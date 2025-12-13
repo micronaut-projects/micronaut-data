@@ -16,10 +16,8 @@
 package io.micronaut.data.model.vector;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Definition;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
 
 import java.util.Arrays;
@@ -31,10 +29,7 @@ import java.util.Objects;
  *
  * @since 4.5
  */
-@TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class, definition = "vector", definitions = {
-    @Definition(value = "VECTOR(*, FLOAT32)", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT32)"),
-    @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)")
-})
+@TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class)
 public final class FloatVector implements Vector {
 
     private final float[] data;

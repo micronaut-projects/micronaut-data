@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Definition;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -158,22 +157,13 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 .orElse(null);
         String converter = annotationMetadata.stringValue(MappedProperty.class, "converter")
                 .orElseGet(() -> annotationMetadata.stringValue(TypeDef.class, "converter").orElse(null));
-
-        String definition = annotationMetadata.stringValue(TypeDef.class, "definition").orElse(property.getDefinition());
-
-        ClassElement type = propertyElement.getGenericType();
-
-        if (definition == null) {
-            definition = type.stringValue(TypeDef.class, "definition").orElse(null);
-        }
-
         if (Objects.equals(converter, Object.class.getName())) {
             converter = null;
         }
         if (converter == null) {
+            ClassElement type = propertyElement.getGenericType();
             converter = TypeUtils.resolveDataConverter(type, dataConverters);
         }
-
         if (converter != null) {
             if (isRelation) {
                 throw new ProcessingException(propertyElement, "Relation cannot have converter specified");
@@ -200,6 +190,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             }
 
             if (dataType == null) {
+                ClassElement type = propertyElement.getGenericType();
                 dataType = TypeUtils.resolveDataType(type, dataTypes);
             }
         }
@@ -224,31 +215,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (converter != null) {
             String finalConverter = converter;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
-        }
-        // Propagate SQL definition and vendor-specific definitions from @TypeDef to @MappedProperty for all cases
-        if (!isRelation) {
-            String finalDefinition0 = definition;
-            // Compute vendor-specific definitions outside the lambda to keep captured variables effectively final
-            List<AnnotationValue<Definition>> tmpDefs = List.of();
-            AnnotationValue<TypeDef> tdOnProperty = propertyElement.getAnnotation(TypeDef.class);
-            if (tdOnProperty != null) {
-                tmpDefs = tdOnProperty.getAnnotations("definitions", Definition.class);
-            }
-            if (tmpDefs.isEmpty()) {
-                AnnotationValue<TypeDef> tdOnType = type.getAnnotation(TypeDef.class);
-                if (tdOnType != null) {
-                    tmpDefs = tdOnType.getAnnotations("definitions", Definition.class);
-                }
-            }
-            final List<AnnotationValue<Definition>> finalDefs = tmpDefs;
-            propertyElement.annotate(MappedProperty.class, builder -> {
-                if (finalDefinition0 != null && !finalDefinition0.isBlank()) {
-                    builder.member("definition", finalDefinition0);
-                }
-                if (!finalDefs.isEmpty()) {
-                    builder.member("definitions", finalDefs.toArray(new AnnotationValue[0]));
-                }
-            });
         }
         if (isRelation) {
             useJoinColumnNameIfSet(annotationMetadata, propertyElement);

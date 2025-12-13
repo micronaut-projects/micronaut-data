@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -99,12 +100,13 @@ public class R2dbcSchemaGenerator {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
+                        AttributeConverterRegistry attributeConverterRegistry = beanLocator.getBean(AttributeConverterRegistry.class);
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                             Mono<Void> result = Mono.empty();
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(attributeConverterRegistry, connection, schemaGenerate, entities, builder));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -113,7 +115,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return result.then(generate(attributeConverterRegistry, connection, schemaGenerate, entities, builder))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -121,8 +123,8 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
-        List<String> createStatements = Arrays.asList(builder.buildCreateTableStatements(entities));
+    private Mono<Void> generate(AttributeConverterRegistry attributeConverterRegistry, Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
+        List<String> createStatements = Arrays.asList(builder.buildCreateTableStatements(attributeConverterRegistry, entities));
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {

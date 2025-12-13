@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.convert.ConversionContext;
 import java.util.Map;
+
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.ByteVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
@@ -39,5 +40,10 @@ public class DefaultByteVectorAttributeConverter extends AbstractVectorAttribute
 
     public DefaultByteVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
         super(converterMap, ByteVector.class);
+    }
+
+    @Override
+    String getOracleType() {
+        return "INT8";
     }
 }

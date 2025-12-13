@@ -32,7 +32,7 @@ import java.util.Objects;
  *
  * @since 4.5
  */
-@TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class, definition = "VECTOR")
+@TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public sealed interface Vector
     permits DoubleVector,
             FloatVector,

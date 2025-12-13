@@ -40,4 +40,9 @@ public class DefaultDoubleVectorAttributeConverter extends AbstractVectorAttribu
     protected DefaultDoubleVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
         super(converterMap, DoubleVector.class);
     }
+
+    @Override
+    String getOracleType() {
+        return "FLOAT64";
+    }
 }

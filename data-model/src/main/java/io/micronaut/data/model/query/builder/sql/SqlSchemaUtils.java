@@ -23,14 +23,12 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Definition;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -39,6 +37,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
@@ -91,6 +92,7 @@ public final class SqlSchemaUtils {
       * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
       * and potentially joined tables.
       *
+      * @param attributeConverterRegistry the attributeConverterRegistry
       * @param entity The entity
       * @param dialect The SQL dialect used to render vendor-specific definitions.
       * @return The SQL table definitions for the given entity
@@ -99,7 +101,7 @@ public final class SqlSchemaUtils {
     @Experimental
     @NonNull
     @SuppressWarnings("java:S3776")
-    public static List<SqlTableMapping> getSqlTableMappings(@NonNull PersistentEntity entity, @NonNull Dialect dialect) {
+    public static List<SqlTableMapping> getSqlTableMappings(AttributeConverterRegistry attributeConverterRegistry, @NonNull PersistentEntity entity, @NonNull Dialect dialect) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = entity.getPersistedName();
@@ -147,24 +149,24 @@ public final class SqlSchemaUtils {
                         PersistentPropertyPath pp = leftProperties.get(i);
                         String columnName = leftJoinTableColumns.get(i);
                         // TODO: Should we treat join table fields as primary keys?
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(attributeConverterRegistry, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 } else {
                     for (PersistentPropertyPath pp : leftProperties) {
                         String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(attributeConverterRegistry, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 }
                 if (rightJoinTableColumns.size() == rightProperties.size()) {
                     for (int i = 0; i < rightJoinTableColumns.size(); i++) {
                         PersistentPropertyPath pp = rightProperties.get(i);
                         String columnName = rightJoinTableColumns.get(i);
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(attributeConverterRegistry, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 } else {
                     for (PersistentPropertyPath pp : rightProperties) {
                         String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(attributeConverterRegistry, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 }
                 SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, null, columns);
@@ -173,20 +175,20 @@ public final class SqlSchemaUtils {
         }
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
-        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(identities, namingStrategy, dialect);
+        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(attributeConverterRegistry, identities, namingStrategy, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
 
         PersistentProperty version = entity.getVersion();
         if (version != null && !version.isGenerated()) {
             String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-            SqlColumnMapping column = getColumnDefinition(version, columnName, false, true, false, dialect);
+            SqlColumnMapping column = getColumnDefinition(attributeConverterRegistry, version, columnName, false, true, false, dialect);
             columns.add(column);
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
-            SqlColumnMapping column = getColumnDefinition(property, columnName, false, isRequired(associations, property),
+            SqlColumnMapping column = getColumnDefinition(attributeConverterRegistry, property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
             columns.add(column);
         };
@@ -207,6 +209,7 @@ public final class SqlSchemaUtils {
     /**
      * Creates a new Column object based on the provided PersistentProperty and other mapped field attributes.
      *
+     * @param attributeConverterRegistry the attributeConverterRegistry
      * @param prop         the PersistentProperty to create the Column for
      * @param column       the name of the column
      * @param primaryKey   whether the column is a primary key
@@ -216,7 +219,7 @@ public final class SqlSchemaUtils {
      * @throws IllegalStateException if the provided property is an Association
      * @throws MappingException      if the data type of the property is unknown
      */
-    private static SqlColumnMapping getColumnDefinition(PersistentProperty prop, String column, boolean primaryKey, boolean required,
+    private static SqlColumnMapping getColumnDefinition(AttributeConverterRegistry attributeConverterRegistry, PersistentProperty prop, String column, boolean primaryKey, boolean required,
                                                         boolean isForeign, Dialect dialect) {
         if (prop instanceof Association) {
             throw new IllegalStateException("Association is not supported here");
@@ -224,29 +227,15 @@ public final class SqlSchemaUtils {
         AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
         String definition = annotationMetadata.stringValue(MappedProperty.class, "definition").orElse(null);
 
-        List<AnnotationValue<Definition>> definitions = annotationMetadata.getAnnotationValuesByType(Definition.class);
-        if (definitions.isEmpty()) {
-            AnnotationValue<MappedProperty> mp = annotationMetadata.getAnnotation(MappedProperty.class);
-            if (mp != null) {
-                definitions = mp.getAnnotations("definitions", Definition.class);
-            }
-        }
-        if (definitions.isEmpty()) {
-            AnnotationValue<TypeDef> td = annotationMetadata.getAnnotation(TypeDef.class);
-            if (td != null) {
-                definitions = td.getAnnotations("definitions", Definition.class);
-            }
-        }
+        OptionalInt len = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "length");
 
-        for (AnnotationValue<Definition> d : definitions) {
-            if (dialect.equals(d.enumValue("dialect", Dialect.class).orElse(null))) {
-                // Definition annotation uses 'value' as its member
-                OptionalInt len = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "length");
-                Optional<String> format = d.stringValue("format");
-                if (format.isPresent() && !format.get().isBlank() && len.isPresent()) {
-                    definition = format.get().formatted(len.getAsInt());
-                } else {
-                    definition = d.stringValue(VALUE_MEMBER).orElse(definition);
+        Class<?> converterClass = prop.getAnnotationMetadata().classValue(MappedProperty.class, "converter").orElse(null);
+        if (converterClass != null) {
+            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+            if (converter instanceof SqlAttributeConverter<?, ?> sqlAttributeConverter) {
+                String definitionFromConverter = sqlAttributeConverter.getColumnDefinition(len, dialect);
+                if (definitionFromConverter != null) {
+                    definition = definitionFromConverter;
                 }
             }
         }
@@ -416,7 +405,7 @@ public final class SqlSchemaUtils {
         return indexMappings;
     }
 
-    private static List<SqlColumnMapping> getPrimaryKeyColumns(List<PersistentProperty> identities, NamingStrategy namingStrategy, Dialect dialect) {
+    private static List<SqlColumnMapping> getPrimaryKeyColumns(AttributeConverterRegistry attributeConverterRegistry, List<PersistentProperty> identities, NamingStrategy namingStrategy, Dialect dialect) {
         List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>(identities.size());
         for (PersistentProperty identity : identities) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
@@ -424,7 +413,7 @@ public final class SqlSchemaUtils {
                 -> ids.add(PersistentPropertyPath.of(associations, property, "")));
             for (PersistentPropertyPath pp : ids) {
                 String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
-                SqlColumnMapping column = getColumnDefinition(pp.getProperty(), columnName, true,
+                SqlColumnMapping column = getColumnDefinition(attributeConverterRegistry, pp.getProperty(), columnName, true,
                     isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()), dialect);
                 primaryKeyColumns.add(column);
             }

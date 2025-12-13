@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.convert.ConversionContext;
 import java.util.Map;
+
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
@@ -38,5 +39,10 @@ public class DefaultVectorAttributeConverter extends AbstractVectorAttributeConv
 
     protected DefaultVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
         super(converterMap, Vector.class);
+    }
+
+    @Override
+    String getOracleType() {
+        return "FLOAT64";
     }
 }

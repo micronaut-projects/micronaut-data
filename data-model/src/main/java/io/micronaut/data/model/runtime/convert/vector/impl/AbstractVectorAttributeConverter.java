@@ -28,6 +28,7 @@ import io.micronaut.data.model.vector.Vector;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.OptionalInt;
 
 /**
  * AbstractVectorAttributeConverter .
@@ -103,5 +104,26 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return dialectConversionContext.getDialect();
         }
         return null;
+    }
+
+    abstract String getOracleType();
+
+    @Override
+    public String getColumnDefinition(OptionalInt len, Dialect dialect) {
+        return switch (dialect) {
+            case ORACLE -> {
+                if (len.isPresent()) {
+                    yield "VECTOR(%d,%s)".formatted(len.getAsInt(), getOracleType());
+                }
+                yield "VECTOR(*,%s)".formatted(getOracleType());
+            }
+            case POSTGRES -> {
+                if (len.isPresent()) {
+                    yield "vector(%d)".formatted(len.getAsInt());
+                }
+                yield "vector";
+            }
+            default -> null;
+        };
     }
 }

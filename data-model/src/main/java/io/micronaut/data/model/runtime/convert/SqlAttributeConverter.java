@@ -18,6 +18,9 @@ package io.micronaut.data.model.runtime.convert;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.OptionalInt;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
@@ -30,4 +33,6 @@ import io.micronaut.core.convert.ConversionContext;
 @Indexed(SqlAttributeConverter.class)
 public interface SqlAttributeConverter<X, Y> extends  AttributeConverter<X, Y> { @Nullable
     Object readFromResultSet(ConversionContext conversionContext, ConverterResultReader<Object, Object> cr, Object resultSet, Object columnName);
+
+    String getColumnDefinition(OptionalInt len, Dialect dialect);
 }
