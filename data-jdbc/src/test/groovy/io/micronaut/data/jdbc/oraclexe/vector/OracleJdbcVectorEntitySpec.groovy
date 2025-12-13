@@ -42,13 +42,6 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
         return [getClass().package.name]
     }
 
-    def setupSpec() {
-        // Create sequence and table if not exists (ignore errors if already present)
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        // Oracle 23ai VECTOR: use 3 dims for tests (FLOAT64 by default)
-        executeSilently "CREATE TABLE vector_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3))"
-    }
-
     def cleanup() {
         // Clean table between tests
         executeSilently "DELETE FROM vector_doc"

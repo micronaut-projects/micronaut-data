@@ -43,20 +43,6 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
         return [getClass().package.name]
     }
 
-    def setupSpec() {
-        // Create sequence and table if not exists (ignore errors if already present)
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        // Oracle 23ai VECTOR: use 3 dims for tests (INT8)
-        executeSilently "CREATE TABLE vector_int_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8))"
-    }
-
-    def cleanup() {
-        // Clean table between tests
-        executeSilently "DELETE FROM vector_int_doc"
-        // no-op transaction boundary to flush
-        context.getBean(SynchronousTransactionManager).executeWrite { status -> null }
-    }
-
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         int[] dv = [1, 2, -3] as int[]

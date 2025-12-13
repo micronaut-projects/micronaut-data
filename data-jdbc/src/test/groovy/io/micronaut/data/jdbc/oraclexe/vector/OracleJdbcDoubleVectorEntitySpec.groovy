@@ -35,20 +35,6 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         return [getClass().package.name]
     }
 
-    def setupSpec() {
-        // Create sequence and table if not exists (ignore errors if already present)
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        // Oracle 23ai VECTOR: use 3 dims for tests (FLOAT64 by default)
-//        executeSilently "CREATE TABLE vector_double_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT64))"
-    }
-
-    def cleanup() {
-        // Clean table between tests
-        executeSilently "DELETE FROM vector_double_doc"
-        // no-op transaction boundary to flush
-        context.getBean(io.micronaut.transaction.SynchronousTransactionManager).executeWrite { status -> null }
-    }
-
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         double[] dv = [1d, 2.5d, -3.75d] as double[]
