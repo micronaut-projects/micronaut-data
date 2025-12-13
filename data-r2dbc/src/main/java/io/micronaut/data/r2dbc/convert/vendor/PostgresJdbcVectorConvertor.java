@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.convert.vendor;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
@@ -12,6 +13,7 @@ import jakarta.inject.Singleton;
 @Internal
 @Singleton
 @Named("POSTGRES")
+@Requires(classes = io.r2dbc.postgresql.codec.Vector.class)
 public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<io.r2dbc.postgresql.codec.Vector> {
 
     private final ConversionService conversionService;

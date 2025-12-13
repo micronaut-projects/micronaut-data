@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.convert.vendor;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
@@ -8,10 +9,12 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 @Internal
 @Singleton
 @Named("ORACLE")
+@Requires(classes = VECTOR.class)
 public class OracleJdbcVectorConvertor implements VectorTypeConvertor<String> {
 
     private final ConversionService conversionService;
