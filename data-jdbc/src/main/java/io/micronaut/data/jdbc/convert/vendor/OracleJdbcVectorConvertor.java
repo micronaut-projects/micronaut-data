@@ -8,7 +8,6 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.postgresql.util.PGobject;
 
 @Internal
 @Singleton

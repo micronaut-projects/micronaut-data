@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.convert.vendor;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
@@ -13,6 +14,7 @@ import org.postgresql.util.PGobject;
 @Internal
 @Singleton
 @Named("POSTGRES")
+@Requires(classes = PGobject.class)
 public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject> {
 
     private final ConversionService conversionService;
