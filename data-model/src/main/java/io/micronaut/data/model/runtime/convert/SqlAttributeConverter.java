@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime.convert;
 
 import io.micronaut.core.annotation.Indexed;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 
 /**
@@ -27,6 +28,6 @@ import io.micronaut.core.convert.ConversionContext;
  * @since 3.1
  */
 @Indexed(SqlAttributeConverter.class)
-public interface SqlAttributeConverter<X, Y> extends  AttributeConverter<X, Y> {
-    Class<?> getPersistedType(ConversionContext conversionContext);
+public interface SqlAttributeConverter<X, Y> extends  AttributeConverter<X, Y> { @Nullable
+    Object readFromResultSet(ConversionContext conversionContext, ConverterResultReader<Object, Object> cr, Object resultSet, Object columnName);
 }

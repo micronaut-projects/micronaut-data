@@ -23,8 +23,6 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.IntVector;
 import jakarta.inject.Singleton;
 
-import java.util.Arrays;
-
 /**
  * Unified attribute converter for IntVector that supports multiple SQL dialects.
  * - PostgreSQL: persisted value is a {@code org.postgresql.util.PGobject} of type {@code vector}

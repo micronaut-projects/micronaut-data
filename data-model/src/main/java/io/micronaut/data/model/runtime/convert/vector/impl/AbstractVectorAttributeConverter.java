@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.convert.ConverterResultReader;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
@@ -80,8 +81,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     /**
      * Returns the persisted type for the given context/dialect.
      */
-    @Override
-    public Class<?> getPersistedType(ConversionContext conversionContext) {
+    private Class<?> getPersistedType(ConversionContext conversionContext) {
         final Dialect dialect = extractDialect(conversionContext);
         VectorTypeConvertor vectorTypeConvertor = dialect != null ? converterMap.get(dialect.toString()) : null;
         if (vectorTypeConvertor != null) {
@@ -90,6 +90,12 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return String.class;
         }
         return Object.class;
+    }
+
+    @Override
+    public Object readFromResultSet(ConversionContext conversionContext, ConverterResultReader<Object, Object> cr, Object resultSet, Object columnName) {
+            Class<?> persistedType = getPersistedType(conversionContext);
+            return cr.readConverter(resultSet, columnName, persistedType);
     }
 
     protected static @Nullable Dialect extractDialect(ConversionContext context) {

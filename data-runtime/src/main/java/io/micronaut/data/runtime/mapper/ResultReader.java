@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.runtime.convert.ConverterResultReader;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -33,7 +34,7 @@ import java.util.UUID;
  * @param <RS> The result set
  * @param <IDX> The index type
  */
-public interface ResultReader<RS, IDX> {
+public interface ResultReader<RS, IDX> extends ConverterResultReader<RS, IDX> {
 
     /**
      * Convert the value to the given type.
@@ -118,26 +119,6 @@ public interface ResultReader<RS, IDX> {
             case BIGDECIMAL -> readBigDecimal(resultSet, index);
             default -> getRequiredValue(resultSet, index, Object.class);
         };
-    }
-
-    /**
-     * Read a value dynamically using the result set and the given name and data type.
-     * @param resultSet The result set
-     * @param index The name
-     * @param dataType The data type
-     * @param persistType The persisted Java type to read as when dataType is OBJECT
-     * @return The value, can be null
-     * @throws DataAccessException if the value cannot be read
-     */
-    default @Nullable Object readDynamic(
-        @NonNull RS resultSet,
-        @NonNull IDX index,
-        @NonNull DataType dataType,
-        Class<?> persistType) {
-        if (dataType == DataType.OBJECT && persistType != null) {
-          return getRequiredValue(resultSet, index, persistType);
-        }
-        return readDynamic(resultSet, index, dataType);
     }
 
     /**
@@ -288,6 +269,15 @@ public interface ResultReader<RS, IDX> {
      */
     default byte[] readBytes(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte[].class);
+    }
+
+    @Override
+    default Object readConverter(RS resultSet, IDX name, Class<?> type) {
+        if (type == String.class) {
+            return readString(resultSet, name);
+        } else {
+            return getRequiredValue(resultSet, name, type);
+        }
     }
 
     /**

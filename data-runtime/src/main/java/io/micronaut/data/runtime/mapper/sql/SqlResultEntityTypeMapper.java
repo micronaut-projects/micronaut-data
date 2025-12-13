@@ -38,6 +38,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.ConverterResultReader;
 import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -706,19 +707,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = prop.getDataType();
         Object result;
-        Class<?> persistType = null;
-
         AttributeConverter<Object, Object> converter = prop.getConverter();
 
-        if (converter != null && converter instanceof SqlAttributeConverter<Object, Object> sqlAttributeConverter) {
-            persistType = sqlAttributeConverter.getPersistedType(conversionContextFactory.forArgument(prop.getArgument()));
-        }
-
-        if (dataType == DataType.JSON && jsonColumnReader != null) {
+        if (converter instanceof SqlAttributeConverter<Object, Object> sqlAttributeConverter) {
+            result = sqlAttributeConverter.readFromResultSet(conversionContextFactory.forArgument(prop.getArgument()), (ConverterResultReader) resultReader, rs, columnName);
+        } else if (dataType == DataType.JSON && jsonColumnReader != null) {
             JsonDataType jsonDataType = prop.getJsonDataType();
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
         } else {
-            result = resultReader.readDynamic(rs, columnName, dataType, persistType);
+            result = resultReader.readDynamic(rs, columnName, dataType);
         }
 
         if (converter != null) {

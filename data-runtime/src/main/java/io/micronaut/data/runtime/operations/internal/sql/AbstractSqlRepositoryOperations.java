@@ -142,6 +142,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param attributeConverterRegistry  The attribute converter registry
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param conversionContextFactory .  The conversion context factory
      */
     protected AbstractSqlRepositoryOperations(
         String dataSourceName,
