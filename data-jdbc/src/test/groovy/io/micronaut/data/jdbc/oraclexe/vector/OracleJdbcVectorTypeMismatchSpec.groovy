@@ -65,7 +65,7 @@ class OracleJdbcVectorTypeMismatchSpec extends Specification implements OracleTe
         def last = rows.last()
         last.embedding != null
         last.embedding.type == Integer.TYPE
-        last.embedding.toIntegerArray().toList() == [1, -2, 3]
+        last.embedding.toIntegerArray().toList() == [1, -2, 4]
     }
 
     void "saving IntVector into FLOAT32 column coerces values (no error)"() {

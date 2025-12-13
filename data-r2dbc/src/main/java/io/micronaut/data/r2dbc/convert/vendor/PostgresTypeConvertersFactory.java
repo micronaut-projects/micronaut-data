@@ -18,7 +18,6 @@ package io.micronaut.data.r2dbc.convert.vendor;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
@@ -141,7 +140,12 @@ final class PostgresTypeConvertersFactory {
             if (pg == null) {
                 return Optional.empty();
             }
-            return Optional.of((DoubleVector) Vector.of(pg.getVector()));
+            float[] f = pg.getVector();
+            double[] d = new double[f.length];
+            for (int i = 0; i < f.length; i++) {
+                d[i] = f[i];
+            }
+            return Optional.of(new DoubleVector(d));
         };
     }
 

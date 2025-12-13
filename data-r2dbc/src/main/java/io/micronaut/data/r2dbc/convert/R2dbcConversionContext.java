@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.r2dbc.convert;
 
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.r2dbc.spi.Connection;
 

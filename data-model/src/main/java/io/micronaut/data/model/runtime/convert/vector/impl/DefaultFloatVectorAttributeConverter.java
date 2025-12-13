@@ -15,21 +15,13 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import java.util.Map;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
-import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
-import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
-
-import java.util.Arrays;
 
 /**
  * Unified attribute converter for FloatVector that supports multiple SQL dialects.

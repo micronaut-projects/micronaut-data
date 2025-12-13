@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
@@ -116,12 +115,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     /**
      * Constructor used to customize the join paths.
      *
-     * @param entity            The entity
-     * @param resultReader      The result reader
-     * @param joinPaths         The join paths
-     * @param jsonColumnReader  The json column reader
-     * @param loadListener      The event listener
-     * @param conversionService The conversion service
+     * @param entity                   The entity
+     * @param resultReader             The result reader
+     * @param joinPaths                The join paths
+     * @param jsonColumnReader         The json column reader
+     * @param loadListener             The event listener
+     * @param conversionService        The conversion service
+     * @param conversionContextFactory The conversion context factory
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,

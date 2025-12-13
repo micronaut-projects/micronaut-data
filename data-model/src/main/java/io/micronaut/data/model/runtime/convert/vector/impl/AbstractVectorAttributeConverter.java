@@ -29,9 +29,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Generic base for vector attribute converters selecting persisted representation by dialect.
- *
- * @since 5.0
+ * AbstractVectorAttributeConverter .
+ * @param <X>
+ * @param <Y>
  */
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements SqlAttributeConverter<X, Y> {
 

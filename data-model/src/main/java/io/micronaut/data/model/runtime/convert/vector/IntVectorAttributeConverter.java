@@ -18,7 +18,6 @@ package io.micronaut.data.model.runtime.convert.vector;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.vector.IntVector;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.

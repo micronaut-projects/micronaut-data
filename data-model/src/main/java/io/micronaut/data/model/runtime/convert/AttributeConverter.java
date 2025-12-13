@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.

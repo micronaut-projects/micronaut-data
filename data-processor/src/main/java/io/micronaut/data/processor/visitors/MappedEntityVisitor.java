@@ -180,19 +180,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             }
             ClassElement persistedClassFromConverter = getPersistedClassFromConverter(converter, context);
             if (persistedClassFromConverter != null) {
-                String finalDefinition = definition;
                 propertyElement.annotate(MappedProperty.class, builder -> {
                     builder.member("converterPersistedType", new AnnotationClassValue<>(persistedClassFromConverter.getCanonicalName()));
-                    if (finalDefinition != null) {
-                        builder.member("definition", new AnnotationClassValue<>(finalDefinition));
-                    }
-                    AnnotationValue<TypeDef> annotation = type.getAnnotation(TypeDef.class);
-                    if (annotation != null) {
-                        List<AnnotationValue<Definition>> definitions = annotation.getAnnotations("definitions", Definition.class);
-                        if (!definitions.isEmpty()) {
-                            builder.member("definitions", definitions.toArray(new AnnotationValue[0]));
-                        }
-                    }
                 });
             }
             if (dataType == null) {
@@ -235,6 +224,31 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (converter != null) {
             String finalConverter = converter;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
+        }
+        // Propagate SQL definition and vendor-specific definitions from @TypeDef to @MappedProperty for all cases
+        if (!isRelation) {
+            String finalDefinition0 = definition;
+            // Compute vendor-specific definitions outside the lambda to keep captured variables effectively final
+            List<AnnotationValue<Definition>> tmpDefs = List.of();
+            AnnotationValue<TypeDef> tdOnProperty = propertyElement.getAnnotation(TypeDef.class);
+            if (tdOnProperty != null) {
+                tmpDefs = tdOnProperty.getAnnotations("definitions", Definition.class);
+            }
+            if (tmpDefs.isEmpty()) {
+                AnnotationValue<TypeDef> tdOnType = type.getAnnotation(TypeDef.class);
+                if (tdOnType != null) {
+                    tmpDefs = tdOnType.getAnnotations("definitions", Definition.class);
+                }
+            }
+            final List<AnnotationValue<Definition>> finalDefs = tmpDefs;
+            propertyElement.annotate(MappedProperty.class, builder -> {
+                if (finalDefinition0 != null && !finalDefinition0.isBlank()) {
+                    builder.member("definition", finalDefinition0);
+                }
+                if (!finalDefs.isEmpty()) {
+                    builder.member("definitions", finalDefs.toArray(new AnnotationValue[0]));
+                }
+            });
         }
         if (isRelation) {
             useJoinColumnNameIfSet(annotationMetadata, propertyElement);

@@ -32,7 +32,7 @@ import java.util.Objects;
  * @since 4.5
  */
 @TypeDef(type = DataType.OBJECT, converter = DoubleVectorAttributeConverter.class, definition = "vector", definitions = {
-    @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT64)"),
+    @Definition(value = "VECTOR(*, FLOAT64)", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT64)"),
     @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)")
 })
 public final class DoubleVector implements Vector {

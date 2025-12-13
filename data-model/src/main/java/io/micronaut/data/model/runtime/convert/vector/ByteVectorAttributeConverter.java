@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.vector.ByteVector;
 

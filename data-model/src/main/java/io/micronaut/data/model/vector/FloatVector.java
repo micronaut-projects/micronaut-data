@@ -32,7 +32,7 @@ import java.util.Objects;
  * @since 4.5
  */
 @TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class, definition = "vector", definitions = {
-    @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT32)"),
+    @Definition(value = "VECTOR(*, FLOAT32)", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT32)"),
     @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)")
 })
 public final class FloatVector implements Vector {

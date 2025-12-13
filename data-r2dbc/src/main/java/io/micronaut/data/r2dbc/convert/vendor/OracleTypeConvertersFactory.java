@@ -27,14 +27,9 @@ import io.micronaut.data.model.vector.IntVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
-import oracle.sql.DATE;
-import oracle.sql.TIMESTAMP;
 import oracle.sql.VECTOR;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -253,15 +248,21 @@ final class OracleTypeConvertersFactory {
                         if (type == OracleType.VECTOR_FLOAT32) {
                             float[] f = oracleVector.toFloatArray();
                             d = new double[f.length];
-                            for (int i = 0; i < f.length; i++) d[i] = f[i];
+                            for (int i = 0; i < f.length; i++) {
+                                d[i] = f[i];
+                            }
                         } else if (type == OracleType.VECTOR_INT8) {
                             int[] ints = oracleVector.toIntArray();
                             d = new double[ints.length];
-                            for (int i = 0; i < ints.length; i++) d[i] = ints[i];
+                            for (int i = 0; i < ints.length; i++) {
+                                d[i] = ints[i];
+                            }
                         } else {
                             byte[] b = oracleVector.toByteArray();
                             d = new double[b.length];
-                            for (int i = 0; i < b.length; i++) d[i] = b[i];
+                            for (int i = 0; i < b.length; i++) {
+                                d[i] = b[i];
+                            }
                         }
                         return Optional.of((DoubleVector) Vector.of(d));
                     }
@@ -290,15 +291,21 @@ final class OracleTypeConvertersFactory {
                         if (type == OracleType.VECTOR_FLOAT64) {
                             double[] d = oracleVector.toDoubleArray();
                             f = new float[d.length];
-                            for (int i = 0; i < d.length; i++) f[i] = (float) d[i];
+                            for (int i = 0; i < d.length; i++) {
+                                f[i] = (float) d[i];
+                            }
                         } else if (type == OracleType.VECTOR_INT8) {
                             int[] ints = oracleVector.toIntArray();
                             f = new float[ints.length];
-                            for (int i = 0; i < ints.length; i++) f[i] = ints[i];
+                            for (int i = 0; i < ints.length; i++) {
+                                f[i] = ints[i];
+                            }
                         } else {
                             byte[] b = oracleVector.toByteArray();
                             f = new float[b.length];
-                            for (int i = 0; i < b.length; i++) f[i] = b[i];
+                            for (int i = 0; i < b.length; i++) {
+                                f[i] = b[i];
+                            }
                         }
                         return Optional.of((FloatVector) Vector.of(f));
                     }
@@ -327,15 +334,21 @@ final class OracleTypeConvertersFactory {
                         if (type == OracleType.VECTOR_FLOAT32) {
                             float[] f = oracleVector.toFloatArray();
                             ints = new int[f.length];
-                            for (int i = 0; i < f.length; i++) ints[i] = (int) f[i];
+                            for (int i = 0; i < f.length; i++) {
+                                ints[i] = (int) f[i];
+                            }
                         } else if (type == OracleType.VECTOR_FLOAT64) {
                             double[] d = oracleVector.toDoubleArray();
                             ints = new int[d.length];
-                            for (int i = 0; i < d.length; i++) ints[i] = (int) d[i];
+                            for (int i = 0; i < d.length; i++) {
+                                ints[i] = (int) d[i];
+                            }
                         } else {
                             byte[] b = oracleVector.toByteArray();
                             ints = new int[b.length];
-                            for (int i = 0; i < b.length; i++) ints[i] = b[i];
+                            for (int i = 0; i < b.length; i++) {
+                                ints[i] = b[i];
+                            }
                         }
                         return Optional.of((IntVector) Vector.of(ints));
                     }
@@ -364,15 +377,21 @@ final class OracleTypeConvertersFactory {
                         if (type == OracleType.VECTOR_INT8) {
                             int[] ints = oracleVector.toIntArray();
                             b = new byte[ints.length];
-                            for (int i = 0; i < ints.length; i++) b[i] = (byte) ints[i];
+                            for (int i = 0; i < ints.length; i++) {
+                                b[i] = (byte) ints[i];
+                            }
                         } else if (type == OracleType.VECTOR_FLOAT32) {
                             float[] f = oracleVector.toFloatArray();
                             b = new byte[f.length];
-                            for (int i = 0; i < f.length; i++) b[i] = (byte) f[i];
+                            for (int i = 0; i < f.length; i++) {
+                                b[i] = (byte) f[i];
+                            }
                         } else {
                             double[] d = oracleVector.toDoubleArray();
                             b = new byte[d.length];
-                            for (int i = 0; i < d.length; i++) b[i] = (byte) d[i];
+                            for (int i = 0; i < d.length; i++) {
+                                b[i] = (byte) d[i];
+                            }
                         }
                         return Optional.of((ByteVector) Vector.of(b));
                     }

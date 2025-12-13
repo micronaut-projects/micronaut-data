@@ -32,7 +32,7 @@ import java.util.Objects;
  * @since 4.7
  */
 @TypeDef(type = DataType.OBJECT, converter = IntVectorAttributeConverter.class, definition = "vector", definitions = {
-    @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,INT8)"),
+    @Definition(value = "VECTOR(*, INT8)", dialect = Dialect.ORACLE, format = "VECTOR(%d,INT8)"),
     @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)")
 })
 public final class IntVector implements Vector {
