@@ -273,11 +273,7 @@ public interface ResultReader<RS, IDX> extends ConverterResultReader<RS, IDX> {
 
     @Override
     default Object readConverter(RS resultSet, IDX name, Class<?> type) {
-        if (type == String.class) {
-            return readString(resultSet, name);
-        } else {
-            return getRequiredValue(resultSet, name, type);
-        }
+        return getRequiredValue(resultSet, name, type);
     }
 
     /**
