@@ -32,7 +32,8 @@ import jakarta.inject.Singleton;
  * This single converter replaces the previous dialect-specific converters and selects
  * the persisted representation based on the {@link Dialect} obtained from the {@link ConversionContext}.
  *
- * @since 5.0
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Singleton
 public class DefaultIntVectorAttributeConverter extends AbstractVectorAttributeConverter<IntVector, Object> implements IntVectorAttributeConverter<Object> {

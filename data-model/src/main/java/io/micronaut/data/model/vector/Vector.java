@@ -30,7 +30,8 @@ import java.util.Objects;
  *
  * Note: Only intended for use as a query argument (not a persistent property type).
  *
- * @since 4.5
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public sealed interface Vector
@@ -75,7 +76,7 @@ public sealed interface Vector
      * Convert this vector to a new int array copy.
      *
      * @return a new int[] with the vector content
-     * @since 4.7
+     * @since 5.0.0
      */
     @NonNull
     default int[] toIntegerArray() {
@@ -181,7 +182,7 @@ public sealed interface Vector
      *
      * @param values the int values to copy into the vector
      * @return a new int-backed vector
-     * @since 4.7
+     * @since 5.0.0
      */
     @NonNull
     static Vector of(int... values) {
@@ -194,7 +195,7 @@ public sealed interface Vector
      *
      * @param values the byte values to copy into the vector
      * @return a new byte-backed vector
-     * @since 4.7
+     * @since 5.0.0
      */
     @NonNull
     static Vector of(byte... values) {

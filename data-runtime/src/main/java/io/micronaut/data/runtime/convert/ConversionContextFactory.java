@@ -28,7 +28,8 @@ import io.micronaut.data.model.runtime.convert.DialectConversionContext;
  *
  * Datastore modules (e.g. JDBC) may provide richer contexts and still satisfy
  *
- * @since 4.x
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 public interface ConversionContextFactory {
 

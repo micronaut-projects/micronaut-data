@@ -30,6 +30,9 @@ import oracle.sql.VECTOR;
  * VectorTypeConvertor for Oracle R2DBC.
  * Persists Micronaut Vector instances as String values and converts to/from
  * Oracle textual vector representation for the ORACLE dialect.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Internal
 @Singleton

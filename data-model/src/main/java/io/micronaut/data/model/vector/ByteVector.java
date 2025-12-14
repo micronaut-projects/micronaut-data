@@ -27,7 +27,8 @@ import java.util.Objects;
  * Byte-backed immutable vector.
  * Split from Vector.java into a dedicated package.
  *
- * @since 4.7
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @TypeDef(type = DataType.OBJECT, converter = ByteVectorAttributeConverter.class)
 public final class ByteVector implements Vector {

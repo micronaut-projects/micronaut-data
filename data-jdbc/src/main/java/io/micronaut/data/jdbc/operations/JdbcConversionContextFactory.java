@@ -23,6 +23,13 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
 
+/**
+ * Factory creating JDBC-specific {@link io.micronaut.data.model.runtime.convert.DialectConversionContext}
+ * instances enriched with the configured SQL {@link io.micronaut.data.model.query.builder.sql.Dialect}.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
+ */
 @EachBean(DataJdbcConfiguration.class)
 @Internal
 class JdbcConversionContextFactory implements ConversionContextFactory {

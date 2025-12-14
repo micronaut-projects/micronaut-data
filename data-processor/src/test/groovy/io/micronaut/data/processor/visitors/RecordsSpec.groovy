@@ -31,7 +31,7 @@ import io.micronaut.data.annotation.*;
 record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(null, entity)
 
         expect:
         sql == 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"age" INT NOT NULL);'

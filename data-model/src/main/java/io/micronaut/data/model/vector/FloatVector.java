@@ -27,7 +27,8 @@ import java.util.Objects;
  * Float-backed immutable vector.
  * Split from Vector.java into a dedicated package.
  *
- * @since 4.5
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class)
 public final class FloatVector implements Vector {

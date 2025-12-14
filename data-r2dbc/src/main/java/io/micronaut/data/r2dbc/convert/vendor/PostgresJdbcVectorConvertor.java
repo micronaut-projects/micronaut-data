@@ -29,6 +29,9 @@ import jakarta.inject.Singleton;
  * VectorTypeConvertor for Postgres R2DBC.
  * Persists Micronaut Vector instances as io.r2dbc.postgresql.codec.Vector values and converts to/from
  * pgvector codec for the POSTGRES dialect.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Internal
 @Singleton

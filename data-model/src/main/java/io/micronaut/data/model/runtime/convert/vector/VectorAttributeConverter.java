@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,17 @@ import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.vector.Vector;
 
 /**
- * The attribute converter is used for converting mapped entity value to the persisted value and back.
+ * SQL attribute converter specialization for {@link Vector} values.
  *
- * @param <X> The entity value type
- * @author Denis Stepanov
- * @since 3.1
+ * <p>Bridges between the entity-side {@link Vector} abstraction and a dialect-specific persisted type {@code X}
+ * (for example, a driver object, textual representation, or a primitive array depending on dialect/driver).</p>
+ *
+ * <p>Implementations should honor the {@link io.micronaut.data.model.query.builder.sql.Dialect} exposed via
+ * the {@link io.micronaut.data.model.runtime.convert.DialectConversionContext} carried in conversion calls.</p>
+ *
+ * @param <X> The persisted dialect/driver type
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Indexed(VectorAttributeConverter.class)
 public interface VectorAttributeConverter<X> extends SqlAttributeConverter<Vector, X> {

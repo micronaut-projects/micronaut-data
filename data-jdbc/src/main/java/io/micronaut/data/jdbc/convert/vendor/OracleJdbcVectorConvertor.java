@@ -24,6 +24,13 @@ import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+/**
+ * Oracle-specific {@link VectorTypeConvertor} that maps {@link Vector} to the JDBC {@link String} representation
+ * accepted by the Oracle driver and back.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
+ */
 @Internal
 @Singleton
 @Named("ORACLE")

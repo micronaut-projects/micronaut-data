@@ -477,7 +477,8 @@ interface MyRepository {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
         QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildBatchCreateTableStatement(entity)
+        def statements = encoder.buildCreateTableStatements(null, entity)
+        def result = statements.join(System.lineSeparator())
 
         expect:
         result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
@@ -534,7 +535,7 @@ interface MyRepository {
     void "test build create embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(entity)
+            def statements = encoder.buildCreateTableStatements(null, entity)
 
         then:
             statements.join("\n") == query
@@ -555,14 +556,14 @@ interface MyRepository {
     void "test build create index from table annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndex))
+        def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(ShipmentWithIndex))
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" ("field", "taxCode");'
 
         when:
-        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
+        def productStatements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(Product))
 
         then:
         productStatements.length == 1
@@ -572,7 +573,7 @@ interface MyRepository {
     void "test build create index from field annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFields))
+        def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(ShipmentWithIndexOnFields))
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
@@ -583,7 +584,7 @@ interface MyRepository {
     void "test build create index from field annotation with composite indexes"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFieldsCompositeIndexes))
+        def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(ShipmentWithIndexOnFieldsCompositeIndexes))
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
@@ -593,7 +594,7 @@ interface MyRepository {
     void "test build create index from index class annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClass))
+        def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(ShipmentWithIndexOnClass))
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
@@ -604,7 +605,7 @@ interface MyRepository {
     void "test build create index from index class annotation and field annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClassAndFields))
+        def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(ShipmentWithIndexOnClassAndFields))
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'

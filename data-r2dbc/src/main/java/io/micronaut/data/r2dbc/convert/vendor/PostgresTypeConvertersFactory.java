@@ -41,7 +41,8 @@ import java.util.Optional;
  * - Binding still goes through JdbcQueryStatement#setValue(..) which calls setObject(..) and
  *   will pass the PGobject to the driver as-is.
  *
- * @since 4.6.x
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Factory
 @Requires(classes = io.r2dbc.postgresql.codec.Vector.class)

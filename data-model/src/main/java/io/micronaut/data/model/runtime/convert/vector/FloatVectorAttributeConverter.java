@@ -23,8 +23,8 @@ import io.micronaut.data.model.vector.FloatVector;
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
  *
  * @param <X> The entity value type
- * @author Denis Stepanov
- * @since 3.1
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Indexed(FloatVectorAttributeConverter.class)
 public interface FloatVectorAttributeConverter<X> extends SqlAttributeConverter<FloatVector, X> {

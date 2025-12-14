@@ -25,6 +25,13 @@ import io.micronaut.data.runtime.convert.ConversionContextFactory;
 
 
 
+/**
+ * Factory creating R2DBC-specific {@link io.micronaut.data.model.runtime.convert.DialectConversionContext}
+ * instances enriched with the configured SQL {@link io.micronaut.data.model.query.builder.sql.Dialect}.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
+ */
 @EachBean(DataR2dbcConfiguration.class)
 @Internal
 class R2dbcConversionContextFactory implements ConversionContextFactory {

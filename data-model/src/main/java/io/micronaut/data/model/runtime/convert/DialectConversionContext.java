@@ -20,18 +20,23 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
- * Conversion context for JDBC implementation.
+ * SQL dialect-aware {@link ConversionContext} used by SQL mappers and converters.
  *
- * @author Denis Stepanov
- * @since 3.1
+ * <p>Implementations provided by datastore modules (e.g. JDBC, R2DBC) expose the current
+ * {@link io.micronaut.data.model.query.builder.sql.Dialect} so that converters can render
+ * vendor-specific behavior (types, column definitions, reading strategies).</p>
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 public interface DialectConversionContext extends ConversionContext {
 
     /**
-     * Provides the SQL dialect for the current operation.
-     * Default implementation returns null for backward compatibility.
+     * Returns the SQL {@link Dialect} for the current operation.
      *
-     * @return the dialect or null if not available
+     * <p>Datastore modules (JDBC/R2DBC) provide non-null dialect values.</p>
+     *
+     * @return the SQL dialect (never null)
      */
     @NonNull
     Dialect getDialect();

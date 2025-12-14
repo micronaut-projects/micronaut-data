@@ -31,9 +31,12 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 /**
- * AbstractVectorAttributeConverter .
- * @param <X>
- * @param <Y>
+ * Base attribute converter for vector types that delegates conversion to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor}.
+ *
+ * @param <X> The vector entity type
+ * @param <Y> The persisted JDBC type
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements SqlAttributeConverter<X, Y> {
 
@@ -90,13 +93,16 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
         } else if (dialect == Dialect.ORACLE) {
             return String.class;
         }
-        return Object.class;
+        return null;
     }
 
     @Override
     public Object readFromResultSet(ConversionContext conversionContext, ConverterResultReader<Object, Object> cr, Object resultSet, Object columnName) {
-            Class<?> persistedType = getPersistedType(conversionContext);
-            return cr.readConverter(resultSet, columnName, persistedType);
+        Class<?> persistedType = getPersistedType(conversionContext);
+        if (persistedType == null) {
+            return null;
+        }
+        return cr.readConverter(resultSet, columnName, persistedType);
     }
 
     protected static @Nullable Dialect extractDialect(ConversionContext context) {
@@ -123,7 +129,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                 }
                 yield "vector";
             }
-            default -> null;
+            default -> "VARCHAR(255)"; // Fallback for dialects without native vector type to avoid schema generation failure
         };
     }
 }

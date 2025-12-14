@@ -27,7 +27,8 @@ import java.util.Objects;
  * Double-backed immutable vector.
  * Split from Vector.java into a dedicated package.
  *
- * @since 4.5
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @TypeDef(type = DataType.OBJECT, converter = DoubleVectorAttributeConverter.class)
 public final class DoubleVector implements Vector {

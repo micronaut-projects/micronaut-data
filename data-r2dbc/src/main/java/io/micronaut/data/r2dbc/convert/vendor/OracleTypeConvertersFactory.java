@@ -36,8 +36,8 @@ import java.util.Optional;
 /**
  * Oracle DATE converters.
  *
- * @author Denis Stepanov
- * @since 3.1.1
+ * @author Nemanja Mikic
+ * @since 5.0.0
  */
 @Factory
 @Requires(classes = VECTOR.class)

@@ -26,6 +26,13 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.postgresql.util.PGobject;
 
+/**
+ * PostgreSQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to {@link PGobject} of type {@code vector}
+ * and back.
+ *
+ * @author Nemanja Mikic
+ * @since 5.0.0
+ */
 @Internal
 @Singleton
 @Named("POSTGRES")
