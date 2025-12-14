@@ -1,16 +1,8 @@
-= SQL Vector Column Mapping (Oracle VECTOR and PostgreSQL pgvector)
-:toc: macro
-:icons: font
-
 Micronaut Data provides first-class support for storing and retrieving numeric embeddings as SQL vector columns.
 
 Supported platforms (since 5.0.0):
 - Oracle Database 23ai VECTOR columns (JDBC and R2DBC)
 - PostgreSQL pgvector (JDBC and R2DBC)
-
-toc::[]
-
-== Overview
 
 Micronaut Data includes a lightweight, immutable vector abstraction in the `io.micronaut.data.model.vector` package:
 
