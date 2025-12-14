@@ -85,10 +85,11 @@ public class SchemaGenerator {
     /**
      * Constructors a schema generator for the given configurations.
      *
-     * @param configurations            The configurations
-     * @param schemaHandler             The schema handler
-     * @param sqlTableMappingValidators The list of {@link SqlTableMappingValidator} instances
-     * @param environment               The environment
+     * @param configurations              The configurations
+     * @param schemaHandler               The schema handler
+     * @param sqlTableMappingValidators   The list of {@link SqlTableMappingValidator} instances
+     * @param environment                 The environment
+     * @param attributeConverterRegistry  The attribute converter registry.
      */
     public SchemaGenerator(List<DataJdbcConfiguration> configurations,
                            JdbcSchemaHandler schemaHandler,
