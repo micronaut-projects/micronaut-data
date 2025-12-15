@@ -1,0 +1,19 @@
+{
+  "$id": "https://example.com/schemas/MoonPhase.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MoonPhase",
+  "type": "object",
+  "properties": {
+    "phase": {
+      "type": "string",
+      "minLength": 1
+    },
+    "emoji": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": ["phase", "emoji"],
+  "additionalProperties": false,
+  "description": "The phase of the moon with a non-empty name and emoji."
+}

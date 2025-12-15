@@ -1,0 +1,27 @@
+micronaut:
+  application:
+    name: jsonschema-sr-oracle-example
+  server:
+    port: 8083
+
+# Confluent Schema Registry client configuration (adjust for your env)
+csr:
+  url: http://localhost:8081
+  auth:
+    type: none         # bearer | basic | none
+    token: ""          # when type=bearer
+    username: ""       # when type=basic
+    password: ""       # when type=basic
+  timeouts:
+    connect-ms: 2000
+    read-ms: 5000
+  compatibility: BACKWARD
+
+# Schema proxy base URL as seen by Oracle DB (use internal DNS in real env)
+schema-proxy:
+  base-url: http://localhost:8083
+
+# Example bootstrap toggles
+bootstrap:
+  register: false     # set true to auto-register schemas in CSR at startup
+  migrate-oracle-domain: false  # set true to run domain DDL (requires Oracle JDBC)

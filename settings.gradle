@@ -138,6 +138,7 @@ include 'doc-examples:jdbc-spring-template-example-groovy'
 include 'doc-examples:jdbc-spring-template-example-kotlin'
 
 include 'doc-examples:jooq-r2dbc-postgres'
+include 'doc-examples:jdbc-jsonschema-sr-oracle-example-java'
 
 include 'test-annotation-processor-java'
 

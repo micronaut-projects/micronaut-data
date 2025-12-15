@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    // Annotation processors
+    annotationProcessor mnValidation.micronaut.validation
+
+    // Micronaut HTTP client (used for CSR calls)
+    implementation mn.micronaut.http.client
+
+    // Bean validation annotations
+    implementation mnValidation.micronaut.validation
+
+    // Logging
+    runtimeOnly mnLogging.logback.classic
+}

@@ -1,0 +1,201 @@
+= JSON Schema Registry and Oracle 23ai Domains
+:toc:
+:icons: font
+:source-highlighter: highlight.js
+
+This page describes how to keep JSON validation consistent between a Micronaut application and Oracle Database 23ai using a Confluent Schema Registry (CSR) and Oracle JSON Domains.
+
+It covers build-time schema generation, automatic registration in CSR, serving a canonical schema URL through the application (proxy), and creating an Oracle JSON Domain that validates using that same schema.
+
+== Overview
+
+- Generate JSON Schema from domain classes/records at build-time (startup fallback optional).
+- Register JSON Schema into Confluent Schema Registry as `schemaType = JSON`.
+- Expose an application-hosted canonical schema URL (proxy), e.g. `/schemas/{subject}/current`, reachable by the database.
+- Create one Oracle JSON Domain per schema that validates using the canonical URL.
+- Enforce BACKWARD compatibility in CSR. Incompatible changes fail the deployment.
+- Single registry and single database per service (initial scope).
+
+TIP: Using a single, canonical URL (e.g., `/current`) means compatible schema upgrades require no DDL change in the database domain.
+
+== Assumptions and Decisions
+
+- Subject/domain naming: reuse the class/record simple name (configurable prefix/suffix).
+- Oracle domain: single unversioned domain per schema, updated in place (no version suffix).
+- CSR compatibility strategy: BACKWARD.
+- Oracle DB has no outbound HTTP to CSR. The application must host a proxy endpoint that returns the JSON Schema for the subject.
+- Code generation: build-time primary; optional startup fallback.
+- Failure policy: fail on incompatible schema changes (deployment aborts).
+- Optional metadata table `JSON_SCHEMA_REGISTRY_MAP` can be maintained for audit/idempotency.
+
+== Configuration
+
+[source,yaml]
+----
+micronaut:
+  jsonschema:
+    packages:
+      - "com.example.domain"
+    codegen: "build"           # "build" (default) or "startup"
+    dialect: "https://json-schema.org/draft/2020-12/schema"
+    subject-template: "{classSimpleName}"
+    subject-prefix: ""         # optional
+    subject-suffix: ""         # optional
+  csr:
+    url: "https://csr.example.com"
+    auth:
+      type: "bearer"           # or "basic"
+      token: "${CSR_TOKEN}"     # or username/password via secrets
+    compatibility: "BACKWARD"
+    timeouts:
+      connectMs: 2000
+      readMs: 5000
+  oracle:
+    domain:
+      name-template: "{classUpperSnake}"  # MoonPhase -> MOON_PHASE
+      prefix: ""                          # optional
+      suffix: ""                          # optional
+  application:
+    schema-proxy:
+      base-url: "https://app.internal"    # host reachable by DB
+      cache-ttl: "P1D"
+      security:
+        auth: "none"                      # "basic" | "mTLS" as needed
+        allowlist:
+          - "10.0.0.0/24"                 # DB subnet CIDR
+----
+
+== Build-time Schema Generation
+
+- Inputs: Java records/classes discovered in `micronaut.jsonschema.packages`.
+- Output: JSON Schema (Draft 2020‑12) written under `META-INF/schemas/{qualifiedName}.schema.json`.
+- Startup fallback can regenerate at runtime if enabled.
+
+Example record:
+
+[source,java]
+----
+@io.micronaut.serde.annotation.Serdeable
+public record MoonPhase(
+  @jakarta.validation.constraints.NotBlank String phase,
+  @jakarta.validation.constraints.NotBlank String emoji
+) {}
+----
+
+== Confluent Schema Registry (CSR)
+
+Register the schema under the subject derived from the class simple name by default.
+
+- POST `/subjects/{subject}/versions`
+- Body:
+[source,json]
+----
+{
+  "schemaType": "JSON",
+  "schema": "{ ...stringified JSON Schema... }"
+}
+----
+- Optionally set subject-level compatibility once:
+[source,json]
+----
+PUT /config/{subject}
+{ "compatibility": "BACKWARD" }
+----
+
+Idempotency:
+- CSR de-duplicates identical schema content and returns existing version.
+- Attempting an incompatible change will be rejected (given BACKWARD policy), causing the deployment to fail early.
+
+== Application-hosted Schema Proxy
+
+Because Oracle cannot reach CSR directly, the application must provide a canonical URL:
+
+- `GET /schemas/{subject}/current` → returns the latest compatible JSON Schema body (with `Cache-Control` and `ETag`).
+- `GET /schemas/{subject}/v/{version}` → optional endpoint for diagnostics.
+
+Security:
+- Restrict access (VPC/internal DNS, allowlist DB subnet, optional basic/mTLS).
+- No credentials stored in the database.
+
+== Oracle JSON Domain
+
+Create one domain per schema, referencing the canonical URL:
+
+[source,sql]
+----
+CREATE DOMAIN MOON_PHASE AS JSON
+  VALIDATE USING 'https://app.internal/schemas/MoonPhase/current';
+----
+
+Compatible schema upgrades:
+- The proxy returns the new schema body under `/current`. No DDL needed.
+- If governance requires, you may explicitly refresh:
+[source,sql]
+----
+ALTER DOMAIN MOON_PHASE AS JSON
+  VALIDATE USING 'https://app.internal/schemas/MoonPhase/current';
+----
+
+Insert validations:
+- Valid JSON → succeeds.
+- Invalid JSON → fails with JSON validation error.
+
+== CI/CD Flow
+
+1. Build app → generate JSON Schemas.
+2. Registration step:
+   - Ensure CSR subject compatibility is set to BACKWARD.
+   - Register or reuse the JSON schema version for each subject.
+3. Deploy application:
+   - Proxy endpoints become available (e.g., `/schemas/MoonPhase/current`).
+4. Database migration:
+   - Create the domain if it does not exist.
+   - If present and policy requires, run `ALTER DOMAIN` to refresh.
+5. Application and DB now validate against the same schema.
+
+== Optional Metadata Table
+
+For audit/idempotency:
+
+[source,sql]
+----
+CREATE TABLE JSON_SCHEMA_REGISTRY_MAP(
+  subject        VARCHAR2(256) PRIMARY KEY,
+  csr_id         NUMBER,
+  latest_version NUMBER,
+  schema_hash    VARCHAR2(64),
+  domain_name    VARCHAR2(128),
+  canonical_url  VARCHAR2(1024),
+  created_at     TIMESTAMP,
+  updated_at     TIMESTAMP
+);
+----
+
+== Testing
+
+- Unit: naming templates, subject mapping, schema generation.
+- CSR integration (e.g., dockerized CSR): register/lookup/compat checks.
+- Proxy tests: `/schemas/{subject}/current` caching and headers.
+- Oracle integration: create domain; verify insert of valid/invalid JSON; ensure incompatible changes are rejected during deployment.
+
+== Security
+
+- Do not store credentials in code or documentation.
+- Use secret stores or environment variables for CSR and DB credentials.
+- Enforce TLS; restrict proxy to DB network; consider mTLS for additional protection.
+
+== Troubleshooting
+
+- CSR rejects schema: check compatibility (BACKWARD), review change for compatibility.
+- Oracle domain creation fails:
+  - Verify DB can reach `base-url`.
+  - Ensure service account has `CREATE/ALTER DOMAIN` privileges.
+- Proxy returns stale/new content:
+  - Verify cache TTL and ETag handling; adjust proxy caching if needed.
+
+== References
+
+- Confluent Schema Registry API: https://docs.confluent.io/platform/current/schema-registry/develop/api.html
+- JSON Schema: https://json-schema.org/
+- Oracle Database 23ai (JSON validation and domains)
+- Micronaut Framework: https://micronaut.io/
