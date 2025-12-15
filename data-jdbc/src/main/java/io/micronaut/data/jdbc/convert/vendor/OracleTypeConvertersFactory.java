@@ -283,6 +283,150 @@ final class OracleTypeConvertersFactory {
     }
 
     // ----------------------
+    // Array conversion helpers to reduce cognitive complexity
+    // ----------------------
+
+    private static double[] toDouble(float[] f) {
+        double[] out = new double[f.length];
+        for (int i = 0; i < f.length; i++) {
+            out[i] = f[i];
+        }
+        return out;
+    }
+
+    private static double[] toDouble(int[] ints) {
+        double[] out = new double[ints.length];
+        for (int i = 0; i < ints.length; i++) {
+            out[i] = ints[i];
+        }
+        return out;
+    }
+
+    private static double[] toDouble(byte[] b) {
+        double[] out = new double[b.length];
+        for (int i = 0; i < b.length; i++) {
+            out[i] = b[i];
+        }
+        return out;
+    }
+
+    private static float[] toFloat(double[] d) {
+        float[] out = new float[d.length];
+        for (int i = 0; i < d.length; i++) {
+            out[i] = (float) d[i];
+        }
+        return out;
+    }
+
+    private static float[] toFloat(int[] ints) {
+        float[] out = new float[ints.length];
+        for (int i = 0; i < ints.length; i++) {
+            out[i] = ints[i];
+        }
+        return out;
+    }
+
+    private static float[] toFloat(byte[] b) {
+        float[] out = new float[b.length];
+        for (int i = 0; i < b.length; i++) {
+            out[i] = b[i];
+        }
+        return out;
+    }
+
+    private static int[] toInt(float[] f) {
+        int[] out = new int[f.length];
+        for (int i = 0; i < f.length; i++) {
+            out[i] = (int) f[i];
+        }
+        return out;
+    }
+
+    private static int[] toInt(double[] d) {
+        int[] out = new int[d.length];
+        for (int i = 0; i < d.length; i++) {
+            out[i] = (int) d[i];
+        }
+        return out;
+    }
+
+    private static int[] toInt(byte[] b) {
+        int[] out = new int[b.length];
+        for (int i = 0; i < b.length; i++) {
+            out[i] = b[i];
+        }
+        return out;
+    }
+
+    private static byte[] toByte(int[] ints) {
+        byte[] out = new byte[ints.length];
+        for (int i = 0; i < ints.length; i++) {
+            out[i] = (byte) ints[i];
+        }
+        return out;
+    }
+
+    private static byte[] toByte(float[] f) {
+        byte[] out = new byte[f.length];
+        for (int i = 0; i < f.length; i++) {
+            out[i] = (byte) f[i];
+        }
+        return out;
+    }
+
+    private static byte[] toByte(double[] d) {
+        byte[] out = new byte[d.length];
+        for (int i = 0; i < d.length; i++) {
+            out[i] = (byte) d[i];
+        }
+        return out;
+    }
+
+    private static Optional<double[]> vectorToDoubleArray(VECTOR oracleVector) throws SQLException {
+        OracleType type = oracleVector.getType();
+        return switch (type) {
+            case VECTOR_FLOAT64 -> Optional.of(oracleVector.toDoubleArray());
+            case VECTOR_FLOAT32 -> Optional.of(toDouble(oracleVector.toFloatArray()));
+            case VECTOR_INT8 -> Optional.of(toDouble(oracleVector.toIntArray()));
+            case VECTOR_BINARY -> Optional.of(toDouble(oracleVector.toByteArray()));
+            default -> Optional.empty();
+        };
+    }
+
+    private static Optional<float[]> vectorToFloatArray(VECTOR oracleVector) throws SQLException {
+        OracleType type = oracleVector.getType();
+        return switch (type) {
+            case VECTOR_FLOAT32 -> Optional.of(oracleVector.toFloatArray());
+            case VECTOR_FLOAT64 -> Optional.of(toFloat(oracleVector.toDoubleArray()));
+            case VECTOR_INT8 -> Optional.of(toFloat(oracleVector.toIntArray()));
+            case VECTOR_BINARY -> Optional.of(toFloat(oracleVector.toByteArray()));
+            default -> Optional.empty();
+        };
+    }
+
+    private static Optional<int[]> vectorToIntArray(VECTOR oracleVector) throws SQLException {
+        OracleType type = oracleVector.getType();
+        return switch (type) {
+            case VECTOR_INT8 -> Optional.of(oracleVector.toIntArray());
+            case VECTOR_FLOAT32 -> Optional.of(toInt(oracleVector.toFloatArray()));
+            case VECTOR_FLOAT64 -> Optional.of(toInt(oracleVector.toDoubleArray()));
+            case VECTOR_BINARY -> Optional.of(toInt(oracleVector.toByteArray()));
+            default -> Optional.empty();
+        };
+    }
+
+    private static Optional<byte[]> vectorToByteArray(VECTOR oracleVector) throws SQLException {
+        OracleType type = oracleVector.getType();
+        return switch (type) {
+            case VECTOR_BINARY -> Optional.of(oracleVector.toByteArray());
+            case VECTOR_INT8 -> Optional.of(toByte(oracleVector.toIntArray()));
+            case VECTOR_FLOAT32 -> Optional.of(toByte(oracleVector.toFloatArray()));
+            case VECTOR_FLOAT64 -> Optional.of(toByte(oracleVector.toDoubleArray()));
+            default -> Optional.empty();
+        };
+    }
+
+    // ----------------------
     // Read path: oracle.sql.VECTOR -> typed Vector implementations
     // ----------------------
 
@@ -291,38 +435,7 @@ final class OracleTypeConvertersFactory {
     DataTypeConverter<VECTOR, DoubleVector> fromOracleVectorToDoubleVector() {
         return (oracleVector, targetType, context) -> {
             try {
-                OracleType type = oracleVector.getType();
-                switch (type) {
-                    case VECTOR_FLOAT64 -> {
-                        return Optional.of((DoubleVector) Vector.of(oracleVector.toDoubleArray()));
-                    }
-                    case VECTOR_FLOAT32, VECTOR_INT8, VECTOR_BINARY -> {
-                        double[] d;
-                        if (type == OracleType.VECTOR_FLOAT32) {
-                            float[] f = oracleVector.toFloatArray();
-                            d = new double[f.length];
-                            for (int i = 0; i < f.length; i++) {
-                                d[i] = f[i];
-                            }
-                        } else if (type == OracleType.VECTOR_INT8) {
-                            int[] ints = oracleVector.toIntArray();
-                            d = new double[ints.length];
-                            for (int i = 0; i < ints.length; i++) {
-                                d[i] = ints[i];
-                            }
-                        } else {
-                            byte[] b = oracleVector.toByteArray();
-                            d = new double[b.length];
-                            for (int i = 0; i < b.length; i++) {
-                                d[i] = b[i];
-                            }
-                        }
-                        return Optional.of((DoubleVector) Vector.of(d));
-                    }
-                    default -> {
-                        return Optional.empty();
-                    }
-                }
+                return vectorToDoubleArray(oracleVector).map(a -> (DoubleVector) Vector.of(a));
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract vector from: " + oracleVector);
             }
@@ -334,38 +447,7 @@ final class OracleTypeConvertersFactory {
     DataTypeConverter<VECTOR, FloatVector> fromOracleVectorToFloatVector() {
         return (oracleVector, targetType, context) -> {
             try {
-                OracleType type = oracleVector.getType();
-                switch (type) {
-                    case VECTOR_FLOAT32 -> {
-                        return Optional.of((FloatVector) Vector.of(oracleVector.toFloatArray()));
-                    }
-                    case VECTOR_FLOAT64, VECTOR_INT8, VECTOR_BINARY -> {
-                        float[] f;
-                        if (type == OracleType.VECTOR_FLOAT64) {
-                            double[] d = oracleVector.toDoubleArray();
-                            f = new float[d.length];
-                            for (int i = 0; i < d.length; i++) {
-                                f[i] = (float) d[i];
-                            }
-                        } else if (type == OracleType.VECTOR_INT8) {
-                            int[] ints = oracleVector.toIntArray();
-                            f = new float[ints.length];
-                            for (int i = 0; i < ints.length; i++) {
-                                f[i] = ints[i];
-                            }
-                        } else {
-                            byte[] b = oracleVector.toByteArray();
-                            f = new float[b.length];
-                            for (int i = 0; i < b.length; i++) {
-                                f[i] = b[i];
-                            }
-                        }
-                        return Optional.of((FloatVector) Vector.of(f));
-                    }
-                    default -> {
-                        return Optional.empty();
-                    }
-                }
+                return vectorToFloatArray(oracleVector).map(a -> (FloatVector) Vector.of(a));
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract vector from: " + oracleVector);
             }
@@ -377,38 +459,7 @@ final class OracleTypeConvertersFactory {
     DataTypeConverter<VECTOR, IntVector> fromOracleVectorToIntVector() {
         return (oracleVector, targetType, context) -> {
             try {
-                OracleType type = oracleVector.getType();
-                switch (type) {
-                    case VECTOR_INT8 -> {
-                        return Optional.of((IntVector) Vector.of(oracleVector.toIntArray()));
-                    }
-                    case VECTOR_FLOAT32, VECTOR_FLOAT64, VECTOR_BINARY -> {
-                        int[] ints;
-                        if (type == OracleType.VECTOR_FLOAT32) {
-                            float[] f = oracleVector.toFloatArray();
-                            ints = new int[f.length];
-                            for (int i = 0; i < f.length; i++) {
-                                ints[i] = (int) f[i];
-                            }
-                        } else if (type == OracleType.VECTOR_FLOAT64) {
-                            double[] d = oracleVector.toDoubleArray();
-                            ints = new int[d.length];
-                            for (int i = 0; i < d.length; i++) {
-                                ints[i] = (int) d[i];
-                            }
-                        } else {
-                            byte[] b = oracleVector.toByteArray();
-                            ints = new int[b.length];
-                            for (int i = 0; i < b.length; i++) {
-                                ints[i] = b[i];
-                            }
-                        }
-                        return Optional.of((IntVector) Vector.of(ints));
-                    }
-                    default -> {
-                        return Optional.empty();
-                    }
-                }
+                return vectorToIntArray(oracleVector).map(a -> (IntVector) Vector.of(a));
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract vector from: " + oracleVector);
             }
@@ -420,38 +471,7 @@ final class OracleTypeConvertersFactory {
     DataTypeConverter<VECTOR, ByteVector> fromOracleVectorToByteVector() {
         return (oracleVector, targetType, context) -> {
             try {
-                OracleType type = oracleVector.getType();
-                switch (type) {
-                    case VECTOR_BINARY -> {
-                        return Optional.of((ByteVector) Vector.of(oracleVector.toByteArray()));
-                    }
-                    case VECTOR_INT8, VECTOR_FLOAT32, VECTOR_FLOAT64 -> {
-                        byte[] b;
-                        if (type == OracleType.VECTOR_INT8) {
-                            int[] ints = oracleVector.toIntArray();
-                            b = new byte[ints.length];
-                            for (int i = 0; i < ints.length; i++) {
-                                b[i] = (byte) ints[i];
-                            }
-                        } else if (type == OracleType.VECTOR_FLOAT32) {
-                            float[] f = oracleVector.toFloatArray();
-                            b = new byte[f.length];
-                            for (int i = 0; i < f.length; i++) {
-                                b[i] = (byte) f[i];
-                            }
-                        } else {
-                            double[] d = oracleVector.toDoubleArray();
-                            b = new byte[d.length];
-                            for (int i = 0; i < d.length; i++) {
-                                b[i] = (byte) d[i];
-                            }
-                        }
-                        return Optional.of((ByteVector) Vector.of(b));
-                    }
-                    default -> {
-                        return Optional.empty();
-                    }
-                }
+                return vectorToByteArray(oracleVector).map(a -> (ByteVector) Vector.of(a));
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract vector from: " + oracleVector);
             }

@@ -39,7 +39,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultByteVectorAttributeConverter extends AbstractVectorAttributeConverter<ByteVector, Object> implements ByteVectorAttributeConverter<Object> {
 
-    public DefaultByteVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
+    public DefaultByteVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
         super(converterMap, ByteVector.class);
     }
 

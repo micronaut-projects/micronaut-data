@@ -110,7 +110,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
     public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         // we need atomicity here, since entites are compared by identity (==)
-        return entities.computeIfAbsent(type, x -> this.newEntity(x));
+        return entities.computeIfAbsent(type, this::newEntity);
     }
 
     @NonNull
@@ -128,11 +128,6 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
             @Override
             protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
                 return attributeConverterRegistry.getConverter(converterClass);
-            }
-
-            @Override
-            protected List<AttributeConverter<Object, Object>> resolveConverters(Class<?> converterClass) {
-                return attributeConverterRegistry.getConverters(converterClass);
             }
 
             @Override

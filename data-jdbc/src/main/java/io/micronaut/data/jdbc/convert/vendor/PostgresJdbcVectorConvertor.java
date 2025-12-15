@@ -52,12 +52,12 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject
 
     @Override
     public PGobject convert(Vector vector, Class<PGobject> targetType) {
-        return conversionService.convert(vector, targetType).get();
+        return conversionService.convert(vector, targetType).orElse(null);
     }
 
     @Override
     public Vector convert(PGobject object, Class<Vector> targetType) {
-        return conversionService.convert(object, targetType).get();
+        return conversionService.convert(object, targetType).orElse(null);
     }
 
     @Override

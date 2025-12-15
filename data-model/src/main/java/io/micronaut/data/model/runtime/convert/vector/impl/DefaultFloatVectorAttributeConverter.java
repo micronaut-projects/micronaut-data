@@ -38,7 +38,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultFloatVectorAttributeConverter extends AbstractVectorAttributeConverter<FloatVector, Object> implements FloatVectorAttributeConverter<Object> {
 
-    protected DefaultFloatVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
+    protected DefaultFloatVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
         super(converterMap, FloatVector.class);
     }
 

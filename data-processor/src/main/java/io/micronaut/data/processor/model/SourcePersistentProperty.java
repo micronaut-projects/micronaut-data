@@ -181,11 +181,6 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement.getNativeType();
     }
 
-    @Override
-    public String getDefinition() {
-        return definition;
-    }
-
     @NonNull
     @Override
     public String getTypeName() {

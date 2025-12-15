@@ -40,10 +40,10 @@ import java.util.OptionalInt;
  */
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements SqlAttributeConverter<X, Y> {
 
-    protected final Map<String, VectorTypeConvertor> converterMap;
+    protected final Map<String, VectorTypeConvertor<?>> converterMap;
     private final Class<X> type;
 
-    protected AbstractVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap, Class<X> type) {
+    protected AbstractVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap, Class<X> type) {
         this.converterMap = converterMap;
         this.type = type;
     }

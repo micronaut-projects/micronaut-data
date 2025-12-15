@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Implementation of {@link io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery}.
+ * Implementation of {@link BindableParametersStoredQuery}.
  *
  * @param <E> The entity type
  * @param <R> The result type
@@ -234,7 +234,6 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             values = null;
         }
         if (values == null) {
-
             if (parameterConverter != null) {
                 value = binder.convert(parameterConverter, value, argument);
             } else if (persistentProperty != null && !binding.isAutoPopulated()) {

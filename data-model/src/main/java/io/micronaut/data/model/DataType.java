@@ -91,8 +91,6 @@ public enum DataType {
      * A {@link Short} value.
      */
     SHORT(Short.class),
-
-
     /**
      * A {@link String} value.
      */
@@ -217,9 +215,5 @@ public enum DataType {
             case BYTE, BIGDECIMAL, LONG, DOUBLE, FLOAT, INTEGER, SHORT -> true;
             default -> false;
         };
-    }
-
-    public Set<Class<?>> getJavaTypes() {
-        return javaTypes;
     }
 }

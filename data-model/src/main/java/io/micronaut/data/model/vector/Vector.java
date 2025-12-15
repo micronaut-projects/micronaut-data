@@ -39,6 +39,7 @@ public sealed interface Vector
             FloatVector,
             ByteVector,
             IntVector {
+    String VALUES = "values";
 
     /**
      * Return the primitive number type the vector is backed by.
@@ -96,7 +97,7 @@ public sealed interface Vector
      */
     @NonNull
     static Vector of(float... values) {
-        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(values, VALUES);
         return new FloatVector(Arrays.copyOf(values, values.length));
     }
 
@@ -108,7 +109,7 @@ public sealed interface Vector
      */
     @NonNull
     static Vector of(double... values) {
-        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(values, VALUES);
         return new DoubleVector(Arrays.copyOf(values, values.length));
     }
 
@@ -124,57 +125,20 @@ public sealed interface Vector
      */
     @NonNull
     static Vector of(@NonNull Collection<? extends Number> values) {
-        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(values, VALUES);
         if (values.isEmpty()) {
             return new DoubleVector(new double[0]);
         }
-        boolean allByte = true;
-        boolean allInt = true;
-        boolean allFloat = true;
-        for (Number n : values) {
-            if (!(n instanceof Byte)) {
-                allByte = false;
-            }
-            if (!(n instanceof Integer)) {
-                allInt = false;
-            }
-            if (!(n instanceof Float)) {
-                allFloat = false;
-            }
-            if (!allByte && !allInt && !allFloat) {
-                break;
-            }
+        if (allBytes(values)) {
+            return new ByteVector(copyByte(values));
         }
-        if (allByte) {
-            byte[] bv = new byte[values.size()];
-            int i = 0;
-            for (Number n : values) {
-                bv[i++] = n.byteValue();
-            }
-            return new ByteVector(bv);
+        if (allIntegers(values)) {
+            return new IntVector(copyInt(values));
         }
-        if (allInt) {
-            int[] iv = new int[values.size()];
-            int i = 0;
-            for (Number n : values) {
-                iv[i++] = n.intValue();
-            }
-            return new IntVector(iv);
+        if (allFloats(values)) {
+            return new FloatVector(copyFloat(values));
         }
-        if (allFloat) {
-            float[] fv = new float[values.size()];
-            int i = 0;
-            for (Number n : values) {
-                fv[i++] = n.floatValue();
-            }
-            return new FloatVector(fv);
-        }
-        double[] dv = new double[values.size()];
-        int i = 0;
-        for (Number n : values) {
-            dv[i++] = n.doubleValue();
-        }
-        return new io.micronaut.data.model.vector.DoubleVector(dv);
+        return new DoubleVector(copyDouble(values));
     }
 
     /**
@@ -186,7 +150,7 @@ public sealed interface Vector
      */
     @NonNull
     static Vector of(int... values) {
-        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(values, VALUES);
         return new io.micronaut.data.model.vector.IntVector(Arrays.copyOf(values, values.length));
     }
 
@@ -199,7 +163,71 @@ public sealed interface Vector
      */
     @NonNull
     static Vector of(byte... values) {
-        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(values, VALUES);
         return new io.micronaut.data.model.vector.ByteVector(Arrays.copyOf(values, values.length));
+    }
+
+    // Helper methods to reduce cognitive complexity of of(Collection)
+    private static boolean allBytes(Collection<? extends Number> values) {
+        for (Number n : values) {
+            if (!(n instanceof Byte)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allIntegers(Collection<? extends Number> values) {
+        for (Number n : values) {
+            if (!(n instanceof Integer)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allFloats(Collection<? extends Number> values) {
+        for (Number n : values) {
+            if (!(n instanceof Float)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static byte[] copyByte(Collection<? extends Number> values) {
+        byte[] out = new byte[values.size()];
+        int i = 0;
+        for (Number n : values) {
+            out[i++] = n.byteValue();
+        }
+        return out;
+    }
+
+    private static int[] copyInt(Collection<? extends Number> values) {
+        int[] out = new int[values.size()];
+        int i = 0;
+        for (Number n : values) {
+            out[i++] = n.intValue();
+        }
+        return out;
+    }
+
+    private static float[] copyFloat(Collection<? extends Number> values) {
+        float[] out = new float[values.size()];
+        int i = 0;
+        for (Number n : values) {
+            out[i++] = n.floatValue();
+        }
+        return out;
+    }
+
+    private static double[] copyDouble(Collection<? extends Number> values) {
+        double[] out = new double[values.size()];
+        int i = 0;
+        for (Number n : values) {
+            out[i++] = n.doubleValue();
+        }
+        return out;
     }
 }

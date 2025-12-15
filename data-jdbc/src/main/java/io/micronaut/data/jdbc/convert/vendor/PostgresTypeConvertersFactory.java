@@ -50,6 +50,17 @@ import java.util.Optional;
 @Requires(classes = PGobject.class)
 final class PostgresTypeConvertersFactory {
 
+    private static final String PG_VECTOR = "vector";
+    private static final String PG_HALF_VECTOR = "halfvec";
+
+    private static boolean isPgVectorOrHalfvec(PGobject pg) {
+        if (pg == null) {
+            return false;
+        }
+        String t = pg.getType();
+        return PG_VECTOR.equalsIgnoreCase(t) || PG_HALF_VECTOR.equalsIgnoreCase(t);
+    }
+
     @Prototype
     DataTypeConverter<DoubleVector, PGobject> fromDoubleVectorToPgObject() {
         return (vector, targetType, context) -> Optional.of(toPgVector(vector.toDoubleArray()));
@@ -141,10 +152,7 @@ final class PostgresTypeConvertersFactory {
     @Prototype
     DataTypeConverter<PGobject, DoubleVector> fromPgObjectToDoubleVector() {
         return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
+            if (!isPgVectorOrHalfvec(pg)) {
                 return Optional.empty();
             }
             String txt = pg.getValue();
@@ -156,10 +164,7 @@ final class PostgresTypeConvertersFactory {
     @Prototype
     DataTypeConverter<PGobject, FloatVector> fromPgObjectToFloatVector() {
         return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
+            if (!isPgVectorOrHalfvec(pg)) {
                 return Optional.empty();
             }
             String txt = pg.getValue();
@@ -175,10 +180,7 @@ final class PostgresTypeConvertersFactory {
     @Prototype
     DataTypeConverter<PGobject, Vector> fromPgObjectToVector() {
         return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
+            if (!isPgVectorOrHalfvec(pg)) {
                 return Optional.empty();
             }
             String txt = pg.getValue();
@@ -194,7 +196,7 @@ final class PostgresTypeConvertersFactory {
     private static PGobject toPgVector(double[] values) {
         try {
             PGobject obj = new PGobject();
-            obj.setType("vector");
+            obj.setType(PG_VECTOR);
             obj.setValue(formatPgVector(values));
             return obj;
         } catch (Exception e) {

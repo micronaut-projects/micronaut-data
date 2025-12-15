@@ -38,7 +38,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultIntVectorAttributeConverter extends AbstractVectorAttributeConverter<IntVector, Object> implements IntVectorAttributeConverter<Object> {
 
-    protected DefaultIntVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
+    protected DefaultIntVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
         super(converterMap, IntVector.class);
     }
 

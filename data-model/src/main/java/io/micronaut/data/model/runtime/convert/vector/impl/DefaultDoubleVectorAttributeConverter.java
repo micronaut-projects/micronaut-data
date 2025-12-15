@@ -38,7 +38,7 @@ import java.util.Map;
 @Singleton
 public class DefaultDoubleVectorAttributeConverter extends AbstractVectorAttributeConverter<DoubleVector, Object> implements DoubleVectorAttributeConverter<Object> {
 
-    protected DefaultDoubleVectorAttributeConverter(Map<String, VectorTypeConvertor> converterMap) {
+    protected DefaultDoubleVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
         super(converterMap, DoubleVector.class);
     }
 

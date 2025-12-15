@@ -34,6 +34,9 @@ import org.reactivestreams.Publisher;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Year;
@@ -46,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -556,8 +560,7 @@ public class TypeUtils {
             } else if (type.isAssignable(UUID.class)) {
                 return DataType.UUID;
             }
-
-            if (DataType.STRING.getJavaTypes().stream().anyMatch(type::isAssignable)) {
+            if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
                 return DataType.STRING;
             }
 
@@ -615,5 +618,4 @@ public class TypeUtils {
             ReflectionUtils.getWrapperType(t).getName()
         ).orElse(typeName);
     }
-
 }
