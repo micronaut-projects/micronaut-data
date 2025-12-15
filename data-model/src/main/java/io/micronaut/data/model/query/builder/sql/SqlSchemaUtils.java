@@ -247,7 +247,7 @@ public final class SqlSchemaUtils {
         OptionalInt optPrecision = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "precision");
         OptionalInt optScale = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "scale");
 
-        SqlDbType dbType = getDbType(prop);
+        SqlDbType dbType = getDbType(prop, definition);
 
         Integer precision = null;
         Integer scale = null;
@@ -307,7 +307,7 @@ public final class SqlSchemaUtils {
      * @throws IllegalStateException if the property is an association
      * @throws MappingException if the data type of the property is unknown
      */
-    private static SqlDbType getDbType(PersistentProperty property) {
+    private static SqlDbType getDbType(PersistentProperty property, String definition) {
         DataType dataType = property.getDataType();
 
         return switch (dataType) {
@@ -329,15 +329,14 @@ public final class SqlSchemaUtils {
             case STRING_ARRAY, CHARACTER_ARRAY, SHORT_ARRAY, INTEGER_ARRAY,
                 LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> SqlDbType.ARRAY;
             default -> {
-                if (property.isAssignable(Vector.class)) {
-                    yield SqlDbType.VECTOR;
-                }
                 if (property.isEnum()) {
                     yield SqlDbType.ENUM;
                 } else if (property.isAssignable(Clob.class)) {
                     yield SqlDbType.CLOB;
                 } else if (property.isAssignable(Blob.class)) {
                     yield SqlDbType.BLOB;
+                } else if (definition != null && !definition.isEmpty()) {
+                    yield SqlDbType.JAVA_OBJECT;
                 } else {
                     throw new MappingException("Unable to create table column for property [" + property.getName() + "] of entity [" + property.getOwner().getName() + "] with unknown data type: " + dataType);
                 }

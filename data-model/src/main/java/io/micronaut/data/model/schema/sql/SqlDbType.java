@@ -324,13 +324,7 @@ public enum SqlDbType {
      * A type code representing the generic SQL type {@code ENUM}.
      * It does not have corresponding value in {@link Types}.
      */
-    ENUM(12001),
-
-    /**
-     * A type code representing the generic SQL type {@code VECTOR}.
-     * It does not have corresponding value in {@link Types}.
-     */
-    VECTOR(14001);
+    ENUM(12001);
 
     private final int type;
 
