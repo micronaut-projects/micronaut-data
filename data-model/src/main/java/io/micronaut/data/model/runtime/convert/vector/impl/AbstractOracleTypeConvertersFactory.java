@@ -17,8 +17,10 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.vector.Vector;
 
 import java.util.Optional;
+import java.util.Arrays;
 
 /**
  * Shared helpers for Oracle VECTOR converters.
@@ -153,6 +155,44 @@ public abstract class AbstractOracleTypeConvertersFactory {
             out[i] = (byte) r;
         }
         return out;
+    }
+
+    // ----------------------
+    // Oracle textual write helpers
+    // ----------------------
+
+    protected static String toOracleText(Vector vector) {
+        double[] arr = vector.toDoubleArray();
+        return Arrays.toString(arr);
+    }
+
+    protected static String toOracleText(double[] arr) {
+        return Arrays.toString(arr);
+    }
+
+    protected static String toOracleText(float[] arr) {
+        return Arrays.toString(arr);
+    }
+
+    protected static String toOracleText(int[] arr) {
+        return Arrays.toString(arr);
+    }
+
+    protected static String toOracleText(byte[] arr) {
+        return Arrays.toString(arr);
+    }
+
+    // ----------------------
+    // Adapter to Vector helper
+    // ----------------------
+
+    protected static Vector toVector(OracleVectorAdapter adapter) {
+        return switch (adapter.getKind()) {
+            case FLOAT32 -> Vector.of(adapter.toFloatArray());
+            case FLOAT64 -> Vector.of(adapter.toDoubleArray());
+            case INT8 -> Vector.of(adapter.toIntArray());
+            case BINARY -> Vector.of(adapter.toByteArray());
+        };
     }
 
     // ----------------------

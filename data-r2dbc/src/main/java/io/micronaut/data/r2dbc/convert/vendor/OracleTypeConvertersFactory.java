@@ -30,7 +30,6 @@ import oracle.jdbc.OracleType;
 import oracle.sql.VECTOR;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -46,26 +45,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Prototype
     DataTypeConverter<VECTOR, Vector> fromOracleVectorToVector() {
         return (oracleVector, targetType, context) -> {
-            try {
-                OracleType type = oracleVector.getType();
-                switch (type) {
-                    case VECTOR_FLOAT32 -> {
-                        return Optional.of(Vector.of(oracleVector.toFloatArray()));
-                    }
-                    case VECTOR_FLOAT64 -> {
-                        return Optional.of(Vector.of(oracleVector.toDoubleArray()));
-                    }
-                    case VECTOR_INT8 -> {
-                        return Optional.of(Vector.of(oracleVector.toIntArray()));
-                    }
-                    case VECTOR_BINARY -> {
-                        return Optional.of(Vector.of(oracleVector.toByteArray()));
-                    }
-                    default -> throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-                }
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-            }
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return Optional.of(toVector(adapter));
         };
     }
 
@@ -95,30 +76,27 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
 
     @Prototype
     DataTypeConverter<Vector, String> fromVectorToString() {
-        return (vector, targetType, context) -> {
-            double[] arr = vector.toDoubleArray();
-            return Optional.of(Arrays.toString(arr));
-        };
+        return (vector, targetType, context) -> Optional.of(toOracleText(vector));
     }
 
     @Prototype
     DataTypeConverter<DoubleVector, String> fromDoubleVectorToString() {
-        return (vector, targetType, context) -> Optional.of(Arrays.toString(vector.toDoubleArray()));
+        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toDoubleArray()));
     }
 
     @Prototype
     DataTypeConverter<FloatVector, String> fromFloatVectorToString() {
-        return (vector, targetType, context) -> Optional.of(Arrays.toString(vector.toFloatArray()));
+        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toFloatArray()));
     }
 
     @Prototype
     DataTypeConverter<IntVector, String> fromIntVectorToString() {
-        return (vector, targetType, context) -> Optional.of(Arrays.toString(vector.toIntegerArray()));
+        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toIntegerArray()));
     }
 
     @Prototype
     DataTypeConverter<ByteVector, String> fromByteVectorToString() {
-        return (vector, targetType, context) -> Optional.of(Arrays.toString(vector.toByteArray()));
+        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toByteArray()));
     }
 
     // ----------------------
