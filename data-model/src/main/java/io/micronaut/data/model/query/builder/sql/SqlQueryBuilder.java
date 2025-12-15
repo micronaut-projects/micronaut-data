@@ -25,14 +25,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.JsonSubView;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.EntityRepresentation;
-import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -428,6 +421,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         PersistentEntity entity = entityOptional.get();
         String viewName = viewEntity.getPersistedName();
+        if (viewEntity.getAnnotationMetadata().hasAnnotation(MappedEntity.class)) {
+            String schema = viewEntity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema").get();
+            viewName = schema + "." + viewName;
+        }
         StringBuilder sb = new StringBuilder("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW ")
             .append(viewName)
             .append(AS_CLAUSE)
