@@ -189,6 +189,63 @@ final class PostgresTypeConvertersFactory {
         };
     }
 
+    @Prototype
+    DataTypeConverter<PGobject, IntVector> fromPgObjectToIntVector() {
+        return (pg, targetType, context) -> {
+            if (!isPgVectorOrHalfvec(pg)) {
+                return Optional.empty();
+            }
+            String txt = pg.getValue();
+            double[] d = parsePgVectorText(txt);
+            int[] arr = new int[d.length];
+            for (int i = 0; i < d.length; i++) {
+                arr[i] = (int) Math.round(d[i]);
+            }
+            return Optional.of((IntVector) Vector.of(arr));
+        };
+    }
+
+    // ----------------------
+    // Cross-type converters (Vector -> specific Vector subtype)
+    // Some drivers/layers may materialize DoubleVector first; adapt to requested subtype
+    // ----------------------
+
+    @Prototype
+    DataTypeConverter<DoubleVector, IntVector> fromDoubleVectorToIntVector() {
+        return (src, targetType, context) -> {
+            double[] d = src.toDoubleArray();
+            int[] arr = new int[d.length];
+            for (int i = 0; i < d.length; i++) {
+                arr[i] = (int) Math.round(d[i]);
+            }
+            return Optional.of((IntVector) Vector.of(arr));
+        };
+    }
+
+    @Prototype
+    DataTypeConverter<FloatVector, IntVector> fromFloatVectorToIntVector() {
+        return (src, targetType, context) -> {
+            float[] f = src.toFloatArray();
+            int[] arr = new int[f.length];
+            for (int i = 0; i < f.length; i++) {
+                arr[i] = (int) Math.round(f[i]);
+            }
+            return Optional.of((IntVector) Vector.of(arr));
+        };
+    }
+
+    @Prototype
+    DataTypeConverter<ByteVector, IntVector> fromByteVectorToIntVector() {
+        return (src, targetType, context) -> {
+            byte[] b = src.toByteArray();
+            int[] arr = new int[b.length];
+            for (int i = 0; i < b.length; i++) {
+                arr[i] = b[i];
+            }
+            return Optional.of((IntVector) Vector.of(arr));
+        };
+    }
+
     // ----------------------
     // Helpers
     // ----------------------

@@ -18,6 +18,8 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 
+import java.util.Optional;
+
 /**
  * Shared helpers for Oracle VECTOR converters.
  * This class intentionally avoids any dependency on Oracle driver or Micronaut runtime types.
@@ -29,6 +31,46 @@ import io.micronaut.core.annotation.Nullable;
  */
 @Internal
 public abstract class AbstractOracleTypeConvertersFactory {
+
+    // ----------------------
+    // Adapter-based array extraction helpers
+    // ----------------------
+
+    protected static Optional<double[]> vectorToDoubleArray(OracleVectorAdapter adapter) {
+        return switch (adapter.getKind()) {
+            case FLOAT64 -> Optional.of(adapter.toDoubleArray());
+            case FLOAT32 -> Optional.of(toDouble(adapter.toFloatArray()));
+            case INT8 -> Optional.of(toDouble(adapter.toIntArray()));
+            case BINARY -> Optional.of(toDouble(adapter.toByteArray()));
+        };
+    }
+
+    protected static Optional<float[]> vectorToFloatArray(OracleVectorAdapter adapter) {
+        return switch (adapter.getKind()) {
+            case FLOAT32 -> Optional.of(adapter.toFloatArray());
+            case FLOAT64 -> Optional.of(toFloat(adapter.toDoubleArray()));
+            case INT8 -> Optional.of(toFloat(adapter.toIntArray()));
+            case BINARY -> Optional.of(toFloat(adapter.toByteArray()));
+        };
+    }
+
+    protected static Optional<int[]> vectorToIntArray(OracleVectorAdapter adapter) {
+        return switch (adapter.getKind()) {
+            case INT8 -> Optional.of(adapter.toIntArray());
+            case FLOAT32 -> Optional.of(toInt(adapter.toFloatArray()));
+            case FLOAT64 -> Optional.of(toInt(adapter.toDoubleArray()));
+            case BINARY -> Optional.of(toInt(adapter.toByteArray()));
+        };
+    }
+
+    protected static Optional<byte[]> vectorToByteArray(OracleVectorAdapter adapter) {
+        return switch (adapter.getKind()) {
+            case BINARY -> Optional.of(adapter.toByteArray());
+            case INT8 -> Optional.of(toByte(adapter.toIntArray()));
+            case FLOAT32 -> Optional.of(toByte(adapter.toFloatArray()));
+            case FLOAT64 -> Optional.of(toByte(adapter.toDoubleArray()));
+        };
+    }
 
     // ----------------------
     // String parsing helpers (Oracle textual format e.g. "[1.0, 2.0]")
@@ -211,5 +253,31 @@ public abstract class AbstractOracleTypeConvertersFactory {
             out[i] = (byte) d[i];
         }
         return out;
+    }
+
+    // ----------------------
+    // Inner types (must be last for Checkstyle)
+    // ----------------------
+
+    /**
+     * Neutral adapter for Oracle VECTOR to avoid driver dependencies in shared helpers.
+     */
+    public enum OracleVectorKind {
+        FLOAT32, FLOAT64, INT8, BINARY
+    }
+
+    /**
+     * Adapter API that concrete factories use to map oracle.sql.VECTOR to a neutral shape.
+     */
+    public interface OracleVectorAdapter {
+        OracleVectorKind getKind();
+
+        float[] toFloatArray();
+
+        double[] toDoubleArray();
+
+        int[] toIntArray();
+
+        byte[] toByteArray();
     }
 }

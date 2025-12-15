@@ -73,6 +73,34 @@ class VectorDoc {
 
 If no definition is provided, schema generation can use a generic `VECTOR` type. For production systems, prefer supplying the exact VECTOR definition (dimensions and element type).
 
+==== Using @Column(length = N) to set dimensions (Oracle)
+
+Micronaut’s unified Vector attribute converters honor `@jakarta.persistence.Column(length = N)` on a Vector-typed property to set the VECTOR dimensions in generated DDL. The element type is derived from the Vector subtype:
+
+- `DoubleVector` → `VECTOR(N, FLOAT64)`
+- `FloatVector` → `VECTOR(N, FLOAT32)`
+- `IntVector` → `VECTOR(N, INT8)`
+- `ByteVector` → `VECTOR(N, BINARY)`
+
+Example:
+[source,java]
+----
+@MappedEntity("vector_len_doc")
+class VectorLenDoc {
+  @Id
+  @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_LEN_DOC_SEQ")
+  Long id;
+
+  @Column(length = 3)               // ← sets VECTOR dimension to 3
+  DoubleVector embedding;           // ← FLOAT64 element type inferred
+}
+----
+
+Runtime notes (observed against Oracle Free/XE):
+- Empty vectors are rejected by Oracle with ORA-51805 (e.g. “Vector is not properly formatted…”).
+- In some setups, inserting vectors with a dimension different from the declared dimension may be accepted (e.g. 2/4 dims into `VECTOR(3, FLOAT64)`), i.e. the database/driver may not enforce length strictly. If strict enforcement is required, validate at application level.
+- In restricted container images, data dictionary views may not expose `VECTOR` metadata; `DBMS_METADATA.GET_DDL` remains the source of truth.
+
 === JDBC binding/reading (Oracle)
 
 - Write path: `Vector` values are unwrapped to primitive arrays (`double[]`, `float[]`, `int[]`, `byte[]`) before binding; the Oracle driver writes them to VECTOR columns.
@@ -127,9 +155,28 @@ CREATE TABLE vector_doc (
 );
 ----
 
+==== Using @Column(length = N) to set dimensions (PostgreSQL)
+
+When using Micronaut’s Vector converters with the Postgres dialect, `@jakarta.persistence.Column(length = N)` on a Vector-typed property will produce `vector(N)` in the generated DDL. The pgvector element type is always numeric; Micronaut writes the textual `[v1, v2, ...]` representation with double semantics as required by the driver.
+
+Example:
+[source,java]
+----
+@MappedEntity("pg_vector_doc")
+class PgVectorDoc {
+  @Id
+  @GeneratedValue
+  Long id;
+
+  @Column(length = 3)     // ← sets vector dimension to 3
+  io.micronaut.data.model.vector.FloatVector embedding;
+}
+----
+
 Micronaut’s converters will map:
-- JDBC: `DoubleVector`/`FloatVector`/`IntVector`/`ByteVector` → `PGobject(type="vector")` with vector text
-- R2DBC: vector values ↔︎ `io.r2dbc.postgresql.codec.Vector`
+- JDBC write: `DoubleVector`/`FloatVector`/`IntVector`/`ByteVector` → `PGobject(type="vector")` with `[v1, v2, ...]`
+  (non-double vectors are coerced to double textual form).
+- JDBC read: pgvector is converted back into a Vector; concrete types are supported (`DoubleVector`, `FloatVector`) and the generic `Vector` type. For `IntVector` and `ByteVector`, values round-trip via double textual representation and are converted back to the requested type by Micronaut’s converters.
 
 === Example: JDBC repository (PostgreSQL)
 
@@ -206,8 +253,12 @@ interface VectorDocCustom {
 == Notes and best practices
 
 - Prefer explicit VECTOR column definitions (dimensions + element type) in Oracle.
+- `@Column(length = N)` can be used to set vector dimensions:
+  - Oracle: `VECTOR(N, TYPE)` where `TYPE` is inferred from the Vector subtype.
+  - PostgreSQL: `vector(N)`.
 - Ensure pgvector is installed and configured on PostgreSQL before using vector columns.
-- Choose the most appropriate `Vector` class to match your column type (e.g. `DoubleVector` for `VECTOR(..., FLOAT64)` or `vector(...)` in PostgreSQL).
+- Choose the most appropriate `Vector` class to match your column type; Micronaut will coerce to the database format as needed and convert back on reads.
+- On Oracle, empty vectors are rejected (ORA-51805). In some driver/engine combinations dimension enforcement may not be strict; validate at application level if required.
 - Converters and column definition helpers are dialect-aware; repositories must declare the correct dialect.
 
 Since: 5.0.0

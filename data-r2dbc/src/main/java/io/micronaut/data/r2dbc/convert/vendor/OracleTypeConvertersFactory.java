@@ -150,49 +150,9 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
         return (text, targetType, context) -> Optional.of((ByteVector) Vector.of(parseByteArray(text)));
     }
 
-    private static Optional<double[]> vectorToDoubleArray(VECTOR oracleVector) throws SQLException {
-        OracleType type = oracleVector.getType();
-        return switch (type) {
-            case VECTOR_FLOAT64 -> Optional.of(oracleVector.toDoubleArray());
-            case VECTOR_FLOAT32 -> Optional.of(toDouble(oracleVector.toFloatArray()));
-            case VECTOR_INT8 -> Optional.of(toDouble(oracleVector.toIntArray()));
-            case VECTOR_BINARY -> Optional.of(toDouble(oracleVector.toByteArray()));
-            default -> Optional.empty();
-        };
-    }
 
-    private static Optional<float[]> vectorToFloatArray(VECTOR oracleVector) throws SQLException {
-        OracleType type = oracleVector.getType();
-        return switch (type) {
-            case VECTOR_FLOAT32 -> Optional.of(oracleVector.toFloatArray());
-            case VECTOR_FLOAT64 -> Optional.of(toFloat(oracleVector.toDoubleArray()));
-            case VECTOR_INT8 -> Optional.of(toFloat(oracleVector.toIntArray()));
-            case VECTOR_BINARY -> Optional.of(toFloat(oracleVector.toByteArray()));
-            default -> Optional.empty();
-        };
-    }
 
-    private static Optional<int[]> vectorToIntArray(VECTOR oracleVector) throws SQLException {
-        OracleType type = oracleVector.getType();
-        return switch (type) {
-            case VECTOR_INT8 -> Optional.of(oracleVector.toIntArray());
-            case VECTOR_FLOAT32 -> Optional.of(toInt(oracleVector.toFloatArray()));
-            case VECTOR_FLOAT64 -> Optional.of(toInt(oracleVector.toDoubleArray()));
-            case VECTOR_BINARY -> Optional.of(toInt(oracleVector.toByteArray()));
-            default -> Optional.empty();
-        };
-    }
 
-    private static Optional<byte[]> vectorToByteArray(VECTOR oracleVector) throws SQLException {
-        OracleType type = oracleVector.getType();
-        return switch (type) {
-            case VECTOR_BINARY -> Optional.of(oracleVector.toByteArray());
-            case VECTOR_INT8 -> Optional.of(toByte(oracleVector.toIntArray()));
-            case VECTOR_FLOAT32 -> Optional.of(toByte(oracleVector.toFloatArray()));
-            case VECTOR_FLOAT64 -> Optional.of(toByte(oracleVector.toDoubleArray()));
-            default -> Optional.empty();
-        };
-    }
 
     // ----------------------
     // Read path: oracle.sql.VECTOR -> typed Vector implementations
@@ -202,11 +162,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, DoubleVector> fromOracleVectorToDoubleVector() {
         return (oracleVector, targetType, context) -> {
-            try {
-                return vectorToDoubleArray(oracleVector).map(a -> (DoubleVector) Vector.of(a));
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-            }
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToDoubleArray(adapter).map(a -> (DoubleVector) Vector.of(a));
         };
     }
 
@@ -214,11 +171,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, FloatVector> fromOracleVectorToFloatVector() {
         return (oracleVector, targetType, context) -> {
-            try {
-                return vectorToFloatArray(oracleVector).map(a -> (FloatVector) Vector.of(a));
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-            }
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToFloatArray(adapter).map(a -> (FloatVector) Vector.of(a));
         };
     }
 
@@ -226,11 +180,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, IntVector> fromOracleVectorToIntVector() {
         return (oracleVector, targetType, context) -> {
-            try {
-                return vectorToIntArray(oracleVector).map(a -> (IntVector) Vector.of(a));
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-            }
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToIntArray(adapter).map(a -> (IntVector) Vector.of(a));
         };
     }
 
@@ -238,12 +189,70 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, ByteVector> fromOracleVectorToByteVector() {
         return (oracleVector, targetType, context) -> {
-            try {
-                return vectorToByteArray(oracleVector).map(a -> (ByteVector) Vector.of(a));
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
-            }
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToByteArray(adapter).map(a -> (ByteVector) Vector.of(a));
         };
     }
 
+    // Adapter over oracle.sql.VECTOR to reuse shared helpers from AbstractOracleTypeConvertersFactory
+    private static final class OracleVectorAdapterImpl implements OracleVectorAdapter {
+        private final VECTOR v;
+
+        OracleVectorAdapterImpl(VECTOR v) {
+            this.v = v;
+        }
+
+        @Override
+        public OracleVectorKind getKind() {
+            OracleType t;
+            try {
+                t = v.getType();
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot inspect vector type: " + v);
+            }
+            return switch (t) {
+                case VECTOR_FLOAT32 -> OracleVectorKind.FLOAT32;
+                case VECTOR_FLOAT64 -> OracleVectorKind.FLOAT64;
+                case VECTOR_INT8 -> OracleVectorKind.INT8;
+                case VECTOR_BINARY -> OracleVectorKind.BINARY;
+                default -> throw new DataAccessException("Unknown Oracle VECTOR type: " + t);
+            };
+        }
+
+        @Override
+        public float[] toFloatArray() {
+            try {
+                return v.toFloatArray();
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot extract vector from: " + v);
+            }
+        }
+
+        @Override
+        public double[] toDoubleArray() {
+            try {
+                return v.toDoubleArray();
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot extract vector from: " + v);
+            }
+        }
+
+        @Override
+        public int[] toIntArray() {
+            try {
+                return v.toIntArray();
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot extract vector from: " + v);
+            }
+        }
+
+        @Override
+        public byte[] toByteArray() {
+            try {
+                return v.toByteArray();
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot extract vector from: " + v);
+            }
+        }
+    }
 }

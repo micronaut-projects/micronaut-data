@@ -9,6 +9,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.FloatVector
+import io.micronaut.data.model.vector.IntVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
@@ -34,6 +35,9 @@ class PostgresR2dbcVectorEntitySpec extends Specification implements PostgresTes
 
     @Shared
     VectorFloatDocRepository vectorFloatDocRepository = context.getBean(VectorFloatDocRepository)
+
+    @Shared
+    VectorIntDocRepository vectorIntDocRepository = context.getBean(VectorIntDocRepository)
 
     // FLOAT64/default
     void "R2DBC DoubleVector - default CRUD and custom @Query"() {
@@ -138,8 +142,56 @@ class PostgresR2dbcVectorEntitySpec extends Specification implements PostgresTes
         after != null
         after.embedding.toFloatArray().toList() == [13f, 14f, 15f]
     }
-}
 
+    // INT8 via pgvector; coerces to float on wire
+    void "R2DBC IntVector - default CRUD and custom @Query"() {
+        given:
+        def repo = vectorIntDocRepository
+        IntVector v1 = Vector.of([1, 2, -3] as int[])
+
+        when:
+        def saved = repo.save(new VectorIntDoc(embedding: v1))
+
+        then:
+        saved?.id != null
+
+        when:
+        def fetched = repo.findById(saved.id).orElse(null)
+
+        then:
+        fetched != null
+        fetched.embedding.type == Integer.TYPE
+        fetched.embedding.toIntegerArray().toList() == [1, 2, -3]
+
+        when:
+        IntVector v2 = Vector.of([7, 0, 9] as int[])
+        fetched.embedding = v2
+        def updated = repo.update(fetched)
+
+        then:
+        updated != null
+        updated.embedding.type == Integer.TYPE
+        updated.embedding.toIntegerArray().toList() == [7, 0, 9]
+
+        when: "custom @Query insert and update"
+        IntVector vx = Vector.of([10, 11, 12] as int[])
+        repo.saveCustom(vx)
+        def all = repo.findAll()
+        def e = all.find { it.embedding?.toIntegerArray()?.toList() == [10, 11, 12] }
+
+        then:
+        e != null
+
+        when:
+        IntVector vy = Vector.of([13, 14, 15] as int[])
+        repo.updateCustom(e.id, vy)
+        def after = repo.findById(e.id).orElse(null)
+
+        then:
+        after != null
+        after.embedding.toIntegerArray().toList() == [13, 14, 15]
+    }
+}
 @MappedEntity("vector_double_doc")
 class VectorDoubleDoc {
     @Id
@@ -214,4 +266,41 @@ interface VectorFloatDocRepository extends CrudRepository<VectorFloatDoc, Long> 
 
     @Query("SELECT * FROM vector_float_doc")
     List<VectorFloatDoc> findAll()
+}
+
+@MappedEntity("vector_int_doc")
+class VectorIntDoc {
+    @Id
+    @GeneratedValue
+    Long id
+
+    // Use length as vector dimensions for pgvector
+    @Column(length = 3)
+    IntVector embedding
+
+    Long getId() { return id }
+    void setId(Long id) { this.id = id }
+
+    IntVector getEmbedding() { return embedding }
+    void setEmbedding(IntVector embedding) { this.embedding = embedding }
+}
+
+@Requires(property = "spec.name", value = "PostgresR2dbcVectorEntitySpec")
+@R2dbcRepository(dialect = Dialect.POSTGRES)
+interface VectorIntDocRepository extends CrudRepository<VectorIntDoc, Long> {
+
+    @Query("INSERT INTO vector_int_doc(embedding) VALUES (:vec)")
+    void saveCustom(@Parameter("vec") Vector vec)
+
+    @Query("INSERT INTO vector_int_doc(embedding) VALUES (:vec)")
+    void saveCustom(@Parameter("vec") IntVector vec)
+
+    @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
+    void updateCustom(Long id, @Parameter("vec") Vector vec)
+
+    @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
+    void updateCustom(Long id, @Parameter("vec") IntVector vec)
+
+    @Query("SELECT * FROM vector_int_doc")
+    List<VectorIntDoc> findAll()
 }
