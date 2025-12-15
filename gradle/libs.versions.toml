@@ -129,7 +129,7 @@ benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom
 
 # TESTCONTAINERS
 
-testcontainers-azure = { module = "org.testcontainers:azure" }
+testcontainers-azure = { module = "org.testcontainers:testcontainers-azure" }
 
 # PLUGINS
 
