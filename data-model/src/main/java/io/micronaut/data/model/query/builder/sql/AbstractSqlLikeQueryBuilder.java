@@ -372,7 +372,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param associationOwner The associated owner
      * @param currentJoinAlias The current join alias
      * @param lastJoinAlias    The last join alias
-     * @param buildForJsonView Boolean true for json view
      */
     protected void buildJoin(String joinType,
                              StringBuilder query,
@@ -380,8 +379,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
-                             String lastJoinAlias,
-                             boolean buildForJsonView) {
+                             String lastJoinAlias) {
     }
 
     /**
@@ -1750,8 +1748,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 joinAssociation,
                 findOwner(entity, joinAssociation),
                 joinPath.getAlias().orElseThrow(),
-                lastJoinAlias,
-                false
+                lastJoinAlias
             );
         }
 

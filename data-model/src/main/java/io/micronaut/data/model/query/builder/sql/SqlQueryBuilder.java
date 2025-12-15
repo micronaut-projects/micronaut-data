@@ -50,6 +50,7 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -551,7 +552,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             );
         }
 
-        buildJoin(null, sb, null, joinAssociation, associationOwnerEntity, associatedEntity.getAliasName(), associationOwnerEntity.getAliasName(), true);
+        QueryState queryState = new QueryState(new BaseQueryDefinition() {
+            @Override
+            public PersistentEntity persistentEntity() {
+                return associatedViewEntity;
+            }
+
+            @Override
+            public Predicate predicate() {
+                return null;
+            }
+
+            @Override
+            public Collection<JoinPath> getJoinPaths() {
+                return List.of();
+            }
+
+            @Override
+            public Optional<JoinPath> getJoinPath(String path) {
+                return Optional.empty();
+            }
+        }, true, true);
+
+        buildJoin(null, sb, queryState, joinAssociation, associationOwnerEntity, associatedEntity.getAliasName(), associationOwnerEntity.getAliasName());
         return sb.toString();
     }
 
@@ -1221,8 +1244,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
-                             String lastJoinAlias,
-                             boolean buildForJsonView) {
+                             String lastJoinAlias) {
         Association association = joinAssociation.getAssociation();
         List<Association> joinAssociationsPath = joinAssociation.getAssociations();
         PersistentEntity associatedEntity = association.getAssociatedEntity();
@@ -1281,8 +1303,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 joinTableAlias,
                 lastJoinAlias,
                 ownerJoinColumns,
-                ownerJoinTableColumns,
-                buildForJsonView
+                ownerJoinTableColumns
             );
             query.append(SPACE);
             join(query,
@@ -1292,8 +1313,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 currentJoinAlias,
                 joinTableAlias,
                 associationJoinTableColumns,
-                associationJoinColumns,
-                buildForJsonView
+                associationJoinColumns
             );
         } else {
             if (StringUtils.isNotEmpty(mappedBy)) {
@@ -1313,8 +1333,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     lastJoinAlias,
                     currentJoinAlias,
                     new PersistentPropertyPath(joinAssociationsPath, ownerIdentity),
-                    mappedByPropertyPath,
-                    buildForJsonView);
+                    mappedByPropertyPath);
             } else {
                 PersistentProperty associatedProperty = associatedEntity.getIdentity();
                 if (associatedProperty == null) {
@@ -1328,8 +1347,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     lastJoinAlias,
                     currentJoinAlias,
                     joinAssociation,
-                    new PersistentPropertyPath(List.of(), associatedProperty),
-                    buildForJsonView);
+                    new PersistentPropertyPath(List.of(), associatedProperty));
             }
         }
 
@@ -1347,8 +1365,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                       String leftTableAlias,
                       String rightTableAlias,
                       PersistentPropertyPath leftPropertyPath,
-                      PersistentPropertyPath rightPropertyPath,
-                      boolean buildForJsonView) {
+                      PersistentPropertyPath rightPropertyPath) {
 
         final boolean escape = shouldEscape(associationOwner);
         List<String> onLeftColumns = new ArrayList<>();
@@ -1405,8 +1422,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             rightTableAlias,
             leftTableAlias,
             escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
-            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns,
-            buildForJsonView
+            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns
         );
     }
 
@@ -1417,14 +1433,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                       String tableAlias,
                       String onTableName,
                       List<String> onLeftColumns,
-                      List<String> onRightColumns,
-                      boolean buildForJsonView) {
+                      List<String> onRightColumns) {
 
         if (onLeftColumns.size() != onRightColumns.size()) {
             throw new IllegalStateException("Un-matching join columns size: " + onLeftColumns.size() + " != " + onRightColumns.size() + " " + onLeftColumns + ", " + onRightColumns);
         }
 
-        if (!buildForJsonView) {
+        if (queryDefinition.persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class)) {
+            builder.append(WHERE_CLAUSE);
+        } else {
             builder
                 .append(joinType)
                 .append(tableName)
@@ -1434,8 +1451,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 appendForUpdate(QueryPosition.AFTER_TABLE_NAME, selectQueryDefinition, builder);
             }
             builder.append(" ON ");
-        } else {
-            builder.append(WHERE_CLAUSE);
         }
 
         buildJoinColumnMatchPart(builder, tableAlias, onTableName, onLeftColumns, onRightColumns);

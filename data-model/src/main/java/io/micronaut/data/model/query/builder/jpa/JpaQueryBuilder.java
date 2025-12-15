@@ -96,8 +96,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
-                             String lastJoinAlias,
-                             boolean buildForJsonView) {
+                             String lastJoinAlias) {
         query.append(joinType)
             .append(lastJoinAlias).append(DOT)
             .append(joinAssociation.getAssociation().getName())
