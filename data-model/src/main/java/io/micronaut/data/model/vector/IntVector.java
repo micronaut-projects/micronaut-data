@@ -29,14 +29,14 @@ import java.util.Objects;
  *
  * @author Nemanja Mikic
  * @since 5.0.0
+ * @param data the backing int values array (a defensive copy is returned by accessors)
  */
 @TypeDef(type = DataType.OBJECT, converter = IntVectorAttributeConverter.class)
-public final class IntVector implements Vector {
+public record IntVector(int[] data) implements Vector {
 
-    private final int[] data;
 
-    public IntVector(int[] data) {
-        this.data = Objects.requireNonNull(data, "data");
+    public IntVector {
+        Objects.requireNonNull(data, "IntVector data must not be null");
     }
 
     @Override

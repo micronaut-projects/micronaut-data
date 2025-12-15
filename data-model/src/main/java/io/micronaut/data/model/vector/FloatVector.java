@@ -29,14 +29,14 @@ import java.util.Objects;
  *
  * @author Nemanja Mikic
  * @since 5.0.0
+ * @param data the backing float values array (a defensive copy is returned by accessors)
  */
 @TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class)
-public final class FloatVector implements Vector {
+public record FloatVector(float[] data) implements Vector {
 
-    private final float[] data;
 
-    public FloatVector(float[] data) {
-        this.data = Objects.requireNonNull(data, "data");
+    public FloatVector {
+        Objects.requireNonNull(data, "FloatVector data must not be null");
     }
 
     @Override

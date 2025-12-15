@@ -76,6 +76,18 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
             this.b = b
         }
 
+        // Support Groovy named-argument constructor calls like:
+        // new Adapter(kind, f: float[], d: double[], i: int[], b: byte[])
+        Adapter(Map params, AbstractOracleTypeConvertersFactory.OracleVectorKind kind) {
+            this(
+                kind,
+                (float[])  (params?.f ?: new float[0]),
+                (double[]) (params?.d ?: new double[0]),
+                (int[])    (params?.i ?: new int[0]),
+                (byte[])   (params?.b ?: new byte[0])
+            )
+        }
+
         @Override
         AbstractOracleTypeConvertersFactory.OracleVectorKind getKind() { kind }
 

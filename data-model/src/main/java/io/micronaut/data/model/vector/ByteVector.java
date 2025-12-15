@@ -29,14 +29,14 @@ import java.util.Objects;
  *
  * @author Nemanja Mikic
  * @since 5.0.0
+ * @param data the backing byte values array (a defensive copy is returned by accessors)
  */
 @TypeDef(type = DataType.OBJECT, converter = ByteVectorAttributeConverter.class)
-public final class ByteVector implements Vector {
+public record ByteVector(byte[] data) implements Vector {
 
-    private final byte[] data;
 
-    public ByteVector(byte[] data) {
-        this.data = Objects.requireNonNull(data, "data");
+    public ByteVector {
+        Objects.requireNonNull(data, "ByteVector data must not be null");
     }
 
     @Override

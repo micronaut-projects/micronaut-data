@@ -29,14 +29,14 @@ import java.util.Objects;
  *
  * @author Nemanja Mikic
  * @since 5.0.0
+ * @param data the backing double values array (a defensive copy is returned by accessors)
  */
 @TypeDef(type = DataType.OBJECT, converter = DoubleVectorAttributeConverter.class)
-public final class DoubleVector implements Vector {
+public record DoubleVector(double[] data) implements Vector {
 
-    private final double[] data;
 
-    public DoubleVector(double[] data) {
-        this.data = Objects.requireNonNull(data, "data");
+    public DoubleVector {
+        Objects.requireNonNull(data, "DoubleVector data must not be null");
     }
 
     @Override

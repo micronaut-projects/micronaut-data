@@ -144,7 +144,8 @@ final class PostgresTypeConvertersFactory {
             float[] f = pg.getVector();
             double[] d = new double[f.length];
             for (int i = 0; i < f.length; i++) {
-                d[i] = f[i];
+                // Preserve the decimal form as represented by the float to avoid binary float-to-double artifacts (e.g. 2.6f -> 2.5999..)
+                d[i] = Double.parseDouble(Float.toString(f[i]));
             }
             return Optional.of(new DoubleVector(d));
         };
