@@ -1240,7 +1240,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     protected void buildJoin(@Nullable String joinType,
                              StringBuilder query,
-                             @Nullable QueryState queryState,
+                             QueryState queryState,
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
@@ -1416,7 +1416,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             });
         }
         join(sb,
-            queryState == null ? null : queryState.baseQueryDefinition(),
+            queryState.baseQueryDefinition(),
             joinType,
             getTableName(associatedEntity),
             rightTableAlias,
@@ -1427,7 +1427,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private void join(StringBuilder builder,
-                      @Nullable BaseQueryDefinition queryDefinition,
+                      BaseQueryDefinition queryDefinition,
                       String joinType,
                       String tableName,
                       String tableAlias,

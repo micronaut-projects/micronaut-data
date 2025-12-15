@@ -19,7 +19,7 @@ public class ContactView {
     private boolean active;
 
     @Relation(Relation.Kind.EMBEDDED)
-    private Address address;
+    private AddressSubView address;
     @JsonProperty("_metadata")
     private Metadata metadata;
 
@@ -46,11 +46,11 @@ public class ContactView {
         this.active = active;
     }
 
-    public Address getAddress() {
+    public AddressSubView getAddress() {
         return address;
     }
 
-    public void setAddress(Address address) {
+    public void setAddress(AddressSubView address) {
         this.address = address;
     }
 

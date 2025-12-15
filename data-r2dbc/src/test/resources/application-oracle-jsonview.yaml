@@ -6,20 +6,12 @@ datasources:
   default:
     db-type: oracle
     dialect: ORACLE
-flyway:
-  datasources:
-    default:
-      locations:
-        - classpath:oracle-jsonview-migrations
-      enabled: true
-      baseline-version: 0
-      baseline-on-migrate: true
 r2dbc:
   datasources:
     default:
       db-type: oracle
       dialect: ORACLE
-      schema-generate: NONE
+      schema-generate: CREATE_DROP
 test-resources:
   containers:
     oracle:
