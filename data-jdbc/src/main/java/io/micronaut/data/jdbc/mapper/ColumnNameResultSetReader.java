@@ -243,8 +243,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
                 o = resultSet.getClob(name);
             } else if (String.class.isAssignableFrom(type)) {
                 o = resultSet.getString(name);
-            }
-            else {
+            } else {
                 o = resultSet.getObject(name);
             }
             if (o == null) {

@@ -57,7 +57,7 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<io.r2dbc
 
     @Override
     public Vector convert(io.r2dbc.postgresql.codec.Vector object, Class<Vector> targetType) {
-        return conversionService.convert(object, targetType).get();
+        return conversionService.convert(object, targetType).orElse(null);
     }
 
     @Override

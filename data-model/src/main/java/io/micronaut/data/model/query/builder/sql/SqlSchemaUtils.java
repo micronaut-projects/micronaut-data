@@ -40,7 +40,6 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
-import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;

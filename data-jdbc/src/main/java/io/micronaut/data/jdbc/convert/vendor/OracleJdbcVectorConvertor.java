@@ -54,7 +54,7 @@ public class OracleJdbcVectorConvertor implements VectorTypeConvertor<String> {
 
     @Override
     public Vector convert(String object, Class<Vector> targetType) {
-        return conversionService.convert(object, targetType).get();
+        return conversionService.convert(object, targetType).orElse(null);
     }
 
     @Override
