@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;

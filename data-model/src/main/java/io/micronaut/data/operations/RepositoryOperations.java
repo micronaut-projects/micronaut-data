@@ -17,8 +17,8 @@ package io.micronaut.data.operations;
 
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NextMajorVersion;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;

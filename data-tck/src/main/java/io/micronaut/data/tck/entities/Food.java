@@ -18,7 +18,7 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;

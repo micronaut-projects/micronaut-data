@@ -16,8 +16,8 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
@@ -64,7 +64,6 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     /**
      * @return The join type
      */
-    @Nullable
     io.micronaut.data.annotation.Join.Type getAssociationJoinType();
 
     @Override
@@ -77,7 +76,7 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
      *
      * @param type The join type
      */
-    void setAssociationJoinType(@Nullable io.micronaut.data.annotation.Join.Type type);
+    void setAssociationJoinType(io.micronaut.data.annotation.Join.Type type);
 
     /**
      * Set join alias.

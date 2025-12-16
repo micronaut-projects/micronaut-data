@@ -16,8 +16,8 @@
 package io.micronaut.data.r2dbc.operations;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.query.builder.sql.Dialect;

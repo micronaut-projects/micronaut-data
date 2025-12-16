@@ -16,7 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.UuidEntity;

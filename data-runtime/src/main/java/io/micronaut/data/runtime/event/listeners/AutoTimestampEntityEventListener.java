@@ -16,8 +16,8 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;

@@ -20,7 +20,7 @@ import io.micronaut.context.Qualifier;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.naming.Named;
 
 import java.util.Optional;

@@ -16,7 +16,7 @@
 package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;

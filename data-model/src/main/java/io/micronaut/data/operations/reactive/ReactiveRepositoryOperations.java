@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.exceptions.DataAccessException;

@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.inject.Singleton;
 

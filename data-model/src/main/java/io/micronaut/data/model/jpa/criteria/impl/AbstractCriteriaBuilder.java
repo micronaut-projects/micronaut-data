@@ -17,8 +17,8 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NextMajorVersion;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;

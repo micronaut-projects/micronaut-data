@@ -16,7 +16,7 @@
 package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;

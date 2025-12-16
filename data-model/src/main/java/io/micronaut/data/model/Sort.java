@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -69,7 +69,7 @@ public interface Sort {
      * @param order The order object
      * @return A new sort with the order applied
      */
-    @NonNull Sort order(@NonNull Sort.Order order);
+    @NonNull Sort order(Sort. Order order);
 
     /**
      * Adds an orders.
@@ -95,7 +95,7 @@ public interface Sort {
      *
      * @return A new sort with the order applied
      */
-    @NonNull Sort order(@NonNull String propertyName, @NonNull Sort.Order.Direction direction);
+    @NonNull Sort order(@NonNull String propertyName, Sort.Order. Direction direction);
 
     /**
      * @return The order definitions for this sort.

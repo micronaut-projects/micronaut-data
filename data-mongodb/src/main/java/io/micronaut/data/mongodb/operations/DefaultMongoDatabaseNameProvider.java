@@ -17,7 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;

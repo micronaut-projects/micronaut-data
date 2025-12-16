@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.FindByIdInterceptor;

@@ -16,7 +16,7 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.AdditionalBindingParameter;
 
@@ -24,7 +24,7 @@ import io.micronaut.data.model.query.builder.AdditionalBindingParameter;
 interface PropertyParameterCreator {
 
     void pushParameter(@NonNull BindingParameter bindingParameter,
-                       @NonNull BindingParameter.BindingContext bindingContext);
+                       BindingParameter. BindingContext bindingContext);
 
     default void pushAdditionalParameter(@NonNull String name) {
         pushParameter(
