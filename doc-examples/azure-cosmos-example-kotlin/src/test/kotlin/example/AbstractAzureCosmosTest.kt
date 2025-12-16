@@ -1,4 +1,6 @@
 
+package example
+
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
 import org.junit.jupiter.api.AfterAll
