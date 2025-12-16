@@ -61,10 +61,9 @@ public @interface JsonView {
      * Specify an entity class annotated with {@link MappedEntity} that this JSON view corresponds to.
      * Valid entity class is one that defines the properties used in this class.
      *
-     *
-     * @return the entity class (default void)
+     * @return the entity class
      */
-    Class<?> entity() default void.class;
+    Class<?> entity();
 
     /**
      * The possible sql operations.

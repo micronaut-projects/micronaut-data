@@ -36,6 +36,18 @@ connection.propagate(() -> {
 
 NOTE: These changes are required for Micronaut 5 to support propagating context with scoped values.
 
+=== `@JsonView` annotation has a new required field `entity`
+
+When using the `@JsonView` annotation, users have to provide the entity class this view represents, here is an example usage:
+
+[source,java]
+----
+@JsonView(entity = Student.class)
+public class StudentView {
+//...
+}
+----
+
 == 4.0
 
 === Repositories validation
