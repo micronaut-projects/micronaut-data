@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 

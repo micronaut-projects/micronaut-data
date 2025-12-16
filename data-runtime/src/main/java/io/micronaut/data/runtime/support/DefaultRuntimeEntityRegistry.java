@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.support;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;

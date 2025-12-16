@@ -21,7 +21,7 @@ import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Repository;

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.util.ArgumentUtils;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.serde.annotation.Serdeable;
 
@@ -92,7 +92,7 @@ final class DefaultSort implements Sort {
 
     @NonNull
     @Override
-    public DefaultSort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
+    public DefaultSort order(@NonNull String propertyName, Order. Direction direction) {
         return order(new Order(propertyName, direction, false));
     }
 

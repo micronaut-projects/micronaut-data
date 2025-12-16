@@ -16,7 +16,7 @@
 package io.micronaut.data.spring.tx;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -213,7 +213,7 @@ public abstract class AbstractSpringTransactionOperations
         }
 
         @Override
-        public void registerSynchronization(@NonNull io.micronaut.transaction.support.TransactionSynchronization synchronization) {
+        public void registerSynchronization(io.micronaut.transaction.support. @NonNull TransactionSynchronization synchronization) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public int getOrder() {

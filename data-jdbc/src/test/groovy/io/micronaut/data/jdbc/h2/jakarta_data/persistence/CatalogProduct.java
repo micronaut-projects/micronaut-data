@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.h2.jakarta_data.persistence;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.Basic;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;

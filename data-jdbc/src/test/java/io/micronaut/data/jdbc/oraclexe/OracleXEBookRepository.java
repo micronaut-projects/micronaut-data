@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
@@ -27,7 +27,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 

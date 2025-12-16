@@ -17,7 +17,7 @@ package io.micronaut.data.processor.jdql;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.jdql.JDQLBaseListener;
@@ -313,7 +313,7 @@ public final class JDQLCriteriaBuilderUtils {
         return deleteQuery;
     }
 
-    private static Predicate getPredicate(@Nullable JDQLParser.Where_clauseContext whereClause,
+    private static Predicate getPredicate(JDQLParser. @Nullable Where_clauseContext whereClause,
                                           Root<?> root,
                                           PersistentEntityCriteriaBuilder criteriaBuilder) {
         if (whereClause == null) {
@@ -323,7 +323,7 @@ public final class JDQLCriteriaBuilderUtils {
         return getPredicate(conditionalExpression, root, criteriaBuilder);
     }
 
-    private static List<Order> getOrders(@Nullable JDQLParser.Orderby_clauseContext orderByClause,
+    private static List<Order> getOrders(JDQLParser. @Nullable Orderby_clauseContext orderByClause,
                                          Root<?> root,
                                          PersistentEntityCriteriaBuilder criteriaBuilder,
                                          MethodElement methodElement) {

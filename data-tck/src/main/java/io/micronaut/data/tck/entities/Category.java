@@ -17,7 +17,7 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateCreated;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;

@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NextMajorVersion;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;

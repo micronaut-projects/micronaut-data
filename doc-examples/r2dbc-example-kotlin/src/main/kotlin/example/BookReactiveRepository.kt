@@ -12,7 +12,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 
 @R2dbcRepository(dialect = Dialect.MYSQL) // <1>
-interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book?, Long> {
+interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book, Long> {
     @Join("author")
     override fun findById(id: @NotNull Long): Mono<Book> // <2>
 

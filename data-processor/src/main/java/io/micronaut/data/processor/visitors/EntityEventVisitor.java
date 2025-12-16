@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.event.EntityEventMapping;

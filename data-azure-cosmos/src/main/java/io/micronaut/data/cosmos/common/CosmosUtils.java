@@ -18,7 +18,7 @@ package io.micronaut.data.cosmos.common;
 import com.azure.cosmos.CosmosDiagnostics;
 import com.azure.cosmos.CosmosException;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor;
 import reactor.core.Exceptions;

@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;

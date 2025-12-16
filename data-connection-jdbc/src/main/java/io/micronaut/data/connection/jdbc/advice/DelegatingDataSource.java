@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.connection.jdbc.advice;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.io.PrintWriter;
 import java.sql.Connection;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.naming;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.naming.NameUtils;
 

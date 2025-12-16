@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GenerateJakartaDataMetamodel;
 import io.micronaut.data.annotation.MappedEntity;

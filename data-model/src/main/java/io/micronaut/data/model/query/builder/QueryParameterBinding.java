@@ -16,7 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
 
 import java.util.List;
