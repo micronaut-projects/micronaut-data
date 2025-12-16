@@ -15,10 +15,6 @@
  */
 package io.micronaut.data.cosmos.operations;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.cosmos.common.Constants;
@@ -36,6 +32,12 @@ import io.micronaut.serde.Serializer;
 import io.micronaut.serde.jackson.JacksonDecoder;
 import io.micronaut.serde.support.util.JsonNodeEncoder;
 import jakarta.inject.Singleton;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
 import java.io.IOException;
 
@@ -57,7 +59,7 @@ final class CosmosSerde {
     }
 
     /**
-     * Serializes given persistent object to the {@link com.fasterxml.jackson.databind.node.ObjectNode}.
+     * Serializes given persistent object to the {@link tools.jackson.databind.node.ObjectNode}.
      *
      * @param persistentEntity the persistent entity
      * @param bean the bean being serialized to JSON
@@ -71,7 +73,7 @@ final class CosmosSerde {
         if (identity != null && !identity.getName().equals(Constants.INTERNAL_ID)) {
             Object value = identity.getProperty().get(bean);
             String id = value == null ? null : value.toString();
-            result.set(Constants.INTERNAL_ID, new TextNode(id));
+            result.set(Constants.INTERNAL_ID, id == null ? NullNode.getInstance() : new StringNode(id));
         }
         CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
         String versionField = cosmosEntity.getVersionField();
@@ -80,7 +82,7 @@ final class CosmosSerde {
             if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
                 Object value = versionProperty.getProperty().get(bean);
                 if (value != null) {
-                    result.set(Constants.ETAG_FIELD_NAME, new TextNode(value.toString()));
+                    result.set(Constants.ETAG_FIELD_NAME, new StringNode(value.toString()));
                 }
             }
         }
@@ -88,14 +90,14 @@ final class CosmosSerde {
     }
 
     /**
-     * Serializes given bean to the given type which will be {@link com.fasterxml.jackson.databind.node.ObjectNode} or {@link com.fasterxml.jackson.databind.JsonNode}.
+     * Serializes given bean to the given type which will be {@link tools.jackson.databind.node.ObjectNode} or {@link tools.jackson.databind.JsonNode}.
      *
      * @param bean the bean being serialized to JSON
      * @param type the argument type
      * @param <O> the type to be returned
      * @return the serialized bean to JSON (JsonNode or ObjectNode)
      */
-    public <O extends com.fasterxml.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
+    public <O extends tools.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
         try {
             Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null);
             Serializer<? super Object> typeSerializer = serdeRegistry.findSerializer(type);
@@ -104,8 +106,8 @@ final class CosmosSerde {
             serializer.serialize(encoder, encoderContext, type, bean);
             // First serialize to Micronaut Serde tree model and then convert it to Jackson's tree model
             JsonNode jsonNode = encoder.getCompletedValue();
-            try (JsonParser jsonParser = JsonNodeTreeCodec.getInstance().treeAsTokens(jsonNode)) {
-                return objectMapper.readTree(jsonParser);
+            try (JsonParser jsonParser = JsonNodeTreeCodec.getInstance().treeAsTokens(jsonNode, ObjectReadContext.empty())) {
+                return (O) objectMapper.readTree(jsonParser);
             }
         } catch (IOException e) {
             throw new DataAccessException("Failed to serialize: " + e.getMessage(), e);
@@ -133,7 +135,7 @@ final class CosmosSerde {
         if (versionField != null) {
             RuntimePersistentProperty<E> versionProperty = persistentEntity.getPropertyByName(versionField);
             if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
-                final com.fasterxml.jackson.databind.JsonNode versionValue = objectNode.get(Constants.ETAG_FIELD_NAME);
+                final tools.jackson.databind.JsonNode versionValue = objectNode.get(Constants.ETAG_FIELD_NAME);
                 objectNode.remove(Constants.ETAG_FIELD_NAME);
                 objectNode.set(versionProperty.getName(), versionValue);
             }
@@ -154,7 +156,7 @@ final class CosmosSerde {
             Deserializer.DecoderContext decoderContext = serdeRegistry.newDecoderContext(null);
             Deserializer<? extends T> typeDeserializer = serdeRegistry.findDeserializer(type);
             Deserializer<? extends T> deserializer = typeDeserializer.createSpecific(decoderContext, type);
-            JsonParser parser = objectNode.traverse();
+            JsonParser parser = objectNode.traverse(ObjectReadContext.empty());
             if (!parser.hasCurrentToken()) {
                 parser.nextToken();
             }
