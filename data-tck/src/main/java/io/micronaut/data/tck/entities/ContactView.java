@@ -18,8 +18,6 @@ public class ContactView {
     private LocalDateTime startDateTime;
     private boolean active;
 
-    @Relation(Relation.Kind.EMBEDDED)
-    private AddressSubView address;
     @JsonProperty("_metadata")
     private Metadata metadata;
 
@@ -44,14 +42,6 @@ public class ContactView {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public AddressSubView getAddress() {
-        return address;
-    }
-
-    public void setAddress(AddressSubView address) {
-        this.address = address;
     }
 
     public Metadata getMetadata() {

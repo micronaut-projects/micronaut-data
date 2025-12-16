@@ -3,7 +3,6 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
@@ -16,9 +15,6 @@ public class Contact {
     private int age;
     private Boolean active = true;
     private LocalDateTime startDateTime;
-
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    private Address address;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -41,13 +37,5 @@ public class Contact {
 
     public void setStartDateTime(LocalDateTime startDateTime) {
         this.startDateTime = startDateTime;
-    }
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address address) {
-        this.address = address;
     }
 }

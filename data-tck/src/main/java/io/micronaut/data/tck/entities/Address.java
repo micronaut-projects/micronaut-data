@@ -16,17 +16,9 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-
-import javax.persistence.Entity;
 
 @Embeddable
-@Entity
 public class Address {
-    @Id
-    @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    private Long id;
     private final String street;
     private final String zipCode;
 
@@ -42,8 +34,4 @@ public class Address {
     public String getZipCode() {
         return zipCode;
     }
-
-    public Long getId() { return id; }
-
-    public void setId(Long id) { this.id = id; }
 }

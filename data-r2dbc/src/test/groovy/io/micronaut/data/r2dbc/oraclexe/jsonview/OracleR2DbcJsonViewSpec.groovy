@@ -1,8 +1,6 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
 import io.micronaut.data.exceptions.OptimisticLockException
-import io.micronaut.data.tck.entities.Address
-import io.micronaut.data.tck.entities.AddressSubView
 import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -21,17 +19,12 @@ class OracleR2DbcJsonViewSpec extends Specification {
     @Inject
     ContactViewRepository contactViewRepository
 
-    @Inject
-    AddressRepository addressRepository
-
     def "test CRUD"() {
         when:
         def contact = new Contact()
         contact.name = "Contact1"
         contact.age = 25
         contact.startDateTime = LocalDateTime.now().minusMonths(10)
-        def address = addressRepository.save(new Address("My Street", "My City"))
-        contact.address = address
         contactRepository.save(contact)
         def optContactView = contactViewRepository.findById(contact.id)
         then:
@@ -56,9 +49,6 @@ class OracleR2DbcJsonViewSpec extends Specification {
         contactView = new ContactView()
         contactView.name = "Contact2"
         contactView.startDateTime =  LocalDateTime.now().minusDays(10)
-        def address2 = addressRepository.save(new Address("My Street 2", "My City 2"))
-        def addressView = AddressSubView.fromAddress(address2)
-        contactView.address = addressView
         contactView.age = 30
         contactViewRepository.save(contactView)
         optContact = contactRepository.findById(contactView.id)
@@ -101,12 +91,10 @@ class OracleR2DbcJsonViewSpec extends Specification {
         ContactView contactView1 = new ContactView()
         contactView1.name = "ContactNew1"
         contactView1.startDateTime = startDateTime
-        contactView1.address = addressView
         contactView1.age = 59
         ContactView contactView2 = new ContactView()
         contactView2.name = "ContactNew2"
         contactView2.startDateTime = startDateTime
-        contactView2.address = addressView
         contactView2.age = 60
         def savedEntities = contactViewRepository.saveAll(Arrays.asList(contactView1, contactView2))
         then:
