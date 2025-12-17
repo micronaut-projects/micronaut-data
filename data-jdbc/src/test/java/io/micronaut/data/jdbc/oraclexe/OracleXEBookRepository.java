@@ -43,11 +43,11 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Override
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Override
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Procedure
     public abstract int add1(int input);

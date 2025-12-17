@@ -38,13 +38,13 @@ public abstract class PostgresBookRepository extends BookRepository {
     }
 
     @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable String arg0, @Nullable Sort sort);
+    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String arg0, @Nullable @io.micronaut.core.annotation.Nullable Sort sort);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query("SELECT 'one\\:two\\:three'")
     public abstract String reproduceColonErrorEscaped();
@@ -98,10 +98,10 @@ public abstract class PostgresBookRepository extends BookRepository {
          RETURNING *
         """)
     public abstract Book customInsertReturningBook(Long authorId,
-                                                   @Nullable Long genderId,
+                                                   @Nullable @io.micronaut.core.annotation.Nullable Long genderId,
                                                    String title,
                                                    int totalPages,
-                                                   @Nullable Long publisherId,
+                                                   @Nullable @io.micronaut.core.annotation.Nullable Long publisherId,
                                                    LocalDateTime lastUpdated);
 
     public abstract Book saveReturning(Book book);
