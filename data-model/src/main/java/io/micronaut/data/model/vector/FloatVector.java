@@ -68,15 +68,6 @@ public record FloatVector(float[] data) implements Vector {
     }
 
     @Override
-    public @NonNull int[] toIntegerArray() {
-        int[] out = new int[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = (int) data[i];
-        }
-        return out;
-    }
-
-    @Override
     public String toString() {
         return "F" + Arrays.toString(data);
     }

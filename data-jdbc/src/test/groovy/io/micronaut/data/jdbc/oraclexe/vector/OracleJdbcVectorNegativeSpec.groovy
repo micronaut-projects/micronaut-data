@@ -33,16 +33,16 @@ class OracleJdbcVectorNegativeSpec extends Specification {
         and: "H2 datasource and the repository bean"
         DataSource h2Ds = h2Ctx.getBean(DataSource)
         // Use repository defined in this package in other tests; bean is generated for tests too
-        VectorIntDocRepository repoOnH2 = h2Ctx.getBean(VectorIntDocRepository)
+        VectorDoubleDocRepository repoOnH2 = h2Ctx.getBean(VectorDoubleDocRepository)
 
         and: "Schema generator should have filtered out vector entity, table is absent"
-        boolean tableExists = tableExists(h2Ds, "vector_doc")
+        boolean tableExists = tableExists(h2Ds, "vector_double_doc")
 
         expect: "The vector table is not created on non-Oracle dialect"
         !tableExists
 
         when: "Attempt to use repository with Vector on H2"
-        def v = Vector.of([1, 2, 3] as int[])
+        def v = Vector.of([1f, 2f, 3f] as float[])
         repoOnH2.saveCustom(v)
 
         then: "Operation fails due to missing table / unsupported feature"

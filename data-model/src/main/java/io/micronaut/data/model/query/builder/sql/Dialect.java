@@ -89,6 +89,7 @@ public enum Dialect {
     private final boolean supportsUpdateReturning;
     private final boolean supportsInsertReturning;
     private final boolean supportsDeleteReturning;
+    private final String name;
 
     /**
      * Allows customization of batch support.
@@ -127,6 +128,7 @@ public enum Dialect {
         this.supportsUpdateReturning = supportsUpdateReturning;
         this.supportsInsertReturning = supportsInsertReturning;
         this.supportsDeleteReturning = supportsDeleteReturning;
+        this.name = this.name();
     }
 
     /**
@@ -212,5 +214,9 @@ public enum Dialect {
      */
     public boolean supportsDeleteReturning() {
         return supportsDeleteReturning;
+    }
+
+    public String value() {
+        return name;
     }
 }

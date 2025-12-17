@@ -18,7 +18,6 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.ConverterResultReader;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
@@ -26,7 +25,6 @@ import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.OptionalInt;
 
@@ -60,11 +58,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             Y result = (Y) vectorTypeConvertor.convert(entityValue, vectorTypeConvertor.getPersistedType());
             return result;
         }
-        // Fallback (e.g. Oracle textual representation)
-        final double[] values = entityValue.toDoubleArray();
-        @SuppressWarnings("unchecked")
-        Y fallback = (Y) Arrays.toString(values);
-        return fallback;
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
     }
 
     @Override
@@ -79,7 +73,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             X result = (X) vectorTypeConvertor.convert(persistedValue, type);
             return result;
         }
-        throw new DataAccessException("Unsupported persisted value type: " + persistedValue.getClass());
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
     }
 
     /**
@@ -92,8 +86,10 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return vectorTypeConvertor.getPersistedType();
         } else if (dialect == Dialect.ORACLE) {
             return String.class;
+        } else if (dialect == Dialect.MYSQL) {
+            return byte[].class;
         }
-        return null;
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
     }
 
     @Override
@@ -128,6 +124,12 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                     yield "vector(%d)".formatted(len.getAsInt());
                 }
                 yield "vector";
+            }
+            case MYSQL -> {
+                if (len.isPresent()) {
+                    yield "VECTOR(%d)".formatted(len.getAsInt());
+                }
+                yield "VECTOR";
             }
             default -> "VARCHAR(255)"; // Fallback for dialects without native vector type to avoid schema generation failure
         };

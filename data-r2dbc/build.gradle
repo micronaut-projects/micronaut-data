@@ -26,7 +26,6 @@ dependencies {
     compileOnly mnSql.jakarta.persistence.api
     compileOnly mnR2dbc.r2dbc.postgresql
 
-
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
     testImplementation mnR2dbc.r2dbc.pool

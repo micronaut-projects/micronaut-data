@@ -3,6 +3,7 @@ Micronaut Data provides first-class support for storing and retrieving numeric e
 Supported platforms (since 5.0.0):
 - Oracle Database 23ai VECTOR columns (JDBC and R2DBC)
 - PostgreSQL pgvector (JDBC and R2DBC)
+- MySQL HeatWave VECTOR columns (JDBC and R2DBC)
 
 Micronaut Data includes a lightweight, immutable vector abstraction in the `io.micronaut.data.model.vector` package:
 
@@ -131,6 +132,42 @@ public class VectorDoubleDoc {
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface VectorDoubleDocRepository extends CrudRepository<VectorDoubleDoc, Long> {
+}
+----
+
+== MySQL HeatWave (VECTOR)
+
+MySQL HeatWave exposes a native VECTOR type. When repositories use the MYSQL dialect, Micronaut Data maps Vector values to a textual representation understood by the driver for binding and reading (e.g., "[1.0, 2.0]").
+
+- Dialect: MYSQL
+- JDBC and R2DBC: Vector values and primitive arrays are formatted to textual `"[v1, v2, ...]"` and read back into the appropriate Vector subtype.
+
+=== DDL (MySQL HeatWave)
+
+[source,sql]
+----
+CREATE TABLE vector_doc (
+  id BIGINT PRIMARY KEY,
+  embedding VECTOR(3)
+);
+----
+
+==== Using @Column(length = N) to set dimensions (MySQL)
+
+When using Micronaut’s Vector converters with the MySQL dialect, `@jakarta.persistence.Column(length = N)` on a Vector-typed property will produce `VECTOR(N)` in the generated DDL.
+
+Example:
+[source,java]
+----
+@MappedEntity("mysql_vector_doc")
+class MySqlVectorDoc {
+  @Id
+  @GeneratedValue
+  Long id;
+
+  // dimension inferred from @Column(length)
+  @Column(length = 3)
+  io.micronaut.data.model.vector.DoubleVector embedding;
 }
 ----
 

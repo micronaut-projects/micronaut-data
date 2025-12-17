@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -52,11 +54,17 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<io.r2dbc
 
     @Override
     public io.r2dbc.postgresql.codec.Vector convert(Vector vector, Class<io.r2dbc.postgresql.codec.Vector> targetType) {
+        if (vector.getClass().getName().equals(ByteVector.class.getName()) || vector.getClass().getName().equals(DoubleVector.class.getName())) {
+            throw new IllegalArgumentException(getName() + " does not support " + targetType.getName());
+        }
         return conversionService.convert(vector, targetType).orElse(null);
     }
 
     @Override
     public Vector convert(io.r2dbc.postgresql.codec.Vector object, Class<Vector> targetType) {
+        if (targetType.getName().equals(ByteVector.class.getName()) || targetType.getName().equals(DoubleVector.class.getName())) {
+            throw new IllegalArgumentException(getName() + " does not support " + targetType.getName());
+        }
         return conversionService.convert(object, targetType).orElse(null);
     }
 

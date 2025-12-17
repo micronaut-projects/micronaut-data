@@ -20,10 +20,7 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.vector.Vector;
-import io.micronaut.data.model.vector.ByteVector;
-import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
-import io.micronaut.data.model.vector.IntVector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import org.postgresql.util.PGobject;
 
@@ -62,102 +59,19 @@ final class PostgresTypeConvertersFactory {
     }
 
     @Prototype
-    DataTypeConverter<DoubleVector, PGobject> fromDoubleVectorToPgObject() {
-        return (vector, targetType, context) -> Optional.of(toPgVector(vector.toDoubleArray()));
-    }
-
-    @Prototype
     DataTypeConverter<FloatVector, PGobject> fromFloatVectorToPgObject() {
-        return (vector, targetType, context) -> {
-            float[] arr = vector.toFloatArray();
-            // Cast to double textual form for pgvector input
-            double[] out = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                out[i] = arr[i];
-            }
-            return Optional.of(toPgVector(out));
-        };
+        return (vector, targetType, context) -> Optional.of(toPgVector(vector.toFloatArray()));
     }
 
-    @Prototype
-    DataTypeConverter<IntVector, PGobject> fromIntVectorToPgObject() {
-        return (vector, targetType, context) -> {
-            int[] arr = vector.toIntegerArray();
-            double[] out = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                out[i] = arr[i];
-            }
-            return Optional.of(toPgVector(out));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<ByteVector, PGobject> fromByteVectorToPgObject() {
-        return (vector, targetType, context) -> {
-            byte[] arr = vector.toByteArray();
-            double[] out = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                out[i] = arr[i];
-            }
-            return Optional.of(toPgVector(out));
-        };
-    }
-
-    // ----------------------
-    // Primitive arrays -> PGobject
-    // ----------------------
-
-    @Prototype
-    DataTypeConverter<double[], PGobject> fromDoubleArrayToPgObject() {
-        return (arr, targetType, context) -> Optional.of(toPgVector(arr));
-    }
 
     @Prototype
     DataTypeConverter<float[], PGobject> fromFloatArrayToPgObject() {
         return (arr, targetType, context) -> {
-            double[] out = new double[arr.length];
+            float[] out = new float[arr.length];
             for (int i = 0; i < arr.length; i++) {
                 out[i] = arr[i];
             }
             return Optional.of(toPgVector(out));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<int[], PGobject> fromIntArrayToPgObject() {
-        return (arr, targetType, context) -> {
-            double[] out = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                out[i] = arr[i];
-            }
-            return Optional.of(toPgVector(out));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<byte[], PGobject> fromByteArrayToPgObject() {
-        return (arr, targetType, context) -> {
-            double[] out = new double[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                out[i] = arr[i];
-            }
-            return Optional.of(toPgVector(out));
-        };
-    }
-
-    // ----------------------
-    // Optional: PGobject -> Vector (read path)
-    // ----------------------
-
-    @Prototype
-    DataTypeConverter<PGobject, DoubleVector> fromPgObjectToDoubleVector() {
-        return (pg, targetType, context) -> {
-            if (!isPgVectorOrHalfvec(pg)) {
-                return Optional.empty();
-            }
-            String txt = pg.getValue();
-            double[] values = parsePgVectorText(txt);
-            return Optional.of((DoubleVector) Vector.of(values));
         };
     }
 
@@ -168,7 +82,7 @@ final class PostgresTypeConvertersFactory {
                 return Optional.empty();
             }
             String txt = pg.getValue();
-            double[] d = parsePgVectorText(txt);
+            float[] d = parsePgVectorText(txt);
             float[] arr = new float[d.length];
             for (int i = 0; i < d.length; i++) {
                 arr[i] = (float) d[i];
@@ -184,65 +98,8 @@ final class PostgresTypeConvertersFactory {
                 return Optional.empty();
             }
             String txt = pg.getValue();
-            double[] values = parsePgVectorText(txt);
+            float[] values = parsePgVectorText(txt);
             return Optional.of(Vector.of(values));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<PGobject, IntVector> fromPgObjectToIntVector() {
-        return (pg, targetType, context) -> {
-            if (!isPgVectorOrHalfvec(pg)) {
-                return Optional.empty();
-            }
-            String txt = pg.getValue();
-            double[] d = parsePgVectorText(txt);
-            int[] arr = new int[d.length];
-            for (int i = 0; i < d.length; i++) {
-                arr[i] = (int) Math.round(d[i]);
-            }
-            return Optional.of((IntVector) Vector.of(arr));
-        };
-    }
-
-    // ----------------------
-    // Cross-type converters (Vector -> specific Vector subtype)
-    // Some drivers/layers may materialize DoubleVector first; adapt to requested subtype
-    // ----------------------
-
-    @Prototype
-    DataTypeConverter<DoubleVector, IntVector> fromDoubleVectorToIntVector() {
-        return (src, targetType, context) -> {
-            double[] d = src.toDoubleArray();
-            int[] arr = new int[d.length];
-            for (int i = 0; i < d.length; i++) {
-                arr[i] = (int) Math.round(d[i]);
-            }
-            return Optional.of((IntVector) Vector.of(arr));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<FloatVector, IntVector> fromFloatVectorToIntVector() {
-        return (src, targetType, context) -> {
-            float[] f = src.toFloatArray();
-            int[] arr = new int[f.length];
-            for (int i = 0; i < f.length; i++) {
-                arr[i] = (int) Math.round(f[i]);
-            }
-            return Optional.of((IntVector) Vector.of(arr));
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<ByteVector, IntVector> fromByteVectorToIntVector() {
-        return (src, targetType, context) -> {
-            byte[] b = src.toByteArray();
-            int[] arr = new int[b.length];
-            for (int i = 0; i < b.length; i++) {
-                arr[i] = b[i];
-            }
-            return Optional.of((IntVector) Vector.of(arr));
         };
     }
 
@@ -250,7 +107,7 @@ final class PostgresTypeConvertersFactory {
     // Helpers
     // ----------------------
 
-    private static PGobject toPgVector(double[] values) {
+    private static PGobject toPgVector(float[] values) {
         try {
             PGobject obj = new PGobject();
             obj.setType(PG_VECTOR);
@@ -264,7 +121,7 @@ final class PostgresTypeConvertersFactory {
     /**
      * Format a double array into pgvector text format: [v1, v2, v3].
      */
-    private static String formatPgVector(double[] values) {
+    private static String formatPgVector(float[] values) {
         StringBuilder sb = new StringBuilder(values.length * 4 + 2);
         sb.append('[');
         for (int i = 0; i < values.length; i++) {
@@ -272,7 +129,7 @@ final class PostgresTypeConvertersFactory {
                 sb.append(", ");
             }
             // Default string form is accepted by pgvector
-            sb.append(Double.toString(values[i]));
+            sb.append(values[i]);
         }
         sb.append(']');
         return sb.toString();
@@ -281,21 +138,21 @@ final class PostgresTypeConvertersFactory {
     /**
      * Parse pgvector textual value like: [1.0, 2, 3.5].
      */
-    private static double[] parsePgVectorText(String txt) {
+    private static float[] parsePgVectorText(String txt) {
         if (txt == null) {
-            return new double[0];
+            return new float[0];
         }
         String s = txt.trim();
         if (s.startsWith("[") && s.endsWith("]")) {
             s = s.substring(1, s.length() - 1).trim();
         }
         if (s.isEmpty()) {
-            return new double[0];
+            return new float[0];
         }
         String[] parts = s.split(",");
-        double[] out = new double[parts.length];
+        float[] out = new float[parts.length];
         for (int i = 0; i < parts.length; i++) {
-            out[i] = Double.parseDouble(parts[i].trim());
+            out[i] = Float.parseFloat(parts[i].trim());
         }
         return out;
     }

@@ -23,7 +23,6 @@ import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeCon
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
-import io.micronaut.data.model.vector.IntVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
@@ -61,11 +60,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     }
 
     @Prototype
-    DataTypeConverter<IntVector, int[]> fromVectorIntToArray() {
-        return (vector, targetType, context) -> Optional.of(vector.toIntegerArray());
-    }
-
-    @Prototype
     DataTypeConverter<ByteVector, byte[]> fromVectorByteToArray() {
         return (vector, targetType, context) -> Optional.of(vector.toByteArray());
     }
@@ -90,11 +84,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     }
 
     @Prototype
-    DataTypeConverter<IntVector, String> fromIntVectorToString() {
-        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toIntegerArray()));
-    }
-
-    @Prototype
     DataTypeConverter<ByteVector, String> fromByteVectorToString() {
         return (vector, targetType, context) -> Optional.of(toOracleText(vector.toByteArray()));
     }
@@ -116,11 +105,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Prototype
     DataTypeConverter<String, FloatVector> fromStringToFloatVector() {
         return (text, targetType, context) -> Optional.of((FloatVector) Vector.of(parseFloatArray(text)));
-    }
-
-    @Prototype
-    DataTypeConverter<String, IntVector> fromStringToIntVector() {
-        return (text, targetType, context) -> Optional.of((IntVector) Vector.of(parseIntArray(text)));
     }
 
     @Prototype
@@ -151,15 +135,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
         return (oracleVector, targetType, context) -> {
             OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
             return vectorToFloatArray(adapter).map(a -> (FloatVector) Vector.of(a));
-        };
-    }
-
-    @Prototype
-    @Requires(classes = VECTOR.class)
-    DataTypeConverter<VECTOR, IntVector> fromOracleVectorToIntVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToIntArray(adapter).map(a -> (IntVector) Vector.of(a));
         };
     }
 

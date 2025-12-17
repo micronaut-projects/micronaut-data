@@ -63,15 +63,6 @@ public record ByteVector(byte[] data) implements Vector {
     }
 
     @Override
-    public @NonNull int[] toIntegerArray() {
-        int[] out = new int[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = data[i];
-        }
-        return out;
-    }
-
-    @Override
     public @NonNull byte[] toByteArray() {
         return Arrays.copyOf(data, data.length);
     }

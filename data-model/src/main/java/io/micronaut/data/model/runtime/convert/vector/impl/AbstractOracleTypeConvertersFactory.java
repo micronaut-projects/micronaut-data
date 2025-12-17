@@ -190,8 +190,7 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return switch (adapter.getKind()) {
             case FLOAT32 -> Vector.of(adapter.toFloatArray());
             case FLOAT64 -> Vector.of(adapter.toDoubleArray());
-            case INT8 -> Vector.of(adapter.toIntArray());
-            case BINARY -> Vector.of(adapter.toByteArray());
+            case BINARY, INT8 -> Vector.of(adapter.toByteArray());
         };
     }
 

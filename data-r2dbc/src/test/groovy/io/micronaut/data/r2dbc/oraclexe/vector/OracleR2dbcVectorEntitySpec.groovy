@@ -10,7 +10,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
-import io.micronaut.data.model.vector.IntVector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
@@ -39,9 +38,6 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
     @Shared
     VectorFloatDocRepository vectorFloatDocRepository = context.getBean(VectorFloatDocRepository)
-
-    @Shared
-    VectorIntDocRepository vectorIntDocRepository = context.getBean(VectorIntDocRepository)
 
     @Shared
     VectorByteDocRepository vectorByteDocRepository = context.getBean(VectorByteDocRepository)
@@ -153,55 +149,6 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         after.embedding.toFloatArray().toList() == [13f, 14f, 15f]
     }
 
-    // INT8 -> IntVector (maps to int[])
-    void "R2DBC IntVector - default CRUD and custom @Query"() {
-        given:
-        def repo = vectorIntDocRepository
-        IntVector v1 = Vector.of([1, -2, 127] as int[])
-
-        when:
-        def saved = repo.save(new VectorIntDoc(embedding: v1))
-
-        then:
-        saved?.id != null
-
-        when:
-        def fetched = repo.findById(saved.id).orElse(null)
-
-        then:
-        fetched != null
-        fetched.embedding.type == Integer.TYPE
-        fetched.embedding.toIntegerArray().toList() == [1, -2, 127]
-
-        when:
-        IntVector v2 = Vector.of([0, 5, -7] as int[])
-        fetched.embedding = v2
-        def updated = repo.update(fetched)
-
-        then:
-        updated != null
-        updated.embedding.type == Integer.TYPE
-        updated.embedding.toIntegerArray().toList() == [0, 5, -7]
-
-        when: "custom @Query insert and update"
-        IntVector vx = Vector.of([10, 11, 12] as int[])
-        repo.saveCustom(vx)
-        def all = repo.findAll()
-        def e = all.find { it.embedding?.toIntegerArray()?.toList() == [10, 11, 12] }
-
-        then:
-        e != null
-
-        when:
-        IntVector vy = Vector.of([13, 14, 15] as int[])
-        repo.updateCustom(e.id, vy)
-        def after = repo.findById(e.id).orElse(null)
-
-        then:
-        after != null
-        after.embedding.toIntegerArray().toList() == [13, 14, 15]
-    }
-
     // INT8 -> ByteVector (maps to byte[])
     void "R2DBC ByteVector - default CRUD and custom @Query"() {
         given:
@@ -297,20 +244,6 @@ class VectorFloatDoc {
     void setEmbedding(FloatVector embedding) { this.embedding = embedding }
 }
 
-@MappedEntity("vector_int_doc")
-class VectorIntDoc {
-    @Id
-    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
-    Long id
-    IntVector embedding
-
-    Long getId() { return id }
-    void setId(Long id) { this.id = id }
-
-    IntVector getEmbedding() { return embedding }
-    void setEmbedding(IntVector embedding) { this.embedding = embedding }
-}
-
 @MappedEntity("vector_byte_doc")
 class VectorByteDoc {
     @Id
@@ -345,26 +278,6 @@ interface VectorFloatDocRepository extends CrudRepository<VectorFloatDoc, Long> 
 
     @Query("SELECT * FROM vector_float_doc")
     List<VectorFloatDoc> findAll()
-}
-
-@Requires(property = "spec.name", value = "OracleR2dbcVectorEntitySpec")
-@R2dbcRepository(dialect = Dialect.ORACLE)
-interface VectorIntDocRepository extends CrudRepository<VectorIntDoc, Long> {
-
-    @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector vec)
-
-    @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") IntVector vec)
-
-    @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector vec)
-
-    @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") IntVector vec)
-
-    @Query("SELECT * FROM vector_int_doc")
-    List<VectorIntDoc> findAll()
 }
 
 @Requires(property = "spec.name", value = "OracleR2dbcVectorEntitySpec")

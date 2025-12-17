@@ -28,9 +28,6 @@ class OracleJdbcVectorTypeMismatchSpec extends Specification implements OracleTe
     DataSource dataSource = context.getBean(DataSource)
 
     @Shared
-    VectorIntDocRepository intRepo = context.getBean(VectorIntDocRepository)
-
-    @Shared
     VectorFloatDocRepository floatRepo = context.getBean(VectorFloatDocRepository)
 
     @Override
@@ -46,28 +43,6 @@ class OracleJdbcVectorTypeMismatchSpec extends Specification implements OracleTe
         context.getBean(io.micronaut.transaction.SynchronousTransactionManager).executeWrite { status -> null }
     }
 
-    void "saving DoubleVector into INT8 column coerces values (no error)"() {
-        given: "An INT8 typed VECTOR column"
-        dropSilently("DROP TABLE vector_doc")
-        dropSilently("DROP SEQUENCE VECTOR_DOC_SEQ")
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        executeSilently "CREATE TABLE vector_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8))"
-
-        and: "A double-backed vector with fractional values"
-        double[] dv = [1.2d, -2.5d, 3.9d] as double[]
-        def vec = Vector.of(dv)
-
-        when: "Saving a DoubleVector into an INT8 column"
-        intRepo.saveCustom(vec)
-
-        then: "It succeeds and values are coerced to ints by the driver/database"
-        def rows = intRepo.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
-        def last = rows.last()
-        last.embedding != null
-        last.embedding.type == Integer.TYPE
-        last.embedding.toIntegerArray().toList() == [1, -2, 4]
-    }
-
     void "saving IntVector into FLOAT32 column coerces values (no error)"() {
         given: "A FLOAT32 typed VECTOR column"
         dropSilently("DROP TABLE vector_doc")
@@ -76,7 +51,7 @@ class OracleJdbcVectorTypeMismatchSpec extends Specification implements OracleTe
         executeSilently "CREATE TABLE vector_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT32))"
 
         and: "An int-backed vector"
-        int[] iv = [1, 2, 3] as int[]
+        byte  [] iv = [1, 2, 3] as byte[]
         def vec = Vector.of(iv)
 
         when: "Saving an IntVector into a FLOAT32 column"

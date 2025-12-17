@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.jdbc.convert.vendor;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
@@ -26,34 +26,40 @@ import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.postgresql.util.PGobject;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
- * PostgreSQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to {@link PGobject} of type {@code vector}
- * and back.
+ * MySQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to JDBC binary (byte[]) accepted
+ * by MySQL HeatWave VECTOR (float32 little-endian, plain concatenation), and back.
+ *
+ * Persisted type: {@code byte[]} (float32 LE per element)
+ *
+ * Example: (1.0, 2.0, 3.0) -> bytes: 00 00 80 3F  00 00 00 40  00 00 40 40
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
+@Requires(classes = com.mysql.cj.jdbc.Driver.class)
 @Singleton
-@Named("POSTGRES")
-@Requires(classes = PGobject.class)
-public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject> {
+@Named("MYSQL")
+public class MySqlJdbcVectorConvertor implements VectorTypeConvertor<byte[]> {
 
     private final ConversionService conversionService;
 
-    public PostgresJdbcVectorConvertor(ConversionService conversionService) {
+    public MySqlJdbcVectorConvertor(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 
     @Override
-    public Class<PGobject> getPersistedType() {
-        return PGobject.class;
+    public Class<byte[]> getPersistedType() {
+        return byte[].class;
     }
 
     @Override
-    public PGobject convert(Vector vector, Class<PGobject> targetType) {
+    public byte[] convert(Vector vector, Class<byte[]> targetType) {
         if (vector instanceof ByteVector || vector instanceof DoubleVector) {
             throw new IllegalArgumentException(getName() + " does not support " + vector.getClass().getName());
         }
@@ -61,7 +67,7 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject
     }
 
     @Override
-    public Vector convert(PGobject object, Class<Vector> targetType) {
+    public Vector convert(byte[] object, Class<Vector> targetType) {
         if (targetType.getName().equals(ByteVector.class.getName()) || targetType.getName().equals(DoubleVector.class.getName())) {
             throw new IllegalArgumentException(getName() + " does not support " + targetType.getName());
         }
@@ -70,11 +76,12 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject
 
     @Override
     public Dialect getDialect() {
-        return Dialect.POSTGRES;
+        return Dialect.MYSQL;
     }
 
     @Override
     public @NonNull String getName() {
         return getDialect().toString();
     }
+
 }

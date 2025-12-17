@@ -140,6 +140,8 @@ class VectorAttributeConverterTransformSpec extends Specification {
         converter.getColumnDefinition(OptionalInt.empty(), Dialect.POSTGRES) == "vector"
         converter.getColumnDefinition(OptionalInt.of(5), Dialect.ORACLE) == "VECTOR(5,FLOAT64)"
         converter.getColumnDefinition(OptionalInt.empty(), Dialect.ORACLE) == "VECTOR(*,FLOAT64)"
+        converter.getColumnDefinition(OptionalInt.of(7), Dialect.MYSQL) == "VECTOR(7)"
+        converter.getColumnDefinition(OptionalInt.empty(), Dialect.MYSQL) == "VECTOR"
         converter.getColumnDefinition(OptionalInt.empty(), Dialect.H2) == "VARCHAR(255)"
     }
 
@@ -155,5 +157,34 @@ class VectorAttributeConverterTransformSpec extends Specification {
 
         then:
         thrown(io.micronaut.data.exceptions.DataAccessException)
+    }
+
+    def "convertToPersistedValue uses converter map for MYSQL dialect"() {
+        given:
+        def persistedType = String
+        def delegatingConverter = Stub(VectorTypeConvertor) {
+            getPersistedType() >> persistedType
+            getDialect() >> Dialect.MYSQL
+            getName() >> "mysql-vector"
+            // entity -> persisted
+            convert(_, _) >> { Vector v, Class t ->
+                "mysql:${v.toDoubleArray().join(',')}"
+            }
+            // persisted -> entity (not used in this test)
+            convert(_, Class) >> { Object obj, Class target ->
+                Vector.of(9d, 9d)
+            }
+        }
+        def converter = new TestDoubleVectorConverter(["MYSQL": delegatingConverter])
+        def ctx = Stub(DialectConversionContext) {
+            getDialect() >> Dialect.MYSQL
+        }
+        def v = (DoubleVector) Vector.of(1d, 2d)
+
+        when:
+        def persisted = converter.convertToPersistedValue(v, ctx)
+
+        then:
+        persisted == "mysql:1.0,2.0"
     }
 }

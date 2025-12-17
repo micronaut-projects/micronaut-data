@@ -37,8 +37,7 @@ import java.util.Objects;
 public sealed interface Vector
     permits DoubleVector,
             FloatVector,
-            ByteVector,
-            IntVector {
+            ByteVector {
     String VALUES = "values";
 
     /**
@@ -72,22 +71,6 @@ public sealed interface Vector
      */
     @NonNull
     byte[] toByteArray();
-
-    /**
-     * Convert this vector to a new int array copy.
-     *
-     * @return a new int[] with the vector content
-     * @since 5.0.0
-     */
-    @NonNull
-    default int[] toIntegerArray() {
-        float[] f = toFloatArray();
-        int[] out = new int[f.length];
-        for (int i = 0; i < f.length; i++) {
-            out[i] = (int) f[i];
-        }
-        return out;
-    }
 
     /**
      * Create a vector from float values (defensive copy).
@@ -132,26 +115,10 @@ public sealed interface Vector
         if (allBytes(values)) {
             return new ByteVector(copyByte(values));
         }
-        if (allIntegers(values)) {
-            return new IntVector(copyInt(values));
-        }
         if (allFloats(values)) {
             return new FloatVector(copyFloat(values));
         }
         return new DoubleVector(copyDouble(values));
-    }
-
-    /**
-     * Create a vector from int values (defensive copy).
-     *
-     * @param values the int values to copy into the vector
-     * @return a new int-backed vector
-     * @since 5.0.0
-     */
-    @NonNull
-    static Vector of(int... values) {
-        Objects.requireNonNull(values, VALUES);
-        return new io.micronaut.data.model.vector.IntVector(Arrays.copyOf(values, values.length));
     }
 
     /**
@@ -177,15 +144,6 @@ public sealed interface Vector
         return true;
     }
 
-    private static boolean allIntegers(Collection<? extends Number> values) {
-        for (Number n : values) {
-            if (!(n instanceof Integer)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private static boolean allFloats(Collection<? extends Number> values) {
         for (Number n : values) {
             if (!(n instanceof Float)) {
@@ -200,15 +158,6 @@ public sealed interface Vector
         int i = 0;
         for (Number n : values) {
             out[i++] = n.byteValue();
-        }
-        return out;
-    }
-
-    private static int[] copyInt(Collection<? extends Number> values) {
-        int[] out = new int[values.size()];
-        int i = 0;
-        for (Number n : values) {
-            out[i++] = n.intValue();
         }
         return out;
     }

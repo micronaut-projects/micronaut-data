@@ -65,4 +65,5 @@ public interface VectorTypeConvertor<T> extends Named {
      * @since 5.0.0
      */
     Dialect getDialect();
+
 }

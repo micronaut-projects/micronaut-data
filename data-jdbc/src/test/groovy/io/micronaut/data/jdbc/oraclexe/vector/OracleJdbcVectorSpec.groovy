@@ -61,21 +61,6 @@ class OracleJdbcVectorSpec extends Specification implements OracleTestPropertyPr
         vec.toDoubleArray().toList() == data.toList()
     }
 
-    def "VECTOR_INT8 converts to Vector backed by int[] from int[]"() {
-        given:
-        int[] ints = [1, -2, 127, -128, 0] as int[]
-        VECTOR v = VECTOR.createVector(ints, OracleType.VECTOR_INT8)
-
-        when:
-        def result = converter.convert(v, Vector, ConversionContext.of(Argument.of(Vector)))
-
-        then:
-        result.present
-        def vec = result.get()
-        vec.type == Integer.TYPE
-        vec.toIntegerArray().toList() == ints.toList()
-    }
-
     def "VECTOR_BINARY converts to Vector backed by byte[] from byte[]"() {
         given:
         byte[] bytes = [1, 127, 0, -1, -128] as byte[]
@@ -88,7 +73,5 @@ class OracleJdbcVectorSpec extends Specification implements OracleTestPropertyPr
         result.present
         def vec = result.get()
         vec.type == Byte.TYPE
-        // byte[] maps to int[] with same numeric values
-        vec.toIntegerArray().toList() == bytes.collect { (int) it }
     }
 }
