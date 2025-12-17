@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeDef;
@@ -196,7 +195,7 @@ public enum DataType {
      * @param type The type
      * @return The data type
      */
-    public static DataType forType(@NonNull Class<?> type) {
+    public static DataType forType(Class<?> type) {
         Class<?> wrapper = ReflectionUtils.getWrapperType(Objects.requireNonNull(type, "The type cannot be null"));
         TypeDef td = wrapper.getAnnotation(TypeDef.class);
         if (td != null) {

@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
@@ -38,10 +37,10 @@ import java.util.List;
 @Internal
 final class DefaultParameterExpression<T> extends IParameterExpression<T> {
 
-    private final @NonNull Class<T> paramClass;
+    private final  Class<T> paramClass;
     private final @Nullable Object value;
 
-    public DefaultParameterExpression(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
+    public DefaultParameterExpression(Class<T> paramClass, @Nullable String name, @Nullable Object value) {
         super(new ClassExpressionType<>(paramClass), name);
         this.paramClass = paramClass;
         this.value = value;

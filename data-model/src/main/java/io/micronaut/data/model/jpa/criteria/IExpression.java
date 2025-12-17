@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import jakarta.persistence.criteria.Expression;
@@ -39,7 +38,7 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
     /**
      * @return The expression type
      */
-    @NonNull
+    
     ExpressionType<T> getExpressionType();
 
     @Override
@@ -48,43 +47,43 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
     }
 
     @Override
-    @NonNull
+    
     default Predicate isNull() {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Predicate isNotNull() {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Predicate in(Object... values) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Predicate in(Expression<?>... values) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Predicate in(Collection<?> values) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Predicate in(Expression<Collection<?>> values) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default <X> Expression<X> as(Class<X> type) {
         throw notSupportedOperation();
     }

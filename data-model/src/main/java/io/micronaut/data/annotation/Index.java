@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.annotation;
 
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -43,7 +42,6 @@ public @interface Index {
      * @return The name of the index
      */
     String name() default "";
-
 
     /**
      * (Required) The list of columns to be used to create an index.

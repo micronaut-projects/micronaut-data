@@ -17,7 +17,6 @@ package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
@@ -45,7 +44,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The root entity type
      */
-    @NonNull
+    
     Class<E> getRootEntity();
 
     /**
@@ -59,7 +58,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-    @NonNull
+    
     String getQuery();
 
     /**
@@ -67,7 +66,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-    @NonNull
+    
     String[] getExpandableQueryParts();
 
     /**
@@ -82,7 +81,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
-    @NonNull
+    
     Class<R> getResultType();
 
     /**
@@ -91,13 +90,13 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query result type
      */
     @Override
-    @NonNull
+    
     Argument<R> getResultArgument();
 
     /**
      * @return The result data type.
      */
-    @NonNull
+    
     DataType getResultDataType();
 
     /**
@@ -146,7 +145,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The parameter binding.
      */
-    @NonNull
+    
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
@@ -155,7 +154,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The all join paths
      * @since 4.8.1
      */
-    @NonNull
+    
     default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
@@ -203,7 +202,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query limit
      * @since 4.13
      */
-    @NonNull
+    
     default Limit getQueryLimit() {
         return Limit.UNLIMITED;
     }
@@ -212,7 +211,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The runtime sort
      * @since 4.13
      */
-    @NonNull
+    
     default Sort getSort() {
         return Sort.UNSORTED;
     }

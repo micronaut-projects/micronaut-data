@@ -70,10 +70,8 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        return queryBuilder.buildUpdate(
-            annotationMetadata,
-            new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues)
-        );
+        return queryBuilder.buildUpdate(annotationMetadata,
+            new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues));
     }
 
     @Override
@@ -147,9 +145,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     public PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
-            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
-            );
+            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
         }

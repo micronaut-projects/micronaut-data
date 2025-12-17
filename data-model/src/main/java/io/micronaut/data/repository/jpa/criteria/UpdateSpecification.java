@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaUpdate;
@@ -37,7 +36,7 @@ public interface UpdateSpecification<T> {
      * @param spec The predicate specification.
      * @return query specification.
      */
-    @NonNull
+    
     default UpdateSpecification<T> where(@Nullable PredicateSpecification<T> spec) {
         if (spec == null) {
             return this;
@@ -54,8 +53,8 @@ public interface UpdateSpecification<T> {
      * @return a {@link Predicate}
      */
     @Nullable
-    Predicate toPredicate(@NonNull Root<T> root,
-                          @NonNull CriteriaUpdate<?> query,
-                          @NonNull CriteriaBuilder criteriaBuilder);
+    Predicate toPredicate(Root<T> root,
+                           CriteriaUpdate<?> query,
+                           CriteriaBuilder criteriaBuilder);
 
 }

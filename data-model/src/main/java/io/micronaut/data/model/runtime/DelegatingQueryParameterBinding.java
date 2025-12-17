@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -43,7 +42,7 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     }
 
     @Override
-    @NonNull
+    
     public String getRequiredName() {
         return delegate.getRequiredName();
     }

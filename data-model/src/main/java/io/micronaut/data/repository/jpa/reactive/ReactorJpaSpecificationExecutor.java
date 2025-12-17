@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.reactive;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -37,19 +36,15 @@ import reactor.core.publisher.Mono;
 public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSpecificationExecutor<T> {
 
     @Override
-    @NonNull
     Mono<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
-    @NonNull
     Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
-    @NonNull
     Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
@@ -59,39 +54,30 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
     Mono<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     @Override
-    @NonNull
     Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     @Override
-    @NonNull
     Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     @Override
-    @NonNull
     Mono<Long> count(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Long> count(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable DeleteSpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
-    @NonNull
     Mono<Long> updateAll(@Nullable @io.micronaut.core.annotation.Nullable UpdateSpecification<T> spec);
 
 }

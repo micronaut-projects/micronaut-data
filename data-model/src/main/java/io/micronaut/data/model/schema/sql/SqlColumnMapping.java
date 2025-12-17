@@ -16,14 +16,12 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-
 
 /**
  * Represents a SQL database column mapped from persistent entity field.
@@ -192,7 +190,7 @@ public final class SqlColumnMapping {
      * @return the SQL type representation of this column
      */
     @SuppressWarnings("java:S3776")
-    public @NonNull String getSqlType(Dialect dialect) {
+    public  String getSqlType(Dialect dialect) {
         if (this.sqlType != null) {
             return this.sqlType;
         }

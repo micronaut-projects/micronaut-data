@@ -16,7 +16,6 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -61,7 +60,7 @@ public interface Association extends PersistentProperty {
      * The associated entity if any.
      * @return The associated entity
      */
-    @NonNull
+    
     PersistentEntity getAssociatedEntity();
 
     /**
