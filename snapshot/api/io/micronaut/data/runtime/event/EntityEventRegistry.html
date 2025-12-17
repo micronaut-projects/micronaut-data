@@ -91,7 +91,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.processor.AnnotationProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>,<wbr>io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&gt;</code>, <code>io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;</code>, <code>io.micronaut.core.order.Ordered</code>, <code><a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EventListener.html" title="class or interface in java.util" class="external-link">EventListener</a></code></dd>
+<dd><code>io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;</code>, <code>io.micronaut.core.order.Ordered</code>, <code><a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code>, <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/EventListener.html" title="class or interface in java.util" class="external-link">EventListener</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
@@ -191,9 +191,9 @@ implements <a href="../../event/EntityEventListener.html" title="interface in io
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A pre-update hook.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process</a><wbr>(io.micronaut.inject.BeanDefinition&lt;?&gt;&nbsp;beanDefinition,
- io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;B&gt;&nbsp;void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process</a><wbr>(io.micronaut.inject.BeanDefinition&lt;B&gt;&nbsp;beanDefinition,
+ io.micronaut.inject.ExecutableMethod&lt;B,<wbr>?&gt;&nbsp;method)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;entity,
@@ -389,11 +389,9 @@ implements <a href="../../event/EntityEventListener.html" title="interface in io
 <li>
 <section class="detail" id="process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)">
 <h3>process</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">process</span><wbr><span class="parameters">(io.micronaut.inject.BeanDefinition&lt;?&gt;&nbsp;beanDefinition,
- io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;B&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">process</span><wbr><span class="parameters">(io.micronaut.inject.BeanDefinition&lt;B&gt;&nbsp;beanDefinition,
+ io.micronaut.inject.ExecutableMethod&lt;B,<wbr>?&gt;&nbsp;method)</span></div>
 <dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>process</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.processor.AnnotationProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>,<wbr>io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&gt;</code></dd>
 <dt>Specified by:</dt>
 <dd><code>process</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;</code></dd>
 </dl>
