@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
