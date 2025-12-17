@@ -234,7 +234,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         List<String> dropStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            String sql = "DROP " + getTableName(entity);
+            String sql = "DROP VIEW " + getTableName(entity);
             dropStatements.add(sql);
             return dropStatements.toArray(new String[0]);
         }
@@ -1359,7 +1359,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private void join(StringBuilder sb,
                       String joinType,
-                      @Nullable QueryState queryState,
+                      QueryState queryState,
                       PersistentEntity associatedEntity,
                       PersistentEntity associationOwner,
                       String leftTableAlias,
