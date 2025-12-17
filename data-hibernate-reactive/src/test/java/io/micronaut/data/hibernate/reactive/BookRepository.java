@@ -119,7 +119,7 @@ public interface BookRepository extends ReactorPageableRepository<Book, Long>, R
     Flux<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    Flux<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    Flux<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
     Flux<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
