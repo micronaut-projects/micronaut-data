@@ -43,7 +43,7 @@ public interface MongoQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The optional result
      */
-    Optional<E> findOne(@Nullable Bson filter);
+    Optional<E> findOne(@Nullable @io.micronaut.core.annotation.Nullable Bson filter);
 
     /**
      * Finds one result.
@@ -60,7 +60,7 @@ public interface MongoQueryExecutor<E> {
      * @return The records
      */
     @NonNull
-    List<E> findAll(@Nullable Bson filter);
+    List<E> findAll(@Nullable @io.micronaut.core.annotation.Nullable Bson filter);
 
     /**
      * Finds all results.
@@ -79,7 +79,7 @@ public interface MongoQueryExecutor<E> {
      * @return The page
      */
     @NonNull
-    Page<E> findAll(@Nullable Bson filter, @NonNull Pageable pageable);
+    Page<E> findAll(@Nullable @io.micronaut.core.annotation.Nullable Bson filter, @NonNull Pageable pageable);
 
     /**
      * Finds a page of records.

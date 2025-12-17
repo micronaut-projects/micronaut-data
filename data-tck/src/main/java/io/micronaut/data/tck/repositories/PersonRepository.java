@@ -93,6 +93,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     int count(String name);
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     Person findByName(String name);
 
     Long deleteByNameLike(String name);
@@ -186,7 +187,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     CursoredPage<Person> retrieve(@NonNull Pageable pageable);
 
     @NonNull
-    CursoredPage<Person> findAll(@Nullable PredicateSpecification<Person> spec, CursoredPageable pageable);
+    CursoredPage<Person> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<Person> spec, CursoredPageable pageable);
 
     final class Specifications {
 

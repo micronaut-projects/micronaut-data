@@ -116,22 +116,22 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     public abstract List<Book> listNativeBooks(String arg0);
 
     @Query(value = "select * from book b where b.title in (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleInCollection(@Nullable Collection<String> arg0);
+    public abstract List<Book> listNativeBooksWithTitleInCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title IN (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableListAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
+    public abstract List<Book> listNativeBooksNullableListAsStringArray(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
 
     @Query("UPDATE book SET author_id = :author WHERE id = :id")
     public abstract long updateAuthorCustom(@Parameter("id") Long id, @Parameter("author") Author author);

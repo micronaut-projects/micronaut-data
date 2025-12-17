@@ -40,8 +40,10 @@ public class ArraysEntity {
     @TypeDef(type = DataType.SHORT_ARRAY)
     private Collection<Short> shortArrayCollection;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private Integer[] integerArray;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private int[] integerPrimitiveArray;
     @Nullable
     @TypeDef(type = DataType.INTEGER_ARRAY)

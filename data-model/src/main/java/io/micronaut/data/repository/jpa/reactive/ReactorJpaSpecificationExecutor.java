@@ -38,60 +38,60 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
 
     @Override
     @NonNull
-    Mono<T> findOne(@Nullable QuerySpecification<T> spec);
+    Mono<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<T> findOne(@Nullable PredicateSpecification<T> spec);
+    Mono<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
     @NonNull
-    Flux<T> findAll(@Nullable QuerySpecification<T> spec);
+    Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
     @NonNull
-    Flux<T> findAll(@Nullable PredicateSpecification<T> spec);
+    Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
-    Mono<Page<T>> findAll(@Nullable QuerySpecification<T> spec, Pageable pageable);
+    Mono<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Pageable pageable);
 
     @Override
-    Mono<Page<T>> findAll(@Nullable PredicateSpecification<T> spec, Pageable pageable);
-
-    @Override
-    @NonNull
-    Flux<T> findAll(@Nullable QuerySpecification<T> spec, Sort sort);
+    Mono<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     @Override
     @NonNull
-    Flux<T> findAll(@Nullable PredicateSpecification<T> spec, Sort sort);
+    Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     @Override
     @NonNull
-    Mono<Long> count(@Nullable QuerySpecification<T> spec);
+    Flux<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     @Override
     @NonNull
-    Mono<Long> count(@Nullable PredicateSpecification<T> spec);
+    Mono<Long> count(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Boolean> exists(@Nullable QuerySpecification<T> spec);
+    Mono<Long> count(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Boolean> exists(@Nullable PredicateSpecification<T> spec);
+    Mono<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Long> deleteAll(@Nullable DeleteSpecification<T> spec);
+    Mono<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Long> deleteAll(@Nullable PredicateSpecification<T> spec);
+    Mono<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable DeleteSpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Long> updateAll(@Nullable UpdateSpecification<T> spec);
+    Mono<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
+
+    @Override
+    @NonNull
+    Mono<Long> updateAll(@Nullable @io.micronaut.core.annotation.Nullable UpdateSpecification<T> spec);
 
 }

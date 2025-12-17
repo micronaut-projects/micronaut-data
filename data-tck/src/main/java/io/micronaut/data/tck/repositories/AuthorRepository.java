@@ -90,6 +90,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long>, JpaSpeci
     Author searchByName(String name);
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     @Join("books")
     Author retrieveByName(String name);
 
@@ -129,7 +130,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long>, JpaSpeci
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<AuthorDtoWithBooks> readByNameIsNotNull();
 
-    void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
+    void updateNickname(@Id Long id, @Parameter("nickName") @Nullable @io.micronaut.core.annotation.Nullable String nickName);
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Page<Author> findAll(Pageable pageable);

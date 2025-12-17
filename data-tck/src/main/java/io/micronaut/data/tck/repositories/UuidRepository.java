@@ -40,5 +40,5 @@ public interface UuidRepository extends CrudRepository<UuidEntity, UUID> {
         value = "select * from uuid_entity where :param is null",
         nativeQuery = true
     )
-    Collection<UuidEntity> findByNullableValue(@Parameter("param") @Nullable UUID param);
+    Collection<UuidEntity> findByNullableValue(@Parameter("param") @Nullable @io.micronaut.core.annotation.Nullable UUID param);
 }

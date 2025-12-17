@@ -71,13 +71,13 @@ public abstract class BookRepository implements PageableRepository<Book, String>
 
     public abstract List<Book> findByAuthorName(String name);
 
-    public abstract List<Book> listByTitleIn(@Nullable Collection<String> arg0);
+    public abstract List<Book> listByTitleIn(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
-    public abstract List<Book> listByTitleIn(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listByTitleIn(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
-    public abstract List<Book> listByTitleIn(@Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
+    public abstract List<Book> listByTitleIn(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
 
-    public abstract List<Book> findByTitleIn(@Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
+    public abstract List<Book> findByTitleIn(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
 
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();

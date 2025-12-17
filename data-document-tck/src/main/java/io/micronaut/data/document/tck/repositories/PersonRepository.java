@@ -49,6 +49,7 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
     List<Person> updatePeople(List<Person> people);
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     Person findByName(String name);
 
     void updatePerson(@Id String id, @Parameter("name") String name);

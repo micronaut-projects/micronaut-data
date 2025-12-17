@@ -39,17 +39,22 @@ public class Train {
 
     private String name;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private String model;
     private int capacity;
     private double speed;
     private boolean electric;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private LocalDateTime departureTime;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private Instant createdAt;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private LocalDate departureDate;
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private LocalTime departureTimeOnly;
 
     @Embedded
@@ -61,7 +66,7 @@ public class Train {
     public Train() {
     }
 
-    public Train(String name, @Nullable String model, int capacity, double speed, boolean electric) {
+    public Train(String name, @Nullable @io.micronaut.core.annotation.Nullable String model, int capacity, double speed, boolean electric) {
         this.name = name;
         this.model = model;
         this.capacity = capacity;
@@ -69,7 +74,7 @@ public class Train {
         this.electric = electric;
     }
 
-    public Train(String name, @Nullable String model, int capacity, double speed, boolean electric, LocalDateTime departureTime, Instant createdAt) {
+    public Train(String name, @Nullable @io.micronaut.core.annotation.Nullable String model, int capacity, double speed, boolean electric, LocalDateTime departureTime, Instant createdAt) {
         this.name = name;
         this.model = model;
         this.capacity = capacity;

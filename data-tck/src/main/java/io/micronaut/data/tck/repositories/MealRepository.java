@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 public interface MealRepository extends CrudRepository<@Valid Meal, Long> {
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     @Join("foods")
     Meal searchById(Long uuid);
 

@@ -31,7 +31,7 @@ public interface AuthorRepository extends CrudRepository<Author, String> {
 
     Author findByName(String name);
 
-    void updateNickname(@Id String id, @Parameter("nickName") @Nullable String nickName);
+    void updateNickname(@Id String id, @Parameter("nickName") @Nullable @io.micronaut.core.annotation.Nullable String nickName);
 
     @NonNull
     @Override
