@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import java.time.LocalDate;
 import java.util.List;
 
+// Extra Nullable because of Javac bug - compiled type annotations not recognized - fixed in Java 22
 @MappedEntity
 public class Person {
     @Id
@@ -35,9 +36,11 @@ public class Person {
     private boolean enabled = true;
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private LocalDate dateOfBirth;
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private List<Address> addresses;
 
     public String getId() {

@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 
+// Extra Nullable because of Javac bug - compiled type annotations not recognized - fixed in Java 22
 @MappedEntity
 public class JsonEntity {
 
@@ -17,20 +18,24 @@ public class JsonEntity {
     @TypeDef(type = DataType.JSON)
     @JsonRepresentation(type = JsonDataType.DEFAULT)
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private SampleData jsonDefault;
 
     @TypeDef(type = DataType.JSON)
     @JsonRepresentation(type = JsonDataType.BLOB)
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private SampleData jsonBlob;
 
     @TypeDef(type = DataType.JSON)
     @JsonRepresentation(type = JsonDataType.STRING)
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private SampleData jsonString;
 
     @TypeDef(type = DataType.JSON)
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private Iterable<String> values;
 
     public Long getId() {
