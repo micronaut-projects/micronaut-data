@@ -16,7 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 

@@ -12,7 +12,7 @@ abstract class FooRepository : CrudRepository<Foo, Long> {
 
     @Join(value = "foo", type = Join.Type.LEFT_FETCH)
     @Join(value = "bar", type = Join.Type.LEFT_FETCH)
-    abstract override fun findById(id: Long?): Optional<Foo>
+    abstract override fun findById(id: Long): Optional<Foo>
 
     abstract fun update(@Id id: Long, foo: Foo)
 

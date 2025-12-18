@@ -32,7 +32,6 @@ dependencies {
     testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation libs.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql

@@ -17,7 +17,7 @@ package io.micronaut.data.tck.tests
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder

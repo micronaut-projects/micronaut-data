@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.operations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;

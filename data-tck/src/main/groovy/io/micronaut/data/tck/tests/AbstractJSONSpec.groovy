@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.tck.tests
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.entities.Discount
 import io.micronaut.data.tck.entities.JsonEntity
@@ -28,6 +27,7 @@ import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+import tools.jackson.databind.ObjectMapper
 
 import java.nio.charset.Charset
 import java.time.Duration

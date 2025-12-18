@@ -16,7 +16,7 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * The operations capable of supporting reactive access.

@@ -8,7 +8,6 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.junit.Test
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -21,7 +20,6 @@ class SampleHttpSpec extends Specification implements PostgresTestPropertyProvid
     @Inject
     ApplicationContext context
 
-    @Test
     void testWriteRead() {
         when:
             SampleEntity se = new SampleEntity(null, "data")

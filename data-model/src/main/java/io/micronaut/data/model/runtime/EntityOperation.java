@@ -16,8 +16,8 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.aop.InvocationContext;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 
 /**

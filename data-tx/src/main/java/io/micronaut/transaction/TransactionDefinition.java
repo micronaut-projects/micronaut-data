@@ -16,8 +16,8 @@
 package io.micronaut.transaction;
 
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 

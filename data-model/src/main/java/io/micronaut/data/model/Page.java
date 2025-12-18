@@ -18,15 +18,15 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Collections;
 import java.util.List;

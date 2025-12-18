@@ -1,6 +1,6 @@
 package io.micronaut.data.runtime.event
 
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.annotation.event.*
 import io.micronaut.data.event.EntityEventContext
 import io.micronaut.data.event.EntityEventListener

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.processor.mappers.MappedEntityMapper;

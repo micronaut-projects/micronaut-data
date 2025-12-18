@@ -17,7 +17,7 @@ package io.micronaut.data.mongodb.operations.options;
 
 import com.mongodb.client.model.Collation;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.bson.conversions.Bson;
 
 /**

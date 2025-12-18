@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.multitenancy;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The tenant resolver for multi-tenancy mode DATASOURCE.

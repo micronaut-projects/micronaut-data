@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.event.PostUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;

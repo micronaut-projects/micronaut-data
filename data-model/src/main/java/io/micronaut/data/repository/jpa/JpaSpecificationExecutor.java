@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.repository.jpa;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -47,7 +47,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    Optional<T> findOne(@Nullable QuerySpecification<T> spec);
+    Optional<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
      * Returns a single entity matching the given {@link PredicateSpecification}.
@@ -55,7 +55,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    Optional<T> findOne(@Nullable PredicateSpecification<T> spec);
+    Optional<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
      * Returns all entities matching the given {@link QuerySpecification}.
@@ -64,7 +64,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    List<T> findAll(@Nullable QuerySpecification<T> spec);
+    List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
      * Returns all entities matching the given {@link PredicateSpecification}.
@@ -73,7 +73,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    List<T> findAll(@Nullable PredicateSpecification<T> spec);
+    List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
      * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
@@ -83,7 +83,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return a page
      */
     @NonNull
-    Page<T> findAll(@Nullable QuerySpecification<T> spec, Pageable pageable);
+    Page<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Pageable pageable);
 
     /**
      * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
@@ -93,7 +93,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return a page
      */
     @NonNull
-    Page<T> findAll(@Nullable PredicateSpecification<T> spec, Pageable pageable);
+    Page<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     /**
      * Returns all entities matching the given {@link QuerySpecification} and {@link Sort}.
@@ -103,7 +103,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    List<T> findAll(@Nullable QuerySpecification<T> spec, Sort sort);
+    List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     /**
      * Returns all entities matching the given {@link QuerySpecification} and {@link Sort}.
@@ -113,7 +113,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    List<T> findAll(@Nullable PredicateSpecification<T> spec, Sort sort);
+    List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
      * Find all using build criteria query.
@@ -125,7 +125,7 @@ public interface JpaSpecificationExecutor<T> {
      * @since 3.5.0
      */
     @NonNull
-    <R> List<R> findAll(@Nullable CriteriaQueryBuilder<R> builder);
+    <R> List<R> findAll(@Nullable @io.micronaut.core.annotation.Nullable CriteriaQueryBuilder<R> builder);
 
     /**
      * Find one using build criteria query.
@@ -137,7 +137,7 @@ public interface JpaSpecificationExecutor<T> {
      * @since 3.5.0
      */
     @NonNull
-    <R> R findOne(@Nullable CriteriaQueryBuilder<R> builder);
+    <R> R findOne(@Nullable @io.micronaut.core.annotation.Nullable CriteriaQueryBuilder<R> builder);
 
     /**
      * Returns the number of instances that the given {@link QuerySpecification} will return.
@@ -145,7 +145,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    long count(@Nullable QuerySpecification<T> spec);
+    long count(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
      * Returns the number of instances that the given {@link QuerySpecification} will return.
@@ -153,7 +153,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    long count(@Nullable PredicateSpecification<T> spec);
+    long count(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
      * Returns whether an instance was found for the given {@link QuerySpecification}.
@@ -162,7 +162,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    boolean exists(@Nullable QuerySpecification<T> spec);
+    boolean exists(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
      * Returns whether an instance was found for the given {@link PredicateSpecification}.
@@ -171,7 +171,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    boolean exists(@Nullable PredicateSpecification<T> spec);
+    boolean exists(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
      * Deletes all entities matching the given {@link DeleteSpecification}.
@@ -179,7 +179,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    long deleteAll(@Nullable DeleteSpecification<T> spec);
+    long deleteAll(@Nullable @io.micronaut.core.annotation.Nullable DeleteSpecification<T> spec);
 
     /**
      * Deletes all entities matching the given {@link PredicateSpecification}.
@@ -187,7 +187,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    long deleteAll(@Nullable PredicateSpecification<T> spec);
+    long deleteAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
      * Delete all entities using build criteria query.
@@ -196,7 +196,7 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
      */
-    long deleteAll(@Nullable CriteriaDeleteBuilder<T> builder);
+    long deleteAll(@Nullable @io.micronaut.core.annotation.Nullable CriteriaDeleteBuilder<T> builder);
 
     /**
      * Updates all entities matching the given {@link UpdateSpecification}.
@@ -204,7 +204,7 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The update specification
      * @return the number records updated.
      */
-    long updateAll(@Nullable UpdateSpecification<T> spec);
+    long updateAll(@Nullable @io.micronaut.core.annotation.Nullable UpdateSpecification<T> spec);
 
     /**
      * Updates all entities using build criteria query.
@@ -213,5 +213,5 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
      */
-    long updateAll(@Nullable CriteriaUpdateBuilder<T> builder);
+    long updateAll(@Nullable @io.micronaut.core.annotation.Nullable CriteriaUpdateBuilder<T> builder);
 }

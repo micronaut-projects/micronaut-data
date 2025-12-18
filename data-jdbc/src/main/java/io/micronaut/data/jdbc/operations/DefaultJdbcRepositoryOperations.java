@@ -21,8 +21,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
@@ -1017,8 +1017,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return null;
     }
 
-    @NonNull
-    private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
+    private ResultConsumer.@NonNull Context<ResultSet> newMappingContext(ResultSet rs) {
         return new ResultConsumer.Context<>() {
             @Override
             public ResultSet getResultSet() {

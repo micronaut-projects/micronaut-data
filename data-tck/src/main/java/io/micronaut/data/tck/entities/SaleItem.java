@@ -16,7 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.DataType;
 

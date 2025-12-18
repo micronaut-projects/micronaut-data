@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.repeatable.JoinSpecifications
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -11,7 +10,7 @@ import java.util.*
 @JdbcRepository(dialect = Dialect.H2)
 interface StudentRepository : CrudRepository<Student, Long> {
     @Join("courses")
-    override fun findById(@NonNull id: Long?): Optional<Student>
+    override fun findById(id: Long): Optional<Student>
 
     @JoinSpecifications(
             Join(value = "courses", type = Join.Type.LEFT_FETCH),

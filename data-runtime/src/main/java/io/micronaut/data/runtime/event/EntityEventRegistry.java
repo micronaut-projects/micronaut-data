@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.event;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
@@ -283,7 +283,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
     }
 
     @Override
-    public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+    public <B> void process(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
         final Argument[] arguments = method.getArguments();
         if (arguments.length == 1) {
             final List<Class<? extends Annotation>> eventTypes = method

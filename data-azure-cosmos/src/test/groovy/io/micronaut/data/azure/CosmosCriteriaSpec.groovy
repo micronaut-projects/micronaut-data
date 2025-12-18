@@ -18,7 +18,7 @@ package io.micronaut.data.azure
 import groovy.transform.CompileStatic
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder
