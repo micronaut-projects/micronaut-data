@@ -16,7 +16,8 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.vector.DoubleVector;
 
 /**
@@ -27,5 +28,5 @@ import io.micronaut.data.model.vector.DoubleVector;
  * @since 5.0.0
  */
 @Indexed(DoubleVectorAttributeConverter.class)
-public interface DoubleVectorAttributeConverter<X> extends SqlAttributeConverter<DoubleVector, X> {
+public interface DoubleVectorAttributeConverter<X> extends AttributeConverter<DoubleVector, X>, SqlColumnDefinitionProvider {
 }

@@ -16,7 +16,8 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.vector.FloatVector;
 
 /**
@@ -27,5 +28,5 @@ import io.micronaut.data.model.vector.FloatVector;
  * @since 5.0.0
  */
 @Indexed(FloatVectorAttributeConverter.class)
-public interface FloatVectorAttributeConverter<X> extends SqlAttributeConverter<FloatVector, X> {
+public interface FloatVectorAttributeConverter<X> extends AttributeConverter<FloatVector, X>, SqlColumnDefinitionProvider {
 }

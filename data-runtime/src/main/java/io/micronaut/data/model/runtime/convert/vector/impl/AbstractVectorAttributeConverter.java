@@ -19,14 +19,15 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.runtime.convert.ConverterResultReader;
+import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
-import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
+import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.core.type.Argument;
 
 import java.util.Map;
-import java.util.OptionalInt;
 
 /**
  * Base attribute converter for vector types that delegates conversion to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor}.
@@ -36,7 +37,7 @@ import java.util.OptionalInt;
  * @author Nemanja Mikic
  * @since 5.0.0
  */
-abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements SqlAttributeConverter<X, Y> {
+abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
 
     protected final Map<String, VectorTypeConvertor<?>> converterMap;
     private final Class<X> type;
@@ -93,12 +94,17 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     }
 
     @Override
-    public Object readFromResultSet(ConversionContext conversionContext, ConverterResultReader<Object, Object> cr, Object resultSet, Object columnName) {
+    public <RS, IDX> Object readFromResultSet(ConversionContext conversionContext,
+                                                ResultReader<RS, IDX> reader,
+                                                RS resultSet,
+                                                IDX columnName) {
         Class<?> persistedType = getPersistedType(conversionContext);
         if (persistedType == null) {
             return null;
         }
-        return cr.readConverter(resultSet, columnName, persistedType);
+        @SuppressWarnings("unchecked")
+        Class<Object> type = (Class<Object>) persistedType;
+        return reader.getRequiredValue(resultSet, columnName, type);
     }
 
     protected static @Nullable Dialect extractDialect(ConversionContext context) {
@@ -111,27 +117,38 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     abstract String getOracleType();
 
     @Override
-    public String getColumnDefinition(OptionalInt len, Dialect dialect) {
-        return switch (dialect) {
+    public boolean supports(Argument<?> argument) {
+        return type.isAssignableFrom(argument.getType());
+    }
+
+    @Override
+    public String getColumnDefinition(Argument<?> argument, SqlColumnDefinitionProvider.DatabaseType databaseType) {
+        // Extract dimension from annotations if present: prefer jakarta.persistence.Column(length)
+        int dim = argument.getAnnotationMetadata()
+            .intValue("jakarta.persistence.Column", "length")
+            .orElse(-1);
+        boolean hasLen = dim > 0;
+
+        return switch (databaseType) {
             case ORACLE -> {
-                if (len.isPresent()) {
-                    yield "VECTOR(%d,%s)".formatted(len.getAsInt(), getOracleType());
+                if (hasLen) {
+                    yield "VECTOR(%d,%s)".formatted(dim, getOracleType());
                 }
                 yield "VECTOR(*,%s)".formatted(getOracleType());
             }
             case POSTGRES -> {
-                if (len.isPresent()) {
-                    yield "vector(%d)".formatted(len.getAsInt());
+                if (hasLen) {
+                    yield "vector(%d)".formatted(dim);
                 }
                 yield "vector";
             }
             case MYSQL -> {
-                if (len.isPresent()) {
-                    yield "VECTOR(%d)".formatted(len.getAsInt());
+                if (hasLen) {
+                    yield "VECTOR(%d)".formatted(dim);
                 }
                 yield "VECTOR";
             }
-            default -> "VARCHAR(255)"; // Fallback for dialects without native vector type to avoid schema generation failure
+            default -> "VARCHAR(255)"; // Fallback for non-SQL or unsupported types to avoid schema generation failure
         };
     }
 }

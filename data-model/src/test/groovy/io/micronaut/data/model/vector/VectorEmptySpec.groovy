@@ -16,7 +16,6 @@ class VectorEmptySpec extends Specification {
         v.type == Double.TYPE
         v.toDoubleArray().length == 0
         v.toFloatArray().length == 0
-        v.toIntegerArray().length == 0
         v.toByteArray().length == 0
     }
 
@@ -30,23 +29,6 @@ class VectorEmptySpec extends Specification {
         then:
         v instanceof FloatVector
         v.type == Float.TYPE
-        v.toFloatArray().length == 0
-        v.toDoubleArray().length == 0
-        v.toIntegerArray().length == 0
-        v.toByteArray().length == 0
-    }
-
-    void "of(empty int[]) yields empty IntVector and conversions are empty"() {
-        given:
-        int[] arr = new int[0]
-
-        when:
-        Vector v = Vector.of(arr)
-
-        then:
-        v instanceof IntVector
-        v.type == Integer.TYPE
-        v.toIntegerArray().length == 0
         v.toFloatArray().length == 0
         v.toDoubleArray().length == 0
         v.toByteArray().length == 0
@@ -65,7 +47,6 @@ class VectorEmptySpec extends Specification {
         v.toByteArray().length == 0
         v.toFloatArray().length == 0
         v.toDoubleArray().length == 0
-        v.toIntegerArray().length == 0
     }
 
     void "of(empty collection) yields empty DoubleVector by default"() {
@@ -80,14 +61,13 @@ class VectorEmptySpec extends Specification {
         v.type == Double.TYPE
         v.toDoubleArray().length == 0
         v.toFloatArray().length == 0
-        v.toIntegerArray().length == 0
         v.toByteArray().length == 0
     }
 
-    void "collection type inference: all Byte -> ByteVector; all Integer -> IntVector; all Float -> FloatVector; mixed -> DoubleVector"() {
+    void "collection type inference: all Byte -> ByteVector; all Integer -> DoubleVector; all Float -> FloatVector; mixed -> DoubleVector"() {
         expect:
         Vector.of(([1 as byte, 2 as byte, 3 as byte] as List<Byte>)).class == ByteVector
-        Vector.of(([1, 2, 3] as List<Integer>)).class == IntVector
+        Vector.of(([1, 2, 3] as List<Integer>)).class == DoubleVector
         Vector.of(([1f, 2f, 3f] as List<Float>)).class == FloatVector
         Vector.of(([1 as byte, 2, 3f, 4d] as List<Number>)).class == DoubleVector
     }
@@ -101,12 +81,6 @@ class VectorEmptySpec extends Specification {
 
         when:
         Vector.of((float[]) null)
-
-        then:
-        thrown(NullPointerException)
-
-        when:
-        Vector.of((int[]) null)
 
         then:
         thrown(NullPointerException)

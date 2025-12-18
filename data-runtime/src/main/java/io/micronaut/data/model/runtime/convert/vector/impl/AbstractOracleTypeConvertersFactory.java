@@ -42,8 +42,7 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return switch (adapter.getKind()) {
             case FLOAT64 -> Optional.of(adapter.toDoubleArray());
             case FLOAT32 -> Optional.of(toDouble(adapter.toFloatArray()));
-            case INT8 -> Optional.of(toDouble(adapter.toIntArray()));
-            case BINARY -> Optional.of(toDouble(adapter.toByteArray()));
+            case BINARY, INT8 -> Optional.of(toDouble(adapter.toByteArray()));
         };
     }
 
@@ -51,24 +50,13 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return switch (adapter.getKind()) {
             case FLOAT32 -> Optional.of(adapter.toFloatArray());
             case FLOAT64 -> Optional.of(toFloat(adapter.toDoubleArray()));
-            case INT8 -> Optional.of(toFloat(adapter.toIntArray()));
-            case BINARY -> Optional.of(toFloat(adapter.toByteArray()));
-        };
-    }
-
-    protected static Optional<int[]> vectorToIntArray(OracleVectorAdapter adapter) {
-        return switch (adapter.getKind()) {
-            case INT8 -> Optional.of(adapter.toIntArray());
-            case FLOAT32 -> Optional.of(toInt(adapter.toFloatArray()));
-            case FLOAT64 -> Optional.of(toInt(adapter.toDoubleArray()));
-            case BINARY -> Optional.of(toInt(adapter.toByteArray()));
+            case BINARY, INT8 -> Optional.of(toFloat(adapter.toByteArray()));
         };
     }
 
     protected static Optional<byte[]> vectorToByteArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
-            case BINARY -> Optional.of(adapter.toByteArray());
-            case INT8 -> Optional.of(toByte(adapter.toIntArray()));
+            case BINARY, INT8 -> Optional.of(adapter.toByteArray());
             case FLOAT32 -> Optional.of(toByte(adapter.toFloatArray()));
             case FLOAT64 -> Optional.of(toByte(adapter.toDoubleArray()));
         };
@@ -174,10 +162,6 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return Arrays.toString(arr);
     }
 
-    protected static String toOracleText(int[] arr) {
-        return Arrays.toString(arr);
-    }
-
     protected static String toOracleText(byte[] arr) {
         return Arrays.toString(arr);
     }
@@ -206,14 +190,6 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
-    protected static double[] toDouble(int[] ints) {
-        double[] out = new double[ints.length];
-        for (int i = 0; i < ints.length; i++) {
-            out[i] = ints[i];
-        }
-        return out;
-    }
-
     protected static double[] toDouble(byte[] b) {
         double[] out = new double[b.length];
         for (int i = 0; i < b.length; i++) {
@@ -230,50 +206,10 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
-    protected static float[] toFloat(int[] ints) {
-        float[] out = new float[ints.length];
-        for (int i = 0; i < ints.length; i++) {
-            out[i] = ints[i];
-        }
-        return out;
-    }
-
     protected static float[] toFloat(byte[] b) {
         float[] out = new float[b.length];
         for (int i = 0; i < b.length; i++) {
             out[i] = b[i];
-        }
-        return out;
-    }
-
-    protected static int[] toInt(float[] f) {
-        int[] out = new int[f.length];
-        for (int i = 0; i < f.length; i++) {
-            out[i] = (int) f[i];
-        }
-        return out;
-    }
-
-    protected static int[] toInt(double[] d) {
-        int[] out = new int[d.length];
-        for (int i = 0; i < d.length; i++) {
-            out[i] = (int) d[i];
-        }
-        return out;
-    }
-
-    protected static int[] toInt(byte[] b) {
-        int[] out = new int[b.length];
-        for (int i = 0; i < b.length; i++) {
-            out[i] = b[i];
-        }
-        return out;
-    }
-
-    protected static byte[] toByte(int[] ints) {
-        byte[] out = new byte[ints.length];
-        for (int i = 0; i < ints.length; i++) {
-            out[i] = (byte) ints[i];
         }
         return out;
     }
@@ -314,8 +250,6 @@ public abstract class AbstractOracleTypeConvertersFactory {
         float[] toFloatArray();
 
         double[] toDoubleArray();
-
-        int[] toIntArray();
 
         byte[] toByteArray();
     }

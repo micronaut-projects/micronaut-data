@@ -38,6 +38,7 @@ import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
+import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -81,6 +82,7 @@ public class SchemaGenerator {
     private final Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap;
     private final PropertyPlaceholderResolver propertyPlaceholderResolver;
     private final AttributeConverterRegistry attributeConverterRegistry;
+    private final List<SqlColumnDefinitionProvider> columnDefinitionProviders;
 
     /**
      * Constructors a schema generator for the given configurations.
@@ -90,12 +92,14 @@ public class SchemaGenerator {
      * @param sqlTableMappingValidators   The list of {@link SqlTableMappingValidator} instances
      * @param environment                 The environment
      * @param attributeConverterRegistry  The attribute converter registry.
+     * @param columnDefinitionProviders   Providers of vendor-specific SQL column definitions for OBJECT types
      */
     public SchemaGenerator(List<DataJdbcConfiguration> configurations,
                            JdbcSchemaHandler schemaHandler,
                            List<SqlTableMappingValidator> sqlTableMappingValidators,
                            Environment environment,
-                           AttributeConverterRegistry attributeConverterRegistry) {
+                           AttributeConverterRegistry attributeConverterRegistry,
+                           List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
         this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
@@ -108,6 +112,7 @@ public class SchemaGenerator {
             dialectSqlTableMappingValidatorMap.put(dialect, sqlTableMappingValidator);
         }
         this.attributeConverterRegistry = attributeConverterRegistry;
+        this.columnDefinitionProviders = columnDefinitionProviders == null ? Collections.emptyList() : columnDefinitionProviders;
     }
 
     /**
@@ -183,11 +188,11 @@ public class SchemaGenerator {
         }
     }
 
-    private static void generate(Connection connection,
-                                 DataJdbcConfiguration configuration,
-                                 PropertyPlaceholderResolver propertyPlaceholderResolver,
-                                 PersistentEntity[] entities,
-                                 AttributeConverterRegistry attributeConverterRegistry) throws SQLException {
+    private void generate(Connection connection,
+                          DataJdbcConfiguration configuration,
+                          PropertyPlaceholderResolver propertyPlaceholderResolver,
+                          PersistentEntity[] entities,
+                          AttributeConverterRegistry attributeConverterRegistry) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
@@ -207,7 +212,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(attributeConverterRegistry, entities));
+                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(attributeConverterRegistry, columnDefinitionProviders, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }
@@ -240,7 +245,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(attributeConverterRegistry, entities, dialect);
+                    String[] sql = builder.buildCreateTableStatements(attributeConverterRegistry, entities, dialect, columnDefinitionProviders);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -263,11 +268,11 @@ public class SchemaGenerator {
         }
     }
 
-    private static void validate(Connection connection,
-                                 DataJdbcConfiguration configuration,
-                                 PersistentEntity[] entities,
-                                 Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
-                                 AttributeConverterRegistry attributeConverterRegistry) throws SQLException {
+    private void validate(Connection connection,
+                          DataJdbcConfiguration configuration,
+                          PersistentEntity[] entities,
+                          Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
+                          AttributeConverterRegistry attributeConverterRegistry) throws SQLException {
         Dialect dialect = configuration.getDialect();
         // Filter out entities that use unsupported types for the current dialect (e.g. VECTOR on non-Oracle)
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
@@ -278,7 +283,7 @@ public class SchemaGenerator {
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
-            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, entity, dialect);
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, columnDefinitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();

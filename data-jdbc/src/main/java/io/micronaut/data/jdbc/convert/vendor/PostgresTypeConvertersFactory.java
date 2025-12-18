@@ -63,7 +63,6 @@ final class PostgresTypeConvertersFactory {
         return (vector, targetType, context) -> Optional.of(toPgVector(vector.toFloatArray()));
     }
 
-
     @Prototype
     DataTypeConverter<float[], PGobject> fromFloatArrayToPgObject() {
         return (arr, targetType, context) -> {

@@ -21,7 +21,6 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.convert.ConverterResultReader;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -34,7 +33,7 @@ import java.util.UUID;
  * @param <RS> The result set
  * @param <IDX> The index type
  */
-public interface ResultReader<RS, IDX> extends ConverterResultReader<RS, IDX> {
+public interface ResultReader<RS, IDX> {
 
     /**
      * Convert the value to the given type.
@@ -269,11 +268,6 @@ public interface ResultReader<RS, IDX> extends ConverterResultReader<RS, IDX> {
      */
     default byte[] readBytes(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte[].class);
-    }
-
-    @Override
-    default Object readConverter(RS resultSet, IDX name, Class<?> type) {
-        return getRequiredValue(resultSet, name, type);
     }
 
     /**

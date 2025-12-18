@@ -244,15 +244,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
         }
 
         @Override
-        public int[] toIntArray() {
-            try {
-                return v.toIntArray();
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract vector from: " + v);
-            }
-        }
-
-        @Override
         public byte[] toByteArray() {
             try {
                 return v.toByteArray();

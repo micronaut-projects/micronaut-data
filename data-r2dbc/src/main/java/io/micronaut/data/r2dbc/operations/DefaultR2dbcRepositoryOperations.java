@@ -909,12 +909,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
                                                               @Nullable Argument<?> argument) {
             if (property != null) {
-                return new RuntimePersistentPropertyR2dbcCC(connection, getDialect(), property);
+                return new RuntimePersistentPropertyR2dbcCC(connection, sqlStoredQuery.getDialect(), property);
             }
             if (argument != null) {
-                return new ArgumentR2dbcCC(connection, getDialect(), argument);
+                return new ArgumentR2dbcCC(connection, sqlStoredQuery.getDialect(), argument);
             }
-            return new R2dbcConversionContextImpl(connection, getDialect());
+            return new R2dbcConversionContextImpl(connection, sqlStoredQuery.getDialect());
         }
 
         @Override
@@ -939,12 +939,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public int currentIndex() {
             return index;
         }
-
-        @Override
-        public Dialect getDialect() {
-            return this.sqlStoredQuery.getDialect();
-        }
-
     }
 
     private final class R2dbcEntityOperations<T> extends AbstractReactiveEntityOperations<R2dbcOperationContext, T, RuntimeException> {

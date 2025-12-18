@@ -27,8 +27,6 @@ import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * MySQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to JDBC binary (byte[]) accepted

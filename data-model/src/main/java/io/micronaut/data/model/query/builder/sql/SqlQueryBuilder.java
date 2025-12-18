@@ -50,6 +50,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
@@ -202,13 +203,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param attributeConverterRegistry the attributeConverterRegistry
+     * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
      * @param entities the entities
      * @return The table
      */
     @Experimental
     @NonNull
-    public String buildBatchCreateTableStatement(AttributeConverterRegistry attributeConverterRegistry, @NonNull PersistentEntity... entities) {
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(attributeConverterRegistry, entity)))
+    public String buildBatchCreateTableStatement(AttributeConverterRegistry attributeConverterRegistry,
+                                                 List<SqlColumnDefinitionProvider> columnDefinitionProviders,
+                                                 @NonNull PersistentEntity... entities) {
+        return Arrays.stream(entities)
+            .flatMap(entity -> Stream.of(buildCreateTableStatements(attributeConverterRegistry, entity, columnDefinitionProviders)))
             .collect(Collectors.joining(System.lineSeparator()));
     }
 
@@ -319,7 +324,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     @NonNull
     public String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry, @NonNull PersistentEntity entity) {
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, entity, getDialect());
+        return buildCreateTableStatements(attributeConverterRegistry, entity, null);
+    }
+
+    @Experimental
+    @NonNull
+    public String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry,
+                                               @NonNull PersistentEntity entity,
+                                               List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, columnDefinitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -353,13 +366,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     @NonNull
     public final String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry, PersistentEntity[] entities, Dialect dialect) {
+        return buildCreateTableStatements(attributeConverterRegistry, entities, dialect, null);
+    }
+
+    @Experimental
+    @NonNull
+    public final String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect,
+                                                     List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, entity, dialect);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, columnDefinitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);

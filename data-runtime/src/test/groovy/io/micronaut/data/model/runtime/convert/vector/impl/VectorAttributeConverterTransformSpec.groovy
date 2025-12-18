@@ -2,7 +2,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl
 
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.convert.DialectConversionContext
-import io.micronaut.data.model.runtime.convert.ConverterResultReader
+import io.micronaut.data.runtime.mapper.ResultReader
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
@@ -12,7 +12,7 @@ import spock.lang.Specification
  * Verifies transform/conversion behavior of AbstractVectorAttributeConverter:
  * - Delegation to a VectorTypeConvertor when a converter is registered for a Dialect
  * - Fallback to textual representation for Oracle when no converter is registered
- * - readFromResultSet delegates to ConverterResultReader with persisted type
+ * - readFromResultSet delegates to ResultReader with persisted type
  * - convertToEntityValue delegates through VectorTypeConvertor
  * - Column definition rendering per dialect
  */
@@ -78,7 +78,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         persisted == "[1.0, 2.0]"
     }
 
-    def "readFromResultSet delegates to ConverterResultReader with persisted type for POSTGRES"() {
+    def "readFromResultSet delegates to ResultReader with persisted type for POSTGRES"() {
         given:
         def persistedType = String
         def delegatingConverter = Stub(VectorTypeConvertor) {
@@ -92,15 +92,15 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def ctx = Stub(DialectConversionContext) {
             getDialect() >> Dialect.POSTGRES
         }
-        def rr = Stub(ConverterResultReader) {
-            readConverter(_, _, _) >> { rs, col, clazz ->
+        def rr = Stub(ResultReader) {
+            getRequiredValue(_, _, _) >> { rs, col, clazz ->
                 // Return a value that includes the class name to assert the persisted type passed down
                 "read:${clazz.name}"
             }
         }
 
         when:
-        def val = converter.readFromResultSet(ctx, rr as ConverterResultReader<Object, Object>, new Object(), "col")
+        def val = converter.readFromResultSet(ctx, rr as ResultReader<Object, Object>, new Object(), "col")
 
         then:
         val == "read:java.lang.String"

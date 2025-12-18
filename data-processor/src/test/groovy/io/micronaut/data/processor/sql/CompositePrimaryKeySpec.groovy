@@ -205,7 +205,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(null, entity)
+        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'

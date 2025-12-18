@@ -1140,12 +1140,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                               Argument<?> argument) {
             Objects.requireNonNull(connection);
             if (property != null) {
-                return new RuntimePersistentPropertyJdbcCC(connection, getDialect(), property);
+                return new RuntimePersistentPropertyJdbcCC(connection, sqlStoredQuery.getDialect(), property);
             }
             if (argument != null) {
-                return new ArgumentJdbcCC(connection, getDialect(), argument);
+                return new ArgumentJdbcCC(connection, sqlStoredQuery.getDialect(), argument);
             }
-            return new JdbcConversionContextImpl(connection, getDialect());
+            return new JdbcConversionContextImpl(connection, sqlStoredQuery.getDialect());
         }
 
         @Override
@@ -1168,11 +1168,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         @Override
         public int currentIndex() {
             return index;
-        }
-
-        @Override
-        public Dialect getDialect() {
-            return this.sqlStoredQuery.getDialect();
         }
 
     }

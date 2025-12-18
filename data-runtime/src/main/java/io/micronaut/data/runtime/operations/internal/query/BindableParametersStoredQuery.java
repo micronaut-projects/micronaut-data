@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -111,8 +110,5 @@ public interface BindableParametersStoredQuery<E, R> extends StoredQuery<E, R>, 
             return -1;
         }
 
-        default Dialect getDialect() {
-            return null;
-        }
     }
 }

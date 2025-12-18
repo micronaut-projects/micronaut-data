@@ -1,7 +1,6 @@
 package io.micronaut.data.runtime.operations.internal.query
 
 import io.micronaut.core.type.Argument
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.QueryParameterBinding
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import spock.lang.Specification
@@ -29,6 +28,5 @@ class BindableParametersStoredQueryBinderDefaultsSpec extends Specification {
 
         expect:
         binder.currentIndex() == -1
-        binder.getDialect() == null as Dialect
     }
 }
