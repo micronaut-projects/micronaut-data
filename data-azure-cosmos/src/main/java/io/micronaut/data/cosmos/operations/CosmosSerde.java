@@ -59,7 +59,7 @@ final class CosmosSerde {
     }
 
     /**
-     * Serializes given persistent object to the {@link tools.jackson.databind.node.ObjectNode}.
+     * Serializes given persistent object to the {@link com.fasterxml.jackson.databind.node.ObjectNode}.
      *
      * @param persistentEntity the persistent entity
      * @param bean the bean being serialized to JSON
@@ -90,7 +90,7 @@ final class CosmosSerde {
     }
 
     /**
-     * Serializes given bean to the given type which will be {@link tools.jackson.databind.node.ObjectNode} or {@link tools.jackson.databind.JsonNode}.
+     * Serializes given bean to the given type which will be {@link com.fasterxml.jackson.databind.node.ObjectNode} or {@link com.fasterxml.jackson.databind.JsonNode}.
      *
      * @param bean the bean being serialized to JSON
      * @param type the argument type
@@ -115,7 +115,7 @@ final class CosmosSerde {
     }
 
     /**
-     * Deserializes from {@link ObjectNode} to the given persistent entity bean type.
+     * Deserializes from {@link com.fasterxml.jackson.databind.node.ObjectNode} to the given persistent entity bean type.
      *
      * @param persistentEntity the persistent entity
      * @param objectNode the object node (JSON representation)
@@ -144,7 +144,7 @@ final class CosmosSerde {
     }
 
     /**
-     * Deserializes from {@link ObjectNode} to the given bean type.
+     * Deserializes from {@link com.fasterxml.jackson.databind.node.ObjectNode} to the given bean type.
      *
      * @param objectNode the object node (JSON representation)
      * @param type the argument type
