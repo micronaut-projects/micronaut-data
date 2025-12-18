@@ -60,6 +60,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Join(value = "author", alias = "auth")
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     public abstract Book queryByTitle(String title);
 
     @Query(value = "SELECT book_.* FROM book book_ LEFT JOIN author book_author_ ON book_.author_id = book_author_.id", countQuery = "SELECT count(*) FROM book book_ ")
@@ -178,11 +179,11 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Override
     @Join(value = "genre", type = Join.Type.LEFT_FETCH)
-    public abstract Optional<Book> findOne(@Nullable PredicateSpecification<Book> spec);
+    public abstract Optional<Book> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<Book> spec);
 
     @Override
     @Join(value = "genre", type = Join.Type.LEFT_FETCH)
-    public abstract  List<Book> findAll(@Nullable PredicateSpecification<Book> spec);
+    public abstract  List<Book> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<Book> spec);
 
     public abstract List<Book> findAllByCriteria(PredicateSpecification<Book> spec);
 
