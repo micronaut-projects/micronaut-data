@@ -1382,7 +1382,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(jsonEntityColumn).append(DOT);
                     PersistentProperty property = propertyPath.getProperty();
                     if (property == queryState.entity.getIdentity()) {
-                            String persistedName = property.getPersistedName();
+                        String persistedName = property.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                            .orElse(property.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                                .orElse(property.getName()));
                             query.append('"').append(persistedName).append('"');
                     } else {
                         query.append(propertyPath.getPath());

@@ -407,7 +407,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
         String[] sql = builder.buildDropTableStatements(studentViewEntity)
         then:
-        sql[0] == "DROP " + builder.getTableName(studentViewEntity)
+        sql[0] == "DROP VIEW " + builder.getTableName(studentViewEntity)
     }
 
     def "test_teacher_json_view"() {

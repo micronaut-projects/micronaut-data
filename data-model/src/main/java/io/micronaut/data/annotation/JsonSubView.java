@@ -64,9 +64,9 @@ public @interface JsonSubView {
      * Specify an entity class annotated with {@link MappedEntity} that this JSON sub view corresponds to.
      * Valid entity class is one that defines the properties used in this class.
      *
-     * @return the entity class
+     * @return the entity class (default void)
      */
-    Class<?> entity();
+    Class<?> entity() default void.class;
 
     /**
      * The supported sql operations array.

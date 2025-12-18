@@ -12,6 +12,63 @@ Also, entity can be mapped to a JSON SUBVIEW as follows:
 
 snippet::example.AddressSubView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
+The main difference between `@JsonView` and `@JsonSubView` and the reason of existence of `@JsonSubView` annotation is to differentiate which for which class will
+creation sql script be generated (`JsonViews` are generated, while `JsonSubViews` are not).
+
+==== Specifying joins
+
+You can define relationships between entities within JSON views by using appropriate annotations.
+For example, to associate a `StudentView` with its related `StudentScheduleSubView` entries in a one-to-many relationship,
+annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
+is the identifier for `StudentScheduleSubView`, as follows:
+
+[source,java]
+----
+@JsonView(entity = Student.class)
+public class StudentView {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    private Long id;
+
+    @JoinColumn(name = "id", referencedColumnName = "student_id")
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    private List<StudentScheduleSubView> schedule;
+}
+----
+
+==== Using `@MappedProperty` annotation
+
+Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
+using `@MappedProperty` annotation, where `value` field, represents the underlying table field name.
+
+[source,java]
+----
+@JsonSubView(entity = Teacher.class)
+public class TeacherSubView {
+    @Id
+    @MappedProperty(value = "id")
+    private Long teachID;
+
+    @MappedProperty(value = "name")
+    private String teacher;
+}
+----
+
+==== Schema generation
+
+`JsonViews` are generated automatically for classes with `@JsonView` annotation.
+
+==== Operations supported
+
+Users can specify sql operations supported for `JsonView` and `JsonSubView` using the `operations` field, if not specified, it defaults to `{ INSERT, UPDATE, DELETE }`.
+
+[source,java]
+----
+@JsonSubView(entity = Teacher.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
+public class TeacherSubView {
+}
+----
+
 ==== Optimistic Locking
 
 You can use optimistic/lock-free concurrency control with duality views, writing JSON documents or committing their updates only when other sessions haven't modified them concurrently.
