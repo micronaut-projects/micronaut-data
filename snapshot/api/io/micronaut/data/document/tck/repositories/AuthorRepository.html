@@ -129,7 +129,7 @@ extends <a href="../../../repository/CrudRepository.html" title="interface in io
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateNickname(java.lang.String,java.lang.String)" class="member-name-link">updateNickname</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;nickName)</code></div>
+ @Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;nickName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
@@ -160,14 +160,13 @@ extends <a href="../../../repository/CrudRepository.html" title="interface in io
 <div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">updateNickname</span><wbr><span class="parameters">(<a href="../../../annotation/Id.html" title="annotation interface in io.micronaut.data.annotation">@Id</a>
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
  @Parameter("nickName") @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;nickName)</span></div>
+ @Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;nickName)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="findById(java.lang.String)">
 <h3>findById</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../entities/Author.html" title="class in io.micronaut.data.document.tck.entities">Author</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NonNull @NotNull
+<div class="member-signature"><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../entities/Author.html" title="class in io.micronaut.data.document.tck.entities">Author</a>&gt;</span>&nbsp;<span class="element-name">findById</span><wbr><span class="parameters">(@NotNull
  @NonNull @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../repository/CrudRepository.html#findById(ID)">CrudRepository</a></code></span></div>
 <div class="block">Retrieves an entity by its id.</div>

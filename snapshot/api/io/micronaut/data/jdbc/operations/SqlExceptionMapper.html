@@ -150,8 +150,7 @@ extends io.micronaut.core.order.Ordered</span></div>
 <li>
 <section class="detail" id="getDialect()">
 <h3>getDialect</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">getDialect</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">getDialect</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql"><code>Dialect</code></a> that this mapper supports</dd>
@@ -161,9 +160,7 @@ extends io.micronaut.core.order.Ordered</span></div>
 <li>
 <section class="detail" id="mapSqlException(java.sql.SQLException)">
 <h3>mapSqlException</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type">@Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">mapSqlException</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException)</span></div>
+<div class="member-signature"><span class="return-type">@Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">mapSqlException</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException)</span></div>
 <div class="block">Maps <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> to custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a>.
  In case when mapper is not able to map <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> to custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> then result will be null
  indicating that mapper cannot map the exception.</div>

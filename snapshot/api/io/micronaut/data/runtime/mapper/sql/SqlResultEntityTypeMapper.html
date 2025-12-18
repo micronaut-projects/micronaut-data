@@ -189,26 +189,26 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is another result available.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#map(RS,java.lang.Class)" class="member-name-link">map</a><wbr>(<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#map(RS,java.lang.Class)" class="member-name-link">map</a><wbr>(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Map the given result set to the given object.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(RS,io.micronaut.core.type.Argument)" class="member-name-link">read</a><wbr>(<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(RS,io.micronaut.core.type.Argument)" class="member-name-link">read</a><wbr>(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
  @NonNull io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value for the given name from the given object.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(RS,java.lang.String)" class="member-name-link">read</a><wbr>(<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#read(RS,java.lang.String)" class="member-name-link">read</a><wbr>(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value for the given name from the given object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readEntity(RS)" class="member-name-link">readEntity</a><wbr>(<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readEntity(RS)" class="member-name-link">readEntity</a><wbr>(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read the entity from the result set.</div>
 </div>
@@ -243,11 +243,8 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
- @NonNull
  @NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
- @NonNull
  @NonNull <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- @Nullable
  @Nullable <a href="SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&gt;&nbsp;jsonColumnReader,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Default constructor.</div>
@@ -264,13 +261,9 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
  @NonNull <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- @Nullable
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
- @Nullable
  @Nullable <a href="SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&gt;&nbsp;jsonColumnReader,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Constructor used to customize the join paths.</div>
@@ -287,15 +280,10 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.runtime.mapper.ResultReader,java.util.Set,io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader,java.util.function.BiFunction,io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>SqlResultEntityTypeMapper</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlResultEntityTypeMapper</span><wbr><span class="parameters">(@NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;entity,
  @NonNull <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;resultReader,
- @Nullable
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
- @Nullable
  @Nullable <a href="SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&gt;&nbsp;jsonColumnReader,
- @Nullable
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener,
  <a href="../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Constructor used to customize the join paths.</div>
@@ -333,8 +321,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="getEntity()">
 <h3>getEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</span>&nbsp;<span class="element-name">getEntity</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</span>&nbsp;<span class="element-name">getEntity</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The entity to be materialized</dd>
@@ -344,8 +331,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="getResultReader()">
 <h3>getResultReader</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getResultReader</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getResultReader</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The result reader instance.</dd>
@@ -355,12 +341,9 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="map(RS,java.lang.Class)">
 <h3 id="map(java.lang.Object,java.lang.Class)">map</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></span>&nbsp;<span class="element-name">map</span><wbr><span class="parameters">(@NonNull
- <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></span>&nbsp;<span class="element-name">map</span><wbr><span class="parameters">(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;type)</span>
-      throws <span class="exceptions"><a href="../../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
+               throws <span class="exceptions"><a href="../../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TypeMapper.html#map(D,java.lang.Class)">TypeMapper</a></code></span></div>
 <div class="block">Map the given result set to the given object.</div>
 <dl class="notes">
@@ -379,9 +362,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="readEntity(RS)">
 <h3 id="readEntity(java.lang.Object)">readEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></span>&nbsp;<span class="element-name">readEntity</span><wbr><span class="parameters">(@NonNull
- <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></span>&nbsp;<span class="element-name">readEntity</span><wbr><span class="parameters">(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</span></div>
 <div class="block">Read the entity from the result set.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -396,10 +377,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="read(RS,java.lang.String)">
 <h3 id="read(java.lang.Object,java.lang.String)">read</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
- <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TypeMapper.html#read(D,java.lang.String)">TypeMapper</a></code></span></div>
 <div class="block">Read a value for the given name from the given object.</div>
@@ -417,10 +395,7 @@ implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.ru
 <li>
 <section class="detail" id="read(RS,io.micronaut.core.type.Argument)">
 <h3 id="read(java.lang.Object,io.micronaut.core.type.Argument)">read</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull
- <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">read</span><wbr><span class="parameters">(@NonNull <a href="SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
  @NonNull io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TypeMapper.html#read(D,io.micronaut.core.type.Argument)">TypeMapper</a></code></span></div>
 <div class="block">Read a value for the given name from the given object.</div>

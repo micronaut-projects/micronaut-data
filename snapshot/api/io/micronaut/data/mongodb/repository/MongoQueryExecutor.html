@@ -152,12 +152,12 @@ loadScripts(document, 'script');</script>
 <div class="block">Finds all results.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(org.bson.conversions.Bson)" class="member-name-link">findAll</a><wbr>(@Nullable org.bson.conversions.Bson&nbsp;filter)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(org.bson.conversions.Bson)" class="member-name-link">findAll</a><wbr>(@Nullable @Nullable org.bson.conversions.Bson&nbsp;filter)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Finds all results.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a><wbr>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(org.bson.conversions.Bson,io.micronaut.data.model.Pageable)" class="member-name-link">findAll</a><wbr>(@Nullable org.bson.conversions.Bson&nbsp;filter,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(org.bson.conversions.Bson,io.micronaut.data.model.Pageable)" class="member-name-link">findAll</a><wbr>(@Nullable @Nullable org.bson.conversions.Bson&nbsp;filter,
  @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Finds a page of records.</div>
@@ -179,7 +179,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Finds one result.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findOne(org.bson.conversions.Bson)" class="member-name-link">findOne</a><wbr>(@Nullable org.bson.conversions.Bson&nbsp;filter)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findOne(org.bson.conversions.Bson)" class="member-name-link">findOne</a><wbr>(@Nullable @Nullable org.bson.conversions.Bson&nbsp;filter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Finds one result.</div>
 </div>
@@ -214,7 +214,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="findOne(org.bson.conversions.Bson)">
 <h3>findOne</h3>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@Nullable
- @Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
+ @Nullable @Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
 <div class="block">Finds one result.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -227,8 +227,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findOne(io.micronaut.data.mongodb.operations.options.MongoFindOptions)">
 <h3>findOne</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options)</span></div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options)</span></div>
 <div class="block">Finds one result.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -241,9 +240,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(org.bson.conversions.Bson)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@Nullable
- @Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@Nullable
+ @Nullable @Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
 <div class="block">Finds all results.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -256,9 +254,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(io.micronaut.data.mongodb.operations.options.MongoFindOptions)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options)</span></div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options)</span></div>
 <div class="block">Finds all results.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -271,10 +267,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(org.bson.conversions.Bson,io.micronaut.data.model.Pageable)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@Nullable
- @Nullable org.bson.conversions.Bson&nbsp;filter,
- @NonNull
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@Nullable
+ @Nullable @Nullable org.bson.conversions.Bson&nbsp;filter,
  @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
 <div class="block">Finds a page of records.</div>
 <dl class="notes">
@@ -289,10 +283,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(io.micronaut.data.mongodb.operations.options.MongoFindOptions,io.micronaut.data.model.Pageable)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options,
- @NonNull
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull <a href="../operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&nbsp;options,
  @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
 <div class="block">Finds a page of records.</div>
 <dl class="notes">
@@ -307,8 +298,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findOne(java.lang.Iterable)">
 <h3>findOne</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline)</span></div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline)</span></div>
 <div class="block">Finds a page of records.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -321,9 +311,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findOne(java.lang.Iterable,io.micronaut.data.mongodb.operations.options.MongoAggregationOptions)">
 <h3>findOne</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
- @NonNull
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
  @NonNull <a href="../operations/options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</span></div>
 <div class="block">Finds one result.</div>
 <dl class="notes">
@@ -338,9 +326,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(java.lang.Iterable)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline)</span></div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline)</span></div>
 <div class="block">Finds all results.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -353,10 +339,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findAll(java.lang.Iterable,io.micronaut.data.mongodb.operations.options.MongoAggregationOptions)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
- @NonNull
+<div class="member-signature"><span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MongoQueryExecutor.html" title="type parameter in MongoQueryExecutor">E</a>&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;org.bson.conversions.Bson&gt;&nbsp;pipeline,
  @NonNull <a href="../operations/options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a>&nbsp;options)</span></div>
 <div class="block">Finds all results.</div>
 <dl class="notes">
@@ -371,8 +354,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="count(org.bson.conversions.Bson)">
 <h3>count</h3>
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">count</span><wbr><span class="parameters">(@Nullable
- @Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
+<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">count</span><wbr><span class="parameters">(@Nullable org.bson.conversions.Bson&nbsp;filter)</span></div>
 <div class="block">Count the records.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -385,8 +367,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="deleteAll(org.bson.conversions.Bson)">
 <h3>deleteAll</h3>
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull
- @NonNull org.bson.conversions.Bson&nbsp;filter)</span></div>
+<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull org.bson.conversions.Bson&nbsp;filter)</span></div>
 <div class="block">Delete the records matching the filter.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -399,9 +380,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="deleteAll(org.bson.conversions.Bson,com.mongodb.client.model.DeleteOptions)">
 <h3>deleteAll</h3>
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull
- @NonNull org.bson.conversions.Bson&nbsp;filter,
- @NonNull
+<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull org.bson.conversions.Bson&nbsp;filter,
  @NonNull com.mongodb.client.model.DeleteOptions&nbsp;options)</span></div>
 <div class="block">Delete the records matching the filter.</div>
 <dl class="notes">
@@ -416,9 +395,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="updateAll(org.bson.conversions.Bson,org.bson.conversions.Bson)">
 <h3>updateAll</h3>
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
- @NonNull org.bson.conversions.Bson&nbsp;filter,
- @NonNull
+<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull org.bson.conversions.Bson&nbsp;filter,
  @NonNull org.bson.conversions.Bson&nbsp;update)</span></div>
 <div class="block">Update the records matching the filter.</div>
 <dl class="notes">
@@ -433,11 +410,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="updateAll(org.bson.conversions.Bson,org.bson.conversions.Bson,com.mongodb.client.model.UpdateOptions)">
 <h3>updateAll</h3>
-<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
- @NonNull org.bson.conversions.Bson&nbsp;filter,
- @NonNull
+<div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull org.bson.conversions.Bson&nbsp;filter,
  @NonNull org.bson.conversions.Bson&nbsp;update,
- @NonNull
  @NonNull com.mongodb.client.model.UpdateOptions&nbsp;options)</span></div>
 <div class="block">Update the records matching the filter.</div>
 <dl class="notes">

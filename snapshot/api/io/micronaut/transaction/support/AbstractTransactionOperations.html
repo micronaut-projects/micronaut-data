@@ -173,7 +173,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)" class="member-name-link">createExistingTransactionStatus</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</code></div>
+ @NonNull <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create transaction status with existing transaction.</div>
 </div>
@@ -246,7 +246,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns connection definition.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return a currently active transaction or create a new one, according to
@@ -306,8 +306,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="synchronousConnectionManager">
 <h3>synchronousConnectionManager</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">synchronousConnectionManager</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">synchronousConnectionManager</span></div>
 </section>
 </li>
 </ul>
@@ -322,7 +321,6 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)">
 <h3>AbstractTransactionOperations</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">AbstractTransactionOperations</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionOperations,
- @Nullable
  @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;synchronousConnectionManager)</span></div>
 </section>
 </li>
@@ -367,9 +365,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">
 <h3>createNoTxTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createNoTxTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createNoTxTransactionStatus</span><wbr><span class="parameters">(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
  @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Create transaction status without open transaction.</div>
 <dl class="notes">
@@ -384,9 +380,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">
 <h3>createNewTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createNewTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createNewTransactionStatus</span><wbr><span class="parameters">(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
  @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Create transaction status with new transaction.</div>
 <dl class="notes">
@@ -401,10 +395,8 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)">
 <h3 id="createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.InternalTransaction)">createExistingTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createExistingTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
- <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</span></div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createExistingTransactionStatus</span><wbr><span class="parameters">(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</span></div>
 <div class="block">Create transaction status with existing transaction.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -432,9 +424,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">
 <h3>doExecute</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">doExecute</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">doExecute</span><wbr><span class="parameters">(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="../TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractPropagatedStatusTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">AbstractPropagatedStatusTransactionOperations</a></code></span></div>
 <div class="block">Do execute in transaction.</div>
@@ -454,9 +444,8 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="getTransaction(io.micronaut.transaction.TransactionDefinition)">
 <h3>getTransaction</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
-                 throws <span class="exceptions"><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
+                          throws <span class="exceptions"><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">SynchronousTransactionManager</a></code></span></div>
 <div class="block">Return a currently active transaction or create a new one, according to
  the specified propagation behavior.

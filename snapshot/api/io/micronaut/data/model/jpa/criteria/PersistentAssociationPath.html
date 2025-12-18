@@ -273,8 +273,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getProperty()">
 <h3>getProperty</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a></span>&nbsp;<span class="element-name">getProperty</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a></span>&nbsp;<span class="element-name">getProperty</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="PersistentPropertyPath.html#getProperty()">getProperty</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>&gt;</code></dd>
@@ -284,8 +283,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getAssociation()">
 <h3>getAssociation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a></span>&nbsp;<span class="element-name">getAssociation</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a></span>&nbsp;<span class="element-name">getAssociation</span>()</div>
 </section>
 </li>
 <li>
@@ -301,8 +299,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getAssociationJoinType()">
 <h3>getAssociationJoinType</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type"><a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></span>&nbsp;<span class="element-name">getAssociationJoinType</span>()</div>
+<div class="member-signature"><span class="return-type"><a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></span>&nbsp;<span class="element-name">getAssociationJoinType</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The join type</dd>
@@ -322,8 +319,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="setAssociationJoinType(io.micronaut.data.annotation.Join.Type)">
 <h3>setAssociationJoinType</h3>
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">setAssociationJoinType</span><wbr><span class="parameters">(@Nullable
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;type)</span></div>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">setAssociationJoinType</span><wbr><span class="parameters">(<a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;type)</span></div>
 <div class="block">Set join type.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -345,15 +341,13 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="asPath()">
 <h3>asPath</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</span>&nbsp;<span class="element-name">asPath</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</span>&nbsp;<span class="element-name">asPath</span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="on(jakarta.persistence.criteria.Expression)">
 <h3>on</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">on</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">on</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>on</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</code></dd>
@@ -363,8 +357,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="on(jakarta.persistence.criteria.Predicate...)">
 <h3>on</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">on</span><wbr><span class="parameters">(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">on</span><wbr><span class="parameters">(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>on</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</code></dd>
@@ -374,8 +367,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getOn()">
 <h3>getOn</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">getOn</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">getOn</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getOn</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</code></dd>
@@ -385,8 +377,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getAttribute()">
 <h3>getAttribute</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.metamodel.Attribute&lt;? super <a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getAttribute</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.metamodel.Attribute&lt;? super <a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr>?&gt;</span>&nbsp;<span class="element-name">getAttribute</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getAttribute</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Join&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>,<wbr><a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</code></dd>
@@ -396,8 +387,7 @@ Y&gt;&nbsp;<a href="PersistentAssociationPath.html" title="interface in io.micro
 <li>
 <section class="detail" id="getModel()">
 <h3>getModel</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.metamodel.Bindable&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">getModel</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.metamodel.Bindable&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">AssociatedEntityType</a>&gt;</span>&nbsp;<span class="element-name">getModel</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getModel</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentAssociationPath.html" title="type parameter in PersistentAssociationPath">OwnerType</a>&gt;</code></dd>

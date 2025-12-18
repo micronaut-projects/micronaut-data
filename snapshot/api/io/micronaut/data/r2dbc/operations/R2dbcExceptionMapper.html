@@ -150,8 +150,7 @@ extends io.micronaut.core.order.Ordered</span></div>
 <li>
 <section class="detail" id="getDialect()">
 <h3>getDialect</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">getDialect</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></span>&nbsp;<span class="element-name">getDialect</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql"><code>Dialect</code></a> that this mapper supports</dd>
@@ -161,9 +160,7 @@ extends io.micronaut.core.order.Ordered</span></div>
 <li>
 <section class="detail" id="mapR2dbcException(io.r2dbc.spi.R2dbcException)">
 <h3>mapR2dbcException</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type">@Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">mapR2dbcException</span><wbr><span class="parameters">(@NonNull
- @NonNull io.r2dbc.spi.R2dbcException&nbsp;r2dbcException)</span></div>
+<div class="member-signature"><span class="return-type">@Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">mapR2dbcException</span><wbr><span class="parameters">(@NonNull io.r2dbc.spi.R2dbcException&nbsp;r2dbcException)</span></div>
 <div class="block">Maps <code>R2dbcException</code> to custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a>.
  In case when mapper is not able to map <code>R2dbcException</code> to custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> then result will be null
  indicating that mapper cannot map the exception.</div>

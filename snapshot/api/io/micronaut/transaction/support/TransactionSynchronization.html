@@ -262,8 +262,7 @@ extends io.micronaut.core.order.Ordered</span></div>
 <li>
 <section class="detail" id="afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)">
 <h3>afterCompletion</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">afterCompletion</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">afterCompletion</span><wbr><span class="parameters">(@NonNull <a href="TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</span></div>
 <div class="block">Invoked after transaction commit/rollback.
  Can perform resource cleanup <i>after</i> transaction completion.
  <p><b>NOTE:</b> The transaction will have been committed or rolled back already,

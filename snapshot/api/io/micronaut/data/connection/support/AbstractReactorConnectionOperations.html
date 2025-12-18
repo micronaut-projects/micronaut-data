@@ -141,7 +141,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract @NonNull org.reactivestreams.Publisher<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#closeConnection(C,io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">closeConnection</a><wbr>(<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&nbsp;connection,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#closeConnection(C,io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">closeConnection</a><wbr>(@NonNull <a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&nbsp;connection,
  @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Close the connection.</div>
@@ -214,9 +214,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <li>
 <section class="detail" id="openConnection(io.micronaut.data.connection.ConnectionDefinition)">
 <h3>openConnection</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">openConnection</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">openConnection</span><wbr><span class="parameters">(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Open a new connection.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -229,10 +227,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <li>
 <section class="detail" id="closeConnection(C,io.micronaut.data.connection.ConnectionDefinition)">
 <h3 id="closeConnection(java.lang.Object,io.micronaut.data.connection.ConnectionDefinition)">closeConnection</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name">closeConnection</span><wbr><span class="parameters">(@NonNull
- <a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&nbsp;connection,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">@NonNull org.reactivestreams.Publisher&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name">closeConnection</span><wbr><span class="parameters">(@NonNull <a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&nbsp;connection,
  @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
 <div class="block">Close the connection.</div>
 <dl class="notes">
@@ -264,8 +259,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <li>
 <section class="detail" id="findConnectionStatus(reactor.util.context.ContextView)">
 <h3>findConnectionStatus</h3>
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findConnectionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findConnectionStatus</span><wbr><span class="parameters">(@NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../reactive/ReactorConnectionOperations.html#findConnectionStatus(reactor.util.context.ContextView)">ReactorConnectionOperations</a></code></span></div>
 <div class="block">Obtains the current connection.</div>
 <dl class="notes">
@@ -281,10 +275,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <li>
 <section class="detail" id="withConnectionFlux(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">
 <h3>withConnectionFlux</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withConnectionFlux</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withConnectionFlux</span><wbr><span class="parameters">(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../reactive/ReactorConnectionOperations.html#withConnectionFlux(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">ReactorConnectionOperations</a></code></span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
@@ -304,10 +295,7 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <li>
 <section class="detail" id="withConnectionMono(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">
 <h3>withConnectionMono</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withConnectionMono</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withConnectionMono</span><wbr><span class="parameters">(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../reactive/ReactorConnectionOperations.html#withConnectionMono(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">ReactorConnectionOperations</a></code></span></div>
 <div class="block">Execute the given handler with a new connection.</div>

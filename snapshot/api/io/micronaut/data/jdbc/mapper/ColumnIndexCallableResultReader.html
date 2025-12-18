@@ -298,12 +298,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <li>
 <section class="detail" id="readDynamic(java.sql.CallableStatement,java.lang.Integer,io.micronaut.data.model.DataType)">
 <h3>readDynamic</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link">CallableStatement</a>&nbsp;cs,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link">CallableStatement</a>&nbsp;cs,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
- @NonNull
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)">ResultReader</a></code></span></div>
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
@@ -412,8 +408,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <li>
 <section class="detail" id="readString(java.sql.CallableStatement,java.lang.Integer)">
 <h3>readString</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readString</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link">CallableStatement</a>&nbsp;cs,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readString</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link">CallableStatement</a>&nbsp;cs,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readString(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a string value for the given name.</div>

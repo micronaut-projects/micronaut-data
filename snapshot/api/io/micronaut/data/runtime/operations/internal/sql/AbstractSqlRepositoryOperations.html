@@ -559,7 +559,6 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../../../model/runtime/S
 <h3>prepareStatement</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T,<wbr>
 R&gt;</span>&nbsp;<span class="return-type"><a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a></span>&nbsp;<span class="element-name">prepareStatement</span><wbr><span class="parameters">(<a href="AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&gt;&nbsp;statementFunction,
- @NonNull
  @NonNull <a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery,
  boolean&nbsp;isUpdate,
  boolean&nbsp;isSingleResult)</span>
@@ -605,12 +604,9 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="AbstractSqlRepositoryOperat
 <li>
 <section class="detail" id="resolveEntityInsert(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)">
 <h3>resolveEntityInsert</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</span>&nbsp;<span class="element-name">resolveEntityInsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</span>&nbsp;<span class="element-name">resolveEntityInsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull
  @NonNull <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;E&gt;&nbsp;persistentEntity)</span></div>
 <div class="block">Resolves a stored insert for the given entity.</div>
 <dl class="notes">
@@ -648,12 +644,9 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="AbstractSqlRepositoryOperat
 <li>
 <section class="detail" id="resolveEntityUpdate(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)">
 <h3>resolveEntityUpdate</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</span>&nbsp;<span class="element-name">resolveEntityUpdate</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</span>&nbsp;<span class="element-name">resolveEntityUpdate</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull
  @NonNull <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;E&gt;&nbsp;persistentEntity)</span></div>
 <div class="block">Resolves a stored update for the given entity.</div>
 <dl class="notes">

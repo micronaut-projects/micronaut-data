@@ -135,7 +135,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -327,11 +327,8 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setDynamic(io.r2dbc.spi.Statement,java.lang.Integer,io.micronaut.data.model.DataType,java.lang.Object)">
 <h3>setDynamic</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDynamic</span><wbr><span class="parameters">(@NonNull
- @NonNull io.r2dbc.spi.Statement&nbsp;statement,
- @NonNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDynamic</span><wbr><span class="parameters">(@NonNull io.r2dbc.spi.Statement&nbsp;statement,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
- @NonNull
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDynamic(PS,IDX,io.micronaut.data.model.DataType,java.lang.Object)">QueryStatement</a></code></span></div>
@@ -375,9 +372,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="convertRequired(java.lang.Object,java.lang.Class)">
 <h3>convertRequired</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(@Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#convertRequired(java.lang.Object,java.lang.Class)">QueryStatement</a></code></span></div>
 <div class="block">Convert the value to the given type.</div>
@@ -397,8 +392,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setLong(io.r2dbc.spi.Statement,java.lang.Integer,long)">
 <h3>setLong</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setLong</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setLong</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  long&nbsp;value)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setLong(PS,IDX,long)">QueryStatement</a></code></span></div>
@@ -418,8 +412,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setChar(io.r2dbc.spi.Statement,java.lang.Integer,char)">
 <h3>setChar</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setChar</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setChar</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  char&nbsp;value)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setChar(PS,IDX,char)">QueryStatement</a></code></span></div>
@@ -439,8 +432,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setDate(io.r2dbc.spi.Statement,java.lang.Integer,java.util.Date)">
 <h3>setDate</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDate</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDate</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a>&nbsp;date)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDate(PS,IDX,java.util.Date)">QueryStatement</a></code></span></div>
@@ -520,8 +512,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setInt(io.r2dbc.spi.Statement,java.lang.Integer,int)">
 <h3>setInt</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setInt</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setInt</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  int&nbsp;integer)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setInt(PS,IDX,int)">QueryStatement</a></code></span></div>
@@ -541,8 +532,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setBoolean(io.r2dbc.spi.Statement,java.lang.Integer,boolean)">
 <h3>setBoolean</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBoolean</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBoolean</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  boolean&nbsp;bool)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBoolean(PS,IDX,boolean)">QueryStatement</a></code></span></div>
@@ -562,8 +552,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setFloat(io.r2dbc.spi.Statement,java.lang.Integer,float)">
 <h3>setFloat</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setFloat</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setFloat</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  float&nbsp;f)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setFloat(PS,IDX,float)">QueryStatement</a></code></span></div>
@@ -583,8 +572,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setByte(io.r2dbc.spi.Statement,java.lang.Integer,byte)">
 <h3>setByte</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setByte</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setByte</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  byte&nbsp;b)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setByte(PS,IDX,byte)">QueryStatement</a></code></span></div>
@@ -604,8 +592,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setShort(io.r2dbc.spi.Statement,java.lang.Integer,short)">
 <h3>setShort</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setShort</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setShort</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  short&nbsp;s)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setShort(PS,IDX,short)">QueryStatement</a></code></span></div>
@@ -625,8 +612,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setDouble(io.r2dbc.spi.Statement,java.lang.Integer,double)">
 <h3>setDouble</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDouble</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDouble</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  double&nbsp;d)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDouble(PS,IDX,double)">QueryStatement</a></code></span></div>
@@ -646,8 +632,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setBigDecimal(io.r2dbc.spi.Statement,java.lang.Integer,java.math.BigDecimal)">
 <h3>setBigDecimal</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bd)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBigDecimal(PS,IDX,java.math.BigDecimal)">QueryStatement</a></code></span></div>
@@ -667,8 +652,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setBytes(io.r2dbc.spi.Statement,java.lang.Integer,byte[])">
 <h3>setBytes</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  byte[]&nbsp;bytes)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBytes(PS,IDX,byte%5B%5D)">QueryStatement</a></code></span></div>
@@ -688,8 +672,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="setArray(io.r2dbc.spi.Statement,java.lang.Integer,java.lang.Object)">
 <h3>setArray</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setArray</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setArray</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;array)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setArray(PS,IDX,java.lang.Object)">QueryStatement</a></code></span></div>

@@ -108,7 +108,7 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByNullableValue(java.util.UUID)" class="member-name-link">findByNullableValue</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByNullableValue(java.util.UUID)" class="member-name-link">findByNullableValue</a><wbr>(@Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">This method semantically makes no sense because it'll always produce NULL
  without correctly wrapping nullable value like this:
@@ -148,7 +148,7 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="member-signature"><span class="annotations"><a href="../../annotation/Query.html" title="annotation interface in io.micronaut.data.annotation">@Query</a>(<a href="../../annotation/Query.html#value()">value</a>="select * from uuid_entity where :param is null",
        <a href="../../annotation/Query.html#nativeQuery()">nativeQuery</a>=true)
 </span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</span>&nbsp;<span class="element-name">findByNullableValue</span><wbr><span class="parameters">(@Parameter("param") @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</span></div>
+ @Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</span></div>
 <div class="block">This method semantically makes no sense because it'll always produce NULL
  without correctly wrapping nullable value like this:
  WHERE :nullableValue IS NULL AND nullable_value IS NULL

@@ -403,8 +403,7 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <li>
 <section class="detail" id="registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">
 <h3>registerSynchronization</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerSynchronization</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerSynchronization</span><wbr><span class="parameters">(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">TransactionStatus</a></code></span></div>
 <div class="block">Register a new transaction synchronization for the current state.
  <p>Note that synchronizations can implement the
@@ -421,8 +420,7 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <li>
 <section class="detail" id="registerInvocationSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">
 <h3>registerInvocationSynchronization</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerInvocationSynchronization</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerInvocationSynchronization</span><wbr><span class="parameters">(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="InternalTransaction.html#registerInvocationSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">InternalTransaction</a></code></span></div>
 <div class="block">The variation of <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> that is always executed on the current TX invocation.
  The ordinary <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> will always bound the synchronization to the TX in progress.</div>

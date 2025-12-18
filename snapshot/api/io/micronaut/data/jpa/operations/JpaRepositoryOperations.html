@@ -115,7 +115,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#detach(T)" class="member-name-link">detach</a><wbr>(T&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#detach(T)" class="member-name-link">detach</a><wbr>(@NonNull T&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Detach the entity from the persistence context.</div>
 </div>
@@ -130,29 +130,29 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull jakarta.persistence.EntityManagerFactory</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getEntityManagerFactory()" class="member-name-link">getEntityManagerFactory</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull T</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#load(java.lang.Class,java.lang.Object)" class="member-name-link">load</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create an uninitialized proxy.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#merge(T)" class="member-name-link">merge</a><wbr>(T&nbsp;entity)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull T</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#merge(T)" class="member-name-link">merge</a><wbr>(@NonNull T&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Merges the entity.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#persist(T)" class="member-name-link">persist</a><wbr>(T&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#persist(T)" class="member-name-link">persist</a><wbr>(@NonNull T&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Persist the entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#refresh(T)" class="member-name-link">refresh</a><wbr>(T&nbsp;entity)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#refresh(T)" class="member-name-link">refresh</a><wbr>(@NonNull T&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Refresh the entity state from the database.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#remove(T)" class="member-name-link">remove</a><wbr>(T&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#remove(T)" class="member-name-link">remove</a><wbr>(@NonNull T&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Remove the entity from the persistence context and schedule deletion.</div>
 </div>
@@ -185,8 +185,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="getCurrentEntityManager()">
 <h3>getCurrentEntityManager</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull jakarta.persistence.EntityManager</span>&nbsp;<span class="element-name">getCurrentEntityManager</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull jakarta.persistence.EntityManager</span>&nbsp;<span class="element-name">getCurrentEntityManager</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The current entity manager</dd>
@@ -196,8 +195,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="getEntityManagerFactory()">
 <h3>getEntityManagerFactory</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull jakarta.persistence.EntityManagerFactory</span>&nbsp;<span class="element-name">getEntityManagerFactory</span>()</div>
+<div class="member-signature"><span class="return-type">@NonNull jakarta.persistence.EntityManagerFactory</span>&nbsp;<span class="element-name">getEntityManagerFactory</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The entity manager factory</dd>
@@ -207,10 +205,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="load(java.lang.Class,java.lang.Object)">
 <h3>load</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">load</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- @NonNull
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull T</span>&nbsp;<span class="element-name">load</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</span></div>
 <div class="block">Create an uninitialized proxy.</div>
 <dl class="notes">
@@ -227,9 +222,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="merge(T)">
 <h3 id="merge(java.lang.Object)">merge</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">merge</span><wbr><span class="parameters">(@NonNull
- T&nbsp;entity)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull T</span>&nbsp;<span class="element-name">merge</span><wbr><span class="parameters">(@NonNull T&nbsp;entity)</span></div>
 <div class="block">Merges the entity.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -257,8 +250,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="persist(T)">
 <h3 id="persist(java.lang.Object)">persist</h3>
-<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">persist</span><wbr><span class="parameters">(@NonNull
- T&nbsp;entity)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">persist</span><wbr><span class="parameters">(@NonNull T&nbsp;entity)</span></div>
 <div class="block">Persist the entity.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -273,8 +265,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="refresh(T)">
 <h3 id="refresh(java.lang.Object)">refresh</h3>
-<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">refresh</span><wbr><span class="parameters">(@NonNull
- T&nbsp;entity)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">refresh</span><wbr><span class="parameters">(@NonNull T&nbsp;entity)</span></div>
 <div class="block">Refresh the entity state from the database.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -289,8 +280,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="remove(T)">
 <h3 id="remove(java.lang.Object)">remove</h3>
-<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">remove</span><wbr><span class="parameters">(@NonNull
- T&nbsp;entity)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">remove</span><wbr><span class="parameters">(@NonNull T&nbsp;entity)</span></div>
 <div class="block">Remove the entity from the persistence context and schedule deletion.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -305,8 +295,7 @@ extends <a href="../../operations/PrimaryRepositoryOperations.html" title="inter
 <li>
 <section class="detail" id="detach(T)">
 <h3 id="detach(java.lang.Object)">detach</h3>
-<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">detach</span><wbr><span class="parameters">(@NonNull
- T&nbsp;entity)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">detach</span><wbr><span class="parameters">(@NonNull T&nbsp;entity)</span></div>
 <div class="block">Detach the entity from the persistence context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>

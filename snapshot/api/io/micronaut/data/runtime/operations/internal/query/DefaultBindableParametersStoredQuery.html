@@ -167,14 +167,14 @@ implements <a href="BindableParametersStoredQuery.html" title="interface in io.m
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#bindParameter(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map,io.micronaut.data.model.runtime.QueryParameterBinding)" class="member-name-link">bindParameter</a><wbr>(<a href="BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a>&nbsp;binder,
  @Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext,
- <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
+ @Nullable <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;previousValues,
  <a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;binding)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)" class="member-name-link">bindParameters</a><wbr>(<a href="BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a>&nbsp;binder,
  @Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext,
- <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
+ @Nullable <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;previousValues)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Bind query parameters.</div>
@@ -268,11 +268,8 @@ implements <a href="BindableParametersStoredQuery.html" title="interface in io.m
 <section class="detail" id="bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)">
 <h3 id="bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,java.lang.Object,java.util.Map)">bindParameters</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">bindParameters</span><wbr><span class="parameters">(<a href="BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a>&nbsp;binder,
- @Nullable
  @Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext,
- @Nullable
- <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
- @Nullable
+ @Nullable <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;previousValues)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="BindableParametersStoredQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)">BindableParametersStoredQuery</a></code></span></div>
 <div class="block">Bind query parameters.</div>
@@ -291,11 +288,8 @@ implements <a href="BindableParametersStoredQuery.html" title="interface in io.m
 <section class="detail" id="bindParameter(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map,io.micronaut.data.model.runtime.QueryParameterBinding)">
 <h3 id="bindParameter(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,java.lang.Object,java.util.Map,io.micronaut.data.model.runtime.QueryParameterBinding)">bindParameter</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">bindParameter</span><wbr><span class="parameters">(<a href="BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a>&nbsp;binder,
- @Nullable
  @Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext,
- @Nullable
- <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
- @Nullable
+ @Nullable <a href="DefaultBindableParametersStoredQuery.html" title="type parameter in DefaultBindableParametersStoredQuery">E</a>&nbsp;entity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;previousValues,
  <a href="../../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&nbsp;binding)</span></div>
 </section>

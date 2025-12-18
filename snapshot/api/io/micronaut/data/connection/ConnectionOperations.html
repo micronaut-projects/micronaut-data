@@ -170,8 +170,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getConnectionStatus()">
 <h3>getConnectionStatus</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnectionStatus</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnectionStatus</span>()</div>
 <div class="block">Obtains the current required connection.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -193,9 +192,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="execute(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)">
 <h3>execute</h3>
-<div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull <a href="ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a connection within the context of the function.</div>
 <dl class="notes">
@@ -212,8 +209,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeRead(java.util.function.Function)">
 <h3>executeRead</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeRead</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a read-only connection within the context of the function.
  NOTE: The connection manager might not support the read only connection!</div>
 <dl class="notes">
@@ -229,8 +225,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeWrite(java.util.function.Function)">
 <h3>executeWrite</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">executeWrite</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block">Execute a write supported connection within the context of the function.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -245,8 +240,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="managesConnection(io.micronaut.data.connection.ConnectionStatus)">
 <h3>managesConnection</h3>
-<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
 <div class="block">Determine whether the given connection status refers to a connection
  managed by this <a href="ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> instance.</div>
 <dl class="notes">

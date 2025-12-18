@@ -210,7 +210,7 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a><wbr>&lt;E&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- E&nbsp;entity)</code></div>
+ @NonNull E&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the delete operation for the given context.</div>
 </div>
@@ -224,7 +224,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningBatchOperation.h
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>
 K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a><wbr>&lt;E,<wbr>K&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteReturningOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- E&nbsp;entity)</code></div>
+ @NonNull E&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the delete operation for the given context.</div>
 </div>
@@ -362,7 +362,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the batch operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @io.micronaut.core.annotation.NonNull boolean</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @org.jspecify.annotations.NonNull boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
@@ -446,8 +446,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.operations.RepositoryOperations)">
 <h3>AbstractQueryInterceptor</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractQueryInterceptor</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;operations)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractQueryInterceptor</span><wbr><span class="parameters">(@NonNull <a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;operations)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -466,8 +465,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getParameterValueMap(io.micronaut.aop.MethodInvocationContext)">
 <h3>getParameterValueMap</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getParameterValueMap</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getParameterValueMap</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Returns parameter values with respect of <code>Parameter</code> annotation.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -493,9 +491,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="convertOne(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">
 <h3>convertOne</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">convertOne</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @Nullable
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">convertOne</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</span></div>
 </section>
 </li>
@@ -509,8 +505,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
 <h3>prepareQuery</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</span></div>
 <div class="block">Prepares a query for the given context.</div>
 <dl class="notes">
@@ -527,9 +522,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="prepareCountQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
 <h3>prepareCountQuery</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">prepareCountQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">prepareCountQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</span></div>
 <div class="block">Prepares a query for the given context.</div>
 <dl class="notes">
@@ -544,8 +537,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getRequiredRootEntity(io.micronaut.aop.MethodInvocationContext)">
 <h3>getRequiredRootEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getRequiredRootEntity</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getRequiredRootEntity</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
 <div class="block">Obtains the root entity or throws an exception if it is not available.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -563,7 +555,6 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="getEntityParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)">
 <h3>getEntityParameter</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">RT</span>&nbsp;<span class="element-name">getEntityParameter</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve an entity parameter value in role.</div>
 <dl class="notes">
@@ -581,7 +572,6 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="getEntitiesParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)">
 <h3>getEntitiesParameter</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getEntitiesParameter</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve an entities parameter value in role.</div>
 <dl class="notes">
@@ -599,7 +589,6 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="findEntityParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)">
 <h3>findEntityParameter</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">findEntityParameter</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Find an entity parameter value in role.</div>
 <dl class="notes">
@@ -617,7 +606,6 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="findEntitiesParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)">
 <h3>findEntitiesParameter</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;RT&gt;&gt;</span>&nbsp;<span class="element-name">findEntitiesParameter</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Fid an entities parameter value in role.</div>
 <dl class="notes">
@@ -635,9 +623,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="getRequiredParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)">
 <h3>getRequiredParameterInRole</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">RT</span>&nbsp;<span class="element-name">getRequiredParameterInRole</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 <dl class="notes">
@@ -656,9 +642,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)">
 <h3>getParameterInRole</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParameterInRole</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 <dl class="notes">
@@ -677,9 +661,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)">
 <h3>getParameterInRole</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParameterInRole</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull io.micronaut.core.type.Argument&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 <dl class="notes">
@@ -697,12 +679,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)">
 <h3>getParametersInRole</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParametersInRole</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParametersInRole</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 <dl class="notes">
@@ -720,12 +698,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)">
 <h3>getParametersInRole</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParametersInRole</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;RT&gt;</span>&nbsp;<span class="element-name">getParametersInRole</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull io.micronaut.core.type.Argument&lt;RT&gt;&nbsp;type)</span></div>
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 <dl class="notes">
@@ -743,12 +717,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)">
 <h3>hasReturnTypeInRole</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@io.micronaut.core.annotation.NonNull boolean</span>&nbsp;<span class="element-name">hasReturnTypeInRole</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@org.jspecify.annotations.NonNull boolean</span>&nbsp;<span class="element-name">hasReturnTypeInRole</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</span></div>
 <div class="block">Check the return role from the method context.</div>
 <dl class="notes">
@@ -764,8 +734,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getPageable(io.micronaut.aop.MethodInvocationContext)">
 <h3>getPageable</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">getPageable</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">getPageable</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -778,8 +747,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getPageableInRole(io.micronaut.aop.MethodInvocationContext)">
 <h3>getPageableInRole</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">getPageableInRole</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">getPageableInRole</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -822,8 +790,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getRequiredEntity(io.micronaut.aop.MethodInvocationContext)">
 <h3>getRequiredEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getRequiredEntity</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getRequiredEntity</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Looks up the entity to persist from the execution context, or throws an exception.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -836,10 +803,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="instantiateEntity(java.lang.Class,java.util.Map)">
 <h3>instantiateEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">instantiateEntity</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">instantiateEntity</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;parameterValues)</span></div>
 <div class="block">Instantiate the given entity for the given parameter values.</div>
 <dl class="notes">
@@ -856,9 +820,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getPagedQuery(io.micronaut.aop.MethodInvocationContext)">
 <h3>getPagedQuery</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getPagedQuery</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getPagedQuery</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
 <div class="block">Get the paged query for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -873,10 +835,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)">
 <h3>getInsertBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the insert batch operation for the given context.</div>
 <dl class="notes">
@@ -893,11 +852,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)">
 <h3>getInsertBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the insert batch operation for the given context.</div>
 <dl class="notes">
@@ -915,9 +871,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getInsertOperation(io.micronaut.aop.MethodInvocationContext)">
 <h3>getInsertOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</span></div>
 <div class="block">Get the batch operation for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -932,9 +886,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getUpdateOperation(io.micronaut.aop.MethodInvocationContext)">
 <h3>getUpdateOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Get the batch operation for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -949,9 +901,7 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getUpdateOperation(io.micronaut.aop.MethodInvocationContext,E)">
 <h3 id="getUpdateOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">getUpdateOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  E&nbsp;entity)</span></div>
 <div class="block">Get the batch operation for the given context.</div>
 <dl class="notes">
@@ -968,11 +918,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getUpdateAllBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)">
 <h3>getUpdateAllBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateAllBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getUpdateAllBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the update all batch operation for the given context.</div>
 <dl class="notes">
@@ -990,11 +937,8 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getDeleteOperation(io.micronaut.aop.MethodInvocationContext,E)">
 <h3 id="getDeleteOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">getDeleteOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull
- E&nbsp;entity)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ @NonNull E&nbsp;entity)</span></div>
 <div class="block">Get the delete operation for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -1010,13 +954,10 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <li>
 <section class="detail" id="getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,E)">
 <h3 id="getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">getDeleteReturningOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
 K&gt;</span>
-<span class="return-type">@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>K&gt;</span>&nbsp;<span class="element-name">getDeleteReturningOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull
- E&nbsp;entity)</span></div>
+<span class="return-type">@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>K&gt;</span>&nbsp;<span class="element-name">getDeleteReturningOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ @NonNull E&nbsp;entity)</span></div>
 <div class="block">Get the delete operation for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -1033,9 +974,7 @@ K&gt;</span>
 <li>
 <section class="detail" id="getDeleteAllBatchOperation(io.micronaut.aop.MethodInvocationContext)">
 <h3>getDeleteAllBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteAllBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteAllBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Get the delete all batch operation for the given context.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -1050,10 +989,7 @@ K&gt;</span>
 <li>
 <section class="detail" id="getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)">
 <h3>getDeleteBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the delete batch operation for the given context.</div>
 <dl class="notes">
@@ -1070,12 +1006,9 @@ K&gt;</span>
 <li>
 <section class="detail" id="getDeleteReturningBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)">
 <h3>getDeleteReturningBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
 K&gt;</span>
-<span class="return-type">@NonNull <a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>K&gt;</span>&nbsp;<span class="element-name">getDeleteReturningBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull
+<span class="return-type">@NonNull <a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>K&gt;</span>&nbsp;<span class="element-name">getDeleteReturningBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the delete returning batch operation for the given context.</div>
 <dl class="notes">
@@ -1093,11 +1026,8 @@ K&gt;</span>
 <li>
 <section class="detail" id="getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)">
 <h3>getDeleteBatchOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteBatchOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getDeleteBatchOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</span></div>
 <div class="block">Get the delete batch operation for the given context.</div>
 <dl class="notes">
@@ -1115,9 +1045,7 @@ K&gt;</span>
 <li>
 <section class="detail" id="getInsertOperation(io.micronaut.aop.MethodInvocationContext,E)">
 <h3 id="getInsertOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">getInsertOperation</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertOperation</span><wbr><span class="parameters">(@NonNull
- @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt;</span>&nbsp;<span class="element-name">getInsertOperation</span><wbr><span class="parameters">(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  E&nbsp;entity)</span></div>
 <div class="block">Get the batch operation for the given context.</div>
 <dl class="notes">
@@ -1158,8 +1086,7 @@ K&gt;</span>
 <li>
 <section class="detail" id="isNumber(java.lang.Class)">
 <h3>isNumber</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNumber</span><wbr><span class="parameters">(@Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNumber</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</span></div>
 <div class="block">Is the type a number.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

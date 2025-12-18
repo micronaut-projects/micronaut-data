@@ -203,8 +203,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="findTransactionStatus(reactor.util.context.ContextView)">
 <h3>findTransactionStatus</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span><wbr><span class="parameters">(@NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
 <div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -217,9 +216,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="getTransactionStatus(reactor.util.context.ContextView)">
 <h3>getTransactionStatus</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getTransactionStatus</span><wbr><span class="parameters">(@NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
 <div class="block">Retrieve the transaction status associated to the current transaction manager from the Reactor context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -232,9 +229,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="getTransactionDefinition(reactor.util.context.ContextView)">
 <h3>getTransactionDefinition</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type">@Nullable <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></span>&nbsp;<span class="element-name">getTransactionDefinition</span><wbr><span class="parameters">(@NonNull
- @NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
+<div class="member-signature"><span class="return-type">@Nullable <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></span>&nbsp;<span class="element-name">getTransactionDefinition</span><wbr><span class="parameters">(@NonNull reactor.util.context.ContextView&nbsp;contextView)</span></div>
 <div class="block">Retrieve the transaction definition associated to the current transaction from the Reactor context.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -247,9 +242,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransactionFlux(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">
 <h3>withTransactionFlux</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionFlux</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionFlux</span><wbr><span class="parameters">(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
@@ -266,8 +259,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransactionFlux(java.util.function.Function)">
 <h3>withTransactionFlux</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionFlux</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionFlux</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -282,9 +274,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransactionMono(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">
 <h3>withTransactionMono</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionMono</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionMono</span><wbr><span class="parameters">(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
@@ -301,8 +291,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransactionMono(java.util.function.Function)">
 <h3>withTransactionMono</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionMono</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">withTransactionMono</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;handler)</span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -317,10 +306,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
 <h3>withTransaction</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">ReactiveTransactionOperations</a></code></span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
@@ -340,9 +326,7 @@ extends <a href="ReactiveTransactionOperations.html" title="interface in io.micr
 <li>
 <section class="detail" id="withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">
 <h3>withTransaction</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">withTransaction</span><wbr><span class="parameters">(@NonNull <a href="ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="ReactorReactiveTransactionOperations.html" title="type parameter in ReactorReactiveTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)">ReactiveTransactionOperations</a></code></span></div>
 <div class="block">Execute the given handler with a new transaction.</div>
 <dl class="notes">

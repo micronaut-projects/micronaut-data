@@ -237,11 +237,8 @@ R&gt;&nbsp;@NonNull reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
 <li>
 <section class="detail" id="findOne(java.lang.Class,java.lang.Object)">
 <h3>findOne</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- @NonNull
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by ID.</div>
@@ -261,10 +258,8 @@ R&gt;&nbsp;@NonNull reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
 <li>
 <section class="detail" id="exists(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>exists</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">exists</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;preparedQuery)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</span>&nbsp;<span class="element-name">exists</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#exists(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Check with a record exists for the given query.</div>
 <dl class="notes">
@@ -282,11 +277,9 @@ R&gt;&nbsp;@NonNull reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
 <li>
 <section class="detail" id="findOne(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>findOne</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
+<div class="member-signature"><span class="annotations">@SingleResult
 </span><span class="type-parameters">&lt;T,<wbr>
-R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;R&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
+R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;R&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findOne(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by Query.</div>
 <dl class="notes">
@@ -305,11 +298,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono
 <li>
 <section class="detail" id="findOptional(java.lang.Class,java.lang.Object)">
 <h3>findOptional</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOptional</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- @NonNull
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOptional</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.lang.Object)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by ID.</div>
@@ -329,11 +319,9 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono
 <li>
 <section class="detail" id="findOptional(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>findOptional</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
+<div class="member-signature"><span class="annotations">@SingleResult
 </span><span class="type-parameters">&lt;T,<wbr>
-R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;R&gt;</span>&nbsp;<span class="element-name">findOptional</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
+R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;R&gt;</span>&nbsp;<span class="element-name">findOptional</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findOptional(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by Query.</div>
 <dl class="notes">
@@ -352,8 +340,7 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono
 <li>
 <section class="detail" id="findAll(io.micronaut.data.model.runtime.PagedQuery)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findAll(io.micronaut.data.model.runtime.PagedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Finds all results for the given query.</div>
 <dl class="notes">
@@ -371,8 +358,7 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono
 <li>
 <section class="detail" id="count(io.micronaut.data.model.runtime.PagedQuery)">
 <h3>count</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
+<div class="member-signature"><span class="annotations">@SingleResult
 </span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">count</span><wbr><span class="parameters">(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#count(io.micronaut.data.model.runtime.PagedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Counts all results for the given query.</div>
@@ -391,10 +377,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono
 <li>
 <section class="detail" id="findAll(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>findAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T,<wbr>
-R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;R&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T,<wbr>
+R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;R&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findAll(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Finds all results for the given query.</div>
 <dl class="notes">
@@ -413,10 +397,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="persist(io.micronaut.data.model.runtime.InsertOperation)">
 <h3>persist</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">persist</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">persist</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#persist(io.micronaut.data.model.runtime.InsertOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Persist the entity returning a possibly new entity.</div>
 <dl class="notes">
@@ -434,10 +416,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="update(io.micronaut.data.model.runtime.UpdateOperation)">
 <h3>update</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">update</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">update</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#update(io.micronaut.data.model.runtime.UpdateOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Updates the entity returning a possibly new entity.</div>
 <dl class="notes">
@@ -455,9 +435,7 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)">
 <h3>updateAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Updates the entities for the given operation.</div>
 <dl class="notes">
@@ -475,9 +453,7 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)">
 <h3>persistAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">persistAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">persistAll</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Persist all the given entities.</div>
 <dl class="notes">
@@ -495,10 +471,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>executeUpdate</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">executeUpdate</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">executeUpdate</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Executes an update for the given query and parameter values. If it is possible to
  return the number of objects updated, then do so.</div>
@@ -515,10 +489,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="executeDelete(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>executeDelete</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">executeDelete</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">executeDelete</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Executes a batch delete for the given query and parameter values. If it is possible to
  return the number of objects updated, then do so.</div>
@@ -535,9 +507,7 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="execute(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>execute</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;R&gt;</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux&lt;R&gt;</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#execute(io.micronaut.data.model.runtime.PreparedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Executes the given query with parameter values returning a result.</div>
 <dl class="notes">
@@ -555,10 +525,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="delete(io.micronaut.data.model.runtime.DeleteOperation)">
 <h3>delete</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">delete</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">delete</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#delete(io.micronaut.data.model.runtime.DeleteOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Deletes the entity.</div>
 <dl class="notes">
@@ -576,10 +544,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)">
 <h3>deleteAll</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Deletes all the entities of the given type.</div>
 <dl class="notes">
@@ -597,10 +563,8 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Flux
 <li>
 <section class="detail" id="findPage(io.micronaut.data.model.runtime.PagedQuery)">
 <h3>findPage</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-@SingleResult
-</span><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;&gt;</span>&nbsp;<span class="element-name">findPage</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;pagedQuery)</span></div>
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">@NonNull reactor.core.publisher.Mono&lt;<a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;&gt;</span>&nbsp;<span class="element-name">findPage</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;pagedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveRepositoryOperations.html#findPage(io.micronaut.data.model.runtime.PagedQuery)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find a page for the given entity and pageable.</div>
 <dl class="notes">

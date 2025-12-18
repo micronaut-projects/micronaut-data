@@ -499,10 +499,8 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <li>
 <section class="detail" id="getEntity(java.lang.Class)">
 <h3>getEntity</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected abstract</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type">@NonNull <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getEntity</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getEntity</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
 <div class="block">Gets the persistence entity.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -517,9 +515,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <li>
 <section class="detail" id="getQueryHints(io.micronaut.data.model.runtime.StoredQuery)">
 <h3>getQueryHints</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getQueryHints</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">getQueryHints</span><wbr><span class="parameters">(@NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/HintsCapableRepository.html#getQueryHints(io.micronaut.data.model.runtime.StoredQuery)">HintsCapableRepository</a></code></span></div>
 <div class="block">Obtain any custom query hints for this method and repository implementation.</div>
 <dl class="notes">
@@ -744,7 +740,6 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="createQuery(java.lang.Object,java.lang.String,java.lang.Class)">createQuery</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
- @Nullable
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</span></div>
 <div class="block">Create a new query.</div>
 <dl class="notes">
@@ -840,7 +835,6 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 <h3 id="bindParameters(java.lang.Object,io.micronaut.data.model.runtime.PreparedQuery,boolean)">bindParameters</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T,<wbr>
 R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">bindParameters</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;q,
- @NonNull
  @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery,
  boolean&nbsp;bindNamed)</span></div>
 <div class="block">Bind parameters into query.</div>
@@ -860,7 +854,6 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 <h3 id="bindParameters(java.lang.Object,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.aop.InvocationContext,java.lang.Object)">bindParameters</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T,<wbr>
 R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">bindParameters</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;q,
- @NonNull
  @NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;T,<wbr>R&gt;&nbsp;storedQuery,
  io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext,
  T&nbsp;entity)</span></div>
@@ -906,7 +899,6 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectCountOf</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;entity,
- @NonNull
  @NonNull <a href="../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
  <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</span></div>
 </section>

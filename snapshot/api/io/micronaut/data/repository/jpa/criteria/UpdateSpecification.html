@@ -142,9 +142,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="where(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)">
 <h3>where</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;</span>&nbsp;<span class="element-name">where</span><wbr><span class="parameters">(@Nullable
- @Nullable <a href="PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;&nbsp;spec)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;</span>&nbsp;<span class="element-name">where</span><wbr><span class="parameters">(@Nullable <a href="PredicateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">PredicateSpecification</a>&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;&nbsp;spec)</span></div>
 <div class="block">Simple static factory method to add some syntactic sugar around a <a href="UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -157,12 +155,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="toPredicate(jakarta.persistence.criteria.Root,jakarta.persistence.criteria.CriteriaUpdate,jakarta.persistence.criteria.CriteriaBuilder)">
 <h3>toPredicate</h3>
-<div class="member-signature"><span class="annotations">@Nullable
-</span><span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">toPredicate</span><wbr><span class="parameters">(@NonNull
- @NonNull jakarta.persistence.criteria.Root&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;&nbsp;root,
- @NonNull
+<div class="member-signature"><span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">toPredicate</span><wbr><span class="parameters">(@NonNull jakarta.persistence.criteria.Root&lt;<a href="UpdateSpecification.html" title="type parameter in UpdateSpecification">T</a>&gt;&nbsp;root,
  @NonNull jakarta.persistence.criteria.CriteriaUpdate&lt;?&gt;&nbsp;query,
- @NonNull
  @NonNull jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder)</span></div>
 <div class="block">Creates a WHERE clause predicate for the given entity <code>Root</code> and a criteria query.</div>
 <dl class="notes">
