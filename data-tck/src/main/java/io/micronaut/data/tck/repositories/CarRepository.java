@@ -21,11 +21,11 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Car;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface CarRepository extends CrudRepository<Car, Long> {
 
-    void update(@Id Long id, @Parameter("name") @Nullable String name);
+    void update(@Id Long id, @Parameter("name") @Nullable @io.micronaut.core.annotation.Nullable String name);
 
     @Join(value = "parts", type = Join.Type.LEFT)
     Car getById(Long id);

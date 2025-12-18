@@ -21,8 +21,6 @@ public class MockedDateTimeProvider implements DateTimeProvider<OffsetDateTime> 
         if (value == null) {
             return OffsetDateTime.now();
         }
-        OffsetDateTime currentValue = value;
-        value = null;
-        return currentValue;
+        return value;
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.Blocking;
 
 import java.util.List;

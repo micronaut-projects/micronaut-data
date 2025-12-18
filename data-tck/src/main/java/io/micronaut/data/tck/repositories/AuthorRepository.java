@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
@@ -31,7 +31,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.entities.Author;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import io.micronaut.data.tck.entities.AuthorDtoWithBooks;
 import jakarta.validation.constraints.NotNull;
@@ -90,6 +90,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long>, JpaSpeci
     Author searchByName(String name);
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     @Join("books")
     Author retrieveByName(String name);
 
@@ -129,7 +130,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long>, JpaSpeci
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<AuthorDtoWithBooks> readByNameIsNotNull();
 
-    void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
+    void updateNickname(@Id Long id, @Parameter("nickName") @Nullable @io.micronaut.core.annotation.Nullable String nickName);
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Page<Author> findAll(Pageable pageable);

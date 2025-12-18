@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.DataType;
 
@@ -170,7 +170,7 @@ public enum Dialect {
      * @param joinType the join type
      * @return True if the type is supported by this dialect.
      */
-    public final boolean supportsJoinType(@NonNull Join.Type joinType) {
+    public final boolean supportsJoinType(Join. @NonNull Type joinType) {
         return this.joinTypesSupported.contains(joinType);
     }
 

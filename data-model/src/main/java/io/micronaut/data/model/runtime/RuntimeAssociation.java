@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Relation;
@@ -60,7 +60,6 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
         return aliasName;
     }
 
-    @NonNull
     @Override
     public Relation.Kind getKind() {
         return kind;

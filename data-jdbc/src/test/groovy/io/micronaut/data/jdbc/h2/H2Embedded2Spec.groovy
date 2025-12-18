@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.core.annotation.Introspected
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.jdbc.annotation.JdbcRepository

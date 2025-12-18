@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.model.query;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
@@ -48,7 +48,7 @@ public class JoinPath {
      * @param joinType        The join type
      * @param alias           The alias
      */
-    public JoinPath(@NonNull String path, @NonNull Association[] associationPath, @NonNull Join.Type joinType, @Nullable String alias) {
+    public JoinPath(@NonNull String path, @NonNull Association[] associationPath, Join.Type joinType, @Nullable String alias) {
         this.path = path;
         this.associationPath = associationPath;
         this.joinType = joinType;
@@ -113,8 +113,7 @@ public class JoinPath {
     /**
      * @return The join type
      */
-    @NonNull
-    public Join.Type getJoinType() {
+    public Join. @NonNull Type getJoinType() {
         return joinType;
     }
 

@@ -16,7 +16,7 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * An async or reactive {@link CriteriaRepositoryOperations} capable of supporting blocking access.

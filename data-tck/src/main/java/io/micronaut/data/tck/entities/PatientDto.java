@@ -1,7 +1,7 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;

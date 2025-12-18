@@ -16,7 +16,7 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
 import io.micronaut.data.model.runtime.DeleteReturningOperation;
 

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * The alternative of {@link ReactiveCapableRepository} that provides {@link ReactorReactiveRepositoryOperations}.

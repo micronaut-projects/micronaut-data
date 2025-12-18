@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.ConnectionStatus;

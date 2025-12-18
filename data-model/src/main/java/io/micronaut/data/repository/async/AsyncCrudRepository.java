@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository.async;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.repository.GenericRepository;
 

@@ -18,7 +18,7 @@ package io.micronaut.data.spring.runtime;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Sort;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 /**
@@ -74,7 +74,7 @@ class SortDelegate implements Sort {
 
     @NonNull
     @Override
-    public Sort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
+    public Sort order(@NonNull String propertyName, Order. @NonNull Direction direction) {
         org.springframework.data.domain.Sort.Direction d = org.springframework.data.domain.Sort.Direction.valueOf(
                 direction.name()
         );

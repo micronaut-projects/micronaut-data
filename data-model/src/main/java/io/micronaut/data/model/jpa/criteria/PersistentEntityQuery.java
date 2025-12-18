@@ -16,7 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.Order;
