@@ -1,6 +1,10 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Id;
 
 @Embeddable
