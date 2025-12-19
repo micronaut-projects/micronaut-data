@@ -39,7 +39,13 @@ public class StudentView {
 ==== Using `@MappedProperty` annotation
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
-using `@MappedProperty` annotation, where `value` field, represents the underlying table field name.
+The fields of types annotated annotated with `@JsonView` or `@JsonSubview` do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
+
+The `@MappedProperty` annotation can be used to control which underlying field the view matches in the entity.
+
+The following example uses a different name in the view the `Teacher` entities `id` and `name` fields, remapping them to `teachID` and `teacher` respectively.
+
+Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
 
 [source,java]
 ----
