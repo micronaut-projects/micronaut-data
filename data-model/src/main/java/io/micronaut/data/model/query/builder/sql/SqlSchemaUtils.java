@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -249,7 +250,7 @@ public final class SqlSchemaUtils {
         if (converterClass != null) {
             AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
             if (converter instanceof SqlColumnDefinitionProvider provider) {
-                String definitionFromConverter = provider.getColumnDefinition(argument, SqlColumnDefinitionProvider.DatabaseType.from(dialect));
+                String definitionFromConverter = provider.getColumnDefinition(argument, DatabaseType.from(dialect));
                 if (definitionFromConverter != null) {
                     definition = definitionFromConverter;
                 }
@@ -263,7 +264,7 @@ public final class SqlSchemaUtils {
             for (SqlColumnDefinitionProvider provider : columnDefinitionProviders) {
                 try {
                     if (provider.supports(argument)) {
-                        String def = provider.getColumnDefinition(argument, SqlColumnDefinitionProvider.DatabaseType.from(dialect));
+                        String def = provider.getColumnDefinition(argument, DatabaseType.from(dialect));
                         if (def != null) {
                             definition = def;
                             break;

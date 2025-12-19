@@ -39,6 +39,6 @@ public interface DialectConversionContext extends ConversionContext {
      * @return the SQL dialect (never null)
      */
     @NonNull
-    Dialect getDialect();
+    DatabaseType getDatabaseType();
 
 }

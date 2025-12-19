@@ -28,15 +28,6 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         AbstractOracleTypeConvertersFactory.parseFloatArray(null).length == 0
     }
 
-    def "parseIntArray rounds and clamps"() {
-        when:
-        def arr = AbstractOracleTypeConvertersFactory.parseIntArray("[1.2, 2.5, -3.49, 2147483648, -2147483649]")
-
-        then:
-        // Math.round: 1.2 -> 1, 2.5 -> 3, -3.49 -> -3; then clamp to INT bounds
-        arr as List == [1, 3, -3, Integer.MAX_VALUE, Integer.MIN_VALUE]
-    }
-
     def "parseByteArray rounds and clamps"() {
         when:
         def arr = AbstractOracleTypeConvertersFactory.parseByteArray("[127.6, -128.4, 10, 9999, -9999]")
@@ -53,7 +44,6 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         AbstractOracleTypeConvertersFactory.toOracleText(v) == "[1.0, 2.0, 3.0]"
         AbstractOracleTypeConvertersFactory.toOracleText(new double[]{1, 2}) == "[1.0, 2.0]"
         AbstractOracleTypeConvertersFactory.toOracleText(new float[]{1, 2}) == "[1.0, 2.0]"
-        AbstractOracleTypeConvertersFactory.toOracleText(new int[]{1, 2}) == "[1, 2]"
         AbstractOracleTypeConvertersFactory.toOracleText(new byte[]{1 as byte, 2 as byte}) == "[1, 2]"
     }
 
@@ -61,29 +51,25 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         private final AbstractOracleTypeConvertersFactory.OracleVectorKind kind
         private final float[] f
         private final double[] d
-        private final int[] i
         private final byte[] b
 
         Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind kind,
                 float[] f = new float[0],
                 double[] d = new double[0],
-                int[] i = new int[0],
                 byte[] b = new byte[0]) {
             this.kind = kind
             this.f = f
             this.d = d
-            this.i = i
             this.b = b
         }
 
         // Support Groovy named-argument constructor calls like:
-        // new Adapter(kind, f: float[], d: double[], i: int[], b: byte[])
+        // new Adapter(kind, f: float[], d: double[], b: byte[])
         Adapter(Map params, AbstractOracleTypeConvertersFactory.OracleVectorKind kind) {
             this(
                 kind,
                 (float[])  (params?.f ?: new float[0]),
                 (double[]) (params?.d ?: new double[0]),
-                (int[])    (params?.i ?: new int[0]),
                 (byte[])   (params?.b ?: new byte[0])
             )
         }
@@ -98,9 +84,6 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         double[] toDoubleArray() { d }
 
         @Override
-        int[] toIntArray() { i }
-
-        @Override
         byte[] toByteArray() { b }
     }
 
@@ -110,7 +93,7 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
                 .toFloatArray() as List == [1f, 2f]
         AbstractOracleTypeConvertersFactory.toVector(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.FLOAT64, d: [1d, 2d] as double[]))
                 .toDoubleArray() as List == [1d, 2d]
-        AbstractOracleTypeConvertersFactory.toVector(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.INT8, i: [1, 2] as int[]))
+        AbstractOracleTypeConvertersFactory.toVector(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.INT8, b: [1 as byte, 2 as byte] as byte[]))
                 .toByteArray() as List == [1 as byte, 2 as byte]
         AbstractOracleTypeConvertersFactory.toVector(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.BINARY, b: [1 as byte, 2 as byte] as byte[]))
                 .toByteArray() as List == [1 as byte, 2 as byte]
@@ -120,7 +103,7 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         given:
         def fAdapter = new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.FLOAT32, f: [1f, 2f] as float[])
         def dAdapter = new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.FLOAT64, d: [1d, 2d] as double[])
-        def iAdapter = new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.INT8, i: [1, 2] as int[])
+        def iAdapter = new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.INT8, b: [1 as byte, 2 as byte] as byte[])
         def bAdapter = new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.BINARY, b: [1 as byte, 2 as byte] as byte[])
 
         expect: "double target"
@@ -134,12 +117,6 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
         AbstractOracleTypeConvertersFactory.vectorToFloatArray(dAdapter).get() as List == [1f, 2f]
         AbstractOracleTypeConvertersFactory.vectorToFloatArray(iAdapter).get() as List == [1f, 2f]
         AbstractOracleTypeConvertersFactory.vectorToFloatArray(bAdapter).get() as List == [1f, 2f]
-
-        and: "int target"
-        AbstractOracleTypeConvertersFactory.vectorToIntArray(iAdapter).get() as List == [1, 2]
-        AbstractOracleTypeConvertersFactory.vectorToIntArray(fAdapter).get() as List == [1, 2]
-        AbstractOracleTypeConvertersFactory.vectorToIntArray(dAdapter).get() as List == [1, 2]
-        AbstractOracleTypeConvertersFactory.vectorToIntArray(bAdapter).get() as List == [1, 2]
 
         and: "byte target"
         AbstractOracleTypeConvertersFactory.vectorToByteArray(bAdapter).get() as List == [1 as byte, 2 as byte]

@@ -16,7 +16,8 @@
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.convert.ConversionContext;
-import java.util.Map;
+
+import java.util.List;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
@@ -38,8 +39,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultVectorAttributeConverter extends AbstractVectorAttributeConverter<Vector, Object>  implements VectorAttributeConverter<Object> {
 
-    protected DefaultVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
-        super(converterMap, Vector.class);
+    protected DefaultVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList) {
+        super(convertorList, Vector.class);
     }
 
     @Override

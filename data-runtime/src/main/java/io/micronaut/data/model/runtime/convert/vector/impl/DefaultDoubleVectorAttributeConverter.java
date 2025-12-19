@@ -22,7 +22,7 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.DoubleVector;
 import jakarta.inject.Singleton;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Unified attribute converter for DoubleVector that supports multiple SQL dialects.
@@ -38,8 +38,8 @@ import java.util.Map;
 @Singleton
 public class DefaultDoubleVectorAttributeConverter extends AbstractVectorAttributeConverter<DoubleVector, Object> implements DoubleVectorAttributeConverter<Object> {
 
-    protected DefaultDoubleVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
-        super(converterMap, DoubleVector.class);
+    protected DefaultDoubleVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList) {
+        super(convertorList, DoubleVector.class);
     }
 
     @Override

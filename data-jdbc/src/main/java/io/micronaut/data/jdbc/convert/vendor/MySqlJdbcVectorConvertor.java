@@ -16,16 +16,15 @@
 package io.micronaut.data.jdbc.convert.vendor;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
-import io.micronaut.data.model.vector.ByteVector;
-import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import java.util.List;
 
 
 /**
@@ -42,13 +41,10 @@ import jakarta.inject.Singleton;
 @Internal
 @Requires(classes = com.mysql.cj.jdbc.Driver.class)
 @Singleton
-@Named("MYSQL")
-public class MySqlJdbcVectorConvertor implements VectorTypeConvertor<byte[]> {
-
-    private final ConversionService conversionService;
+public final class MySqlJdbcVectorConvertor extends AbstractJdbcVectorConvertor<byte[]> {
 
     public MySqlJdbcVectorConvertor(ConversionService conversionService) {
-        this.conversionService = conversionService;
+        super(conversionService);
     }
 
     @Override
@@ -56,30 +52,12 @@ public class MySqlJdbcVectorConvertor implements VectorTypeConvertor<byte[]> {
         return byte[].class;
     }
 
-    @Override
-    public byte[] convert(Vector vector, Class<byte[]> targetType) {
-        if (vector instanceof ByteVector || vector instanceof DoubleVector) {
-            throw new IllegalArgumentException(getName() + " does not support " + vector.getClass().getName());
-        }
-        return conversionService.convert(vector, targetType).orElse(null);
+    public List<Class<? extends Vector>> supportedVectorTypes() {
+        return List.of(Vector.class, FloatVector.class);
     }
 
     @Override
-    public Vector convert(byte[] object, Class<Vector> targetType) {
-        if (targetType.getName().equals(ByteVector.class.getName()) || targetType.getName().equals(DoubleVector.class.getName())) {
-            throw new IllegalArgumentException(getName() + " does not support " + targetType.getName());
-        }
-        return conversionService.convert(object, targetType).orElse(null);
+    public DatabaseType databaseType() {
+        return DatabaseType.MYSQL;
     }
-
-    @Override
-    public Dialect getDialect() {
-        return Dialect.MYSQL;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return getDialect().toString();
-    }
-
 }

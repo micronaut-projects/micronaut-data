@@ -17,16 +17,15 @@ package io.micronaut.data.jdbc.convert.vendor;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
-import io.micronaut.data.model.vector.ByteVector;
-import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.postgresql.util.PGobject;
+
+import java.util.List;
 
 /**
  * PostgreSQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to {@link PGobject} of type {@code vector}
@@ -37,14 +36,11 @@ import org.postgresql.util.PGobject;
  */
 @Internal
 @Singleton
-@Named("POSTGRES")
 @Requires(classes = PGobject.class)
-public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject> {
-
-    private final ConversionService conversionService;
+public final class PostgresJdbcVectorConvertor extends AbstractJdbcVectorConvertor<PGobject> {
 
     public PostgresJdbcVectorConvertor(ConversionService conversionService) {
-        this.conversionService = conversionService;
+        super(conversionService);
     }
 
     @Override
@@ -52,29 +48,12 @@ public class PostgresJdbcVectorConvertor implements VectorTypeConvertor<PGobject
         return PGobject.class;
     }
 
-    @Override
-    public PGobject convert(Vector vector, Class<PGobject> targetType) {
-        if (vector instanceof ByteVector || vector instanceof DoubleVector) {
-            throw new IllegalArgumentException(getName() + " does not support " + vector.getClass().getName());
-        }
-        return conversionService.convert(vector, targetType).orElse(null);
+    public List<Class<? extends Vector>> supportedVectorTypes() {
+        return List.of(Vector.class, FloatVector.class);
     }
 
     @Override
-    public Vector convert(PGobject object, Class<Vector> targetType) {
-        if (targetType.getName().equals(ByteVector.class.getName()) || targetType.getName().equals(DoubleVector.class.getName())) {
-            throw new IllegalArgumentException(getName() + " does not support " + targetType.getName());
-        }
-        return conversionService.convert(object, targetType).orElse(null);
-    }
-
-    @Override
-    public Dialect getDialect() {
-        return Dialect.POSTGRES;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return getDialect().toString();
+    public DatabaseType databaseType() {
+        return DatabaseType.POSTGRES;
     }
 }

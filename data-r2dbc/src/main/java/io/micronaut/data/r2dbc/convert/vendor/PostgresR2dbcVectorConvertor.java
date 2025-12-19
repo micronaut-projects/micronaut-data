@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.convert.vendor;
+package io.micronaut.data.r2dbc.convert.vendor;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
-import io.micronaut.data.model.vector.ByteVector;
-import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
@@ -28,31 +26,34 @@ import jakarta.inject.Singleton;
 import java.util.List;
 
 /**
- * Oracle-specific {@link VectorTypeConvertor} that maps {@link Vector} to the JDBC {@link String} representation
- * accepted by the Oracle driver and back.
+ * VectorTypeConvertor for Postgres R2DBC.
+ * Persists Micronaut Vector instances as io.r2dbc.postgresql.codec.Vector values and converts to/from
+ * pgvector codec for the POSTGRES dialect.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
 @Singleton
-public final class OracleJdbcVectorConvertor extends AbstractJdbcVectorConvertor<String> {
+@Requires(classes = io.r2dbc.postgresql.codec.Vector.class)
+public final class PostgresR2dbcVectorConvertor extends AbstractR2dbcVectorConvertor<io.r2dbc.postgresql.codec.Vector> {
 
-    public OracleJdbcVectorConvertor(ConversionService conversionService) {
+    public PostgresR2dbcVectorConvertor(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<String> getPersistedType() {
-        return String.class;
+    public Class<io.r2dbc.postgresql.codec.Vector> getPersistedType() {
+        return io.r2dbc.postgresql.codec.Vector.class;
     }
 
+    @Override
     public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
+        return List.of(Vector.class, FloatVector.class);
     }
 
-        @Override
+    @Override
     public DatabaseType databaseType() {
-        return DatabaseType.ORACLE;
+        return DatabaseType.POSTGRES;
     }
 }

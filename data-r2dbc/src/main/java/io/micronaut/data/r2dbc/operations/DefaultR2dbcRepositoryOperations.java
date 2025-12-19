@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
@@ -909,12 +910,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
                                                               @Nullable Argument<?> argument) {
             if (property != null) {
-                return new RuntimePersistentPropertyR2dbcCC(connection, sqlStoredQuery.getDialect(), property);
+                return new RuntimePersistentPropertyR2dbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), property);
             }
             if (argument != null) {
-                return new ArgumentR2dbcCC(connection, sqlStoredQuery.getDialect(), argument);
+                return new ArgumentR2dbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), argument);
             }
-            return new R2dbcConversionContextImpl(connection, sqlStoredQuery.getDialect());
+            return new R2dbcConversionContextImpl(connection, DatabaseType.from(sqlStoredQuery.getDialect()));
         }
 
         @Override
@@ -1202,8 +1203,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final RuntimePersistentProperty<?> property;
 
-        public RuntimePersistentPropertyR2dbcCC(Connection connection, Dialect dialect, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection, dialect);
+        public RuntimePersistentPropertyR2dbcCC(Connection connection, DatabaseType databaseType, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, databaseType);
             this.property = property;
         }
 
@@ -1217,8 +1218,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(Connection connection, Dialect dialect, Argument argument) {
-            super(ConversionContext.of(argument), connection, dialect);
+        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument argument) {
+            super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
 
@@ -1232,16 +1233,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         implements R2dbcConversionContext {
 
         private final Connection connection;
-        private final Dialect dialect;
+        private final DatabaseType databaseType;
 
-        public R2dbcConversionContextImpl(Connection connection, Dialect dialect) {
-            this(ConversionContext.DEFAULT, connection, dialect);
+        public R2dbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
+            this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, Dialect dialect) {
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
-            this.dialect = dialect;
+            this.databaseType = databaseType;
         }
 
         @Override
@@ -1250,8 +1251,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public Dialect getDialect() {
-            return dialect;
+        public DatabaseType getDatabaseType() {
+            return databaseType;
         }
     }
 }

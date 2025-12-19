@@ -17,14 +17,16 @@ package io.micronaut.data.r2dbc.convert.vendor;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import oracle.sql.VECTOR;
+
+import java.util.List;
 
 /**
  * VectorTypeConvertor for Oracle R2DBC.
@@ -36,38 +38,25 @@ import oracle.sql.VECTOR;
  */
 @Internal
 @Singleton
-@Named("ORACLE")
 @Requires(classes = VECTOR.class)
-public class OracleJdbcVectorConvertor implements VectorTypeConvertor<String> {
+public final class OracleR2dbcVectorConvertor extends AbstractR2dbcVectorConvertor<String> {
 
-    private final ConversionService conversionService;
+    public OracleR2dbcVectorConvertor(ConversionService conversionService) {
+        super(conversionService);
+    }
 
-    public OracleJdbcVectorConvertor(ConversionService conversionService) {
-        this.conversionService = conversionService;
+    @Override
+    public List<Class<? extends Vector>> supportedVectorTypes() {
+        return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
+    }
+
+    @Override
+    public DatabaseType databaseType() {
+        return DatabaseType.ORACLE;
     }
 
     @Override
     public Class<String> getPersistedType() {
         return String.class;
-    }
-
-    @Override
-    public String convert(Vector vector, Class<String> targetType) {
-        return conversionService.convert(vector, targetType).orElse(null);
-    }
-
-    @Override
-    public Vector convert(String object, Class<Vector> targetType) {
-        return conversionService.convert(object, targetType).orElse(null);
-    }
-
-    @Override
-    public Dialect getDialect() {
-        return Dialect.ORACLE;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return getDialect().toString();
     }
 }

@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -107,6 +108,7 @@ import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
 
 import javax.sql.DataSource;
+import javax.xml.crypto.Data;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -1139,12 +1141,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                               Argument<?> argument) {
             Objects.requireNonNull(connection);
             if (property != null) {
-                return new RuntimePersistentPropertyJdbcCC(connection, sqlStoredQuery.getDialect(), property);
+                return new RuntimePersistentPropertyJdbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), property);
             }
             if (argument != null) {
-                return new ArgumentJdbcCC(connection, sqlStoredQuery.getDialect(), argument);
+                return new ArgumentJdbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), argument);
             }
-            return new JdbcConversionContextImpl(connection, sqlStoredQuery.getDialect());
+            return new JdbcConversionContextImpl(connection, DatabaseType.from(sqlStoredQuery.getDialect()));
         }
 
         @Override
@@ -1414,8 +1416,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final RuntimePersistentProperty<?> property;
 
-        public RuntimePersistentPropertyJdbcCC(Connection connection, Dialect dialect, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection, dialect);
+        public RuntimePersistentPropertyJdbcCC(Connection connection, DatabaseType databaseType, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, databaseType);
             this.property = property;
         }
 
@@ -1429,8 +1431,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final Argument argument;
 
-        public ArgumentJdbcCC(Connection connection, Dialect dialect, Argument argument) {
-            super(ConversionContext.of(argument), connection, dialect);
+        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument argument) {
+            super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
 
@@ -1444,16 +1446,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         implements JdbcConversionContext {
 
         private final Connection connection;
-        private final Dialect dialect;
+        private final DatabaseType databaseType;
 
-        public JdbcConversionContextImpl(Connection connection, Dialect dialect) {
-            this(ConversionContext.DEFAULT, connection, dialect);
+        public JdbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
+            this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, Dialect dialect) {
+        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
-            this.dialect = dialect;
+            this.databaseType = databaseType;
         }
 
         @Override
@@ -1462,8 +1464,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public Dialect getDialect() {
-            return dialect;
+        public DatabaseType getDatabaseType() {
+            return databaseType;
         }
     }
 

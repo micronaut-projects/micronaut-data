@@ -18,7 +18,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
@@ -27,6 +27,8 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.type.Argument;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,11 +41,14 @@ import java.util.Map;
  */
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
 
-    protected final Map<String, VectorTypeConvertor<?>> converterMap;
+    protected final Map<DatabaseType, VectorTypeConvertor<?>> converterMap;
     private final Class<X> type;
 
-    protected AbstractVectorAttributeConverter(Map<String, VectorTypeConvertor<?>> converterMap, Class<X> type) {
-        this.converterMap = converterMap;
+    protected AbstractVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList, Class<X> type) {
+        this.converterMap = new HashMap<>(convertorList.size());
+        for (VectorTypeConvertor<?> converter : convertorList) {
+            converterMap.put(converter.databaseType(), converter);
+        }
         this.type = type;
     }
 
@@ -52,14 +57,14 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
         if (entityValue == null) {
             return null;
         }
-        final Dialect dialect = extractDialect(context);
-        VectorTypeConvertor vectorTypeConvertor = dialect != null ? converterMap.get(dialect.toString()) : null;
+        final DatabaseType databaseType = extractDatabaseType(context);
+        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
         if (vectorTypeConvertor != null) {
             @SuppressWarnings("unchecked")
-            Y result = (Y) vectorTypeConvertor.convert(entityValue, vectorTypeConvertor.getPersistedType());
+            Y result = (Y) vectorTypeConvertor.convert(entityValue);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
     }
 
     @Override
@@ -67,30 +72,23 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
         if (persistedValue == null) {
             return null;
         }
-        final Dialect dialect = extractDialect(context);
-        VectorTypeConvertor vectorTypeConvertor = dialect != null ? converterMap.get(dialect.toString()) : null;
+        final DatabaseType databaseType = extractDatabaseType(context);
+        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
         if (vectorTypeConvertor != null) {
             @SuppressWarnings("unchecked")
             X result = (X) vectorTypeConvertor.convert(persistedValue, type);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
     }
 
     /**
      * Returns the persisted type for the given context/dialect.
      */
     private Class<?> getPersistedType(ConversionContext conversionContext) {
-        final Dialect dialect = extractDialect(conversionContext);
-        VectorTypeConvertor vectorTypeConvertor = dialect != null ? converterMap.get(dialect.toString()) : null;
-        if (vectorTypeConvertor != null) {
-            return vectorTypeConvertor.getPersistedType();
-        } else if (dialect == Dialect.ORACLE) {
-            return String.class;
-        } else if (dialect == Dialect.MYSQL) {
-            return byte[].class;
-        }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + dialect);
+        final DatabaseType databaseType = extractDatabaseType(conversionContext);
+        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
     }
 
     @Override
@@ -98,18 +96,14 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                                                 ResultReader<RS, IDX> reader,
                                                 RS resultSet,
                                                 IDX columnName) {
-        Class<?> persistedType = getPersistedType(conversionContext);
-        if (persistedType == null) {
-            return null;
-        }
-        @SuppressWarnings("unchecked")
-        Class<Object> type = (Class<Object>) persistedType;
-        return reader.getRequiredValue(resultSet, columnName, type);
+        final DatabaseType databaseType = extractDatabaseType(conversionContext);
+        VectorTypeConvertor<?> vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
+        return reader.getRequiredValue(resultSet, columnName, vectorTypeConvertor.getPersistedType());
     }
 
-    protected static @Nullable Dialect extractDialect(ConversionContext context) {
+    protected static @Nullable DatabaseType extractDatabaseType(ConversionContext context) {
         if (context instanceof DialectConversionContext dialectConversionContext) {
-            return dialectConversionContext.getDialect();
+            return dialectConversionContext.getDatabaseType();
         }
         return null;
     }
@@ -122,7 +116,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     }
 
     @Override
-    public String getColumnDefinition(Argument<?> argument, SqlColumnDefinitionProvider.DatabaseType databaseType) {
+    public String getColumnDefinition(Argument<?> argument, DatabaseType databaseType) {
         // Extract dimension from annotations if present: prefer jakarta.persistence.Column(length)
         int dim = argument.getAnnotationMetadata()
             .intValue("jakarta.persistence.Column", "length")

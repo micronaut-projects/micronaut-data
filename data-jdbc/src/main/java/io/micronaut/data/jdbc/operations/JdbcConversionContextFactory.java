@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
 
@@ -42,7 +43,7 @@ class JdbcConversionContextFactory implements ConversionContextFactory {
 
     @Override
     public DialectConversionContext forArgument(Argument<?> argument) {
-        return new DefaultJdbcRepositoryOperations.ArgumentJdbcCC(null, jdbcConfiguration.getDialect(), argument);
+        return new DefaultJdbcRepositoryOperations.ArgumentJdbcCC(null, DatabaseType.from(jdbcConfiguration.getDialect()), argument);
 
     }
 }
