@@ -1,6 +1,6 @@
 package io.micronaut.data.model.runtime.convert.vector.impl
 
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DialectConversionContext
 import io.micronaut.data.runtime.mapper.ResultReader
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor
@@ -10,11 +10,11 @@ import spock.lang.Specification
 
 /**
  * Verifies transform/conversion behavior of AbstractVectorAttributeConverter:
- * - Delegation to a VectorTypeConvertor when a converter is registered for a Dialect
- * - Fallback to textual representation for Oracle when no converter is registered
+ * - Delegation to a VectorTypeConvertor when a converter is registered for a DatabaseType
+ * - Throws when no converter is registered for a DatabaseType
  * - readFromResultSet delegates to ResultReader with persisted type
  * - convertToEntityValue delegates through VectorTypeConvertor
- * - Column definition rendering per dialect
+ * - Column definition rendering per database type
  */
 class VectorAttributeConverterTransformSpec extends Specification {
 
@@ -23,8 +23,8 @@ class VectorAttributeConverterTransformSpec extends Specification {
      * AbstractVectorAttributeConverter from the same package.
      */
     static class TestDoubleVectorConverter extends AbstractVectorAttributeConverter<DoubleVector, Object> {
-        TestDoubleVectorConverter(Map<String, VectorTypeConvertor<?>> converterMap) {
-            super(converterMap, DoubleVector.class)
+        TestDoubleVectorConverter(List<VectorTypeConvertor<?>> converterList) {
+            super(converterList, DoubleVector.class)
         }
 
         @Override
@@ -33,25 +33,24 @@ class VectorAttributeConverterTransformSpec extends Specification {
         }
     }
 
-    def "convertToPersistedValue uses converter map for POSTGRES dialect"() {
+    def "convertToPersistedValue uses converter map for POSTGRES database"() {
         given:
         def persistedType = String
         def delegatingConverter = Stub(VectorTypeConvertor) {
             getPersistedType() >> persistedType
-            getDialect() >> Dialect.POSTGRES
-            getName() >> "postgres-vector"
+            databaseType() >> DatabaseType.POSTGRES
             // entity -> persisted
-            convert(_, _) >> { Vector v, Class t ->
+            convert(_ as Vector) >> { Vector v ->
                 "pg:${v.toDoubleArray().join(',')}"
             }
             // persisted -> entity (not used in this test)
-            convert(_, Class) >> { Object obj, Class target ->
+            convert(_ as String, _ as Class) >> { Object obj, Class target ->
                 Vector.of(9d, 9d)
             }
         }
-        def converter = new TestDoubleVectorConverter(["POSTGRES": delegatingConverter])
+        def converter = new TestDoubleVectorConverter([delegatingConverter])
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.POSTGRES
+            getDatabaseType() >> DatabaseType.POSTGRES
         }
         def v = (DoubleVector) Vector.of(1d, 2d)
 
@@ -62,20 +61,19 @@ class VectorAttributeConverterTransformSpec extends Specification {
         persisted == "pg:1.0,2.0"
     }
 
-    def "convertToPersistedValue falls back to textual representation for ORACLE when no converter exists"() {
+    def "convertToPersistedValue throws for ORACLE when no converter exists"() {
         given:
-        def converter = new TestDoubleVectorConverter([:]) // no converter in the map
+        def converter = new TestDoubleVectorConverter([]) // no converter in the list
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.ORACLE
+            getDatabaseType() >> DatabaseType.ORACLE
         }
         def v = (DoubleVector) Vector.of(1d, 2d)
 
         when:
-        def persisted = converter.convertToPersistedValue(v, ctx)
+        converter.convertToPersistedValue(v, ctx)
 
         then:
-        // Fallback is Arrays.toString(double[]) e.g. "[1.0, 2.0]"
-        persisted == "[1.0, 2.0]"
+        thrown(IllegalArgumentException)
     }
 
     def "readFromResultSet delegates to ResultReader with persisted type for POSTGRES"() {
@@ -83,14 +81,13 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def persistedType = String
         def delegatingConverter = Stub(VectorTypeConvertor) {
             getPersistedType() >> persistedType
-            getDialect() >> Dialect.POSTGRES
-            getName() >> "postgres-vector"
-            convert(_, _) >> { Vector v, Class t -> "pg:${v.toDoubleArray().join(',')}" }
-            convert(_, Class) >> { Object obj, Class target -> Vector.of(1d, 2d) }
+            databaseType() >> DatabaseType.POSTGRES
+            convert(_ as Vector) >> { Vector v -> "pg:${v.toDoubleArray().join(',')}" }
+            convert(_ as String, _ as Class) >> { Object obj, Class target -> Vector.of(1d, 2d) }
         }
-        def converter = new TestDoubleVectorConverter(["POSTGRES": delegatingConverter])
+        def converter = new TestDoubleVectorConverter([delegatingConverter])
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.POSTGRES
+            getDatabaseType() >> DatabaseType.POSTGRES
         }
         def rr = Stub(ResultReader) {
             getRequiredValue(_, _, _) >> { rs, col, clazz ->
@@ -110,17 +107,17 @@ class VectorAttributeConverterTransformSpec extends Specification {
         given:
         def delegatingConverter = Stub(VectorTypeConvertor) {
             getPersistedType() >> String
-            getDialect() >> Dialect.POSTGRES
-            getName() >> "postgres-vector"
-            convert(_ as Vector, _ as Class) >> { Vector v, Class t -> "pg:${v.toDoubleArray().join(',')}" }
+            databaseType() >> DatabaseType.POSTGRES
+            // entity -> persisted (not used here)
+            convert(_ as Vector) >> { Vector v -> "pg:${v.toDoubleArray().join(',')}" }
+            // persisted -> entity path
             convert(_ as String, _ as Class) >> { String obj, Class target ->
-                // persisted -> entity path
                 Vector.of(7d, 8d)
             }
         }
-        def converter = new TestDoubleVectorConverter(["POSTGRES": delegatingConverter])
+        def converter = new TestDoubleVectorConverter([delegatingConverter])
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.POSTGRES
+            getDatabaseType() >> DatabaseType.POSTGRES
         }
 
         when:
@@ -131,53 +128,50 @@ class VectorAttributeConverterTransformSpec extends Specification {
         entity.toDoubleArray().toList() == [7d, 8d]
     }
 
-    def "getColumnDefinition renders per dialect"() {
+    def "getColumnDefinition renders per database type"() {
         given:
-        def converter = new TestDoubleVectorConverter([:])
+        def converter = new TestDoubleVectorConverter([])
+        def arg = io.micronaut.core.type.Argument.of(DoubleVector)
 
         expect:
-        converter.getColumnDefinition(OptionalInt.of(3), Dialect.POSTGRES) == "vector(3)"
-        converter.getColumnDefinition(OptionalInt.empty(), Dialect.POSTGRES) == "vector"
-        converter.getColumnDefinition(OptionalInt.of(5), Dialect.ORACLE) == "VECTOR(5,FLOAT64)"
-        converter.getColumnDefinition(OptionalInt.empty(), Dialect.ORACLE) == "VECTOR(*,FLOAT64)"
-        converter.getColumnDefinition(OptionalInt.of(7), Dialect.MYSQL) == "VECTOR(7)"
-        converter.getColumnDefinition(OptionalInt.empty(), Dialect.MYSQL) == "VECTOR"
-        converter.getColumnDefinition(OptionalInt.empty(), Dialect.H2) == "VARCHAR(255)"
+        converter.getColumnDefinition(arg, DatabaseType.POSTGRES) == "vector"
+        converter.getColumnDefinition(arg, DatabaseType.ORACLE) == "VECTOR(*,FLOAT64)"
+        converter.getColumnDefinition(arg, DatabaseType.MYSQL) == "VECTOR"
+        converter.getColumnDefinition(arg, DatabaseType.H2) == "VARCHAR(255)"
     }
 
     def "convertToEntityValue without converter throws"() {
         given:
-        def converter = new TestDoubleVectorConverter([:]) // no dialect converter
+        def converter = new TestDoubleVectorConverter([]) // no dialect converter
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.ORACLE
+            getDatabaseType() >> DatabaseType.ORACLE
         }
 
         when:
         converter.convertToEntityValue("ignored", ctx)
 
         then:
-        thrown(io.micronaut.data.exceptions.DataAccessException)
+        thrown(IllegalArgumentException)
     }
 
-    def "convertToPersistedValue uses converter map for MYSQL dialect"() {
+    def "convertToPersistedValue uses converter map for MYSQL database"() {
         given:
         def persistedType = String
         def delegatingConverter = Stub(VectorTypeConvertor) {
             getPersistedType() >> persistedType
-            getDialect() >> Dialect.MYSQL
-            getName() >> "mysql-vector"
+            databaseType() >> DatabaseType.MYSQL
             // entity -> persisted
-            convert(_, _) >> { Vector v, Class t ->
+            convert(_ as Vector) >> { Vector v ->
                 "mysql:${v.toDoubleArray().join(',')}"
             }
             // persisted -> entity (not used in this test)
-            convert(_, Class) >> { Object obj, Class target ->
+            convert(_ as String, _ as Class) >> { Object obj, Class target ->
                 Vector.of(9d, 9d)
             }
         }
-        def converter = new TestDoubleVectorConverter(["MYSQL": delegatingConverter])
+        def converter = new TestDoubleVectorConverter([delegatingConverter])
         def ctx = Stub(DialectConversionContext) {
-            getDialect() >> Dialect.MYSQL
+            getDatabaseType() >> DatabaseType.MYSQL
         }
         def v = (DoubleVector) Vector.of(1d, 2d)
 

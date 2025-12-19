@@ -82,15 +82,6 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
         throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
     }
 
-    /**
-     * Returns the persisted type for the given context/dialect.
-     */
-    private Class<?> getPersistedType(ConversionContext conversionContext) {
-        final DatabaseType databaseType = extractDatabaseType(conversionContext);
-        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
-    }
-
     @Override
     public <RS, IDX> Object readFromResultSet(ConversionContext conversionContext,
                                                 ResultReader<RS, IDX> reader,

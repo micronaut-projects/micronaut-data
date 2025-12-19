@@ -18,7 +18,6 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.Employee
@@ -32,7 +31,7 @@ class BuildTableSpec extends AbstractDataSpec {
         given:
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def entity = PersistentEntity.of(Restaurant)
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
@@ -89,7 +88,7 @@ class Test {
 }
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -139,7 +138,7 @@ class Test {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
@@ -157,7 +156,7 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"created_date" TIMESTAMP,"updated_date" TIMESTAMP);'
@@ -290,7 +289,7 @@ class Test {
 ''')
 
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -325,7 +324,7 @@ class Test {
     }}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -405,7 +404,7 @@ class Emb {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(null, List.of(), entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
@@ -418,8 +417,8 @@ class Emb {
         def builder = new SqlQueryBuilder(Dialect.H2)
 
         when:"Tables are created"
-        def employeeSql = builder.buildCreateTableStatements(null, employeeEntity)
-        def employeeGroupSql = builder.buildCreateTableStatements(null, employeeGroupEntity)
+        def employeeSql = builder.buildCreateTableStatements(employeeEntity, List.of())
+        def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity, List.of())
         then:"No join table is created"
         employeeSql.length == 1
         employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
@@ -504,7 +503,7 @@ class Teacher {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildCreateTableStatements(null, entity)
+        def sql = builder.buildCreateTableStatements(entity, List.of())
 
         then:
         sql.length == 4

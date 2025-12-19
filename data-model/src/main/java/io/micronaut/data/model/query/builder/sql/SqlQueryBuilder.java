@@ -48,7 +48,6 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
@@ -197,17 +196,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
-     * @param attributeConverterRegistry the attributeConverterRegistry
      * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
      * @param entities the entities
      * @return The table
      */
     @Experimental
-    public String buildBatchCreateTableStatement(AttributeConverterRegistry attributeConverterRegistry,
-                                                 List<SqlColumnDefinitionProvider> columnDefinitionProviders,
+    public String buildBatchCreateTableStatement(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
                                                  PersistentEntity... entities) {
         return Arrays.stream(entities)
-            .flatMap(entity -> Stream.of(buildCreateTableStatements(attributeConverterRegistry, entity, columnDefinitionProviders)))
+            .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders)))
             .collect(Collectors.joining(System.lineSeparator()));
     }
 
@@ -304,24 +301,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association);
     }
 
-    /**
-     * Builds the creation table statement. Designed for testing and not production usage. For production a
-     * SQL migration tool such as Flyway or Liquibase is recommended.
-     *
-     * @param attributeConverterRegistry the attributeConverterRegistry
-     * @param entity The entity
-     * @return The tables for the give entity
-     */
     @Experimental
-    public String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry, PersistentEntity entity) {
-        return buildCreateTableStatements(attributeConverterRegistry, entity, null);
-    }
-
-    @Experimental
-    public String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry,
-                                               PersistentEntity entity,
+    public final String[] buildCreateTableStatements(PersistentEntity entity,
                                                List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, columnDefinitionProviders, entity, getDialect());
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(columnDefinitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -342,24 +325,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
-     * @param attributeConverterRegistry the attributeConverterRegistry
      * @param entities The collection of entities
      * @return The tables for the given entities
      */
     @Experimental
-
-    public final String[] buildCreateTableStatements(@Nullable AttributeConverterRegistry attributeConverterRegistry, PersistentEntity... entities) {
-        return buildCreateTableStatements(attributeConverterRegistry, entities, getDialect());
+    public final String[] buildCreateTableStatements(PersistentEntity... entities) {
+        return buildCreateTableStatements(entities, getDialect());
     }
 
     @Experimental
-    public final String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry, PersistentEntity[] entities, Dialect dialect) {
-        return buildCreateTableStatements(attributeConverterRegistry, entities, dialect, null);
+    public final String[] buildCreateTableStatements(PersistentEntity[] entities, Dialect dialect) {
+        return buildCreateTableStatements(entities, dialect, null);
     }
 
     @Experimental
-    public final String[] buildCreateTableStatements(AttributeConverterRegistry attributeConverterRegistry,
-                                                     PersistentEntity[] entities,
+    public final String[] buildCreateTableStatements(PersistentEntity[] entities,
                                                      Dialect dialect,
                                                      List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
@@ -368,7 +348,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(attributeConverterRegistry, columnDefinitionProviders, entity, dialect);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(columnDefinitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);

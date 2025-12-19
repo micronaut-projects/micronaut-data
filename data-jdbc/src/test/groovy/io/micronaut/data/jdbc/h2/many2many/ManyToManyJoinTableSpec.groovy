@@ -100,7 +100,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build create Student tables"() {
         when:
             SqlQueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(Student))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student), List.of())
 
         then:
             statements.length == 3
@@ -112,7 +112,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build create CourseRating tables"() {
         when:
             SqlQueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(CourseRating))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating), List.of())
 
         then:
             statements.length == 2
@@ -123,7 +123,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build create Course tables"() {
         when:
             SqlQueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(null, getRuntimePersistentEntity(Course))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course), List.of())
 
         then:
             statements.length == 2
