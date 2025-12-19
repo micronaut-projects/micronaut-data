@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.util.ArgumentUtils;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.serde.annotation.Serdeable;
 
@@ -61,7 +60,7 @@ final class DefaultSort implements Sort {
      * @return The Query instance
      */
     @Override
-    public @NonNull DefaultSort order(@NonNull Order order) {
+    public  DefaultSort order(Order order) {
         ArgumentUtils.requireNonNull("order", order);
         List<Order> newOrderBy = new ArrayList<>(orderBy);
         newOrderBy.add(order);
@@ -74,7 +73,7 @@ final class DefaultSort implements Sort {
      * @return The order entries
      */
     @Override
-    public @NonNull List<Order> getOrderBy() {
+    public  List<Order> getOrderBy() {
         return Collections.unmodifiableList(orderBy);
     }
 
@@ -84,15 +83,13 @@ final class DefaultSort implements Sort {
         return CollectionUtils.isNotEmpty(orderBy);
     }
 
-    @NonNull
     @Override
-    public DefaultSort order(@NonNull String propertyName) {
+    public DefaultSort order(String propertyName) {
         return order(new Order(propertyName));
     }
 
-    @NonNull
     @Override
-    public DefaultSort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
+    public DefaultSort order(String propertyName, Order. Direction direction) {
         return order(new Order(propertyName, direction, false));
     }
 

@@ -18,7 +18,7 @@ package io.micronaut.data.processor.mappers.jakarta.data;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.data.annotation.Delete;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;

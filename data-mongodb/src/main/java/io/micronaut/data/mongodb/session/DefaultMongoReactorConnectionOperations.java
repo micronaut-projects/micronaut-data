@@ -20,7 +20,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;

@@ -41,7 +41,10 @@ graalvmNative {
                     buildArgs.add("-H:+SharedArenaSupport")
                 }
             }
-            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger")
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger,org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter," +
+                    "ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger,ch.qos.logback.classic.LoggerContext,ch.qos.logback.classic.PatternLayout,ch.qos.logback.classic.spi,ch.qos.logback.classic.encoder," +
+                    "ch.qos.logback.core.spi,ch.qos.logback.core.util,ch.qos.logback.core,ch.qos.logback.classic.util,ch.qos.logback.classic.pattern.color,ch.qos.logback.classic.pattern," +
+                    "ch.qos.logback.classic.model.processor,ch.qos.logback.classic.model,ch.qos.logback.classic.joran,ch.qos.logback.core.helpers,org.xml.sax.helpers")
         }
     }
 }

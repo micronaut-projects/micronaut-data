@@ -35,16 +35,14 @@ import java.util.List;
  * @since 4.13.0
  */
 @Internal
-public record SqlTableMapping(
-    String schema,
+public record SqlTableMapping(String schema,
     String name,
     boolean escape,
     TableType type,
     List<SqlColumnMapping> primaryKeyColumns,
     List<SqlColumnMapping> columns,
     List<SqlSequenceMapping> sequences,
-    List<SqlIndexMapping> indexes
-) {
+    List<SqlIndexMapping> indexes) {
     public SqlTableMapping(String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
         this(schema, name, escape, type, primaryKeyColumns, columns, null, null);
     }

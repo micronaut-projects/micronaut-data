@@ -139,7 +139,7 @@ class EntityB {
     Long bId
     Long aId
     String bProp
-    @io.micronaut.core.annotation.Nullable
+    @org.jspecify.annotations.Nullable
     String reqProp
 
     Long getBId() {

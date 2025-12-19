@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 
 /**

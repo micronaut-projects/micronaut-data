@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -43,12 +42,12 @@ public interface SqlTableMappingValidator {
      * @param tableMetadata   The SQL table metadata from the database to compare against
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    void validateTable(@NonNull SqlTableMapping tableMapping, @NonNull SqlTableMetadata tableMetadata);
+    void validateTable(SqlTableMapping tableMapping,  SqlTableMetadata tableMetadata);
 
     /**
      * Returns the SQL dialect supported by this validator.
      *
      * @return the supported SQL dialect, never null
      */
-    @NonNull Dialect getSupportedDialect();
+     Dialect getSupportedDialect();
 }

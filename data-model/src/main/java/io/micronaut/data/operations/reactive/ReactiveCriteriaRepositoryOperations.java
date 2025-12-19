@@ -16,7 +16,6 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
@@ -50,7 +49,7 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @return True if query returns true or any row
      * @since 4.10
      */
-    Publisher<Boolean> exists(@NonNull CriteriaQuery<?> query);
+    Publisher<Boolean> exists(CriteriaQuery<?> query);
 
     /**
      * Find one by Query.
@@ -60,7 +59,7 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @return A single result publisher
      */
     @SingleResult
-    <R> Publisher<R> findOne(@NonNull CriteriaQuery<R> query);
+    <R> Publisher<R> findOne(CriteriaQuery<R> query);
 
     /**
      * Finds all results for the given query.
@@ -68,8 +67,8 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @param <T> The generic type
      * @return All result publisher
      */
-    @NonNull
-    <T> Publisher<T> findAll(@NonNull CriteriaQuery<T> query);
+    
+    <T> Publisher<T> findAll(CriteriaQuery<T> query);
 
     /**
      * Finds all results for the given query.
@@ -79,8 +78,8 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @param <T> The generic type
      * @return All result publisher
      */
-    @NonNull
-    <T> Publisher<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+    
+    <T> Publisher<T> findAll(CriteriaQuery<T> query, int offset, int limit);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -88,9 +87,9 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @param query The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
+    
     @SingleResult
-    Publisher<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
+    Publisher<Number> updateAll(CriteriaUpdate<Number> query);
 
     /**
      * Executes a delete for the given query and parameter values. If it is possible to
@@ -98,8 +97,8 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
      * @param query The query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
+    
     @SingleResult
-    Publisher<Number> deleteAll(@NonNull CriteriaDelete<Number> query);
+    Publisher<Number> deleteAll(CriteriaDelete<Number> query);
 
 }

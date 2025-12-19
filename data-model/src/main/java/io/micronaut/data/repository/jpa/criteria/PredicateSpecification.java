@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -42,7 +41,7 @@ public interface PredicateSpecification<T> {
      * @param spec The specification.
      * @return predicate specification.
      */
-    @NonNull
+    
     static <T> PredicateSpecification<T> where(@Nullable PredicateSpecification<T> spec) {
         if (spec == null) {
             return (PredicateSpecification<T>) ALL;
@@ -57,7 +56,7 @@ public interface PredicateSpecification<T> {
      * @param spec The specification.
      * @return negated specification}.
      */
-    @NonNull
+    
     static <T> PredicateSpecification<T> not(@Nullable PredicateSpecification<T> spec) {
         if (spec == null) {
             return (PredicateSpecification<T>) ALL;
@@ -71,7 +70,7 @@ public interface PredicateSpecification<T> {
      * @param other The other predicate.
      * @return The conjunction of the specifications
      */
-    @NonNull
+    
     default PredicateSpecification<T> and(@Nullable PredicateSpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::and);
     }
@@ -82,7 +81,7 @@ public interface PredicateSpecification<T> {
      * @param other The other predicate.
      * @return The disjunction of the specifications
      */
-    @NonNull
+    
     default PredicateSpecification<T> or(@Nullable PredicateSpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::or);
     }
@@ -95,7 +94,7 @@ public interface PredicateSpecification<T> {
      * @return a {@link Predicate}
      */
     @Nullable
-    Predicate toPredicate(@NonNull Root<T> root,
-                          @NonNull CriteriaBuilder criteriaBuilder);
+    Predicate toPredicate(Root<T> root,
+                           CriteriaBuilder criteriaBuilder);
 
 }

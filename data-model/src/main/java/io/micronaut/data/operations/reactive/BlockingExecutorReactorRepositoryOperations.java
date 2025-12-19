@@ -16,8 +16,7 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -50,37 +49,33 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
 
     @Override
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
+    default <T> T findOne(Class<T> type,  Object id) {
         return block(reactive -> reactive.findOne(type, id));
     }
 
     @Nullable
     @Override
-    default <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
         return block(reactive -> reactive.findOne(preparedQuery));
     }
 
-    @NonNull
     @Override
-    default <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
         return block(reactive -> reactive.findAll(preparedQuery).collectList());
     }
 
-    @NonNull
     @Override
-    default <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
         return block(reactive -> reactive.findAll(preparedQuery).collectList()).stream();
     }
 
-    @NonNull
     @Override
-    default <T> T persist(@NonNull InsertOperation<T> operation) {
+    default <T> T persist(InsertOperation<T> operation) {
         return blockOptional(reactive -> reactive.persist(operation)).orElseGet(operation::getEntity);
     }
 
-    @NonNull
     @Override
-    default <T> T update(@NonNull UpdateOperation<T> operation) {
+    default <T> T update(UpdateOperation<T> operation) {
         return blockOptional(reactive -> reactive.update(operation)).orElseGet(operation::getEntity);
     }
 
@@ -89,20 +84,18 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
         return blockOptional(reactive -> reactive.updateAll(operation).collectList().<Iterable<T>>map(it -> it)).orElse(operation);
     }
 
-    @NonNull
     @Override
-    default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+    default <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         return blockOptional(reactive -> reactive.persistAll(operation).collectList().<Iterable<T>>map(it -> it)).orElse(operation);
     }
 
-    @NonNull
     @Override
-    default Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
         return blockOptional(reactive -> reactive.executeUpdate(preparedQuery));
     }
 
     @Override
-    default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return blockOptional(reactive -> reactive.executeDelete(preparedQuery));
     }
 
@@ -112,28 +105,27 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
     }
 
     @Override
-    default <T> int delete(@NonNull DeleteOperation<T> operation) {
+    default <T> int delete(DeleteOperation<T> operation) {
         return blockOptional(reactive -> reactive.delete(operation)).orElse(0).intValue();
     }
 
     @Override
-    default <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
+    default <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         return blockOptional(reactive -> reactive.deleteAll(operation));
     }
 
     @Override
-    default <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
+    default <T> boolean exists(PreparedQuery<T, Boolean> preparedQuery) {
         return blockOptional(reactive -> reactive.exists(preparedQuery)).orElse(false);
     }
 
     @Override
-    default <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+    default <R> Page<R> findPage(PagedQuery<R> query) {
         return block(reactive -> reactive.findPage(query));
     }
 
-    @NonNull
     @Override
-    default <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+    default <T> Iterable<T> findAll(PagedQuery<T> query) {
         return block(reactive -> reactive.findAll(query).collectList());
     }
 
@@ -142,9 +134,8 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
         return blockOptional(reactive -> reactive.count(pagedQuery)).orElse(0L);
     }
 
-    @NonNull
     @Override
-    default <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
+    default <T> Stream<T> findStream(PagedQuery<T> query) {
         return block(reactive -> reactive.findAll(query).collectList()).stream();
     }
 }

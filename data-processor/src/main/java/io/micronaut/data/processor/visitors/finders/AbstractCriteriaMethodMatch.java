@@ -18,8 +18,8 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -136,8 +136,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @return The operation type
      */
-    @NonNull
-    protected abstract DataMethod.OperationType getOperationType();
+    protected abstract DataMethod. @NonNull OperationType getOperationType();
 
     /**
      * @return true of the operation is supported by implicit queries
@@ -546,8 +545,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName + " " + root.getPersistentEntity().getPersistentProperties().stream().map(PersistentProperty::getName).toList());
     }
 
-    @Nullable
-    protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
+    protected final <T> io.micronaut.data.model.jpa.criteria. @Nullable PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         PersistentProperty prop = entity.getPropertyByName(propertyName);

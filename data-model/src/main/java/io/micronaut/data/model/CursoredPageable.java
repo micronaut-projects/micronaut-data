@@ -20,8 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
@@ -55,13 +54,11 @@ public interface CursoredPageable extends Pageable {
      * @param sort The sort
      * @return The pageable
      */
-    static @NonNull CursoredPageable from(Sort sort) {
+    static  CursoredPageable from(Sort sort) {
         if (sort == null) {
             sort = Sort.UNSORTED;
         }
-        return new DefaultCursoredPageable(
-            -1, null, Mode.CURSOR_NEXT, 0, sort, true
-        );
+        return new DefaultCursoredPageable(-1, null, Mode.CURSOR_NEXT, 0, sort, true);
     }
 
     /**
@@ -71,10 +68,8 @@ public interface CursoredPageable extends Pageable {
      * @param sort The sort
      * @return The pageable
      */
-    static @NonNull CursoredPageable from(
-        @JsonProperty("size") int size,
-        @JsonProperty("sort") @Nullable Sort sort
-    ) {
+    static  CursoredPageable from(@JsonProperty("size") int size,
+        @JsonProperty("sort") @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }
@@ -94,14 +89,12 @@ public interface CursoredPageable extends Pageable {
      */
     @Internal
     @JsonCreator
-    static @NonNull CursoredPageable from(
-        @JsonProperty("number") int page,
+    static  CursoredPageable from(@JsonProperty("number") int page,
         @Nullable Cursor cursor,
         Pageable.Mode mode,
         int size,
         @Nullable Sort sort,
-        boolean requestTotal
-    ) {
+        boolean requestTotal) {
         if (sort == null) {
             sort = UNSORTED;
         }

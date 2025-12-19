@@ -16,7 +16,6 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
@@ -33,18 +32,18 @@ import reactor.core.publisher.Mono;
 public interface ReactorCriteriaRepositoryOperations extends ReactiveCriteriaRepositoryOperations {
 
     @Override
-    <R> Mono<R> findOne(@NonNull CriteriaQuery<R> query);
+    <R> Mono<R> findOne(CriteriaQuery<R> query);
 
     @Override
-    <T> Flux<T> findAll(@NonNull CriteriaQuery<T> query);
+    <T> Flux<T> findAll(CriteriaQuery<T> query);
 
     @Override
-    <T> Flux<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+    <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit);
 
     @Override
-    Mono<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
+    Mono<Number> updateAll(CriteriaUpdate<Number> query);
 
     @Override
-    Mono<Number> deleteAll(@NonNull CriteriaDelete<Number> query);
+    Mono<Number> deleteAll(CriteriaDelete<Number> query);
 
 }

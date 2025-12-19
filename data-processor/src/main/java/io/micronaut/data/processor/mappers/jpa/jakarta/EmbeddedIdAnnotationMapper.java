@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Maps JPA's embedded ID to {@link io.micronaut.data.annotation.EmbeddedId}.

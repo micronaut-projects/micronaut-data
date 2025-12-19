@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -37,14 +36,14 @@ public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCrite
      * The root entity.
      * @return The root entity
      */
-    @NonNull
+    
     PersistentEntityRoot<T> getRoot();
 
     /**
      * The persistent entity.
      * @return The persistent entity
      */
-    @NonNull
+    
     PersistentEntity getPersistentEntity();
 
     /**
@@ -56,7 +55,7 @@ public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCrite
     /**
      * @return The parameters
      */
-    @NonNull
+    
     Set<ParameterExpression<?>> getParameters();
 
 }

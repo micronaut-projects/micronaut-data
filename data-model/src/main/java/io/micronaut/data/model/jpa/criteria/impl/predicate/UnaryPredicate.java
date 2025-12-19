@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -33,18 +32,16 @@ public final class UnaryPredicate extends AbstractPredicate {
     private final Expression<?> expression;
     private final PredicateUnaryOp op;
 
-    public UnaryPredicate(@NonNull Expression<?> expression, @NonNull PredicateUnaryOp op) {
+    public UnaryPredicate(Expression<?> expression,  PredicateUnaryOp op) {
         this.expression = expression;
         this.op = op;
         op.validate(expression);
     }
 
-    @NonNull
     public Expression<?> getExpression() {
         return expression;
     }
 
-    @NonNull
     public PredicateUnaryOp getOp() {
         return op;
     }

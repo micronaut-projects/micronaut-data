@@ -18,15 +18,14 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Collections;
 import java.util.List;
@@ -93,7 +92,7 @@ public interface Page<T> extends Slice<T> {
      * @return A new slice with the mapped content
      */
     @Override
-    default @NonNull <T2> Page<T2> map(Function<T, T2> function) {
+    default <T2> Page<T2> map(Function<T, T2> function) {
         if (this == EMPTY) {
             return (Page<T2>) EMPTY;
         }
@@ -111,11 +110,9 @@ public interface Page<T> extends Slice<T> {
      * @return The slice
      */
     @ReflectiveAccess
-    static @NonNull <T> Page<T> of(
-            @JsonProperty("content") @NonNull List<T> content,
-            @JsonProperty("pageable") @NonNull Pageable pageable,
-            @JsonProperty("totalSize") @Nullable Long totalSize
-    ) {
+    static <T> Page<T> of(@JsonProperty("content") List<T> content,
+            @JsonProperty("pageable") Pageable pageable,
+            @JsonProperty("totalSize") @Nullable Long totalSize) {
         return new DefaultPage<>(content, pageable, totalSize);
     }
 
@@ -133,12 +130,10 @@ public interface Page<T> extends Slice<T> {
     @JsonCreator
     @Internal
     @ReflectiveAccess
-    static @NonNull <T> Page<T> ofCursors(
-        @JsonProperty("content") @NonNull List<T> content,
-        @JsonProperty("pageable") @NonNull Pageable pageable,
+    static <T> Page<T> ofCursors(@JsonProperty("content") List<T> content,
+        @JsonProperty("pageable") Pageable pageable,
         @JsonProperty("cursors") @Nullable List<Cursor> cursors,
-        @JsonProperty("totalSize") @Nullable Long totalSize
-    ) {
+        @JsonProperty("totalSize") @Nullable Long totalSize) {
         if (cursors == null) {
             return new DefaultPage<>(content, pageable, totalSize);
         }
@@ -151,7 +146,7 @@ public interface Page<T> extends Slice<T> {
      * @return The slice
      */
     @SuppressWarnings("unchecked")
-    static @NonNull <T2> Page<T2> empty() {
+    static <T2> Page<T2> empty() {
         return (Page<T2>) EMPTY;
     }
 }

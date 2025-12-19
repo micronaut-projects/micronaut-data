@@ -13,8 +13,6 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
-import static org.junit.Assert.assertEquals
-
 @Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
 // <1>
 @Property(name = "datasources.default.url", value = "jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE")
@@ -66,7 +64,7 @@ class TenancyBookControllerSpec extends Specification {
         HttpRequest<?> request = HttpRequest.GET("/books").header("tenantId", framework)
         Argument<List<TenancyBook>> responseArgument = Argument.listOf(TenancyBook.class)
         HttpResponse<List<TenancyBook>> response = client.exchange(request, responseArgument)
-        assertEquals(HttpStatus.OK, response.getStatus())
+        org.junit.jupiter.api.Assertions.assertEquals(HttpStatus.OK, response.getStatus())
         return response.body()
     }
 

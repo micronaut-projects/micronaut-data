@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.event;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.event.EntityEventContext;

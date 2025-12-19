@@ -17,7 +17,6 @@ package io.micronaut.data.model.naming;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -34,7 +33,6 @@ import io.micronaut.data.model.PersistentProperty;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
 
 /**
  * A strategy interface for resolving the mapped name of an entity or property.
@@ -56,15 +54,15 @@ public interface NamingStrategy {
      * @param name The name
      * @return The mapped name
      */
-    @NonNull
-    String mappedName(@NonNull String name);
+    
+    String mappedName(String name);
 
     /**
      * Return the mapped name for the given entity.
      * @param entity The entity
      * @return The mapped name
      */
-    default @NonNull String mappedName(@NonNull PersistentEntity entity) {
+    default  String mappedName(PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class)
                 .filter(StringUtils::isNotEmpty)
@@ -86,7 +84,7 @@ public interface NamingStrategy {
      * @param property The embedded property
      * @return The mapped name
      */
-    default @NonNull String mappedName(Embedded embedded, PersistentProperty property) {
+    default  String mappedName(Embedded embedded, PersistentProperty property) {
         return mappedName(embedded.getName() + mappedAssociatedName(property.getPersistedName()));
     }
 
@@ -95,7 +93,7 @@ public interface NamingStrategy {
      * @param property The property
      * @return The mapped name
      */
-    default @NonNull String mappedName(@NonNull PersistentProperty property) {
+    default  String mappedName(PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
         if (property instanceof Association association) {
             return mappedName(association);
@@ -121,7 +119,7 @@ public interface NamingStrategy {
      * @param association The association
      * @return The mapped name
      */
-    default @NonNull String mappedName(Association association) {
+    default  String mappedName(Association association) {
         String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
         if (providedName != null) {
             return providedName;
@@ -144,12 +142,12 @@ public interface NamingStrategy {
      * @return the name in a proper format
      * @since 4.2.0
      */
-    @NonNull
-    default String mappedAssociatedName(@NonNull String associatedName) {
+    
+    default String mappedAssociatedName(String associatedName) {
         return NameUtils.capitalize(associatedName);
     }
 
-    default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
+    default  String mappedName(List<Association> associations,  PersistentProperty property) {
         if (associations.isEmpty()) {
             return mappedName(property);
         }
@@ -213,7 +211,7 @@ public interface NamingStrategy {
      * The default foreign key suffix for property names.
      * @return The suffix
      */
-    default @NonNull String getForeignKeySuffix() {
+    default  String getForeignKeySuffix() {
         return "Id";
     }
 }

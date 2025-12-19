@@ -17,7 +17,6 @@ package io.micronaut.data.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.ArgumentUtils;
@@ -49,8 +48,7 @@ class DefaultSlice<T> implements Slice<T> {
     @ReflectiveAccess
     @JsonCreator
     @Creator
-    DefaultSlice(
-            @JsonProperty("content")
+    DefaultSlice(@JsonProperty("content")
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable) {
@@ -59,14 +57,12 @@ class DefaultSlice<T> implements Slice<T> {
         this.pageable = pageable;
     }
 
-    @NonNull
     @Override
     @ReflectiveAccess
     public List<T> getContent() {
         return content;
     }
 
-    @NonNull
     @Override
     @ReflectiveAccess
     public Pageable getPageable() {

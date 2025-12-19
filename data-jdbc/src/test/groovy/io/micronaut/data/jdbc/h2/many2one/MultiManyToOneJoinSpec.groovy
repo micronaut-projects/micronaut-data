@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.h2.many2one
 
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.sql.JoinColumn
 import io.micronaut.data.jdbc.annotation.JdbcRepository

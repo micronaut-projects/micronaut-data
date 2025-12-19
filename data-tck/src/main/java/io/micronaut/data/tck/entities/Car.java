@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;

@@ -16,8 +16,7 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.operations.BlockingCriteriaCapableRepository;
@@ -47,21 +46,20 @@ public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRep
         return this;
     }
 
-    @NonNull
     private ContextView getContextView() {
         return ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty());
     }
 
     @Override
     @Nullable
-    default <R> R findOne(@NonNull CriteriaQuery<R> query) {
+    default <R> R findOne(CriteriaQuery<R> query) {
         return reactive().findOne(query)
             .contextWrite(getContextView())
             .block();
     }
 
     @Override
-    default <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
+    default <T> List<T> findAll(CriteriaQuery<T> query) {
         return reactive().findAll(query)
             .collectList()
             .contextWrite(getContextView())
@@ -70,7 +68,7 @@ public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRep
     }
 
     @Override
-    default <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int limit, int offset) {
+    default <T> List<T> findAll(CriteriaQuery<T> query, int limit, int offset) {
         return reactive().findAll(query, limit, offset)
             .collectList()
             .contextWrite(getContextView())
@@ -79,14 +77,14 @@ public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRep
     }
 
     @Override
-    default Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query) {
+    default Optional<Number> updateAll(CriteriaUpdate<Number> query) {
         return reactive().updateAll(query)
             .contextWrite(getContextView())
             .blockOptional();
     }
 
     @Override
-    default Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query) {
+    default Optional<Number> deleteAll(CriteriaDelete<Number> query) {
         return reactive().deleteAll(query)
             .contextWrite(getContextView())
             .blockOptional();

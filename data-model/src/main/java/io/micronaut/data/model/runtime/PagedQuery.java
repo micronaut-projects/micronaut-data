@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.Limit;
@@ -37,20 +36,20 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
      *
      * @return The root entity type
      */
-    @NonNull
+    
     Class<E> getRootEntity();
 
     /**
      * @return The pageable object. Defaults to {@link Pageable#UNPAGED}
      */
-    @NonNull
+    
     Pageable getPageable();
 
     /**
      * @return The limit
      * @since 4.13
      */
-    @NonNull
+    
     default Limit getQueryLimit() {
         return getPageable().getLimit();
     }
@@ -59,7 +58,7 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
      * @return The sort
      * @since 4.13
      */
-    @NonNull
+    
     default Sort getSort() {
         return getPageable().getSort();
     }
@@ -69,7 +68,7 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
      *
      * @return The parameter binding.
      */
-    @NonNull
+    
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }

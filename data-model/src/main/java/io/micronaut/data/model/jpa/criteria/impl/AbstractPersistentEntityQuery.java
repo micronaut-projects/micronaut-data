@@ -123,8 +123,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
                 throw new IllegalStateException("Root entity has to be specified");
             }
         }
-        return new SelectQueryDefinitionImpl(
-            root,
+        return new SelectQueryDefinitionImpl(root,
             root.getPersistentEntity(),
             predicate,
             selection == null ? root : selection,
@@ -134,8 +133,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             orders == null ? List.of() : orders,
             max,
             offset,
-            parametersInRole
-        );
+            parametersInRole);
     }
 
     private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity) {
@@ -165,10 +163,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             }
             Association[] associationPath;
             if (propertyPath.getProperty() instanceof Association) {
-                associationPath = Stream.concat(
-                    propertyPath.getAssociations().stream(),
-                    Stream.of(propertyPath.getProperty())
-                ).toArray(Association[]::new);
+                associationPath = Stream.concat(propertyPath.getAssociations().stream(),
+                    Stream.of(propertyPath.getProperty())).toArray(Association[]::new);
             } else {
                 associationPath = propertyPath.getAssociations().toArray(new Association[0]);
             }
@@ -307,9 +303,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             return where(restrictions[0]);
         }
         if (restrictions.length > 0) {
-            predicate = new ConjunctionPredicate(
-                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
-            );
+            predicate = new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
         }

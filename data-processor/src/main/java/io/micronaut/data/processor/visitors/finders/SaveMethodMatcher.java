@@ -71,6 +71,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Insert.class) || matchContext.getMethodElement().hasStereotype(Save.class)) {
             if (matchContext.getRootEntity() == null) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (matchContext.getRootEntity() == null) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());

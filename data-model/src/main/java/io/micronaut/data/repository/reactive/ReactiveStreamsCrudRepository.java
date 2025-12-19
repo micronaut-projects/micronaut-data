@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.repository.GenericRepository;
 import org.reactivestreams.Publisher;
@@ -37,9 +36,9 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return The saved entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
+    
     @SingleResult
-    <S extends E> Publisher<S> save(@NonNull S entity);
+    <S extends E> Publisher<S> save(S entity);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -48,8 +47,8 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      */
-    @NonNull
-    <S extends E> Publisher<S> saveAll(@NonNull Iterable<S> entities);
+    
+    <S extends E> Publisher<S> saveAll(Iterable<S> entities);
 
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -58,8 +57,8 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return The updated entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> Publisher<S> update(@NonNull S entity);
+    
+    <S extends E> Publisher<S> update(S entity);
 
     /**
      * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -68,8 +67,8 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return The updated entities will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> Publisher<S> updateAll(@NonNull Iterable<S> entities);
+    
+    <S extends E> Publisher<S> updateAll(Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -77,9 +76,9 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or {@literal Optional#empty()} if none found
      */
-    @NonNull
+    
     @SingleResult
-    Publisher<E> findById(@NonNull ID id);
+    Publisher<E> findById(ID id);
 
     /**
      * Returns whether an entity with the given id exists.
@@ -88,14 +87,14 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
      */
     @SingleResult
-    @NonNull Publisher<Boolean> existsById(@NonNull ID id);
+     Publisher<Boolean> existsById(ID id);
 
     /**
      * Returns all instances of the type.
      *
      * @return all entities
      */
-    @NonNull Publisher<E> findAll();
+     Publisher<E> findAll();
 
     /**
      * Returns the number of entities available.
@@ -103,7 +102,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return the number of entities
      */
     @SingleResult
-    @NonNull Publisher<Long> count();
+     Publisher<Long> count();
 
     /**
      * Deletes the entity with the given id.
@@ -111,9 +110,9 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @param id must not be {@literal null}.
      * @return A future that executes the delete operation
      */
-    @NonNull
+    
     @SingleResult
-    Publisher<Long> deleteById(@NonNull ID id);
+    Publisher<Long> deleteById(ID id);
 
     /**
      * Deletes a given entity.
@@ -122,7 +121,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return A future that executes the delete operation
      */
     @SingleResult
-    @NonNull Publisher<Long> delete(@NonNull E entity);
+     Publisher<Long> delete(E entity);
 
     /**
      * Deletes the given entities.
@@ -131,12 +130,12 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return A future that executes the delete operation
      */
     @SingleResult
-    @NonNull Publisher<Long> deleteAll(@NonNull Iterable<? extends E> entities);
+     Publisher<Long> deleteAll(Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.
      * @return A future that executes the delete operation
      */
-    @NonNull Publisher<Long> deleteAll();
+     Publisher<Long> deleteAll();
 }
 

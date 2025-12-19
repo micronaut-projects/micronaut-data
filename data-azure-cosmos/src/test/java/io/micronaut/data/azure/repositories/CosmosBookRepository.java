@@ -1,7 +1,7 @@
 package io.micronaut.data.azure.repositories;
 
 import com.azure.cosmos.models.PartitionKey;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.azure.entities.CosmosBook;
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
 import io.micronaut.data.model.Pageable;

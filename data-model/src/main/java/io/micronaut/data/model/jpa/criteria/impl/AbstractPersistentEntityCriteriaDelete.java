@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -62,10 +61,8 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        return queryBuilder.buildDelete(
-            annotationMetadata,
-            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning)
-        );
+        return queryBuilder.buildDelete(annotationMetadata,
+            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning));
     }
 
     @Override
@@ -93,9 +90,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     public PersistentEntityCriteriaDelete<T> where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
-            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
-            );
+            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
         }
@@ -143,7 +138,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public PersistentEntityCriteriaDelete<T> returningMulti(@NonNull Selection<?>... selections) {
+    public PersistentEntityCriteriaDelete<T> returningMulti(Selection<?>... selections) {
         Objects.requireNonNull(selections);
         if (selections.length != 0) {
             this.returning = new CompoundSelection<>(List.of(selections));
