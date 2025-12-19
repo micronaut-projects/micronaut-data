@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
@@ -44,17 +43,14 @@ import java.util.StringJoiner;
 @Experimental
 public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
 
-    @NonNull
     PersistentProperty getProperty();
 
-    @NonNull
     List<Association> getAssociations();
 
     default io.micronaut.data.model.PersistentPropertyPath getPropertyPath() {
         return new io.micronaut.data.model.PersistentPropertyPath(getAssociations(), getProperty());
     }
 
-    @NonNull
     default String getPathAsString() {
         StringJoiner joiner = new StringJoiner(".");
         for (Association association : getAssociations()) {

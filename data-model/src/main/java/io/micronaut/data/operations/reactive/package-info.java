@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 /**
- * Runtime support for reactive operations.
+ * Reactive repository operations API.
  *
  * @author graemerocher
  * @since 1.0.0
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.operations.reactive;

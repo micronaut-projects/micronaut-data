@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -157,35 +156,32 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The property type, unwrapped if primitive
      */
-    public @NonNull Class<?> getType() {
+    public  Class<?> getType() {
         return type;
     }
 
-    @NonNull
     @Override
     public String getName() {
         return property.getName();
     }
 
-    @NonNull
     @Override
     public String getTypeName() {
         return property.getType().getName();
     }
 
-    @NonNull
     @Override
     public RuntimePersistentEntity<T> getOwner() {
         return owner;
     }
 
     @Override
-    public boolean isAssignable(@NonNull String type) {
+    public boolean isAssignable(String type) {
         throw new UnsupportedOperationException("Use isAssignable(Class) instead");
     }
 
     @Override
-    public boolean isAssignable(@NonNull Class<?> type) {
+    public boolean isAssignable(Class<?> type) {
         return type.isAssignableFrom(getProperty().getType());
     }
 
@@ -209,7 +205,6 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         return converter.get();
     }
 
-    @NonNull
     @Override
     public String getPersistedName() {
         if (persistedName == null) {

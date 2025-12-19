@@ -51,7 +51,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     private boolean previousInitialized;
     private QueryParameterBinding previousPopulatedValueParameter;
 
-    @SuppressWarnings("ParameterNumber")
+    @SuppressWarnings("checkstyle:ParameterNumber")
     StoredQueryParameter(String name,
                          DataType dataType,
                          JsonDataType jsonDataType,

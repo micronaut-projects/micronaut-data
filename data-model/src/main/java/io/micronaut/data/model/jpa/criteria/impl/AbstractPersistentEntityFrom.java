@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -67,7 +66,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
     @Override
     public abstract PersistentEntity getPersistentEntity();
 
-    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(@NonNull Association association,
+    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
                                                                                  io.micronaut.data.annotation.Join. @Nullable Type type,
                                                                                  @Nullable String alias);
 

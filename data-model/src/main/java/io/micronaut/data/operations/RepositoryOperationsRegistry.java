@@ -16,7 +16,6 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -36,7 +35,7 @@ public interface RepositoryOperationsRegistry {
      * @param <T>            The operations type
      * @return the provided instance
      */
-    @NonNull
+    
     <T extends RepositoryOperations> T provide(Class<T> repositoryType, @Nullable String dataSourceName);
 
 }

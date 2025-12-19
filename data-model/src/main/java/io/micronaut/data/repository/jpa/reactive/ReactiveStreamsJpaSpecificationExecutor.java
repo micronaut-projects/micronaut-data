@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.reactive;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -41,7 +40,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    @NonNull
     Publisher<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -50,7 +48,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return optional found result
      */
-    @NonNull
     Publisher<T> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -59,7 +56,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    @NonNull
     Publisher<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -68,7 +64,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    @NonNull
     Publisher<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -78,7 +73,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     Publisher<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Pageable pageable);
 
     /**
@@ -88,7 +82,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     Publisher<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     /**
@@ -98,7 +91,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    @NonNull
     Publisher<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     /**
@@ -108,7 +100,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    @NonNull
     Publisher<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
@@ -117,7 +108,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    @NonNull
     Publisher<Long> count(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -126,7 +116,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    @NonNull
     Publisher<Long> count(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -136,7 +125,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    @NonNull
     Publisher<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -146,7 +134,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    @NonNull
     Publisher<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -155,7 +142,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    @NonNull
     Publisher<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable DeleteSpecification<T> spec);
 
     /**
@@ -164,7 +150,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    @NonNull
     Publisher<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -173,7 +158,6 @@ public interface ReactiveStreamsJpaSpecificationExecutor<T> {
      * @param spec The update specification
      * @return the number records updated.
      */
-    @NonNull
     Publisher<Long> updateAll(@Nullable @io.micronaut.core.annotation.Nullable UpdateSpecification<T> spec);
 
 }

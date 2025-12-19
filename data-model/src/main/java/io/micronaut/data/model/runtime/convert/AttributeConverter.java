@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime.convert;
 
 import io.micronaut.core.annotation.Indexed;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 
@@ -39,7 +38,7 @@ public interface AttributeConverter<X, Y> {
      * @return the persisted value
      */
     @Nullable
-    Y convertToPersistedValue(@Nullable X entityValue, @NonNull ConversionContext context);
+    Y convertToPersistedValue(@Nullable X entityValue,  ConversionContext context);
 
     /**
      * Converts the persisted value to the entity value.
@@ -49,5 +48,6 @@ public interface AttributeConverter<X, Y> {
      * @return the entity value
      */
     @Nullable
-    X convertToEntityValue(@Nullable Y persistedValue, @NonNull ConversionContext context);
+    X convertToEntityValue(@Nullable Y persistedValue,  ConversionContext context);
+
 }

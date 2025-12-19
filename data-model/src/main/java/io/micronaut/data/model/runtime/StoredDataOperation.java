@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.Argument;
 
 /**
@@ -33,6 +32,6 @@ public interface StoredDataOperation<R> extends AnnotationMetadataProvider {
     /**
      * @return The query result type
      */
-    @NonNull
+    
     Argument<R> getResultArgument();
 }

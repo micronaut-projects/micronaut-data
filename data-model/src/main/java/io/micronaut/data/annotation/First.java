@@ -33,7 +33,8 @@ public @interface First {
     /**
      * The limit on the number of results returned by the repository method.
      * Must be strictly positive.
-     * @return 1 by default;
+     *
+     * @return The maximum number of results to return; must be strictly positive.
      */
     int value() default 1;
 }

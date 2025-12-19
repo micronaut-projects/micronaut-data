@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -49,22 +48,22 @@ public final class CriteriaUtils {
     private CriteriaUtils() {
     }
 
-    public static boolean isNumeric(@NonNull Class<?> clazz) {
+    public static boolean isNumeric(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return Number.class.isAssignableFrom(ReflectionUtils.getPrimitiveType(clazz));
         }
         return Number.class.isAssignableFrom(clazz);
     }
 
-    public static boolean isBoolean(@NonNull Class<?> clazz) {
+    public static boolean isBoolean(Class<?> clazz) {
         return Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz);
     }
 
-    public static boolean isComparable(@NonNull Class<?> clazz) {
+    public static boolean isComparable(Class<?> clazz) {
         return Comparable.class.isAssignableFrom(clazz) || isNumeric(clazz) ;
     }
 
-    public static boolean isTextual(@NonNull Class<?> clazz) {
+    public static boolean isTextual(Class<?> clazz) {
         return CharSequence.class.isAssignableFrom(clazz);
     }
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 /**
- * Common data access exceptions.
+ * Built-in entity event listener contracts.
  *
  * @author graemerocher
  * @since 1.0.0
  */
 @org.jspecify.annotations.NullMarked
-package io.micronaut.data.exceptions;
+package io.micronaut.data.event.listeners;

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 
 /**
@@ -28,7 +27,7 @@ public interface EntityEventContext<T> extends PersistenceEventContext<T> {
     /**
      * @return The entity associated with the event.
      */
-    @NonNull T getEntity();
+     T getEntity();
 
     /**
      * Sets a property to its new value. If the property is immutable then the copy-constructor will be used and {@link #getEntity()} will return the updated entity.

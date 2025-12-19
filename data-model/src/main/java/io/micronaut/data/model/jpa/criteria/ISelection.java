@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
@@ -36,8 +35,8 @@ import java.util.List;
 public interface ISelection<T> extends Selection<T> {
 
     @Override
-    @NonNull
-    default Selection<T> alias(@NonNull String name) {
+    
+    default Selection<T> alias(String name) {
         return new AliasedSelection<>(this, name);
     }
 
@@ -53,7 +52,7 @@ public interface ISelection<T> extends Selection<T> {
     }
 
     @Override
-    @NonNull
+    
     default List<Selection<?>> getCompoundSelectionItems() {
         return Collections.emptyList();
     }
