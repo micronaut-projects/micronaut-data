@@ -19,7 +19,7 @@ micronaut-multitenancy = "5.8.0"
 micronaut-validation = "4.12.0"
 micronaut-logging = "1.7.1"
 micronaut-flyway = "7.9.2"
-micronaut-coherence = "5.1.0"
+micronaut-coherence = "6.0.0-M1"
 #micronaut-sourcegen = "1.8.2"
 
 groovy = "5.0.2"
