@@ -22,7 +22,7 @@ dependencies {
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
     compileOnly mnSql.postgresql
-    compileOnly mnSql.mysql.connector.java
+    compileOnly mnSql.mysql.connector.j
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
@@ -55,14 +55,14 @@ dependencies {
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.mariadb.java.client
-    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.mysql.connector.j
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
 
     testResourcesService mnSql.mariadb.java.client
     testResourcesService mnSql.ojdbc11
-    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.mysql.connector.j
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
 

@@ -56,7 +56,7 @@ dependencies {
 
     // mysql
     testImplementation mnR2dbc.r2dbc.mysql
-    testImplementation mnSql.mysql.connector.java
+    testImplementation mnSql.mysql.connector.j
 
     // h2
     testImplementation mnR2dbc.r2dbc.h2
@@ -79,7 +79,7 @@ dependencies {
 
     testResourcesService mnSql.mariadb.java.client
     testResourcesService mnSql.ojdbc11
-    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.mysql.connector.j
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
 
