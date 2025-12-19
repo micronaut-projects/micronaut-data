@@ -9,6 +9,7 @@ application {
 micronaut {
     version libs.versions.micronaut.platform.get()
     testRuntime "junit5"
+    runtime "netty"
 }
 
 dependencies {
