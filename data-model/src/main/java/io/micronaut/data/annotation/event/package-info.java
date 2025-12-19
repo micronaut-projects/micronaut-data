@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 /**
- * Common data access exceptions.
+ * Annotations related to entity lifecycle events.
  *
  * @author graemerocher
  * @since 1.0.0
  */
 @org.jspecify.annotations.NullMarked
-package io.micronaut.data.exceptions;
+package io.micronaut.data.annotation.event;

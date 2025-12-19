@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.async;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -44,7 +43,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The entity type
      * @return optional found result
      */
-    @NonNull
     <S extends T> CompletableFuture<S> findOne(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -54,7 +52,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The result type
      * @return optional found result
      */
-    @NonNull
     <S extends T> CompletableFuture<S> findOne(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -64,7 +61,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The result type
      * @return found results
      */
-    @NonNull
     <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -74,7 +70,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The result type
      * @return found results
      */
-    @NonNull
     <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -84,7 +79,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     CompletableFuture<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Pageable pageable);
 
     /**
@@ -94,7 +88,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     CompletableFuture<Page<T>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     /**
@@ -105,7 +98,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The result type
      * @return found results
      */
-    @NonNull
     <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     /**
@@ -116,7 +108,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param <S> The result type
      * @return found results
      */
-    @NonNull
     <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
@@ -125,7 +116,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    @NonNull
     CompletableFuture<Long> count(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -134,7 +124,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return the number of instances.
      */
-    @NonNull
     CompletableFuture<Long> count(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -144,7 +133,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    @NonNull
     CompletableFuture<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -154,7 +142,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return the number of instances.
      * @since 3.8
      */
-    @NonNull
     CompletableFuture<Boolean> exists(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -163,7 +150,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    @NonNull
     CompletableFuture<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable DeleteSpecification<T> spec);
 
     /**
@@ -172,7 +158,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param spec The delete specification
      * @return the number records deleted.
      */
-    @NonNull
     CompletableFuture<Long> deleteAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -181,7 +166,6 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @param spec The update specification
      * @return the number records updated.
      */
-    @NonNull
     CompletableFuture<Long> updateAll(@Nullable @io.micronaut.core.annotation.Nullable UpdateSpecification<T> spec);
 
 }

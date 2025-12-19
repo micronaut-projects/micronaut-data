@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
@@ -40,7 +39,7 @@ public interface PersistentEntityPath<T> extends Path<T>, IExpression<T> {
     /**
      * @return The persistent entity
      */
-    @NonNull
+    
     PersistentEntity getPersistentEntity();
 
     /**
@@ -51,8 +50,8 @@ public interface PersistentEntityPath<T> extends Path<T>, IExpression<T> {
      * @return The property path
      */
     @Override
-    @NonNull
-    <Y> PersistentPropertyPath<Y> get(@NonNull String attributeName);
+    
+    <Y> PersistentPropertyPath<Y> get(String attributeName);
 
     @Override
     default <Y> PersistentPropertyPath<Y> get(SingularAttribute<? super T, Y> attribute) {

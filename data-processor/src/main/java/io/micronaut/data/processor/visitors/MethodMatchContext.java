@@ -60,6 +60,7 @@ public class MethodMatchContext extends MatchContext {
      * @param entityResolver function used to resolve entities
      * @param findInterceptors The interceptors
      */
+    @SuppressWarnings("checkstyle:ParameterNumber")
     MethodMatchContext(
             @NonNull QueryBuilder queryBuilder,
             @NonNull ClassElement repositoryClass,

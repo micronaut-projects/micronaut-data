@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -41,7 +40,7 @@ public interface QueryParameterBinding {
     /**
      * @return The required name of the parameter or throws exception
      */
-    @NonNull
+    
     default String getRequiredName() {
         String name = getName();
         if (name == null) {
@@ -100,7 +99,7 @@ public interface QueryParameterBinding {
     /**
      * @return The required property path or throws and exception.
      */
-    @NonNull
+    
     default String[] getRequiredPropertyPath() {
         String[] propertyPath = getPropertyPath();
         if (propertyPath == null) {

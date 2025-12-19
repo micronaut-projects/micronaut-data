@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 
@@ -43,12 +42,12 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
     /**
      * @return The persistent joins
      */
-    @NonNull
+    
     Collection<PersistentAssociationPath<AssociatedEntityType, ?>> getPersistentJoins();
 
     @Override
     @Nullable
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName);
+    <X, Y> PersistentEntityJoin<X, Y> join(String attributeName);
 
     /**
      * Joins the entity with specific join type.
@@ -59,8 +58,8 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>           The association entity type
      * @return The joined entity
      */
-    @NonNull
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, Join.Type joinType);
+    
+    <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, Join.Type joinType);
 
     /**
      * Joins the entity with specific join type.
@@ -72,16 +71,14 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>           The association entity type
      * @return The joined entity
      */
-    @NonNull
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, Join.Type joinType, @NonNull String alias);
+    
+    <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, Join.Type joinType,  String alias);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, @NonNull JoinType jt);
+    <X, Y> PersistentEntityJoin<X, Y> join(String attributeName,  JoinType jt);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute, @NonNull JoinType jt);
+    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute,  JoinType jt);
 
     /**
      * Joins the entity with specific join type.
@@ -91,59 +88,46 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>       The association entity type
      * @return The joined entity
      */
-    @NonNull
-    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute, Join.Type jt);
+    
+    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute, Join.Type jt);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute);
+    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityCollectionJoin<AssociatedEntityType, Y> join(@NonNull CollectionAttribute<? super AssociatedEntityType, Y> collection, @NonNull JoinType jt);
+    <Y> PersistentEntityCollectionJoin<AssociatedEntityType, Y> join(CollectionAttribute<? super AssociatedEntityType, Y> collection,  JoinType jt);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityCollectionJoin<AssociatedEntityType, Y> join(@NonNull CollectionAttribute<? super AssociatedEntityType, Y> collection);
+    <Y> PersistentEntityCollectionJoin<AssociatedEntityType, Y> join(CollectionAttribute<? super AssociatedEntityType, Y> collection);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityListJoin<AssociatedEntityType, Y> join(@NonNull ListAttribute<? super AssociatedEntityType, Y> list);
+    <Y> PersistentEntityListJoin<AssociatedEntityType, Y> join(ListAttribute<? super AssociatedEntityType, Y> list);
 
-    @NonNull
     @Override
-    <Y> PersistentEntityListJoin<AssociatedEntityType, Y> join(@NonNull ListAttribute<? super AssociatedEntityType, Y> list, @NonNull JoinType jt);
+    <Y> PersistentEntityListJoin<AssociatedEntityType, Y> join(ListAttribute<? super AssociatedEntityType, Y> list,  JoinType jt);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntityListJoin<X, Y> joinList(@NonNull String attributeName);
+    <X, Y> PersistentEntityListJoin<X, Y> joinList(String attributeName);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntityListJoin<X, Y> joinList(@NonNull String attributeName, @NonNull JoinType jt);
+    <X, Y> PersistentEntityListJoin<X, Y> joinList(String attributeName,  JoinType jt);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(@NonNull String attributeName);
+    <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(@NonNull String attributeName, @NonNull JoinType jt);
+    <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName,  JoinType jt);
 
-    @NonNull
     @Override
-    <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(@NonNull SetAttribute<? super AssociatedEntityType, Y> set);
+    <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(SetAttribute<? super AssociatedEntityType, Y> set);
 
-    @NonNull
     @Override
-    <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(@NonNull SetAttribute<? super AssociatedEntityType, Y> set, @NonNull JoinType jt);
+    <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(SetAttribute<? super AssociatedEntityType, Y> set,  JoinType jt);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntitySetJoin<X, Y> joinSet(@NonNull String attributeName);
+    <X, Y> PersistentEntitySetJoin<X, Y> joinSet(String attributeName);
 
-    @NonNull
     @Override
-    <X, Y> PersistentEntitySetJoin<X, Y> joinSet(@NonNull String attributeName, @NonNull JoinType jt);
+    <X, Y> PersistentEntitySetJoin<X, Y> joinSet(String attributeName,  JoinType jt);
 
 }
