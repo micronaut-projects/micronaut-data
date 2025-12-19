@@ -16,6 +16,8 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -162,5 +164,24 @@ public class MethodMatchContext extends MatchContext {
      */
     public @NonNull SourcePersistentEntity getEntity(@NonNull ClassElement element) {
         return entityResolver.apply(element);
+    }
+
+    /**
+     * Find implicit root entity.
+     *
+     * @since 5.0
+     */
+    public void findImplicitRootEntity() {
+        if (parameters.length == 1) {
+            ClassElement rootType = parameters[0].getGenericType();
+            if (rootType.isArray()) {
+                rootType = rootType.fromArray();
+            } else if (TypeUtils.isIterableOfEntity(rootType)) {
+                rootType = rootType.getFirstTypeArgument().orElseThrow(() -> new ProcessingException(methodElement, "Cannot determine implicit root entity type"));
+            }
+            if (TypeUtils.isEntity(rootType)) {
+                setRootEntity(getEntity(rootType));
+            }
+        }
     }
 }
