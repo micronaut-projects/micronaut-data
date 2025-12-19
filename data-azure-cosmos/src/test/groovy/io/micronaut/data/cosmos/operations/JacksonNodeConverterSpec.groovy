@@ -19,6 +19,11 @@ import spock.lang.Specification
 
 final class JacksonNodeConverterSpec extends Specification {
 
+    static class MyPojo {
+        String name
+        int value
+    }
+
     def "jackson 3 to jackson 2 and back (via converter)"() {
         given:
         // Build a com.fasterxml tree, then convert to tools and back
@@ -35,6 +40,8 @@ final class JacksonNodeConverterSpec extends Specification {
         fRoot.set("arr", fArr)
         byte[] bytes = [1, 2, 3, 4] as byte[]
         fRoot.put("bin", bytes)
+        def pojo = new MyPojo(name: "foo", value: 42)
+        fRoot.putPOJO("pojo", pojo)
 
         when:
         def tNode = JacksonNodeConverter.toJackson3JsonNode(fRoot)
@@ -61,6 +68,9 @@ final class JacksonNodeConverterSpec extends Specification {
         fNode.get("arr").get(1).textValue() == "a"
         fNode.get("bin").isBinary()
         Arrays.equals(bytes, fNode.get("bin").binaryValue())
+        fNode.get("pojo").isPojo()
+        fNode.get("pojo") instanceof com.fasterxml.jackson.databind.node.POJONode
+        ((com.fasterxml.jackson.databind.node.POJONode) fNode.get("pojo")).getPojo() == pojo
     }
 
     def "jackson2 to jackson3 and back"() {
@@ -78,6 +88,8 @@ final class JacksonNodeConverterSpec extends Specification {
         fRoot.set("arr", fArr)
         byte[] bytes = [9, 8, 7, 6] as byte[]
         fRoot.put("bin", bytes)
+        def pojo = new MyPojo(name: "bar", value: 24)
+        fRoot.putPOJO("pojo", pojo)
 
         when:
         def tNode = JacksonNodeConverter.toJackson3JsonNode(fRoot)
@@ -104,6 +116,9 @@ final class JacksonNodeConverterSpec extends Specification {
         fRound.get("arr").get(1).textValue() == "b"
         fRound.get("bin").isBinary()
         Arrays.equals(bytes, fRound.get("bin").binaryValue())
+        fRound.get("pojo").isPojo()
+        fRound.get("pojo") instanceof com.fasterxml.jackson.databind.node.POJONode
+        ((com.fasterxml.jackson.databind.node.POJONode) fRound.get("pojo")).getPojo() == pojo
     }
 
     def "missing node preserved"() {

@@ -20,8 +20,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.NonNull;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -49,7 +47,7 @@ final class JacksonNodeConverter {
     /**
      * Deeply convert a shaded Jackson (tools.jackson) JsonNode into a standard Jackson (com.fasterxml.jackson) JsonNode.
      *
-     * @param source The source node (may be null)
+     * @param source The source node (can be null)
      * @return A converted node of the corresponding type, or null if source is null
      */
     static @Nullable com.fasterxml.jackson.databind.JsonNode toJackson2JsonNode(@Nullable tools.jackson.databind.JsonNode source) {
@@ -84,9 +82,9 @@ final class JacksonNodeConverter {
             return toJackson2NumberJsonNode(source);
         }
         if (source.isPojo() && source instanceof tools.jackson.databind.node.POJONode pojoNode) {
-                Object pojo = pojoNode.getPojo();
-                return pojoToJackson2JsonNode(pojo);
-            }
+            Object pojo = pojoNode.getPojo();
+            return pojoToJackson2JsonNode(pojo);
+        }
 
         // Fallback to textual representation to avoid losing information
         return com.fasterxml.jackson.databind.node.TextNode.valueOf(source.toString());
@@ -111,87 +109,33 @@ final class JacksonNodeConverter {
     private static @NonNull com.fasterxml.jackson.databind.JsonNode toJackson2NumberJsonNode(@NonNull tools.jackson.databind.JsonNode num) {
         // Map number types by name to preserve exact types where possible
         tools.jackson.core.JsonParser.NumberType nt = num.numberType();
-        String name = nt != null ? nt.name() : null;
-        if ("INT".equals(name)) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.intValue());
+        if (nt == null) {
+            // Fallbacks
+            if (num.isIntegralNumber()) {
+                return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
+            }
+            if (num.isFloatingPointNumber()) {
+                return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
+            }
+            // As a last resort, use textual
+            return com.fasterxml.jackson.databind.node.TextNode.valueOf(num.numberValue().toString());
         }
-        if ("LONG".equals(name)) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
-        }
-        if ("BIG_INTEGER".equals(name)) {
-            BigInteger bi = num.bigIntegerValue();
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(bi);
-        }
-        if ("FLOAT".equals(name)) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.floatValue());
-        }
-        if ("DOUBLE".equals(name)) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
-        }
-        if ("BIG_DECIMAL".equals(name)) {
-            BigDecimal bd = num.decimalValue();
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(bd);
-        }
-        // Fallbacks
-        if (num.isIntegralNumber()) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
-        }
-        if (num.isFloatingPointNumber()) {
-            return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
-        }
-        // As a last resort, use textual
-        return com.fasterxml.jackson.databind.node.TextNode.valueOf(num.numberValue().toString());
+        return switch (nt) {
+            case INT -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.intValue());
+            case LONG -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
+            case BIG_INTEGER -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.bigIntegerValue());
+            case FLOAT -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.floatValue());
+            case DOUBLE -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
+            case BIG_DECIMAL -> com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.decimalValue());
+        };
+
     }
 
     private static @NonNull com.fasterxml.jackson.databind.JsonNode pojoToJackson2JsonNode(@Nullable Object pojo) {
-        switch (pojo) {
-            case null -> {
-                return com.fasterxml.jackson.databind.node.NullNode.getInstance();
-            }
-            case com.fasterxml.jackson.databind.JsonNode fn -> {
-                return fn;
-            }
-            case tools.jackson.databind.JsonNode tn -> {
-                return toJackson2JsonNode(tn);
-            }
-            case CharSequence cs -> {
-                return com.fasterxml.jackson.databind.node.TextNode.valueOf(cs.toString());
-            }
-            case Boolean b -> {
-                return b ? com.fasterxml.jackson.databind.node.BooleanNode.TRUE : com.fasterxml.jackson.databind.node.BooleanNode.FALSE;
-            }
-            case BigDecimal bd -> {
-                return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(bd);
-            }
-            case BigInteger bi -> {
-                return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(bi);
-            }
-            case Number n -> {
-                // Preserve integer vs floating
-                if (n instanceof Byte || n instanceof Short || n instanceof Integer) {
-                    return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.intValue());
-                }
-                return switch (n) {
-                    case Long ignored ->
-                        com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.longValue());
-                    case Float ignored ->
-                        com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.floatValue());
-                    case Double ignored ->
-                        com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.doubleValue());
-                    default ->
-                        // Fallback to BigDecimal
-                        com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.numberNode(new BigDecimal(n.toString()));
-                };
-                // Fallback to BigDecimal
-            }
-            case byte[] bytes -> {
-                return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.binaryNode(bytes);
-            }
-            default -> {
-            }
+        if (pojo == null) {
+            return com.fasterxml.jackson.databind.node.NullNode.getInstance();
         }
-        // Last resort
-        return com.fasterxml.jackson.databind.node.TextNode.valueOf(String.valueOf(pojo));
+        return new com.fasterxml.jackson.databind.node.POJONode(pojo);
     }
 
     // -------------- Jackson 2 -> Jackson 3 --------------
@@ -199,7 +143,7 @@ final class JacksonNodeConverter {
     /**
      * Deeply convert a standard Jackson 2 (com.fasterxml.jackson) JsonNode into a Jackson 2 (tools.jackson) JsonNode.
      *
-     * @param source The source node (may be null)
+     * @param source The source node (can be null)
      * @return A converted node of the corresponding type, or null if source is null
      */
     static @Nullable tools.jackson.databind.JsonNode toJackson3JsonNode(@Nullable com.fasterxml.jackson.databind.JsonNode source) throws IOException {
@@ -233,12 +177,11 @@ final class JacksonNodeConverter {
         if (source.isNumber()) {
             return toJackson3NumberJsonNode(source);
         }
-        if (source.isPojo()) {
-            if (source instanceof com.fasterxml.jackson.databind.node.POJONode) {
-                Object pojo = ((com.fasterxml.jackson.databind.node.POJONode) source).getPojo();
-                return pojoToJackson3JsonNode(pojo);
-            }
+        if (source.isPojo() && source instanceof com.fasterxml.jackson.databind.node.POJONode pojoNode) {
+            Object pojo = pojoNode.getPojo();
+            return pojoToJackson3JsonNode(pojo);
         }
+
         // Fallback to textual representation
         return tools.jackson.databind.node.StringNode.valueOf(source.toString());
     }
@@ -265,82 +208,31 @@ final class JacksonNodeConverter {
 
     private static @NonNull tools.jackson.databind.JsonNode toJackson3NumberJsonNode(@NonNull com.fasterxml.jackson.databind.JsonNode num) {
         com.fasterxml.jackson.core.JsonParser.NumberType nt = num.numberType();
-        String name = nt != null ? nt.name() : null;
-        if ("INT".equals(name)) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.intValue());
+        if (nt == null) {
+            // Fallbacks
+            if (num.isIntegralNumber()) {
+                return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
+            }
+            if (num.isFloatingPointNumber()) {
+                return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
+            }
+            // As a last resort, use textual
+            return tools.jackson.databind.node.StringNode.valueOf(num.numberValue().toString());
         }
-        if ("LONG".equals(name)) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
-        }
-        if ("BIG_INTEGER".equals(name)) {
-            BigInteger bi = num.bigIntegerValue();
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(bi);
-        }
-        if ("FLOAT".equals(name)) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.floatValue());
-        }
-        if ("DOUBLE".equals(name)) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
-        }
-        if ("BIG_DECIMAL".equals(name)) {
-            BigDecimal bd = num.decimalValue();
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(bd);
-        }
-        // Fallbacks
-        if (num.isIntegralNumber()) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
-        }
-        if (num.isFloatingPointNumber()) {
-            return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
-        }
-        // As a last resort, use textual
-        return tools.jackson.databind.node.StringNode.valueOf(num.numberValue().toString());
+        return switch (nt) {
+            case INT -> tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.intValue());
+            case LONG -> tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.longValue());
+            case BIG_INTEGER -> tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.bigIntegerValue());
+            case FLOAT ->  tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.floatValue());
+            case DOUBLE -> tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.doubleValue());
+            case BIG_DECIMAL -> tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(num.decimalValue());
+        };
     }
 
-    private static @NonNull tools.jackson.databind.JsonNode pojoToJackson3JsonNode(@Nullable Object pojo) throws IOException {
-        switch (pojo) {
-            case null -> {
-                return tools.jackson.databind.node.NullNode.getInstance();
-            }
-            case tools.jackson.databind.JsonNode tn -> {
-                return tn;
-            }
-            case com.fasterxml.jackson.databind.JsonNode fn -> {
-                return toJackson3JsonNode(fn);
-            }
-            case CharSequence cs -> {
-                return tools.jackson.databind.node.StringNode.valueOf(cs.toString());
-            }
-            case Boolean b -> {
-                return b ? tools.jackson.databind.node.BooleanNode.TRUE : tools.jackson.databind.node.BooleanNode.FALSE;
-            }
-            case BigDecimal bd -> {
-                return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(bd);
-            }
-            case BigInteger bi -> {
-                return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(bi);
-            }
-            case Number n -> {
-                if (n instanceof Byte || n instanceof Short || n instanceof Integer) {
-                    return tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.intValue());
-                }
-                return switch (n) {
-                    case Long l ->
-                        tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.longValue());
-                    case Float v ->
-                        tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.floatValue());
-                    case Double v ->
-                        tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(n.doubleValue());
-                    default ->
-                        tools.jackson.databind.node.JsonNodeFactory.instance.numberNode(new BigDecimal(n.toString()));
-                };
-            }
-            case byte[] bytes -> {
-                return tools.jackson.databind.node.JsonNodeFactory.instance.binaryNode(bytes);
-            }
-            default -> {
-            }
+    private static @NonNull tools.jackson.databind.JsonNode pojoToJackson3JsonNode(@Nullable Object pojo) {
+        if (pojo == null) {
+            return tools.jackson.databind.node.NullNode.getInstance();
         }
-        return tools.jackson.databind.node.StringNode.valueOf(String.valueOf(pojo));
+        return new tools.jackson.databind.node.POJONode(pojo);
     }
 }
