@@ -39,6 +39,7 @@ class BookCursorRepositoryTest : AbstractTest(false) {
             "A Tale of Two Cities", "Brave New World", "Catch-22",
             "Dune", "Ender's Game", "Fahrenheit 451", "Gone Girl", "Hyperion"
         )
+        // This will produce 6 books with pages >= 400 to be verifed in the tests
         titles.forEachIndexed { i, t ->
             blockingBookRepository.save(Book(t, 300 + (i * 50), author))
         }
@@ -48,14 +49,17 @@ class BookCursorRepositoryTest : AbstractTest(false) {
         val page1 = bookCursorRepository.findByCursor(400, pageable)
         assertTrue(page1.content.isNotEmpty())
         assertEquals(3, page1.numberOfElements)
+        assertEquals(6, page1.totalSize)
         assertTrue(page1.hasTotalSize())
 
         // Next cursored page
         val page2 = bookCursorRepository.findByCursor(400, page1.nextPageable())
         assertTrue(page2.numberOfElements > 0)
+        assertEquals(6, page1.totalSize)
 
         // Regular pageable + count
         val offsetPage = bookCursorRepository.findByCursor(400, Pageable.from(0, 2))
         assertEquals(2, offsetPage.numberOfElements)
+        assertEquals(6, offsetPage.totalSize)
     }
 }
