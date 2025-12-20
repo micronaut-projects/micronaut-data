@@ -12,7 +12,7 @@ data class Book(
         val title: String,
         val pages: Int,
         @Relation(Relation.Kind.MANY_TO_ONE)
-        val author: Author? = null,) {
+        val author: Author?) {
     @Id
     @GeneratedValue
     var id: Long? = null
