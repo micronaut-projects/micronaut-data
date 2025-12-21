@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.context.annotation.DefaultImplementation;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
@@ -115,7 +114,6 @@ public interface CursoredPage<T> extends Page<T> {
         return Pageable.beforeCursor(cursor, Math.max(0, pageable.getNumber() - 1), pageable.getSize(), pageable.getSort());
     }
 
-
     /**
      * Maps the content with the given function.
      *
@@ -124,7 +122,7 @@ public interface CursoredPage<T> extends Page<T> {
      * @return A new slice with the mapped content
      */
     @Override
-    default @NonNull <T2> CursoredPage<T2> map(Function<T, T2> function) {
+    default  <T2> CursoredPage<T2> map(Function<T, T2> function) {
         if (this == EMPTY) {
             return (CursoredPage<T2>) EMPTY;
         }
@@ -144,12 +142,10 @@ public interface CursoredPage<T> extends Page<T> {
      */
     @JsonCreator
     @ReflectiveAccess
-    static @NonNull <T> CursoredPage<T> of(
-        @JsonProperty("content") @NonNull List<T> content,
-        @JsonProperty("pageable") @NonNull Pageable pageable,
+    static  <T> CursoredPage<T> of(@JsonProperty("content")  List<T> content,
+        @JsonProperty("pageable")  Pageable pageable,
         @JsonProperty("cursors") @Nullable List<Cursor> cursors,
-        @JsonProperty("totalSize") @Nullable Long totalSize
-    ) {
+        @JsonProperty("totalSize") @Nullable Long totalSize) {
         return new DefaultCursoredPage<>(content, pageable, cursors, totalSize);
     }
 
@@ -178,7 +174,7 @@ public interface CursoredPage<T> extends Page<T> {
      * @return The slice
      */
     @SuppressWarnings("unchecked")
-    static @NonNull <T2> CursoredPage<T2> empty() {
+    static  <T2> CursoredPage<T2> empty() {
         return (CursoredPage<T2>) EMPTY;
     }
 

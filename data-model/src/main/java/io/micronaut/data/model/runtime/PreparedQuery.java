@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.core.type.Argument;
@@ -50,7 +49,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      */
     Argument[] getArguments();
 
-    @NonNull
     @Override
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
@@ -75,7 +73,7 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
     }
 
     @Override
-    default @NonNull ConversionService getConversionService() {
+    default  ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

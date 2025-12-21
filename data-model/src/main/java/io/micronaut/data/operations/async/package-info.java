@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 /**
- * Runtime support for async operations.
+ * Async repository operations API.
  *
  * @author graemerocher
  * @since 1.0.0
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.operations.async;

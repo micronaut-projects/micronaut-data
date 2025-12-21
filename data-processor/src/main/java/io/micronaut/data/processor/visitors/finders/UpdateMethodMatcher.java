@@ -71,6 +71,9 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Update.class)) {
             if (matchContext.getRootEntity() == null) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (matchContext.getRootEntity() == null) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());

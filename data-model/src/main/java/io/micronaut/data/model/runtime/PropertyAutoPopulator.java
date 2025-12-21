@@ -19,7 +19,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.order.Ordered;
 
 import java.lang.annotation.Annotation;
@@ -49,5 +48,5 @@ public interface PropertyAutoPopulator<T extends Annotation> extends Ordered {
      * @param previousValue the previous value, if any
      * @return new value
      */
-    @NonNull Object populate(RuntimePersistentProperty<?> property, @Nullable Object previousValue);
+     Object populate(RuntimePersistentProperty<?> property, @Nullable Object previousValue);
 }

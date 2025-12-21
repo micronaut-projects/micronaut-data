@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
@@ -49,11 +48,9 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> extends PersistentEntityJoin<OwnerType, AssociatedEntityType>,
         PersistentPropertyPath<AssociatedEntityType> {
 
-    @NonNull
     @Override
     Association getProperty();
 
-    @NonNull
     Association getAssociation();
 
     @Override
@@ -85,7 +82,6 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
      */
     void setAlias(String alias);
 
-    @NonNull
     default List<Association> asPath() {
         List<Association> associations = getAssociations();
         List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
@@ -95,13 +91,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    @NonNull
+    
     default Join<OwnerType, AssociatedEntityType> on(Expression<Boolean> restriction) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Join<OwnerType, AssociatedEntityType> on(Predicate... restrictions) {
         throw notSupportedOperation();
     }
@@ -113,13 +109,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    @NonNull
+    
     default Attribute<? super OwnerType, ?> getAttribute() {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+    
     default Bindable<AssociatedEntityType> getModel() {
         throw notSupportedOperation();
     }

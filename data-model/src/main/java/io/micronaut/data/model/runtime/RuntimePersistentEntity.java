@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
@@ -69,7 +68,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * Default constructor.
      * @param type The type
      */
-    public RuntimePersistentEntity(@NonNull Class<T> type) {
+    public RuntimePersistentEntity(Class<T> type) {
         this(BeanIntrospection.getIntrospection(type));
     }
 
@@ -77,7 +76,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * Default constructor.
      * @param introspection The introspection
      */
-    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
+    public RuntimePersistentEntity(BeanIntrospection<T> introspection) {
         this(introspection, introspection.getBeanProperties());
     }
 
@@ -87,7 +86,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param introspection The introspection
      * @param beanProperties The bean properties
      */
-    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
+    public RuntimePersistentEntity(BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
@@ -177,8 +176,8 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param converterClass The converter class
      * @return converter instance
      */
-    @NonNull
-    protected AttributeConverter<Object, Object> resolveConverter(@NonNull Class<?> converterClass) {
+    
+    protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
         throw new MappingException("Converters not supported");
     }
 
@@ -268,7 +267,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return getName();
     }
 
-    @NonNull
     @Override
     public String getAliasName() {
         return aliasName;
@@ -327,7 +325,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return version;
     }
 
-    @NonNull
     @Override
     public Collection<RuntimePersistentProperty<T>> getPersistentProperties() {
         if (persistentPropertiesValues == null) {
@@ -336,7 +333,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return persistentPropertiesValues;
     }
 
-    @NonNull
     @Override
     public Collection<RuntimeAssociation<T>> getAssociations() {
         return (Collection<RuntimeAssociation<T>>) super.getAssociations();
@@ -368,7 +364,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return (RuntimePersistentProperty<T>) super.getIdentityByName(name);
     }
 
-    @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
         if (allPersistentPropertiesNames == null) {

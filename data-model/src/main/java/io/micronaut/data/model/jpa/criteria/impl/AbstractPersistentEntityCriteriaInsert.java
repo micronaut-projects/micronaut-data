@@ -47,10 +47,8 @@ public abstract class AbstractPersistentEntityCriteriaInsert<T> implements Persi
 
     @Override
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        return queryBuilder.buildInsert(
-            annotationMetadata,
-            new InsertQueryDefinitionImpl(entityRoot.getPersistentEntity(), returning)
-        );
+        return queryBuilder.buildInsert(annotationMetadata,
+            new InsertQueryDefinitionImpl(entityRoot.getPersistentEntity(), returning));
     }
 
     @Override

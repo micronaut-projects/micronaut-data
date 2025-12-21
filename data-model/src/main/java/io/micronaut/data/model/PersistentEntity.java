@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
@@ -51,12 +50,12 @@ public interface PersistentEntity extends PersistentElement {
      * @return The entity name
      */
     @Override
-    @NonNull String getName();
+     String getName();
 
     /**
      * @return A name to use when referring to this element via an alias.
      */
-    @NonNull
+    
     String getAliasName();
 
     /**
@@ -96,7 +95,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return The identity properties
      */
-    @NonNull
+    
     default List<PersistentProperty> getIdentityProperties() {
         if (getIdentity() != null) {
             return List.of(getIdentity());
@@ -129,7 +128,7 @@ public interface PersistentEntity extends PersistentElement {
      * A list of properties to be persisted.
      * @return A list of PersistentProperty instances
      */
-    @NonNull Collection<? extends PersistentProperty> getPersistentProperties();
+     Collection<? extends PersistentProperty> getPersistentProperties();
 
     /**
      * A list of the associations for this entity. This is typically
@@ -137,7 +136,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return A list of associations
      */
-    @NonNull
+    
     default Collection<? extends Association> getAssociations() {
         return getPersistentProperties()
                 .stream()
@@ -152,7 +151,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return A list of associations
      */
-    default @NonNull Collection<Embedded> getEmbedded() {
+    default  Collection<Embedded> getEmbedded() {
         return getPersistentProperties().stream()
                 .filter(PersistentProperty::isEmbedded)
                 .map(p -> (Embedded) p)
@@ -203,7 +202,7 @@ public interface PersistentEntity extends PersistentElement {
      * A list of property names that a persistent.
      * @return A List of strings
      */
-    @NonNull Collection<String> getPersistentPropertyNames();
+     Collection<String> getPersistentPropertyNames();
 
     /**
      * @return Is the entity embeddable.
@@ -215,7 +214,7 @@ public interface PersistentEntity extends PersistentElement {
     /**
      * @return The simple name without the package of entity
      */
-    @NonNull
+    
     default String getSimpleName() {
         return NameUtils.getSimpleName(getName());
     }
@@ -223,7 +222,7 @@ public interface PersistentEntity extends PersistentElement {
     /**
      * @return Returns the name of the class decapitalized form
      */
-    default @NonNull String getDecapitalizedName() {
+    default  String getDecapitalizedName() {
         return NameUtils.decapitalize(getSimpleName());
     }
 
@@ -295,7 +294,7 @@ public interface PersistentEntity extends PersistentElement {
      * Obtains the root entity of an inheritance hierarchy.
      * @return The root entity
      */
-    default @NonNull PersistentEntity getRootEntity() {
+    default  PersistentEntity getRootEntity() {
         return this;
     }
 
@@ -357,7 +356,7 @@ public interface PersistentEntity extends PersistentElement {
      * @return The properties
      */
     @Nullable
-    default PersistentPropertyPath getPropertyPath(@NonNull String path) {
+    default PersistentPropertyPath getPropertyPath(String path) {
         if (path.indexOf('.') == -1) {
             return getPropertyPath(new String[] {path});
         }
@@ -371,7 +370,7 @@ public interface PersistentEntity extends PersistentElement {
      * @return The properties
      */
     @Nullable
-    default PersistentPropertyPath getPropertyPath(@NonNull String[] propertyPath) {
+    default PersistentPropertyPath getPropertyPath(String[] propertyPath) {
         if (propertyPath.length == 0) {
             return null;
         }
@@ -427,14 +426,14 @@ public interface PersistentEntity extends PersistentElement {
      * Obtain the naming strategy for the entity.
      * @return The naming strategy
      */
-    @NonNull
+    
     NamingStrategy getNamingStrategy();
 
     /**
      * Find the naming strategy that is defined for the entity.
      * @return The optional naming strategy
      */
-    @NonNull
+    
     Optional<NamingStrategy> findNamingStrategy();
 
     /**
@@ -445,7 +444,7 @@ public interface PersistentEntity extends PersistentElement {
      * @param <T> The generic type
      * @return The entity
      */
-    static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull Class<T> type) {
+    static  <T> RuntimePersistentEntity<T> of(Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         return new RuntimePersistentEntity<>(type);
     }
@@ -458,7 +457,7 @@ public interface PersistentEntity extends PersistentElement {
      * @param <T> The generic type
      * @return The entity
      */
-    static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull BeanIntrospection<T> introspection) {
+    static  <T> RuntimePersistentEntity<T> of(BeanIntrospection<T> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
         return new RuntimePersistentEntity<>(introspection);
     }

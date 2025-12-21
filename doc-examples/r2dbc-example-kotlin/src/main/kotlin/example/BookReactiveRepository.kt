@@ -21,9 +21,9 @@ interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book, Long> {
 
     // tag::mandatory[]
     @Transactional(Transactional.TxType.MANDATORY)
-    override fun <S : Book?> save(entity: @Valid @NotNull S): Publisher<S>
+    override fun <S : Book> save(entity: @Valid @NotNull S): Publisher<S>
 
     @Transactional(Transactional.TxType.MANDATORY)
-    override fun <S : Book?> saveAll(entities: @Valid @NotNull Iterable<S>): Publisher<S>
+    override fun <S : Book> saveAll(entities: @Valid @NotNull Iterable<S>): Publisher<S>
     // end::mandatory[]
 }

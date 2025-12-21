@@ -47,8 +47,7 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
     @JsonCreator
     @Creator
     @ReflectiveAccess
-    DefaultPage(
-            @JsonProperty("content")
+    DefaultPage(@JsonProperty("content")
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable,

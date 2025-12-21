@@ -19,7 +19,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Introspected;
 
-import org.jspecify.annotations.NonNull;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -78,7 +77,6 @@ final class DefaultPageable implements Pageable {
         return requestTotal;
     }
 
-    @NonNull
     @Override
     public Sort getSort() {
         return sort;

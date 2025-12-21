@@ -49,16 +49,14 @@ final class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPag
     @JsonCreator
     @Creator
     @ReflectiveAccess
-    DefaultCursoredPage(
-            @JsonProperty("content")
+    DefaultCursoredPage(@JsonProperty("content")
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable,
             @JsonProperty("cursors")
             List<Cursor> cursors,
             @JsonProperty("totalSize")
-            Long totalSize
-    ) {
+            Long totalSize) {
         super(content, pageable, totalSize);
         if (content.size() != cursors.size()) {
             throw new IllegalArgumentException("The number of cursors must match the number of content items for a page");

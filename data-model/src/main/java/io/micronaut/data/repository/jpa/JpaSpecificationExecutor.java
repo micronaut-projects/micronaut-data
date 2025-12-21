@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -63,7 +62,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    @NonNull
     List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec);
 
     /**
@@ -72,7 +70,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param spec The query specification
      * @return found results
      */
-    @NonNull
     List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec);
 
     /**
@@ -82,7 +79,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     Page<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Pageable pageable);
 
     /**
@@ -92,7 +88,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param pageable The pageable object
      * @return a page
      */
-    @NonNull
     Page<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     /**
@@ -102,7 +97,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    @NonNull
     List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable QuerySpecification<T> spec, Sort sort);
 
     /**
@@ -112,7 +106,6 @@ public interface JpaSpecificationExecutor<T> {
      * @param sort The sort object
      * @return found results
      */
-    @NonNull
     List<T> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
@@ -124,7 +117,6 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
      */
-    @NonNull
     <R> List<R> findAll(@Nullable @io.micronaut.core.annotation.Nullable CriteriaQueryBuilder<R> builder);
 
     /**
@@ -136,7 +128,6 @@ public interface JpaSpecificationExecutor<T> {
      * @return the number records updated.
      * @since 3.5.0
      */
-    @NonNull
     <R> R findOne(@Nullable @io.micronaut.core.annotation.Nullable CriteriaQueryBuilder<R> builder);
 
     /**

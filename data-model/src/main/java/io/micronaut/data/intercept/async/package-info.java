@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 /**
- * Async variants of interfaces.
+ * Method interceptors for async repository operations.
  *
  * @author graemerocher
  * @since 1.0.0
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.intercept.async;

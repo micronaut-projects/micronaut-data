@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Relation;
@@ -76,7 +75,6 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
         return (Optional<RuntimeAssociation<?>>) Association.super.getInverseSide();
     }
 
-    @NonNull
     @Override
     public RuntimePersistentEntity<?> getAssociatedEntity() {
         switch (getKind()) {
