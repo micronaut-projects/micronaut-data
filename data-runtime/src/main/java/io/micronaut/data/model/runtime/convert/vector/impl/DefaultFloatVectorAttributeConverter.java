@@ -21,7 +21,7 @@ import java.util.List;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import jakarta.inject.Singleton;
 
@@ -39,8 +39,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultFloatVectorAttributeConverter extends AbstractVectorAttributeConverter<FloatVector, Object> implements FloatVectorAttributeConverter<Object> {
 
-    protected DefaultFloatVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList) {
-        super(convertorList, FloatVector.class);
+    protected DefaultFloatVectorAttributeConverter(List<VectorTypeConverter<?>> converterList) {
+        super(converterList, FloatVector.class);
     }
 
     @Override

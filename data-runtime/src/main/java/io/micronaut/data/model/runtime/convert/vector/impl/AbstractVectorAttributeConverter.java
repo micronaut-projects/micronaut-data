@@ -23,7 +23,7 @@ import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.type.Argument;
 
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Base attribute converter for vector types that delegates conversion to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor}.
+ * Base attribute converter for vector types that delegates conversion to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter}.
  *
  * @param <X> The vector entity type
  * @param <Y> The persisted JDBC type
@@ -41,12 +41,12 @@ import java.util.Map;
  */
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
 
-    protected final Map<DatabaseType, VectorTypeConvertor<?>> converterMap;
+    protected final Map<DatabaseType, VectorTypeConverter<?>> converterMap;
     private final Class<X> type;
 
-    protected AbstractVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList, Class<X> type) {
-        this.converterMap = new HashMap<>(convertorList.size());
-        for (VectorTypeConvertor<?> converter : convertorList) {
+    protected AbstractVectorAttributeConverter(List<VectorTypeConverter<?>> converterList, Class<X> type) {
+        this.converterMap = new HashMap<>(converterList.size());
+        for (VectorTypeConverter<?> converter : converterList) {
             converterMap.put(converter.databaseType(), converter);
         }
         this.type = type;
@@ -58,10 +58,10 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
-        if (vectorTypeConvertor != null) {
+        VectorTypeConverter vectorTypeConverter = databaseType != null ? converterMap.get(databaseType) : null;
+        if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
-            Y result = (Y) vectorTypeConvertor.convert(entityValue);
+            Y result = (Y) vectorTypeConverter.convert(entityValue);
             return result;
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
@@ -73,10 +73,10 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConvertor vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
-        if (vectorTypeConvertor != null) {
+        VectorTypeConverter vectorTypeConverter = databaseType != null ? converterMap.get(databaseType) : null;
+        if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
-            X result = (X) vectorTypeConvertor.convert(persistedValue, type);
+            X result = (X) vectorTypeConverter.convert(persistedValue, type);
             return result;
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
@@ -87,13 +87,12 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                                               ResultReader<RS, IDX> reader,
                                               RS resultSet,
                                               IDX columnName) {
-        VectorTypeConvertor<?> vectorTypeConvertor = converterMap.get(conversionContext.getDatabaseType());
-        if (vectorTypeConvertor != null) {
-            return reader.getRequiredValue(resultSet, columnName, vectorTypeConvertor.getPersistedType());
+        VectorTypeConverter<?> vectorTypeConverter = converterMap.get(conversionContext.getDatabaseType());
+        if (vectorTypeConverter != null) {
+            return reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
     }
-
 
     protected static @Nullable DatabaseType extractDatabaseType(ConversionContext context) {
         if (context instanceof DatabaseTypeConversionContext databaseTypeConversionContext) {

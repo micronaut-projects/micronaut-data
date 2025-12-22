@@ -15,44 +15,45 @@
  */
 package io.micronaut.data.jdbc.convert.vendor;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
-import io.micronaut.data.model.vector.ByteVector;
-import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+import org.postgresql.util.PGobject;
 
 import java.util.List;
 
 /**
- * Oracle-specific {@link VectorTypeConvertor} that maps {@link Vector} to the JDBC {@link String} representation
- * accepted by the Oracle driver and back.
+ * PostgreSQL-specific {@link VectorTypeConverter} that maps {@link Vector} to {@link PGobject} of type {@code vector}
+ * and back.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
 @Singleton
-public final class OracleJdbcVectorConvertor extends AbstractJdbcVectorConvertor<String> {
+@Requires(classes = PGobject.class)
+public final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGobject> {
 
-    public OracleJdbcVectorConvertor(ConversionService conversionService) {
+    public PostgresJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<String> getPersistedType() {
-        return String.class;
+    public Class<PGobject> getPersistedType() {
+        return PGobject.class;
     }
 
     public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
+        return List.of(Vector.class, FloatVector.class);
     }
 
-        @Override
+    @Override
     public DatabaseType databaseType() {
-        return DatabaseType.ORACLE;
+        return DatabaseType.POSTGRES;
     }
 }

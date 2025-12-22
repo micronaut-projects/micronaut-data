@@ -3,17 +3,17 @@ package io.micronaut.data.model.runtime.convert.vector.impl
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.data.runtime.mapper.ResultReader
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 /**
  * Verifies transform/conversion behavior of AbstractVectorAttributeConverter:
- * - Delegation to a VectorTypeConvertor when a converter is registered for a DatabaseType
+ * - Delegation to a VectorTypeConverter when a converter is registered for a DatabaseType
  * - Throws when no converter is registered for a DatabaseType
  * - readFromResultSet delegates to ResultReader with persisted type
- * - convertToEntityValue delegates through VectorTypeConvertor
+ * - convertToEntityValue delegates through VectorTypeConverter
  * - Column definition rendering per database type
  */
 class VectorAttributeConverterTransformSpec extends Specification {
@@ -23,7 +23,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
      * AbstractVectorAttributeConverter from the same package.
      */
     static class TestDoubleVectorConverter extends AbstractVectorAttributeConverter<DoubleVector, Object> {
-        TestDoubleVectorConverter(List<VectorTypeConvertor<?>> converterList) {
+        TestDoubleVectorConverter(List<VectorTypeConverter<?>> converterList) {
             super(converterList, DoubleVector.class)
         }
 
@@ -36,7 +36,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
     def "convertToPersistedValue uses converter map for POSTGRES database"() {
         given:
         def persistedType = String
-        def delegatingConverter = Stub(VectorTypeConvertor) {
+        def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.POSTGRES
             // entity -> persisted
@@ -79,7 +79,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
     def "readFromResultSet delegates to ResultReader with persisted type for POSTGRES"() {
         given:
         def persistedType = String
-        def delegatingConverter = Stub(VectorTypeConvertor) {
+        def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.POSTGRES
             convert(_ as Vector) >> { Vector v -> "pg:${v.toDoubleArray().join(',')}" }
@@ -105,7 +105,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
 
     def "convertToEntityValue delegates to converter for POSTGRES"() {
         given:
-        def delegatingConverter = Stub(VectorTypeConvertor) {
+        def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String
             databaseType() >> DatabaseType.POSTGRES
             // entity -> persisted (not used here)
@@ -157,7 +157,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
     def "convertToPersistedValue uses converter map for MYSQL database"() {
         given:
         def persistedType = String
-        def delegatingConverter = Stub(VectorTypeConvertor) {
+        def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.MYSQL
             // entity -> persisted

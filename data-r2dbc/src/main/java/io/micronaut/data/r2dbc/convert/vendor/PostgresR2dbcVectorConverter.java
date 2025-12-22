@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
 import java.util.List;
 
 /**
- * VectorTypeConvertor for Postgres R2DBC.
+ * VectorTypeConverter for Postgres R2DBC.
  * Persists Micronaut Vector instances as io.r2dbc.postgresql.codec.Vector values and converts to/from
  * pgvector codec for the POSTGRES dialect.
  *
@@ -36,9 +36,9 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = io.r2dbc.postgresql.codec.Vector.class)
-public final class PostgresR2dbcVectorConvertor extends AbstractR2dbcVectorConvertor<io.r2dbc.postgresql.codec.Vector> {
+public final class PostgresR2dbcVectorConverter extends AbstractR2dbcVectorConverter<io.r2dbc.postgresql.codec.Vector> {
 
-    public PostgresR2dbcVectorConvertor(ConversionService conversionService) {
+    public PostgresR2dbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 

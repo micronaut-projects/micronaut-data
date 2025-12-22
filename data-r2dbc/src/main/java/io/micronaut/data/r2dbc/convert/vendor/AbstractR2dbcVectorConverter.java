@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.convert.vendor;
+package io.micronaut.data.r2dbc.convert.vendor;
 
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
-public abstract class AbstractJdbcVectorConvertor<T> implements VectorTypeConvertor<T> {
+public abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T> {
 
     private final ConversionService conversionService;
 
-    public AbstractJdbcVectorConvertor(ConversionService conversionService) {
+    public AbstractR2dbcVectorConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 

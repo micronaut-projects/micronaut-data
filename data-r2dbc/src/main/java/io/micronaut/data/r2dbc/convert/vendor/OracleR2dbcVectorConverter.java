@@ -13,51 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.convert.vendor;
+package io.micronaut.data.r2dbc.convert.vendor;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 import java.util.List;
 
-
 /**
- * MySQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to JDBC binary (byte[]) accepted
- * by MySQL HeatWave VECTOR (float32 little-endian, plain concatenation), and back.
- *
- * Persisted type: {@code byte[]} (float32 LE per element)
- *
- * Example: (1.0, 2.0, 3.0) -> bytes: 00 00 80 3F  00 00 00 40  00 00 40 40
+ * VectorTypeConverter for Oracle R2DBC.
+ * Persists Micronaut Vector instances as String values and converts to/from
+ * Oracle textual vector representation for the ORACLE dialect.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
-@Requires(classes = com.mysql.cj.jdbc.Driver.class)
 @Singleton
-public final class MySqlJdbcVectorConvertor extends AbstractJdbcVectorConvertor<byte[]> {
+@Requires(classes = VECTOR.class)
+public final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<String> {
 
-    public MySqlJdbcVectorConvertor(ConversionService conversionService) {
+    public OracleR2dbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<byte[]> getPersistedType() {
-        return byte[].class;
-    }
-
     public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(Vector.class, FloatVector.class);
+        return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
     }
 
     @Override
     public DatabaseType databaseType() {
-        return DatabaseType.MYSQL;
+        return DatabaseType.ORACLE;
+    }
+
+    @Override
+    public Class<String> getPersistedType() {
+        return String.class;
     }
 }

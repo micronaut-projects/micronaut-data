@@ -18,7 +18,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.DoubleVectorAttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.DoubleVector;
 import jakarta.inject.Singleton;
 
@@ -38,8 +38,8 @@ import java.util.List;
 @Singleton
 public class DefaultDoubleVectorAttributeConverter extends AbstractVectorAttributeConverter<DoubleVector, Object> implements DoubleVectorAttributeConverter<Object> {
 
-    protected DefaultDoubleVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList) {
-        super(convertorList, DoubleVector.class);
+    protected DefaultDoubleVectorAttributeConverter(List<VectorTypeConverter<?>> converterList) {
+        super(converterList, DoubleVector.class);
     }
 
     @Override

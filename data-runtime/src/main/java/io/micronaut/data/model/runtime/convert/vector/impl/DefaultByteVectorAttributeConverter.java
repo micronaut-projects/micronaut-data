@@ -21,7 +21,7 @@ import java.util.List;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.ByteVectorAttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.ByteVector;
 import jakarta.inject.Singleton;
 
@@ -40,8 +40,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DefaultByteVectorAttributeConverter extends AbstractVectorAttributeConverter<ByteVector, Object> implements ByteVectorAttributeConverter<Object> {
 
-    public DefaultByteVectorAttributeConverter(List<VectorTypeConvertor<?>> convertorList) {
-        super(convertorList, ByteVector.class);
+    public DefaultByteVectorAttributeConverter(List<VectorTypeConverter<?>> converterList) {
+        super(converterList, ByteVector.class);
     }
 
     @Override

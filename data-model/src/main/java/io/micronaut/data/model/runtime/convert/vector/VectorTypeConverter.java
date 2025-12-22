@@ -21,13 +21,13 @@ import io.micronaut.data.model.vector.Vector;
 import java.util.List;
 
 /**
- * Dialect-specific converter for vector values to and from the persisted JDBC type.
+ * Dialect-specific converter for vector values to and from the persisted database type (JDBC/R2DBC).
  *
  * @param <T> The persisted JDBC type for a given dialect
  * @author Nemanja Mikic
  * @since 5.0.0
  */
-public interface VectorTypeConvertor<T> {
+public interface VectorTypeConverter<T> {
 
     /**
      * Convert an entity-side {@link Vector} into the dialect-specific persisted type.
@@ -38,15 +38,15 @@ public interface VectorTypeConvertor<T> {
      */
     T convert(Vector vector);
 
-    /**
-     * Convert a dialect-specific persisted value into the entity-side {@link Vector}.
-     *
-     * @param object the persisted value (type returned by {@link #()})
-     * @param targetType the target entity type (typically {@code Vector.class})
-     * @return the entity-side vector value
-     * @since 5.0.0
-     */
-    Vector convert(T object, Class<Vector> targetType);
+     /**
+      * Convert a dialect-specific persisted value into the entity-side {@link Vector}.
+      *
+      * @param object the persisted value (type returned by {@link #getPersistedType()})
+      * @param targetType the target entity type (typically {@code Vector.class})
+      * @return the entity-side vector value
+      * @since 5.0.0
+      */
+     Vector convert(T object, Class<Vector> targetType);
 
     List<Class<? extends Vector>> supportedVectorTypes();
 

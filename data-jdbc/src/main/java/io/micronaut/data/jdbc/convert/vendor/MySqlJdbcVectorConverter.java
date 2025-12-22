@@ -15,37 +15,41 @@
  */
 package io.micronaut.data.jdbc.convert.vendor;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
-import org.postgresql.util.PGobject;
 
 import java.util.List;
 
+
 /**
- * PostgreSQL-specific {@link VectorTypeConvertor} that maps {@link Vector} to {@link PGobject} of type {@code vector}
- * and back.
+ * MySQL-specific {@link VectorTypeConverter} that maps {@link Vector} to JDBC binary (byte[]) accepted
+ * by MySQL HeatWave VECTOR (float32 little-endian, plain concatenation), and back.
+ *
+ * Persisted type: {@code byte[]} (float32 LE per element)
+ *
+ * Example: (1.0, 2.0, 3.0) -> bytes: 00 00 80 3F  00 00 00 40  00 00 40 40
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
+@Requires(classes = com.mysql.cj.jdbc.Driver.class)
 @Singleton
-@Requires(classes = PGobject.class)
-public final class PostgresJdbcVectorConvertor extends AbstractJdbcVectorConvertor<PGobject> {
+public final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]> {
 
-    public PostgresJdbcVectorConvertor(ConversionService conversionService) {
+    public MySqlJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<PGobject> getPersistedType() {
-        return PGobject.class;
+    public Class<byte[]> getPersistedType() {
+        return byte[].class;
     }
 
     public List<Class<? extends Vector>> supportedVectorTypes() {
@@ -54,6 +58,6 @@ public final class PostgresJdbcVectorConvertor extends AbstractJdbcVectorConvert
 
     @Override
     public DatabaseType databaseType() {
-        return DatabaseType.POSTGRES;
+        return DatabaseType.MYSQL;
     }
 }
