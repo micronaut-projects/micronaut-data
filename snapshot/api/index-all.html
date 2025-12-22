@@ -3717,7 +3717,7 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/intercept/DataIntroductionAdvice.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DataIntroductionAdvice</a> - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
 <dd>
 <div class="block">The root Data introduction advice, which simply delegates to an appropriate interceptor
- declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code>io.micronaut.data.intercept</code></a> package.</div>
+ declared in the io.micronaut.data.intercept package (for example <a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DataInterceptor</code></a>).</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DataIntroductionAdvice.html#%3Cinit%3E(io.micronaut.data.runtime.intercept.DataInterceptorResolver,io.micronaut.inject.InjectionPoint,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">DataIntroductionAdvice(DataInterceptorResolver, InjectionPoint&lt;?&gt;, DataConversionService)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.runtime.intercept">DataIntroductionAdvice</a></dt>
 <dd>
@@ -8935,7 +8935,7 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
 <dd>
-<div class="block">Interceptor for flushing.</div>
+<div class="block">Interceptor that flushes the underlying JPA EntityManager.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Food.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Food</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
@@ -9919,7 +9919,9 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/tck/entities/Meal.html#getCurrentBloodGlucose()" class="member-name-link">getCurrentBloodGlucose()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#getCurrentEntityManager()" class="member-name-link">getCurrentEntityManager()</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Returns the current JPA EntityManager.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/CursoredPage.html#getCursor(int)" class="member-name-link">getCursor(int)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
 <dd>
 <div class="block">Get cursor at the given position or empty if no such cursor exists.</div>
@@ -10254,7 +10256,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Gets an entity graph.</div>
 </dd>
 <dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#getEntityManagerFactory()" class="member-name-link">getEntityManagerFactory()</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Returns the JPA EntityManagerFactory.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#getEntityParameter()" class="member-name-link">getEntityParameter()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getEntityParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getEntityParameter(MethodInvocationContext&lt;?, ?&gt;, Class&lt;RT&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
@@ -13852,7 +13856,9 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/spring/jpa/hibernate/HibernateTransactionManagerFactory.html#%3Cinit%3E()" class="member-name-link">HibernateTransactionManagerFactory()</a> - Constructor for class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/HibernateTransactionManagerFactory.html" title="class in io.micronaut.data.spring.jpa.hibernate">HibernateTransactionManagerFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/annotation/EntityGraph.html#hint()" class="member-name-link">hint()</a> - Element in annotation interface io.micronaut.data.jpa.annotation.<a href="io/micronaut/data/jpa/annotation/EntityGraph.html" title="annotation interface in io.micronaut.data.jpa.annotation">EntityGraph</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Returns the name of the JPA entity graph hint to use.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoAggregateOptions.html#hint()" class="member-name-link">hint()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoAggregateOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoAggregateOptions</a></dt>
 <dd>
 <div class="block">The hint.</div>
@@ -14685,8 +14691,6 @@ loadScripts(document, 'script');</script>
 <div class="block">Backend implementation for Hibernate/JPA.</div>
 </dd>
 <dt><a href="io/micronaut/data/hibernate/reactive/operations/package-summary.html">io.micronaut.data.hibernate.reactive.operations</a> - package io.micronaut.data.hibernate.reactive.operations</dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a> - package io.micronaut.data.info</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a> - package io.micronaut.data.intercept</dt>
 <dd>
@@ -17587,90 +17591,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>MethodResult</code> record class.</div>
 </dd>
-<dt><a href="io/micronaut/data/info/MicronautDataAzureCosmosModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataAzureCosmosModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataAzureCosmosModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataAzureCosmosModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataAzureCosmosModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataAzureCosmosModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionHibernateModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataConnectionHibernateModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionHibernateModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataConnectionHibernateModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataConnectionHibernateModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataConnectionHibernateModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionJdbcModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataConnectionJdbcModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionJdbcModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataConnectionJdbcModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataConnectionJdbcModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataConnectionJdbcModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataConnectionModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataConnectionModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataConnectionModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataConnectionModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataConnectionModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataDocumentModelModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataDocumentModelModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataDocumentModelModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataDocumentModelModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataDocumentModelModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataDocumentModelModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataDocumentProcessorModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataDocumentProcessorModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataDocumentProcessorModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataDocumentProcessorModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataDocumentProcessorModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataDocumentProcessorModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataHibernateJpaModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataHibernateJpaModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataHibernateJpaModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataHibernateJpaModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataHibernateJpaModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataHibernateJpaModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataHibernateReactiveModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataHibernateReactiveModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataHibernateReactiveModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataHibernateReactiveModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataHibernateReactiveModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataHibernateReactiveModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataJdbcModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataJdbcModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataJdbcModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataJdbcModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataJdbcModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataJdbcModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataJpaModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataJpaModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataJpaModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataJpaModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataJpaModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataJpaModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataModelModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataModelModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataModelModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataModelModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataModelModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataModelModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataMongodbModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataMongodbModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataMongodbModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataMongodbModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataMongodbModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataMongodbModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataProcessorModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataProcessorModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataProcessorModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataProcessorModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataProcessorModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataProcessorModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataR2dbcModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataR2dbcModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataR2dbcModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataR2dbcModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataR2dbcModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataR2dbcModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataRuntimeModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataRuntimeModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataRuntimeModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataRuntimeModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataRuntimeModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataRuntimeModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringJdbcModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataSpringJdbcModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringJdbcModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataSpringJdbcModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataSpringJdbcModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataSpringJdbcModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringJpaModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataSpringJpaModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringJpaModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataSpringJpaModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataSpringJpaModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataSpringJpaModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataSpringModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataSpringModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataSpringModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataSpringModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataSpringModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxHibernateModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataTxHibernateModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxHibernateModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataTxHibernateModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataTxHibernateModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataTxHibernateModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxJdbcModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataTxJdbcModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxJdbcModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataTxJdbcModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataTxJdbcModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataTxJdbcModuleInfo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxModuleInfo.html" class="type-name-link" title="class in io.micronaut.data.info">MicronautDataTxModuleInfo</a> - Class in <a href="io/micronaut/data/info/package-summary.html">io.micronaut.data.info</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/info/MicronautDataTxModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautDataTxModuleInfo()</a> - Constructor for class io.micronaut.data.info.<a href="io/micronaut/data/info/MicronautDataTxModuleInfo.html" title="class in io.micronaut.data.info">MicronautDataTxModuleInfo</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/hibernate/MicronautSessionContext.html" class="type-name-link" title="class in io.micronaut.transaction.hibernate">MicronautSessionContext</a> - Class in <a href="io/micronaut/transaction/hibernate/package-summary.html">io.micronaut.transaction.hibernate</a></dt>
 <dd>
 <div class="block">Implementation of Hibernate 3.1's <code>CurrentSessionContext</code> interface
@@ -24625,15 +24545,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/spring/runtime/SpringDataTypeConverters.html" class="type-name-link" title="class in io.micronaut.data.spring.runtime">SpringDataTypeConverters</a> - Class in <a href="io/micronaut/data/spring/runtime/package-summary.html">io.micronaut.data.spring.runtime</a></dt>
 <dd>
-<div class="block">Type converters for supporting classes and interfaces in the 
-<details class="invalid-tag">
-<summary>invalid reference</summary>
-<pre><code>org.springframework.data.domain</code></pre>
-</details>
- package.</div>
+<div class="block">Type converters for supporting classes and interfaces in the org.springframework.data.domain package (for example <code>Pageable</code>).</div>
 </dd>
 <dt><a href="io/micronaut/data/spring/runtime/SpringDataTypeConverters.html#%3Cinit%3E()" class="member-name-link">SpringDataTypeConverters()</a> - Constructor for class io.micronaut.data.spring.runtime.<a href="io/micronaut/data/spring/runtime/SpringDataTypeConverters.html" title="class in io.micronaut.data.spring.runtime">SpringDataTypeConverters</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateConnectionOperations.html" class="type-name-link" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateConnectionOperations</a> - Class in <a href="io/micronaut/data/spring/jpa/hibernate/package-summary.html">io.micronaut.data.spring.jpa.hibernate</a></dt>
 <dd>
 <div class="block">Spring JDBC Hibernate Session operations.</div>
@@ -26506,7 +26423,9 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html#TYPE" class="member-name-link">TYPE</a> - Static variable in class io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http">PageableRequestArgumentBinder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/spring/runtime/http/SpringPageableRequestArgumentBinder.html#TYPE" class="member-name-link">TYPE</a> - Static variable in class io.micronaut.data.spring.runtime.http.<a href="io/micronaut/data/spring/runtime/http/SpringPageableRequestArgumentBinder.html" title="class in io.micronaut.data.spring.runtime.http">SpringPageableRequestArgumentBinder</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Argument type representing Spring Data's <code>Pageable</code> for binding.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#TYPE_NAME_COLUMN" class="member-name-link">TYPE_NAME_COLUMN</a> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#typeAndInterceptorEntry(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,java.lang.Class)" class="member-name-link">typeAndInterceptorEntry(MethodMatchContext, ClassElement, Class&lt;? extends DataInterceptor&gt;)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
