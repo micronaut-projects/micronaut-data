@@ -26,6 +26,12 @@ tasks.named("test") {
     useJUnitPlatform()
 }
 
+tasks.withType(Javadoc).configureEach {
+    // Disable doclint warnings for benchmark projects to avoid "no comment" noise in generated Javadoc
+    options.addBooleanOption('Xdoclint:none', true)
+    options.addBooleanOption('quiet', true)
+}
+
 application {
     mainClass = "example.Application"
 }
