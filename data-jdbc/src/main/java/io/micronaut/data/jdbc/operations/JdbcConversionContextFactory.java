@@ -21,11 +21,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.DialectConversionContext;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
 
 /**
- * Factory creating JDBC-specific {@link io.micronaut.data.model.runtime.convert.DialectConversionContext}
+ * Factory creating JDBC-specific {@link DatabaseTypeConversionContext}
  * instances enriched with the configured SQL {@link io.micronaut.data.model.query.builder.sql.Dialect}.
  *
  * @author Nemanja Mikic
@@ -42,7 +42,7 @@ class JdbcConversionContextFactory implements ConversionContextFactory {
     }
 
     @Override
-    public DialectConversionContext forArgument(Argument<?> argument) {
+    public DatabaseTypeConversionContext forArgument(Argument<?> argument) {
         return new DefaultJdbcRepositoryOperations.ArgumentJdbcCC(null, DatabaseType.from(jdbcConfiguration.getDialect()), argument);
 
     }

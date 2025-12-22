@@ -1,7 +1,7 @@
 package io.micronaut.data.model.runtime.convert.vector.impl
 
 import io.micronaut.data.model.runtime.convert.DatabaseType
-import io.micronaut.data.model.runtime.convert.DialectConversionContext
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.data.runtime.mapper.ResultReader
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor
 import io.micronaut.data.model.vector.DoubleVector
@@ -49,7 +49,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
             }
         }
         def converter = new TestDoubleVectorConverter([delegatingConverter])
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.POSTGRES
         }
         def v = (DoubleVector) Vector.of(1d, 2d)
@@ -64,7 +64,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
     def "convertToPersistedValue throws for ORACLE when no converter exists"() {
         given:
         def converter = new TestDoubleVectorConverter([]) // no converter in the list
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.ORACLE
         }
         def v = (DoubleVector) Vector.of(1d, 2d)
@@ -86,7 +86,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
             convert(_ as String, _ as Class) >> { Object obj, Class target -> Vector.of(1d, 2d) }
         }
         def converter = new TestDoubleVectorConverter([delegatingConverter])
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.POSTGRES
         }
         def rr = Stub(ResultReader) {
@@ -116,7 +116,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
             }
         }
         def converter = new TestDoubleVectorConverter([delegatingConverter])
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.POSTGRES
         }
 
@@ -143,7 +143,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
     def "convertToEntityValue without converter throws"() {
         given:
         def converter = new TestDoubleVectorConverter([]) // no dialect converter
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.ORACLE
         }
 
@@ -170,7 +170,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
             }
         }
         def converter = new TestDoubleVectorConverter([delegatingConverter])
-        def ctx = Stub(DialectConversionContext) {
+        def ctx = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.MYSQL
         }
         def v = (DoubleVector) Vector.of(1d, 2d)

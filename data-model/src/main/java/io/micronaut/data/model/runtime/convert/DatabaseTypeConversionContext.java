@@ -29,7 +29,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
  * @author Nemanja Mikic
  * @since 5.0.0
  */
-public interface DialectConversionContext extends ConversionContext {
+public interface DatabaseTypeConversionContext extends ConversionContext {
 
     /**
      * Returns the SQL {@link Dialect} for the current operation.

@@ -96,7 +96,6 @@ public final class SqlSchemaUtils {
       * @since 4.13.0
       */
     @Experimental
-
     @SuppressWarnings("java:S3776")
     public static List<SqlTableMapping> getSqlTableMappings(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
                                                             PersistentEntity entity,
@@ -216,6 +215,7 @@ public final class SqlSchemaUtils {
      * @throws IllegalStateException if the provided property is an Association
      * @throws MappingException      if the data type of the property is unknown
      */
+    @SuppressWarnings("java:S3776")
     private static SqlColumnMapping getColumnDefinition(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
                                                         PersistentProperty prop,
                                                         String column,

@@ -20,14 +20,14 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
-import io.micronaut.data.model.runtime.convert.DialectConversionContext;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
 
 
 
 /**
- * Factory creating R2DBC-specific {@link io.micronaut.data.model.runtime.convert.DialectConversionContext}
+ * Factory creating R2DBC-specific {@link DatabaseTypeConversionContext}
  * instances enriched with the configured SQL {@link io.micronaut.data.model.query.builder.sql.Dialect}.
  *
  * @author Nemanja Mikic
@@ -44,7 +44,7 @@ class R2dbcConversionContextFactory implements ConversionContextFactory {
     }
 
     @Override
-    public DialectConversionContext forArgument(Argument<?> argument) {
+    public DatabaseTypeConversionContext forArgument(Argument<?> argument) {
         return new DefaultR2dbcRepositoryOperations.ArgumentR2dbcCC(null, DatabaseType.from(r2dbcConfiguration.getDialect()), argument);
 
     }

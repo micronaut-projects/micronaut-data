@@ -19,9 +19,9 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConvertor;
 import io.micronaut.data.model.vector.Vector;
@@ -83,18 +83,21 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     }
 
     @Override
-    public <RS, IDX> Object readFromResultSet(ConversionContext conversionContext,
-                                                ResultReader<RS, IDX> reader,
-                                                RS resultSet,
-                                                IDX columnName) {
-        final DatabaseType databaseType = extractDatabaseType(conversionContext);
-        VectorTypeConvertor<?> vectorTypeConvertor = databaseType != null ? converterMap.get(databaseType) : null;
-        return reader.getRequiredValue(resultSet, columnName, vectorTypeConvertor.getPersistedType());
+    public <RS, IDX> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
+                                              ResultReader<RS, IDX> reader,
+                                              RS resultSet,
+                                              IDX columnName) {
+        VectorTypeConvertor<?> vectorTypeConvertor = converterMap.get(conversionContext.getDatabaseType());
+        if (vectorTypeConvertor != null) {
+            return reader.getRequiredValue(resultSet, columnName, vectorTypeConvertor.getPersistedType());
+        }
+        throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
     }
 
+
     protected static @Nullable DatabaseType extractDatabaseType(ConversionContext context) {
-        if (context instanceof DialectConversionContext dialectConversionContext) {
-            return dialectConversionContext.getDatabaseType();
+        if (context instanceof DatabaseTypeConversionContext databaseTypeConversionContext) {
+            return databaseTypeConversionContext.getDatabaseType();
         }
         return null;
     }

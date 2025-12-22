@@ -29,7 +29,7 @@ public abstract class AbstractR2dbcVectorConvertor<T> implements VectorTypeConve
 
     @Override
     public T convert(Vector vector) {
-        if (supportedVectorTypes().stream().anyMatch(x -> vector.getClass().getName().equals(x.getName()))) {
+        if (supportedVectorTypes().stream().anyMatch(x -> vector.getClass().isAssignableFrom(x))) {
             return conversionService.convert(vector, getPersistedType()).orElse(null);
         }
         throw new IllegalArgumentException(databaseType() + " does not support " + vector.getClass().getName());
@@ -37,7 +37,7 @@ public abstract class AbstractR2dbcVectorConvertor<T> implements VectorTypeConve
 
     @Override
     public Vector convert(T object, Class<Vector> targetType) {
-        if (supportedVectorTypes().stream().anyMatch(x -> targetType.getName().equals(x.getName()))) {
+        if (supportedVectorTypes().stream().anyMatch(targetType::isAssignableFrom)) {
             return conversionService.convert(object, targetType).orElse(null);
         }
         throw new IllegalArgumentException(databaseType() + " does not support " + targetType.getName());

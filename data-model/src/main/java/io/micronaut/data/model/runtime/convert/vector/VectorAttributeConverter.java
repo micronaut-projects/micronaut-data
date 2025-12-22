@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.vector.Vector;
 
@@ -27,7 +28,7 @@ import io.micronaut.data.model.vector.Vector;
  * (for example, a driver object, textual representation, or a primitive array depending on dialect/driver).</p>
  *
  * <p>Implementations should honor the {@link io.micronaut.data.model.query.builder.sql.Dialect} exposed via
- * the {@link io.micronaut.data.model.runtime.convert.DialectConversionContext} carried in conversion calls.</p>
+ * the {@link DatabaseTypeConversionContext} carried in conversion calls.</p>
  *
  * @param <X> The persisted dialect/driver type
  * @author Nemanja Mikic

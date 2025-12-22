@@ -28,7 +28,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
  * {@link #convertToEntityValue(Object, ConversionContext)}.</p>
  *
  * <p>The {@link ConversionContext} may carry additional metadata and, when it is an instance of
- * {@link io.micronaut.data.model.runtime.convert.DialectConversionContext}, it exposes the SQL dialect
+ * {@link DatabaseTypeConversionContext}, it exposes the SQL dialect
  * associated with the current operation.</p>
  *
  * <p>Implementations adapt between the entity-facing type {@code X} and the persisted driver type {@code Y}.</p>
@@ -58,7 +58,7 @@ public interface ResultReaderAttributeConverter<X, Y> extends AttributeConverter
      * @since 5.0.0
      */
     @Nullable
-    <RS, IDX> Object readFromResultSet(ConversionContext conversionContext,
+    <RS, IDX> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
                                        ResultReader<RS, IDX> reader,
                                        RS resultSet,
                                        IDX columnName);

@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.convert;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.model.runtime.convert.DialectConversionContext;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 
 /**
  * Factory to create ConversionContext instances used during SQL mapping.
@@ -40,5 +40,5 @@ public interface ConversionContextFactory {
      * @return SQL conversion context
      */
     @NonNull
-    DialectConversionContext forArgument(@NonNull Argument<?> argument);
+    DatabaseTypeConversionContext forArgument(@NonNull Argument<?> argument);
 }

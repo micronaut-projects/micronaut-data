@@ -183,6 +183,7 @@ public class SchemaGenerator {
         }
     }
 
+    @SuppressWarnings("java:S3776")
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
