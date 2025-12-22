@@ -12,4 +12,4 @@ public record AddressSubView(
     Long addressID,
     String street
 ) {}
-// tag::record-example[]
+// end::record-example[]

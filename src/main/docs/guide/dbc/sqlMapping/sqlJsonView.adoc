@@ -8,12 +8,12 @@ More about Oracle JSON VIEW can be read here https://docs.oracle.com/en/database
 Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be
 performed against json view mapped entities.
 
-Also, entity can be mapped to a JSON SUBVIEW as follows:
+Also, entity can be mapped to a ann:io.micronaut.data.annotation.JsonView[] as follows:
 
 snippet::example.AddressSubView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
-The main difference between `@JsonView` and `@JsonSubView` and the reason of existence of `@JsonSubView` annotation is to differentiate which for which class will
-creation sql script be generated (`JsonViews` are generated, while `JsonSubViews` are not).
+The main difference between ann:io.micronaut.data.annotation.JsonView[] and ann:io.micronaut.data.annotation.JsonSubView[], and the reason for the existence of the ann:io.micronaut.data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
+SQL script will be generated. SQL scripts are generated for JsonViews, but not for JsonSubViews.
 
 ==== Specifying joins
 
@@ -22,24 +22,12 @@ For example, to associate a `StudentView` with its related `StudentScheduleSubVi
 annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
 is the identifier for `StudentScheduleSubView`, as follows:
 
-[source,java]
-----
-@JsonView(entity = Student.class)
-public class StudentView {
-    @Id
-    @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    private Long id;
-
-    @JoinColumn(name = "id", referencedColumnName = "student_id")
-    @Relation(Relation.Kind.ONE_TO_MANY)
-    private List<StudentScheduleSubView> schedule;
-}
-----
+snippet::example.StudentView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
 ==== Using `@MappedProperty` annotation
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
-The fields of types annotated annotated with `@JsonView` or `@JsonSubview` do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
+The fields of types annotated annotated with ann:io.micronaut.data.annotation.JsonView[] or ann:io.micronaut.data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
 
 The `@MappedProperty` annotation can be used to control which underlying field the view matches in the entity.
 
@@ -47,33 +35,43 @@ The following example uses a different name in the view the `Teacher` entities `
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
 
-[source,java]
-----
-@JsonSubView(entity = Teacher.class)
-public class TeacherSubView {
-    @Id
-    @MappedProperty(value = "id")
-    private Long teachID;
-
-    @MappedProperty(value = "name")
-    private String teacher;
-}
-----
+snippet::example.TeacherSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
 ==== Schema generation
 
-`JsonViews` are generated automatically for classes with `@JsonView` annotation.
+Given the example entities above the following JSON Duality View definition is generated:
+
+[source,sql]
+----
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
+    SELECT JSON {
+        '_id' : S.ID, -- <1>
+        'name' : S.NAME, -- <2>
+        'schedule' : [SELECT JSON { -- <3>
+            'id' : SC.ID
+        }
+        FROM TBL_STUDENT_CLASSES SC
+        WITH UPDATE INSERT DELETE -- <4>
+        WHERE S."ID" = SC."STUDENT_ID" -- <5>
+        ]}
+    FROM TBL_STUDENT S
+    WITH UPDATE INSERT DELETE -- <6>
+----
+
+<1> Generated identity column, annotated with ann:io.micronaut.data.annotation.Generated[] and ann:io.micronaut.data.annotation.Id[]
+<2> Ordinary column
+<3> Relation column, annotated with ann:io.micronaut.data.annotation.Relation[]
+<4> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonSubView[]
+<5> Column matching, specified by ann:io.micronaut.data.annotation.JoinColumn[]
+<6> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
 
 ==== Operations supported
 
 Users can specify sql operations supported for `JsonView` and `JsonSubView` using the `operations` field, if not specified, it defaults to `{ INSERT, UPDATE, DELETE }`.
 
-[source,java]
-----
-@JsonSubView(entity = Teacher.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
-public class TeacherSubView {
-}
-----
+snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
+
+More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/using-json-relational-duality-views.html/[link]
 
 ==== Optimistic Locking
 
