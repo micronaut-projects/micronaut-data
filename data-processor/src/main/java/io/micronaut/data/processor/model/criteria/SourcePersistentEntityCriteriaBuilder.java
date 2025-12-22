@@ -16,15 +16,23 @@
 package io.micronaut.data.processor.model.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
+
 import org.jspecify.annotations.Nullable;
+
 import io.micronaut.data.model.PersistentProperty;
+
 import io.micronaut.data.model.PersistentPropertyPath;
+
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
+
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+
 import io.micronaut.inject.ast.ClassElement;
+
 import io.micronaut.inject.ast.ParameterElement;
+
 import jakarta.persistence.criteria.ParameterExpression;
 
 /**
@@ -36,7 +44,7 @@ import jakarta.persistence.criteria.ParameterExpression;
 @Experimental
 public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityCriteriaBuilder {
 
-    /**
+/**
      * Create parameter expression from {@link ParameterElement}.
      *
      * @param property   The property
@@ -44,10 +52,9 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>        The expression type
      * @return new parameter
      */
-    @NonNull
-    <T> ParameterExpression<T> expression(@NonNull PersistentProperty property, @NonNull String expression);
+    <T> ParameterExpression<T> expression(PersistentProperty property, String expression);
 
-    /**
+/**
      * Create parameter expression from {@link ParameterElement}.
      *
      * @param parameterElement The parameter element
@@ -55,11 +62,10 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>              The expression type
      * @return new parameter
      */
-    @NonNull
-    <T> ParameterExpression<T> parameter(@NonNull ParameterElement parameterElement,
+    <T> ParameterExpression<T> parameter(ParameterElement parameterElement,
                                          @Nullable PersistentPropertyPath propertyPath);
 
-    /**
+/**
      * Create parameter expression from {@link ParameterElement}.
      *
      * @param parameterIndex The parameter index
@@ -67,10 +73,9 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @return new parameter
      * @since 4.13
      */
-    @NonNull
     <T> ParameterExpression<T> parameterReferencingMethodParameter(int parameterIndex);
 
-    /**
+/**
      * Create parameter expression from {@link ParameterElement}.
      *
      * @param parameterName The parameter name
@@ -78,10 +83,9 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @return new parameter
      * @since 4.13
      */
-    @NonNull
     <T> ParameterExpression<T> parameterReferencingMethodParameter(String parameterName);
 
-    /**
+/**
      * Create parameter expression from {@link ParameterElement} that is representing an entity instance.
      *
      * @param entityParameter The entity parameter element
@@ -89,37 +93,35 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>             The expression type
      * @return new parameter
      */
-    @NonNull
-    <T> ParameterExpression<T> entityPropertyParameter(@NonNull ParameterElement entityParameter,
+    <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter,
                                                        @Nullable PersistentPropertyPath propertyPath);
 
     @Override
     <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
 
-    @Override
+@Override
     <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
 
-    /**
+/**
      * The criteria insert.
      * @param targetEntity The target entity
      * @param <T> The type
      * @return The criteria insert
      */
-    @NonNull
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity);
 
-    /**
+/**
      * The criteria insert.
      * @param targetEntity The target entity
      * @param <T> The type
      * @return The criteria insert
      */
-    @NonNull
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity);
 
-    @Override
+@Override
     SourcePersistentEntityCriteriaQuery<Object> createQuery();
 
-    @Override
+@Override
     <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass);
+
 }

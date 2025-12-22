@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -37,7 +36,6 @@ public class EmbeddableVisitor implements TypeElementVisitor<Embeddable, Object>
                 .visitClass(element, context);
     }
 
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;

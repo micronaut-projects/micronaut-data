@@ -235,7 +235,6 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
 
                 QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
-
                 ClassElement genericReturnType = matchContext.getReturnType();
                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
                     || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {

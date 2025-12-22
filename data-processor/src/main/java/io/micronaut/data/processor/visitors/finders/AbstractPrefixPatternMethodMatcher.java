@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 
 import java.util.Comparator;
@@ -38,7 +37,7 @@ public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatche
 
     protected final Pattern pattern;
 
-    protected AbstractPrefixPatternMethodMatcher(@NonNull List<String> prefixes) {
+    protected AbstractPrefixPatternMethodMatcher(List<String> prefixes) {
         if (prefixes.isEmpty()) {
             throw new IllegalArgumentException("At least one prefix required");
         }

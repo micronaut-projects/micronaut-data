@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GenerateJakartaDataMetamodel;
 import io.micronaut.data.annotation.MappedEntity;
@@ -49,7 +48,7 @@ import java.util.function.Function;
 public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<GenerateJakartaDataMetamodel, Object>, PackageElementVisitor<GenerateJakartaDataMetamodel> {
 
     @Override
-    public void visitPackage(@NonNull PackageElement element, @NonNull VisitorContext context) throws ProcessingException {
+    public void visitPackage(PackageElement element, VisitorContext context) throws ProcessingException {
         for (ClassElement classElement : context.getClassElements(element)) {
             visitClass(classElement, context);
         }
@@ -252,7 +251,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
     }
 
     @Override
-    public @NonNull VisitorKind getVisitorKind() {
+    public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
     }
 }

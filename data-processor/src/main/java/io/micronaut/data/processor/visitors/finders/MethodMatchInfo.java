@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -26,7 +25,6 @@ import io.micronaut.inject.ast.TypedElement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 
 /**
  * The method info. This class describes the pre-computed method handling for a
@@ -105,14 +103,14 @@ public final class MethodMatchInfo {
      * @param name      The role name
      * @see io.micronaut.data.annotation.TypeRole
      */
-    public void addParameterRole(@NonNull ParameterElement parameter, @NonNull String name) {
+    public void addParameterRole(ParameterElement parameter, String name) {
         parameterRoles.put(parameter, name);
     }
 
     /**
      * @return The parameter roles
      */
-    @NonNull
+    
     public Map<ParameterElement, String> getParameterRoles() {
         return Collections.unmodifiableMap(parameterRoles);
     }

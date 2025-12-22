@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.ParameterExpression;
@@ -106,13 +105,13 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
-                    // Don't use implicit entity interceptors for implicit-query repositories
+// Don't use implicit entity interceptors for implicit-query repositories
                     // Otherwise JPA's implicit interceptors will not use a custom query
                     FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
-                            entityParameter != null,
+                        entityParameter != null,
                         entitiesParameter != null,
-                            operationType,
-                            matchContext);
+                        operationType,
+                        matchContext);
                     ClassElement resultType = entry.returnType();
                     ClassElement interceptorType = entry.interceptor();
 
@@ -148,9 +147,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     }
 
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                            operationType,
-                            resultType,
-                            interceptorType
+                        operationType,
+                        resultType,
+                        interceptorType
                     );
 
                     methodMatchInfo.dto(isDto);
@@ -210,7 +209,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     /**
      * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
      */
-    private void buildRawQuery(@NonNull MethodMatchContext matchContext,
+    private void buildRawQuery(MethodMatchContext matchContext,
                                MethodMatchInfo methodMatchInfo,
                                ParameterElement entityParameter,
                                ParameterElement entitiesParameter,
@@ -218,11 +217,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                boolean implicitQueries) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
-                new IllegalStateException("Should only be called if Query has value!")
+            new IllegalStateException("Should only be called if Query has value!")
         );
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         boolean namedParameters = matchContext.getRepositoryClass()
-                .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
+            .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
 
         ParameterElement entityParam = null;
         SourcePersistentEntity persistentEntity = null;
@@ -236,7 +235,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
         QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
-                .orElse(null);
+            .orElse(null);
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
         boolean encodeEntityParameters;
         if (implicitQueries) {
@@ -245,10 +244,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             encodeEntityParameters = false;
         }
         methodMatchInfo
-                .isRawQuery(true)
-                .encodeEntityParameters(encodeEntityParameters)
-                .queryResult(queryResult)
-                .countQueryResult(countQueryResult);
+            .isRawQuery(true)
+            .encodeEntityParameters(encodeEntityParameters)
+            .queryResult(queryResult)
+            .countQueryResult(countQueryResult);
     }
 
     private QueryResult getQueryResult(MethodMatchContext matchContext,
@@ -369,10 +368,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
-                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
-                matchContext.getParameters(),
-                element,
-                isEntityParameter,
+            Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            matchContext.getParameters(),
+            element,
+            isEntityParameter,
             null);
     }
 
@@ -380,7 +379,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                                                   String name,
                                                                   ClassElement type) {
         return new SourceParameterExpressionImpl(
-                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             name,
             type,
             null);
@@ -388,7 +387,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     /**
      * Extract the expression type.
-     * @param matchContext The match context
+     *
+     * @param matchContext        The match context
      * @param parameterExpression The parameter expression
      * @return the type
      */

@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.processing.ProcessingException;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -64,19 +63,19 @@ public class MethodMatchContext extends MatchContext {
      */
     @SuppressWarnings("checkstyle:ParameterNumber")
     MethodMatchContext(
-            @NonNull QueryBuilder queryBuilder,
-            @NonNull ClassElement repositoryClass,
-            @NonNull SourcePersistentEntity entity,
-            @NonNull VisitorContext visitorContext,
-            @NonNull ClassElement returnType,
-            @NonNull MethodElement methodElement,
-            @NonNull Map<Element, String> parametersInRole,
-            @NonNull Map<String, String> typeRoles,
-            @NonNull List<Map.Entry<String, String>> annotationRoles,
-            @NonNull ParameterElement[] parameters,
-            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver,
-            @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors,
-            @NonNull Function<String, SourcePersistentEntity> entityBySimplyNameResolver) {
+            QueryBuilder queryBuilder,
+            ClassElement repositoryClass,
+            SourcePersistentEntity entity,
+            VisitorContext visitorContext,
+            ClassElement returnType,
+            MethodElement methodElement,
+            Map<Element, String> parametersInRole,
+            Map<String, String> typeRoles,
+            List<Map.Entry<String, String>> annotationRoles,
+            ParameterElement[] parameters,
+            Function<ClassElement, SourcePersistentEntity> entityResolver,
+            Map<ClassElement, FindInterceptorDef> findInterceptors,
+            Function<String, SourcePersistentEntity> entityBySimplyNameResolver) {
         super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, annotationRoles, returnType, parameters, findInterceptors);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
@@ -97,7 +96,7 @@ public class MethodMatchContext extends MatchContext {
      * @return True if there is a parameter available in the given role
      */
     @SuppressWarnings("ConstantConditions")
-    public boolean hasParameterInRole(@NonNull String role) {
+    public boolean hasParameterInRole(String role) {
         return role != null && parametersInRole.containsValue(role);
     }
 
@@ -107,7 +106,7 @@ public class MethodMatchContext extends MatchContext {
      * @return The parameter
      */
     @Nullable
-    public Element findParameterInRole(@NonNull String role) {
+    public Element findParameterInRole(String role) {
         for (Map.Entry<Element, String> e : parametersInRole.entrySet()) {
             if (e.getValue().equals(role)) {
                 return e.getKey();
@@ -119,7 +118,6 @@ public class MethodMatchContext extends MatchContext {
     /**
      * @return Parameters that fulfill a query execution role
      */
-    @NonNull
     public Map<Element, String> getParametersInRole() {
         return parametersInRole;
     }
@@ -143,7 +141,7 @@ public class MethodMatchContext extends MatchContext {
      * Returns a list of parameters that are not fulfilling a specific query role.
      * @return The parameters not in role
      */
-    public @NonNull List<ParameterElement> getParametersNotInRole() {
+    public List<ParameterElement> getParametersNotInRole() {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsKey(p)
         ).toList();
@@ -153,7 +151,7 @@ public class MethodMatchContext extends MatchContext {
      * Returns a list of parameters that are not fulfilling a specific query role.
      * @return The parameters not in role
      */
-    public @NonNull List<ParameterElement> getParametersInRoleList() {
+    public List<ParameterElement> getParametersInRoleList() {
         return Arrays.stream(getParameters()).filter(this.parametersInRole::containsKey).toList();
     }
 
@@ -162,7 +160,7 @@ public class MethodMatchContext extends MatchContext {
      * @param element The element
      * @return The entity
      */
-    public @NonNull SourcePersistentEntity getEntity(@NonNull ClassElement element) {
+    public SourcePersistentEntity getEntity(ClassElement element) {
         return entityResolver.apply(element);
     }
 

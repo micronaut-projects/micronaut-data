@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Expandable;
@@ -316,8 +315,8 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
     }
 
     @Nullable
-    private String[] getParameterBindingPath(@NonNull PersistentPropertyPath incomingMethodParameterPropertyPath,
-                                             @NonNull PersistentPropertyPath outgoingQueryParameterPropertyPath) {
+    private String[] getParameterBindingPath(PersistentPropertyPath incomingMethodParameterPropertyPath,
+                                             PersistentPropertyPath outgoingQueryParameterPropertyPath) {
         List<String> parameterPath = List.of(incomingMethodParameterPropertyPath.getArrayPath());
         List<String> path = List.of(outgoingQueryParameterPropertyPath.getArrayPath());
         if (path.equals(parameterPath)) {
