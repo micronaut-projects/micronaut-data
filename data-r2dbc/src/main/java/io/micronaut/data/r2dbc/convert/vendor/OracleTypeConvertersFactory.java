@@ -18,6 +18,7 @@ package io.micronaut.data.r2dbc.convert.vendor;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory;
 import io.micronaut.data.model.vector.ByteVector;
@@ -39,6 +40,7 @@ import java.util.Optional;
  */
 @Factory
 @Requires(classes = VECTOR.class)
+@Internal
 final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFactory {
 
     @Prototype

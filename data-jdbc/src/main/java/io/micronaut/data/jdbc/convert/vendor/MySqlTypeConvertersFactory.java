@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.convert.vendor;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
@@ -38,6 +39,7 @@ import java.util.Optional;
  */
 @Factory
 @Requires(classes = com.mysql.cj.jdbc.Driver.class)
+@Internal
 final class MySqlTypeConvertersFactory {
 
     @Prototype

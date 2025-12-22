@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.r2dbc.convert.vendor;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
-public abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T> {
+@Internal
+abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T> {
 
     private final ConversionService conversionService;
 

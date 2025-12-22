@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.convert.vendor;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.vector.Vector;
@@ -44,6 +45,7 @@ import java.util.Optional;
  */
 @Factory
 @Requires(classes = DATE.class)
+@Internal
 final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFactory {
 
     @Prototype

@@ -18,6 +18,7 @@ package io.micronaut.data.r2dbc.convert.vendor;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
@@ -43,6 +44,7 @@ import java.util.Optional;
  */
 @Factory
 @Requires(classes = io.r2dbc.postgresql.codec.Vector.class)
+@Internal
 final class PostgresTypeConvertersFactory {
 
     @Prototype

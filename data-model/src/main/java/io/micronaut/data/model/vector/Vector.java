@@ -26,9 +26,24 @@ import java.util.Objects;
 
 /**
  * Lightweight, immutable wrapper for n-dimensional numeric embeddings.
- * Provides conversion helpers to primitive arrays compatible with Hibernate Vector.
+ * Provides conversion helpers to primitive arrays.
  *
- * Note: Only intended for use as a query argument (not a persistent property type).
+ * This type is suitable both for use as a repository method argument/return type and
+ * as a persistent property type through Micronaut Data converters.
+ *
+ * Sealed hierarchy:
+ * - DoubleVector (double[])
+ * - FloatVector  (float[])
+ * - ByteVector   (byte[])
+ *
+ * All constructors perform defensive copying to guarantee immutability. Callers should
+ * avoid excessive copying in tight loops; prefer reusing instances when possible.
+ *
+ * Notes about numeric conversions:
+ * - Converting between float and double may introduce rounding differences.
+ * - Converting to byte[] follows Java narrowing conversions (values are truncated to 8 bits).
+ * - NaN/Infinity are preserved in float/double arrays; downstream drivers/platforms
+ *   may have different handling rules.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
@@ -43,7 +58,7 @@ public sealed interface Vector
     /**
      * Return the primitive number type the vector is backed by.
      *
-     * @return the primitive number type (Byte.TYPE, Integer.TYPE, Float.TYPE or Double.TYPE)
+     * @return the primitive number type (Byte.TYPE, Float.TYPE or Double.TYPE)
      */
     @NonNull
     Class<? extends Number> getType();
@@ -99,12 +114,11 @@ public sealed interface Vector
     /**
      * Create a vector from a numeric collection.
      * If all elements are Byte, an 8-bit byte-backed vector is created.
-     * If all elements are Integer, a 32-bit int-backed vector is created.
      * If all elements are Float, a float-backed vector is created.
      * Otherwise, a double-backed vector is created.
      *
      * @param values the collection of numbers; may not be null
-     * @return a new vector backed by byte[], int[], float[] or double[]
+     * @return a new vector backed by byte[], float[] or double[]
      */
     @NonNull
     static Vector of(@NonNull Collection<? extends Number> values) {

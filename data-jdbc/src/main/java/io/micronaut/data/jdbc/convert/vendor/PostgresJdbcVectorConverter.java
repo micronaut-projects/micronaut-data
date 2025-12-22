@@ -37,9 +37,9 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = PGvector.class)
-public final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGvector> {
+final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGvector> {
 
-    public PostgresJdbcVectorConverter(ConversionService conversionService) {
+    PostgresJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 

@@ -36,9 +36,9 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = io.r2dbc.postgresql.codec.Vector.class)
-public final class PostgresR2dbcVectorConverter extends AbstractR2dbcVectorConverter<io.r2dbc.postgresql.codec.Vector> {
+final class PostgresR2dbcVectorConverter extends AbstractR2dbcVectorConverter<io.r2dbc.postgresql.codec.Vector> {
 
-    public PostgresR2dbcVectorConverter(ConversionService conversionService) {
+    PostgresR2dbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 

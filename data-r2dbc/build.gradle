@@ -85,6 +85,7 @@ dependencies {
 
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mnSerde.micronaut.serde.support
+    testImplementation mn.micronaut.jackson.databind
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 

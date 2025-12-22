@@ -19,6 +19,7 @@ import com.pgvector.PGvector;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
@@ -46,20 +47,21 @@ import java.util.Optional;
  */
 @Factory
 @Requires(classes = PGvector.class)
+@Internal
 final class PostgresTypeConvertersFactory {
 
     @Prototype
-    public DataTypeConverter<FloatVector, PGvector> fromFloatVectorToPgObject() {
+    DataTypeConverter<FloatVector, PGvector> fromFloatVectorToPgObject() {
         return (vector, targetType, context) -> Optional.of(new PGvector(vector.toFloatArray()));
     }
 
     @Prototype
-    public DataTypeConverter<float[], PGvector> fromFloatArrayToPgObject() {
+    DataTypeConverter<float[], PGvector> fromFloatArrayToPgObject() {
         return (arr, targetType, context) -> Optional.of(new PGvector(arr));
     }
 
     @Prototype
-    public DataTypeConverter<PGvector, FloatVector> fromPgObjectToFloatVector() {
+    DataTypeConverter<PGvector, FloatVector> fromPgObjectToFloatVector() {
         return (pg, targetType, context) -> {
             if (pg == null) {
                 return Optional.empty();
@@ -69,7 +71,7 @@ final class PostgresTypeConvertersFactory {
     }
 
     @Prototype
-    public DataTypeConverter<PGvector, Vector> fromPgObjectToVector() {
+    DataTypeConverter<PGvector, Vector> fromPgObjectToVector() {
         return (pg, targetType, context) -> {
             if (pg == null) {
                 return Optional.empty();
@@ -79,7 +81,7 @@ final class PostgresTypeConvertersFactory {
     }
 
     @Prototype
-    public DataTypeConverter<PGobject, PGvector> fromPgObjectToPgVector() {
+    DataTypeConverter<PGobject, PGvector> fromPgObjectToPgVector() {
         return (pg, targetType, context) -> {
             if (pg == null) {
                 return Optional.empty();

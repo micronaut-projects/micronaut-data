@@ -36,9 +36,9 @@ import java.util.List;
  */
 @Internal
 @Singleton
-public final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<String> {
+final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<String> {
 
-    public OracleJdbcVectorConverter(ConversionService conversionService) {
+    OracleJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
@@ -51,7 +51,7 @@ public final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter
         return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
     }
 
-        @Override
+@Override
     public DatabaseType databaseType() {
         return DatabaseType.ORACLE;
     }

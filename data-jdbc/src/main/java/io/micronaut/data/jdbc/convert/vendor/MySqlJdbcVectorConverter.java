@@ -41,9 +41,9 @@ import java.util.List;
 @Internal
 @Requires(classes = com.mysql.cj.jdbc.Driver.class)
 @Singleton
-public final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]> {
+final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]> {
 
-    public MySqlJdbcVectorConverter(ConversionService conversionService) {
+    MySqlJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 

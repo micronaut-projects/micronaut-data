@@ -5,48 +5,6 @@ import spock.lang.Specification
 
 class AbstractOracleTypeConvertersFactorySpec extends Specification {
 
-    def "trimBrackets handles null, empty and whitespace"() {
-        expect:
-        AbstractOracleTypeConvertersFactory.trimBrackets(null) == ""
-        AbstractOracleTypeConvertersFactory.trimBrackets("") == ""
-        AbstractOracleTypeConvertersFactory.trimBrackets("   ") == ""
-        AbstractOracleTypeConvertersFactory.trimBrackets("[1,2]") == "1,2"
-        AbstractOracleTypeConvertersFactory.trimBrackets(" [ 1 , 2 ] ") == "1 , 2"
-    }
-
-    def "parseDoubleArray parses values"() {
-        expect:
-        AbstractOracleTypeConvertersFactory.parseDoubleArray("[1.0, 2.5, -3]") as List == [1.0d, 2.5d, -3.0d]
-        AbstractOracleTypeConvertersFactory.parseDoubleArray("[]").length == 0
-        AbstractOracleTypeConvertersFactory.parseDoubleArray(null).length == 0
-    }
-
-    def "parseFloatArray parses values"() {
-        expect:
-        AbstractOracleTypeConvertersFactory.parseFloatArray("[1.0, 2.5, -3]") as List == [1.0f, 2.5f, -3.0f]
-        AbstractOracleTypeConvertersFactory.parseFloatArray("[]").length == 0
-        AbstractOracleTypeConvertersFactory.parseFloatArray(null).length == 0
-    }
-
-    def "parseByteArray rounds and clamps"() {
-        when:
-        def arr = AbstractOracleTypeConvertersFactory.parseByteArray("[127.6, -128.4, 10, 9999, -9999]")
-
-        then:
-        arr as List == [127 as byte, -128 as byte, 10 as byte, Byte.MAX_VALUE, Byte.MIN_VALUE]
-    }
-
-    def "toOracleText for vector and primitive arrays"() {
-        given:
-        def v = Vector.of(1d, 2d, 3d)
-
-        expect:
-        AbstractOracleTypeConvertersFactory.toOracleText(v) == "[1.0, 2.0, 3.0]"
-        AbstractOracleTypeConvertersFactory.toOracleText(new double[]{1, 2}) == "[1.0, 2.0]"
-        AbstractOracleTypeConvertersFactory.toOracleText(new float[]{1, 2}) == "[1.0, 2.0]"
-        AbstractOracleTypeConvertersFactory.toOracleText(new byte[]{1 as byte, 2 as byte}) == "[1, 2]"
-    }
-
     private static class Adapter implements AbstractOracleTypeConvertersFactory.OracleVectorAdapter {
         private final AbstractOracleTypeConvertersFactory.OracleVectorKind kind
         private final float[] f

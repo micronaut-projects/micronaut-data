@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.jdbc.convert.vendor;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
-public abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> {
+@Internal
+abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> {
 
     private final ConversionService conversionService;
 

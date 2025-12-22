@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
@@ -39,6 +40,7 @@ import java.util.Map;
  * @author Nemanja Mikic
  * @since 5.0.0
  */
+@Internal
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
 
     protected final Map<DatabaseType, VectorTypeConverter<?>> converterMap;
@@ -47,7 +49,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     protected AbstractVectorAttributeConverter(List<VectorTypeConverter<?>> converterList, Class<X> type) {
         this.converterMap = new HashMap<>(converterList.size());
         for (VectorTypeConverter<?> converter : converterList) {
-            converterMap.put(converter.databaseType(), converter);
+            converterMap.putIfAbsent(converter.databaseType(), converter);
         }
         this.type = type;
     }

@@ -268,7 +268,6 @@ public class SchemaGenerator {
                           PersistentEntity[] entities,
                           Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        // Filter out entities that use unsupported types for the current dialect (e.g. VECTOR on non-Oracle)
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);

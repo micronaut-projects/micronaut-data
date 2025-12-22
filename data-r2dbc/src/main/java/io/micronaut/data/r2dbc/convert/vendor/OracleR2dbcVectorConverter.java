@@ -39,9 +39,9 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = VECTOR.class)
-public final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<String> {
+final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<String> {
 
-    public OracleR2dbcVectorConverter(ConversionService conversionService) {
+    OracleR2dbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 

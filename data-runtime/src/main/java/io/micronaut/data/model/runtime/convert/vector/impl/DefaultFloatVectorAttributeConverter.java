@@ -16,10 +16,11 @@
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.annotation.Internal;
 
 import java.util.List;
 
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
@@ -31,15 +32,17 @@ import jakarta.inject.Singleton;
  * - Oracle: persisted value is a {@code String} accepted by the Oracle JDBC driver (e.g. "[1.0, 2.0]")
  *
  * This single converter replaces the previous dialect-specific converters and selects
- * the persisted representation based on the {@link Dialect} obtained from the {@link ConversionContext}.
+ * the persisted representation based on the DatabaseType obtained from the {@link ConversionContext}
+ * via {@link DatabaseTypeConversionContext}.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Singleton
-public class DefaultFloatVectorAttributeConverter extends AbstractVectorAttributeConverter<FloatVector, Object> implements FloatVectorAttributeConverter<Object> {
+@Internal
+final class DefaultFloatVectorAttributeConverter extends AbstractVectorAttributeConverter<FloatVector, Object> implements FloatVectorAttributeConverter<Object> {
 
-    protected DefaultFloatVectorAttributeConverter(List<VectorTypeConverter<?>> converterList) {
+    DefaultFloatVectorAttributeConverter(List<VectorTypeConverter<?>> converterList) {
         super(converterList, FloatVector.class);
     }
 
