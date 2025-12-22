@@ -23,12 +23,14 @@ dependencies {
     compileOnly mnSql.ojdbc11
     compileOnly mnSql.postgresql
     compileOnly mnSql.mysql.connector.j
+    compileOnly libs.managed.pg.vector
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     testImplementation projects.micronautDataTck
+    testImplementation libs.managed.pg.vector
     testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor

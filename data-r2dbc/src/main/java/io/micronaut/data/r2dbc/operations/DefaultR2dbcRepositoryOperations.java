@@ -70,7 +70,6 @@ import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
-import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -197,8 +196,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
-        @Parameter ReactorConnectionOperations<Connection> connectionOperations,
-        @Parameter ConversionContextFactory conversionContextFactory) {
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -211,7 +209,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             attributeConverterRegistry,
             jsonMapper,
             sqlJsonColumnMapperProvider,
-            conversionContextFactory);
+            argument -> new ArgumentR2dbcCC(null, DatabaseType.from(configuration.getDialect()), argument));
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;

@@ -77,7 +77,6 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -108,7 +107,6 @@ import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
 
 import javax.sql.DataSource;
-import javax.xml.crypto.Data;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -206,8 +204,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
-                                    List<SqlExceptionMapper> sqlExceptionMapperList,
-                                    @Parameter ConversionContextFactory conversionContextFactory) {
+                                    List<SqlExceptionMapper> sqlExceptionMapperList) {
 
         super(
             dataSourceName,
@@ -221,7 +218,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             attributeConverterRegistry,
             jsonMapper,
             sqlJsonColumnMapperProvider,
-            conversionContextFactory);
+            argument -> new ArgumentJdbcCC(null, DatabaseType.from(jdbcConfiguration.getDialect()), argument));
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;

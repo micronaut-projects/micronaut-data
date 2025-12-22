@@ -16,11 +16,9 @@
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.vector.Vector;
 
 import java.util.Optional;
-import java.util.Arrays;
 
 /**
  * Shared helpers for Oracle VECTOR converters.
@@ -60,110 +58,6 @@ public abstract class AbstractOracleTypeConvertersFactory {
             case FLOAT32 -> Optional.of(toByte(adapter.toFloatArray()));
             case FLOAT64 -> Optional.of(toByte(adapter.toDoubleArray()));
         };
-    }
-
-    // ----------------------
-    // String parsing helpers (Oracle textual format e.g. "[1.0, 2.0]")
-    // ----------------------
-
-    protected static String trimBrackets(@Nullable String txt) {
-        if (txt == null) {
-            return "";
-        }
-        String s = txt.trim();
-        if (s.startsWith("[") && s.endsWith("]")) {
-            s = s.substring(1, s.length() - 1).trim();
-        }
-        return s;
-    }
-
-    protected static double[] parseDoubleArray(@Nullable String txt) {
-        String s = trimBrackets(txt);
-        if (s.isEmpty()) {
-            return new double[0];
-        }
-        String[] parts = s.split(",");
-        double[] out = new double[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            out[i] = Double.parseDouble(parts[i].trim());
-        }
-        return out;
-    }
-
-    protected static float[] parseFloatArray(@Nullable String txt) {
-        String s = trimBrackets(txt);
-        if (s.isEmpty()) {
-            return new float[0];
-        }
-        String[] parts = s.split(",");
-        float[] out = new float[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            out[i] = Float.parseFloat(parts[i].trim());
-        }
-        return out;
-    }
-
-    protected static int[] parseIntArray(@Nullable String txt) {
-        String s = trimBrackets(txt);
-        if (s.isEmpty()) {
-            return new int[0];
-        }
-        String[] parts = s.split(",");
-        int[] out = new int[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            double d = Double.parseDouble(parts[i].trim());
-            long r = Math.round(d);
-            if (r > Integer.MAX_VALUE) {
-                r = Integer.MAX_VALUE;
-            }
-            if (r < Integer.MIN_VALUE) {
-                r = Integer.MIN_VALUE;
-            }
-            out[i] = (int) r;
-        }
-        return out;
-    }
-
-    protected static byte[] parseByteArray(@Nullable String txt) {
-        String s = trimBrackets(txt);
-        if (s.isEmpty()) {
-            return new byte[0];
-        }
-        String[] parts = s.split(",");
-        byte[] out = new byte[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            double d = Double.parseDouble(parts[i].trim());
-            int r = (int) Math.round(d);
-            if (r > Byte.MAX_VALUE) {
-                r = Byte.MAX_VALUE;
-            }
-            if (r < Byte.MIN_VALUE) {
-                r = Byte.MIN_VALUE;
-            }
-            out[i] = (byte) r;
-        }
-        return out;
-    }
-
-    // ----------------------
-    // Oracle textual write helpers
-    // ----------------------
-
-    protected static String toOracleText(Vector vector) {
-        double[] arr = vector.toDoubleArray();
-        return Arrays.toString(arr);
-    }
-
-    protected static String toOracleText(double[] arr) {
-        return Arrays.toString(arr);
-    }
-
-    protected static String toOracleText(float[] arr) {
-        return Arrays.toString(arr);
-    }
-
-    protected static String toOracleText(byte[] arr) {
-        return Arrays.toString(arr);
     }
 
     // ----------------------

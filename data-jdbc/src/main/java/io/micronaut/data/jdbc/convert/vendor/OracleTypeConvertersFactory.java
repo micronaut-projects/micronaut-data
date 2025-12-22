@@ -37,7 +37,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * Oracle DATE converters.
+ * Oracle DATE and VECTOR converters.
  *
  * @author Denis Stepanov
  * @since 3.1.1
@@ -101,77 +101,6 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
             return Optional.of(toVector(adapter));
         };
     }
-
-    @Prototype
-    DataTypeConverter<DoubleVector, double[]> fromVectorDoubleToArray() {
-        return (vector, targetType, context) -> Optional.of(vector.toDoubleArray());
-    }
-
-    @Prototype
-    DataTypeConverter<FloatVector, float[]> fromVectorFloatToArray() {
-        return (vector, targetType, context) -> Optional.of(vector.toFloatArray());
-    }
-
-    @Prototype
-    DataTypeConverter<ByteVector, byte[]> fromVectorByteToArray() {
-        return (vector, targetType, context) -> Optional.of(vector.toByteArray());
-    }
-
-    // ----------------------
-    // Write path: Vector and arrays -> String (acceptable by Oracle JDBC)
-    // ----------------------
-
-    @Prototype
-    DataTypeConverter<Vector, String> fromVectorToString() {
-        return (vector, targetType, context) -> Optional.of(toOracleText(vector));
-    }
-
-    @Prototype
-    DataTypeConverter<DoubleVector, String> fromDoubleVectorToString() {
-        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toDoubleArray()));
-    }
-
-    @Prototype
-    DataTypeConverter<FloatVector, String> fromFloatVectorToString() {
-        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toFloatArray()));
-    }
-
-    @Prototype
-    DataTypeConverter<ByteVector, String> fromByteVectorToString() {
-        return (vector, targetType, context) -> Optional.of(toOracleText(vector.toByteArray()));
-    }
-
-    // ----------------------
-    // Read path: String -> typed Vector implementations (Oracle textual format e.g. "[1.0, 2.0]")
-    // ----------------------
-
-    @Prototype
-    DataTypeConverter<String, Vector> fromStringToVector() {
-        return (text, targetType, context) -> Optional.of(Vector.of(parseDoubleArray(text)));
-    }
-
-    @Prototype
-    DataTypeConverter<String, DoubleVector> fromStringToDoubleVector() {
-        return (text, targetType, context) -> Optional.of((DoubleVector) Vector.of(parseDoubleArray(text)));
-    }
-
-    @Prototype
-    DataTypeConverter<String, FloatVector> fromStringToFloatVector() {
-        return (text, targetType, context) -> Optional.of((FloatVector) Vector.of(parseFloatArray(text)));
-    }
-
-    @Prototype
-    DataTypeConverter<String, ByteVector> fromStringToByteVector() {
-        return (text, targetType, context) -> Optional.of((ByteVector) Vector.of(parseByteArray(text)));
-    }
-
-
-
-
-
-    // ----------------------
-    // Read path: oracle.sql.VECTOR -> typed Vector implementations
-    // ----------------------
 
     @Prototype
     @Requires(classes = VECTOR.class)

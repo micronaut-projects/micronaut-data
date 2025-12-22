@@ -50,18 +50,11 @@ final class PostgresTypeConvertersFactory {
         return (vector, targetType, context) -> Optional.of(toPgVector(vector.toFloatArray()));
     }
 
-    // ----------------------
-    // Primitive arrays -> PGobject
-    // ----------------------
-
     @Prototype
     DataTypeConverter<float[], io.r2dbc.postgresql.codec.Vector> fromFloatArrayToPgObject() {
         return (arr, targetType, context) -> Optional.of(toPgVector(arr));
     }
 
-    // ----------------------
-    // Optional: PGobject -> Vector (read path)
-    // ----------------------
     @Prototype
     DataTypeConverter<io.r2dbc.postgresql.codec.Vector, FloatVector> fromPgObjectToFloatVector() {
         return (pg, targetType, context) -> {

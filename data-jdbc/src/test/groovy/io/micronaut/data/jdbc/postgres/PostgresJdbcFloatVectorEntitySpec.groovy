@@ -27,9 +27,6 @@ class PostgresJdbcFloatVectorEntitySpec extends Specification implements Postgre
     @Shared
     VectorFloatDocRepository vectorRepository = context.getBean(VectorFloatDocRepository)
 
-    @Shared
-    javax.sql.DataSource dataSource = context.getBean(javax.sql.DataSource)
-
     @Override
     List<String> packages() {
         // Ensure entity/repository in this package are scanned
