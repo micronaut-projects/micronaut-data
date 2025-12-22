@@ -43,7 +43,6 @@ dependencies {
     testImplementation(platform(mnTestResources.boms.testcontainers))
     testImplementation libs.testcontainers.azure
     testImplementation mn.micronaut.inject.java.test
-
+    testImplementation mn.jackson.databind
     testCompileOnly mn.micronaut.inject.groovy
 }
-
