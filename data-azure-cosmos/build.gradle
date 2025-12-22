@@ -24,6 +24,7 @@ dependencies {
     api mnSerde.micronaut.serde.support
     api libs.micronaut.azure.cosmos
 
+    compileOnly(mn.jackson.databind)
     runtimeOnly(mn.jackson.databind) {
         because("Serde Cosmos depends on Jackson parsers")
     }

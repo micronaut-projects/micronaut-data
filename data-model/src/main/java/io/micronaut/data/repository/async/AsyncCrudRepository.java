@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.repository.GenericRepository;
 
@@ -38,8 +37,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The saved entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> CompletableFuture<S> save(@NonNull S entity);
+    
+    <S extends E> CompletableFuture<S> save(S entity);
 
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -48,8 +47,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The updated entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> CompletableFuture<S> update(@NonNull S entity);
+    
+    <S extends E> CompletableFuture<S> update(S entity);
 
     /**
      * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -58,8 +57,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The updating entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> CompletableFuture<? extends Iterable<S>> updateAll(@NonNull Iterable<S> entities);
+    
+    <S extends E> CompletableFuture<? extends Iterable<S>> updateAll(Iterable<S> entities);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -68,8 +67,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      */
-    @NonNull
-    <S extends E> CompletableFuture<? extends Iterable<S>> saveAll(@NonNull Iterable<S> entities);
+    
+    <S extends E> CompletableFuture<? extends Iterable<S>> saveAll(Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -78,8 +77,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return the entity with the given id or null
      * @throws io.micronaut.data.exceptions.EmptyResultException if no entity exists for the ID
      */
-    @NonNull
-    CompletableFuture<E> findById(@NonNull ID id);
+    
+    CompletableFuture<E> findById(ID id);
 
     /**
      * Returns whether an entity with the given id exists.
@@ -87,21 +86,21 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
      */
-    @NonNull CompletableFuture<Boolean> existsById(@NonNull ID id);
+     CompletableFuture<Boolean> existsById(ID id);
 
     /**
      * Returns all instances of the type.
      *
      * @return all entities
      */
-    @NonNull CompletableFuture<? extends Iterable<E>> findAll();
+     CompletableFuture<? extends Iterable<E>> findAll();
 
     /**
      * Returns the number of entities available.
      *
      * @return the number of entities
      */
-    @NonNull CompletableFuture<Long> count();
+     CompletableFuture<Long> count();
 
     /**
      * Deletes the entity with the given id.
@@ -109,7 +108,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param id must not be {@literal null}.
      * @return A future that executes the delete operation
      */
-    @NonNull CompletableFuture<Void> deleteById(@NonNull ID id);
+     CompletableFuture<Void> deleteById(ID id);
 
     /**
      * Deletes a given entity.
@@ -117,7 +116,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entity The entity to delete
      * @return A future that executes the delete operation
      */
-    @NonNull CompletableFuture<Void> delete(@NonNull E entity);
+     CompletableFuture<Void> delete(E entity);
 
     /**
      * Deletes the given entities.
@@ -125,11 +124,11 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to delete
      * @return A future that executes the delete operation
      */
-    @NonNull CompletableFuture<Void> deleteAll(@NonNull Iterable<? extends E> entities);
+     CompletableFuture<Void> deleteAll(Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.
      * @return A future that executes the delete operation
      */
-    @NonNull CompletableFuture<Void> deleteAll();
+     CompletableFuture<Void> deleteAll();
 }

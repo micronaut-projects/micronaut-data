@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Page;
@@ -44,14 +43,13 @@ import java.util.stream.Stream;
  */
 public interface BlockingReactorRepositoryOperations extends RepositoryOperations, ReactorReactiveCapableRepository {
 
-    @NonNull
     private ContextView getContextView() {
         return ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty());
     }
 
     @Override
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
+    default <T> T findOne(Class<T> type,  Object id) {
         return reactive().findOne(type, id)
             .contextWrite(getContextView())
             .block();
@@ -59,41 +57,37 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
 
     @Nullable
     @Override
-    default <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> R findOne(PreparedQuery<T, R> preparedQuery) {
         return reactive().findOne(preparedQuery)
             .contextWrite(getContextView())
             .block();
     }
 
-    @NonNull
     @Override
-    default <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
         return reactive().findAll(preparedQuery)
             .contextWrite(getContextView())
             .collectList()
             .block();
     }
 
-    @NonNull
     @Override
-    default <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
+    default <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
         return reactive().findAll(preparedQuery)
             .contextWrite(getContextView())
             .toStream();
     }
 
-    @NonNull
     @Override
-    default <T> T persist(@NonNull InsertOperation<T> operation) {
+    default <T> T persist(InsertOperation<T> operation) {
         return reactive().persist(operation)
             .contextWrite(getContextView())
             .blockOptional()
             .orElseGet(operation::getEntity);
     }
 
-    @NonNull
     @Override
-    default <T> T update(@NonNull UpdateOperation<T> operation) {
+    default <T> T update(UpdateOperation<T> operation) {
         return reactive().update(operation)
             .contextWrite(getContextView())
             .blockOptional()
@@ -110,9 +104,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
             .orElse(operation);
     }
 
-    @NonNull
     @Override
-    default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+    default <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         return reactive().persistAll(operation)
             .contextWrite(getContextView())
             .collectList()
@@ -121,16 +114,15 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
             .orElse(operation);
     }
 
-    @NonNull
     @Override
-    default Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
         return reactive().executeUpdate(preparedQuery)
             .contextWrite(getContextView())
             .blockOptional();
     }
 
     @Override
-    default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return reactive().executeDelete(preparedQuery)
             .contextWrite(getContextView())
             .blockOptional();
@@ -145,36 +137,35 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     }
 
     @Override
-    default <T> int delete(@NonNull DeleteOperation<T> operation) {
+    default <T> int delete(DeleteOperation<T> operation) {
         return reactive().delete(operation)
             .contextWrite(getContextView())
             .blockOptional().orElse(0).intValue();
     }
 
     @Override
-    default <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
+    default <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         return reactive().deleteAll(operation)
             .contextWrite(getContextView())
             .blockOptional();
     }
 
     @Override
-    default <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
+    default <T> boolean exists(PreparedQuery<T, Boolean> preparedQuery) {
         return reactive().exists(preparedQuery)
             .contextWrite(getContextView())
             .blockOptional().orElse(false);
     }
 
     @Override
-    default <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+    default <R> Page<R> findPage(PagedQuery<R> query) {
         return reactive().findPage(query)
             .contextWrite(getContextView())
             .block();
     }
 
-    @NonNull
     @Override
-    default <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+    default <T> Iterable<T> findAll(PagedQuery<T> query) {
         return reactive().findAll(query)
             .contextWrite(getContextView())
             .collectList()
@@ -189,9 +180,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
             .blockOptional().orElse(0L);
     }
 
-    @NonNull
     @Override
-    default <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
+    default <T> Stream<T> findStream(PagedQuery<T> query) {
         return reactive().findAll(query)
             .contextWrite(getContextView())
             .toStream();

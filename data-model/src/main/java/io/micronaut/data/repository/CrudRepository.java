@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
 
 import java.util.List;
@@ -40,8 +39,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The saved entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> S save(@NonNull S entity);
+    <S extends E> S save(S entity);
 
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -50,8 +48,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The updated entity will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> S update(@NonNull S entity);
+    <S extends E> S update(S entity);
 
     /**
      * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -60,8 +57,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The updated entities will never be {@literal null}.
      * @param <S> The generic type
      */
-    @NonNull
-    <S extends E> List<S> updateAll(@NonNull Iterable<S> entities);
+    <S extends E> List<S> updateAll(Iterable<S> entities);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -70,8 +66,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      */
-    @NonNull
-    <S extends E> List<S> saveAll(@NonNull Iterable<S> entities);
+    <S extends E> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -79,8 +74,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
      * @return the entity with the given id or {@literal Optional#empty()} if none found
      */
-    @NonNull
-    Optional<E> findById(@NonNull ID id);
+    Optional<E> findById(ID id);
 
     /**
      * Returns whether an entity with the given id exists.
@@ -88,14 +82,14 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
      */
-    boolean existsById(@NonNull ID id);
+    boolean existsById(ID id);
 
     /**
      * Returns all instances of the type.
      *
      * @return all entities
      */
-    @NonNull List<E> findAll();
+    List<E> findAll();
 
     /**
      * Returns the number of entities available.
@@ -109,21 +103,21 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      */
-    void deleteById(@NonNull ID id);
+    void deleteById(ID id);
 
     /**
      * Deletes a given entity.
      *
      * @param entity The entity to delete
      */
-    void delete(@NonNull E entity);
+    void delete(E entity);
 
     /**
      * Deletes the given entities.
      *
      * @param entities The entities to delete
      */
-    void deleteAll(@NonNull Iterable<? extends E> entities);
+    void deleteAll(Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.

@@ -29,4 +29,3 @@ import java.util.concurrent.CompletionStage;
 public interface FindOneAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Object>> {
 }
 
-

@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -93,9 +92,9 @@ public final class SqlSchemaUtils {
      * @since 4.13.0
      */
     @Experimental
-    @NonNull
+    
     @SuppressWarnings("java:S3776")
-    public static List<SqlTableMapping> getSqlTableMappings(@NonNull PersistentEntity entity) {
+    public static List<SqlTableMapping> getSqlTableMappings(PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = entity.getPersistedName();
@@ -119,8 +118,7 @@ public final class SqlSchemaUtils {
                 String joinTableName = annotationMetadata
                     .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
-                        namingStrategy.mappedName(association)
-                    );
+                        namingStrategy.mappedName(association));
                 String joinTableSchema = annotationMetadata.stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, SqlMembers.SCHEMA).orElse(null);
                 if (!StringUtils.isNotEmpty(joinTableSchema)) {
                     joinTableSchema = schema;

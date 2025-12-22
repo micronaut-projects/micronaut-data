@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Introspected;
 
-import io.micronaut.core.annotation.NonNull;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -78,7 +77,6 @@ final class DefaultPageable implements Pageable {
         return requestTotal;
     }
 
-    @NonNull
     @Override
     public Sort getSort() {
         return sort;

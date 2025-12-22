@@ -16,7 +16,7 @@
 package io.micronaut.data.connection.support;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import org.slf4j.Logger;
 

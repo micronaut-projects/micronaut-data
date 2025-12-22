@@ -57,6 +57,9 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Delete.class)) {
             if (matchContext.getRootEntity() == null) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (matchContext.getRootEntity() == null) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());

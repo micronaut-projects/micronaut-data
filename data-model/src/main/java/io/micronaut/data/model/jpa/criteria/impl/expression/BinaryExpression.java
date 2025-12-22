@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
@@ -43,17 +42,14 @@ public final class BinaryExpression<E> extends AbstractExpression<E> {
         this.type = type;
     }
 
-    @NonNull
     public BinaryExpressionType getType() {
         return type;
     }
 
-    @NonNull
     public Expression<?> getLeft() {
         return left;
     }
 
-    @NonNull
     public Expression<?> getRight() {
         return right;
     }

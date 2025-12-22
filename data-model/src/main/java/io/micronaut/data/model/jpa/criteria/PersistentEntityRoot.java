@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
@@ -39,7 +38,7 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @param <Y> The id type
      * @return The ID expression
      */
-    @NonNull
+    
     default <Y> IExpression<Y> id() {
         PersistentEntity persistentEntity = getPersistentEntity();
         if (persistentEntity.hasIdentity()) {
@@ -56,7 +55,7 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @param <Y> The version type
      * @return The version expression
      */
-    @NonNull
+    
     default <Y> PersistentPropertyPath<Y> version() {
         PersistentEntity persistentEntity = getPersistentEntity();
         PersistentProperty version = persistentEntity.getVersion();
@@ -74,8 +73,8 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @return The property expression
      * @since 4.8.0
      */
-    @NonNull
-    default <Y> PersistentPropertyPath<Y> get(@NonNull PersistentProperty persistentProperty) {
+    
+    default <Y> PersistentPropertyPath<Y> get(PersistentProperty persistentProperty) {
         return get(persistentProperty.getName());
     }
 

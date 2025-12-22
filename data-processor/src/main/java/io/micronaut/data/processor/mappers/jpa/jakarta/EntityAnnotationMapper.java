@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Translates the {@code jakarta.persistence} annotation model into the generic model understood by Micronaut Data.

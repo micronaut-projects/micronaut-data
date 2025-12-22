@@ -16,8 +16,7 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.aop.InvocationContext;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 
 /**
@@ -30,13 +29,13 @@ public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
      *
      * @return The root entity type
      */
-    @NonNull
+    
     Class<E> getRootEntity();
 
     /**
      * @return The repository type.
      */
-    @NonNull
+    
     Class<?> getRepositoryType();
 
     /**

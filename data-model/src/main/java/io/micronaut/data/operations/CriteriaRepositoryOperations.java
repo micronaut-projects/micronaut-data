@@ -16,8 +16,7 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -47,7 +46,7 @@ public interface CriteriaRepositoryOperations {
      * @return True if query returns true or any row
      * @since 4.10
      */
-    boolean exists(@NonNull CriteriaQuery<?> query);
+    boolean exists(CriteriaQuery<?> query);
 
     /**
      * Find one by Query.
@@ -56,7 +55,7 @@ public interface CriteriaRepositoryOperations {
      * @param <R> The result type
      * @return A result or null
      */
-    @Nullable <R> R findOne(@NonNull CriteriaQuery<R> query);
+    @Nullable <R> R findOne(CriteriaQuery<R> query);
 
     /**
      * Finds all results for the given query.
@@ -64,8 +63,8 @@ public interface CriteriaRepositoryOperations {
      * @param <T> The generic type
      * @return An iterable result
      */
-    @NonNull
-    <T> List<T> findAll(@NonNull CriteriaQuery<T> query);
+    
+    <T> List<T> findAll(CriteriaQuery<T> query);
 
     /**
      * Finds all results for the given query.
@@ -75,8 +74,8 @@ public interface CriteriaRepositoryOperations {
      * @param <T> The generic type
      * @return An iterable result
      */
-    @NonNull
-    <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+    
+    <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -84,8 +83,8 @@ public interface CriteriaRepositoryOperations {
      * @param query The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
-    Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
+    
+    Optional<Number> updateAll(CriteriaUpdate<Number> query);
 
     /**
      * Executes delete for the given query and parameter values. If it is possible to
@@ -93,7 +92,7 @@ public interface CriteriaRepositoryOperations {
      * @param query The query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
-    Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query);
+    
+    Optional<Number> deleteAll(CriteriaDelete<Number> query);
 
 }

@@ -17,8 +17,8 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -881,7 +881,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
+        public int pushParameter(@NonNull BindingParameter bindingParameter, BindingParameter. @NonNull BindingContext bindingContext) {
             int index = position.getAndIncrement();
             bindingContext = bindingContext.index(index);
             parameterBindings.add(
@@ -894,7 +894,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private interface PropertyParameterCreator {
 
         int pushParameter(@NonNull BindingParameter bindingParameter,
-                          @NonNull BindingParameter.BindingContext bindingContext);
+                          BindingParameter. @NonNull BindingContext bindingContext);
 
     }
 

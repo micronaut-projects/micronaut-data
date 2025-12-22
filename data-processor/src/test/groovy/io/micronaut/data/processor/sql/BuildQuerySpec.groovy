@@ -535,7 +535,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
             def repository = buildRepository('test.UserRoleRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.jdbc.entities.Role;
@@ -640,7 +640,7 @@ interface FacesRepository extends CrudRepository<Face, Long> {
     void "test native query with colon used in query"() {
         given:
         def repository = buildRepository('test.FacesRepository', """
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
@@ -1766,7 +1766,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         def repository = buildRepository('test.SettlementRepository', """
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Pageable;
@@ -2140,7 +2140,7 @@ class Resource {
         given:
         def repository = buildRepository('test.TestRepository', """
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.custom.CustomRepository;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;

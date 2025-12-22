@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -38,8 +37,8 @@ public interface AsyncPageableRepository<E, ID> extends AsyncCrudRepository<E, I
      * @param sort The sort
      * @return The results publisher
      */
-    @NonNull
-    CompletableFuture<E> findAll(@NonNull Sort sort);
+    
+    CompletableFuture<E> findAll(Sort sort);
 
     /**
      * Finds all records for the given pageable.
@@ -47,6 +46,6 @@ public interface AsyncPageableRepository<E, ID> extends AsyncCrudRepository<E, I
      * @param pageable The pageable.
      * @return The results publisher
      */
-    @NonNull
-    CompletableFuture<Page<E>> findAll(@NonNull Pageable pageable);
+    
+    CompletableFuture<Page<E>> findAll(Pageable pageable);
 }

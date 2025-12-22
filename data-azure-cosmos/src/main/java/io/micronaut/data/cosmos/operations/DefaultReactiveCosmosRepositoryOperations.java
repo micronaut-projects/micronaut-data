@@ -32,13 +32,11 @@ import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.SqlParameter;
 import com.azure.cosmos.models.SqlQuerySpec;
 import com.azure.cosmos.util.CosmosPagedFlux;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -95,6 +93,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -652,7 +653,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      */
     @Nullable
     private PartitionKey getPartitionKey(String partitionKeyField, ObjectNode item) {
-        com.fasterxml.jackson.databind.JsonNode jsonNode = item.get(partitionKeyField);
+        JsonNode jsonNode = item.get(partitionKeyField);
         if (jsonNode == null) {
             return null;
         }
@@ -674,7 +675,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return document id
      */
     private String getItemId(ObjectNode item) {
-        com.fasterxml.jackson.databind.JsonNode idNode = item.get(Constants.INTERNAL_ID);
+        JsonNode idNode = item.get(Constants.INTERNAL_ID);
         if (idNode == null) {
             return null;
         }
@@ -775,7 +776,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         for (Map.Entry<String, Object> propertyToUpdate : propertiesToUpdate.entrySet()) {
             String property = propertyToUpdate.getKey();
             Object value = propertyToUpdate.getValue();
-            com.fasterxml.jackson.databind.JsonNode objectNode;
+            JsonNode objectNode;
             if (value == null) {
                 objectNode = NullNode.getInstance();
             } else {
@@ -889,7 +890,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private void setIfMatchETag(CosmosItemRequestOptions requestOptions, ObjectNode item) {
-        final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
+        final JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
         if (versionValue != null) {
             requestOptions.setIfMatchETag(versionValue.textValue());
         }
@@ -1269,7 +1270,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             PartitionKey partitionKey = getPartitionKey(partitionKeyField, item);
             RequestOptions requestOptions = new RequestOptions();
             if (!insert) {
-                final com.fasterxml.jackson.databind.JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
+                final JsonNode versionValue = item.get(Constants.ETAG_FIELD_NAME);
                 if (versionValue != null) {
                     requestOptions.setIfMatchETag(versionValue.textValue());
                 }

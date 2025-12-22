@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -44,7 +43,7 @@ public class PersistentPropertyPath {
      *
      * @param property     The property
      */
-    public PersistentPropertyPath(@NonNull PersistentProperty property) {
+    public PersistentPropertyPath(PersistentProperty property) {
         this(List.of(), property, null);
     }
 
@@ -54,7 +53,7 @@ public class PersistentPropertyPath {
      * @param associations The associations
      * @param property     The property
      */
-    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
+    public PersistentPropertyPath(List<Association> associations,  PersistentProperty property) {
         this(associations, property, null);
     }
 
@@ -65,7 +64,7 @@ public class PersistentPropertyPath {
      * @param property     The property
      * @param path         The path
      */
-    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+    public PersistentPropertyPath(List<Association> associations,  PersistentProperty property, @Nullable String path) {
         Objects.requireNonNull(associations);
         Objects.requireNonNull(property);
         this.associations = associations;
@@ -80,7 +79,7 @@ public class PersistentPropertyPath {
      * @param property     The property
      * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
      */
-    public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property) {
+    public static PersistentPropertyPath of(List<Association> associations,  PersistentProperty property) {
         return of(associations, property, null);
     }
 
@@ -92,7 +91,7 @@ public class PersistentPropertyPath {
      * @param path         The path
      * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
      */
-    public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+    public static PersistentPropertyPath of(List<Association> associations,  PersistentProperty property, @Nullable String path) {
         if (property instanceof Association association) {
             return new PersistentAssociationPath(associations, association, path);
         }
@@ -168,7 +167,7 @@ public class PersistentPropertyPath {
     /**
      * @return The associations
      */
-    @NonNull
+    
     public List<Association> getAssociations() {
         return associations;
     }
@@ -176,7 +175,7 @@ public class PersistentPropertyPath {
     /**
      * @return The property
      */
-    @NonNull
+    
     public PersistentProperty getProperty() {
         return property;
     }
@@ -184,7 +183,7 @@ public class PersistentPropertyPath {
     /**
      * @return The path
      */
-    @NonNull
+    
     public String getPath() {
         if (path == null) {
             if (associations.isEmpty()) {
@@ -203,7 +202,7 @@ public class PersistentPropertyPath {
     /**
      * @return The associations path
      */
-    @NonNull
+    
     public String getAssociationsPath() {
         if (associations.isEmpty()) {
             return "";
@@ -218,7 +217,7 @@ public class PersistentPropertyPath {
     /**
      * @return The array path
      */
-    @NonNull
+    
     public String[] getArrayPath() {
         if (associations.isEmpty()) {
             return new String[]{property.getName()};
@@ -234,7 +233,7 @@ public class PersistentPropertyPath {
     /**
      * @return The array path
      */
-    @NonNull
+    
     public List<PersistentProperty> getPropertyPath() {
         if (associations.isEmpty()) {
             return List.of(property);

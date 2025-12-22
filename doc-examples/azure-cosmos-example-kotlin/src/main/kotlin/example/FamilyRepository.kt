@@ -99,8 +99,8 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
         }
 
         // tag::predicate_array_contains[]
-        fun tagsContain(tag: String): PredicateSpecification<Family?>? {
-            return PredicateSpecification { root: Root<Family?>, criteriaBuilder: CriteriaBuilder ->
+        fun tagsContain(tag: String): PredicateSpecification<Family> {
+            return PredicateSpecification { root: Root<Family>, criteriaBuilder: CriteriaBuilder ->
                 (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
                     root.get<Any>("tags"),
                     criteriaBuilder.literal(tag)
@@ -110,8 +110,8 @@ abstract class FamilyRepository : PageableRepository<Family, String>, JpaSpecifi
         // end::predicate_array_contains[]
 
         // tag::predicate_array_contains_partial[]
-        fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification<Family?>? {
-            return PredicateSpecification { root: Root<Family?>, criteriaBuilder: CriteriaBuilder ->
+        fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification<Family> {
+            return PredicateSpecification { root: Root<Family>, criteriaBuilder: CriteriaBuilder ->
                 (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
                     root.join<Any, Any>("children"),
                     criteriaBuilder.literal(gender)

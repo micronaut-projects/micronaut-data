@@ -6,7 +6,7 @@ abstract class AbstractTest(private var useFlyway: Boolean) : TestPropertyProvid
 
     override fun getProperties(): Map<String, String> {
         val props = if (useFlyway) {
-            mapOf("flyway.datasources.default.enabled:" to "true")
+            mapOf("flyway.datasources.default.enabled" to "true")
         } else {
             mapOf("r2dbc.datasources.default.schema-generate" to "CREATE_DROP")
         }

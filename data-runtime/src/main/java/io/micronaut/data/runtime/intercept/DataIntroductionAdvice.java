@@ -21,8 +21,8 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -38,7 +38,7 @@ import java.util.concurrent.CompletionStage;
 
 /**
  * The root Data introduction advice, which simply delegates to an appropriate interceptor
- * declared in the {@link io.micronaut.data.intercept} package.
+ * declared in the io.micronaut.data.intercept package (for example {@link io.micronaut.data.intercept.DataInterceptor}).
  *
  * @author graemerocher
  * @since 1.0

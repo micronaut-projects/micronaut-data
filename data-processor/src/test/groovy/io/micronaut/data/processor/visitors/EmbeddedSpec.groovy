@@ -143,7 +143,7 @@ class Pet {
     private PetType type = PetType.DOG;
 
     @Creator
-    public Pet(String name, @io.micronaut.core.annotation.Nullable Owner owner) {
+    public Pet(String name, @org.jspecify.annotations.Nullable Owner owner) {
         this.name = name;
         this.owner = owner;
     }

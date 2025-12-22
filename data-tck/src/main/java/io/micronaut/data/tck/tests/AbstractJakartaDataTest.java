@@ -48,10 +48,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -73,6 +75,8 @@ public abstract class AbstractJakartaDataTest {
 
     @BeforeEach
     public void setup() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
         // Create test data
         LocalDateTime baseTime = LocalDateTime.of(2023, 1, 1, 8, 0);
         LocalDate baseDate = baseTime.toLocalDate();
@@ -127,6 +131,7 @@ public abstract class AbstractJakartaDataTest {
     @AfterEach
     public void cleanup() {
         trainRepository.deleteAll();
+        TimeZone.setDefault(null);
     }
 
     @Inject
@@ -632,6 +637,8 @@ public abstract class AbstractJakartaDataTest {
         Restriction<Train> restriction = _Train.departureTime.greaterThan(TemporalExpression.localDateTime());
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
+
+        dateTimeProvider.setValue(null);
     }
 
     @Test
@@ -645,13 +652,15 @@ public abstract class AbstractJakartaDataTest {
         assertEquals(0, trains.size()); // All trains have departureDate = 2023-01-01, so none are after
 
         // Test with a threshold that would match some trains
-        LocalDate earlierThreshold = LocalDate.of(2022, 12, 31);
+        LocalDate earlierThreshold = LocalDate.of(2021, 12, 31);
         dateTimeProvider.setValue(earlierThreshold.atStartOfDay().atOffset(ZoneOffset.UTC));
 
         restriction = _Train.departureDate.greaterThan(TemporalExpression.localDate());
         trains = trainRepository.findTrains(restriction);
         assertEquals(6, trains.size()); // All trains are after 2022-12-31
         assertEquals(trains.size(), trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getDepartureDate().isAfter(earlierThreshold)).count());
+
+        dateTimeProvider.setValue(null);
     }
 
     @Test
@@ -664,6 +673,8 @@ public abstract class AbstractJakartaDataTest {
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size()); // Trains with departure times: 8:00, 10:00, 12:00, 14:00, 16:00, 18:00 - so 14:00, 16:00, 18:00 are after 12:00
         assertEquals(trains.size(), trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getDepartureTimeOnly().isAfter(threshold)).count());
+
+        dateTimeProvider.setValue(null);
     }
 
     @Test

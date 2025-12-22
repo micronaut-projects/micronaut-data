@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.operations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -29,12 +29,16 @@ import jakarta.persistence.EntityManagerFactory;
 public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
 
     /**
+     * Returns the current JPA EntityManager.
+     *
      * @return The current entity manager
      */
     @NonNull
     EntityManager getCurrentEntityManager();
 
     /**
+     * Returns the JPA EntityManagerFactory.
+     *
      * @return The entity manager factory
      */
     @NonNull

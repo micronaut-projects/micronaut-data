@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jta;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Maps JTA's Jakarta transaction annotation.

@@ -12,7 +12,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 
 @R2dbcRepository(dialect = Dialect.MYSQL) // <1>
-interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book?, Long> {
+interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book, Long> {
     @Join("author")
     override fun findById(id: @NotNull Long): Mono<Book> // <2>
 
@@ -21,9 +21,9 @@ interface BookReactiveRepository : ReactiveStreamsCrudRepository<Book?, Long> {
 
     // tag::mandatory[]
     @Transactional(Transactional.TxType.MANDATORY)
-    override fun <S : Book?> save(entity: @Valid @NotNull S): Publisher<S>
+    override fun <S : Book> save(entity: @Valid @NotNull S): Publisher<S>
 
     @Transactional(Transactional.TxType.MANDATORY)
-    override fun <S : Book?> saveAll(entities: @Valid @NotNull Iterable<S>): Publisher<S>
+    override fun <S : Book> saveAll(entities: @Valid @NotNull Iterable<S>): Publisher<S>
     // end::mandatory[]
 }

@@ -31,16 +31,14 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Documented
-@Introspected(
-    indexed = {
+@Introspected(indexed = {
         @Introspected.IndexedAnnotation(annotation = Id.class),
         @Introspected.IndexedAnnotation(annotation = Version.class),
         @Introspected.IndexedAnnotation(annotation = DateCreated.class),
         @Introspected.IndexedAnnotation(annotation = DateUpdated.class),
         @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value"),
         @Introspected.IndexedAnnotation(annotation = Index.class, member = "value")
-    }
-)
+    })
 public @interface MappedEntity {
 
     /**

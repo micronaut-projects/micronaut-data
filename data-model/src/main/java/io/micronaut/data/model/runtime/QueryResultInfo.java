@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
@@ -33,7 +32,7 @@ public class QueryResultInfo {
     private final QueryResult.Type type;
     private final JsonDataType jsonDataType;
 
-    public QueryResultInfo(@NonNull QueryResult.Type type, @Nullable String columnName, @Nullable JsonDataType jsonDataType) {
+    public QueryResultInfo(QueryResult. Type type, @Nullable String columnName, @Nullable JsonDataType jsonDataType) {
         ArgumentUtils.requireNonNull("type", type);
         this.type = type;
         this.columnName = columnName;

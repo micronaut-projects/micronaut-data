@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -67,8 +66,8 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
     @Override
     public abstract PersistentEntity getPersistentEntity();
 
-    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(@NonNull Association association,
-                                                                                 @Nullable io.micronaut.data.annotation.Join.Type type,
+    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
+                                                                                 io.micronaut.data.annotation.Join. @Nullable Type type,
                                                                                  @Nullable String alias);
 
     private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName) {
@@ -156,8 +155,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return getJoin(attributeName, type, Objects.requireNonNull(alias));
     }
 
-    @Nullable
-    private io.micronaut.data.annotation.Join.Type convert(@Nullable JoinType joinType) {
+    private io.micronaut.data.annotation.Join. @Nullable Type convert(@Nullable JoinType joinType) {
         if (joinType == null) {
             return null;
         }
@@ -324,8 +322,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return (Fetch<X, Y>) join(attributeName, convertFetch(jt));
     }
 
-    @Nullable
-    private io.micronaut.data.annotation.Join.Type convertFetch(@Nullable JoinType joinType) {
+    private io.micronaut.data.annotation.Join. @Nullable Type convertFetch(@Nullable JoinType joinType) {
         if (joinType == null) {
             return null;
         }

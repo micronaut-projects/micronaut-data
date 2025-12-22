@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.ParameterExpression;
@@ -76,16 +76,16 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 
     @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END) FOR UPDATE", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
+    public abstract List<Book> listNativeBooksNullableSearch(@Nullable @io.micronaut.core.annotation.Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
+    public abstract List<Book> listNativeBooksNullableListSearch(@Nullable @io.micronaut.core.annotation.Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE :arg1 END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableListSearchWithExtraParameter(@Nullable List<String> arg0, boolean arg1);
+    public abstract List<Book> listNativeBooksNullableListSearchWithExtraParameter(@Nullable @io.micronaut.core.annotation.Nullable List<String> arg0, boolean arg1);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     public abstract List<Book> updateBooks(Collection<Book> books);
 
