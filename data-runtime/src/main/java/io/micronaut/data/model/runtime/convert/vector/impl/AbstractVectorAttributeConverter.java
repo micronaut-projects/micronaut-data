@@ -28,7 +28,7 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.type.Argument;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +47,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
     private final Class<X> type;
 
     protected AbstractVectorAttributeConverter(List<VectorTypeConverter<?>> converterList, Class<X> type) {
-        this.converterMap = new HashMap<>(converterList.size());
+        this.converterMap = new EnumMap<>(DatabaseType.class);
         for (VectorTypeConverter<?> converter : converterList) {
             converterMap.putIfAbsent(converter.databaseType(), converter);
         }
@@ -60,7 +60,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter vectorTypeConverter = databaseType != null ? converterMap.get(databaseType) : null;
+        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? converterMap.get(databaseType) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             Y result = (Y) vectorTypeConverter.convert(entityValue);
@@ -75,10 +75,10 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter vectorTypeConverter = databaseType != null ? converterMap.get(databaseType) : null;
+        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) converterMap.get(databaseType) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
-            X result = (X) vectorTypeConverter.convert(persistedValue, type);
+            X result = (X) vectorTypeConverter.convert(persistedValue, (Class<Vector>) type);
             return result;
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);

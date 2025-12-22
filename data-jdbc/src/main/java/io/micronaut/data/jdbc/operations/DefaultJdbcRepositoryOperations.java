@@ -1428,7 +1428,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final Argument argument;
 
-        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument argument) {
+        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }

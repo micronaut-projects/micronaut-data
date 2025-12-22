@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -68,7 +69,7 @@ public record FloatVector(float[] data) implements Vector {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "F" + Arrays.toString(data);
     }
 
@@ -79,9 +80,9 @@ public record FloatVector(float[] data) implements Vector {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof FloatVector other)) {
+        if (!(obj instanceof FloatVector(float[] data1))) {
             return false;
         }
-        return Arrays.equals(this.data, other.data);
+        return Arrays.equals(this.data, data1);
     }
 }

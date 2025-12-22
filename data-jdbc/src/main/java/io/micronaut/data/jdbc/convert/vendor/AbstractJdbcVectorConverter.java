@@ -25,7 +25,7 @@ abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> 
 
     private final ConversionService conversionService;
 
-    public AbstractJdbcVectorConverter(ConversionService conversionService) {
+    protected AbstractJdbcVectorConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 

@@ -79,9 +79,9 @@ public record ByteVector(byte[] data) implements Vector {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ByteVector other)) {
+        if (!(obj instanceof ByteVector(byte[] data1))) {
             return false;
         }
-        return Arrays.equals(this.data, other.data);
+        return Arrays.equals(this.data, data1);
     }
 }

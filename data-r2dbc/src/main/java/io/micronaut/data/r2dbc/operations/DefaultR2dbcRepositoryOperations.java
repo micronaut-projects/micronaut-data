@@ -1216,7 +1216,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument argument) {
+        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
