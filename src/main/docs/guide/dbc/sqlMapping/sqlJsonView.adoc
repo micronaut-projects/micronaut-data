@@ -17,7 +17,10 @@ SQL script will be generated. SQL scripts are generated for JsonViews, but not f
 
 ==== Specifying joins
 
-You can define relationships between entities within JSON views by using appropriate annotations.
+You can define relationships between entities within JSON views by using ann:io.micronaut.data.annotation.Relation[]. Tables are
+joined automatically, by their columns annotated with ann:io.micronaut.data.annotation.Id[] by default, but if user specified columns to join in
+by ann:io.micronaut.data.annotation.JoinColumn[], those columns will be used.
+
 For example, to associate a `StudentView` with its related `StudentScheduleSubView` entries in a one-to-many relationship,
 annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
 is the identifier for `StudentScheduleSubView`, as follows:

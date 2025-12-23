@@ -1297,6 +1297,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 lastJoinAlias,
                 ownerJoinColumns,
                 ownerJoinTableColumns);
+            if (queryState.baseQueryDefinition().persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class)) {
+                return;
+            }
             query.append(SPACE);
             join(query,
                 queryState.baseQueryDefinition(),

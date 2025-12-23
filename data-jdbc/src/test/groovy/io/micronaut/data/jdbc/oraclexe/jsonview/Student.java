@@ -27,7 +27,7 @@ public class Student {
 
     private boolean active;
 
-    @JoinTable(name = "TBL_STUDENT_CLASSES")
+    @JoinTable(name = "TBL_STUDENT_CLASSES", alias = "sc")
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 

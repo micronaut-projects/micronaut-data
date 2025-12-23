@@ -27,9 +27,8 @@ public class StudentView {
 
     private boolean active;
 
-    @JoinColumn(name = "id", referencedColumnName = "student_id")
     @Relation(Relation.Kind.ONE_TO_MANY)
-    private List<StudentScheduleSubView> schedule;
+    private List<StudentScheduleSubView> classes;
 
     @Relation(Relation.Kind.EMBEDDED)
     private AddressSubView address;
@@ -85,12 +84,12 @@ public class StudentView {
         this.active = active;
     }
 
-    public List<StudentScheduleSubView> getSchedule() {
-        return schedule;
+    public List<StudentScheduleSubView> getClasses() {
+        return classes;
     }
 
-    public void setSchedule(List<StudentScheduleSubView> schedule) {
-        this.schedule = schedule;
+    public void setClasses(List<StudentScheduleSubView> classes) {
+        this.classes = classes;
     }
 
     public AddressSubView getAddress() {

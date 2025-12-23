@@ -187,7 +187,7 @@ class OracleJdbcJsonViewSpec extends Specification {
             classSchedule.put(clazz.getId(), clazz.getTime())
         }
 
-        for (def schedule : denisStudentView.getSchedule()) {
+        for (def schedule : denisStudentView.getClasses()) {
             // Schedule one hour later
             schedule.getClazz().setTime(schedule.getClazz().getTime().plusHours(1))
         }
@@ -308,9 +308,9 @@ class OracleJdbcJsonViewSpec extends Specification {
 
         newStudentScheduleView.setClazz(studentScheduleClassView)
         ivoneStudentView.setAddress(addressView)
-        ivoneStudentView.setSchedule(List.of(newStudentScheduleView))
+        ivoneStudentView.setClasses(List.of(newStudentScheduleView))
         peterStudentView.setAddress(addressView)
-        peterStudentView.setSchedule(List.of(newStudentScheduleView))
+        peterStudentView.setClasses(List.of(newStudentScheduleView))
         studentViewRepository.save(ivoneStudentView)
         studentViewRepository.saveAll(Arrays.asList(peterStudentView))
 
@@ -322,7 +322,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         optPeterStudentView.present
         optIvoneStudentView.isPresent()
         // And just to validate that saved local time is + 30 minutes from initial class time
-        def studentClassTime = optIvoneStudentView.get().getSchedule().get(0).getClazz().getTime()
+        def studentClassTime = optIvoneStudentView.get().getClasses().get(0).getClazz().getTime()
         classTime.plusMinutes(30) == studentClassTime
         // And also in class table itself
         def updatedClassTime = clazz.getTime()
@@ -397,7 +397,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
         String[] sql = builder.buildCreateTableStatements(studentViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id,'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'schedule': [SELECT JSON {'id': sc.id,'class': (SELECT JSON {'classID': c.id,'teacher': (SELECT JSON {'teachID': t.id,'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id,'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id,'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'classes': [SELECT JSON {'id': sc.id,'class': (SELECT JSON {'classID': c.id,'teacher': (SELECT JSON {'teachID': t.id,'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id,'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
     }
 
     def "test_generate_drop_json_vew"() {
