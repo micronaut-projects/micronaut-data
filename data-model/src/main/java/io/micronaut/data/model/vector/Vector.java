@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.vector;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
@@ -68,7 +68,6 @@ public sealed interface Vector
      *
      * @return a new float[] with the vector content
      */
-    @NonNull
     float[] toFloatArray();
 
     /**
@@ -76,7 +75,6 @@ public sealed interface Vector
      *
      * @return a new double[] with the vector content
      */
-    @NonNull
     double[] toDoubleArray();
 
     /**
@@ -84,7 +82,6 @@ public sealed interface Vector
      *
      * @return a new byte[] with the vector content
      */
-    @NonNull
     byte[] toByteArray();
 
     /**

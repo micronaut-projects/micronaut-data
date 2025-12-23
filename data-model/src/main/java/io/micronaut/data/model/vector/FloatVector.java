@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.model.vector;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -46,12 +45,12 @@ public record FloatVector(float[] data) implements Vector {
     }
 
     @Override
-    public @NonNull float[] toFloatArray() {
+    public float[] toFloatArray() {
         return Arrays.copyOf(data, data.length);
     }
 
     @Override
-    public @NonNull double[] toDoubleArray() {
+    public double[] toDoubleArray() {
         double[] out = new double[data.length];
         for (int i = 0; i < data.length; i++) {
             out[i] = data[i];
@@ -60,7 +59,7 @@ public record FloatVector(float[] data) implements Vector {
     }
 
     @Override
-    public @NonNull byte[] toByteArray() {
+    public byte[] toByteArray() {
         byte[] out = new byte[data.length];
         for (int i = 0; i < data.length; i++) {
             out[i] = (byte) data[i];
@@ -69,7 +68,7 @@ public record FloatVector(float[] data) implements Vector {
     }
 
     @Override
-    public @NotNull String toString() {
+    public @NonNull String toString() {
         return "F" + Arrays.toString(data);
     }
 

@@ -26,7 +26,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
@@ -72,7 +72,7 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
         super.setValue(attributeName, asParameter(value));
     }
 
-    @NotNull
+    @NonNull
     private ParameterExpression<?> asParameter(Object exp) {
         if (exp instanceof ParameterExpression<?> parameterExpression) {
             return parameterExpression;

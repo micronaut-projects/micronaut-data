@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 

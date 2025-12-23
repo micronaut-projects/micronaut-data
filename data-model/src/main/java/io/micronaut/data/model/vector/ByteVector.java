@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.vector;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.vector.ByteVectorAttributeConverter;
@@ -45,7 +45,7 @@ public record ByteVector(byte[] data) implements Vector {
     }
 
     @Override
-    public @NonNull float[] toFloatArray() {
+    public float[] toFloatArray() {
         float[] out = new float[data.length];
         for (int i = 0; i < data.length; i++) {
             out[i] = data[i];
@@ -54,7 +54,7 @@ public record ByteVector(byte[] data) implements Vector {
     }
 
     @Override
-    public @NonNull double[] toDoubleArray() {
+    public double[] toDoubleArray() {
         double[] out = new double[data.length];
         for (int i = 0; i < data.length; i++) {
             out[i] = data[i];
@@ -63,12 +63,12 @@ public record ByteVector(byte[] data) implements Vector {
     }
 
     @Override
-    public @NonNull byte[] toByteArray() {
+    public byte[] toByteArray() {
         return Arrays.copyOf(data, data.length);
     }
 
     @Override
-    public String toString() {
+    public @NonNull String toString() {
         return "B" + Arrays.toString(data);
     }
 
