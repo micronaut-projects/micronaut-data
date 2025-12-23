@@ -30,13 +30,8 @@ import io.micronaut.json.JsonMapper;
 import java.util.Optional;
 
 /**
- * Centralized converters for textual vector representation (Oracle string format).
- *
- * Responsibility:
- * - Provide String <-> Vector converters used by vendor drivers (JDBC/R2DBC) that persist vectors as JSON-like text.
- * - Use JsonMapper to parse JSON array input (e.g. "[1.0, 2.0]").
- *
- * This factory intentionally lives in runtime to avoid duplication across vendor factories.
+ * String <-> Vector converters for textual storage (e.g. Oracle), using JsonMapper to parse "[...]".
+ * Shared at runtime to avoid duplication across vendor layers; invalid JSON throws IllegalArgumentException.
  *
  * @author Nemanja Mikic
  * @since 5.0.0

@@ -26,13 +26,8 @@ import jakarta.inject.Singleton;
 import java.util.List;
 
 /**
- * Unified attribute converter for DoubleVector that supports multiple SQL dialects.
- * - PostgreSQL: persisted value is a {@code org.postgresql.util.PGobject} of type {@code vector}
- * - Oracle: persisted value is a {@code String} accepted by the Oracle JDBC driver (e.g. "[1.0, 2.0]")
- *
- * This single converter replaces the previous dialect-specific converters and selects
- * the persisted representation based on the DatabaseType obtained from the {@link ConversionContext}
- * via {@link DatabaseTypeConversionContext}.
+ * Unified DoubleVector converter that delegates to a dialect-specific VectorTypeConverter selected by DatabaseType.
+ * Supports PostgreSQL (pgvector) and Oracle (textual "[...]") persisted forms; Oracle element type is FLOAT64.
  *
  * @author Nemanja Mikic
  * @since 5.0.0

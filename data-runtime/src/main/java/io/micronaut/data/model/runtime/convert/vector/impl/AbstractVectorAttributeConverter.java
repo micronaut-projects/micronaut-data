@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Base attribute converter for vector types that delegates conversion to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter}.
+ * Base converter that delegates Vector conversions to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter} selected by DatabaseType.
+ * Also exposes vendor DDL via {@link io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider} and honors {@code @jakarta.persistence.Column(length)}.
  *
  * @param <X> The vector entity type
  * @param <Y> The persisted JDBC type

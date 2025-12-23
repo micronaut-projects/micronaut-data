@@ -1,396 +1,89 @@
-Micronaut Data provides first-class support for storing and retrieving numeric embeddings as SQL vector columns.
+This section explains how to map and use vector embeddings with Micronaut Data.
 
-Supported platforms (since 5.0.0):
-- Oracle Database 23ai VECTOR columns (JDBC and R2DBC)
-- PostgreSQL pgvector (JDBC and R2DBC)
-- MySQL HeatWave VECTOR columns (JDBC and R2DBC)
+Micronaut Data ships lightweight value types under `io.micronaut.data.model.vector`:
 
-Micronaut Data includes a lightweight, immutable vector abstraction in the `io.micronaut.data.model.vector` package:
+- `FloatVector` — float[]-backed (good size/speed balance; recommended default)
+- `DoubleVector` — double[]-backed (best precision; bigger payloads)
+- `ByteVector` — byte[]-backed (smallest size; lossy/narrowed)
 
-- `Vector` (sealed interface)
-- `DoubleVector` (backed by `double[]`)
-- `FloatVector` (backed by `float[]`)
-- `ByteVector` (backed by `byte[]`)
+You can also use the sealed interface `Vector` if you need a type-agnostic parameter which is preferred way of using it. When you use `Vector`, Micronaut Data will by default choose the optimal database-specific representation for the configured dialect/driver.
 
-Factory methods are available via `Vector.of(...)` for convenience:
+=== Example entity
 
-[source,java]
-----
-import io.micronaut.data.model.vector.Vector;
+snippet::example.DocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
 
-Vector v1 = Vector.of(1d, 2.5d, -3.75d); // returns a DoubleVector
-Vector v2 = Vector.of(1f, 2f, 3f);       // returns a FloatVector
-Vector v4 = Vector.of((byte)1,(byte)2);  // returns a ByteVector
-----
+=== Repository usage
 
-Vector values are converted to/from datastore-specific SQL types via Micronaut converters with full support in JDBC and R2DBC.
+Use vector fields as you would any other property. You can also pass `Vector` into query parameters when you don’t want to commit to a specific subtype at the call site.
 
-=== Dependencies and prerequisites
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main"]
 
-The following drivers/codecs must be present for vector support. Beans are conditionally created (via `@Requires`) based on classpath presence.
+=== Example usage
 
-- PostgreSQL (JDBC)
-  - `org.postgresql:postgresql`
-  - `com.pgvector:pgvector`
-  - Server setup: `CREATE EXTENSION IF NOT EXISTS vector;`
-- PostgreSQL (R2DBC)
-  - `io.r2dbc:r2dbc-postgresql` (with vector codec support)
-  - Server setup: `CREATE EXTENSION IF NOT EXISTS vector;`
-- Oracle Database 23ai (JDBC)
-  - Oracle JDBC driver (e.g. `com.oracle.database.jdbc:ojdbc11`)
-- Oracle Database 23ai (R2DBC)
-  - `com.oracle.database.r2dbc:oracle-r2dbc`
-- MySQL HeatWave (JDBC)
-  - `com.mysql:mysql-connector-j`
-- MySQL HeatWave (R2DBC)
-  - Use a compatible MySQL R2DBC driver; vector binding is driver-dependent and handled by Micronaut converters when supported.
+snippet::example.DocumentEmbeddingRepositorySpec[project-base="doc-examples/jdbc-vector-example", source="test", tags="create_vector"]
 
-==== Gradle coordinates (examples)
+=== DDL generation and dimensions
 
-The exact coordinates/versions may be managed by your project’s version catalog. The following examples illustrate typical dependencies:
+Micronaut Data honors `@jakarta.persistence.Column(length = N)` to set vector dimensions (when the vendor supports it):
 
-[source,groovy]
-----
-dependencies {
-  // PostgreSQL JDBC + pgvector
-  implementation("org.postgresql:postgresql")
-  implementation("com.pgvector:pgvector")
+- PostgreSQL (pgvector): `vector(N)` when length is present, otherwise `vector`
+- Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
+- MySQL HeatWave: `VECTOR(N)` or `VECTOR`
 
-  // PostgreSQL R2DBC
-  implementation("io.r2dbc:r2dbc-postgresql")
+The Oracle `<TYPE>` is inferred from the vector subtype:
+- `DoubleVector` -> `FLOAT64`
+- `FloatVector`  -> `FLOAT32`
+- `ByteVector`   -> `INT8`
 
-  // Oracle JDBC and R2DBC (ensure appropriate licensing)
-  implementation("com.oracle.database.jdbc:ojdbc11")
-  implementation("com.oracle.database.r2dbc:oracle-r2dbc")
+If the dialect does not support vectors, Micronaut falls back to `VARCHAR(255)` to avoid schema generation failure.
 
-  // MySQL JDBC
-  implementation("com.mysql:mysql-connector-j")
-}
-----
 
-NOTE: If a dependency is missing, the corresponding converters/factories will not be registered and vector mapping for that stack will be disabled.
+=== PostgreSQL (pgvector)
 
-== Oracle Database (VECTOR)
+- Column type: `vector` or `vector(N)`
+- Only `FloatVector` is supported.
+- Use `@Column(length = N)` to define the dimension in schema generation
 
-Oracle VECTOR columns are supported when the repository uses the Oracle dialect.
-
-Key points:
-- Entities with VECTOR fields are supported on Oracle; schema generation emits `VECTOR` column types.
-- Oracle’s JDBC and R2DBC drivers surface VECTOR values as primitive arrays depending on element type; Micronaut maps those to the corresponding `Vector` implementations.
-
-Oracle driver mapping (read path):
-- `VECTOR(*, *)` and `VECTOR(..., FLOAT64)` → `double[]` → `DoubleVector`
-- `VECTOR(..., FLOAT32)` → `float[]` → `FloatVector`
-- `VECTOR(..., INT8)` → `byte[]` → `ByteVector`
-- `VECTOR(..., BINARY)` → `byte[]` → `ByteVector`
-
-=== DDL and schema generation (Oracle)
-
-For Oracle, VECTOR properties map to `VECTOR`. You can (and should) specify dimensions and element type explicitly in the DDL or via `@MappedProperty(definition = "...")`.
-
-Examples:
+DDL example:
 [source,sql]
 ----
-CREATE TABLE vector_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT64));
-CREATE TABLE vector_float_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT32));
-CREATE TABLE vector_byte_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8));
-----
-
-Using `@MappedProperty` to set the column definition:
-[source,java]
-----
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.model.vector.DoubleVector;
-
-@MappedEntity("vector_doc")
-class VectorDoc {
-  @Id
-  @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
-  Long id;
-
-  // Explicit DDL (dimension + element type)
-  @MappedProperty(definition = "VECTOR(3, FLOAT64)")
-  DoubleVector embedding;
-}
-----
-
-If no definition is provided, schema generation can use a generic `VECTOR` type. For production systems, prefer supplying the exact VECTOR definition (dimensions and element type).
-
-==== Using @Column(length = N) to set dimensions (Oracle)
-
-Micronaut’s unified Vector attribute converters honor `@jakarta.persistence.Column(length = N)` on a Vector-typed property to set the VECTOR dimensions in generated DDL. The element type is derived from the Vector subtype:
-
-- `DoubleVector` → `VECTOR(N, FLOAT64)`
-- `FloatVector` → `VECTOR(N, FLOAT32)`
-- `ByteVector` → `VECTOR(N, INT8)`
-
-Example:
-[source,java]
-----
-@MappedEntity("vector_len_doc")
-class VectorLenDoc {
-  @Id
-  @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_LEN_DOC_SEQ")
-  Long id;
-
-  @Column(length = 3)               // ← sets VECTOR dimension to 3
-  DoubleVector embedding;           // ← FLOAT64 element type inferred
-}
-----
-
-Runtime notes (observed against Oracle Free/XE):
-- Empty vectors are rejected by Oracle with ORA-51805 (e.g. “Vector is not properly formatted…”).
-- In some setups, inserting vectors with a dimension different from the declared dimension may be accepted (e.g. 2/4 dims into `VECTOR(3, FLOAT64)`), i.e. the database/driver may not enforce length strictly. If strict enforcement is required, validate at application level.
-- In restricted container images, data dictionary views may not expose `VECTOR` metadata; `DBMS_METADATA.GET_DDL` remains the source of truth.
-
-=== JDBC binding/reading (Oracle)
-
-- Write path: `Vector` values are unwrapped to primitive arrays (`double[]`, `float[]`, `int[]`, `byte[]`) before binding; the Oracle driver writes them to VECTOR columns.
-- Read path: Result values are read as primitive arrays and adapted back into the appropriate `Vector` implementation.
-- Dedicated converters handle cases where `oracle.sql.VECTOR` is returned directly.
-
-=== Example: JDBC repository (Oracle)
-
-[source,java]
-----
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.model.vector.DoubleVector;
-
-@MappedEntity("vector_double_doc")
-public class VectorDoubleDoc {
-  @Id
-  @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
-  Long id;
-
-  // Defaults to FLOAT64 semantics
-  DoubleVector embedding;
-
-  // getters/setters omitted
-}
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface VectorDoubleDocRepository extends CrudRepository<VectorDoubleDoc, Long> {
-}
-----
-
-== MySQL HeatWave (VECTOR)
-
-MySQL HeatWave exposes a native VECTOR type. When repositories use the MYSQL dialect:
-
-- JDBC: Micronaut binds vectors as little-endian `float32` binary (`byte[]`) per element, matching HeatWave requirements. Reads are converted back into the appropriate `Vector` subtype.
-- R2DBC: Binding is driver-dependent; Micronaut will adapt via its converters when a compatible driver is used.
-
-- Dialect: MYSQL
-
-=== DDL (MySQL HeatWave)
-
-[source,sql]
-----
-CREATE TABLE vector_doc (
+CREATE TABLE document_embedding (
   id BIGINT PRIMARY KEY,
-  embedding VECTOR(3)
+  embedding vector(384)
 );
 ----
 
-==== Using @Column(length = N) to set dimensions (MySQL)
+=== Oracle (VECTOR)
 
-When using Micronaut’s Vector converters with the MySQL dialect, `@jakarta.persistence.Column(length = N)` on a Vector-typed property will produce `VECTOR(N)` in the generated DDL.
+- Column type: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)`
+- `<TYPE>` derives from the Java vector subtype:
+  - `DoubleVector` -> `FLOAT64`
+  - `FloatVector`  -> `FLOAT32`
+  - `ByteVector`   -> `INT8`
+- Use `@Column(length = N)` to set the dimension; when omitted, `*` is used.
 
-Example:
-[source,java]
-----
-@MappedEntity("mysql_vector_doc")
-class MySqlVectorDoc {
-  @Id
-  @GeneratedValue
-  Long id;
-
-  // dimension inferred from @Column(length)
-  @Column(length = 3)
-  io.micronaut.data.model.vector.FloatVector embedding;
-}
-----
-
-== PostgreSQL (pgvector)
-
-TIP: Ensure the pgvector extension is installed on the server:
+DDL example:
 [source,sql]
 ----
-CREATE EXTENSION IF NOT EXISTS vector;
-----
-
-PostgreSQL vector support targets the https://github.com/pgvector/pgvector[pgvector] extension.
-
-Requirements:
-- PostgreSQL with pgvector installed (e.g., `CREATE EXTENSION IF NOT EXISTS vector;`)
-- Dialect set to POSTGRES
-- JDBC: Driver exposes `org.postgresql.util.PGobject` with type `vector`
-- R2DBC: Driver exposes `io.r2dbc.postgresql.codec.Vector`
-
-=== DDL (PostgreSQL)
-
-[source,sql]
-----
-CREATE EXTENSION IF NOT EXISTS vector;
-CREATE TABLE vector_doc (
-  id BIGINT PRIMARY KEY,
-  embedding vector(3)
+CREATE TABLE document_embedding (
+  id NUMBER(19) PRIMARY KEY,
+  embedding VECTOR(384, FLOAT64)
 );
 ----
 
-==== Using @Column(length = N) to set dimensions (PostgreSQL)
+=== MySQL HeatWave (VECTOR)
 
-When using Micronaut’s Vector converters with the Postgres dialect, `@jakarta.persistence.Column(length = N)` on a Vector-typed property will produce `vector(N)` in the generated DDL. The pgvector element type is always numeric; Micronaut writes the textual `[v1, v2, ...]` representation with double semantics as required by the driver.
+- Column type: `VECTOR(N)` or `VECTOR`
+- Only `FloatVector` is supported.
+- Works with JDBC only; R2DBC is currently not supported.
+- Use `@Column(length = N)` to define the dimension
 
-Example:
-[source,java]
+DDL example:
+[source,sql]
 ----
-@MappedEntity("pg_vector_doc")
-class PgVectorDoc {
-  @Id
-  @GeneratedValue
-  Long id;
-
-  @Column(length = 3)     // ← sets vector dimension to 3
-  io.micronaut.data.model.vector.FloatVector embedding;
-}
+CREATE TABLE document_embedding (
+  id BIGINT PRIMARY KEY,
+  embedding VECTOR(1536)
+);
 ----
 
-Micronaut’s converters will map:
-- JDBC write: `DoubleVector`/`FloatVector`/`ByteVector` → `PGobject(type="vector")` with `[v1, v2, ...]`
-  (non-double vectors are coerced to double textual form).
-- JDBC read: pgvector is converted back into a Vector; concrete types are supported (`DoubleVector`, `FloatVector`) and the generic `Vector` type. For `ByteVector`, values round-trip via double textual representation and are converted back to the requested type by Micronaut’s converters.
-
-=== Example: JDBC repository (PostgreSQL)
-
-[source,java]
-----
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.model.vector.DoubleVector;
-
-@MappedEntity("vector_doc")
-class PgVectorDoc {
-  @Id
-  @GeneratedValue
-  Long id;
-
-  DoubleVector embedding;
-}
-
-@JdbcRepository(dialect = Dialect.POSTGRES)
-interface PgVectorDocRepository extends CrudRepository<PgVectorDoc, Long> {
-}
-----
-
-=== Example: R2DBC repository (PostgreSQL)
-
-[source,java]
-----
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.reactive.ReactorCrudRepository;
-import io.micronaut.data.model.vector.FloatVector;
-
-@MappedEntity("vector_doc")
-class PgVectorR2dbcDoc {
-  @Id
-  @GeneratedValue
-  Long id;
-
-  FloatVector embedding;
-}
-
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-interface PgVectorR2dbcDocRepository extends ReactorCrudRepository<PgVectorR2dbcDoc, Long> {
-}
-----
-
-== Custom queries
-
-For custom SQL via `@Query`, pass `Vector` or a specific implementation:
-
-[source,java]
-----
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Parameter;
-import java.util.Optional;
-import io.micronaut.data.model.vector.Vector;
-
-@JdbcRepository(dialect = Dialect.ORACLE) // or POSTGRES
-interface VectorDocCustom {
-  @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-  void saveCustom(@Parameter("vec") Vector vec);
-
-  @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-  void updateCustom(Long id, @Parameter("vec") Vector vec);
-
-  @Query("SELECT * FROM vector_double_doc WHERE id = :id")
-  Optional<VectorDoubleDoc> findById(Long id);
-}
-----
-
-== Choosing a Vector subtype
-
-Pick the subtype that matches how the column is stored in your database:
-
-- Oracle
-  - FLOAT64 → use DoubleVector
-  - FLOAT32 → use FloatVector
-  - INT8/BINARY → use ByteVector
-- PostgreSQL (pgvector)
-  - pgvector stores numeric values; Micronaut writes textual form "[v1, v2, ...]".
-  - Use FloatVector for R2DBC (codec convenience) or DoubleVector; Micronaut will coerce as needed.
-  - ByteVector is supported through conversion; prefer FloatVector/DoubleVector for numeric embeddings.
-- MySQL HeatWave
-  - VECTOR expects LE float32 binary; use FloatVector for natural mapping.
-
-TIP: If you need to interop with pre-existing tables, annotate with @MappedProperty(definition = "…") to force the exact column definition and align your Java Vector subtype accordingly.
-
-== Performance considerations
-
-- Prefer FloatVector where appropriate to reduce payload size (especially for large embeddings) and match native storage (Postgres codec, MySQL HeatWave).
-- Avoid boxing/allocations in hot paths:
-  - Reuse entity instances where possible.
-  - Keep conversions to a single pass (Micronaut converters already avoid double conversion on read/write).
-- Validate dimensions at the application layer if your database/driver does not enforce strict vector length.
-
-== Notes and best practices
-
-- Prefer explicit VECTOR column definitions (dimensions + element type) in Oracle.
-- `@Column(length = N)` can be used to set vector dimensions:
-  - Oracle: `VECTOR(N, TYPE)` where `TYPE` is inferred from the Vector subtype.
-  - PostgreSQL: `vector(N)`.
-- Ensure pgvector is installed and configured on PostgreSQL before using vector columns.
-- Choose the most appropriate `Vector` class to match your column type; Micronaut will coerce to the database format as needed and convert back on reads.
-- On Oracle, empty vectors are rejected (ORA-51805). In some driver/engine combinations dimension enforcement may not be strict; validate at application level if required.
-- Converters and column definition helpers are dialect-aware; repositories must declare the correct dialect.
-
-== Troubleshooting
-
-- Missing converters/factories
-  - Symptom: Vector values are not bound/converted; bean not found or converter not applied.
-  - Cause: Required driver/codec dependency is absent on the classpath. Beans are created conditionally via `@Requires(classes = ...)`.
-  - Fix: Add the appropriate dependency (e.g., `com.pgvector:pgvector` for Postgres JDBC, `io.r2dbc:r2dbc-postgresql` for R2DBC, Oracle/MySQL drivers).
-
-- PostgreSQL “type does not exist: vector”
-  - Cause: pgvector extension is not installed on the server.
-  - Fix: `CREATE EXTENSION IF NOT EXISTS vector;`
-
-- Oracle VECTOR dimension/type mismatch
-  - Symptom: ORA-51805 (“Vector is not properly formatted…”) or similar errors.
-  - Cause: Inserted vector dimension differs from column definition or data not in expected element type.
-  - Fix: Use `@MappedProperty(definition = "VECTOR(N, TYPE)")` or `@Column(length = N)` with a matching `Vector` subtype; validate dimensions in application code if strict enforcement is required.
-
-- MySQL HeatWave binding issues
-  - Symptom: Binding fails when sending textual vectors.
-  - Cause: HeatWave VECTOR expects little-endian float32 binary.
-  - Fix: Ensure the Micronaut converters are used (they bind `byte[]` in LE float32). Avoid manual textual binding.
-
-Since: 5.0.0
