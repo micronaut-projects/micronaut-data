@@ -38,7 +38,7 @@ import java.util.concurrent.CompletionStage;
 
 /**
  * The root Data introduction advice, which simply delegates to an appropriate interceptor
- * declared in the {@link io.micronaut.data.intercept} package.
+ * declared in the io.micronaut.data.intercept package (for example {@link io.micronaut.data.intercept.DataInterceptor}).
  *
  * @author graemerocher
  * @since 1.0

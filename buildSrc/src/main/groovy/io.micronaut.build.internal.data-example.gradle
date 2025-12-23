@@ -12,6 +12,12 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
+tasks.withType(Javadoc).configureEach {
+    // Disable doclint warnings for example projects to avoid "no comment" noise in generated Javadoc
+    options.addBooleanOption('Xdoclint:none', true)
+    options.addBooleanOption('quiet', true)
+}
+
 tasks.register("testExamples") {
     dependsOn "test"
 }
