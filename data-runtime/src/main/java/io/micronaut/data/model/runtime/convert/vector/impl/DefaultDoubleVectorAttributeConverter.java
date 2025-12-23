@@ -15,9 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.DoubleVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.DoubleVector;

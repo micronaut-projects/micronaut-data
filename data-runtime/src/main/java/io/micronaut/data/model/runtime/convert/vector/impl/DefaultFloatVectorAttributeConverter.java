@@ -15,12 +15,10 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.List;
 
-import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;

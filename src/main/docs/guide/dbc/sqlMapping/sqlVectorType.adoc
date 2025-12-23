@@ -20,7 +20,7 @@ snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vec
 
 === Example usage
 
-snippet::example.DocumentEmbeddingRepositorySpec[project-base="doc-examples/jdbc-vector-example", source="test", tags="create_vector"]
+snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector-example", source="main", tags="create_vector"]
 
 === DDL generation and dimensions
 

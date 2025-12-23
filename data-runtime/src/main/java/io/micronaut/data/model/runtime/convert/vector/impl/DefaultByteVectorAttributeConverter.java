@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.List;
