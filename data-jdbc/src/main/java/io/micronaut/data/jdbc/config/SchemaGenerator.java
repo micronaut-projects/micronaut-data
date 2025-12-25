@@ -38,7 +38,7 @@ import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
-import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
@@ -80,7 +80,7 @@ public class SchemaGenerator {
     private final JdbcSchemaHandler schemaHandler;
     private final Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap;
     private final PropertyPlaceholderResolver propertyPlaceholderResolver;
-    private final List<SqlColumnDefinitionProvider> columnDefinitionProviders;
+    private final List<DefinitionProvider> definitionProviders;
 
     /**
      * Constructors a schema generator for the given configurations.
@@ -89,13 +89,13 @@ public class SchemaGenerator {
      * @param schemaHandler               The schema handler
      * @param sqlTableMappingValidators   The list of {@link SqlTableMappingValidator} instances
      * @param environment                 The environment
-     * @param columnDefinitionProviders   Providers of vendor-specific SQL column definitions for OBJECT types
+     * @param definitionProviders         Providers of vendor-specific SQL definitions (columns and indexes) used during schema generation
      */
     public SchemaGenerator(List<DataJdbcConfiguration> configurations,
                            JdbcSchemaHandler schemaHandler,
                            List<SqlTableMappingValidator> sqlTableMappingValidators,
                            Environment environment,
-                           List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
+                           List<DefinitionProvider> definitionProviders) {
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
         this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
@@ -107,7 +107,7 @@ public class SchemaGenerator {
             }
             dialectSqlTableMappingValidatorMap.put(dialect, sqlTableMappingValidator);
         }
-        this.columnDefinitionProviders = columnDefinitionProviders == null ? Collections.emptyList() : columnDefinitionProviders;
+        this.definitionProviders = definitionProviders == null ? Collections.emptyList() : definitionProviders;
     }
 
     /**
@@ -207,7 +207,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(columnDefinitionProviders, entities));
+                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }
@@ -240,7 +240,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(entities, dialect, columnDefinitionProviders);
+                    String[] sql = builder.buildCreateTableStatements(entities, dialect, definitionProviders);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -276,7 +276,7 @@ public class SchemaGenerator {
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
-            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(columnDefinitionProviders, entity, dialect);
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();

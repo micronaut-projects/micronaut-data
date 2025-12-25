@@ -27,7 +27,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -55,21 +55,21 @@ public class R2dbcSchemaGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(R2dbcSchemaGenerator.class);
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
-    private final List<SqlColumnDefinitionProvider> columnDefinitionProviders;
+    private final List<DefinitionProvider> definitionProviders;
 
     /**
      * Default constructor.
      *
      * @param configurations     The configurations.
      * @param schemaHandler      The schema handler
-     * @param columnDefinitionProviders Providers of vendor-specific SQL column definitions for OBJECT types
+     * @param definitionProviders Providers of vendor-specific SQL definitions
      */
     public R2dbcSchemaGenerator(List<DataR2dbcConfiguration> configurations,
                                 R2dbcSchemaHandler schemaHandler,
-                                List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
+                                List<DefinitionProvider> definitionProviders) {
         this.configurations = configurations;
         this.schemaHandler = schemaHandler;
-        this.columnDefinitionProviders = columnDefinitionProviders == null ? java.util.Collections.emptyList() : columnDefinitionProviders;
+        this.definitionProviders = definitionProviders == null ? java.util.Collections.emptyList() : definitionProviders;
     }
 
     /**
@@ -132,7 +132,7 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.asList(
-            builder.buildCreateTableStatements(entities, builder.getDialect(), columnDefinitionProviders)
+            builder.buildCreateTableStatements(entities, builder.getDialect(), definitionProviders)
         );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {

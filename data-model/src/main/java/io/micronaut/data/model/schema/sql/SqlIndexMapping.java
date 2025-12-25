@@ -16,6 +16,8 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
+import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -26,9 +28,25 @@ import java.util.Objects;
  * @param name The index name
  * @param unique Whether the index is unique
  * @param columns The column names in the index
+ * @param sqlIndexDefinitionProvider Optional vendor-specific index DDL provider
+ * @param vectorIndexMetadata Vector index metadata, if any
  */
 @Internal
-public record SqlIndexMapping(String name, boolean unique, String[] columns) {
+public record SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider, VectorIndexMetadata vectorIndexMetadata) {
+
+    /**
+     * Backwards-compatible constructor (non-vector index).
+     */
+    public SqlIndexMapping(String name, boolean unique, String[] columns) {
+        this(name, unique, columns, null, null);
+    }
+
+    /**
+     * Constructor that supports SqlIndexDefinitionProvider (non-vector index).
+     */
+    public SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
+        this(name, unique, columns, sqlIndexDefinitionProvider, null);
+    }
 
     @Override
     public boolean equals(Object object) {
@@ -39,12 +57,17 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             return false;
         }
         SqlIndexMapping that = (SqlIndexMapping) object;
-        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns);
+        return unique == that.unique &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(vectorIndexMetadata, that.vectorIndexMetadata) &&
+               Arrays.equals(columns, that.columns);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, unique, Arrays.hashCode(columns));
+        int result = Objects.hash(name, unique, vectorIndexMetadata);
+        result = 31 * result + Arrays.hashCode(columns);
+        return result;
     }
 
     @Override

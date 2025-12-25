@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -48,7 +49,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
+import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
@@ -201,7 +202,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The table
      */
     @Experimental
-    public String buildBatchCreateTableStatement(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
+    public String buildBatchCreateTableStatement(List<DefinitionProvider> columnDefinitionProviders,
                                                  PersistentEntity... entities) {
         return Arrays.stream(entities)
             .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders)))
@@ -303,8 +304,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Experimental
     public final String[] buildCreateTableStatements(PersistentEntity entity,
-                                               List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(columnDefinitionProviders, entity, getDialect());
+                                               List<DefinitionProvider> definitionProviders) {
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -341,14 +342,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     public final String[] buildCreateTableStatements(PersistentEntity[] entities,
                                                      Dialect dialect,
-                                                     List<SqlColumnDefinitionProvider> columnDefinitionProviders) {
+                                                     List<DefinitionProvider> definitionProviders) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(columnDefinitionProviders, entity, dialect);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
@@ -491,7 +492,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private  String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
         // Create index name without escaped table name and then escape if needed
         String columnNames = String.join(", ", indexMapping.columns());
         String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
@@ -500,19 +501,32 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (escape) {
             indexName = quote(indexName);
         }
-
-        StringBuilder indexBuilder = new StringBuilder();
-        indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
-            .append("INDEX ");
-        String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
-        indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(indexColumnNames);
-
-        if (dialect == Dialect.ORACLE) {
-            indexBuilder.append(")");
+        SqlIndexDefinitionProvider sqlIndexDefinitionProvider = indexMapping.sqlIndexDefinitionProvider();
+        if (sqlIndexDefinitionProvider != null) {
+            return sqlIndexDefinitionProvider.getIndexDefinition(
+                indexName,
+                escapedTableName,
+                indexMapping.columns(),
+                escape,
+                this::quote,
+                indexMapping,
+                dialect
+            );
         } else {
-            indexBuilder.append(");");
+
+            StringBuilder indexBuilder = new StringBuilder();
+            indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
+                .append("INDEX ");
+            String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
+            indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(indexColumnNames);
+
+            if (dialect == Dialect.ORACLE) {
+                indexBuilder.append(")");
+            } else {
+                indexBuilder.append(");");
+            }
+            return indexBuilder.toString();
         }
-        return indexBuilder.toString();
     }
 
     private String createSequenceStmt(@Nullable String schema, String tableName, String definedName, boolean escape) {

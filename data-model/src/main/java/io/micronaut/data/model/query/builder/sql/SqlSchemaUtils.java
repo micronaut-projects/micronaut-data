@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.VectorIndexType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -26,6 +27,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.VectorIndex;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -37,13 +39,16 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
 
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
@@ -89,7 +94,7 @@ public final class SqlSchemaUtils {
       * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
       * and potentially joined tables.
       *
-      * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
+      * @param definitionProviders the list of DefinitionProvider (column/index DDL providers)
       * @param entity The entity
       * @param dialect The SQL dialect used to render vendor-specific definitions.
       * @return The SQL table definitions for the given entity
@@ -97,7 +102,7 @@ public final class SqlSchemaUtils {
       */
     @Experimental
     @SuppressWarnings("java:S3776")
-    public static List<SqlTableMapping> getSqlTableMappings(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
+    public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
                                                             PersistentEntity entity,
                                                             Dialect dialect) {
         ArgumentUtils.requireNonNull("entity", entity);
@@ -109,6 +114,9 @@ public final class SqlSchemaUtils {
         List<SqlTableMapping> tables = new ArrayList<>();
 
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
+
+        List<SqlColumnDefinitionProvider> sqlColumnDefinitionProviders = definitionProviders.stream().filter(x -> x instanceof SqlColumnDefinitionProvider).map(x -> (SqlColumnDefinitionProvider) x).toList();
+        List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders = definitionProviders.stream().filter(x -> x instanceof SqlIndexDefinitionProvider).map(x -> (SqlIndexDefinitionProvider) x).toList();
 
         NamingStrategy namingStrategy = entity.getNamingStrategy();
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
@@ -146,24 +154,24 @@ public final class SqlSchemaUtils {
                         PersistentPropertyPath pp = leftProperties.get(i);
                         String columnName = leftJoinTableColumns.get(i);
                         // TODO: Should we treat join table fields as primary keys?
-                        columns.add(getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 } else {
                     for (PersistentPropertyPath pp : leftProperties) {
                         String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 }
                 if (rightJoinTableColumns.size() == rightProperties.size()) {
                     for (int i = 0; i < rightJoinTableColumns.size(); i++) {
                         PersistentPropertyPath pp = rightProperties.get(i);
                         String columnName = rightJoinTableColumns.get(i);
-                        columns.add(getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 } else {
                     for (PersistentPropertyPath pp : rightProperties) {
                         String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
+                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
                     }
                 }
                 SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, null, columns);
@@ -172,20 +180,20 @@ public final class SqlSchemaUtils {
         }
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
-        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(columnDefinitionProviders, identities, namingStrategy, dialect);
+        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
 
         PersistentProperty version = entity.getVersion();
         if (version != null && !version.isGenerated()) {
             String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-            SqlColumnMapping column = getColumnDefinition(columnDefinitionProviders, version, columnName, false, true, false, dialect);
+            SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect);
             columns.add(column);
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
-            SqlColumnMapping column = getColumnDefinition(columnDefinitionProviders, property, columnName, false, isRequired(associations, property),
+            SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
             columns.add(column);
         };
@@ -195,7 +203,7 @@ public final class SqlSchemaUtils {
         }
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
-        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity);
+        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
             indexes);
@@ -402,8 +410,9 @@ public final class SqlSchemaUtils {
         return sequences;
     }
 
-    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity) {
+    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity, Dialect dialect, List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         List<SqlIndexMapping> indexMappings = new ArrayList<>();
+        NamingStrategy namingStrategy = entity.getNamingStrategy();
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
             .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
@@ -417,6 +426,36 @@ public final class SqlSchemaUtils {
                 String[] columns = index.stringValues("columns");
                 indexMappings.add(new SqlIndexMapping(name, unique, columns));
             });
+
+        for (PersistentProperty prop : entity.getPersistentProperties()) {
+            AnnotationValue<VectorIndex> vi = prop.getAnnotationMetadata().getAnnotation(VectorIndex.class);
+            if (vi != null) {
+                String name = vi.stringValue("name").orElse("");
+                VectorIndexType indexType = vi.enumValue("vectorIndexType", VectorIndexType.class).orElse(VectorIndexType.IVF);
+                VectorIndexType.DistanceType distanceType = vi.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
+                int accuracy = vi.intValue("accuracy").orElse(90);
+                String columnName = namingStrategy.mappedName(Collections.emptyList(), prop);
+                VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy);
+                SqlIndexDefinitionProvider provider = null;
+                io.micronaut.core.type.Argument<?> arg;
+                if (prop instanceof io.micronaut.data.model.runtime.RuntimePersistentProperty<?> rpp) {
+                    arg = rpp.getArgument();
+                } else {
+                    arg = io.micronaut.core.type.Argument.of(Object.class);
+                }
+                for (SqlIndexDefinitionProvider sqlIndexDefinitionProvider: sqlIndexDefinitionProviders) {
+                    try {
+                        if (sqlIndexDefinitionProvider.supports(arg, dialect)) {
+                            provider = sqlIndexDefinitionProvider;
+                            break;
+                        }
+                    } catch (Exception ignored) {
+                        // be resilient during discovery
+                    }
+                }
+                indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta));
+            }
+        }
         return indexMappings;
     }
 

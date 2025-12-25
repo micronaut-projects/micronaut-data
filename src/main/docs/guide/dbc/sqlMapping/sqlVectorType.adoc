@@ -12,6 +12,11 @@ You can also use the sealed interface `Vector` if you need a type-agnostic param
 
 snippet::example.DocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
 
+To create a vector index, annotate the vector property with @VectorIndex (params: name optional, vectorIndexType IVF|HNSW, distanceType, accuracy).
+Dialect notes:
+- PostgreSQL (pgvector): Creates ivfflat/hnsw; operator class is derived from distance (e.g. COSINE -> vector_cosine_ops, DOT -> vector_ip_ops, L1/L2 -> vector_l1_ops/vector_l2_ops, HAMMING/JACCARD on bit vectors).
+- Oracle: Creates CREATE VECTOR INDEX with ORGANIZATION NEIGHBOR PARTITIONS (IVF) or GRAPH (HNSW), uses DISTANCE and target ACCURACY.
+
 === Repository usage
 
 Use vector fields as you would any other property. You can also pass `Vector` into query parameters when you don’t want to commit to a specific subtype at the call site.
@@ -86,4 +91,3 @@ CREATE TABLE document_embedding (
   embedding VECTOR(1536)
 );
 ----
-

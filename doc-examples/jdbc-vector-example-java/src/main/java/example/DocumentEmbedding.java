@@ -3,6 +3,8 @@ package example;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.VectorIndex;
+import io.micronaut.data.annotation.VectorIndexType;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.Column;
 
@@ -12,6 +14,11 @@ public record DocumentEmbedding(
     @GeneratedValue
     Long id,
 
+    @VectorIndex(
+        vectorIndexType = VectorIndexType.IVF,
+        distanceType = VectorIndexType.DistanceType.COSINE,
+        accuracy = 90
+    )
     @Column(length = 3)
     Vector embedding) {
 }

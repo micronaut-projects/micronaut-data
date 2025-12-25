@@ -25,7 +25,7 @@ import io.micronaut.core.type.Argument;
  *
  * @since 5.0.0
  */
-public interface SqlColumnDefinitionProvider {
+public interface SqlColumnDefinitionProvider extends DefinitionProvider {
 
     /**
       * Return a vendor-specific SQL column definition for this attribute, or {@code null} to delegate to default mapping.
@@ -48,4 +48,9 @@ public interface SqlColumnDefinitionProvider {
      * @return true if this provider can generate a column definition for the given argument
      */
     boolean supports(Argument<?> argument);
+
+    @Override
+    default DefinitionType getDefinitionType() {
+        return DefinitionType.COLUMN;
+    }
 }
