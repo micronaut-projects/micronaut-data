@@ -45,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "r2dbc.datasources.default.options.connectTimeout", value = "PT1M")
 @Property(name = "r2dbc.datasources.default.options.statementTimeout", value = "PT1M")
 @Property(name = "r2dbc.datasources.default.options.lockTimeout", value = "PT1M")
-@Property(name = "test-resources.containers.postgres.image-name", value = "postgres:10")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PostgresApp implements TestPropertyProvider {
 

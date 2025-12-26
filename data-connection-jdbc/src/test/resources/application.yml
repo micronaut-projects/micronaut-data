@@ -11,6 +11,7 @@ test-resources:
       startup-timeout: 300s
       image-name: gvenzl/oracle-free:latest-faststart
     postgres:
+      image-name: pgvector/pgvector:pg16
       startup-timeout: 300s
 
 micronaut:
