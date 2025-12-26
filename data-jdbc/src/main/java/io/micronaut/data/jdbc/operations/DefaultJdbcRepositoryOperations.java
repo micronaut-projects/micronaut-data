@@ -39,6 +39,7 @@ import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
@@ -50,6 +51,7 @@ import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
@@ -166,6 +168,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
 
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
+    private final ColumnNameCallableResultReader columnNameCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
 
@@ -230,6 +233,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
+        this.columnNameCallableResultReader = new ColumnNameCallableResultReader(conversionService);
         if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
             for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
                 Dialect dialect = sqlExceptionMapper.getDialect();
@@ -1262,7 +1266,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     storedQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
                     // Prefer OUT parameter metadata from the stored query (avoids SQL parsing)
                     int inCount = storedQuery.getQueryBindings().size();
-                    int outCountRegistered;
                     List<QueryOutParameterBinding> outParams = storedQuery.getOutParameterBindings();
                     if (outParams != null && !outParams.isEmpty()) {
                         int pos = inCount;
@@ -1272,67 +1275,55 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 : Types.VARCHAR;
                             cs.registerOutParameter(++pos, sqlType);
                         }
-                        outCountRegistered = outParams.size();
                     } else {
                         throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
                     }
                     cs.execute();
                     rowsUpdated = 1;
-                    if (storedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING) {
-                        // For DELETE RETURNING the row no longer exists; return the original entity and trigger post-load
-                        entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
-                        return;
-                    }
-                    // If the entity has an identity, update it from the last OUT param (by convention ID is last)
+
+                    // Map OUT parameters back into the entity using callable readers (no re-select).
                     @SuppressWarnings("unchecked")
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    Object idValue = null;
-                    if (identity != null && outCountRegistered > 0) {
-                        // Try to locate the ID column among OUT params by name; fall back to the last one
-                        String idCol = identity.getPersistedName();
-                        String normId = DefaultJdbcRepositoryOperations.stripQuotesToUpper(idCol);
-                        int idOutIndex = -1;
-                        List<QueryOutParameterBinding> outParamsList = storedQuery.getOutParameterBindings();
-                        if (outParamsList != null) {
-                            for (int i = 0; i < outParamsList.size(); i++) {
-                                String n = outParamsList.get(i).getName();
-                                if (n != null && DefaultJdbcRepositoryOperations.stripQuotesToUpper(n).equals(normId)) {
-                                    idOutIndex = i;
-                                    break;
+                    List<QueryOutParameterBinding> outParamsList = storedQuery.getOutParameterBindings();
+
+                    if (CollectionUtils.isNotEmpty(outParamsList)) {
+                        for (int i = 0; i < outParamsList.size(); i++) {
+                            QueryOutParameterBinding outParam = outParamsList.get(i);
+                            int outParamPosition = inCount + i + 1;
+                            DataType dataType = outParam.getDataType();
+                            String outName = outParam.getName();
+
+                            Object outValue = columnIndexCallableResultReader.readDynamic(cs, outParamPosition, dataType != null ? dataType : DataType.OBJECT);
+
+                            if (outValue == null) {
+                                continue;
+                            }
+
+                            boolean applied = false;
+                            String[] propertyPathArr = outParam.getPropertyPath();
+                            if (propertyPathArr != null && propertyPathArr.length > 0) {
+                                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyPathArr);
+                                if (propertyPath != null) {
+                                    // Set nested or direct property value
+                                    entity = (T) propertyPath.setPropertyValue(entity, outValue);
+                                    applied = true;
                                 }
                             }
-                        }
-                        int outParamPosition = inCount + (idOutIndex >= 0 ? idOutIndex + 1 : outCountRegistered);
-                        idValue = cs.getObject(outParamPosition);
-                        if (idValue != null) {
-                            BeanProperty<T, Object> property = identity.getProperty();
-                            entity = updateEntityId(property, entity, idValue);
+
+                            // Fallback to identity match by persisted column name if no explicit property path was provided
+                            if (!applied && identity != null && outName != null) {
+                                String idCol = identity.getPersistedName();
+                                if (DefaultJdbcRepositoryOperations.stripQuotesToUpper(outName)
+                                    .equals(DefaultJdbcRepositoryOperations.stripQuotesToUpper(idCol))) {
+                                    BeanProperty<T, Object> property = identity.getProperty();
+                                    entity = updateEntityId(property, entity, outValue);
+                                }
+                            }
                         }
                     }
 
-                    // Load full row to return all fields (ensures consistency with RETURNING semantics)
-                    if (identity != null && idValue != null) {
-                        // Build a simple SELECT by ID
-                        String tableName = storedQuery.getQueryBuilder().getTableName(persistentEntity);
-                        String idCol = identity.getPersistedName();
-                        String idColQuoted = idCol;
-                        if (ctx.dialect == Dialect.ORACLE) {
-                            idColQuoted = "\"" + idCol.toUpperCase(Locale.ENGLISH) + "\"";
-                        }
-                        String sql = "SELECT * FROM " + tableName + " WHERE " + idColQuoted + " = ?";
-                        try (PreparedStatement sel = ctx.connection.prepareStatement(sql)) {
-                            sel.setObject(1, idValue);
-                            try (ResultSet rs = sel.executeQuery()) {
-                                if (rs.next()) {
-                                    Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
-                                    entity = readEntity(null, rs, type);
-                                    entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
-                                } else {
-                                    throw new DataAccessException("Failed to reload inserted entity by id");
-                                }
-                            }
-                        }
-                    }
+                    // For DELETE RETURNING the row no longer exists; just trigger post-load on the updated entity
+                    entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
                     return;
                 } catch (SQLException e) {
                     throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
