@@ -17,11 +17,14 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.VectorIndexType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 /**
@@ -43,7 +46,7 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
     public boolean supports(Argument<?> argument, Dialect dialect) {
         return dialect == Dialect.ORACLE
             && argument != null
-            && io.micronaut.data.model.vector.Vector.class.isAssignableFrom(argument.getType());
+            && Vector.class.isAssignableFrom(argument.getType());
     }
 
     @Override
@@ -56,11 +59,11 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
                                      Dialect dialect) {
         String columnNames = String.join(", ", columns);
         String indexColumnNames = escape
-            ? String.join(", ", java.util.Arrays.stream(columns).map(quoter).toList())
+            ? String.join(", ", Arrays.stream(columns).map(quoter).toList())
             : columnNames;
 
         var meta = mapping.vectorIndexMetadata();
-        boolean hnsw = meta != null && meta.vectorIndexType() == io.micronaut.data.annotation.VectorIndexType.HNSW;
+        boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
         String organization = hnsw ? "ORGANIZATION NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
         String distance = switch (meta.distanceType()) {
             case DOT -> "DOT";
@@ -70,8 +73,6 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
             case HAMMING -> "HAMMING";
             default -> "COSINE";
         };
-        int accuracy = meta != null ? meta.accuracy() : 90;
-
         StringBuilder vec = new StringBuilder();
         vec.append("CREATE VECTOR INDEX ")
            .append(indexName)
@@ -87,7 +88,7 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
            .append(distance)
            .append(' ')
            .append("WITH TARGET ACCURACY ")
-           .append(accuracy);
+           .append(meta.accuracy());
         return vec.toString();
     }
 }
