@@ -19,9 +19,9 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
 
 /**
- * SPI that allows a converter to provide a vendor-specific SQL column definition during schema generation.
+ * Extension interface to provide vendor-specific SQL column definitions during schema generation.
  *
- * Implementations can be discovered by SqlSchemaUtils without introducing cross-module dependencies.
+ * Implementations are standard Micronaut beans discovered by the schema utilities.
  *
  * @since 5.0.0
  */
@@ -48,9 +48,4 @@ public interface SqlColumnDefinitionProvider extends DefinitionProvider {
      * @return true if this provider can generate a column definition for the given argument
      */
     boolean supports(Argument<?> argument);
-
-    @Override
-    default DefinitionType getDefinitionType() {
-        return DefinitionType.COLUMN;
-    }
 }

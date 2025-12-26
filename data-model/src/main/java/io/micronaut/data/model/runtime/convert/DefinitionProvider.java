@@ -18,15 +18,12 @@ package io.micronaut.data.model.runtime.convert;
 import io.micronaut.core.annotation.Internal;
 
 /**
- * Internal SPI for SQL schema definition providers.
+ * Internal extension interface for SQL schema definition providers.
+ * Implementations are standard Micronaut beans.
  *
  * @since 5.0.0
  */
 @Internal
 public interface DefinitionProvider {
 
-    /**
-     * @return The definition type.
-     */
-    DefinitionType getDefinitionType();
 }

@@ -62,18 +62,14 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
         var meta = mapping.vectorIndexMetadata();
         boolean hnsw = meta != null && meta.vectorIndexType() == io.micronaut.data.annotation.VectorIndexType.HNSW;
         String organization = hnsw ? "ORGANIZATION NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
-        String distance = "COSINE";
-        if (meta != null && meta.distanceType() != null) {
-            distance = switch (meta.distanceType()) {
-                case COSINE -> "COSINE";
-                case DOT -> "DOT";
-                case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN SQUARED";
-                case L2_EUCLIDEAN -> "EUCLIDEAN";
-                case L1_MANHATTAN -> "MANHATTAN";
-                case HAMMING -> "HAMMING";
-                default -> "COSINE";
-            };
-        }
+        String distance = switch (meta.distanceType()) {
+            case DOT -> "DOT";
+            case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN SQUARED";
+            case L2_EUCLIDEAN -> "EUCLIDEAN";
+            case L1_MANHATTAN -> "MANHATTAN";
+            case HAMMING -> "HAMMING";
+            default -> "COSINE";
+        };
         int accuracy = meta != null ? meta.accuracy() : 90;
 
         StringBuilder vec = new StringBuilder();

@@ -27,5 +27,5 @@ import org.jspecify.annotations.NonNull;
  * @param accuracy Target accuracy
  */
 @Internal
-public record VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType, VectorIndexType.DistanceType distanceType, int accuracy) {
+public record VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType, VectorIndexType.@NonNull DistanceType distanceType, int accuracy) {
 }

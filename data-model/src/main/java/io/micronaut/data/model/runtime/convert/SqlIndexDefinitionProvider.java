@@ -23,8 +23,8 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import java.util.function.Function;
 
 /**
- * SPI to allow providers to generate vendor-specific SQL index definitions during schema generation.
- * Implementations can be discovered or registered and consulted by the SQL schema generator.
+ * Extension interface to generate vendor-specific SQL index definitions for schema generation.
+ * Implementations are standard Micronaut beans consulted by the schema generator.
  *
  * This mirrors {@link SqlColumnDefinitionProvider} but for index DDL.
  *
@@ -61,9 +61,4 @@ public interface SqlIndexDefinitionProvider extends DefinitionProvider {
                               Function<String, String> quoter,
                               SqlIndexMapping mapping,
                               Dialect dialect);
-
-    @Override
-    default DefinitionType getDefinitionType() {
-        return DefinitionType.INDEX;
-    }
 }

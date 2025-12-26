@@ -410,6 +410,7 @@ public final class SqlSchemaUtils {
         return sequences;
     }
 
+    @SuppressWarnings("java:S3776")
     private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity, Dialect dialect, List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         List<SqlIndexMapping> indexMappings = new ArrayList<>();
         NamingStrategy namingStrategy = entity.getNamingStrategy();
