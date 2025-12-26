@@ -614,4 +614,29 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         insertQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE) "
         method.classValue(DataMethod, "interceptor").get() == SaveEntityInterceptor
     }
+
+    void "ORACLE test build save returning"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    Book saveReturning(Book book);
+}
+""")
+        when:
+            def saveReturningMethod = repository.findPossibleMethods("saveReturning").findFirst().get()
+        then:
+            getQuery(saveReturningMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+            getDataResultType(saveReturningMethod) == "io.micronaut.data.tck.entities.Book"
+            getParameterPropertyPaths(saveReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated"] as String[]
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getResultDataType(saveReturningMethod) == DataType.ENTITY
+            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
+    }
 }

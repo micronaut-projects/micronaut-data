@@ -38,7 +38,7 @@ public interface QueryResult {
     /**
      * @return A string representation of the original query.
      */
-    
+
     String getQuery();
 
     /**
@@ -62,7 +62,7 @@ public interface QueryResult {
     /**
      * @return A string parts representation of the original query.
      */
-    
+
     List<String> getQueryParts();
 
     /**
@@ -71,7 +71,7 @@ public interface QueryResult {
      *
      * @return The map
      */
-    default 
+    default
     Map<String, String> getParameters() {
         return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> String.join(".", p.getPropertyPath())));
     }
@@ -79,7 +79,7 @@ public interface QueryResult {
     /**
      * @return The computed parameter types.
      */
-    default 
+    default
     Map<String, DataType> getParameterTypes() {
         return getParameterBindings().stream().collect(Collectors.toMap(p -> String.join(".", p.getPropertyPath()), QueryParameterBinding::getDataType, (d1, d2) -> d1));
     }
@@ -90,6 +90,17 @@ public interface QueryResult {
      * @return the parameters binding
      */
     List<QueryParameterBinding> getParameterBindings();
+
+    /**
+     * Returns the OUT parameters binding for this query (e.g. Oracle RETURNING ... INTO ...).
+     * Default is empty for dialects that don't use OUT parameters.
+     *
+     * @return the OUT parameters binding
+     * @since 4.11
+     */
+    default List<QueryOutParameterBinding> getOutParameterBindings() {
+        return Collections.emptyList();
+    }
 
     /**
      * Returns additional required parameters.
@@ -117,7 +128,7 @@ public interface QueryResult {
      *
      * @return the join paths or empty
      */
-    
+
     default Collection<JoinPath> getJoinPaths() {
         return Collections.emptyList();
     }
@@ -130,7 +141,7 @@ public interface QueryResult {
      * @return The query
      * @since 4.10
      */
-    
+
     static QueryResult of(String query,  List<QueryParameterBinding> parameterBindings) {
         return of(query, List.of(), parameterBindings);
     }
@@ -144,7 +155,7 @@ public interface QueryResult {
      * @param additionalRequiredParameters Additional required parameters to execute the query
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,
@@ -154,7 +165,7 @@ public interface QueryResult {
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
 
         return new QueryResult() {
-            
+
             @Override
             public String getQuery() {
                 return query;
@@ -185,7 +196,7 @@ public interface QueryResult {
      * @param parameterBindings            The parameters binding
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings) {
@@ -193,7 +204,7 @@ public interface QueryResult {
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
 
         return new QueryResult() {
-            
+
             @Override
             public String getQuery() {
                 return query;
@@ -223,7 +234,7 @@ public interface QueryResult {
      * @param offset                       The query offset
      * @return The query
      */
-    static 
+    static
     QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,
@@ -245,7 +256,7 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,
@@ -308,7 +319,7 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,
@@ -365,13 +376,13 @@ public interface QueryResult {
      * @param joinPaths         The join paths
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,
             int max,
             long offset,
-            
+
             Sort sort,
             @Nullable
             Collection<JoinPath> joinPaths) {
@@ -426,7 +437,7 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    
+
     static QueryResult of(String query,
              List<String> queryParts,
              List<QueryParameterBinding> parameterBindings,

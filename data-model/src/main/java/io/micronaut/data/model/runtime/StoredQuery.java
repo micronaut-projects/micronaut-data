@@ -23,6 +23,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
+import java.util.List;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The root entity type
      */
-    
+
     Class<E> getRootEntity();
 
     /**
@@ -58,7 +59,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-    
+
     String getQuery();
 
     /**
@@ -66,7 +67,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-    
+
     String[] getExpandableQueryParts();
 
     /**
@@ -81,7 +82,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
-    
+
     Class<R> getResultType();
 
     /**
@@ -90,13 +91,13 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query result type
      */
     @Override
-    
+
     Argument<R> getResultArgument();
 
     /**
      * @return The result data type.
      */
-    
+
     DataType getResultDataType();
 
     /**
@@ -145,7 +146,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The parameter binding.
      */
-    
+
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
@@ -154,7 +155,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The all join paths
      * @since 4.8.1
      */
-    
+
     default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
@@ -202,7 +203,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query limit
      * @since 4.13
      */
-    
+
     default Limit getQueryLimit() {
         return Limit.UNLIMITED;
     }
@@ -211,9 +212,20 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The runtime sort
      * @since 4.13
      */
-    
+
     default Sort getSort() {
         return Sort.UNSORTED;
+    }
+
+    /**
+     * OUT parameters metadata for this stored query (e.g. Oracle RETURNING ... INTO ...).
+     * Order corresponds to the order in which OUT parameters must be registered.
+     *
+     * @return list of OUT parameter bindings or empty if none
+     * @since 4.11
+     */
+    default List<QueryOutParameterBinding> getOutParameterBindings() {
+        return List.of();
     }
 
     /**

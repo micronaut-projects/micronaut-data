@@ -64,6 +64,8 @@ import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -686,6 +688,35 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (queryResult != null) {
             if (parameterBinding.stream().anyMatch(QueryParameterBinding::isExpandable)) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY, queryResult.getQueryParts().toArray(new String[0]));
+            }
+            // OUT parameter bindings (e.g. Oracle RETURNING ... INTO ...)
+            java.util.List<QueryOutParameterBinding> outBindings = queryResult.getOutParameterBindings();
+            if (io.micronaut.core.util.CollectionUtils.isNotEmpty(outBindings)) {
+                java.util.List<io.micronaut.core.annotation.AnnotationValue<?>> outAnnotations = new java.util.ArrayList<>(outBindings.size());
+                for (QueryOutParameterBinding b : outBindings) {
+                    io.micronaut.core.annotation.AnnotationValueBuilder<?> outBuilder = io.micronaut.core.annotation.AnnotationValue.builder(DataMethodQueryOutParameter.class);
+                    if (io.micronaut.core.util.StringUtils.isNotEmpty(b.getName())) {
+                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
+                    }
+                    if (b.getDataType() != null) {
+                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
+                    }
+                    if (b.getParameterBindingPath() != null) {
+                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PARAMETER_BINDING_PATH, b.getParameterBindingPath());
+                    }
+                    if (b.getPropertyPath() != null) {
+                        if (b.getPropertyPath().length == 1) {
+                            outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PROPERTY, b.getPropertyPath()[0]);
+                        } else {
+                            outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PROPERTY_PATH, b.getPropertyPath());
+                        }
+                    }
+                    if (b.getParameterConverterClass() != null) {
+                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_CONVERTER, new io.micronaut.core.annotation.AnnotationClassValue<>(b.getParameterConverterClass().getName()));
+                    }
+                    outAnnotations.add(outBuilder.build());
+                }
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new io.micronaut.core.annotation.AnnotationValue[0]));
             }
 
             int max = queryResult.getMax();

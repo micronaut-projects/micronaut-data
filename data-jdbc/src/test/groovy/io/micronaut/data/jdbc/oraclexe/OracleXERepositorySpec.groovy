@@ -229,14 +229,13 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             cleanupBooks()
     }
 
-    @PendingFeature
     void "test update returning book"() {
         given:
             setupBooks()
         when:
             def book = bookRepository.findByTitle("Pet Cemetery")
             book.title = "Xyz"
-            Book newBook = bookRepository.updateReturning(book)
+            Book newBook = bookRepository.updateReturning(book.id, book.title)
             book.title = "old"
         then:
             newBook.title == "Xyz"
@@ -294,6 +293,38 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         noExceptionThrown()
         cleanup:
         faceRepository.delete(face)
+    }
+
+    void "test insert returning book"() {
+        given:
+            setupBooks()
+            def existing = bookRepository.findByTitle("Pet Cemetery")
+            def bookToCreate = new Book(title: "My book ORA", totalPages: 321, author: existing.author)
+        when:
+            def newBook = bookRepository.saveReturning(bookToCreate)
+        then:
+            newBook.id
+            !newBook.is(bookToCreate)
+            // lifecycle events
+            bookToCreate.prePersist == 1
+            newBook.postLoad == 1
+            newBook.postPersist == 1
+            // verify persisted
+            bookRepository.findById(newBook.id).get().title == "My book ORA"
+            bookRepository.findByTitle("My book ORA")
+    }
+
+    void "test delete returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            Book deletedBook = bookRepository.deleteReturning(book.id)
+        then:
+            deletedBook.id == book.id
+            deletedBook.title == book.title
+            deletedBook.postLoad == 1
+            bookRepository.findById(book.id).isEmpty()
     }
 
 }

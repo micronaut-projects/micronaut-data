@@ -29,6 +29,7 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -38,6 +39,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.inject.ExecutableMethod;
@@ -88,6 +90,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Set<JoinPath> joinPaths = null;
     private Set<JoinPath> joinFetchPaths = null;
     private final List<QueryParameterBinding> queryParameters;
+    private final List<QueryOutParameterBinding> outParameterBindings;
     private final boolean rawQuery;
     private final boolean jsonEntity;
     private final OperationType operationType;
@@ -234,6 +237,9 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
             isNumericPlaceHolder
         );
+        this.outParameterBindings = getOutParameters(
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, DataMethodQueryOutParameter.class)
+        );
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
@@ -309,6 +315,75 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return queryParameters;
     }
 
+    private static List<QueryOutParameterBinding> getOutParameters(List<io.micronaut.core.annotation.AnnotationValue<DataMethodQueryOutParameter>> params) {
+        if (params == null || params.isEmpty()) {
+            return java.util.List.of();
+        }
+        java.util.List<QueryOutParameterBinding> outParams = new java.util.ArrayList<>(params.size());
+        for (io.micronaut.core.annotation.AnnotationValue<DataMethodQueryOutParameter> av : params) {
+            String[] propertyPath = av.stringValues(DataMethodQueryOutParameter.META_MEMBER_PROPERTY_PATH);
+            if (propertyPath.length == 0) {
+                propertyPath = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_PROPERTY)
+                    .map(prop -> new String[]{prop})
+                    .orElse(null);
+            }
+            String[] parameterBindingPath = av.stringValues(DataMethodQueryOutParameter.META_MEMBER_PARAMETER_BINDING_PATH);
+            if (parameterBindingPath.length == 0) {
+                parameterBindingPath = null;
+            }
+            io.micronaut.data.model.DataType dataType = av.enumValue(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, io.micronaut.data.model.DataType.class).orElse(null);
+            Class<?> converterClass = av.classValue(DataMethodQueryOutParameter.META_MEMBER_CONVERTER).orElse(null);
+            String name = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_NAME).orElse(null);
+            outParams.add(new StoredOutParameter(name, dataType, parameterBindingPath, propertyPath, converterClass));
+        }
+        return outParams;
+    }
+
+    private static final class StoredOutParameter implements QueryOutParameterBinding {
+        private final String name;
+        private final io.micronaut.data.model.DataType dataType;
+        private final String[] parameterBindingPath;
+        private final String[] propertyPath;
+        private final Class<?> converterClass;
+
+        private StoredOutParameter(String name,
+                                   io.micronaut.data.model.DataType dataType,
+                                   String[] parameterBindingPath,
+                                   String[] propertyPath,
+                                   Class<?> converterClass) {
+            this.name = name;
+            this.dataType = dataType;
+            this.parameterBindingPath = parameterBindingPath;
+            this.propertyPath = propertyPath;
+            this.converterClass = converterClass;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public io.micronaut.data.model.DataType getDataType() {
+            return dataType;
+        }
+
+        @Override
+        public Class<?> getParameterConverterClass() {
+            return converterClass;
+        }
+
+        @Override
+        public String[] getParameterBindingPath() {
+            return parameterBindingPath;
+        }
+
+        @Override
+        public String[] getPropertyPath() {
+            return propertyPath;
+        }
+    }
+
     @Override
     public Limit getQueryLimit() {
         return limit;
@@ -322,6 +397,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public List<QueryParameterBinding> getQueryBindings() {
         return queryParameters;
+    }
+
+    @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return outParameterBindings == null ? java.util.List.of() : outParameterBindings;
     }
 
     @Override

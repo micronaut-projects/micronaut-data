@@ -48,11 +48,13 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,7 +201,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The table
      */
     @Experimental
-    
+
     public String buildBatchCreateTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
             .collect(Collectors.joining(System.lineSeparator()));
@@ -213,7 +215,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The table
      */
     @Experimental
-    
+
     public String buildBatchDropTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
             .collect(Collectors.joining("\n"));
@@ -227,7 +229,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the give entity
      */
     @Experimental
-    
+
     public String[] buildDropTableStatements(PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
@@ -255,7 +257,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @param association The association
      * @return The join table insert statement
      */
-    
+
     public String buildJoinTableInsert(PersistentEntity entity,  Association association) {
         if (!isForeignKeyWithJoinTable(association)) {
             throw new IllegalArgumentException("Join table inserts can only be built for foreign key associations that are mapped with a join table.");
@@ -306,7 +308,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the give entity
      */
     @Experimental
-    
+
     public String[] buildCreateTableStatements(PersistentEntity entity) {
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
         assert CollectionUtils.isNotEmpty(tables);
@@ -333,7 +335,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the given entities
      */
     @Experimental
-    
+
     public String[] buildCreateTableStatements(PersistentEntity[] entities) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
@@ -680,6 +682,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         String builder;
+        List<String> resultColumns = new ArrayList<>();
+        List<DataType> resultColumnTypes = new ArrayList<>();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
 
         if (isJsonEntity(repositoryMetadata, entity)) {
@@ -690,6 +694,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             for (PersistentProperty identity : entity.getIdentityProperties()) {
                 if (identity.isGenerated()) {
                     String identityName = identity.getPersistedName();
+                    resultColumns.add(identityName);
+                    resultColumnTypes.add(identity.getDataType());
                     builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
                 }
                 parameterBindings.add(new QueryParameterBinding() {
@@ -722,7 +728,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
-            List<String> resultColumns = new ArrayList<>();
             List<String> values = new ArrayList<>();
 
             for (PersistentProperty prop : persistentProperties) {
@@ -734,6 +739,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             columnName = quote(columnName);
                         }
                         resultColumns.add(columnName);
+                        resultColumnTypes.add(property.getDataType());
                         return;
                     }
 
@@ -774,6 +780,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
                     columns.add(columnName);
                     resultColumns.add(columnName);
+                    resultColumnTypes.add(property.getDataType());
                 });
             }
             PersistentProperty version = entity.getVersion();
@@ -815,6 +822,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 }
                 columns.add(columnName);
                 resultColumns.add(columnName);
+                resultColumnTypes.add(version.getDataType());
             }
 
             for (PersistentProperty identity : entity.getIdentityProperties()) {
@@ -829,6 +837,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (SqlQueryBuilderUtils.isNotForeign(associations)) {
 
                         resultColumns.add(columnName);
+                        resultColumnTypes.add(property.getDataType());
 
                         Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
                         if (generated.isPresent()) {
@@ -890,14 +899,256 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
 
             if (definition.returning()) {
-                // TODO: proper selection of columns
-                builder += RETURNING + String.join(",", resultColumns);
+                if (dialect == Dialect.ORACLE) {
+                    // For Oracle use RETURNING all result columns INTO placeholders with CallableStatement.
+                    if (resultColumns.isEmpty()) {
+                        throw new IllegalStateException("INSERT ... RETURNING requires at least one column to return for entity: " + entity.getName());
+                    }
+                    List<String> outPlaceholders = new ArrayList<>(resultColumns.size());
+                    for (int i = 0; i < resultColumns.size(); i++) {
+                        outPlaceholders.add(formatParameter(values.size() + 1 + i).name());
+                    }
+                    builder = "BEGIN " + builder + " RETURNING " + String.join(",", resultColumns) + " INTO " + String.join(",", outPlaceholders) + "; END;";
+                } else {
+                    // Postgres and others using a result set for RETURNING
+                    builder += RETURNING + String.join(",", resultColumns);
+                }
             }
+        }
+        if (definition.returning() && dialect == Dialect.ORACLE) {
+            // Attach OUT parameter bindings metadata (columns listed in RETURNING ...)
+            List<QueryOutParameterBinding> outBindings = new ArrayList<>();
+            for (int i = 0; i < resultColumns.size(); i++) {
+                final String col = resultColumns.get(i);
+                final DataType dt = i < resultColumnTypes.size() ? resultColumnTypes.get(i) : null;
+                outBindings.add(new QueryOutParameterBinding() {
+                    @Override
+                    public String getName() {
+                        return col;
+                    }
+
+                    @Override
+                    public DataType getDataType() {
+                        return dt;
+                    }
+                });
+            }
+            final String q = builder;
+            final List<QueryParameterBinding> params = parameterBindings;
+            return new QueryResult() {
+                @Override
+                public String getQuery() {
+                    return q;
+                }
+
+                @Override
+                public List<String> getQueryParts() {
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public List<QueryParameterBinding> getParameterBindings() {
+                    return params;
+                }
+
+                @Override
+                public Map<String, String> getAdditionalRequiredParameters() {
+                    return Collections.emptyMap();
+                }
+
+                @Override
+                public List<QueryOutParameterBinding> getOutParameterBindings() {
+                    return outBindings;
+                }
+            };
         }
         return QueryResult.of(builder,
             Collections.emptyList(),
             parameterBindings,
             Collections.emptyMap());
+    }
+
+    // Split a projection list by commas at top-level (ignoring commas inside parentheses)
+    private static List<String> splitTopLevelCommaSeparated(String s) {
+        List<String> res = new ArrayList<>();
+        if (s == null || s.isEmpty()) {
+            return res;
+        }
+        int level = 0;
+        StringBuilder cur = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '(') {
+                level++;
+                cur.append(c);
+            } else if (c == ')') {
+                level = Math.max(0, level - 1);
+                cur.append(c);
+            } else if (c == ',' && level == 0) {
+                String token = cur.toString().trim();
+                if (!token.isEmpty()) {
+                    res.add(token);
+                }
+                cur.setLength(0);
+            } else {
+                cur.append(c);
+            }
+        }
+        String token = cur.toString().trim();
+        if (!token.isEmpty()) {
+            res.add(token);
+        }
+        return res;
+    }
+
+    // Strip trailing AS alias if present
+    private static String stripAsAlias(String token) {
+        String up = token.toUpperCase(Locale.ENGLISH);
+        int asIdx = up.lastIndexOf(" AS ");
+        if (asIdx > -1) {
+            return token.substring(0, asIdx).trim();
+        }
+        return token.trim();
+    }
+
+    @Override
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
+        QueryResult base = super.buildUpdate(annotationMetadata, definition);
+        Selection<?> returningSelection = definition.returningSelection();
+        if (!(returningSelection != null && dialect == Dialect.ORACLE)) {
+            return base;
+        }
+        String q = base.getQuery();
+        String up = q.toUpperCase(Locale.ENGLISH);
+        int retIdx = up.indexOf(" RETURNING ");
+        if (retIdx < 0) {
+            return base;
+        }
+        String projection = q.substring(retIdx + " RETURNING ".length()); // projection is at the end
+        List<String> cols = splitTopLevelCommaSeparated(projection).stream()
+            .map(SqlQueryBuilder::stripAsAlias)
+            .toList();
+
+        // Build INTO placeholders after IN parameters
+        int inCount = base.getParameterBindings().size();
+        List<String> outPlaceholders = new ArrayList<>(cols.size());
+        for (int i = 0; i < cols.size(); i++) {
+            outPlaceholders.add(formatParameter(inCount + 1 + i).name());
+        }
+        String transformed = "BEGIN " + q + " INTO " + String.join(",", outPlaceholders) + "; END;";
+
+        // Build OUT metadata
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>(cols.size());
+        for (String col : cols) {
+            final String c = col;
+            outBindings.add(new QueryOutParameterBinding() {
+                @Override
+                public String getName() {
+                    return c;
+                }
+            });
+        }
+
+        final List<QueryParameterBinding> params = base.getParameterBindings();
+        final List<String> parts = base.getQueryParts();
+        final Map<String, String> addParams = base.getAdditionalRequiredParameters();
+        final String finalQuery = transformed;
+        return new QueryResult() {
+            @Override
+            public String getQuery() {
+                return finalQuery;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return parts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return addParams;
+            }
+
+            @Override
+            public List<QueryOutParameterBinding> getOutParameterBindings() {
+                return outBindings;
+            }
+        };
+    }
+
+    @Override
+    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
+        QueryResult base = super.buildDelete(annotationMetadata, definition);
+        Selection<?> returningSelection = definition.returningSelection();
+        if (!(returningSelection != null && dialect == Dialect.ORACLE)) {
+            return base;
+        }
+        String q = base.getQuery();
+        String up = q.toUpperCase(Locale.ENGLISH);
+        int retIdx = up.indexOf(" RETURNING ");
+        if (retIdx < 0) {
+            return base;
+        }
+        String projection = q.substring(retIdx + " RETURNING ".length()); // projection is at the end
+        List<String> cols = splitTopLevelCommaSeparated(projection).stream()
+            .map(SqlQueryBuilder::stripAsAlias)
+            .toList();
+
+        // Build INTO placeholders after IN parameters
+        int inCount = base.getParameterBindings().size();
+        List<String> outPlaceholders = new ArrayList<>(cols.size());
+        for (int i = 0; i < cols.size(); i++) {
+            outPlaceholders.add(formatParameter(inCount + 1 + i).name());
+        }
+        String transformed = "BEGIN " + q + " INTO " + String.join(",", outPlaceholders) + "; END;";
+
+        // Build OUT metadata
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>(cols.size());
+        for (String col : cols) {
+            final String c = col;
+            outBindings.add(new QueryOutParameterBinding() {
+                @Override
+                public String getName() {
+                    return c;
+                }
+            });
+        }
+
+        final List<QueryParameterBinding> params = base.getParameterBindings();
+        final List<String> parts = base.getQueryParts();
+        final Map<String, String> addParams = base.getAdditionalRequiredParameters();
+        final String finalQuery = transformed;
+        return new QueryResult() {
+            @Override
+            public String getQuery() {
+                return finalQuery;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return parts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return addParams;
+            }
+
+            @Override
+            public List<QueryOutParameterBinding> getOutParameterBindings() {
+                return outBindings;
+            }
+        };
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {
