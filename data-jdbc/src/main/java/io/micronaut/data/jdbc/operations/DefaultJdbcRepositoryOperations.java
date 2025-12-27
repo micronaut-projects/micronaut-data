@@ -1270,7 +1270,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     cs.execute();
                     rowsUpdated = 1;
                     ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
-                        columnNames, inCount + 1);
+                        columnNames, inCount);
                     SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
                     SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(persistentEntity, resultReader,
                         Set.of(), reader, (DataConversionService) conversionService);

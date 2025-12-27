@@ -65,7 +65,7 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
             for (int i = 0; i < columnNames.size(); i++) {
                 String columnName = columnNames.get(i);
                 if (columnName.equalsIgnoreCase(index)) {
-                    pos = i + posOffset;
+                    pos = i + posOffset + 1;
                     break;
                 }
             }
