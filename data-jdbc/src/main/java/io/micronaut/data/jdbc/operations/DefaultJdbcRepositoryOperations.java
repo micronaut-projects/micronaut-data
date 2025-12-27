@@ -1077,17 +1077,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
     }
 
-    private static String stripQuotesToUpper(String name) {
-        if (name == null) {
-            return null;
-        }
-        String n = name;
-        if (n.length() >= 2 && n.charAt(0) == '"' && n.charAt(n.length() - 1) == '"') {
-            n = n.substring(1, n.length() - 1);
-        }
-        return n.toUpperCase(Locale.ENGLISH);
-    }
-
     /**
      * Handles {@link SQLException} first trying to map it to {@link DataAccessException} using {@link SqlExceptionMapper}.
      * If mapped exception is not {@link DataAccessException} then returns {@link DataAccessException} using provided fallbackMapper.
