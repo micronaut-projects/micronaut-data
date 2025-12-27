@@ -683,6 +683,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         String builder;
         List<String> resultColumns = new ArrayList<>();
+        List<String> unescapedColumns = new ArrayList<>();
         List<DataType> resultColumnTypes = new ArrayList<>();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
 
@@ -735,6 +736,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
                     if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
+                        unescapedColumns.add(columnName);
                         if (escape) {
                             columnName = quote(columnName);
                         }
@@ -775,6 +777,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     });
 
                     String columnName = getMappedName(namingStrategy, associations, property);
+                    unescapedColumns.add(columnName);
                     if (escape) {
                         columnName = quote(columnName);
                     }
@@ -817,6 +820,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 });
 
                 String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
+                unescapedColumns.add(columnName);
                 if (escape) {
                     columnName = quote(columnName);
                 }
@@ -828,7 +832,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             for (PersistentProperty identity : entity.getIdentityProperties()) {
                 // Property skipped
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                    String columnName = getMappedName(namingStrategy, associations, property);
+                    String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                    String columnName = unescapedColumnName;
                     if (escape) {
                         columnName = quote(columnName);
                     }
@@ -836,6 +841,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     boolean isSequence = false;
                     if (SqlQueryBuilderUtils.isNotForeign(associations)) {
 
+                        unescapedColumns.add(unescapedColumnName);
                         resultColumns.add(columnName);
                         resultColumnTypes.add(property.getDataType());
 
@@ -918,8 +924,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (definition.returning() && dialect == Dialect.ORACLE) {
             // Attach OUT parameter bindings metadata (columns listed in RETURNING ...)
             List<QueryOutParameterBinding> outBindings = new ArrayList<>();
-            for (int i = 0; i < resultColumns.size(); i++) {
-                final String col = resultColumns.get(i);
+            for (int i = 0; i < unescapedColumns.size(); i++) {
+                final String col = unescapedColumns.get(i);
                 final DataType dt = i < resultColumnTypes.size() ? resultColumnTypes.get(i) : null;
                 outBindings.add(new QueryOutParameterBinding() {
                     @Override
