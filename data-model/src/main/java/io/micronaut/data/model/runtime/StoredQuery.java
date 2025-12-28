@@ -222,7 +222,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * Order corresponds to the order in which OUT parameters must be registered.
      *
      * @return list of OUT parameter bindings or empty if none
-     * @since 4.11
+     * @since 5.0
      */
     default List<QueryOutParameterBinding> getOutParameterBindings() {
         return List.of();

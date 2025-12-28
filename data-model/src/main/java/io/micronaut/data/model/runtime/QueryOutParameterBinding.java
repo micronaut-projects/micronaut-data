@@ -18,7 +18,6 @@ package io.micronaut.data.model.runtime;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.DataType;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Runtime OUT parameter binding metadata for a stored query (e.g. Oracle RETURNING ... INTO ...).
@@ -33,52 +32,12 @@ public interface QueryOutParameterBinding {
     /**
      * @return The name of the OUT column/parameter if available.
      */
-    @Nullable
-    default String getName() {
-        return null;
-    }
-
-    /**
-     * @return The required name or throws.
-     */
     @NonNull
-    default String getRequiredName() {
-        String name = getName();
-        if (name == null) {
-            throw new IllegalStateException("OUT parameter name cannot be null: " + this);
-        }
-        return name;
-    }
+    String getName();
 
     /**
      * @return The data type for the OUT parameter when known.
      */
-    @Nullable
-    default DataType getDataType() {
-        return null;
-    }
-
-    /**
-     * @return The parameter converter class, when used.
-     */
-    @Nullable
-    default Class<?> getParameterConverterClass() {
-        return null;
-    }
-
-    /**
-     * @return The parameter binding property path (when sourced from a method argument), if any.
-     */
-    @Nullable
-    default String[] getParameterBindingPath() {
-        return null;
-    }
-
-    /**
-     * @return The entity property path this OUT parameter should map back into, if applicable.
-     */
-    @Nullable
-    default String[] getPropertyPath() {
-        return null;
-    }
+    @NonNull
+    DataType getDataType();
 }

@@ -19,7 +19,6 @@ import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.annotation.ClientInfo;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -65,21 +64,6 @@ public abstract class OracleXEBookRepository extends BookRepository {
     public abstract Book saveReturning(Book book);
 
     public abstract List<Book> saveReturning(List<Book> books);
-
-    // Update/Delete returning (Oracle support)
-    @Query("UPDATE book SET title=:title WHERE id=:id")
-    public abstract long updateTitle(@Id Long id, String title);
-
-    public Book updateReturning(@Id Long id, String title) {
-        updateTitle(id, title);
-        return findById(id).orElseThrow();
-    }
-
-    public Book deleteReturning(@Id Long id) {
-        Book toReturn = findById(id).orElseThrow();
-        deleteById(id);
-        return toReturn;
-    }
 
     //    public abstract Book updateReturning(Book book);
 //

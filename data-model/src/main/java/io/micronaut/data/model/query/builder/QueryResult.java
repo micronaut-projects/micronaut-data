@@ -96,7 +96,7 @@ public interface QueryResult {
      * Default is empty for dialects that don't use OUT parameters.
      *
      * @return the OUT parameters binding
-     * @since 4.11
+     * @since 5.0
      */
     default List<QueryOutParameterBinding> getOutParameterBindings() {
         return Collections.emptyList();

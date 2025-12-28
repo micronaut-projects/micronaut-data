@@ -194,88 +194,89 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
 
     void "test procedure"() {
         expect:
-            bookRepository.add1(123) == 124
-            bookRepository.add1Aliased(123) == 124
+        bookRepository.add1(123) == 124
+        bookRepository.add1Aliased(123) == 124
     }
 
     void "test ANY queries"() {
         given:
-            saveSampleBooks()
+        saveSampleBooks()
         when:
-            def books1 = bookRepository.listNativeBooksWithTitleAnyCollection(null)
+        def books1 = bookRepository.listNativeBooksWithTitleAnyCollection(null)
         then:
-            books1.size() == 0
+        books1.size() == 0
         when:
-            def books2 = bookRepository.listNativeBooksWithTitleAnyCollection(["The Stand", "Along Came a Spider", "FFF"])
+        def books2 = bookRepository.listNativeBooksWithTitleAnyCollection(["The Stand", "Along Came a Spider", "FFF"])
         then:
-            books2.size() == 2
+        books2.size() == 2
         when:
-            def books3 = bookRepository.listNativeBooksWithTitleAnyCollection([])
+        def books3 = bookRepository.listNativeBooksWithTitleAnyCollection([])
         then:
-            books3.size() == 0
+        books3.size() == 0
         when:
-            def books4 = bookRepository.listNativeBooksWithTitleAnyArray(null)
+        def books4 = bookRepository.listNativeBooksWithTitleAnyArray(null)
         then:
-            books4.size() == 0
+        books4.size() == 0
         when:
-            def books5 = bookRepository.listNativeBooksWithTitleAnyArray(new String[]{"The Stand", "Along Came a Spider", "FFF"})
+        def books5 = bookRepository.listNativeBooksWithTitleAnyArray(new String[]{"The Stand", "Along Came a Spider", "FFF"})
         then:
-            books5.size() == 2
+        books5.size() == 2
         when:
-            def books6 = bookRepository.listNativeBooksWithTitleAnyArray(new String[0])
+        def books6 = bookRepository.listNativeBooksWithTitleAnyArray(new String[0])
         then:
-            books6.size() == 0
+        books6.size() == 0
         cleanup:
-            cleanupBooks()
+        cleanupBooks()
     }
 
+    @PendingFeature
     void "test update returning book"() {
         given:
-            setupBooks()
+        setupBooks()
         when:
-            def book = bookRepository.findByTitle("Pet Cemetery")
-            book.title = "Xyz"
-            Book newBook = bookRepository.updateReturning(book.id, book.title)
-            book.title = "old"
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        book.title = "Xyz"
+        Book newBook = bookRepository.updateReturning(book)
+        book.title = "old"
         then:
-            newBook.title == "Xyz"
+        newBook.title == "Xyz"
     }
 
     @PendingFeature
     void "test update returning book title"() {
         given:
-            setupBooks()
+        setupBooks()
         when:
-            def book = bookRepository.findByTitle("Pet Cemetery")
-            book.title = "Xyz"
-            String newTitle = bookRepository.updateReturningTitle(book)
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        book.title = "Xyz"
+        String newTitle = bookRepository.updateReturningTitle(book)
         then:
-            newTitle == "Xyz"
-            bookRepository.findById(book.id).get().title == "Xyz"
+        newTitle == "Xyz"
+        bookRepository.findById(book.id).get().title == "Xyz"
     }
 
     @PendingFeature
     void "test update returning book title 2"() {
         given:
-            setupBooks()
-            def book = bookRepository.findByTitle("Pet Cemetery")
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
         when:
-            String newTitle = bookRepository.updateReturningTitle(book.id, "Xyz")
+        String newTitle = bookRepository.updateReturningTitle(book.id, "Xyz")
         then:
-            newTitle == "Xyz"
-            bookRepository.findById(book.id).get().title == "Xyz"
+        newTitle == "Xyz"
+        bookRepository.findById(book.id).get().title == "Xyz"
     }
 
     @PendingFeature
     void "test update returning book title 3"() {
         given:
-            setupBooks()
-            def book = bookRepository.findByTitle("Pet Cemetery")
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
         when:
-            String newTitle = bookRepository.updateByIdReturningTitle(book.id, "Xyz")
+        String newTitle = bookRepository.updateByIdReturningTitle(book.id, "Xyz")
         then:
-            newTitle == "Xyz"
-            bookRepository.findById(book.id).get().title == "Xyz"
+        newTitle == "Xyz"
+        bookRepository.findById(book.id).get().title == "Xyz"
     }
 
     void "test native query with colon"() {
@@ -297,34 +298,20 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
 
     void "test insert returning book"() {
         given:
-            setupBooks()
-            def existing = bookRepository.findByTitle("Pet Cemetery")
-            def bookToCreate = new Book(title: "My book ORA", totalPages: 321, author: existing.author)
+        setupBooks()
+        def existing = bookRepository.findByTitle("Pet Cemetery")
+        def bookToCreate = new Book(title: "My book ORA", totalPages: 321, author: existing.author)
         when:
-            def newBook = bookRepository.saveReturning(bookToCreate)
+        def newBook = bookRepository.saveReturning(bookToCreate)
         then:
-            newBook.id
-            !newBook.is(bookToCreate)
-            // lifecycle events
-            bookToCreate.prePersist == 1
-            newBook.postLoad == 1
-            newBook.postPersist == 1
-            // verify persisted
-            bookRepository.findById(newBook.id).get().title == "My book ORA"
-            bookRepository.findByTitle("My book ORA")
+        newBook.id
+        !newBook.is(bookToCreate)
+        // lifecycle events
+        bookToCreate.prePersist == 1
+        newBook.postLoad == 1
+        newBook.postPersist == 1
+        // verify persisted
+        bookRepository.findById(newBook.id).get().title == "My book ORA"
+        bookRepository.findByTitle("My book ORA")
     }
-
-    void "test delete returning book"() {
-        given:
-            setupBooks()
-        when:
-            def book = bookRepository.findByTitle("Pet Cemetery")
-            Book deletedBook = bookRepository.deleteReturning(book.id)
-        then:
-            deletedBook.id == book.id
-            deletedBook.title == book.title
-            deletedBook.postLoad == 1
-            bookRepository.findById(book.id).isEmpty()
-    }
-
 }

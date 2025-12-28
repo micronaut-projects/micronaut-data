@@ -50,26 +50,6 @@ public @interface DataMethodQueryOutParameter {
     String META_MEMBER_DATA_TYPE = "dataType";
 
     /**
-     * The member name that holds the parameter binding path (when sourced from method arguments).
-     */
-    String META_MEMBER_PARAMETER_BINDING_PATH = "parameterBindingPath";
-
-    /**
-     * The member name that holds the property name.
-     */
-    String META_MEMBER_PROPERTY = "property";
-
-    /**
-     * The member name that holds the property path.
-     */
-    String META_MEMBER_PROPERTY_PATH = "propertyPath";
-
-    /**
-     * The member name that holds the converter class.
-     */
-    String META_MEMBER_CONVERTER = "converter";
-
-    /**
      * @return The OUT parameter name (column/alias), when present.
      */
     String name() default "";
@@ -78,24 +58,4 @@ public @interface DataMethodQueryOutParameter {
      * @return The OUT parameter data type (if known).
      */
     DataType dataType() default DataType.OBJECT;
-
-    /**
-     * @return The parameter binding property path (when coming from a method argument), if any.
-     */
-    String[] parameterBindingPath() default {};
-
-    /**
-     * @return The property name this OUT parameter maps back into (if simple).
-     */
-    String property() default "";
-
-    /**
-     * @return The entity property path this OUT parameter maps back into (if nested).
-     */
-    String[] propertyPath() default {};
-
-    /**
-     * @return Optional converter class for mapping values.
-     */
-    Class[] converter() default {};
 }

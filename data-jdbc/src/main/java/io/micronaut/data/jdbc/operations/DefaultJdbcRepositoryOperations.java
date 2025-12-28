@@ -1267,8 +1267,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     } else {
                         throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
                     }
-                    cs.execute();
-                    rowsUpdated = 1;
+                    // rowsUpdated = 1;
+                    rowsUpdated = cs.executeUpdate();
                     ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
                         columnNames, inCount);
                     SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
@@ -1277,7 +1277,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     entity = (T) mapper.readEntity(cs);
 
                     // For DELETE RETURNING the row no longer exists; just trigger post-load on the updated entity
-                    // TODO: Why is this needed?
+                    // TODO: Why is this needed? It's not always entity, sometimes can be String returned
                     entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
                     return;
                 } catch (SQLException e) {

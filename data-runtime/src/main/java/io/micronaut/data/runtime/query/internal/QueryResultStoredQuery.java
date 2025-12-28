@@ -216,20 +216,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             return delegate.getDataType();
         }
 
-        @Override
-        public Class<?> getParameterConverterClass() {
-            return delegate.getParameterConverterClass();
-        }
-
-        @Override
-        public String[] getParameterBindingPath() {
-            return delegate.getParameterBindingPath();
-        }
-
-        @Override
-        public String[] getPropertyPath() {
-            return delegate.getPropertyPath();
-        }
     }
 
     private static class QueryResultParameterBinding implements QueryParameterBinding {

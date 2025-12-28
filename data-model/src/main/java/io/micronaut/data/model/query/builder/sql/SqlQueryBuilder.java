@@ -54,7 +54,6 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
-import jakarta.persistence.criteria.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -974,39 +973,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collections.emptyMap());
     }
 
-    // Split a projection list by commas at top-level (ignoring commas inside parentheses)
-    private static List<String> splitTopLevelCommaSeparated(String s) {
-        List<String> res = new ArrayList<>();
-        if (s == null || s.isEmpty()) {
-            return res;
-        }
-        int level = 0;
-        StringBuilder cur = new StringBuilder(s.length());
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '(') {
-                level++;
-                cur.append(c);
-            } else if (c == ')') {
-                level = Math.max(0, level - 1);
-                cur.append(c);
-            } else if (c == ',' && level == 0) {
-                String token = cur.toString().trim();
-                if (!token.isEmpty()) {
-                    res.add(token);
-                }
-                cur.setLength(0);
-            } else {
-                cur.append(c);
-            }
-        }
-        String token = cur.toString().trim();
-        if (!token.isEmpty()) {
-            res.add(token);
-        }
-        return res;
-    }
-
     // Strip trailing AS alias if present
     private static String stripAsAlias(String token) {
         String up = token.toUpperCase(Locale.ENGLISH);
@@ -1015,146 +981,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return token.substring(0, asIdx).trim();
         }
         return token.trim();
-    }
-
-    @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
-        QueryResult base = super.buildUpdate(annotationMetadata, definition);
-        Selection<?> returningSelection = definition.returningSelection();
-        if (!(returningSelection != null && dialect == Dialect.ORACLE)) {
-            return base;
-        }
-        String q = base.getQuery();
-        String up = q.toUpperCase(Locale.ENGLISH);
-        int retIdx = up.indexOf(" RETURNING ");
-        if (retIdx < 0) {
-            return base;
-        }
-        String projection = q.substring(retIdx + " RETURNING ".length()); // projection is at the end
-        List<String> cols = splitTopLevelCommaSeparated(projection).stream()
-            .map(SqlQueryBuilder::stripAsAlias)
-            .toList();
-
-        // Build INTO placeholders after IN parameters
-        int inCount = base.getParameterBindings().size();
-        List<String> outPlaceholders = new ArrayList<>(cols.size());
-        for (int i = 0; i < cols.size(); i++) {
-            outPlaceholders.add(formatParameter(inCount + 1 + i).name());
-        }
-        String transformed = "BEGIN " + q + " INTO " + String.join(",", outPlaceholders) + "; END;";
-
-        // Build OUT metadata
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>(cols.size());
-        for (String col : cols) {
-            final String c = col;
-            outBindings.add(new QueryOutParameterBinding() {
-                @Override
-                public String getName() {
-                    return c;
-                }
-            });
-        }
-
-        final List<QueryParameterBinding> params = base.getParameterBindings();
-        final List<String> parts = base.getQueryParts();
-        final Map<String, String> addParams = base.getAdditionalRequiredParameters();
-        final String finalQuery = transformed;
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return finalQuery;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return parts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return addParams;
-            }
-
-            @Override
-            public List<QueryOutParameterBinding> getOutParameterBindings() {
-                return outBindings;
-            }
-        };
-    }
-
-    @Override
-    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
-        QueryResult base = super.buildDelete(annotationMetadata, definition);
-        Selection<?> returningSelection = definition.returningSelection();
-        if (!(returningSelection != null && dialect == Dialect.ORACLE)) {
-            return base;
-        }
-        String q = base.getQuery();
-        String up = q.toUpperCase(Locale.ENGLISH);
-        int retIdx = up.indexOf(" RETURNING ");
-        if (retIdx < 0) {
-            return base;
-        }
-        String projection = q.substring(retIdx + " RETURNING ".length()); // projection is at the end
-        List<String> cols = splitTopLevelCommaSeparated(projection).stream()
-            .map(SqlQueryBuilder::stripAsAlias)
-            .toList();
-
-        // Build INTO placeholders after IN parameters
-        int inCount = base.getParameterBindings().size();
-        List<String> outPlaceholders = new ArrayList<>(cols.size());
-        for (int i = 0; i < cols.size(); i++) {
-            outPlaceholders.add(formatParameter(inCount + 1 + i).name());
-        }
-        String transformed = "BEGIN " + q + " INTO " + String.join(",", outPlaceholders) + "; END;";
-
-        // Build OUT metadata
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>(cols.size());
-        for (String col : cols) {
-            final String c = col;
-            outBindings.add(new QueryOutParameterBinding() {
-                @Override
-                public String getName() {
-                    return c;
-                }
-            });
-        }
-
-        final List<QueryParameterBinding> params = base.getParameterBindings();
-        final List<String> parts = base.getQueryParts();
-        final Map<String, String> addParams = base.getAdditionalRequiredParameters();
-        final String finalQuery = transformed;
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return finalQuery;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return parts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return addParams;
-            }
-
-            @Override
-            public List<QueryOutParameterBinding> getOutParameterBindings() {
-                return outBindings;
-            }
-        };
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {

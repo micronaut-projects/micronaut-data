@@ -321,67 +321,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         }
         java.util.List<QueryOutParameterBinding> outParams = new java.util.ArrayList<>(params.size());
         for (io.micronaut.core.annotation.AnnotationValue<DataMethodQueryOutParameter> av : params) {
-            String[] propertyPath = av.stringValues(DataMethodQueryOutParameter.META_MEMBER_PROPERTY_PATH);
-            if (propertyPath.length == 0) {
-                propertyPath = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_PROPERTY)
-                    .map(prop -> new String[]{prop})
-                    .orElse(null);
-            }
-            String[] parameterBindingPath = av.stringValues(DataMethodQueryOutParameter.META_MEMBER_PARAMETER_BINDING_PATH);
-            if (parameterBindingPath.length == 0) {
-                parameterBindingPath = null;
-            }
             io.micronaut.data.model.DataType dataType = av.enumValue(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, io.micronaut.data.model.DataType.class).orElse(null);
-            Class<?> converterClass = av.classValue(DataMethodQueryOutParameter.META_MEMBER_CONVERTER).orElse(null);
             String name = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_NAME).orElse(null);
-            outParams.add(new StoredOutParameter(name, dataType, parameterBindingPath, propertyPath, converterClass));
+            outParams.add(new StoredOutParameter(name, dataType));
         }
         return outParams;
-    }
-
-    private static final class StoredOutParameter implements QueryOutParameterBinding {
-        private final String name;
-        private final io.micronaut.data.model.DataType dataType;
-        private final String[] parameterBindingPath;
-        private final String[] propertyPath;
-        private final Class<?> converterClass;
-
-        private StoredOutParameter(String name,
-                                   io.micronaut.data.model.DataType dataType,
-                                   String[] parameterBindingPath,
-                                   String[] propertyPath,
-                                   Class<?> converterClass) {
-            this.name = name;
-            this.dataType = dataType;
-            this.parameterBindingPath = parameterBindingPath;
-            this.propertyPath = propertyPath;
-            this.converterClass = converterClass;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public io.micronaut.data.model.DataType getDataType() {
-            return dataType;
-        }
-
-        @Override
-        public Class<?> getParameterConverterClass() {
-            return converterClass;
-        }
-
-        @Override
-        public String[] getParameterBindingPath() {
-            return parameterBindingPath;
-        }
-
-        @Override
-        public String[] getPropertyPath() {
-            return propertyPath;
-        }
     }
 
     @Override
@@ -568,5 +512,26 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
             return o;
         };
+    }
+
+    private static final class StoredOutParameter implements QueryOutParameterBinding {
+        private final String name;
+        private final io.micronaut.data.model.DataType dataType;
+
+        private StoredOutParameter(String name,
+                                   io.micronaut.data.model.DataType dataType) {
+            this.name = name;
+            this.dataType = dataType;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public io.micronaut.data.model.DataType getDataType() {
+            return dataType;
+        }
     }
 }

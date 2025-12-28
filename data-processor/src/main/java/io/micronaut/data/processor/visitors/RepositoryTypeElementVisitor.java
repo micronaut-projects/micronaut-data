@@ -701,19 +701,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     if (b.getDataType() != null) {
                         outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
                     }
-                    if (b.getParameterBindingPath() != null) {
-                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PARAMETER_BINDING_PATH, b.getParameterBindingPath());
-                    }
-                    if (b.getPropertyPath() != null) {
-                        if (b.getPropertyPath().length == 1) {
-                            outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PROPERTY, b.getPropertyPath()[0]);
-                        } else {
-                            outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_PROPERTY_PATH, b.getPropertyPath());
-                        }
-                    }
-                    if (b.getParameterConverterClass() != null) {
-                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_CONVERTER, new io.micronaut.core.annotation.AnnotationClassValue<>(b.getParameterConverterClass().getName()));
-                    }
                     outAnnotations.add(outBuilder.build());
                 }
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new io.micronaut.core.annotation.AnnotationValue[0]));
