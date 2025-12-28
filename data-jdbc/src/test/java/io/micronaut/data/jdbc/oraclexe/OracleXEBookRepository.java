@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.data.annotation.Id;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
@@ -65,11 +66,11 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     public abstract List<Book> saveReturning(List<Book> books);
 
-    //    public abstract Book updateReturning(Book book);
-//
-//    public abstract String updateReturningTitle(Book book);
-//
-//    public abstract String updateReturningTitle(@Id Long id, String title);
-//
-//    public abstract String updateByIdReturningTitle(Long id, String title);
+    public abstract Book updateReturning(Book book);
+
+    public abstract String updateReturningTitle(Book book);
+
+    public abstract String updateReturningTitle(@Id Long id, String title);
+
+    public abstract String updateByIdReturningTitle(Long id, String title);
 }

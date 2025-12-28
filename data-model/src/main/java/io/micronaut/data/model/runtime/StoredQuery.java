@@ -23,7 +23,6 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
-import java.util.List;
 
 import java.util.Collections;
 import java.util.List;

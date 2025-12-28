@@ -229,7 +229,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         cleanupBooks()
     }
 
-    @PendingFeature
     void "test update returning book"() {
         given:
         setupBooks()

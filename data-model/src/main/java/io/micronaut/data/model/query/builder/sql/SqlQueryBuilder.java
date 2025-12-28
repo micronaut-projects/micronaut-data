@@ -657,6 +657,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
+    protected UpdateReturningVisitor createUpdateReturningVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        return new OracleUpdateReturningSelectionVisitor(queryState, annotationMetadata, distinct);
+    }
+
+    @Override
     public String resolveJoinType(Join.Type jt) {
         if (!this.dialect.supportsJoinType(jt)) {
             throw new IllegalArgumentException("Unsupported join type [" + jt + "] by dialect [" + this.dialect + "]");
@@ -971,16 +976,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collections.emptyList(),
             parameterBindings,
             Collections.emptyMap());
-    }
-
-    // Strip trailing AS alias if present
-    private static String stripAsAlias(String token) {
-        String up = token.toUpperCase(Locale.ENGLISH);
-        int asIdx = up.lastIndexOf(" AS ");
-        if (asIdx > -1) {
-            return token.substring(0, asIdx).trim();
-        }
-        return token.trim();
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {
@@ -1672,4 +1667,82 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     }
 
+    protected final class OracleUpdateReturningSelectionVisitor extends SqlSelectionVisitor implements UpdateReturningVisitor {
+        private final List<String> unescapedColumns = new ArrayList<>();
+        private final List<DataType> resultColumnTypes = new ArrayList<>();
+
+        public OracleUpdateReturningSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
+            super(queryState, annotationMetadata, distinct);
+        }
+
+        @Override
+        public List<String> getUnescapedColumns() {
+            return unescapedColumns;
+        }
+
+        @Override
+        public List<DataType> getResultColumnTypes() {
+            return resultColumnTypes;
+        }
+
+        @Override
+        public void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity entity, String alias) {
+            // Mirror base behavior, but also collect unescaped column names and types for OUT parameter metadata
+            boolean escape = shouldEscape(entity);
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
+            int length = query.length();
+            PersistentEntityUtils.traversePersistentProperties(entity, (associations, property) -> {
+                appendProperty(query, associations, property, namingStrategy, alias, escape);
+                unescapedColumns.add(getMappedName(namingStrategy, associations, property));
+                resultColumnTypes.add(property.getDataType());
+            });
+            int newLength = query.length();
+            if (newLength == length) {
+                // Fallback to wildcard if no properties were appended (shouldn't normally happen for non-JSON entities)
+                if (alias != null) {
+                    query.append(alias).append(DOT);
+                }
+                query.append("*");
+            } else {
+                query.setLength(newLength - 1);
+            }
+        }
+
+        @Override
+        protected void appendPropertyProjection(QueryPropertyPath propertyPath) {
+            boolean jsonEntity = isJsonEntity(annotationMetadata, entity);
+            if (!computePropertyPaths() || jsonEntity) {
+                // Delegate to default rendering; collect best-effort name/type
+                super.appendPropertyProjection(propertyPath);
+                PersistentProperty prop = propertyPath.getPropertyPath().getProperty();
+                unescapedColumns.add(prop.getPersistedName());
+                resultColumnTypes.add(prop.getDataType());
+                return;
+            }
+            String tableAlias = propertyPath.getTableAlias();
+            boolean escape = propertyPath.shouldEscape();
+            NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
+            boolean[] needsTrimming = {false};
+            int[] propertiesCount = new int[1];
+
+            PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
+                appendProperty(query, associations, property, namingStrategy, tableAlias, escape);
+                unescapedColumns.add(getMappedName(namingStrategy, associations, property));
+                resultColumnTypes.add(property.getDataType());
+                needsTrimming[0] = true;
+                propertiesCount[0]++;
+            });
+            if (needsTrimming[0]) {
+                query.setLength(query.length() - 1);
+            }
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                if (propertiesCount[0] > 1) {
+                    throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+                }
+                if (propertiesCount[0] == 1) {
+                    query.append(AS_CLAUSE).append(columnAlias);
+                }
+            }
+        }
+    }
 }

@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -168,7 +169,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param value The literal value
      * @return converter value
      */
-    
+
     protected String asLiteral(@Nullable Object value) {
         if (value instanceof LiteralExpression<?> literalExpression) {
             value = literalExpression.getValue();
@@ -338,7 +339,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param joinPath The join path
      * @return The alias
      */
-    
+
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
             var p = new StringBuilder();
@@ -512,7 +513,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param association    the association
      * @return the mapped name for the association
      */
-    
+
     protected String getMappedName(NamingStrategy namingStrategy,  Association association) {
         return namingStrategy.mappedName(association);
     }
@@ -525,7 +526,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param property       the property
      * @return the mappen name for the list of associations and property using given naming strategy
      */
-    
+
     protected String getMappedName(NamingStrategy namingStrategy,  List<Association> associations,  PersistentProperty property) {
         return namingStrategy.mappedName(associations, property);
     }
@@ -537,7 +538,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param propertyPath   the property path
      * @return the mappen name for the list of associations and property using given naming strategy
      */
-    
+
     protected String getMappedName(NamingStrategy namingStrategy,  PersistentPropertyPath propertyPath) {
         return namingStrategy.mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
     }
@@ -952,6 +953,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected abstract boolean computePropertyPaths();
 
+    /**
+     * Creates a visitor for handling the RETURNING clause in an UPDATE statement.
+     *
+     * This method is used to generate the necessary SQL for the RETURNING clause
+     * when executing an UPDATE query with a RETURNING clause.
+     *
+     * @param annotationMetadata The annotation metadata associated with the query.
+     * @param queryState         The current state of the query being built.
+     * @param distinct           Whether the query is marked as DISTINCT.
+     * @return A visitor that can handle the RETURNING clause.
+     */
+    protected UpdateReturningVisitor createUpdateReturningVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        throw new UnsupportedOperationException("OracleUpdateReturningVisitor is not yet implemented");
+    }
+
     @Override
     public QueryResult buildUpdate(AnnotationMetadata annotationMetadata,  UpdateQueryDefinition definition) {
         Map<String, Object> propertiesToUpdate = definition.propertiesToUpdate();
@@ -975,11 +991,76 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (!getDialect().supportsUpdateReturning()) {
                 throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support UPDATE ... RETURNING clause");
             }
+
             queryString.append(RETURNING);
-            buildSelect(annotationMetadata,
-                queryState,
-                returningSelection,
-                false);
+
+            if (getDialect() == Dialect.ORACLE) {
+                // Collect OUT parameter metadata (column names and data types)
+                UpdateReturningVisitor visitor = createUpdateReturningVisitor(annotationMetadata, queryState, false);
+                if (returningSelection instanceof ISelection<?> selectionVisitable) {
+                    selectionVisitable.visitSelection(visitor);
+                } else {
+                    throw new IllegalStateException("Unknown selection type: " + returningSelection.getClass().getName());
+                }
+                int inCount = queryState.getParameterBindings().size();
+                int outCount = visitor.getUnescapedColumns().size();
+                if (outCount == 0) {
+                    throw new IllegalStateException("UPDATE ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
+                }
+                List<String> placeholders = new ArrayList<>(outCount);
+                for (int i = 0; i < outCount; i++) {
+                    placeholders.add(formatParameter(inCount + 1 + i).name());
+                }
+                final String finalSql = "BEGIN " + queryState.getFinalQuery() + " INTO " + String.join(",", placeholders) + "; END;";
+                final List<QueryOutParameterBinding> outBindings = new ArrayList<>(outCount);
+                for (int i = 0; i < outCount; i++) {
+                    final String col = visitor.getUnescapedColumns().get(i);
+                    final DataType dt = visitor.getResultColumnTypes().get(i);
+                    outBindings.add(new QueryOutParameterBinding() {
+                        @Override
+                        public String getName() {
+                            return col;
+                        }
+
+                        @Override
+                        public DataType getDataType() {
+                            return dt;
+                        }
+                    });
+                }
+                final List<QueryParameterBinding> params = queryState.getParameterBindings();
+                return new QueryResult() {
+                    @Override
+                    public String getQuery() {
+                        return finalSql;
+                    }
+
+                    @Override
+                    public List<String> getQueryParts() {
+                        return Collections.emptyList();
+                    }
+
+                    @Override
+                    public List<QueryParameterBinding> getParameterBindings() {
+                        return params;
+                    }
+
+                    @Override
+                    public Map<String, String> getAdditionalRequiredParameters() {
+                        return Collections.emptyMap();
+                    }
+
+                    @Override
+                    public List<QueryOutParameterBinding> getOutParameterBindings() {
+                        return outBindings;
+                    }
+                };
+            } else {
+                buildSelect(annotationMetadata,
+                    queryState,
+                    returningSelection,
+                    false);
+            }
         }
         return QueryResult.of(queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1030,7 +1111,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param queryString The query string
      * @return The delete clause
      */
-    
+
     protected StringBuilder appendDeleteClause(StringBuilder queryString) {
         return queryString.append("DELETE ").append(FROM_CLAUSE);
     }
@@ -1046,7 +1127,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param tableAlias         The table alias
      * @return The encoded query
      */
-    
+
     public String buildOrderBy(String query,
                                 PersistentEntity entity,
                                 AnnotationMetadata annotationMetadata,
@@ -1880,7 +1961,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The associations
          */
-        
+
         public List<Association> getAssociations() {
             return propertyPath.getAssociations();
         }
@@ -1888,7 +1969,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The property
          */
-        
+
         public PersistentProperty getProperty() {
             return propertyPath.getProperty();
         }
@@ -1896,7 +1977,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The path
          */
-        
+
         public String getPath() {
             return propertyPath.getPath();
         }
@@ -3026,5 +3107,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return queryState.findProperty(propertyPath);
         }
 
+    }
+
+    protected interface UpdateReturningVisitor extends SelectionVisitor {
+
+        List<String> getUnescapedColumns();
+
+        List<DataType> getResultColumnTypes();
     }
 }
