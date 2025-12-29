@@ -399,6 +399,50 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
+        if (preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING && preparedQuery.getDialect() == Dialect.ORACLE) {
+            try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
+                JdbcParameterBinder binder = new JdbcParameterBinder(connection, cs, preparedQuery);
+                preparedQuery.bindParameters(binder);
+                // Prefer OUT parameter metadata from the stored query (avoids SQL parsing)
+                int inCount = preparedQuery.getQueryBindings().size();
+                List<QueryOutParameterBinding> outParams = preparedQuery.getOutParameterBindings();
+                List<String> columnNames = new ArrayList<>(outParams.size());
+                if (outParams != null && !outParams.isEmpty()) {
+                    int pos = inCount;
+                    for (QueryOutParameterBinding outParam : outParams) {
+                        int sqlType = outParam.getDataType() != null
+                            ? JdbcQueryStatement.findSqlType(outParam.getDataType(), jdbcConfiguration.getDialect())
+                            : Types.VARCHAR;
+                        cs.registerOutParameter(++pos, sqlType);
+                        columnNames.add(outParam.getName());
+                    }
+                } else {
+                    throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
+                }
+                cs.execute();
+                boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
+                if (isEntityResult) {
+                    ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
+                        columnNames, inCount);
+                    SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
+                    SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(preparedQuery.getPersistentEntity(), resultReader,
+                        Set.of(), reader, conversionService);
+                    return List.of((R) mapper.readEntity(cs));
+                }
+                // Otherwise single field
+                List<R> result = new ArrayList<>();
+                result.add(
+                    (R) columnIndexCallableResultReader.readDynamic(
+                        cs,
+                        inCount + 1,
+                        preparedQuery.getResultDataType()
+                    )
+                );
+                return result;
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing Oracle SQL UPDATE RETURNING: " + e.getMessage(), e);
+            }
+        }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
@@ -1515,5 +1559,4 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return connection;
         }
     }
-
 }

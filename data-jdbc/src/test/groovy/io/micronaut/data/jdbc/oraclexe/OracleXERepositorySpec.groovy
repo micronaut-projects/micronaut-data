@@ -16,12 +16,10 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
-import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.PendingFeature
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
@@ -241,7 +239,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         newBook.title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title"() {
         given:
         setupBooks()
@@ -254,7 +251,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         bookRepository.findById(book.id).get().title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title 2"() {
         given:
         setupBooks()
@@ -266,7 +262,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         bookRepository.findById(book.id).get().title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title 3"() {
         given:
         setupBooks()
