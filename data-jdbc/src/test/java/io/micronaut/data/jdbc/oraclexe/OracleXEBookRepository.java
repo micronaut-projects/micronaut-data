@@ -61,7 +61,6 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @ClientInfo.Attribute(name = "OCSID.ACTION", value = "INSERT")
     public abstract @NonNull Book save(@NonNull Book book);
 
-    // Insert returning (Oracle support)
     public abstract Book saveReturning(Book book);
 
     public abstract List<Book> saveReturning(List<Book> books);
