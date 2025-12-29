@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 

@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -63,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -436,13 +439,48 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity) {
         String alias = entity.getAliasName();
-        for (PersistentProperty identity: viewEntity.getIdentityProperties()) {
+
+        List<PersistentProperty> identities = viewEntity.getIdentityProperties();
+        Iterator<PersistentProperty> it = identities.iterator();
+
+        List<PersistentProperty> allColumns = (List<PersistentProperty>) viewEntity.getPersistentProperties();
+        List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT).toList();
+
+        while (it.hasNext()) {
+            PersistentProperty identity = it.next();
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
                 .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(identity.getName()));
             String entityPersistedPropertyName;
             if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = identity.getPersistedName();
+            } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
+                sb.append("'_id': {");
+                Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
+                List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity).getFirst().primaryKeyColumns();
+                if (fields.length != columnMappings.size()) {
+                    return;
+                }
+                for (int i = 0; i < fields.length; i++) {
+                    String propertyPersistedName = columnMappings.get(i).getName();
+                    String propertyName = fields[i].getName();
+                    sb.append("'")
+                        .append(propertyName)
+                        .append("': ")
+                        .append(alias)
+                        .append(DOT)
+                        .append(propertyPersistedName);
+                    if (i != fields.length - 1) {
+                        sb.append(COMMA)
+                            .append(SPACE);
+                    }
+                }
+                sb.append('}');
+                if (it.hasNext() || !columns.isEmpty()) {
+                    sb.append(COMMA)
+                        .append(SPACE);
+                }
+                continue;
             } else {
                 entityPersistedPropertyName = entity.getPropertyByName(viewPropertyName).getPersistedName();
             }
@@ -451,12 +489,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append("': ")
                 .append(alias)
                 .append(DOT)
-                .append(entityPersistedPropertyName)
-                .append(COMMA);
+                .append(entityPersistedPropertyName);
+            if (it.hasNext() || !columns.isEmpty()) {
+                sb.append(COMMA)
+                    .append(SPACE);
+            }
         }
-        List<PersistentProperty> allColumns = (List<PersistentProperty>) viewEntity.getPersistentProperties();
-        List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT).toList();
-        Iterator<PersistentProperty> it = columns.iterator();
+
+        it = columns.iterator();
         while (it.hasNext()) {
             PersistentProperty column = it.next();
             String columnPropertyName = column.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")

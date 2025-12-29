@@ -42,11 +42,15 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     TeacherViewRepository teacherViewRepository
 
+    @Inject
+    ApartmentViewRepository apartmentViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
         teacherRepository.deleteAll()
         studentRepository.deleteAll()
+        apartmentViewRepository.deleteAll()
 
         Teacher teacherAnna = teacherRepository.save(new Teacher("Mrs. Anna"))
         Teacher teacherJeff = teacherRepository.save(new Teacher("Mr. Jeff"))
@@ -390,7 +394,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         dialect << [Dialect.H2, Dialect.ANSI, Dialect.MYSQL, Dialect.POSTGRES, Dialect.SQL_SERVER]
     }
 
-    def "test_generate_create_json_view"() {
+    def "test_generate_create_student_view"() {
         when:
         Dialect dialect = Dialect.ORACLE
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
@@ -398,6 +402,26 @@ class OracleJdbcJsonViewSpec extends Specification {
         String[] sql = builder.buildCreateTableStatements(studentViewEntity)
         then:
         sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id,'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'classes': [SELECT JSON {'id': sc.id,'class': (SELECT JSON {'classID': c.id,'teacher': (SELECT JSON {'teachID': t.id,'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id,'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_generate_create_apartment_view"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity apartmentViewEntity = getRuntimePersistentEntity(ApartmentView)
+        String[] sql = builder.buildCreateTableStatements(apartmentViewEntity)
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW apartment_view AS SELECT JSON {'_id': {'buildingId': ap.apartment_id_building_id, 'flatId': ap.apartment_id_flat_id}} FROM TBL_APARTMENT ap WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_apartment_view_repository"() {
+        when:
+        def apartmentId = new ApartmentId(12, 34)
+        def apartmentView = new ApartmentView(apartmentId)
+        apartmentViewRepository.save(apartmentView)
+        def result = apartmentViewRepository.findById(apartmentId)
+        then:
+        result.present
     }
 
     def "test_generate_drop_json_vew"() {
