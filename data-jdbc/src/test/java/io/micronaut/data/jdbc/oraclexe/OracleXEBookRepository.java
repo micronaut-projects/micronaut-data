@@ -72,4 +72,8 @@ public abstract class OracleXEBookRepository extends BookRepository {
     public abstract String updateReturningTitle(@Id Long id, String title);
 
     public abstract String updateByIdReturningTitle(Long id, String title);
+
+    public abstract Book deleteReturning(Book book);
+
+    public abstract String deleteReturningTitle(Book book);
 }

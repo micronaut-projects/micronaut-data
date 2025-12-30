@@ -587,4 +587,36 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         deleteQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) DELETE FROM person WHERE id = :id "
         method.classValue(DataMethod, "interceptor").get() == DeleteAllInterceptor
     }
+
+    void "ORACLE test build delete returning "() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    Book deleteReturning(Book book);
+    String deleteReturningTitle(Book book);
+}
+""")
+        when:
+        def deleteReturningMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
+        def deleteReturningTitleMethod = repository.findPossibleMethods("deleteReturningTitle").findFirst().get()
+        then:
+        getQuery(deleteReturningMethod) == 'BEGIN DELETE  FROM "BOOK"  WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(deleteReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getParameterPropertyPaths(deleteReturningMethod) == ["id"] as String[]
+        getDataInterceptor(deleteReturningMethod) == "io.micronaut.data.intercept.DeleteOneInterceptor"
+        getResultDataType(deleteReturningMethod) == DataType.ENTITY
+        getQuery(deleteReturningTitleMethod) == 'BEGIN DELETE  FROM "BOOK"  WHERE ("ID" = ?) RETURNING "TITLE" INTO ?; END;'
+        getDataResultType(deleteReturningTitleMethod) == "java.lang.String"
+        getParameterPropertyPaths(deleteReturningTitleMethod) == ["id"] as String[]
+        getDataInterceptor(deleteReturningTitleMethod) == "io.micronaut.data.intercept.DeleteReturningOneInterceptor"
+        getResultDataType(deleteReturningTitleMethod) == DataType.STRING
+    }
 }

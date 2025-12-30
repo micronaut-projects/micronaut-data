@@ -657,8 +657,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
-    protected UpdateReturningVisitor createUpdateReturningVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
-        return new OracleUpdateReturningSelectionVisitor(queryState, annotationMetadata, distinct);
+    protected ReturningSelectionVisitor createReturningSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        return new DefaultReturningSelectionVisitor(queryState, annotationMetadata, distinct);
     }
 
     @Override
@@ -1667,11 +1667,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     }
 
-    protected final class OracleUpdateReturningSelectionVisitor extends SqlSelectionVisitor implements UpdateReturningVisitor {
+    @Internal
+    protected final class DefaultReturningSelectionVisitor extends SqlSelectionVisitor implements ReturningSelectionVisitor {
         private final List<String> unescapedColumns = new ArrayList<>();
         private final List<DataType> resultColumnTypes = new ArrayList<>();
 
-        public OracleUpdateReturningSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
+        DefaultReturningSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             super(queryState, annotationMetadata, distinct);
         }
 

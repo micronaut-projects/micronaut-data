@@ -826,18 +826,22 @@ import io.micronaut.data.tck.entities.Author;
 @JdbcRepository(dialect= Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
-
     Book updateReturning(Book book);
-
+    String updateReturningTitle(Book book);
 }
 """)
         when:
-            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+            def updateReturningMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+            def updateReturningTitleMethod = repository.findPossibleMethods("updateReturningTitle").findFirst().get()
         then:
-            getQuery(updateReturningCustomMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
-            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
-            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
-            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
+            getQuery(updateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
+            getDataResultType(updateReturningMethod) == "io.micronaut.data.tck.entities.Book"
+            getParameterPropertyPaths(updateReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataInterceptor(updateReturningMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
+            getQuery(updateReturningTitleMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "TITLE" INTO ?; END;'
+            getDataResultType(updateReturningTitleMethod) == "java.lang.String"
+            getParameterPropertyPaths(updateReturningTitleMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataInterceptor(updateReturningTitleMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
     }
 
 }

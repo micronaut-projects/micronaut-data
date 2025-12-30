@@ -308,4 +308,60 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         bookRepository.findById(newBook.id).get().title == "My book ORA"
         bookRepository.findByTitle("My book ORA")
     }
+
+    void "test insert returning books"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+
+        def booksToCreate = List.of(
+                new Book(title: "My book 1", totalPages: 123, author: book.author),
+                new Book(title: "My book 2", totalPages: 123, author: book.author),
+                new Book(title: "My book 3", totalPages: 123, author: book.author),
+        )
+        when:
+        def newBooks = bookRepository.saveReturning(
+                booksToCreate
+        )
+        then:
+        newBooks.size() == 3
+        newBooks[0].id
+        !newBooks[0].is(booksToCreate[0])
+        newBooks[0].title == "My book 1"
+        newBooks[1].title == "My book 2"
+        newBooks[2].title == "My book 3"
+        def newBook = newBooks[0]
+        bookRepository.findById(newBook.id).get().title == "My book 1"
+        bookRepository.findByTitle("My book 1")
+        booksToCreate.forEach {
+            assert it.prePersist == 1
+        }
+        newBooks.forEach {
+            assert it.postLoad == 1
+            assert it.postPersist == 1
+        }
+    }
+
+    void "test delete returning book"() {
+        given:
+        setupBooks()
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        Book deletedBook = bookRepository.deleteReturning(book)
+        then:
+        deletedBook.id == book.id
+        deletedBook.title == book.title
+        deletedBook.postLoad == 1
+    }
+
+    void "test delete returning title book"() {
+        given:
+        setupBooks()
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        String deletedTitle = bookRepository.deleteReturningTitle(book)
+        then:
+        deletedTitle == book.title
+        bookRepository.findById(book.id).isEmpty()
+    }
 }

@@ -399,26 +399,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
-        if (preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING && preparedQuery.getDialect() == Dialect.ORACLE) {
+        if (preparedQuery.getDialect() == Dialect.ORACLE && (preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
+            || preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
                 JdbcParameterBinder binder = new JdbcParameterBinder(connection, cs, preparedQuery);
                 preparedQuery.bindParameters(binder);
-                // Prefer OUT parameter metadata from the stored query (avoids SQL parsing)
-                int inCount = preparedQuery.getQueryBindings().size();
-                List<QueryOutParameterBinding> outParams = preparedQuery.getOutParameterBindings();
-                List<String> columnNames = new ArrayList<>(outParams.size());
-                if (outParams != null && !outParams.isEmpty()) {
-                    int pos = inCount;
-                    for (QueryOutParameterBinding outParam : outParams) {
-                        int sqlType = outParam.getDataType() != null
-                            ? JdbcQueryStatement.findSqlType(outParam.getDataType(), jdbcConfiguration.getDialect())
-                            : Types.VARCHAR;
-                        cs.registerOutParameter(++pos, sqlType);
-                        columnNames.add(outParam.getName());
-                    }
-                } else {
-                    throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-                }
+                OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery);
+                int inCount = outCtx.inCount();
+                List<String> columnNames = outCtx.columnNames();
                 cs.execute();
                 boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
                 if (isEntityResult) {
@@ -1137,9 +1125,30 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return fallbackMapper.apply(sqlException);
     }
 
+    private OutParameterContext registerOracleReturningOutParameters(CallableStatement cs, SqlStoredQuery<?, ?> query) throws SQLException {
+        int inCount = query.getQueryBindings().size();
+        List<QueryOutParameterBinding> outParams = query.getOutParameterBindings();
+        if (outParams == null || outParams.isEmpty()) {
+            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
+        }
+        int pos = inCount;
+        List<String> columnNames = new ArrayList<>(outParams.size());
+        for (QueryOutParameterBinding outParam : outParams) {
+            int sqlType = outParam.getDataType() != null
+                ? JdbcQueryStatement.findSqlType(outParam.getDataType(), jdbcConfiguration.getDialect())
+                : Types.VARCHAR;
+            cs.registerOutParameter(++pos, sqlType);
+            columnNames.add(outParam.getName());
+        }
+        return new OutParameterContext(inCount, columnNames);
+    }
+
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
+    }
+
+    private record OutParameterContext(int inCount, List<String> columnNames) {
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
@@ -1294,22 +1303,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
                     JdbcParameterBinder binder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
                     storedQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
-                    // Prefer OUT parameter metadata from the stored query (avoids SQL parsing)
-                    int inCount = storedQuery.getQueryBindings().size();
-                    List<QueryOutParameterBinding> outParams = storedQuery.getOutParameterBindings();
-                    List<String> columnNames = new ArrayList<>(outParams.size());
-                    if (outParams != null && !outParams.isEmpty()) {
-                        int pos = inCount;
-                        for (QueryOutParameterBinding outParam : outParams) {
-                            int sqlType = outParam.getDataType() != null
-                                ? JdbcQueryStatement.findSqlType(outParam.getDataType(), jdbcConfiguration.getDialect())
-                                : Types.VARCHAR;
-                            cs.registerOutParameter(++pos, sqlType);
-                            columnNames.add(outParam.getName());
-                        }
-                    } else {
-                        throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-                    }
+                    OutParameterContext outCtx = registerOracleReturningOutParameters(cs, storedQuery);
+                    int inCount = outCtx.inCount();
+                    List<String> columnNames = outCtx.columnNames();
                     // rowsUpdated = 1;
                     rowsUpdated = cs.executeUpdate();
                     ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,

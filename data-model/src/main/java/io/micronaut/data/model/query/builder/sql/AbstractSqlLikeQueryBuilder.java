@@ -964,12 +964,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param distinct           Whether the query is marked as DISTINCT.
      * @return A visitor that can handle the RETURNING clause.
      */
-    protected UpdateReturningVisitor createUpdateReturningVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
-        throw new UnsupportedOperationException("OracleUpdateReturningVisitor is not yet implemented");
+    protected ReturningSelectionVisitor createReturningSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata,  UpdateQueryDefinition definition) {
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
         Map<String, Object> propertiesToUpdate = definition.propertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
@@ -995,66 +995,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryString.append(RETURNING);
 
             if (getDialect() == Dialect.ORACLE) {
-                // Collect OUT parameter metadata (column names and data types)
-                UpdateReturningVisitor visitor = createUpdateReturningVisitor(annotationMetadata, queryState, false);
-                if (returningSelection instanceof ISelection<?> selectionVisitable) {
-                    selectionVisitable.visitSelection(visitor);
-                } else {
-                    throw new IllegalStateException("Unknown selection type: " + returningSelection.getClass().getName());
-                }
-                int inCount = queryState.getParameterBindings().size();
-                int outCount = visitor.getUnescapedColumns().size();
-                if (outCount == 0) {
-                    throw new IllegalStateException("UPDATE ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
-                }
-                List<String> placeholders = new ArrayList<>(outCount);
-                for (int i = 0; i < outCount; i++) {
-                    placeholders.add(formatParameter(inCount + 1 + i).name());
-                }
-                final String finalSql = "BEGIN " + queryState.getFinalQuery() + " INTO " + String.join(",", placeholders) + "; END;";
-                final List<QueryOutParameterBinding> outBindings = new ArrayList<>(outCount);
-                for (int i = 0; i < outCount; i++) {
-                    final String col = visitor.getUnescapedColumns().get(i);
-                    final DataType dt = visitor.getResultColumnTypes().get(i);
-                    outBindings.add(new QueryOutParameterBinding() {
-                        @Override
-                        public String getName() {
-                            return col;
-                        }
-
-                        @Override
-                        public DataType getDataType() {
-                            return dt;
-                        }
-                    });
-                }
-                final List<QueryParameterBinding> params = queryState.getParameterBindings();
-                return new QueryResult() {
-                    @Override
-                    public String getQuery() {
-                        return finalSql;
-                    }
-
-                    @Override
-                    public List<String> getQueryParts() {
-                        return Collections.emptyList();
-                    }
-
-                    @Override
-                    public List<QueryParameterBinding> getParameterBindings() {
-                        return params;
-                    }
-
-                    @Override
-                    public Map<String, String> getAdditionalRequiredParameters() {
-                        return Collections.emptyMap();
-                    }
-
-                    @Override
-                    public List<QueryOutParameterBinding> getOutParameterBindings() {
-                        return outBindings;
-                    }
-                };
+                return buildOracleUpdateOrDeleteReturning(annotationMetadata, queryState, returningSelection, definition);
             } else {
                 buildSelect(annotationMetadata,
                     queryState,
@@ -1086,10 +1027,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support DELETE ... RETURNING clause");
             }
             queryString.append(RETURNING);
-            buildSelect(annotationMetadata,
-                queryState,
-                returningSelection,
-                false);
+            if (getDialect() == Dialect.ORACLE) {
+                return buildOracleUpdateOrDeleteReturning(annotationMetadata, queryState, returningSelection, definition);
+            } else {
+                buildSelect(annotationMetadata,
+                    queryState,
+                    returningSelection,
+                    false);
+            }
         }
         return QueryResult.of(queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1548,6 +1493,70 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+    }
+
+    private QueryResult buildOracleUpdateOrDeleteReturning(AnnotationMetadata annotationMetadata, QueryState queryState,
+                                                           Selection<?> returningSelection, BaseQueryDefinition definition) {
+        // Collect OUT parameter metadata (column names and data types)
+        ReturningSelectionVisitor visitor = createReturningSelectionVisitor(annotationMetadata, queryState, false);
+        if (returningSelection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(visitor);
+        } else {
+            throw new IllegalStateException("Unknown selection type: " + returningSelection.getClass().getName());
+        }
+        int inCount = queryState.getParameterBindings().size();
+        int outCount = visitor.getUnescapedColumns().size();
+        if (outCount == 0) {
+            throw new IllegalStateException("DELETE ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
+        }
+        List<String> placeholders = new ArrayList<>(outCount);
+        for (int i = 0; i < outCount; i++) {
+            placeholders.add(formatParameter(inCount + 1 + i).name());
+        }
+        final String finalSql = "BEGIN " + queryState.getFinalQuery() + " INTO " + String.join(",", placeholders) + "; END;";
+        final List<QueryOutParameterBinding> outBindings = new ArrayList<>(outCount);
+        for (int i = 0; i < outCount; i++) {
+            final String col = visitor.getUnescapedColumns().get(i);
+            final DataType dt = visitor.getResultColumnTypes().get(i);
+            outBindings.add(new QueryOutParameterBinding() {
+                @Override
+                public String getName() {
+                    return col;
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return dt;
+                }
+            });
+        }
+        final List<QueryParameterBinding> params = queryState.getParameterBindings();
+        return new QueryResult() {
+            @Override
+            public String getQuery() {
+                return finalSql;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public List<QueryOutParameterBinding> getOutParameterBindings() {
+                return outBindings;
+            }
+        };
     }
 
     protected record QueryBuilder(AtomicInteger position,
@@ -3109,10 +3118,32 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     }
 
-    protected interface UpdateReturningVisitor extends SelectionVisitor {
+    /**
+     * Visitor for handling the columns produced by a dialect-specific
+     * UPDATE/DELETE ... RETURNING clause.
+     * <p>
+     * Implementations collect the unescaped column names as they are rendered
+     * into the SQL and the corresponding {@link DataType}s so that callers can
+     * construct the appropriate OUT parameter metadata (for example, when using
+     * Oracle's RETURNING INTO mechanism).
+     * </p>
+     */
+    protected interface ReturningSelectionVisitor extends SelectionVisitor {
 
+        /**
+         * Returns the list of physical column names as they appear in the SQL,
+         * without dialect-specific quoting applied.
+         *
+         * @return unescaped column names in the order they are rendered
+         */
         List<String> getUnescapedColumns();
 
+        /**
+         * Returns the data types for the columns produced by the RETURNING clause.
+         * The order must match {@link #getUnescapedColumns()}.
+         *
+         * @return result column data types
+         */
         List<DataType> getResultColumnTypes();
     }
 }
