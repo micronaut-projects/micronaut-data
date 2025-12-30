@@ -207,12 +207,12 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         }
 
         @Override
-        public String getName() {
+        public String name() {
             return delegate.getName();
         }
 
         @Override
-        public io.micronaut.data.model.DataType getDataType() {
+        public io.micronaut.data.model.DataType dataType() {
             return delegate.getDataType();
         }
 

@@ -69,7 +69,6 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
     @Nullable
     QueryResultInfo getQueryResultInfo();
 
-
     /**
      * @return The persistent entity
      */

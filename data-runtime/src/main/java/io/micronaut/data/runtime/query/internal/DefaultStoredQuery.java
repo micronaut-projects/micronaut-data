@@ -514,24 +514,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         };
     }
 
-    private static final class StoredOutParameter implements QueryOutParameterBinding {
-        private final String name;
-        private final io.micronaut.data.model.DataType dataType;
-
-        private StoredOutParameter(String name,
-                                   io.micronaut.data.model.DataType dataType) {
-            this.name = name;
-            this.dataType = dataType;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public io.micronaut.data.model.DataType getDataType() {
-            return dataType;
-        }
+    private record StoredOutParameter(String name, DataType dataType) implements QueryOutParameterBinding {
     }
 }

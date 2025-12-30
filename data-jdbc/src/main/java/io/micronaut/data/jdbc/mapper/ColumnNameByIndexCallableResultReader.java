@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -39,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 5.0
  */
 @Internal
+@Experimental
 public final class ColumnNameByIndexCallableResultReader implements ResultReader<CallableStatement, String> {
 
     private final ColumnIndexCallableResultReader delegate;
@@ -51,8 +53,8 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
      * Constructs a new instance of ColumnNameByIndexCallableResultReader.
      *
      * @param delegate     the delegate {@link ColumnIndexCallableResultReader} to use for reading values
-     * @param columnNames  the list of column names in the order they appear in the result set or out parameters for callable statement
-     * @param posOffset    the offset to add to the column index when retrieving values from the result set or callable statement
+     * @param columnNames  the list of column names in the order they appear in the out parameters for callable statement
+     * @param posOffset    the offset to add to the column index when retrieving values from the callable statement
      */
     public ColumnNameByIndexCallableResultReader(ColumnIndexCallableResultReader delegate, List<String> columnNames,
                                                  Integer posOffset) {

@@ -44,7 +44,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The root entity type
      */
-
     Class<E> getRootEntity();
 
     /**
@@ -58,7 +57,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-
     String getQuery();
 
     /**
@@ -81,7 +79,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
-
     Class<R> getResultType();
 
     /**
@@ -90,13 +87,11 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query result type
      */
     @Override
-
     Argument<R> getResultArgument();
 
     /**
      * @return The result data type.
      */
-
     DataType getResultDataType();
 
     /**
@@ -145,7 +140,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The parameter binding.
      */
-
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
@@ -154,7 +148,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The all join paths
      * @since 4.8.1
      */
-
     default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
@@ -202,7 +195,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The query limit
      * @since 4.13
      */
-
     default Limit getQueryLimit() {
         return Limit.UNLIMITED;
     }
@@ -211,7 +203,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The runtime sort
      * @since 4.13
      */
-
     default Sort getSort() {
         return Sort.UNSORTED;
     }

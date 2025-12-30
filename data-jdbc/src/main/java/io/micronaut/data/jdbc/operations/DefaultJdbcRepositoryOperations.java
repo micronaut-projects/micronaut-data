@@ -1133,11 +1133,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         int pos = inCount;
         List<String> columnNames = new ArrayList<>(outParams.size());
         for (QueryOutParameterBinding outParam : outParams) {
-            int sqlType = outParam.getDataType() != null
-                ? JdbcQueryStatement.findSqlType(outParam.getDataType(), jdbcConfiguration.getDialect())
+            int sqlType = outParam.dataType() != null
+                ? JdbcQueryStatement.findSqlType(outParam.dataType(), jdbcConfiguration.getDialect())
                 : Types.VARCHAR;
             cs.registerOutParameter(++pos, sqlType);
-            columnNames.add(outParam.getName());
+            columnNames.add(outParam.name());
         }
         return new OutParameterContext(inCount, columnNames);
     }
@@ -1297,7 +1297,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private void executeReturning() {
             // For Oracle, RETURNING is expressed via PL/SQL block with INTO placeholders.
-            // Use CallableStatement and OUT parameter to capture the generated id (initial scope).
+            // Use CallableStatement and OUT parameter to capture the generated id and out field parameters.
             if (ctx.dialect == Dialect.ORACLE) {
                 try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
                     storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, cs, storedQuery),

@@ -200,7 +200,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The table
      */
     @Experimental
-
     public String buildBatchCreateTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
             .collect(Collectors.joining(System.lineSeparator()));
@@ -214,7 +213,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The table
      */
     @Experimental
-
     public String buildBatchDropTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
             .collect(Collectors.joining("\n"));
@@ -228,7 +226,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the give entity
      */
     @Experimental
-
     public String[] buildDropTableStatements(PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
@@ -256,7 +253,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @param association The association
      * @return The join table insert statement
      */
-
     public String buildJoinTableInsert(PersistentEntity entity,  Association association) {
         if (!isForeignKeyWithJoinTable(association)) {
             throw new IllegalArgumentException("Join table inserts can only be built for foreign key associations that are mapped with a join table.");
@@ -307,7 +303,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the give entity
      */
     @Experimental
-
     public String[] buildCreateTableStatements(PersistentEntity entity) {
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
         assert CollectionUtils.isNotEmpty(tables);
@@ -334,7 +329,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the given entities
      */
     @Experimental
-
     public String[] buildCreateTableStatements(PersistentEntity[] entities) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map

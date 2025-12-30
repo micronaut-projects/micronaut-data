@@ -33,11 +33,11 @@ public interface QueryOutParameterBinding {
      * @return The name of the OUT column/parameter if available.
      */
     @NonNull
-    String getName();
+    String name();
 
     /**
      * @return The data type for the OUT parameter when known.
      */
     @NonNull
-    DataType getDataType();
+    DataType dataType();
 }
