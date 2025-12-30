@@ -954,10 +954,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected abstract boolean computePropertyPaths();
 
     /**
-     * Creates a visitor for handling the RETURNING clause in an UPDATE statement.
+     * Creates a visitor for handling the RETURNING clause in an UPDATE/DELETE statement.
      *
      * This method is used to generate the necessary SQL for the RETURNING clause
-     * when executing an UPDATE query with a RETURNING clause.
+     * when executing an UPDATE or DELETE query with a RETURNING clause.
      *
      * @param annotationMetadata The annotation metadata associated with the query.
      * @param queryState         The current state of the query being built.
@@ -991,11 +991,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (!getDialect().supportsUpdateReturning()) {
                 throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support UPDATE ... RETURNING clause");
             }
-
             queryString.append(RETURNING);
-
             if (getDialect() == Dialect.ORACLE) {
-                return buildOracleUpdateOrDeleteReturning(annotationMetadata, queryState, returningSelection, definition);
+                return buildOracleUpdateOrDeleteReturningQueryResult(annotationMetadata, queryState, returningSelection, definition, true);
             } else {
                 buildSelect(annotationMetadata,
                     queryState,
@@ -1028,7 +1026,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             queryString.append(RETURNING);
             if (getDialect() == Dialect.ORACLE) {
-                return buildOracleUpdateOrDeleteReturning(annotationMetadata, queryState, returningSelection, definition);
+                return buildOracleUpdateOrDeleteReturningQueryResult(annotationMetadata, queryState, returningSelection, definition, false);
             } else {
                 buildSelect(annotationMetadata,
                     queryState,
@@ -1495,8 +1493,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private QueryResult buildOracleUpdateOrDeleteReturning(AnnotationMetadata annotationMetadata, QueryState queryState,
-                                                           Selection<?> returningSelection, BaseQueryDefinition definition) {
+    private QueryResult buildOracleUpdateOrDeleteReturningQueryResult(AnnotationMetadata annotationMetadata,
+                                                                      QueryState queryState,
+                                                                      Selection<?> returningSelection,
+                                                                      BaseQueryDefinition definition,
+                                                                      boolean update) {
         // Collect OUT parameter metadata (column names and data types)
         ReturningSelectionVisitor visitor = createReturningSelectionVisitor(annotationMetadata, queryState, false);
         if (returningSelection instanceof ISelection<?> selectionVisitable) {
@@ -1507,7 +1508,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         int inCount = queryState.getParameterBindings().size();
         int outCount = visitor.getUnescapedColumns().size();
         if (outCount == 0) {
-            throw new IllegalStateException("DELETE ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
+            String operation = update ? "UPDATE" : "DELETE";
+            throw new IllegalStateException(operation + " ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
         }
         List<String> placeholders = new ArrayList<>(outCount);
         for (int i = 0; i < outCount; i++) {
@@ -1530,33 +1532,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             });
         }
-        final List<QueryParameterBinding> params = queryState.getParameterBindings();
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return finalSql;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-
-            @Override
-            public List<QueryOutParameterBinding> getOutParameterBindings() {
-                return outBindings;
-            }
-        };
+        return QueryResult.of(finalSql, List.of(), queryState.getParameterBindings(), outBindings, Map.of());
     }
 
     protected record QueryBuilder(AtomicInteger position,

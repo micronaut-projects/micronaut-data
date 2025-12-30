@@ -402,8 +402,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (preparedQuery.getDialect() == Dialect.ORACLE && (preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
             || preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
-                JdbcParameterBinder binder = new JdbcParameterBinder(connection, cs, preparedQuery);
-                preparedQuery.bindParameters(binder);
+                preparedQuery.bindParameters(new JdbcParameterBinder(connection, cs, preparedQuery));
                 OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery);
                 int inCount = outCtx.inCount();
                 List<String> columnNames = outCtx.columnNames();
@@ -428,7 +427,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 );
                 return result;
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing Oracle SQL UPDATE RETURNING: " + e.getMessage(), e);
+                throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
             }
         }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
@@ -1301,12 +1300,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             // Use CallableStatement and OUT parameter to capture the generated id (initial scope).
             if (ctx.dialect == Dialect.ORACLE) {
                 try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
-                    JdbcParameterBinder binder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
-                    storedQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
+                    storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, cs, storedQuery),
+                        ctx.invocationContext, entity, previousValues);
                     OutParameterContext outCtx = registerOracleReturningOutParameters(cs, storedQuery);
                     int inCount = outCtx.inCount();
                     List<String> columnNames = outCtx.columnNames();
-                    // rowsUpdated = 1;
                     rowsUpdated = cs.executeUpdate();
                     ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
                         columnNames, inCount);
@@ -1315,8 +1313,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         Set.of(), reader, (DataConversionService) conversionService);
                     entity = (T) mapper.readEntity(cs);
 
-                    // For DELETE RETURNING the row no longer exists; just trigger post-load on the updated entity
-                    // TODO: Why is this needed? It's not always entity, sometimes can be String returned
+                    // Trigger post-load on the entity
                     entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
                     return;
                 } catch (SQLException e) {

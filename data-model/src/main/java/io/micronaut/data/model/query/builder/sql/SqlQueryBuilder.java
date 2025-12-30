@@ -943,34 +943,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
                 });
             }
-            final String q = builder;
-            final List<QueryParameterBinding> params = parameterBindings;
-            return new QueryResult() {
-                @Override
-                public String getQuery() {
-                    return q;
-                }
-
-                @Override
-                public List<String> getQueryParts() {
-                    return Collections.emptyList();
-                }
-
-                @Override
-                public List<QueryParameterBinding> getParameterBindings() {
-                    return params;
-                }
-
-                @Override
-                public Map<String, String> getAdditionalRequiredParameters() {
-                    return Collections.emptyMap();
-                }
-
-                @Override
-                public List<QueryOutParameterBinding> getOutParameterBindings() {
-                    return outBindings;
-                }
-            };
+            return QueryResult.of(builder, List.of(), parameterBindings, outBindings, Map.of());
         }
         return QueryResult.of(builder,
             Collections.emptyList(),
@@ -1667,6 +1640,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     }
 
+    /**
+     * Default implementation of {@link ReturningSelectionVisitor} used by {@link SqlQueryBuilder}
+     * to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).
+     * <p>
+     * In addition to emitting the selection into the SQL buffer, this visitor collects:
+     * <ul>
+     *   <li>Unescaped column names in declaration order via {@link #getUnescapedColumns()}</li>
+     *   <li>Result column data types via {@link #getResultColumnTypes()}</li>
+     * </ul>
+     * The collected metadata is used by dialects such as Oracle that require {@code RETURNING ... INTO}
+     * OUT parameters instead of a result set.
+     * <p>
+     * This type is not thread-safe and is intended for per-query use only.
+     * It is an internal implementation detail and not part of the public API.
+     *
+     * @see SqlQueryBuilder#createReturningSelectionVisitor(AnnotationMetadata, QueryState, boolean)
+     * @see ReturningSelectionVisitor
+     */
     @Internal
     protected final class DefaultReturningSelectionVisitor extends SqlSelectionVisitor implements ReturningSelectionVisitor {
         private final List<String> unescapedColumns = new ArrayList<>();

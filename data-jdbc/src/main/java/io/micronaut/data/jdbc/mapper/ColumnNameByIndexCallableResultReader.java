@@ -47,6 +47,13 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
 
     private final Map<String, Integer> columnIndexes = new ConcurrentHashMap<>();
 
+    /**
+     * Constructs a new instance of ColumnNameByIndexCallableResultReader.
+     *
+     * @param delegate     the delegate {@link ColumnIndexCallableResultReader} to use for reading values
+     * @param columnNames  the list of column names in the order they appear in the result set or out parameters for callable statement
+     * @param posOffset    the offset to add to the column index when retrieving values from the result set or callable statement
+     */
     public ColumnNameByIndexCallableResultReader(ColumnIndexCallableResultReader delegate, List<String> columnNames,
                                                  Integer posOffset) {
         this.delegate = delegate;
@@ -59,15 +66,17 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
         return delegate.getConversionService();
     }
 
-    private Integer getIndex(String index) {
-        return columnIndexes.computeIfAbsent(index, s -> {
+    private Integer getIndex(String columnName) {
+        return columnIndexes.computeIfAbsent(columnName, s -> {
             int pos = -1;
             for (int i = 0; i < columnNames.size(); i++) {
-                String columnName = columnNames.get(i);
-                if (columnName.equalsIgnoreCase(index)) {
+                if (columnName.equalsIgnoreCase(columnNames.get(i))) {
                     pos = i + posOffset + 1;
                     break;
                 }
+            }
+            if (pos == -1) {
+                throw new DataAccessException("Column name not found: " + columnName);
             }
             return pos;
         });
