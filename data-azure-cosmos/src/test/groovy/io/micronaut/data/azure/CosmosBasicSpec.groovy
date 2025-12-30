@@ -56,6 +56,7 @@ import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
+import tools.jackson.core.ObjectReadContext
 
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsIn
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.idsInAndNotIn
@@ -602,7 +603,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             if (filteredFamilies.iterator().hasNext()) {
                 ObjectNode b = filteredFamilies.iterator().next()
 
-                def parser = b.traverse()
+                def parser = io.micronaut.data.cosmos.operations.JacksonNodeConverter.toJackson3ObjectNode(b).traverse(ObjectReadContext.empty())
                 if (!parser.hasCurrentToken()) {
                     parser.nextToken()
                 }
