@@ -207,10 +207,13 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             try {
                 connectionStatus.beforeClosed();
             } finally {
-                if (connectionStatus.isNew()) {
-                    closeConnection(status);
+                try {
+                    if (connectionStatus.isNew()) {
+                        closeConnection(status);
+                    }
+                } finally {
+                    connectionStatus.afterClosed();
                 }
-                connectionStatus.afterClosed();
             }
         }
     }

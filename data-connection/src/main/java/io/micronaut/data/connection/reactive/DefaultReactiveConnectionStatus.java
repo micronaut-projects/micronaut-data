@@ -112,12 +112,29 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
             return Mono.empty();
         }
         Mono<Void> chain = Mono.empty();
+        List<Throwable> exceptions = new ArrayList<>(connectionSynchronizations.size());
         ListIterator<ReactiveConnectionSynchronization> listIterator = connectionSynchronizations.listIterator(connectionSynchronizations.size());
         while (listIterator.hasPrevious()) {
-            Publisher<Void> next = consumer.apply(listIterator.previous());
-            if (next != EMPTY) {
-                chain = chain.then(Mono.from(next));
+            try {
+                Publisher<Void> next = consumer.apply(listIterator.previous());
+                Mono<Void> wrapped = next == EMPTY ? Mono.empty() : Mono.from(next).onErrorResume(e -> {
+                    exceptions.add(e);
+                    return Mono.empty();
+                });
+                chain = chain.then(wrapped);
+            } catch (Exception e) {
+                exceptions.add(e);
             }
+        }
+        if (!exceptions.isEmpty()) {
+            if (exceptions.size() == 1) {
+                return chain.then(Mono.error(exceptions.get(0)));
+            }
+            IllegalStateException e = new IllegalStateException("Error executing connection synchronizations", exceptions.get(0));
+            for (int i = 1; i < exceptions.size(); i++) {
+                e.addSuppressed(exceptions.get(i));
+            }
+            return chain.then(Mono.error(e));
         }
         return chain;
     }
