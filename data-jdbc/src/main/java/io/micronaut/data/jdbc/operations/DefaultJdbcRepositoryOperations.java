@@ -1153,9 +1153,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         int pos = inCount;
         List<String> columnNames = new ArrayList<>(outParams.size());
         for (QueryOutParameterBinding outParam : outParams) {
-            int sqlType = outParam.dataType() != null
-                ? JdbcQueryStatement.findSqlType(outParam.dataType(), jdbcConfiguration.getDialect())
-                : Types.VARCHAR;
+            int sqlType = JdbcQueryStatement.findSqlType(outParam.dataType(), jdbcConfiguration.getDialect());
             cs.registerOutParameter(++pos, sqlType);
             columnNames.add(outParam.name());
         }

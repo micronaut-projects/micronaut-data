@@ -475,6 +475,7 @@ public interface QueryResult {
         @NonNull Map<String, String> additionalRequiredParameters) {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+        ArgumentUtils.requireNonNull("outParameterBindings", outParameterBindings);
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
 
         return new QueryResult() {
