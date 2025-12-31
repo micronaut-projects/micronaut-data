@@ -2467,7 +2467,7 @@ class User {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -2511,7 +2511,7 @@ interface UserRepository : CrudRepository&lt;User, Long&gt; { // <b class="conum
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -3009,33 +3009,6 @@ Book update(Book newBook);</code></pre>
 </div>
 <div class="paragraph">
 <p>You can also specify a custom query for the update methods:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query("UPDATE book SET title = :title where id = :id")
-void updateOne(Book book);
-
-@Query("UPDATE book SET title = :title where id = :id")
-void updateMany(Iterable&lt;Book&gt; books);</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("UPDATE book SET title = :title where id = :id")
-fun updateOne(book: Book)
-
-@Query("UPDATE book SET title = :title where id = :id")
-fun updateMany(books: Iterable&lt;Book&gt;)</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Query("UPDATE book SET title = :title where id = :id")
-void updateOne(Book book)
-
-@Query("UPDATE book SET title = :title where id = :id")
-void updateMany(Iterable&lt;Book&gt; books)</code></pre>
-</div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -8518,7 +8491,7 @@ class Book {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -8561,7 +8534,7 @@ interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -9383,7 +9356,7 @@ class Author {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
@@ -9426,7 +9399,7 @@ interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
@@ -11988,7 +11961,7 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 import java.util.Date;
 
@@ -14326,7 +14299,7 @@ public class CountryRegion {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -14393,7 +14366,7 @@ data class Product(@field:Id @GeneratedValue
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -17033,9 +17006,9 @@ long countAgeLess30 = personRepository.count(ageIsLessThan(30))
 
 long countAgeLess20 = personRepository.count(ageIsLessThan(20))
 
-long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; not(nameEquals("Denis")))
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; PredicateSpecification.not(nameEquals("Denis")))
 
-List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
+List&lt;Person&gt; people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17068,8 +17041,8 @@ List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") |
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun tagsContain(tag: String): PredicateSpecification&lt;Family?&gt;? {
-    return PredicateSpecification { root: Root&lt;Family?&gt;, criteriaBuilder: CriteriaBuilder -&gt;
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun tagsContain(tag: String): PredicateSpecification&lt;Family&gt; {
+    return PredicateSpecification { root: Root&lt;Family&gt;, criteriaBuilder: CriteriaBuilder -&gt;
         (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
             root.get&lt;Any&gt;("tags"),
             criteriaBuilder.literal(tag)
@@ -17121,8 +17094,8 @@ It can be also achieved by using predicate specification:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification&lt;Family?&gt;? {
-    return PredicateSpecification { root: Root&lt;Family?&gt;, criteriaBuilder: CriteriaBuilder -&gt;
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun childrenArrayContainsGender(gender: IGenderAware): PredicateSpecification&lt;Family&gt; {
+    return PredicateSpecification { root: Root&lt;Family&gt;, criteriaBuilder: CriteriaBuilder -&gt;
         (criteriaBuilder as PersistentEntityCriteriaBuilder).arrayContains(
             root.join&lt;Any, Any&gt;("children"),
             criteriaBuilder.literal(gender)
@@ -17514,7 +17487,7 @@ val recordsDeleted = personRepository.deleteAll(where {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))</code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))</code></pre>
 </div>
 </div>
 
