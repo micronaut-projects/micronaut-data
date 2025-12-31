@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.DataType;
 
@@ -28,6 +29,7 @@ import io.micronaut.data.model.DataType;
  * @since 5.0
  */
 @Experimental
+@Internal
 public interface QueryOutParameterBinding {
 
     /**

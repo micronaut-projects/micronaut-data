@@ -91,7 +91,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
-    public java.util.List<QueryOutParameterBinding> getOutParameterBindings() {
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
         return getStoredQueryDelegate().getOutParameterBindings();
     }
 

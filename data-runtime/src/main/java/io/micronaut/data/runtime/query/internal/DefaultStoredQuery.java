@@ -315,13 +315,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return queryParameters;
     }
 
-    private static List<QueryOutParameterBinding> getOutParameters(List<io.micronaut.core.annotation.AnnotationValue<DataMethodQueryOutParameter>> params) {
+    private static List<QueryOutParameterBinding> getOutParameters(List<AnnotationValue<DataMethodQueryOutParameter>> params) {
         if (params == null || params.isEmpty()) {
-            return java.util.List.of();
+            return List.of();
         }
-        java.util.List<QueryOutParameterBinding> outParams = new java.util.ArrayList<>(params.size());
-        for (io.micronaut.core.annotation.AnnotationValue<DataMethodQueryOutParameter> av : params) {
-            io.micronaut.data.model.DataType dataType = av.enumValue(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, io.micronaut.data.model.DataType.class).orElse(null);
+        List<QueryOutParameterBinding> outParams = new ArrayList<>(params.size());
+        for (AnnotationValue<DataMethodQueryOutParameter> av : params) {
+            DataType dataType = av.enumValue(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(null);
             String name = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_NAME).orElse(null);
             outParams.add(new StoredOutParameter(name, dataType));
         }
@@ -345,7 +345,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
 
     @Override
     public List<QueryOutParameterBinding> getOutParameterBindings() {
-        return outParameterBindings == null ? java.util.List.of() : outParameterBindings;
+        return outParameterBindings == null ? List.of() : outParameterBindings;
     }
 
     @Override

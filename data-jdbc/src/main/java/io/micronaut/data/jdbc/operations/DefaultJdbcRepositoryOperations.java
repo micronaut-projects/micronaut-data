@@ -1147,7 +1147,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private OutParameterContext registerOracleReturningOutParameters(CallableStatement cs, SqlStoredQuery<?, ?> query) throws SQLException {
         int inCount = query.getQueryBindings().size();
         List<QueryOutParameterBinding> outParams = query.getOutParameterBindings();
-        if (outParams == null || outParams.isEmpty()) {
+        if (CollectionUtils.isEmpty(outParams)) {
             throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
         }
         int pos = inCount;

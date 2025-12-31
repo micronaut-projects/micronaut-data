@@ -960,7 +960,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return A visitor that can handle the RETURNING clause.
      */
     protected ReturningSelectionVisitor createReturningSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Not supported by this SQL builder.");
     }
 
     @Override

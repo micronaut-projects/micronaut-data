@@ -690,12 +690,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY, queryResult.getQueryParts().toArray(new String[0]));
             }
             // OUT parameter bindings (e.g. Oracle RETURNING ... INTO ...)
-            java.util.List<QueryOutParameterBinding> outBindings = queryResult.getOutParameterBindings();
-            if (io.micronaut.core.util.CollectionUtils.isNotEmpty(outBindings)) {
-                java.util.List<io.micronaut.core.annotation.AnnotationValue<?>> outAnnotations = new java.util.ArrayList<>(outBindings.size());
+            List<QueryOutParameterBinding> outBindings = queryResult.getOutParameterBindings();
+            if (CollectionUtils.isNotEmpty(outBindings)) {
+                List<AnnotationValue<?>> outAnnotations = new ArrayList<>(outBindings.size());
                 for (QueryOutParameterBinding b : outBindings) {
-                    io.micronaut.core.annotation.AnnotationValueBuilder<?> outBuilder = io.micronaut.core.annotation.AnnotationValue.builder(DataMethodQueryOutParameter.class);
-                    if (io.micronaut.core.util.StringUtils.isNotEmpty(b.getName())) {
+                    AnnotationValueBuilder<?> outBuilder = AnnotationValue.builder(DataMethodQueryOutParameter.class);
+                    if (StringUtils.isNotEmpty(b.getName())) {
                         outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
                     }
                     if (b.getDataType() != null) {
@@ -703,7 +703,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     }
                     outAnnotations.add(outBuilder.build());
                 }
-                annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new io.micronaut.core.annotation.AnnotationValue[0]));
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new AnnotationValue[0]));
             }
 
             int max = queryResult.getMax();
