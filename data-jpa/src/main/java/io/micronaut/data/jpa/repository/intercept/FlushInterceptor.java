@@ -25,8 +25,9 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 /**
- * Interceptor for flushing.
- * @param <T>
+ * Interceptor that flushes the underlying JPA EntityManager.
+ *
+ * @param <T> The entity type handled by this interceptor
  */
 @Internal
 public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DataInterceptor<T, Void> {
