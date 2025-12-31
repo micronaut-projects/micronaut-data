@@ -33,6 +33,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
 import static io.micronaut.data.processor.visitors.TestUtils.getDataResultType
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getOperationType
+import static io.micronaut.data.processor.visitors.TestUtils.getOutBindingParameters
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
@@ -630,13 +631,29 @@ interface BookRepository extends GenericRepository<Book, Long> {
 }
 """)
         when:
-            def saveReturningMethod = repository.findPossibleMethods("saveReturning").findFirst().get()
+        def saveReturningMethod = repository.findPossibleMethods("saveReturning").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(saveReturningMethod)
         then:
-            getQuery(saveReturningMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
-            getDataResultType(saveReturningMethod) == "io.micronaut.data.tck.entities.Book"
-            getParameterPropertyPaths(saveReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated"] as String[]
-            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
-            getResultDataType(saveReturningMethod) == DataType.ENTITY
-            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
+        getQuery(saveReturningMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(saveReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getParameterPropertyPaths(saveReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated"] as String[]
+        getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+        getResultDataType(saveReturningMethod) == DataType.ENTITY
+        getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
+        outBindingParameters.length == 7
+        outBindingParameters[0].name == "author_id"
+        outBindingParameters[0].dataType == DataType.LONG
+        outBindingParameters[1].name == "genre_id"
+        outBindingParameters[1].dataType == DataType.LONG
+        outBindingParameters[2].name == "title"
+        outBindingParameters[2].dataType == DataType.STRING
+        outBindingParameters[3].name == "total_pages"
+        outBindingParameters[3].dataType == DataType.INTEGER
+        outBindingParameters[4].name == "publisher_id"
+        outBindingParameters[4].dataType == DataType.LONG
+        outBindingParameters[5].name == "last_updated"
+        outBindingParameters[5].dataType == DataType.TIMESTAMP
+        outBindingParameters[6].name == "id"
+        outBindingParameters[6].dataType == DataType.LONG
     }
 }

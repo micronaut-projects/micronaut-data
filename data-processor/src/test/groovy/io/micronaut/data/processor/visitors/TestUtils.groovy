@@ -22,6 +22,8 @@ import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -185,6 +187,18 @@ class TestUtils {
                 .toArray(String[]::new)
     }
 
+    static OutBindingParameter[] getOutBindingParameters(AnnotationMetadata annotationMetadata) {
+        return getOutBindingParameters(annotationMetadata.getAnnotation(DataMethod))
+    }
+
+    static OutBindingParameter[] getOutBindingParameters(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, DataMethodQueryOutParameter)
+                .stream()
+                .map(p -> new OutBindingParameter(name: p.getRequiredValue("name", String.class),
+                    dataType: p.getRequiredValue("dataType", DataType)))
+                .toArray(OutBindingParameter[]::new)
+    }
+
     static Boolean[] getParameterExpressions(AnnotationValue<DataMethod> annotationValue) {
         return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
                 .stream()
@@ -235,5 +249,10 @@ class TestUtils {
                 .stream()
                 .collect(Collectors.<AnnotationValue, String, Join.Type>toMap((AnnotationValue av) -> av.stringValue().get(),
                         (AnnotationValue av) -> av.enumValue("type", Join.Type).get()))
+    }
+
+    static class OutBindingParameter {
+        String name
+        DataType dataType
     }
 }

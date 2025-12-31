@@ -16,8 +16,10 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -38,6 +40,11 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     @Override
     OracleXEBookRepository getBookRepository() {
         return context.getBean(OracleXEBookRepository)
+    }
+
+    @Memoized
+    OracleRestaurantRepository getRestaurantRepository() {
+        return context.getBean(OracleRestaurantRepository)
     }
 
     @Memoized
@@ -363,5 +370,21 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         then:
         deletedTitle == book.title
         bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test insert returning restaurant with embedded fields"() {
+        given:
+        def restaurantToCreate = new Restaurant("Una", new Address("Main", "21002"))
+        when:
+        def newRestaurant = restaurantRepository.saveReturning(restaurantToCreate)
+        then:
+        newRestaurant.id
+        !newRestaurant.is(restaurantToCreate)
+        newRestaurant.address
+        newRestaurant.address.street == "Main"
+        // verify persisted
+        restaurantRepository.findById(newRestaurant.id).get().name == "Una"
+        cleanup:
+        restaurantRepository.deleteAll()
     }
 }

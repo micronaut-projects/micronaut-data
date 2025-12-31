@@ -121,6 +121,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -409,11 +410,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 cs.execute();
                 boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
                 if (isEntityResult) {
-                    ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
-                        columnNames, inCount);
-                    SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
-                    SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(preparedQuery.getPersistentEntity(), resultReader,
-                        Set.of(), reader, conversionService);
+                    SqlResultEntityTypeMapper mapper = getSqlResultEntityTypeMapper(preparedQuery.getPersistentEntity(), columnNames, inCount);
                     return List.of((R) mapper.readEntity(cs));
                 }
                 // Otherwise single field
@@ -436,6 +433,29 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         } catch (Throwable e) {
             throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Creates a {@link SqlResultEntityTypeMapper} instance to map the results from a {@link CallableStatement} to an entity.
+     * Currently used for INSERT/UPDATE/DELETE ... RETURNING for Oracle dialect.
+     *
+     * @param persistentEntity the persistent entity to be mapped
+     * @param columnNames      the column names of the result set
+     * @param inCount          the number of input parameters in the statement
+     * @return a {@link SqlResultEntityTypeMapper} instance
+     */
+    private SqlResultEntityTypeMapper getSqlResultEntityTypeMapper(RuntimePersistentEntity<?> persistentEntity, List<String> columnNames, int inCount) {
+        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(columnNames.size());
+        int pos = inCount;
+        for (String columnName : columnNames) {
+            columnIndexesByName.put(columnName, ++pos);
+        }
+        ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
+            columnIndexesByName);
+        SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
+        SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(persistentEntity, resultReader,
+            Set.of(), reader, conversionService);
+        return mapper;
     }
 
     private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, PreparedStatement ps) throws SQLException {
@@ -1306,11 +1326,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     int inCount = outCtx.inCount();
                     List<String> columnNames = outCtx.columnNames();
                     rowsUpdated = cs.executeUpdate();
-                    ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
-                        columnNames, inCount);
-                    SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
-                    SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(persistentEntity, resultReader,
-                        Set.of(), reader, (DataConversionService) conversionService);
+                    SqlResultEntityTypeMapper mapper = getSqlResultEntityTypeMapper(persistentEntity, columnNames, inCount);
                     entity = (T) mapper.readEntity(cs);
 
                     // Trigger post-load on the entity

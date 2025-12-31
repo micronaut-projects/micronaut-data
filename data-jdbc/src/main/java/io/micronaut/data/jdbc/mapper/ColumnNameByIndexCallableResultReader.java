@@ -28,9 +28,7 @@ import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Time;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A result reader that uses the column name to retrieve the column index and then delegates to
@@ -44,23 +42,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ColumnNameByIndexCallableResultReader implements ResultReader<CallableStatement, String> {
 
     private final ColumnIndexCallableResultReader delegate;
-    private final List<String> columnNames;
-    private final Integer posOffset;
-
-    private final Map<String, Integer> columnIndexes = new ConcurrentHashMap<>();
+    private final Map<String, Integer> columnIndexesByName;
 
     /**
      * Constructs a new instance of ColumnNameByIndexCallableResultReader.
      *
-     * @param delegate     the delegate {@link ColumnIndexCallableResultReader} to use for reading values
-     * @param columnNames  the list of column names in the order they appear in the out parameters for callable statement
-     * @param posOffset    the offset to add to the column index when retrieving values from the callable statement
+     * @param delegate             The delegate {@link ColumnIndexCallableResultReader} to use for reading values
+     * @param columnIndexesByName  The map of column indexes by names used as out parameters for the callable statement
      */
-    public ColumnNameByIndexCallableResultReader(ColumnIndexCallableResultReader delegate, List<String> columnNames,
-                                                 Integer posOffset) {
+    public ColumnNameByIndexCallableResultReader(ColumnIndexCallableResultReader delegate, Map<String, Integer> columnIndexesByName) {
         this.delegate = delegate;
-        this.columnNames = columnNames;
-        this.posOffset = posOffset;
+        this.columnIndexesByName = columnIndexesByName;
     }
 
     @Override
@@ -69,19 +61,10 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     private Integer getIndex(String columnName) {
-        return columnIndexes.computeIfAbsent(columnName, s -> {
-            int pos = -1;
-            for (int i = 0; i < columnNames.size(); i++) {
-                if (columnName.equalsIgnoreCase(columnNames.get(i))) {
-                    pos = i + posOffset + 1;
-                    break;
-                }
-            }
-            if (pos == -1) {
-                throw new DataAccessException("Column name not found: " + columnName);
-            }
-            return pos;
-        });
+        if (columnIndexesByName.containsKey(columnName)) {
+            return columnIndexesByName.get(columnName);
+        }
+        throw new DataAccessException("Column name not found: " + columnName);
     }
 
     @Nullable

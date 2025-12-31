@@ -831,17 +831,39 @@ interface BookRepository extends GenericRepository<Book, Long> {
 }
 """)
         when:
-            def updateReturningMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
-            def updateReturningTitleMethod = repository.findPossibleMethods("updateReturningTitle").findFirst().get()
+        def updateReturningMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        def updateOutBindingParameters = getOutBindingParameters(updateReturningMethod)
+        def updateReturningTitleMethod = repository.findPossibleMethods("updateReturningTitle").findFirst().get()
+        def updateTitleOutBindingParameters = getOutBindingParameters(updateReturningTitleMethod)
         then:
-            getQuery(updateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
-            getDataResultType(updateReturningMethod) == "io.micronaut.data.tck.entities.Book"
-            getParameterPropertyPaths(updateReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
-            getDataInterceptor(updateReturningMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
-            getQuery(updateReturningTitleMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "TITLE" INTO ?; END;'
-            getDataResultType(updateReturningTitleMethod) == "java.lang.String"
-            getParameterPropertyPaths(updateReturningTitleMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
-            getDataInterceptor(updateReturningTitleMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+        getQuery(updateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(updateReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getParameterPropertyPaths(updateReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+        getDataInterceptor(updateReturningMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
+        getQuery(updateReturningTitleMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "TITLE" INTO ?; END;'
+        getDataResultType(updateReturningTitleMethod) == "java.lang.String"
+        getParameterPropertyPaths(updateReturningTitleMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+        getDataInterceptor(updateReturningTitleMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+
+        updateOutBindingParameters.length == 7
+        updateOutBindingParameters[0].name == "id"
+        updateOutBindingParameters[0].dataType == DataType.LONG
+        updateOutBindingParameters[1].name == "author_id"
+        updateOutBindingParameters[1].dataType == DataType.LONG
+        updateOutBindingParameters[2].name == "genre_id"
+        updateOutBindingParameters[2].dataType == DataType.LONG
+        updateOutBindingParameters[3].name == "title"
+        updateOutBindingParameters[3].dataType == DataType.STRING
+        updateOutBindingParameters[4].name == "total_pages"
+        updateOutBindingParameters[4].dataType == DataType.INTEGER
+        updateOutBindingParameters[5].name == "publisher_id"
+        updateOutBindingParameters[5].dataType == DataType.LONG
+        updateOutBindingParameters[6].name == "last_updated"
+        updateOutBindingParameters[6].dataType == DataType.TIMESTAMP
+
+        updateTitleOutBindingParameters.length == 1
+        updateTitleOutBindingParameters[0].name == "title"
+        updateTitleOutBindingParameters[0].dataType == DataType.STRING
     }
 
 }
