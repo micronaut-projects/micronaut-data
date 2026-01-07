@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA Convert annotation.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public class ConvertAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.ConvertAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Convert";

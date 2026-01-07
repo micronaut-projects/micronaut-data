@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.processor.mappers.jta;
-
 /**
- * Maps JTA's Jakarta transaction annotation.
- *
- * @author Denis Stepanov
- * @since 3.5.0
+ * Jakarta JPA annotation mappers.
  */
-public final class JakartaTransactionalMapper extends JtaTransactionalMapper {
-    @Override
-    public String getName() {
-        return "jakarta.transaction.Transactional";
-    }
-
-}
+@org.jspecify.annotations.NullMarked
+package io.micronaut.data.processor.mappers.jpa.jakarta;

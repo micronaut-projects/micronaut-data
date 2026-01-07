@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.model;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
@@ -158,7 +157,6 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement.getAnnotationMetadata();
     }
 
-    @NonNull
     @Override
     public String getName() {
         return propertyElement.getName();
@@ -179,20 +177,18 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement.getNativeType();
     }
 
-    @NonNull
     @Override
     public String getTypeName() {
         return type.getName();
     }
 
-    @NonNull
     @Override
     public PersistentEntity getOwner() {
         return owner;
     }
 
     @Override
-    public boolean isAssignable(@NonNull String type) {
+    public boolean isAssignable(String type) {
         ClassElement t = getType();
         return t.isAssignable(type);
     }
@@ -200,17 +196,15 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     /**
      * @return The property element.
      */
-    public @NonNull PropertyElement getPropertyElement() {
+    public PropertyElement getPropertyElement() {
         return propertyElement;
     }
 
-    @NonNull
     @Override
     public ClassElement getType() {
         return type;
     }
 
-    @NonNull
     @Override
     public String getPersistedName() {
         return owner.getNamingStrategy().mappedName(this);

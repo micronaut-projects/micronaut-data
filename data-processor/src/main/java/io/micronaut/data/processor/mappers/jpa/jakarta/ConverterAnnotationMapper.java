@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA converter annotation to a singleton instance.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public class ConverterAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.ConverterAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Converter";

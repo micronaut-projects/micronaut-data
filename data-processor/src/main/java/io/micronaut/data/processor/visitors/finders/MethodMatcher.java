@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -41,7 +40,7 @@ public interface MethodMatcher extends Ordered {
     }
 
     @Nullable
-    MethodMatch match(@NonNull MethodMatchContext matchContext);
+    MethodMatch match(MethodMatchContext matchContext);
 
     /**
      * Method match implementation.

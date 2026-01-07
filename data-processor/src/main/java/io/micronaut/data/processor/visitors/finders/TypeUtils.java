@@ -17,7 +17,6 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -67,7 +66,7 @@ public class TypeUtils {
     private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
     @Nullable
-    public static ClassElement getKotlinCoroutineProducedType(@NonNull MethodElement methodElement) {
+    public static ClassElement getKotlinCoroutineProducedType(MethodElement methodElement) {
         if (!methodElement.isSuspend()) {
             throw new IllegalStateException("Not a coroutine method!");
         }
@@ -178,7 +177,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesANumber(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesANumber(MethodElement methodElement) {
         return isNumber(getMethodProducingItemType(methodElement));
     }
 
@@ -187,13 +186,13 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it returns void
      */
-    public static boolean doesReturnVoid(@NonNull MethodElement methodElement) {
+    public static boolean doesReturnVoid(MethodElement methodElement) {
         ClassElement producingItemType = getMethodProducingItemType(methodElement);
         return producingItemType == null || isVoid(producingItemType);
     }
 
     @Nullable
-    public static ClassElement getMethodProducingItemType(@NonNull MethodElement methodElement) {
+    public static ClassElement getMethodProducingItemType(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -208,7 +207,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesABoolean(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesABoolean(MethodElement methodElement) {
         return isBoolean(getMethodProducingItemType(methodElement));
     }
 
@@ -435,7 +434,7 @@ public class TypeUtils {
      * @param parameter The parameter
      * @return The data type
      */
-    public static Optional<DataType> resolveDataType(@NonNull ParameterElement parameter) {
+    public static Optional<DataType> resolveDataType(ParameterElement parameter) {
         ClassElement genericType = parameter.getGenericType();
         Objects.requireNonNull(genericType);
         if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
@@ -455,7 +454,7 @@ public class TypeUtils {
      * @param dataConverters Configured data converters
      * @return The data type
      */
-    public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
+    public static @Nullable String resolveDataConverter(ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
         if (explicitConverter.isPresent()) {
             return explicitConverter.get();
@@ -472,7 +471,7 @@ public class TypeUtils {
      * @param dataTypes Configured data types
      * @return The data type
      */
-    public static @NonNull DataType resolveDataType(@NonNull ClassElement type, Map<String, DataType> dataTypes) {
+    public static DataType resolveDataType(ClassElement type, Map<String, DataType> dataTypes) {
         final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
 
         return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
@@ -615,7 +614,7 @@ public class TypeUtils {
      * @param type The type
      * @return The ID type
      */
-    public static @NonNull String getTypeName(@NonNull ClassElement type) {
+    public static String getTypeName(ClassElement type) {
         String typeName = type.getName();
         return ClassUtils.getPrimitiveType(typeName).map(t ->
             ReflectionUtils.getWrapperType(t).getName()

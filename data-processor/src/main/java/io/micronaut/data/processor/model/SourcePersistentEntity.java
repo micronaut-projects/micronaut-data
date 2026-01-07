@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.model;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
@@ -54,8 +53,8 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
      * @param entityResolver The entity resolver to resolve any additional entities such as associations
      */
     public SourcePersistentEntity(
-            @NonNull ClassElement classElement,
-            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
+            ClassElement classElement,
+            Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(classElement);
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
@@ -110,7 +109,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         this.version = version;
     }
 
-    @NonNull
     @Override
     public String getName() {
         return classElement.getName();
@@ -169,7 +167,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return version;
     }
 
-    @NonNull
     @Override
     public List<SourcePersistentProperty> getPersistentProperties() {
         if (persistentPropertiesValues == null) {
@@ -228,7 +225,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return null;
     }
 
-    @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
         if (allPersistentPropertiesNames == null) {
@@ -255,7 +251,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return classElement;
     }
 
-    @NonNull
     @Override
     public ClassElement getType() {
         return classElement;

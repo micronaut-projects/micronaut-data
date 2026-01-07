@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA column annotation to {@link io.micronaut.data.annotation.MappedProperty}.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public final class ColumnAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.ColumnAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Column";

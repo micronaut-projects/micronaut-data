@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
@@ -63,7 +62,7 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
     }
 
     private static <Y> SourcePersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,
-                                                                      @NonNull SourcePersistentProperty property,
+                                                                      SourcePersistentProperty property,
                                                                       CriteriaBuilder criteriaBuilder) {
         List<Association> associations;
         if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {

@@ -17,7 +17,6 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.reflect.ClassUtils;
@@ -363,8 +362,8 @@ public interface FindersUtils {
         return entry;
     }
 
-    private static FindersUtils.InterceptorMatch resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext,
-                                                                    @NonNull ClassElement returnType) {
+    private static FindersUtils.InterceptorMatch resolveSyncFindInterceptor(MethodMatchContext matchContext,
+                                                                    ClassElement returnType) {
         FindInterceptorDef findInterceptorDef = matchContext.getFindInterceptors().get(returnType);
         if (findInterceptorDef != null) {
             if (findInterceptorDef.isContainer() && isContainer(returnType, findInterceptorDef.returnType())) {
@@ -396,8 +395,8 @@ public interface FindersUtils {
         return returnType.getFirstTypeArgument().orElseThrow(failOnMissingGeneric(methodElement, returnType));
     }
 
-    private static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(@NonNull MethodMatchContext matchContext,
-                                                                                @NonNull ClassElement returnType,
+    private static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(MethodMatchContext matchContext,
+                                                                                ClassElement returnType,
                                                                                 boolean singleResult) {
         if (isCursoredPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindCursoredReactivePageInterceptor.class);
@@ -412,7 +411,7 @@ public interface FindersUtils {
         }
     }
 
-    private static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(@NonNull MethodMatchContext matchContext, @NonNull ClassElement asyncType) {
+    private static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(MethodMatchContext matchContext, ClassElement asyncType) {
         if (isCursoredPage(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindCursoredAsyncPageInterceptor.class);
         } else if (isPage(matchContext, asyncType)) {
@@ -601,8 +600,8 @@ public interface FindersUtils {
         );
     }
 
-    static ClassElement getAsyncType(@NonNull MethodElement methodElement,
-                                     @NonNull ClassElement returnType) {
+    static ClassElement getAsyncType(MethodElement methodElement,
+                                     ClassElement returnType) {
         if (methodElement.isSuspend()) {
             return TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
@@ -721,7 +720,7 @@ public interface FindersUtils {
      * @param type         The type
      * @return The element
      */
-    static ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
+    static ClassElement getInterceptorElement(MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
         return matchContext.getVisitorContext().getClassElement(type).orElseGet(() -> new FindersUtils.DynamicClassElement(type));
     }
 
@@ -732,7 +731,7 @@ public interface FindersUtils {
      * @param type         The type
      * @return The element
      */
-    static ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, String type) {
+    static ClassElement getInterceptorElement(MethodMatchContext matchContext, String type) {
         return matchContext.getVisitorContext().getClassElement(type).orElseThrow(() -> new IllegalStateException("Unable to apply interceptor of type: " + type + ". The interceptor was not found on the classpath. Check your annotation processor configuration and try again."));
     }
 
@@ -761,7 +760,6 @@ public interface FindersUtils {
             return new DynamicClassElement((Class<? extends DataInterceptor>) type.getComponentType());
         }
 
-        @NonNull
         @Override
         public String getName() {
             return type.getName();
@@ -777,7 +775,6 @@ public interface FindersUtils {
             return Modifier.isPublic(type.getModifiers());
         }
 
-        @NonNull
         @Override
         public Object getNativeType() {
             return type;

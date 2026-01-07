@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
@@ -136,7 +135,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @return The operation type
      */
-    protected abstract DataMethod. @NonNull OperationType getOperationType();
+    protected abstract DataMethod. OperationType getOperationType();
 
     /**
      * @return true of the operation is supported by implicit queries
@@ -533,7 +532,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return genericType.isAssignable(Iterable.class);
     }
 
-    @NonNull
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
@@ -578,7 +576,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return CriteriaUtils.requireProperty(exp);
     }
 
-    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, @NonNull List<AnnotationValue<Join>> joinSpecs) {
+    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);
             Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
@@ -607,8 +605,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
      * @param isQuery      true if is a query criteria
      * @return a List of annotations values for {@link Join} annotation.
      */
-    @NonNull
-    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext, boolean isQuery) {
+
+    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(MethodMatchContext matchContext, boolean isQuery) {
         List<AnnotationValue<Join>> joins;
         if (!isQuery) {
             return matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
@@ -620,7 +618,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return matchContext.getRepositoryClass().getAnnotationMetadata().getAnnotationValuesByType(Join.class);
     }
 
-    protected final boolean hasNoWhereAndJoinDeclaration(@NonNull MethodMatchContext matchContext) {
+    protected final boolean hasNoWhereAndJoinDeclaration(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasAnnotation(Join.class)) {
             return false;
         }

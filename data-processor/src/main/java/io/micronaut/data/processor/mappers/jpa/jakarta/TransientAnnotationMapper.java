@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's {@code Transient} annotation to {@link io.micronaut.data.annotation.Transient}.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public final class TransientAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.TransientAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Transient";

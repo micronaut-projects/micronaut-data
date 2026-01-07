@@ -18,7 +18,6 @@ package io.micronaut.data.processor.mappers.jakarta.data;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.First;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -35,7 +34,6 @@ import java.util.List;
 @Internal
 public final class JakartaDataFirstByMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.data.repository.First";

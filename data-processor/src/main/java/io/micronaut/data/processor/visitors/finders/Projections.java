@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -52,8 +51,8 @@ public final class Projections {
             }).toList();
 
     @Nullable
-    public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
-                                    @NonNull PersistentEntityCriteriaBuilder cb,
+    public static Selection<?> find(PersistentEntityRoot<?> entityRoot,
+                                    PersistentEntityCriteriaBuilder cb,
                                     String value,
                                     BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
         String decapitalized = NameUtils.decapitalize(value);
@@ -163,9 +162,9 @@ public final class Projections {
     interface Projection {
 
         @Nullable
-        Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
-                          @NonNull PersistentEntityCriteriaBuilder cb,
-                          @NonNull String value,
+        Selection<?> find(PersistentEntityRoot<?> entityRoot,
+                          PersistentEntityCriteriaBuilder cb,
+                          String value,
                           BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction);
 
     }

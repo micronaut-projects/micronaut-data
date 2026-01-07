@@ -17,7 +17,6 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.FindByIdInterceptor;
@@ -113,8 +112,8 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
                 return e;
             }
 
-            private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext,
-                                            @NonNull ClassElement queryResultType) {
+            private boolean isFindByIdQuery(MethodMatchContext matchContext,
+                                            ClassElement queryResultType) {
                 return hasIdMatch
                     && matchContext.supportsImplicitQueries()
                     && queryResultType.getName().equals(matchContext.getRootEntity().getName())

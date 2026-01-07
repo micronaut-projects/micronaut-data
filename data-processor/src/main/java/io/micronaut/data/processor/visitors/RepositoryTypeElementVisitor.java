@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
@@ -208,7 +207,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         visitedRepositories.clear();
     }
 
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
@@ -330,7 +328,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      * @param annotationMetadata The annotation metadata.
      * @return The query builder
      */
-    private static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
+    private static QueryBuilder newQueryBuilder(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER
