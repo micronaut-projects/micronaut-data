@@ -156,7 +156,7 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../anno
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull io.micronaut.inject.visitor.TypeElementVisitor.VisitorKind</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.visitor.TypeElementVisitor.VisitorKind</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getVisitorKind()" class="member-name-link">getVisitorKind</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.visitor.TypeElementQuery</code></div>
@@ -167,8 +167,8 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../anno
  io.micronaut.inject.visitor.VisitorContext&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitPackage(io.micronaut.inject.ast.PackageElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitPackage</a><wbr>(@NonNull io.micronaut.inject.ast.PackageElement&nbsp;element,
- @NonNull io.micronaut.inject.visitor.VisitorContext&nbsp;context)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitPackage(io.micronaut.inject.ast.PackageElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitPackage</a><wbr>(io.micronaut.inject.ast.PackageElement&nbsp;element,
+ io.micronaut.inject.visitor.VisitorContext&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -213,8 +213,8 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../anno
 <li>
 <section class="detail" id="visitPackage(io.micronaut.inject.ast.PackageElement,io.micronaut.inject.visitor.VisitorContext)">
 <h3>visitPackage</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitPackage</span><wbr><span class="parameters">(@NonNull io.micronaut.inject.ast.PackageElement&nbsp;element,
- @NonNull io.micronaut.inject.visitor.VisitorContext&nbsp;context)</span>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitPackage</span><wbr><span class="parameters">(io.micronaut.inject.ast.PackageElement&nbsp;element,
+ io.micronaut.inject.visitor.VisitorContext&nbsp;context)</span>
                   throws <span class="exceptions">io.micronaut.inject.processing.ProcessingException</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -270,7 +270,7 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../anno
 <li>
 <section class="detail" id="getVisitorKind()">
 <h3>getVisitorKind</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull io.micronaut.inject.visitor.TypeElementVisitor.VisitorKind</span>&nbsp;<span class="element-name">getVisitorKind</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">io.micronaut.inject.visitor.TypeElementVisitor.VisitorKind</span>&nbsp;<span class="element-name">getVisitorKind</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getVisitorKind</code>&nbsp;in interface&nbsp;<code>io.micronaut.inject.visitor.PackageElementVisitor&lt;<a href="../../annotation/GenerateJakartaDataMetamodel.html" title="annotation interface in io.micronaut.data.annotation">GenerateJakartaDataMetamodel</a>&gt;</code></dd>

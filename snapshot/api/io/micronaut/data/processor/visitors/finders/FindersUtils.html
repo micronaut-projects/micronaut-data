@@ -126,20 +126,20 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType</a><wbr>(@NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getAsyncType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../FindInterceptorDef.html" title="class in io.micronaut.data.processor.visitors">FindInterceptorDef</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#getDefaultInterceptors(io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">getDefaultInterceptors</a><wbr>(io.micronaut.inject.visitor.VisitorContext&nbsp;visitorContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Obtain the interceptor element for the given class.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)" class="member-name-link">getInterceptorElement</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Obtain the interceptor element for the given class name.</div>
@@ -451,8 +451,8 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getAsyncType(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.ast.ClassElement)">
 <h3>getAsyncType</h3>
-<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getAsyncType</span><wbr><span class="parameters">(@NonNull io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getAsyncType</span><wbr><span class="parameters">(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
 </section>
 </li>
 <li>
@@ -547,7 +547,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)">
 <h3>getInterceptorElement</h3>
-<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;type)</span></div>
 <div class="block">Obtain the interceptor element for the given class.</div>
 <dl class="notes">
@@ -562,7 +562,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)">
 <h3>getInterceptorElement</h3>
-<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">getInterceptorElement</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;type)</span></div>
 <div class="block">Obtain the interceptor element for the given class name.</div>
 <dl class="notes">
