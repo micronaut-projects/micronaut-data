@@ -17,6 +17,7 @@ package io.micronaut.data.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Introspected;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Marker interface for all Data related interceptors.
@@ -37,5 +38,6 @@ public interface DataInterceptor<T, R> {
      * @param context The context
      * @return The result
      */
+    @Nullable
     R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context);
 }

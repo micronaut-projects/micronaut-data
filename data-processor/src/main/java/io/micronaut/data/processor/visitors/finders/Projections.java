@@ -54,7 +54,7 @@ public final class Projections {
     public static Selection<?> find(PersistentEntityRoot<?> entityRoot,
                                     PersistentEntityCriteriaBuilder cb,
                                     String value,
-                                    BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
+                                    BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction) {
         String decapitalized = NameUtils.decapitalize(value);
         Optional<String> path = PersistentEntityUtils.getPersistentPropertyPath(entityRoot.getPersistentEntity(), decapitalized);
         if (path.isPresent()) {
@@ -140,7 +140,8 @@ public final class Projections {
     private abstract static class PrefixedPropertyProjection implements Projection {
 
         @Override
-        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value, BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
+        @Nullable
+        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value, BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction) {
             String prefix = getPrefix();
             if (value.startsWith(prefix)) {
                 String remaining = value.substring(prefix.length());
@@ -154,7 +155,7 @@ public final class Projections {
             return null;
         }
 
-        public abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath);
+        protected abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath);
 
         protected abstract String getPrefix();
     }
@@ -165,7 +166,7 @@ public final class Projections {
         Selection<?> find(PersistentEntityRoot<?> entityRoot,
                           PersistentEntityCriteriaBuilder cb,
                           String value,
-                          BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction);
+                          BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction);
 
     }
 

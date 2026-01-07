@@ -22,6 +22,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 
 /**
@@ -34,7 +35,7 @@ public class ExecutorReactiveOperationsSupportingCriteria extends ExecutorReacti
     private final ExecutorAsyncOperationsSupportingCriteria asyncOperations;
 
     public ExecutorReactiveOperationsSupportingCriteria(ExecutorAsyncOperationsSupportingCriteria asyncOperations,
-                                                        DataConversionService dataConversionService) {
+                                                        @Nullable DataConversionService dataConversionService) {
         super(asyncOperations, dataConversionService);
         this.asyncOperations = asyncOperations;
     }

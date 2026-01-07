@@ -55,6 +55,7 @@ import org.bson.BsonNull;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -248,6 +249,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             final BeanIntrospection<R> rootEntity = BeanIntrospection.getIntrospection((Class<R>) preparedQuery.getRootEntity());
 
             @Override
+            @Nullable
             public Object read(BsonDocument document, String alias) {
                 if (iterator.hasNext()) {
                     alias = iterator.next();
@@ -284,8 +286,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(entity, codecRegistry);
         BsonDocument filter = new BsonDocument();
         filter.put(MongoUtils.ID, bsonDocument.get(MongoUtils.ID));
-        RuntimePersistentProperty<T> version = persistentEntity.getVersion();
-        if (version != null) {
+        if (persistentEntity.hasVersion()) {
+            RuntimePersistentProperty<T> version = persistentEntity.getVersion();
             // We don't support naming strategy for Mongo entity properties
             String versionPropertyName = version.getName();
             BsonValue value = bsonDocument.get(versionPropertyName);

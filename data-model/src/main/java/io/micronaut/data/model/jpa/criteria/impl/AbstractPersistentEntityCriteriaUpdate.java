@@ -35,6 +35,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,18 +59,23 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 @Internal
 public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T> {
 
+    @Nullable
     protected Predicate predicate;
+    @Nullable
     protected PersistentEntityRoot<T> entityRoot;
     protected Map<String, Object> updateValues = new LinkedHashMap<>();
+    @Nullable
     protected Selection<?> returning;
 
     @Override
     public PersistentEntity getPersistentEntity() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot.getPersistentEntity();
     }
 
     @Override
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        Objects.requireNonNull(entityRoot);
         return queryBuilder.buildUpdate(annotationMetadata,
             new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues));
     }
@@ -82,19 +88,17 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> from(EntityType<T> entity) {
-        if (entityRoot != null) {
-            throw new IllegalStateException("The root entity is already specified!");
-        }
-        return null;
+        throw notSupportedOperation();
     }
 
     @Override
     public PersistentEntityRoot<T> getRoot() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot;
     }
 
     @Override
-    public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute, X value) {
+    public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute, @Nullable X value) {
         throw notSupportedOperation();
     }
 
@@ -104,7 +108,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, X value) {
+    public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, @Nullable X value) {
         setValue(requireProperty(attribute).getPathAsString(), value);
         return this;
     }
@@ -116,7 +120,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public PersistentEntityCriteriaUpdate<T> set(String attributeName, Object value) {
+    public PersistentEntityCriteriaUpdate<T> set(String attributeName, @Nullable Object value) {
         setValue(attributeName, value);
         return this;
     }
@@ -127,7 +131,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
      * @param attributeName The attribute name
      * @param value         The value
      */
-    protected void setValue(String attributeName, Object value) {
+    protected void setValue(String attributeName, @Nullable Object value) {
         updateValues.put(attributeName, value);
     }
 
@@ -153,6 +157,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
+    @Nullable
     public final Predicate getRestriction() {
         return predicate;
     }
@@ -163,7 +168,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     public final boolean hasVersionRestriction() {
-        if (entityRoot.getPersistentEntity().getVersion() == null) {
+        if (predicate == null) {
+            return false;
+        }
+        Objects.requireNonNull(entityRoot);
+        if (!entityRoot.getPersistentEntity().hasVersion()) {
             return false;
         }
         return CriteriaUtils.hasVersionPredicate(predicate);
@@ -199,10 +208,13 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.UpdateQueryDefinition {
 
         private final Map<String, Object> propertiesToUpdate;
+        @Nullable
         private final Selection<?> returningSelection;
 
-        public UpdateQueryDefinitionImpl(PersistentEntity persistentEntity,
+        private UpdateQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                         @Nullable
                                          Predicate predicate,
+                                         @Nullable
                                          Selection<?> returningSelection,
                                          Map<String, Object> propertiesToUpdate) {
             super(persistentEntity, predicate, Map.of());
@@ -216,6 +228,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         }
 
         @Override
+        @Nullable
         public Selection<?> returningSelection() {
             return returningSelection;
         }

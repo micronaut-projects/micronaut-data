@@ -34,6 +34,7 @@ import io.micronaut.inject.writer.GeneratedFile;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -92,6 +93,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
             // Add string constants for field names
             for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
                 SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
+                Objects.requireNonNull(persistentProperty);
                 String fieldName = persistentProperty.getName().toUpperCase();
                 writer.write("    public static final String " + fieldName + " = \"" + persistentProperty.getName() + "\";\n");
             }
@@ -100,6 +102,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
             // Add attribute fields
             for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
                 SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
+                Objects.requireNonNull(persistentProperty);
                 String fieldName = persistentProperty.getName();
                 ClassElement propertyType = persistentProperty.getType();
 

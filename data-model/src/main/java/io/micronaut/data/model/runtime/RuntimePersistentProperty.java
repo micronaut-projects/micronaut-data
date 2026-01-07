@@ -25,6 +25,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,8 +49,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final JsonDataType jsonDataType;
     private final boolean constructorArg;
     private final Argument<Object> argument;
+    @Nullable
     private final Supplier<AttributeConverter<Object, Object>> converter;
+    @Nullable
     private String persistedName;
+    @Nullable
     private final String alias;
 
     /**
@@ -77,7 +81,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.annotationMetadata = annotationMetadata;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
-        this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : null;
+        this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : JsonDataType.DEFAULT;
         this.constructorArg = constructorArg;
         this.argument = argument;
         this.converter = annotationMetadata.classValue(MappedProperty.class, "converter")
@@ -87,6 +91,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
+    @Nullable
     public String getAlias() {
         return alias;
     }
@@ -194,6 +199,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
+    @Nullable
     public AttributeConverter<Object, Object> getConverter() {
         if (converter == null) {
             return null;

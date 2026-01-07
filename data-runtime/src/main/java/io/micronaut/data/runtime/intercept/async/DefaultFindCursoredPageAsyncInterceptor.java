@@ -55,30 +55,26 @@ public final class DefaultFindCursoredPageAsyncInterceptor extends AbstractConve
         Argument<?> returnArgument = returnType.isSuspended() ? returnType.asArgument() : returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
-            return asyncDatastoreOperations.findPage(preparedQuery).thenCompose((Page<?> page) -> {
+            return asyncDatastoreOperations.findPage(preparedQuery).thenApply((Page<?> page) -> {
                 if (!page.hasTotalSize() && preparedQuery.getPageable().requestTotal()) {
                     PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-                    final Page<?> page0 = page;
-                    return asyncDatastoreOperations.findOne(countQuery).thenApply(n -> {
-                        Long totalCount = n != null ? n.longValue() : -1;
-                        if (page0 instanceof CursoredPage<?> cursoredPage) {
-                            return CursoredPage.of(
-                                cursoredPage.getContent(),
-                                cursoredPage.getPageable(),
-                                cursoredPage.getCursors(),
-                                totalCount
-                            );
-                        } else {
-                            return Page.of(
-                                page0.getContent(),
-                                page0.getPageable(),
-                                totalCount
-                            );
-                        }
-                    });
+                    Number n = operations.findOne(countQuery);
+                    Long totalCount = n != null ? n.longValue() : -1;
+                    if (page instanceof CursoredPage<?> cursoredPage) {
+                        page = CursoredPage.of(
+                            cursoredPage.getContent(),
+                            cursoredPage.getPageable(),
+                            cursoredPage.getCursors(),
+                            totalCount
+                        );
+                    } else {
+                        page = Page.of(
+                            page.getContent(),
+                            page.getPageable(),
+                            totalCount
+                        );
+                    }
                 }
-                return java.util.concurrent.CompletableFuture.completedFuture(page);
-            }).thenApply(page -> {
                 if (returnArgument.isInstance(page)) {
                     return page;
                 }

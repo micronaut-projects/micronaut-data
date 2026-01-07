@@ -43,6 +43,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,6 +81,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().stringValue(Query.class).isPresent()) {
             return new MethodMatch() {
@@ -211,7 +213,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
      */
     private void buildRawQuery(MethodMatchContext matchContext,
                                MethodMatchInfo methodMatchInfo,
+                               @Nullable
                                ParameterElement entityParameter,
+                               @Nullable
                                ParameterElement entitiesParameter,
                                DataMethod.OperationType operationType,
                                boolean implicitQueries) {
@@ -254,7 +258,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        String queryString,
                                        List<ParameterElement> parameters,
                                        boolean namedParameters,
+                                       @Nullable
                                        ParameterElement entityParam,
+                                       @Nullable
                                        SourcePersistentEntity persistentEntity) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
@@ -318,7 +324,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     public static QueryParameterBinding addBinding(MethodMatchContext matchContext,
                                                    List<ParameterElement> parameters,
                                                    List<AnnotationValue<ParameterExpression>> parameterExpressions,
+                                                   @Nullable
                                                    ParameterElement entityParam,
+                                                   @Nullable
                                                    SourcePersistentEntity persistentEntity,
                                                    String name,
                                                    BindingContext bindingContext) {
@@ -340,7 +348,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
             .findFirst();
         if (element.isPresent()) {
-            PersistentPropertyPath propertyPath = matchContext.getRootEntity() == null ? null : matchContext.getRootEntity().getPropertyPath(name);
+            PersistentPropertyPath propertyPath = !matchContext.hasRootEntity() ? null : matchContext.getRootEntity().getPropertyPath(name);
             bindingContext = bindingContext
                 .incomingMethodParameterProperty(propertyPath)
                 .outgoingQueryParameterProperty(propertyPath);
@@ -362,11 +370,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
     }
 
-    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, @Nullable ParameterElement element) {
         return bindingParameter(matchContext, element, false);
     }
 
-    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, @Nullable ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
             Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             matchContext.getParameters(),
@@ -377,7 +385,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
                                                                   String name,
-                                                                  ClassElement type) {
+                                                                  @Nullable ClassElement type) {
         return new SourceParameterExpressionImpl(
             Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             name,
@@ -392,8 +400,12 @@ public class RawQueryMethodMatcher implements MethodMatcher {
      * @param parameterExpression The parameter expression
      * @return the type
      */
+    @Nullable
     public static ClassElement extractExpressionType(MatchContext matchContext, AnnotationValue<ParameterExpression> parameterExpression) {
         Object expressionValue = parameterExpression.getValues().get("expression");
+        if (expressionValue == null) {
+            return null;
+        }
         if (expressionValue instanceof String) {
             throw new ProcessingException(matchContext.getMethodElement(), "Expected an expression '#{...}' found a string!");
         }

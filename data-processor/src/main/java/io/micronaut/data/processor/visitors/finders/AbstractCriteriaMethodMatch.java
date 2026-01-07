@@ -69,6 +69,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -109,7 +110,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         RESTRICTIONS_PATTERN = Pattern.compile("^(" + rExpressionPattern + ")$");
     }
 
-    @Nullable
     protected final List<MethodNameParser.Match> matches;
 
     protected AbstractCriteriaMethodMatch(List<MethodNameParser.Match> matches) {
@@ -208,7 +208,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 }
                 PersistentPropertyPath propPath;
                 if (isId && rootEntity.hasIdentity()) {
-                    propPath = new PersistentPropertyPath(rootEntity.getIdentity());
+                    propPath = new PersistentPropertyPath(Objects.requireNonNull(rootEntity.getIdentity()));
                 } else {
                     propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
                 }
@@ -221,9 +221,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     }
                 } else {
                     PersistentProperty property = propPath.getProperty();
-                    if (property == rootEntity.getIdentity()) {
+                    if (rootEntity.hasIdentity() && property == rootEntity.getIdentity()) {
                         predicates.add(cb.equal(root.id(), param));
-                    } else if (property == rootEntity.getVersion()) {
+                    } else if (rootEntity.hasVersion() && property == rootEntity.getVersion()) {
                         predicates.add(cb.equal(root.version(), param));
                     } else {
                         if (propPath.getAssociations().isEmpty()) {
@@ -313,7 +313,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return existingPredicate;
     }
 
-    protected final <T> Predicate extractPredicates(String querySequence,
+    @Nullable
+    protected final <T> Predicate extractPredicates(@Nullable String querySequence,
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
                                                     PersistentEntityCriteriaBuilder cb) {
@@ -332,12 +333,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     String[] queryParameters = querySequence.split(operatorInUse);
                     List<Predicate> opPredicates = new ArrayList<>();
                     Pattern orPattern = OPERATOR_PATTERNS.get(OPERATOR_OR);
+                    Objects.requireNonNull(orPattern);
                     for (String queryParameter : queryParameters) {
                         // Since split was done first by And operator we may have queryParameters with Or predicate
                         // If queryParameters is actual Or expression we need to further extract predicates
                         // And not try to find actual method predicate from the property (queryParameter) containing Or expression
                         if (!OPERATOR_OR.equals(operatorInUse) && orPattern.matcher(queryParameter).find()) {
-                            opPredicates.add(extractPredicates(queryParameter, parametersIt, root, cb));
+                            Predicate innerPredicate = extractPredicates(queryParameter, parametersIt, root, cb);
+                            if (innerPredicate != null) {
+                                opPredicates.add(innerPredicate);
+                            }
                         } else {
                             opPredicates.add(
                                 findMethodPredicate(queryParameter, root, cb, parametersIt)
@@ -403,6 +408,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
         }
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
+        Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
     }
 
@@ -671,7 +677,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
+                                                     @Nullable
                                                      String selectedType,
+                                                     @Nullable
                                                      ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
@@ -691,7 +699,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
-                                                     ClassElement queryResultType,
+                                                     @Nullable ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
         return MatchUtils.analyzeMethodResult(matchContext.getRepositoryClass(), matchContext.getRootEntity().getClassElement(), queryResultType, interceptorMatch, allowEntityResultByDefault);

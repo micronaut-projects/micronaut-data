@@ -27,6 +27,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,8 +50,8 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
 
     @Override
     protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
-                                                                        Join.Type associationJoinType,
-                                                                        String alias) {
+                                                                        Join. @Nullable Type associationJoinType,
+                                                                        @Nullable String alias) {
         RuntimeAssociation<E> runtimeAssociation = (RuntimeAssociation<E>) association;
         Class<?> type = runtimeAssociation.getProperty().getType();
         if (List.class.isAssignableFrom(type)) {

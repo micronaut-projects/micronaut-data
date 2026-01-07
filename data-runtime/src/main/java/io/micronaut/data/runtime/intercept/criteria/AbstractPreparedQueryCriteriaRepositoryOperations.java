@@ -42,8 +42,10 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * The abstract criteria operation.
@@ -67,6 +69,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
                                                                 MethodInvocationContext<?, ?> context,
                                                                 QueryBuilder queryBuilder,
                                                                 Class<?> entityRoot,
+                                                                @Nullable
                                                                 Pageable pageable) {
         this.context = context;
         this.queryBuilder = queryBuilder;
@@ -147,6 +150,8 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
             persistentCriteriaQuery.offset((int) limit.offset());
         }
         QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaQuery).build(context, queryBuilder);
+        Objects.requireNonNull(queryResult, "Query result cannot be null");
+
         Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
         Selection<?> selection = persistentCriteriaQuery.getSelection();
         boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
@@ -160,6 +165,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
 
     private <E> StoredQuery<E, ?> buildExists(CriteriaQuery<?> criteriaQuery) {
         QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaQuery).build(context, queryBuilder);
+        Objects.requireNonNull(queryResult, "Query result cannot be null");
 
         return QueryResultStoredQuery.single(StoredQuery.OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
             queryResult, (Class<E>) entityRoot);
@@ -167,12 +173,16 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
 
     private <E> StoredQuery<E, ?> buildUpdateAll(CriteriaUpdate<E> criteriaUpdate) {
         QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaUpdate).build(context, queryBuilder);
+        Objects.requireNonNull(queryResult, "Query result cannot be null");
+
         return QueryResultStoredQuery.single(StoredQuery.OperationType.UPDATE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
 
     private <E> StoredQuery<E, ?> buildDeleteAll(CriteriaDelete<E> criteriaDelete) {
         QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaDelete).build(context, queryBuilder);
+        Objects.requireNonNull(queryResult, "Query result cannot be null");
+
         return QueryResultStoredQuery.single(StoredQuery.OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
     }

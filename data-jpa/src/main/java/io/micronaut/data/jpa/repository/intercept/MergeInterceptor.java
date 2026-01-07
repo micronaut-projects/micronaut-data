@@ -23,6 +23,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -51,12 +52,10 @@ public final class MergeInterceptor<T> extends AbstractQueryInterceptor<T, T> im
         this.jpaRepositoryOperations = (JpaRepositoryOperations) operations;
     }
 
+    @Nullable
     @Override
     public T intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, T> context) {
         Object argument = context.getParameterValues()[0];
-        if (argument == null) {
-            return null;
-        }
         if (argument instanceof Iterable<?> iterable) {
             List<Object> merged = new ArrayList<>();
             for (Object value : iterable) {

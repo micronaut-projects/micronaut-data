@@ -39,6 +39,7 @@ import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.annotation.PreDestroy;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 import jakarta.persistence.EntityManager;
@@ -64,7 +65,9 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
 
     private final ApplicationContext applicationContext;
     private final DefaultHibernateReactiveRepositoryOperations reactiveRepositoryOperations;
+    @Nullable
     private AsyncRepositoryOperations asyncRepositoryOperations;
+    @Nullable
     private ExecutorService executorService;
 
     public DefaultHibernateReactiveSynchronousRepositoryOperations(ApplicationContext applicationContext,

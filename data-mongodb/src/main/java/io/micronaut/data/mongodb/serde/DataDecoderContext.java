@@ -41,6 +41,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -94,6 +95,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Deserializer<?> relationDeser = findDeserializer(type);
                     return new Deserializer<>() {
                         @Override
+                        @Nullable
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
                                 return null;
@@ -152,6 +154,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Deserializer<?> deserializer = findDeserializer(convertedType);
                     return new Deserializer<>() {
                         @Override
+                        @Nullable
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
                                 return null;

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -36,11 +37,14 @@ public class Shipment {
     }
 
     @EmbeddedId
+    @Nullable
     private ShipmentId shipmentId;
 
     @MappedProperty("field")
+    @Nullable
     private String field;
 
+    @Nullable
     public ShipmentId getShipmentId() {
         return shipmentId;
     }
@@ -49,6 +53,7 @@ public class Shipment {
         this.shipmentId = shipmentId;
     }
 
+    @Nullable
     public String getField() {
         return field;
     }

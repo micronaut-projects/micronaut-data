@@ -16,6 +16,7 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -111,7 +112,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     @Override
     @NonNull
-    public C getConnection() {
+    public @NotNull C getConnection() {
         return connectionStatus.getConnection();
     }
 
@@ -127,7 +128,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     private static final class NewTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NewTransactionStatus(ConnectionStatus<C> connectionStatus,
+        private NewTransactionStatus(ConnectionStatus<C> connectionStatus,
                                     TransactionDefinition definition,
                                     TransactionOperations<C> transactionOperations) {
             super(connectionStatus, definition, transactionOperations);
@@ -142,7 +143,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     private static final class NoTxTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
+        private NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
                                      TransactionDefinition definition,
                                      TransactionOperations<C> transactionOperations) {
             super(connectionStatus, definition, transactionOperations);
@@ -159,7 +160,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
         private final DefaultTransactionStatus<C> existingTransaction;
 
-        public ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
+        private ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
                                          DefaultTransactionStatus<C> existingTransaction,
                                          TransactionOperations<C> transactionOperations) {
             super(connectionStatus, existingTransaction.getTransactionDefinition(), transactionOperations);

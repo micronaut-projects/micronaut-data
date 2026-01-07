@@ -66,17 +66,18 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, methodMatchContext::getEntity, this);
+    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(@Nullable Class<T> resultClass) {
+        Class aClass = resultClass == null ? Object.class : resultClass;
+        return new SourcePersistentEntityCriteriaQueryImpl<>(aClass, methodMatchContext::getEntity, this);
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
+    public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(@Nullable Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaDeleteImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
+    public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(@Nullable Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
@@ -101,8 +102,8 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
-    public ParameterExpression<Object> parameter(ParameterElement parameterElement,
-                                                 PersistentPropertyPath propertyPath) {
+    public ParameterExpression<Object> parameter(@Nullable ParameterElement parameterElement,
+                                                 @Nullable PersistentPropertyPath propertyPath) {
         return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, propertyPath);
     }
 
@@ -125,7 +126,7 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
-    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter,
+    public ParameterExpression<Object> entityPropertyParameter(@Nullable ParameterElement entityParameter,
                                                                @Nullable PersistentPropertyPath propertyPath) {
         return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), entityParameter, true, propertyPath);
     }

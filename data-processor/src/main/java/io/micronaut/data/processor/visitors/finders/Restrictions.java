@@ -816,7 +816,7 @@ public final class Restrictions {
 
         private final OneExpressionOp<T> func;
 
-        public SinglePropertyRestriction(OneExpressionOp<T> func) {
+        private SinglePropertyRestriction(OneExpressionOp<T> func) {
             this.func = func;
         }
 
@@ -838,7 +838,7 @@ public final class Restrictions {
 
         private final TwoExpressionOp<T> func;
 
-        public SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
+        private SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
             this.func = func;
         }
 

@@ -17,16 +17,21 @@ package io.micronaut.data.document.tck.entities;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Customer {
 
     @Id
+    @Nullable
     private String id;
 
+    @Nullable
     private String firstName;
+    @Nullable
     private String lastName;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -35,6 +40,7 @@ public class Customer {
         this.id = id;
     }
 
+    @Nullable
     public String getFirstName() {
         return firstName;
     }
@@ -43,6 +49,7 @@ public class Customer {
         this.firstName = firstName;
     }
 
+    @Nullable
     public String getLastName() {
         return lastName;
     }

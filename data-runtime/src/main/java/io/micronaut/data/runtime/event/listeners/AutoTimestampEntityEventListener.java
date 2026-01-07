@@ -97,18 +97,23 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return conversionService.convertRequired(now, property.getArgument());
     }
 
-    private Object truncate(Object now, ChronoUnit truncateToValue) {
+    @Nullable
+    private Object truncate(@Nullable Object now, @Nullable ChronoUnit truncateToValue) {
         if (truncateToValue != null) {
             if (now instanceof OffsetDateTime offsetDateTime) {
                 now = offsetDateTime.truncatedTo(truncateToValue);
             } else {
-                now = conversionService.convertRequired(now, Instant.class).truncatedTo(truncateToValue);
+                Instant instant = conversionService.convertRequired(now, Instant.class);
+                if (instant != null) {
+                    now = instant.truncatedTo(truncateToValue);
+                }
             }
         }
         return now;
     }
 
-    private Object computePropertyNow(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, Object now) {
+    @Nullable
+    private Object computePropertyNow(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, @Nullable Object now) {
         ChronoUnit truncateToValue;
         if (isUpdate) {
             truncateToValue = truncateToDateUpdated(annotationMetadata);
@@ -121,7 +126,10 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return truncate(now, truncateToValue);
     }
 
-    private @Nullable Object convertIfNeeded(@NonNull Object value, @NonNull Class<?> targetType) {
+    private @Nullable Object convertIfNeeded(@Nullable Object value, @NonNull Class<?> targetType) {
+        if (value == null) {
+            return null;
+        }
         if (targetType.isInstance(value)) {
             return value;
         }

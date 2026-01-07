@@ -47,6 +47,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     private final ReactorConnectionOperations<C> connectionOperations;
     private final boolean isNew;
 
+    @Nullable
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
 
     public DefaultReactiveConnectionStatus(C connection, ConnectionDefinition definition, ReactorConnectionOperations<C> connectionOperations, boolean isNew) {

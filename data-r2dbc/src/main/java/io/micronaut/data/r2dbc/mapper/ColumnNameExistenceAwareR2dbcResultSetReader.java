@@ -22,6 +22,7 @@ import io.micronaut.data.runtime.mapper.AbstractDelegatingResultReader;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -35,12 +36,14 @@ import java.util.Set;
 @Internal
 public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelegatingResultReader<Row, String> {
 
+    @Nullable
     private Set<String> knownColumns;
 
     public ColumnNameExistenceAwareR2dbcResultSetReader() {
         super(new ColumnNameR2dbcResultReader());
     }
 
+    @Nullable
     @Override
     public Object readDynamic(Row row, String index, DataType dataType) {
         if (!containsColumnName(row, index)) {

@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -58,6 +59,7 @@ public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public final MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         Matcher matcher = patternWithBySyntax.matcher(methodName);

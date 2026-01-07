@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 
 import jakarta.persistence.criteria.From;
@@ -42,11 +41,9 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
     /**
      * @return The persistent joins
      */
-    
     Collection<PersistentAssociationPath<AssociatedEntityType, ?>> getPersistentJoins();
 
     @Override
-    @Nullable
     <X, Y> PersistentEntityJoin<X, Y> join(String attributeName);
 
     /**
@@ -58,7 +55,6 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>           The association entity type
      * @return The joined entity
      */
-    
     <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, Join.Type joinType);
 
     /**
@@ -71,7 +67,6 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>           The association entity type
      * @return The joined entity
      */
-    
     <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, Join.Type joinType,  String alias);
 
     @Override
@@ -88,7 +83,6 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @param <Y>       The association entity type
      * @return The joined entity
      */
-    
     <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute, Join.Type jt);
 
     @Override

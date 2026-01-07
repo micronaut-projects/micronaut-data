@@ -70,6 +70,7 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * @since 4.0.0
      */
     @Override
+    @Nullable
     QueryResultInfo getQueryResultInfo();
 
     /**
@@ -84,6 +85,6 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
     /**
      * @return The persistent entity
      */
-    @Nullable
+    @Override
     RuntimePersistentEntity<E> getPersistentEntity();
 }

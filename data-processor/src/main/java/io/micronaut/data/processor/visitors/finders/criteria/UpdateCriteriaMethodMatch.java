@@ -46,6 +46,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -116,10 +117,10 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
-            .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
+            .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
             .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
-        if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
+        if (entity.hasVersion() && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
             query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
         }
 
@@ -159,10 +160,12 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     @Override
+    @Nullable
     protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
                                                List<ParameterElement> notConsumedParameters,
                                                PersistentEntityRoot<T> root,
                                                PersistentEntityCriteriaBuilder cb,
+                                               @Nullable
                                                Predicate existingPredicate) {
         ParameterElement entityParameter = getEntityParameter();
         if (entityParameter == null) {
@@ -172,7 +175,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         Predicate predicate = null;
         SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
         if (entityParameter != null) {
-            if (rootEntity.getVersion() != null && existingPredicate == null) {
+            if (rootEntity.hasVersion() && existingPredicate == null) {
                 predicate = cb.and(
                     cb.equal(root.id(), scb.entityPropertyParameter(entityParameter, null)),
                     cb.equal(root.version(), scb.entityPropertyParameter(entityParameter, null))

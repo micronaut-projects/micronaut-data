@@ -146,7 +146,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final String dataSourceName;
+    @Nullable
     private ExecutorService ioExecutorService;
+    @Nullable
     private AsyncRepositoryOperations asyncRepositoryOperations;
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
@@ -353,7 +355,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(reactiveOperations, ioExecutorService);
         }
-        return asyncRepositoryOperations;
+        return Objects.requireNonNull(asyncRepositoryOperations);
     }
 
     @NonNull
@@ -877,12 +879,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+        public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
             return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
         }
 
+        @Nullable
         @Override
-        public Object convert(Object value, RuntimePersistentProperty<?> property) {
+        public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
             if (property == null) {
                 return value;
             }
@@ -894,7 +897,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+        @Nullable
+        public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
             if (converterClass == null) {
                 return value;
             }
@@ -915,7 +919,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, Object value) {
+        public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
             JsonDataType jsonDataType = null;
             if (binding.getDataType() == DataType.JSON) {
                 jsonDataType = binding.getJsonDataType();
@@ -1177,6 +1181,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final Connection connection;
         private final Dialect dialect;
+        @Nullable
         private final InvocationContext<?, ?> invocationContext;
 
         /**
@@ -1188,7 +1193,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
          * @param dialect            the dialect
          * @param connection         the connection
          */
-        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
+        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, @Nullable InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;
             this.connection = connection;

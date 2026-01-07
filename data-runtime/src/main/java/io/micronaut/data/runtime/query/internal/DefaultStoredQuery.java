@@ -41,6 +41,7 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -81,12 +82,12 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isNative;
     private final boolean isProcedure;
     private final boolean hasPageable;
-    private final AnnotationMetadata annotationMetadata;
     private final boolean isCount;
     private final boolean hasResultConsumer;
+    @Nullable
     private Map<String, Object> queryHints;
+    @Nullable
     private Set<JoinPath> joinPaths = null;
-    private Set<JoinPath> joinFetchPaths = null;
     private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
     private final boolean jsonEntity;
@@ -94,6 +95,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final Map<String, AnnotationValue<?>> parameterExpressions;
     private final Limit limit;
     private final Sort sort;
+    @Nullable
     private final Function<Object, Object> stringsEnvResolverValueMapper;
 
     /**
@@ -147,7 +149,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         }
 
         this.rootEntity = getRequiredRootEntity(method);
-        this.annotationMetadata = method.getAnnotationMetadata();
+        AnnotationMetadata annotationMetadata = method.getAnnotationMetadata();
         this.isProcedure = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_PROCEDURE);
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
         boolean isNumericPlaceHolder = method

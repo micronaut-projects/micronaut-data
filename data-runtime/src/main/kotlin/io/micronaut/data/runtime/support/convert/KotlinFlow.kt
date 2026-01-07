@@ -61,7 +61,7 @@ internal class KotlinFlow : TypeConverterRegistrar {
             }
         }
         conversionService.addConverter(
-            Any::class.java,
+            Object::class.java,
             Flow::class.java
         ) { obj: Any ->
             flow {

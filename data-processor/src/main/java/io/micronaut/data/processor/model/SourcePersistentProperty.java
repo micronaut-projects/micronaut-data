@@ -49,6 +49,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     private final PropertyElement propertyElement;
     private final DataType dataType;
     private final ClassElement type;
+    @Nullable
     private final String converterClassName;
     private final String alias;
 

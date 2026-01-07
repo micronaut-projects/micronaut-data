@@ -31,6 +31,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,17 +51,22 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 @Internal
 public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T> {
 
+    @Nullable
     protected Predicate predicate;
+    @Nullable
     protected PersistentEntityRoot<T> entityRoot;
+    @Nullable
     protected Selection<?> returning;
 
     @Override
     public PersistentEntity getPersistentEntity() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot.getPersistentEntity();
     }
 
     @Override
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        Objects.requireNonNull(entityRoot);
         return queryBuilder.buildDelete(annotationMetadata,
             new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning));
     }
@@ -99,10 +105,12 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> getRoot() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot;
     }
 
     @Override
+    @Nullable
     public Predicate getRestriction() {
         return predicate;
     }
@@ -113,7 +121,11 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     public final boolean hasVersionRestriction() {
-        if (entityRoot.getPersistentEntity().getVersion() == null) {
+        if (predicate == null) {
+            return false;
+        }
+        Objects.requireNonNull(entityRoot);
+        if (!entityRoot.getPersistentEntity().hasVersion()) {
             return false;
         }
         return CriteriaUtils.hasVersionPredicate(predicate);
@@ -150,13 +162,15 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder.DeleteQueryDefinition {
 
+        @Nullable
         private final Selection<?> returningSelection;
 
-        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection) {
+        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, @Nullable Predicate predicate, @Nullable Selection<?> returningSelection) {
             super(persistentEntity, predicate, Map.of());
             this.returningSelection = returningSelection;
         }
 
+        @Nullable
         @Override
         public Selection<?> returningSelection() {
             return returningSelection;

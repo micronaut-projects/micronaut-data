@@ -62,7 +62,7 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>              The expression type
      * @return new parameter
      */
-    <T> ParameterExpression<T> parameter(ParameterElement parameterElement,
+    <T> ParameterExpression<T> parameter(@Nullable ParameterElement parameterElement,
                                          @Nullable PersistentPropertyPath propertyPath);
 
 /**
@@ -93,14 +93,14 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>             The expression type
      * @return new parameter
      */
-    <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter,
+    <T> ParameterExpression<T> entityPropertyParameter(@Nullable ParameterElement entityParameter,
                                                        @Nullable PersistentPropertyPath propertyPath);
 
     @Override
-    <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
+    <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(@Nullable Class<T> targetEntity);
 
-@Override
-    <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
+    @Override
+    <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(@Nullable Class<T> targetEntity);
 
 /**
      * The criteria insert.
@@ -118,10 +118,10 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      */
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity);
 
-@Override
+    @Override
     SourcePersistentEntityCriteriaQuery<Object> createQuery();
 
-@Override
-    <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass);
+    @Override
+    <T> SourcePersistentEntityCriteriaQuery<T> createQuery(@Nullable Class<T> resultClass);
 
 }

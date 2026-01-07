@@ -390,7 +390,7 @@ public class TypeUtils {
         if (methodElement.isSuspend()) {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return returnType.isAssignable(Iterable.class);
+        return returnType != null && returnType.isAssignable(Iterable.class);
     }
 
     /**

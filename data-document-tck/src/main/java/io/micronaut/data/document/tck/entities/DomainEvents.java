@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.event.PostUpdate;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.annotation.event.PreUpdate;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
@@ -35,12 +36,15 @@ import java.time.LocalDateTime;
 public class DomainEvents {
     @Id
     @GeneratedValue
+    @Nullable
     String id;
 
     @DateCreated
+    @Nullable
     LocalDateTime dateCreated;
 
     @DateUpdated
+    @Nullable
     LocalDateTime dateUpdated;
 
     private String name = "test";
@@ -53,6 +57,7 @@ public class DomainEvents {
         this.name = name;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -61,6 +66,7 @@ public class DomainEvents {
         this.id = id;
     }
 
+    @Nullable
     public LocalDateTime getDateCreated() {
         return dateCreated;
     }
@@ -69,6 +75,7 @@ public class DomainEvents {
         this.dateCreated = dateCreated;
     }
 
+    @Nullable
     public LocalDateTime getDateUpdated() {
         return dateUpdated;
     }
