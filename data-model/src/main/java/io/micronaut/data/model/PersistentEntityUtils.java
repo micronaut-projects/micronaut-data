@@ -59,7 +59,7 @@ public final class PersistentEntityUtils {
         PersistentEntity associatedEntity = association.getAssociatedEntity();
         if (!associatedEntity.hasIdentity()) {
             // Some strange case of document DB
-            return true;
+            return false;
         }
         PersistentProperty identity = associatedEntity.getIdentity();
         if (identity instanceof Embedded embedded) {
