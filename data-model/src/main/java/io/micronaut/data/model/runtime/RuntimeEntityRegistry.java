@@ -38,8 +38,8 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
      * @return The new value, never null.
      */
     @Experimental
-     Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty,
-            @Nullable Object previousValue);
+    Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty,
+                                       @Nullable Object previousValue);
 
     /**
      * Get a new, non-cached instance.

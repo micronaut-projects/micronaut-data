@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code findOne(Specification)} for JPA specifications.
@@ -38,6 +39,7 @@ public class FindOneSpecificationInterceptor extends AbstractSpecificationInterc
         super(operations);
     }
 
+    @Nullable
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         return convertOne(

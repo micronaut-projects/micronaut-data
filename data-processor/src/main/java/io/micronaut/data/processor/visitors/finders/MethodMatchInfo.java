@@ -44,7 +44,9 @@ public final class MethodMatchInfo {
     private boolean dto;
     private boolean optimisticLock;
 
+    @Nullable
     private QueryResult queryResult;
+    @Nullable
     private QueryResult countQueryResult;
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
@@ -56,7 +58,7 @@ public final class MethodMatchInfo {
      * @param resultType    The result type, can be null for void etc.
      * @param interceptor   The interceptor type to execute at runtime
      */
-    public MethodMatchInfo(DataMethod.OperationType operationType, @Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
+    public MethodMatchInfo(DataMethod.OperationType operationType, TypedElement resultType, ClassElement interceptor) {
         this.operationType = operationType;
         this.interceptor = interceptor;
         this.resultType = resultType;
@@ -110,7 +112,7 @@ public final class MethodMatchInfo {
     /**
      * @return The parameter roles
      */
-    
+
     public Map<ParameterElement, String> getParameterRoles() {
         return Collections.unmodifiableMap(parameterRoles);
     }
@@ -119,7 +121,7 @@ public final class MethodMatchInfo {
      * The computed result type.
      * @return The result type.
      */
-    @Nullable public TypedElement getResultType() {
+    public TypedElement getResultType() {
         return resultType;
     }
 
@@ -136,12 +138,12 @@ public final class MethodMatchInfo {
         return this;
     }
 
-    public MethodMatchInfo queryResult(QueryResult queryResult) {
+    public MethodMatchInfo queryResult(@Nullable QueryResult queryResult) {
         this.queryResult = queryResult;
         return this;
     }
 
-    public MethodMatchInfo countQueryResult(QueryResult countQueryResult) {
+    public MethodMatchInfo countQueryResult(@Nullable QueryResult countQueryResult) {
         this.countQueryResult = countQueryResult;
         return this;
     }
@@ -165,10 +167,12 @@ public final class MethodMatchInfo {
         return interceptor;
     }
 
+    @Nullable
     public QueryResult getQueryResult() {
         return queryResult;
     }
 
+    @Nullable
     public QueryResult getCountQueryResult() {
         return countQueryResult;
     }

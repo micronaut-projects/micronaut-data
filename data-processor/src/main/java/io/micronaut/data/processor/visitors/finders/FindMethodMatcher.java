@@ -32,6 +32,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +60,7 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
             .build());
     }
 
+    @Nullable
     @Override
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Find.class)) {
@@ -69,7 +71,7 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
                     .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "Unknown entity: " + rootEntity.get()));
                 matchContext.setRootEntity(matchContext.getEntity(classElement));
             }
-            if (matchContext.getRootEntity() == null) {
+            if (!matchContext.hasRootEntity()) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());

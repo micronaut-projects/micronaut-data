@@ -22,6 +22,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Exists specification method.
@@ -37,6 +38,7 @@ public final class ExistsSpecificationMethodMatcher extends AbstractSpecificatio
     }
 
     @Override
+    @Nullable
     protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement()) && isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickExistsSpecInterceptor(matchContext, matchContext.getReturnType());

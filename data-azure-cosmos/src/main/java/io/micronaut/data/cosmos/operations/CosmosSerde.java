@@ -34,6 +34,7 @@ import io.micronaut.serde.Serializer;
 import io.micronaut.serde.jackson.JacksonDecoder;
 import io.micronaut.serde.support.util.JsonNodeEncoder;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.ObjectReadContext;
 import tools.jackson.databind.ObjectMapper;
@@ -67,13 +68,18 @@ final class CosmosSerde {
      * @param <E> the entity type
      * @return the serialized bean to JSON (JsonNode or ObjectNode)
      */
-    public <E> com.fasterxml.jackson.databind.node.ObjectNode serialize(RuntimePersistentEntity<E> persistentEntity, E bean, Argument<E> type) {
+    public <E> com.fasterxml.jackson.databind.node. @Nullable ObjectNode serialize(RuntimePersistentEntity<E> persistentEntity, E bean, Argument<E> type) {
         com.fasterxml.jackson.databind.node.ObjectNode result = serialize(bean, type);
-        RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
-        if (identity != null && !identity.getName().equals(Constants.INTERNAL_ID)) {
-            Object value = identity.getProperty().get(bean);
-            String id = value == null ? null : value.toString();
-            result.set(Constants.INTERNAL_ID, id == null ? NullNode.getInstance() : new TextNode(id));
+        if (result == null) {
+            return null;
+        }
+        if (persistentEntity.hasIdentity()) {
+            RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
+            if (!identity.getName().equals(Constants.INTERNAL_ID)) {
+                Object value = identity.getProperty().get(bean);
+                String id = value == null ? null : value.toString();
+                result.set(Constants.INTERNAL_ID, id == null ? NullNode.getInstance() : new TextNode(id));
+            }
         }
         CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
         String versionField = cosmosEntity.getVersionField();
@@ -97,6 +103,7 @@ final class CosmosSerde {
      * @param <O> the type to be returned
      * @return the serialized bean to JSON (JsonNode or ObjectNode)
      */
+    @Nullable
     public <O extends com.fasterxml.jackson.databind.JsonNode> O serialize(Object bean, Argument<?> type) {
         try {
             Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null);

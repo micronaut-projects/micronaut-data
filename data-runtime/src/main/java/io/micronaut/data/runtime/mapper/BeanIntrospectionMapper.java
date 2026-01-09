@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
@@ -48,8 +47,7 @@ import java.util.Optional;
 public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
 
     @Override
-    default @NonNull
-    R map(@NonNull D object, @NonNull Class<R> type) throws InstantiationException {
+    default R map(D object, Class<R> type) throws InstantiationException {
         ArgumentUtils.requireNonNull("resultSet", object);
         ArgumentUtils.requireNonNull("type", type);
         try {
@@ -90,8 +88,7 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                 }
                 instance = introspection.instantiate(args);
             }
-            Collection<BeanProperty<R, Object>> properties = beanProperties;
-            for (BeanProperty<R, Object> property : properties) {
+            for (BeanProperty<R, Object> property : beanProperties) {
                 if (property.isReadOnly()) {
                     continue;
                 }
@@ -123,9 +120,6 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
     }
 
     default Object convert(Object value, Argument<?> argument) {
-        if (value == null) {
-            return null;
-        }
         ConversionContext acc = ConversionContext.of(argument);
         Optional<?> result = getConversionService().convert(value, argument);
         if (result.isEmpty()) {

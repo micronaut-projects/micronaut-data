@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.Expression;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +60,7 @@ public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
             }
 
             @Override
-            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
                 throw new IllegalStateException("AutoPopulateRuntimeProperty are not yet supported");
             }
 
@@ -123,7 +124,7 @@ public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     @Override
     @NextMajorVersion("Require non null")
-    public <T> Expression<T> literal(T value) {
+    public <T> Expression<T> literal(@Nullable T value) {
         // Runtime literals need to be bind as parameters not modifying the query to avoid the SQL injection
         return super.parameter(value == null ? (Class<T>) Object.class : (Class<T>) value.getClass(), null, value);
     }

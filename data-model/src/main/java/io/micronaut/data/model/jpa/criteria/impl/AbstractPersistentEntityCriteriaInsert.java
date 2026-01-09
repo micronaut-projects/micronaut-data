@@ -24,7 +24,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.ParameterExpression;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -37,22 +39,27 @@ import java.util.Set;
 @Internal
 public abstract class AbstractPersistentEntityCriteriaInsert<T> implements PersistentEntityCriteriaInsert<T> {
 
+    @Nullable
     protected PersistentEntityRoot<T> entityRoot;
     private boolean returning;
 
     @Override
     public PersistentEntity getPersistentEntity() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot.getPersistentEntity();
     }
 
     @Override
+    @Nullable
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        Objects.requireNonNull(entityRoot);
         return queryBuilder.buildInsert(annotationMetadata,
             new InsertQueryDefinitionImpl(entityRoot.getPersistentEntity(), returning));
     }
 
     @Override
     public PersistentEntityRoot<T> getRoot() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot;
     }
 

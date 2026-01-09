@@ -24,6 +24,7 @@ import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.api.annotation.Observes;
 import org.jboss.arquillian.test.spi.event.suite.After;
 import org.jboss.arquillian.test.spi.event.suite.Before;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
  *
  * @author Denis Stepanov
  */
+@NullUnmarked
 public class TckObserver {
 
     @Inject

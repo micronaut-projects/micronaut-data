@@ -15,7 +15,6 @@
  */
 package io.micronaut.transaction;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
@@ -44,7 +43,6 @@ public interface TransactionStatus<T> extends TransactionExecution, PropagatedCo
     /**
      * @return The associated connection.
      */
-    @NonNull
     default T getConnection() {
         return getConnectionStatus().getConnection();
     }
@@ -53,7 +51,6 @@ public interface TransactionStatus<T> extends TransactionExecution, PropagatedCo
      * @return The connection status.
      * @since 4.0.0
      */
-    @NonNull
     ConnectionStatus<T> getConnectionStatus();
 
     /**
@@ -64,7 +61,7 @@ public interface TransactionStatus<T> extends TransactionExecution, PropagatedCo
      *
      * @param synchronization the synchronization object to register
      */
-    default void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+    default void registerSynchronization(TransactionSynchronization synchronization) {
         throw new TransactionUsageException("Transaction synchronization is not supported!");
     }
 

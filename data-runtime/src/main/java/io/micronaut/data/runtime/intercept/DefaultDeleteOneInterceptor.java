@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -42,6 +43,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
+    @Nullable
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Class<Object> returnType = context.getReturnType().getType();
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);

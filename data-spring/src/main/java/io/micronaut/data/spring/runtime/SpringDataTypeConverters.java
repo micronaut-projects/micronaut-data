@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
 import java.util.Optional;
 
 /**
- * Type converters for supporting classes and interfaces in the org.springframework.data.domain package (for example {@link org.springframework.data.domain.Pageable}).
+ * Type converters for supporting classes and interfaces in the {@link org.springframework.data.domain} package.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -34,12 +34,6 @@ import java.util.Optional;
 @Factory
 @Internal
 public class SpringDataTypeConverters {
-
-    /**
-     * Default constructor.
-     */
-    public SpringDataTypeConverters() {
-    }
 
     /**
      * @return The page converter

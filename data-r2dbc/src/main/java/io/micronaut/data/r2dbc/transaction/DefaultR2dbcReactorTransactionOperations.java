@@ -26,6 +26,7 @@ import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         return connectionStatus.getConnection().rollbackTransaction();
     }
 
+    @Nullable
     private IsolationLevel getIsolationLevel(TransactionDefinition definition) {
         return definition.getIsolationLevel().map(isolation -> switch (isolation) {
             case READ_COMMITTED -> IsolationLevel.READ_COMMITTED;

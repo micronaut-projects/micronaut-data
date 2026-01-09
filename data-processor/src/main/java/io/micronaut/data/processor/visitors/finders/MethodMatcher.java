@@ -53,6 +53,7 @@ public interface MethodMatcher extends Ordered {
          * @param matchContext The match context
          * @return The match info
          */
+        @Nullable
         MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext);
 
     }

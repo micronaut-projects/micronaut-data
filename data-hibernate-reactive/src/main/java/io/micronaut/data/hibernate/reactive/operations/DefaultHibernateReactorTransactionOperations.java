@@ -27,6 +27,7 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,7 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         return new HibernateReactiveTransactionStatus(txStatus, transaction, this);
     }
 
+    @Nullable
     private <R> Flux<R> validateTransaction(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Transaction execution for Hibernate Reactive connection: {} and configuration {}.", txStatus.getConnection(), serverName);

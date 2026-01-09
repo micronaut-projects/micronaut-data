@@ -27,10 +27,13 @@ public class Restaurant {
 
     @GeneratedValue
     @Id
+    @Nullable
     private String id;
+    @Nullable
     private final String name;
 
     @Relation(Relation.Kind.EMBEDDED)
+    @Nullable
     private final Address address;
 
     @Relation(Relation.Kind.EMBEDDED)
@@ -42,6 +45,7 @@ public class Restaurant {
         this.address = address;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -50,10 +54,12 @@ public class Restaurant {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
 
+    @Nullable
     public Address getAddress() {
         return address;
     }

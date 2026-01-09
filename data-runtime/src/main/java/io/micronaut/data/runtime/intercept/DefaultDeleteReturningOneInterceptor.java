@@ -22,6 +22,7 @@ import io.micronaut.data.intercept.DeleteReturningOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,9 +44,10 @@ public final class DefaultDeleteReturningOneInterceptor<T, R> extends AbstractQu
         super(datastore);
     }
 
+    @Nullable
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        PreparedQuery<?, R> preparedQuery = (PreparedQuery<?, R>) prepareQuery(methodKey, context);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         List<R> results = operations.execute(preparedQuery);
         if (results.isEmpty()) {
             return null;

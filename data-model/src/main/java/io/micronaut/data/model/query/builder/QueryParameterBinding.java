@@ -33,6 +33,7 @@ public interface QueryParameterBinding {
     /**
      * @return The parameter name.
      */
+    @Nullable
     String getName();
 
     /**
@@ -71,16 +72,14 @@ public interface QueryParameterBinding {
     /**
      * @return The parameter binding path
      */
-    @Nullable
-    default String[] getParameterBindingPath() {
+    default String @Nullable [] getParameterBindingPath() {
         return null;
     }
 
     /**
      * @return The property path
      */
-    @Nullable
-    default String[] getPropertyPath() {
+    default String @Nullable [] getPropertyPath() {
         return null;
     }
 
@@ -122,7 +121,6 @@ public interface QueryParameterBinding {
      * @return The value or null
      * @since 4.5.0
      */
-    @Nullable
     default boolean isExpression() {
         return false;
     }

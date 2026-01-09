@@ -62,7 +62,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     @Override
     public boolean supports(RuntimePersistentEntity<Object> entity, Class<? extends Annotation> eventType) {
-        return entity.getVersion() != null && !entity.getVersion().isGenerated() && SUPPORTED_EVENTS.contains(eventType);
+        return entity.hasVersion() && !entity.getVersion().isGenerated() && SUPPORTED_EVENTS.contains(eventType);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         return increment(previousValue, type);
     }
 
-    private Object increment(Object previousValue, Class<?> type) {
+    private Object increment(@Nullable Object previousValue, Class<?> type) {
         if (previousValue == null) {
             throw new IllegalStateException("@Version value cannot be null");
         }

@@ -36,6 +36,7 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.support.ExceptionUtil;
 import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -54,6 +55,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     private final SynchronousTransactionManager<Object> synchronousTransactionManager;
     private final TransactionOperations<Object> transactionManager;
     private final TransactionMode transactionMode;
+    @Nullable
     private TransactionStatus<Object> tx;
     private final AtomicInteger counter = new AtomicInteger();
     private final AtomicInteger setupCounter = new AtomicInteger();
@@ -107,6 +109,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     }
 
     private Object propagate(TestMethodInvocationContext<Object> methodInvocationContext) {
+        Objects.requireNonNull(tx);
         return tx.propagate(() -> {
             try {
                 return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
@@ -222,6 +225,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
             if (synchronousTransactionManager == null) {
                 return;
             }
+            Objects.requireNonNull(tx);
             if (rollback) {
                 synchronousTransactionManager.rollback(tx);
             } else {

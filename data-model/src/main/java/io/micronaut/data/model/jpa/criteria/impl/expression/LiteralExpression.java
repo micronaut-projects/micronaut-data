@@ -43,6 +43,7 @@ public final class LiteralExpression<T> extends AbstractExpression<T> {
         this.value = object;
     }
 
+    @Nullable
     public T getValue() {
         return value;
     }

@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -42,10 +43,11 @@ import java.util.function.Function;
 @Internal
 public class MethodMatchContext extends MatchContext {
 
+    @Nullable
     private SourcePersistentEntity entity;
     private final Map<Element, String> parametersInRole;
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
-    private final Function<String, SourcePersistentEntity> entityBySimplyNameResolver;
+    private final Function<String, @Nullable SourcePersistentEntity> entityBySimplyNameResolver;
 
     /**
      * Creates the context.
@@ -65,6 +67,7 @@ public class MethodMatchContext extends MatchContext {
     MethodMatchContext(
             QueryBuilder queryBuilder,
             ClassElement repositoryClass,
+            @Nullable
             SourcePersistentEntity entity,
             VisitorContext visitorContext,
             ClassElement returnType,
@@ -86,7 +89,7 @@ public class MethodMatchContext extends MatchContext {
     /**
      * @return The entity by a simple name resolver
      */
-    public Function<String, SourcePersistentEntity> getEntityBySimplyNameResolver() {
+    public Function<String, @Nullable SourcePersistentEntity> getEntityBySimplyNameResolver() {
         return entityBySimplyNameResolver;
     }
 
@@ -123,11 +126,18 @@ public class MethodMatchContext extends MatchContext {
     }
 
     /**
+     * @return Has a root entity?
+     */
+    public boolean hasRootEntity() {
+        return entity != null;
+    }
+
+    /**
      * The root entity being queried.
      * @return The root entity
      */
     public SourcePersistentEntity getRootEntity() {
-        return entity;
+        return Objects.requireNonNull(entity, "Persistent entity is required");
     }
 
     /**

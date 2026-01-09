@@ -72,7 +72,7 @@ import jakarta.persistence.criteria.Selection;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,6 +85,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -119,6 +120,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
 
+    @Nullable
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition insertQueryDefinition) {
         return null;
@@ -169,11 +171,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath = requireProperty(order.getExpression());
                 PersistentProperty property = persistentPropertyPath.getProperty();
                 PersistentEntity owner = property.getOwner();
-                PersistentProperty identity = owner.getIdentity();
-                if (identity != null && identity.equals(property)) {
-                    sortObj.put(MONGO_ID_FIELD, order.isAscending() ? 1 : -1);
-                } else {
-                    sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                if (owner.hasIdentity()) {
+                    PersistentProperty identity = owner.getIdentity();
+                    if (identity.equals(property)) {
+                        sortObj.put(MONGO_ID_FIELD, order.isAscending() ? 1 : -1);
+                    } else {
+                        sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                    }
                 }
             });
             pipeline.add(Map.of("$sort", sortObj));
@@ -217,12 +221,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 currentEntityPath.add(path);
                 String thisPath = currentEntityPath.toString();
                 if (currentLookup.subLookups.containsKey(thisPath)) {
+                    // TODO: inspect this check. Why do we check 'thisPath' but get 'path'
                     currentLookup = currentLookup.subLookups.get(path);
+                    Objects.requireNonNull(currentLookup);
                     currentEntityPath = new StringJoiner(".");
                     continue;
                 }
 
                 PersistentPropertyPath propertyPath = currentLookup.persistentEntity.getPropertyPath(thisPath);
+                Objects.requireNonNull(propertyPath, "Cannot find property path: " + thisPath);
                 PersistentProperty property = propertyPath.getProperty();
                 if (!(property instanceof Association association)) {
                     continue;
@@ -241,16 +248,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
                     PersistentEntity associationOwner = association.getOwner();
                     // JOIN TABLE
-                    PersistentProperty identity = associatedEntity.getIdentity();
-                    if (identity == null) {
+                    if (!associatedEntity.hasIdentity()) {
                         throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                     }
-                    final PersistentProperty associatedId = associationOwner.getIdentity();
-                    if (associatedId == null) {
+                    if (!associationOwner.hasIdentity()) {
                         throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                     }
                     Association owningAssociation = inverseSide.orElse(association);
-                    boolean isAssociationOwner = !association.getInverseSide().isPresent();
+                    boolean isAssociationOwner = association.getInverseSide().isEmpty();
                     NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                     AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
 
@@ -319,10 +324,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        PersistentProperty identity = lookupStage.persistentEntity.getIdentity();
-                        if (identity == null) {
+                        if (!lookupStage.persistentEntity.hasIdentity()) {
                             throw new IllegalStateException("Null identity of persistent entity: " + lookupStage.persistentEntity);
                         }
+                        PersistentProperty identity = lookupStage.persistentEntity.getIdentity();
                         PersistentEntityUtils.traversePersistentProperties(mappedAssociations, identity, (associations, p) -> {
                             localMatchFields.add(asPath(associations, p));
                         });
@@ -365,10 +370,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
-        PersistentProperty identity = entity.getIdentity();
-        if (identity == null) {
+        if (!entity.hasIdentity()) {
             throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
         }
+        PersistentProperty identity = entity.getIdentity();
         var fields = new ArrayList<String>();
         PersistentEntityUtils.traversePersistentProperties(identity, (associations, property) -> {
             fields.add(asPath(associations, property));
@@ -510,7 +515,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (joinAssociation.getAssociatedEntity().hasIdentity() && association != joinAssociation.getAssociatedEntity().getIdentity()) {
                     if (!queryState.isAllowJoins()) {
                         throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
                     }
@@ -527,7 +532,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
-                if (property != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (joinAssociation.getAssociatedEntity().hasIdentity() && property != joinAssociation.getAssociatedEntity().getIdentity()) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
@@ -535,7 +540,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 }
                 // We don't need to join to access the id of the relation
             }
-        } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
+        } else if (TypeRole.ID.equals(name) && entity.hasIdentity()) {
             // special case handling for ID
             return PersistentPropertyPath.of(Collections.emptyList(), entity.getIdentity(), entity.getIdentity().getName());
         }
@@ -774,7 +779,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
      */
     private String getPropertyPersistName(PersistentPropertyPath propertyPath) {
         PersistentProperty property = propertyPath.getProperty();
-        if (property.getOwner().getIdentity() == property) {
+        if (property.getOwner().hasIdentity() && property.getOwner().getIdentity() == property) {
             return MONGO_ID_FIELD;
         }
         return property.getAnnotationMetadata()
@@ -783,7 +788,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private String getPropertyPersistName(PersistentProperty property) {
-        if (property.getOwner().getIdentity() == property) {
+        if (property.getOwner().hasIdentity() && property.getOwner().getIdentity() == property) {
             return MONGO_ID_FIELD;
         }
         return property.getAnnotationMetadata()
@@ -791,6 +796,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             .orElseGet(property::getName);
     }
 
+    @Nullable
     private Object asLiteral(@Nullable Object value) {
         if (value instanceof RegexPattern regexPattern) {
             return "'" + Pattern.quote(regexPattern.value) + "'";
@@ -1087,7 +1093,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
             Expression<?> value = expression;
             if (expression instanceof LiteralExpression<?> literalExpression) {
-                value = new LiteralExpression<Object>(new RegexPattern((String) literalExpression.getValue()));
+                value = new LiteralExpression<Object>(new RegexPattern(Objects.requireNonNull(literalExpression.getValue()).toString()));
             }
             appendOperatorExpression(leftExpression, REGEX, value);
         }
@@ -1233,12 +1239,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
-            appendPropertyNotEquals(expression, new LiteralExpression<>(null));
+            appendPropertyNotEquals(expression, new LiteralExpression<>((Object) null));
         }
 
         @Override
         public void visitIsNull(Expression<?> expression) {
-            appendEquals(expression, new LiteralExpression<>(null));
+            appendEquals(expression, new LiteralExpression<>((Object) null));
         }
 
         @Override
@@ -1288,7 +1294,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             } else if (persistentEntity.hasIdentity()) {
                 query.put(
                     MONGO_ID_FIELD,
-                    valueRepresentation(queryState, new PersistentPropertyPath(List.of(), persistentEntity.getIdentity()), expression)
+                    valueRepresentation(queryState, new PersistentPropertyPath(List.of(), Objects.requireNonNull(persistentEntity.getIdentity())), expression)
                 );
             } else {
                 throw new IllegalStateException("No ID found for entity: " + persistentEntity.getName());
@@ -1339,18 +1345,22 @@ public final class MongoQueryBuilder implements QueryBuilder {
             query.put(getPropertyPersistName(propertyPath), filterValue);
         }
 
-        private Object valueRepresentation(PropertyParameterCreator parameterCreator, Expression<?> leftExpression, Object value) {
+        @Nullable
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator, Expression<?> leftExpression, @Nullable Object value) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);
         }
 
-        private Object valueRepresentation(PropertyParameterCreator parameterCreator, PersistentPropertyPath propertyPath, Object value) {
+        @Nullable
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator, PersistentPropertyPath propertyPath, @Nullable Object value) {
             return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);
         }
 
+        @Nullable
         private Object valueRepresentation(PropertyParameterCreator parameterCreator,
                                            PersistentPropertyPath inPropertyPath,
                                            PersistentPropertyPath outPropertyPath,
+                                           @Nullable
                                            Object value) {
             if (value instanceof LiteralExpression<?> literalExpression) {
                 value = literalExpression.getValue();
@@ -1379,11 +1389,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         private String formatDate(LocalDateTime localDateTime) {
-            return formatDate(localDateTime.atZone(ZoneId.of("Z")).toInstant().toEpochMilli());
+            return formatDate(localDateTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli());
         }
 
         private String formatDate(final long dateTime) {
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME);
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
         }
 
     }
@@ -1393,6 +1403,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final Map<String, Object> projectionObj;
         private final Map<String, Object> groupObj;
         private final Map<String, Object> countObj;
+        @Nullable
         private String alias;
 
         public MongoSelectionVisitor(Map<String, Object> projectionObj, Map<String, Object> groupObj, Map<String, Object> countObj) {

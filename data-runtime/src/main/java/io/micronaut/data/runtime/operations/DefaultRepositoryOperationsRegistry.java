@@ -19,6 +19,7 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperationsRegistry;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -41,7 +42,7 @@ class DefaultRepositoryOperationsRegistry implements RepositoryOperationsRegistr
     }
 
     @Override
-    public <T extends RepositoryOperations> T provide(Class<T> repositoryOperationsType, String dataSourceName) {
+    public <T extends RepositoryOperations> T provide(Class<T> repositoryOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName != null) {
             try {
                 return locator.getBean(repositoryOperationsType, Qualifiers.byName(dataSourceName));

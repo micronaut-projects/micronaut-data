@@ -23,6 +23,8 @@ import io.micronaut.inject.BeanIdentifier;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 
@@ -63,6 +65,7 @@ public final class ContextualAwareDataSource implements BeanCreatedEventListener
      */
     private final class DataSourceProxy extends DelegatingDataSource {
         private final String qualifier;
+        @Nullable
         private Connection transactionAwareConnection;
 
         /**

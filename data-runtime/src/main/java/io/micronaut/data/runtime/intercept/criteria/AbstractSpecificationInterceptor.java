@@ -98,6 +98,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     protected static final String PREPARED_QUERY_KEY = "PREPARED_QUERY";
 
+    @Nullable
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
     protected CriteriaBuilder criteriaBuilder;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
@@ -139,6 +140,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     final CriteriaRepositoryOperations getCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
                                                                        MethodInvocationContext<?, ?> context,
+                                                                       @Nullable
                                                                        Pageable pageable) {
         if (criteriaRepositoryOperations != null) {
             return criteriaRepositoryOperations;
@@ -549,7 +551,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                     Root<?> root = criteriaQuery.getRoots().iterator().next();
                     Expression countExpression;
                     PersistentEntity entity = getPersistentEntity(root);
-                    boolean countOnRoot = entity.hasCompositeIdentity() || (entity.getIdentity() instanceof Embedded);
+                    boolean countOnRoot = entity.hasCompositeIdentity() || (entity.hasIdentity() && entity.getIdentity() instanceof Embedded);
                     if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
                         countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
                     } else {
@@ -577,7 +579,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
         Expression<Long> countExpression;
         PersistentEntity entity = getPersistentEntity(root);
-        boolean countOnRoot = entity.hasCompositeIdentity() || (entity.getIdentity() instanceof Embedded);
+        boolean countOnRoot = entity.hasCompositeIdentity() || (entity.hasIdentity() && entity.getIdentity() instanceof Embedded);
         if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
             countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
         } else {

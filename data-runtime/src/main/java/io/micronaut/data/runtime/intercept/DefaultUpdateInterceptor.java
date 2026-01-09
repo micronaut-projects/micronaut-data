@@ -23,6 +23,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link UpdateInterceptor}.
@@ -40,6 +41,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Obj
         super(datastore);
     }
 
+    @Nullable
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         PreparedQuery<?, Number> preparedQuery = prepareQuery(methodKey, context);

@@ -40,11 +40,14 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     private final ClassElement classElement;
     private final SourcePersistentProperty[] ids;
+    @Nullable
     private final SourcePersistentProperty version;
     private final Map<String, SourcePersistentProperty> persistentProperties;
     private final Map<String, SourcePersistentProperty> allPersistentProperties;
 
+    @Nullable
     private List<String> allPersistentPropertiesNames;
+    @Nullable
     private List<SourcePersistentProperty> persistentPropertiesValues;
 
     /**
@@ -144,16 +147,28 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return ids.length == 1;
     }
 
-    @Nullable
     @Override
-    public SourcePersistentProperty[] getCompositeIdentity() {
-        return ids.length > 1 ? ids : null;
+    public boolean hasVersion() {
+        return version != null;
     }
 
-    @Nullable
+    @Override
+    public SourcePersistentProperty [] getCompositeIdentity() {
+        if (hasCompositeIdentity()) {
+            return ids;
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have composite identity");
+    }
+
     @Override
     public SourcePersistentProperty getIdentity() {
-        return ids.length == 1 ? ids[0] : null;
+        if (hasIdentity()) {
+            return ids[0];
+        }
+        if (hasCompositeIdentity()) {
+            throw new IllegalStateException("Entity [" + getName() + "] has composite identity");
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have an identity");
     }
 
     @Override
@@ -161,10 +176,12 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return List.of(ids);
     }
 
-    @Nullable
     @Override
     public SourcePersistentProperty getVersion() {
-        return version;
+        if (hasVersion()) {
+            return Objects.requireNonNull(version);
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have a version");
     }
 
     @Override
@@ -185,6 +202,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     }
 
     @Override
+    @Nullable
     public SourcePersistentProperty getPropertyByNameIgnoreCase(String name) {
         for (SourcePersistentProperty property : allPersistentProperties.values()) {
             if (property.getName().equalsIgnoreCase(name)) {
@@ -206,6 +224,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
      * @param name The name of the id or version property
      * @return The PersistentProperty used as id or version or null if it doesn't exist
      */
+    @Nullable
     public SourcePersistentProperty getIdOrVersionPropertyByName(String name) {
         if (ArrayUtils.isNotEmpty(ids)) {
             SourcePersistentProperty persistentProp = Arrays.stream(ids)

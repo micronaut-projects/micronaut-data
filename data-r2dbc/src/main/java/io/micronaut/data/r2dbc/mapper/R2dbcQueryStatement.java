@@ -39,10 +39,6 @@ import java.util.UUID;
 public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     private final ConversionService conversionService;
 
-    public R2dbcQueryStatement() {
-        this(null);
-    }
-
     /**
      * Constructs a new instance.
      *
@@ -60,7 +56,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     }
 
     @Override
-    public QueryStatement<Statement, Integer> setDynamic(@NonNull Statement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
+    public QueryStatement<Statement, Integer> setDynamic(@NonNull Statement statement, @NonNull Integer index, @NonNull DataType dataType, @Nullable Object value) {
         if (value == null) {
             switch (dataType) {
                 case UUID:
@@ -132,7 +128,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     }
 
     @Override
-    public QueryStatement<Statement, Integer> setValue(Statement statement, Integer index, Object value) throws DataAccessException {
+    public QueryStatement<Statement, Integer> setValue(Statement statement, Integer index, @Nullable Object value) throws DataAccessException {
         if (value == null) {
             statement.bindNull(index, Object.class);
         } else {
@@ -141,13 +137,9 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
         return this;
     }
 
-    @Nullable
     @Override
-    public <T> T convertRequired(@Nullable Object value, Class<T> type) {
-        return conversionService.convertRequired(
-                value,
-                type
-        );
+    public <T> T convertRequired(Object value, Class<T> type) {
+        return conversionService.convertRequired(value, type);
     }
 
     @NonNull
@@ -166,7 +158,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setDate(Statement statement, Integer name, Date date) {
+    public QueryStatement<Statement, Integer> setDate(Statement statement, Integer name, @Nullable Date date) {
         if (date == null) {
             statement.bindNull(name, LocalDate.class);
         } else {
@@ -176,7 +168,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     }
 
     @Override
-    public QueryStatement<Statement, Integer> setTimestamp(Statement statement, Integer name, Instant instant) {
+    public QueryStatement<Statement, Integer> setTimestamp(Statement statement, Integer name, @Nullable Instant instant) {
         if (instant == null) {
             statement.bindNull(name, LocalDateTime.class);
         } else {
@@ -186,23 +178,22 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     }
 
     @Override
-    public QueryStatement<Statement, Integer> setTime(Statement statement, Integer name, Time instant) {
-        // OracleDB stores TIME as DATE. LocalDateTime corresponds to DATE (https://github.com/oracle/oracle-r2dbc/blob/main/README.md#type-mappings)
-        if (statement.getClass().getName().equals("oracle.r2dbc.impl.OracleStatementImpl")) {
-            setTimestamp(statement, name, Instant.ofEpochMilli(instant.getTime()));
-            return this;
-        }
-
+    public QueryStatement<Statement, Integer> setTime(Statement statement, Integer name, @Nullable Time instant) {
         if (instant == null) {
             statement.bindNull(name, LocalTime.class);
         } else {
+            // OracleDB stores TIME as DATE. LocalDateTime corresponds to DATE (https://github.com/oracle/oracle-r2dbc/blob/main/README.md#type-mappings)
+            if (statement.getClass().getName().equals("oracle.r2dbc.impl.OracleStatementImpl")) {
+                setTimestamp(statement, name, Instant.ofEpochMilli(instant.getTime()));
+                return this;
+            }
             statement.bind(name, instant.toLocalTime());
         }
         return this;
     }
 
     @Override
-    public QueryStatement<Statement, Integer> setString(Statement statement, Integer name, String string) {
+    public QueryStatement<Statement, Integer> setString(Statement statement, Integer name, @Nullable String string) {
         if (string == null) {
             statement.bindNull(name, String.class);
         } else {
@@ -255,7 +246,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setBigDecimal(Statement statement, Integer name, BigDecimal bd) {
+    public QueryStatement<Statement, Integer> setBigDecimal(Statement statement, Integer name, @Nullable BigDecimal bd) {
         if (bd == null) {
             statement.bindNull(name, BigDecimal.class);
         } else {
@@ -266,7 +257,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setBytes(Statement statement, Integer name, byte[] bytes) {
+    public QueryStatement<Statement, Integer> setBytes(Statement statement, Integer name, byte @Nullable [] bytes) {
         if (bytes == null) {
             statement.bindNull(name, byte[].class);
         } else {
@@ -277,7 +268,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setArray(Statement statement, Integer name, Object array) {
+    public QueryStatement<Statement, Integer> setArray(Statement statement, Integer name, @Nullable Object array) {
         if (array == null) {
             statement.bindNull(name, Object[].class);
         } else {
