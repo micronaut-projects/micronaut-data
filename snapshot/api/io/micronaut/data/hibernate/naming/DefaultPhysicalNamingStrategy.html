@@ -133,23 +133,23 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.boot.model.naming.Identifier</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable org.hibernate.boot.model.naming.Identifier</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toPhysicalCatalogName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)" class="member-name-link">toPhysicalCatalogName</a><wbr>(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.boot.model.naming.Identifier</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable org.hibernate.boot.model.naming.Identifier</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toPhysicalColumnName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)" class="member-name-link">toPhysicalColumnName</a><wbr>(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.boot.model.naming.Identifier</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable org.hibernate.boot.model.naming.Identifier</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toPhysicalSchemaName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)" class="member-name-link">toPhysicalSchemaName</a><wbr>(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.boot.model.naming.Identifier</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable org.hibernate.boot.model.naming.Identifier</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toPhysicalSequenceName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)" class="member-name-link">toPhysicalSequenceName</a><wbr>(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.hibernate.boot.model.naming.Identifier</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable org.hibernate.boot.model.naming.Identifier</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toPhysicalTableName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)" class="member-name-link">toPhysicalTableName</a><wbr>(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -190,7 +190,7 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <li>
 <section class="detail" id="toPhysicalCatalogName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)">
 <h3>toPhysicalCatalogName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalCatalogName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalCatalogName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -201,7 +201,7 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <li>
 <section class="detail" id="toPhysicalSchemaName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)">
 <h3>toPhysicalSchemaName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalSchemaName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalSchemaName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -212,7 +212,7 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <li>
 <section class="detail" id="toPhysicalTableName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)">
 <h3>toPhysicalTableName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalTableName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalTableName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -223,7 +223,7 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <li>
 <section class="detail" id="toPhysicalSequenceName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)">
 <h3>toPhysicalSequenceName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalSequenceName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalSequenceName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -234,7 +234,7 @@ implements org.hibernate.boot.model.naming.PhysicalNamingStrategy</span></div>
 <li>
 <section class="detail" id="toPhysicalColumnName(org.hibernate.boot.model.naming.Identifier,org.hibernate.engine.jdbc.env.spi.JdbcEnvironment)">
 <h3>toPhysicalColumnName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalColumnName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable org.hibernate.boot.model.naming.Identifier</span>&nbsp;<span class="element-name">toPhysicalColumnName</span><wbr><span class="parameters">(org.hibernate.boot.model.naming.Identifier&nbsp;name,
  org.hibernate.engine.jdbc.env.spi.JdbcEnvironment&nbsp;jdbcEnvironment)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>

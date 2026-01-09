@@ -175,7 +175,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A list of the associations for this entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCompositeIdentity()" class="member-name-link">getCompositeIdentity</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The composite id.</div>
@@ -188,7 +188,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtain an entity for the given type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdentity()" class="member-name-link">getIdentity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the identity of the instance.</div>
@@ -231,7 +231,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets a PersistentProperty instance by name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPropertyByNameIgnoreCase(java.lang.String)" class="member-name-link">getPropertyByNameIgnoreCase</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets a PersistentProperty instance by name ignoring the case.</div>
@@ -241,7 +241,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">An alternative to <a href="#getIdentityProperties()"><code>getIdentityProperties()</code></a> but that returns <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentProperty</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a><wbr>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getVersion()" class="member-name-link">getVersion</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the version property.</div>
@@ -295,25 +295,30 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <div class="block">Does the entity have pre-update event listeners.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity</a><wbr>(<a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasVersion()" class="member-name-link">hasVersion</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Is the entity versioned for optimistic locking.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity</a><wbr>(<a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logDebug(java.lang.String,java.lang.Exception)" class="member-name-link">logDebug</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logDebug(java.lang.String,java.lang.Exception)" class="member-name-link">logDebug</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;e)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Log error message.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveConverter(java.lang.Class)" class="member-name-link">resolveConverter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveConverter(java.lang.Class)" class="member-name-link">resolveConverter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;converterClass)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves a converter instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -334,7 +339,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <code><a href="../PersistentElement.html#getPersistedName()">getPersistedName</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.PersistentEntity">Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></h3>
-<code><a href="../PersistentEntity.html#findNamingStrategy()">findNamingStrategy</a>, <a href="../PersistentEntity.html#getDecapitalizedName()">getDecapitalizedName</a>, <a href="../PersistentEntity.html#getEmbedded()">getEmbedded</a>, <a href="../PersistentEntity.html#getNamingStrategy()">getNamingStrategy</a>, <a href="../PersistentEntity.html#getPath(java.lang.String)">getPath</a>, <a href="../PersistentEntity.html#getPropertyByPath(java.lang.String)">getPropertyByPath</a>, <a href="../PersistentEntity.html#getPropertyPath(java.lang.String)">getPropertyPath</a>, <a href="../PersistentEntity.html#getPropertyPath(java.lang.String%5B%5D)">getPropertyPath</a>, <a href="../PersistentEntity.html#getRootEntity()">getRootEntity</a>, <a href="../PersistentEntity.html#getSimpleName()">getSimpleName</a>, <a href="../PersistentEntity.html#isEmbeddable()">isEmbeddable</a>, <a href="../PersistentEntity.html#isRoot()">isRoot</a>, <a href="../PersistentEntity.html#isVersioned()">isVersioned</a></code></div>
+<code><a href="../PersistentEntity.html#findNamingStrategy()">findNamingStrategy</a>, <a href="../PersistentEntity.html#getDecapitalizedName()">getDecapitalizedName</a>, <a href="../PersistentEntity.html#getEmbedded()">getEmbedded</a>, <a href="../PersistentEntity.html#getNamingStrategy()">getNamingStrategy</a>, <a href="../PersistentEntity.html#getPath(java.lang.String)">getPath</a>, <a href="../PersistentEntity.html#getPropertyByPath(java.lang.String)">getPropertyByPath</a>, <a href="../PersistentEntity.html#getPropertyPath(java.lang.String)">getPropertyPath</a>, <a href="../PersistentEntity.html#getPropertyPath(java.lang.String%5B%5D)">getPropertyPath</a>, <a href="../PersistentEntity.html#getRootEntity()">getRootEntity</a>, <a href="../PersistentEntity.html#getSimpleName()">getSimpleName</a>, <a href="../PersistentEntity.html#isEmbeddable()">isEmbeddable</a>, <a href="../PersistentEntity.html#isRoot()">isRoot</a></code></div>
 </section>
 </li>
 </ul>
@@ -596,11 +601,26 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 </section>
 </li>
 <li>
+<section class="detail" id="hasVersion()">
+<h3>hasVersion</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasVersion</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#hasVersion()">PersistentEntity</a></code></span></div>
+<div class="block">Is the entity versioned for optimistic locking.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PersistentEntity.html#hasVersion()">hasVersion</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
+<dt>Returns:</dt>
+<dd>true if versioned</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getCompositeIdentity()">
 <h3>getCompositeIdentity</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getCompositeIdentity()">PersistentEntity</a></code></span></div>
-<div class="block">The composite id.</div>
+<div class="block">The composite id.
+ The method will throw an exception if there is none or one identity. <a href="../PersistentEntity.html#hasCompositeIdentity()"><code>PersistentEntity.hasCompositeIdentity()</code></a> should be used to check for presence of identity.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../PersistentEntity.html#getCompositeIdentity()">getCompositeIdentity</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
@@ -612,14 +632,30 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <li>
 <section class="detail" id="getIdentity()">
 <h3>getIdentity</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentity</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getIdentity</span>()</div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getIdentity()">PersistentEntity</a></code></span></div>
-<div class="block">Returns the identity of the instance.</div>
+<div class="block">Returns the identity of the instance.
+ The method will throw an exception if there is none or more than one identity. <a href="../PersistentEntity.html#hasIdentity()"><code>PersistentEntity.hasIdentity()</code></a> should be used to check for presence of identity.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../PersistentEntity.html#getIdentity()">getIdentity</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
 <dt>Returns:</dt>
 <dd>The identity or null if there isn't one</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getVersion()">
+<h3>getVersion</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getVersion</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getVersion()">PersistentEntity</a></code></span></div>
+<div class="block">Returns the version property.
+ The method will throw an exception if there is no version property. Use <a href="../PersistentEntity.html#hasVersion()"><code>PersistentEntity.hasVersion()</code></a> to check for presence of version.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PersistentEntity.html#getVersion()">getVersion</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
+<dt>Returns:</dt>
+<dd>the property</dd>
 </dl>
 </section>
 </li>
@@ -645,20 +681,6 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The identity properties</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getVersion()">
-<h3>getVersion</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getVersion</span>()</div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getVersion()">PersistentEntity</a></code></span></div>
-<div class="block">Returns the version property.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../PersistentEntity.html#getVersion()">getVersion</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
-<dt>Returns:</dt>
-<dd>the property</dd>
 </dl>
 </section>
 </li>
@@ -710,7 +732,7 @@ implements <a href="../PersistentEntity.html" title="interface in io.micronaut.d
 <li>
 <section class="detail" id="getPropertyByNameIgnoreCase(java.lang.String)">
 <h3>getPropertyByNameIgnoreCase</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getPropertyByNameIgnoreCase</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</span>&nbsp;<span class="element-name">getPropertyByNameIgnoreCase</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntity.html#getPropertyByNameIgnoreCase(java.lang.String)">PersistentEntity</a></code></span></div>
 <div class="block">Gets a PersistentProperty instance by name ignoring the case.</div>
 <dl class="notes">

@@ -159,11 +159,11 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#entityUpdate(java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.inject.ast.ParameterElement,boolean)" class="member-name-link">entityUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches,
- io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
- io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
+ @Nullable io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
+ @Nullable io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
  boolean&nbsp;isReturning)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
@@ -209,7 +209,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="match(io.micronaut.data.processor.visitors.MethodMatchContext)">
 <h3>match</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="MethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code>&nbsp;in interface&nbsp;<code><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></code></dd>
@@ -240,8 +240,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="entityUpdate(java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.inject.ast.ParameterElement,boolean)">
 <h3>entityUpdate</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></span>&nbsp;<span class="element-name">entityUpdate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches,
- io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
- io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
+ @Nullable io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
+ @Nullable io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
  boolean&nbsp;isReturning)</span></div>
 </section>
 </li>

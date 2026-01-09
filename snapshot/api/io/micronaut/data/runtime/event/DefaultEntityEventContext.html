@@ -145,7 +145,7 @@ implements <a href="../../event/EntityEventContext.html" title="interface in io.
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;P&gt;&nbsp;void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setProperty(io.micronaut.core.beans.BeanProperty,P)" class="member-name-link">setProperty</a><wbr>(io.micronaut.core.beans.BeanProperty&lt;<a href="DefaultEntityEventContext.html" title="type parameter in DefaultEntityEventContext">T</a>,<wbr>P&gt;&nbsp;property,
- P&nbsp;newValue)</code></div>
+ @Nullable P&nbsp;newValue)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets a property to its new value.</div>
 </div>
@@ -200,7 +200,7 @@ implements <a href="../../event/EntityEventContext.html" title="interface in io.
 <section class="detail" id="setProperty(io.micronaut.core.beans.BeanProperty,P)">
 <h3 id="setProperty(io.micronaut.core.beans.BeanProperty,java.lang.Object)">setProperty</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;P&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setProperty</span><wbr><span class="parameters">(io.micronaut.core.beans.BeanProperty&lt;<a href="DefaultEntityEventContext.html" title="type parameter in DefaultEntityEventContext">T</a>,<wbr>P&gt;&nbsp;property,
- P&nbsp;newValue)</span></div>
+ @Nullable P&nbsp;newValue)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../event/EntityEventContext.html#setProperty(io.micronaut.core.beans.BeanProperty,P)">EntityEventContext</a></code></span></div>
 <div class="block">Sets a property to its new value. If the property is immutable then the copy-constructor will be used and <a href="../../event/EntityEventContext.html#getEntity()"><code>EntityEventContext.getEntity()</code></a> will return the updated entity.</div>
 <dl class="notes">

@@ -115,10 +115,8 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E()" class="member-name-link">R2dbcQueryStatement</a>()</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">R2dbcQueryStatement</a><wbr>(<a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">R2dbcQueryStatement</a><wbr>(<a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Constructs a new instance.</div>
 </div>
 </div>
@@ -135,8 +133,8 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Convert the value to the given type.</div>
@@ -149,14 +147,14 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setArray(io.r2dbc.spi.Statement,java.lang.Integer,java.lang.Object)" class="member-name-link">setArray</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;array)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;array)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets an array value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setBigDecimal(io.r2dbc.spi.Statement,java.lang.Integer,java.math.BigDecimal)" class="member-name-link">setBigDecimal</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bd)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bd)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a BigDecimal value for the given name.</div>
 </div>
@@ -177,7 +175,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setBytes(io.r2dbc.spi.Statement,java.lang.Integer,byte%5B%5D)" class="member-name-link">setBytes</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- byte[]&nbsp;bytes)</code></div>
+ byte @Nullable []&nbsp;bytes)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a byte[] value for the given name.</div>
 </div>
@@ -191,7 +189,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDate(io.r2dbc.spi.Statement,java.lang.Integer,java.util.Date)" class="member-name-link">setDate</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a>&nbsp;date)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a>&nbsp;date)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a date value for the given name.</div>
 </div>
@@ -206,7 +204,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDynamic(io.r2dbc.spi.Statement,java.lang.Integer,io.micronaut.data.model.DataType,java.lang.Object)" class="member-name-link">setDynamic</a><wbr>(@NonNull io.r2dbc.spi.Statement&nbsp;statement,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a value dynamically using the result set and the given name and data type.</div>
 </div>
@@ -241,28 +239,28 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setString(io.r2dbc.spi.Statement,java.lang.Integer,java.lang.String)" class="member-name-link">setString</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;string)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;string)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a string value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTime(io.r2dbc.spi.Statement,java.lang.Integer,java.sql.Time)" class="member-name-link">setTime</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a>&nbsp;instant)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a>&nbsp;instant)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write an instant value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTimestamp(io.r2dbc.spi.Statement,java.lang.Integer,java.time.Instant)" class="member-name-link">setTimestamp</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;instant)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;instant)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write an instant value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setValue(io.r2dbc.spi.Statement,java.lang.Integer,java.lang.Object)" class="member-name-link">setValue</a><wbr>(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the give given object value.</div>
 </div>
@@ -283,12 +281,6 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <section class="constructor-details" id="constructor-detail">
 <h2>Constructor Details</h2>
 <ul class="member-list">
-<li>
-<section class="detail" id="&lt;init&gt;()">
-<h3>R2dbcQueryStatement</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">R2dbcQueryStatement</span>()</div>
-</section>
-</li>
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>R2dbcQueryStatement</h3>
@@ -330,7 +322,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDynamic</span><wbr><span class="parameters">(@NonNull io.r2dbc.spi.Statement&nbsp;statement,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDynamic(PS,IDX,io.micronaut.data.model.DataType,java.lang.Object)">QueryStatement</a></code></span></div>
 <div class="block">Write a value dynamically using the result set and the given name and data type.</div>
 <dl class="notes">
@@ -351,7 +343,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setValue</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setValue</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span>
                                                         throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setValue(PS,IDX,java.lang.Object)">QueryStatement</a></code></span></div>
 <div class="block">Sets the give given object value.</div>
@@ -372,7 +364,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <li>
 <section class="detail" id="convertRequired(java.lang.Object,java.lang.Class)">
 <h3>convertRequired</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#convertRequired(java.lang.Object,java.lang.Class)">QueryStatement</a></code></span></div>
 <div class="block">Convert the value to the given type.</div>
@@ -434,7 +426,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setDate</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDate</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a>&nbsp;date)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a>&nbsp;date)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDate(PS,IDX,java.util.Date)">QueryStatement</a></code></span></div>
 <div class="block">Write a date value for the given name.</div>
 <dl class="notes">
@@ -454,7 +446,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setTimestamp</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setTimestamp</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;instant)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;instant)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setTimestamp(PS,IDX,java.time.Instant)">QueryStatement</a></code></span></div>
 <div class="block">Write an instant value for the given name.</div>
 <dl class="notes">
@@ -474,7 +466,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setTime</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setTime</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a>&nbsp;instant)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a>&nbsp;instant)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setTime(PS,IDX,java.sql.Time)">QueryStatement</a></code></span></div>
 <div class="block">Write an instant value for the given name.</div>
 <dl class="notes">
@@ -494,7 +486,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setString</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setString</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;string)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;string)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setString(PS,IDX,java.lang.String)">QueryStatement</a></code></span></div>
 <div class="block">Write a string value for the given name.</div>
 <dl class="notes">
@@ -634,7 +626,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setBigDecimal</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bd)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bd)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBigDecimal(PS,IDX,java.math.BigDecimal)">QueryStatement</a></code></span></div>
 <div class="block">Write a BigDecimal value for the given name.</div>
 <dl class="notes">
@@ -654,7 +646,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setBytes</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- byte[]&nbsp;bytes)</span></div>
+ byte @Nullable []&nbsp;bytes)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBytes(PS,IDX,byte%5B%5D)">QueryStatement</a></code></span></div>
 <div class="block">Write a byte[] value for the given name.</div>
 <dl class="notes">
@@ -674,7 +666,7 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h3>setArray</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;io.r2dbc.spi.Statement,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setArray</span><wbr><span class="parameters">(io.r2dbc.spi.Statement&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;array)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;array)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setArray(PS,IDX,java.lang.Object)">QueryStatement</a></code></span></div>
 <div class="block">Sets an array value for the given name.</div>
 <dl class="notes">

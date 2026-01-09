@@ -276,7 +276,7 @@ R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected com.mongodb.reactivestreams.client.MongoDatabase</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)" class="member-name-link">getDatabase</a><wbr>(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repository)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repository)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.DeleteOptions</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getDeleteOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
@@ -318,7 +318,7 @@ R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;values,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </div>
@@ -811,7 +811,7 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;R&gt;
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">persistBatch</span><wbr><span class="parameters">(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;values,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#persistBatch(Ctx,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></code></span></div>
 <div class="block">Persist multiple entities in batch during cascade.</div>
 <dl class="notes">
@@ -855,7 +855,7 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;R&gt;
 <section class="detail" id="getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)">
 <h3>getDatabase</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">com.mongodb.reactivestreams.client.MongoDatabase</span>&nbsp;<span class="element-name">getDatabase</span><wbr><span class="parameters">(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repository)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repository)</span></div>
 </section>
 </li>
 <li>

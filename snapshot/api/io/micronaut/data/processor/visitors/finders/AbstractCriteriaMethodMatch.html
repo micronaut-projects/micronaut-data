@@ -120,7 +120,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected final @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</code></div>
+<div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#matches" class="member-name-link">matches</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -154,14 +154,14 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">MethodResult</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)" class="member-name-link">analyzeMethodResult</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
  <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
  boolean&nbsp;allowEntityResultByDefault)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">MethodResult</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)" class="member-name-link">analyzeMethodResult</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
- io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
  <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
  boolean&nbsp;allowEntityResultByDefault)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -177,8 +177,8 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Match info builder.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#extractPredicates(java.lang.String,java.util.Iterator,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder)" class="member-name-link">extractPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;@Nullable jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#extractPredicates(java.lang.String,java.util.Iterator,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder)" class="member-name-link">extractPredicates</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Iterator.html" title="class or interface in java.util" class="external-link">Iterator</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parametersIt,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
@@ -262,7 +262,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <li>
 <section class="detail" id="matches">
 <h3>matches</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</span>&nbsp;<span class="element-name">matches</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</span>&nbsp;<span class="element-name">matches</span></div>
 </section>
 </li>
 </ul>
@@ -397,7 +397,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="extractPredicates(java.lang.String,java.util.Iterator,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder)">
 <h3>extractPredicates</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">extractPredicates</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
+<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">extractPredicates</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Iterator.html" title="class or interface in java.util" class="external-link">Iterator</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parametersIt,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb)</span></div>
@@ -472,8 +472,8 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)">
 <h3>analyzeMethodResult</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">MethodResult</a></span>&nbsp;<span class="element-name">analyzeMethodResult</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
- io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
  <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
  boolean&nbsp;allowEntityResultByDefault)</span></div>
 </section>
@@ -482,7 +482,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <section class="detail" id="analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)">
 <h3>analyzeMethodResult</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">MethodResult</a></span>&nbsp;<span class="element-name">analyzeMethodResult</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ @Nullable io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
  <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
  boolean&nbsp;allowEntityResultByDefault)</span></div>
 </section>

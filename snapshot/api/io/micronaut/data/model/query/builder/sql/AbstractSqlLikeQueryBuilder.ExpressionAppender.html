@@ -129,7 +129,7 @@ implements <a href="../../../jpa/criteria/impl/ExpressionVisitor.html" title="in
 <div class="col-first odd-row-color"><code>protected final <a href="AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryState</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#queryState" class="member-name-link">queryState</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color"><code>protected final @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#tableAlias" class="member-name-link">tableAlias</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -189,8 +189,8 @@ implements <a href="../../../jpa/criteria/impl/ExpressionVisitor.html" title="in
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendPropertyRef(io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">appendPropertyRef</a><wbr>(<a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findParameterBoundProperty(jakarta.persistence.criteria.Expression)" class="member-name-link">findParameterBoundProperty</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;binaryOpExpression)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @Nullable <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findParameterBoundProperty(jakarta.persistence.criteria.Expression)" class="member-name-link">findParameterBoundProperty</a><wbr>(@Nullable jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;binaryOpExpression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)" class="member-name-link">getRequiredProperty</a><wbr>(<a href="../../../jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&nbsp;persistentPropertyPath)</code></div>
@@ -274,7 +274,7 @@ implements <a href="../../../jpa/criteria/impl/ExpressionVisitor.html" title="in
 <li>
 <section class="detail" id="tableAlias">
 <h3>tableAlias</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">tableAlias</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">tableAlias</span></div>
 </section>
 </li>
 <li>
@@ -354,7 +354,7 @@ implements <a href="../../../jpa/criteria/impl/ExpressionVisitor.html" title="in
 <li>
 <section class="detail" id="findParameterBoundProperty(jakarta.persistence.criteria.Expression)">
 <h3>findParameterBoundProperty</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></span>&nbsp;<span class="element-name">findParameterBoundProperty</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;binaryOpExpression)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></span>&nbsp;<span class="element-name">findParameterBoundProperty</span><wbr><span class="parameters">(@Nullable jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;binaryOpExpression)</span></div>
 </section>
 </li>
 <li>

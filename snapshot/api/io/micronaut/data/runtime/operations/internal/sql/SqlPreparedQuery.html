@@ -166,10 +166,10 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the invocation context associated with this prepared query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
@@ -270,7 +270,7 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <li>
 <section class="detail" id="getQueryResultInfo()">
 <h3>getQueryResultInfo</h3>
-<div class="member-signature"><span class="return-type"><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></span>&nbsp;<span class="element-name">getQueryResultInfo</span>()</div>
+<div class="member-signature"><span class="return-type">@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></span>&nbsp;<span class="element-name">getQueryResultInfo</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="SqlStoredQuery.html#getQueryResultInfo()">getQueryResultInfo</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>,<wbr><a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">R</a>&gt;</code></dd>
@@ -295,12 +295,10 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <li>
 <section class="detail" id="getPersistentEntity()">
 <h3>getPersistentEntity</h3>
-<div class="member-signature"><span class="return-type">@Nullable <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+<div class="member-signature"><span class="return-type"><a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../query/PersistentEntityAwareQuery.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></dd>
-<dt>Specified by:</dt>
-<dd><code><a href="SqlStoredQuery.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>,<wbr><a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The persistent entity</dd>
 </dl>

@@ -121,13 +121,13 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a><wbr>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
+<div class="col-first even-row-color"><code>protected @Nullable <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a><wbr>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#entityRoot" class="member-name-link">entityRoot</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-first odd-row-color"><code>protected @Nullable jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color"><code><a href="#predicate" class="member-name-link">predicate</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected jakarta.persistence.criteria.Selection<wbr>&lt;?&gt;</code></div>
+<div class="col-first even-row-color"><code>protected @Nullable jakarta.persistence.criteria.Selection<wbr>&lt;?&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#returning" class="member-name-link">returning</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
@@ -177,7 +177,7 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The persistent entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRestriction()" class="member-name-link">getRestriction</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a><wbr>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
@@ -241,19 +241,19 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <li>
 <section class="detail" id="predicate">
 <h3>predicate</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">predicate</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">predicate</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="entityRoot">
 <h3>entityRoot</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">entityRoot</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">entityRoot</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="returning">
 <h3>returning</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Selection&lt;?&gt;</span>&nbsp;<span class="element-name">returning</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Selection&lt;?&gt;</span>&nbsp;<span class="element-name">returning</span></div>
 </section>
 </li>
 </ul>
@@ -383,7 +383,7 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <li>
 <section class="detail" id="getRestriction()">
 <h3>getRestriction</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">getRestriction</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">getRestriction</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getRestriction</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CommonAbstractCriteria</code></dd>

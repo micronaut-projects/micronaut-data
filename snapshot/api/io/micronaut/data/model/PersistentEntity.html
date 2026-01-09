@@ -146,7 +146,7 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">A list of the associations for this entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>[]</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>[]</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getCompositeIdentity()" class="member-name-link">getCompositeIdentity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The composite id.</div>
@@ -159,7 +159,7 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">A list of embedded associations for this entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getIdentity()" class="member-name-link">getIdentity</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the identity of the instance.</div>
@@ -238,39 +238,39 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getSimpleName()" class="member-name-link">getSimpleName</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getVersion()" class="member-name-link">getVersion</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the version property.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#hasCompositeIdentity()" class="member-name-link">hasCompositeIdentity</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasCompositeIdentity()" class="member-name-link">hasCompositeIdentity</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Has composite identity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#hasIdentity()" class="member-name-link">hasIdentity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasIdentity()" class="member-name-link">hasIdentity</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Has identity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isEmbeddable()" class="member-name-link">isEmbeddable</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity</a><wbr>(<a href="PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasVersion()" class="member-name-link">hasVersion</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Is the entity versioned for optimistic locking.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isEmbeddable()" class="member-name-link">isEmbeddable</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity</a><wbr>(<a href="PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isRoot()" class="member-name-link">isRoot</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Whether this entity is a root entity.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isVersioned()" class="member-name-link">isVersioned</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isRoot()" class="member-name-link">isRoot</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Is the entity versioned for optimistic locking.</div>
+<div class="block">Whether this entity is a root entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;<a href="runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.core.beans.BeanIntrospection)" class="member-name-link">of</a><wbr>(io.micronaut.core.beans.BeanIntrospection&lt;T&gt;&nbsp;introspection)</code></div>
@@ -331,7 +331,7 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <li>
 <section class="detail" id="hasCompositeIdentity()">
 <h3>hasCompositeIdentity</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasCompositeIdentity</span>()</div>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">hasCompositeIdentity</span>()</div>
 <div class="block">Has composite identity.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -342,7 +342,7 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <li>
 <section class="detail" id="hasIdentity()">
 <h3>hasIdentity</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasIdentity</span>()</div>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">hasIdentity</span>()</div>
 <div class="block">Has identity.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -353,8 +353,9 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <li>
 <section class="detail" id="getCompositeIdentity()">
 <h3>getCompositeIdentity</h3>
-<div class="member-signature"><span class="return-type">@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
-<div class="block">The composite id.</div>
+<div class="member-signature"><span class="return-type"><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>[]</span>&nbsp;<span class="element-name">getCompositeIdentity</span>()</div>
+<div class="block">The composite id.
+ The method will throw an exception if there is none or one identity. <a href="#hasCompositeIdentity()"><code>hasCompositeIdentity()</code></a> should be used to check for presence of identity.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The composite id or null if there isn't one</dd>
@@ -364,8 +365,9 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <li>
 <section class="detail" id="getIdentity()">
 <h3>getIdentity</h3>
-<div class="member-signature"><span class="return-type">@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></span>&nbsp;<span class="element-name">getIdentity</span>()</div>
-<div class="block">Returns the identity of the instance.</div>
+<div class="member-signature"><span class="return-type"><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></span>&nbsp;<span class="element-name">getIdentity</span>()</div>
+<div class="block">Returns the identity of the instance.
+ The method will throw an exception if there is none or more than one identity. <a href="#hasIdentity()"><code>hasIdentity()</code></a> should be used to check for presence of identity.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The identity or null if there isn't one</dd>
@@ -386,8 +388,9 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 <li>
 <section class="detail" id="getVersion()">
 <h3>getVersion</h3>
-<div class="member-signature"><span class="return-type">@Nullable <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></span>&nbsp;<span class="element-name">getVersion</span>()</div>
-<div class="block">Returns the version property.</div>
+<div class="member-signature"><span class="return-type"><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></span>&nbsp;<span class="element-name">getVersion</span>()</div>
+<div class="block">Returns the version property.
+ The method will throw an exception if there is no version property. Use <a href="#hasVersion()"><code>hasVersion()</code></a> to check for presence of version.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the property</dd>
@@ -395,9 +398,9 @@ extends <a href="PersistentElement.html" title="interface in io.micronaut.data.m
 </section>
 </li>
 <li>
-<section class="detail" id="isVersioned()">
-<h3>isVersioned</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isVersioned</span>()</div>
+<section class="detail" id="hasVersion()">
+<h3>hasVersion</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">hasVersion</span>()</div>
 <div class="block">Is the entity versioned for optimistic locking.</div>
 <dl class="notes">
 <dt>Returns:</dt>

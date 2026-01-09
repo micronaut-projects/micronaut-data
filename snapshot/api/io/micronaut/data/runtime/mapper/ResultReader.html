@@ -113,13 +113,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;T</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convertRequired</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Convert the value to the given type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Convert the value to the given type.</div>
@@ -136,106 +136,113 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#next(RS)" class="member-name-link">next</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getRequiredValueNonNull(RS,IDX,java.lang.Class)" class="member-name-link">getRequiredValueNonNull</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Get a value from the given result set for the given name and type.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#next(RS)" class="member-name-link">next</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Move the index to the next result if possible.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBigDecimal(RS,IDX)" class="member-name-link">readBigDecimal</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBigDecimal(RS,IDX)" class="member-name-link">readBigDecimal</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a BigDecimal value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBoolean(RS,IDX)" class="member-name-link">readBoolean</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBoolean(RS,IDX)" class="member-name-link">readBoolean</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a boolean value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default byte</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readByte(RS,IDX)" class="member-name-link">readByte</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default byte</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readByte(RS,IDX)" class="member-name-link">readByte</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a byte value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default byte[]</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBytes(RS,IDX)" class="member-name-link">readBytes</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default byte @Nullable []</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readBytes(RS,IDX)" class="member-name-link">readBytes</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a byte[] value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default char</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readChar(RS,IDX)" class="member-name-link">readChar</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default char</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readChar(RS,IDX)" class="member-name-link">readChar</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a char value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDate(RS,IDX)" class="member-name-link">readDate</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDate(RS,IDX)" class="member-name-link">readDate</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a date value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default double</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDouble(RS,IDX)" class="member-name-link">readDouble</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default double</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDouble(RS,IDX)" class="member-name-link">readDouble</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a double value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDynamic(RS,IDX,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(@NonNull <a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
- @NonNull <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
- @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDynamic(RS,IDX,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
+ <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default float</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readFloat(RS,IDX)" class="member-name-link">readFloat</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default float</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readFloat(RS,IDX)" class="member-name-link">readFloat</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a float value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readInt(RS,IDX)" class="member-name-link">readInt</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readInt(RS,IDX)" class="member-name-link">readInt</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read an int value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default long</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readLong(RS,IDX)" class="member-name-link">readLong</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readLong(RS,IDX)" class="member-name-link">readLong</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a long value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default short</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readShort(RS,IDX)" class="member-name-link">readShort</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default short</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readShort(RS,IDX)" class="member-name-link">readShort</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a short value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readString(RS,IDX)" class="member-name-link">readString</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readString(RS,IDX)" class="member-name-link">readString</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a string value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readTime(RS,IDX)" class="member-name-link">readTime</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
- <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Read a time value for the given index.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readTimestamp(RS,IDX)" class="member-name-link">readTimestamp</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readTime(RS,IDX)" class="member-name-link">readTime</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Read a time value for the given index.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readTimestamp(RS,IDX)" class="member-name-link">readTimestamp</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a timestamp value for the given index.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readUUID(RS,IDX)" class="member-name-link">readUUID</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readUUID(RS,IDX)" class="member-name-link">readUUID</a><wbr>(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a UUID value for the given name.</div>
 </div>
 </div>
@@ -255,7 +262,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="convertRequired(java.lang.Object,java.lang.Class)">
 <h3>convertRequired</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
 <div class="block">Convert the value to the given type.</div>
 <dl class="notes">
@@ -274,7 +281,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="convertRequired(java.lang.Object,io.micronaut.core.type.Argument)">
 <h3>convertRequired</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</span></div>
 <div class="block">Convert the value to the given type.</div>
 <dl class="notes">
@@ -313,6 +320,28 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="getRequiredValueNonNull(RS,IDX,java.lang.Class)">
+<h3 id="getRequiredValueNonNull(java.lang.Object,java.lang.Object,java.lang.Class)">getRequiredValueNonNull</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">getRequiredValueNonNull</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span>
+                               throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
+<div class="block">Get a value from the given result set for the given name and type.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The generic type</dd>
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>name</code> - The name</dd>
+<dd><code>type</code> - The type</dd>
+<dt>Returns:</dt>
+<dd>The value</dd>
+<dt>Throws:</dt>
+<dd><code><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be read</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="next(RS)">
 <h3 id="next(java.lang.Object)">next</h3>
 <div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">next</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet)</span></div>
@@ -328,9 +357,9 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readDynamic(RS,IDX,io.micronaut.data.model.DataType)">
 <h3 id="readDynamic(java.lang.Object,java.lang.Object,io.micronaut.data.model.DataType)">readDynamic</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull <a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
- @NonNull <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
- @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
+ <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -377,7 +406,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readDate(RS,IDX)">
 <h3 id="readDate(java.lang.Object,java.lang.Object)">readDate</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readDate</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readDate</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</span></div>
 <div class="block">Read a date value for the given name.</div>
 <dl class="notes">
@@ -392,7 +421,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readTimestamp(RS,IDX)">
 <h3 id="readTimestamp(java.lang.Object,java.lang.Object)">readTimestamp</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readTimestamp</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readTimestamp</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</span></div>
 <div class="block">Read a timestamp value for the given index.</div>
 <dl class="notes">
@@ -407,7 +436,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readTime(RS,IDX)">
 <h3 id="readTime(java.lang.Object,java.lang.Object)">readTime</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></span>&nbsp;<span class="element-name">readTime</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></span>&nbsp;<span class="element-name">readTime</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</span></div>
 <div class="block">Read a time value for the given index.</div>
 <dl class="notes">
@@ -542,7 +571,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readBigDecimal(RS,IDX)">
 <h3 id="readBigDecimal(java.lang.Object,java.lang.Object)">readBigDecimal</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</span></div>
 <div class="block">Read a BigDecimal value for the given name.</div>
 <dl class="notes">
@@ -557,7 +586,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="readBytes(RS,IDX)">
 <h3 id="readBytes(java.lang.Object,java.lang.Object)">readBytes</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">byte[]</span>&nbsp;<span class="element-name">readBytes</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">byte @Nullable []</span>&nbsp;<span class="element-name">readBytes</span><wbr><span class="parameters">(<a href="ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</span></div>
 <div class="block">Read a byte[] value for the given name.</div>
 <dl class="notes">

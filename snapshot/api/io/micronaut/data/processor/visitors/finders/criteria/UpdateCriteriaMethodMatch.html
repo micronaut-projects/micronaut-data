@@ -173,12 +173,12 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;@Nullable jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#interceptPredicate(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Predicate)" class="member-name-link">interceptPredicate</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;notConsumedParameters,
  <a href="../../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
- jakarta.persistence.criteria.Predicate&nbsp;existingPredicate)</code></div>
+ @Nullable jakarta.persistence.criteria.Predicate&nbsp;existingPredicate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Intercept the predicate being applied.</div>
 </div>
@@ -246,11 +246,11 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="interceptPredicate(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Predicate)">
 <h3>interceptPredicate</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">interceptPredicate</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<span class="return-type">@Nullable jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">interceptPredicate</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;notConsumedParameters,
  <a href="../../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
- jakarta.persistence.criteria.Predicate&nbsp;existingPredicate)</span></div>
+ @Nullable jakarta.persistence.criteria.Predicate&nbsp;existingPredicate)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../AbstractCriteriaMethodMatch.html#interceptPredicate(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Predicate)">AbstractCriteriaMethodMatch</a></code></span></div>
 <div class="block">Intercept the predicate being applied.</div>
 <dl class="notes">

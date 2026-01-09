@@ -287,7 +287,7 @@ R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Gets an entity graph.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final jakarta.persistence.FlushModeType</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @Nullable jakarta.persistence.FlushModeType</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFlushModeType(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getFlushModeType</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;org.hibernate.query.Order&lt;? super T&gt;&gt;</code></div>
@@ -321,14 +321,14 @@ R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setParameter(Q,int,java.lang.Object)" class="member-name-link">setParameter</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  int&nbsp;parameterIndex,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets a parameter into query.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setParameter(Q,int,java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">setParameter</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  int&nbsp;parameterIndex,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets parameter into query.</div>
@@ -336,14 +336,14 @@ R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setParameter(Q,java.lang.String,java.lang.Object)" class="member-name-link">setParameter</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets a parameter into query.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setParameter(Q,java.lang.String,java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">setParameter</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Sets parameter into query.</div>
@@ -533,7 +533,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="setParameter(java.lang.Object,java.lang.String,java.lang.Object)">setParameter</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setParameter</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block">Sets a parameter into query.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -548,7 +548,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="setParameter(java.lang.Object,java.lang.String,java.lang.Object,io.micronaut.core.type.Argument)">setParameter</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setParameter</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
 <div class="block">Sets parameter into query.</div>
 <dl class="notes">
@@ -597,7 +597,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="setParameter(java.lang.Object,int,java.lang.Object)">setParameter</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setParameter</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  int&nbsp;parameterIndex,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
 <div class="block">Sets a parameter into query.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -612,7 +612,7 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 <h3 id="setParameter(java.lang.Object,int,java.lang.Object,io.micronaut.core.type.Argument)">setParameter</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setParameter</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&nbsp;query,
  int&nbsp;parameterIndex,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
 <div class="block">Sets parameter into query.</div>
 <dl class="notes">
@@ -873,7 +873,7 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 <li>
 <section class="detail" id="getFlushModeType(io.micronaut.core.annotation.AnnotationMetadata)">
 <h3>getFlushModeType</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">jakarta.persistence.FlushModeType</span>&nbsp;<span class="element-name">getFlushModeType</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.FlushModeType</span>&nbsp;<span class="element-name">getFlushModeType</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</span></div>
 </section>
 </li>
 <li>
