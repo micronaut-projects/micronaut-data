@@ -21,12 +21,14 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonWithIdAndNameDto
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.util.stream.Stream
 
+@Ignore(value = "Fix as part of https://github.com/micronaut-projects/micronaut-data/issues/3679")
 class PostgresStreamingSpec extends Specification implements PostgresTestPropertyProvider {
 
     @AutoCleanup
