@@ -40,6 +40,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -121,6 +122,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -542,11 +544,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
-                    return executeAndMapEachRow(statement, row -> {
-                        rowsMapper.processRow(row);
-                        return "";
-                    }).collectList().flatMapIterable(ignore -> rowsMapper.getResult());
+                    Set<JoinPath> joinFetchPaths = preparedQuery.getJoinPaths();
+                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
+                    if (!onlySingleEndedJoins) {
+                        // Joins included - multiple rows are needed to construct an entity - cannot stream
+                        SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
+                        return executeAndMapEachRow(statement, row -> {
+                            rowsMapper.processRow(row);
+                            return "";
+                        }).collectList().flatMapIterable(ignore -> rowsMapper.getResult());
+                    }
                 }
                 return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType()));
             });
