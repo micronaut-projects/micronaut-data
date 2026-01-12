@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -28,7 +30,7 @@ public final class PersistentAssociationPath extends PersistentPropertyPath {
         super(associations, association);
     }
 
-    public PersistentAssociationPath(List<Association> associations, Association association, String path) {
+    public PersistentAssociationPath(List<Association> associations, Association association, @Nullable String path) {
         super(associations, association, path);
     }
 

@@ -140,6 +140,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     void visitIsNotEmpty(Expression<?> expression);
 
+    @Override
     default void visit(InPredicate<?> inPredicate) {
         visitIn(inPredicate.getExpression(), inPredicate.getValues(), false);
     }

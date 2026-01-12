@@ -28,6 +28,7 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -133,6 +134,7 @@ public abstract class AbstractSpringTransactionOperations
         }
     }
 
+    @Nullable
     private <R> R execute(TransactionCallback<Connection, R> callback,
                           org.springframework.transaction.TransactionStatus status,
                           TransactionDefinition transactionDefinition) {

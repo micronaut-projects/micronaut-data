@@ -44,6 +44,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -68,12 +69,13 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Update.class)) {
-            if (matchContext.getRootEntity() == null) {
+            if (!matchContext.hasRootEntity()) {
                 matchContext.findImplicitRootEntity();
             }
-            if (matchContext.getRootEntity() == null) {
+            if (!matchContext.hasRootEntity()) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());
@@ -111,13 +113,17 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
     }
 
     public static UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
-                                                   ParameterElement entityParameter,
-                                                   ParameterElement entitiesParameter,
-                                                   boolean isReturning) {
+                                                         @Nullable
+                                                         ParameterElement entityParameter,
+                                                         @Nullable
+                                                         ParameterElement entitiesParameter,
+                                                         boolean isReturning) {
         return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
+            @Nullable
             final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
+            @Override
             protected <T> void addPropertiesToUpdate(List<ParameterElement> nonConsumedParameters,
                                                      MethodMatchContext matchContext,
                                                      PersistentEntityRoot<T> root,
@@ -133,9 +139,8 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                     return;
                 }
 
-                Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
-                        .filter(p -> p != null && !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() &&
-                                p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
+                Stream.concat(rootEntity.getPersistentProperties().stream(), rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.of())
+                        .filter(p -> !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
                         .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
 
                 if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
@@ -165,11 +170,13 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntityParameter() {
                 return entityParameter;
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntitiesParameter() {
                 return entitiesParameter;
             }

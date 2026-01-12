@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -55,6 +56,7 @@ final class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPag
             Pageable pageable,
             @JsonProperty("cursors")
             List<Cursor> cursors,
+            @Nullable
             @JsonProperty("totalSize")
             Long totalSize) {
         super(content, pageable, totalSize);

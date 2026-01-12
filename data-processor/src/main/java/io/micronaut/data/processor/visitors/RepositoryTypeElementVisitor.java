@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
@@ -110,6 +109,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -131,16 +131,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
 
-    private ClassElement currentClass;
-    private ClassElement currentRepository;
-    private QueryBuilder queryEncoder;
     private final List<MethodMatcher> methodsMatchers;
     private final Set<String> visitedRepositories = new HashSet<>();
     private final Set<String> postponedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
-    private Function<ClassElement, SourcePersistentEntity> entityResolver;
-    private Function<String, SourcePersistentEntity> entityBySimplyNameResolver;
+
 
     {
         List<MethodMatcher> matcherList = new ArrayList<>(20);
@@ -192,6 +188,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         );
     }
 
+    @Nullable
     private Map<String, String> currentClassTypeRoles;
 
     @Nullable
@@ -201,7 +198,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      * Default constructor.
      */
     public RepositoryTypeElementVisitor() {
-
     }
 
     @Override
@@ -210,7 +206,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         visitedRepositories.clear();
     }
 
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
@@ -247,8 +242,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             String interfaceName = element.getName();
             if (visitedRepositories.contains(interfaceName)) {
                 // prevent duplicate visits
-                currentRepository = null;
-                currentClass = null;
                 return;
             }
             if (element.hasStereotype("io.micronaut.data.document.annotation.DocumentProcessorRequired") && !IS_DOCUMENT_ANNOTATION_PROCESSOR) {
@@ -256,12 +249,37 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     "Make sure it's included as a dependency to the annotation processor classpath!");
             }
 
-            this.currentClass = element;
 
-            entityResolver = new Function<>() {
+            if (!element.hasDeclaredStereotype(Repository.class)) {
+                return;
+            }
+            // delay visiting until the next round.
+            if (element.hasUnresolvedTypes(UnresolvedTypeKind.INTERFACE, UnresolvedTypeKind.SUPERCLASS) && !postponedRepositories.contains(interfaceName)) {
+                postponedRepositories.add(interfaceName);
+                throw new ElementPostponedToNextRoundException(element);
+            }
+            visitedRepositories.add(interfaceName);
+            QueryBuilder queryEncoder = newQueryBuilder(element.getAnnotationMetadata());
+            this.dataTypes = Utils.getConfiguredDataTypes(element);
+            AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
+            List<AnnotationValue<TypeRole>> roleArray = annotationMetadata
+                .findAnnotation(RepositoryConfiguration.class)
+                .map(av -> av.getAnnotations("typeRoles", TypeRole.class))
+                .orElse(Collections.emptyList());
+            for (AnnotationValue<TypeRole> parameterRole : roleArray) {
+                String role = parameterRole.stringValue("role").orElse(null);
+                AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
+                if (StringUtils.isNotEmpty(role) && cv != null) {
+                    context.getClassElement(cv.getName()).ifPresent(ce ->
+                        Objects.requireNonNull(currentClassTypeRoles).put(ce.getName(), role)
+                    );
+                }
+            }
+
+            Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
 
                 final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-                final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
+                final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
 
                 @Override
                 public SourcePersistentEntity apply(ClassElement classElement) {
@@ -276,8 +294,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     });
                 }
             };
-            entityBySimplyNameResolver = new Function<>() {
+            Function<String, SourcePersistentEntity> entityBySimplyNameResolver = new Function<>() {
                 @Override
+                @Nullable
                 public SourcePersistentEntity apply(String entitySimpleName) {
                     for (SourcePersistentEntity persistentEntity : entityMap.values()) {
                         if (persistentEntity.getPersistedName().equalsIgnoreCase(entitySimpleName)) {
@@ -287,40 +306,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     return null;
                 }
             };
+            // Annotate repository with EntityRepresentation if present on entity class
+            annotateEntityRepresentationIfPresent(element, entityResolver);
 
-            if (element.hasDeclaredStereotype(Repository.class)) {
-                // delay visiting until the next round.
-                if (element.hasUnresolvedTypes(UnresolvedTypeKind.INTERFACE, UnresolvedTypeKind.SUPERCLASS) && !postponedRepositories.contains(interfaceName)) {
-                    postponedRepositories.add(interfaceName);
-                    throw new ElementPostponedToNextRoundException(element);
-                }
-                visitedRepositories.add(interfaceName);
-                currentRepository = element;
-                queryEncoder = newQueryBuilder(element.getAnnotationMetadata());
-                this.dataTypes = Utils.getConfiguredDataTypes(currentRepository);
-                AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
-                List<AnnotationValue<TypeRole>> roleArray = annotationMetadata
-                    .findAnnotation(RepositoryConfiguration.class)
-                    .map(av -> av.getAnnotations("typeRoles", TypeRole.class))
-                    .orElse(Collections.emptyList());
-                for (AnnotationValue<TypeRole> parameterRole : roleArray) {
-                    String role = parameterRole.stringValue("role").orElse(null);
-                    AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
-                    if (StringUtils.isNotEmpty(role) && cv != null) {
-                        context.getClassElement(cv.getName()).ifPresent(ce ->
-                            currentClassTypeRoles.put(ce.getName(), role)
-                        );
-                    }
-                }
-
-                // Annotate repository with EntityRepresentation if present on entity class
-                annotateEntityRepresentationIfPresent(element);
-
-                if (queryEncoder == null) {
-                    throw new ProcessingException(element, "QueryEncoder not present on annotation processor path");
-                }
-            }
-            element.getMethods().forEach(method -> visitMethod(method, context));
+            element.getMethods().forEach(method -> visitRepositoryMethod(queryEncoder, element, method, entityResolver, entityBySimplyNameResolver, context));
         } catch (Exception e) {
             visitedRepositories.remove(element.getName());
             throw e;
@@ -332,7 +321,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      * @param annotationMetadata The annotation metadata.
      * @return The query builder
      */
-    private static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
+    private static QueryBuilder newQueryBuilder(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER
@@ -353,29 +342,33 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 })).orElse(new JpaQueryBuilder());
     }
 
-    @Override
-    public void visitMethod(MethodElement element, VisitorContext context) {
-        if (currentRepository == null) {
-            return;
-        }
-        ClassElement genericReturnType = element.getGenericReturnType();
-        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
-            ParameterElement[] parameters = element.getParameters();
+    private void visitRepositoryMethod(QueryBuilder queryEncoder,
+                                       ClassElement currentRepository,
+                                       MethodElement method,
+                                       Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                       Function<String, SourcePersistentEntity> entityBySimplyNameResolver,
+                                       VisitorContext context) {
+        Objects.requireNonNull(entityResolver);
+        Objects.requireNonNull(entityBySimplyNameResolver);
+
+        ClassElement genericReturnType = method.getGenericReturnType();
+        if (method.isAbstract() && !method.isStatic()) {
+            ParameterElement[] parameters = method.getParameters();
             Map<Element, String> parametersInRole = getParametersInRole(parameters);
 
-            if (element.hasDeclaredAnnotation(DataMethod.class)) {
+            if (method.hasDeclaredAnnotation(DataMethod.class)) {
                 // explicitly handled
                 return;
             }
 
-            Map<ClassElement, FindInterceptorDef> findInterceptors = createFindInterceptors(currentClass, context);
+            Map<ClassElement, FindInterceptorDef> findInterceptors = createFindInterceptors(currentRepository, context);
 
             MatchContext matchContext = new MatchContext(
                 queryEncoder,
                 currentRepository,
                 context,
-                element,
-                currentClassTypeRoles,
+                method,
+                Objects.requireNonNull(currentClassTypeRoles),
                 COMMON_ANNOTATION_ROLES,
                 genericReturnType,
                 parameters,
@@ -385,14 +378,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 List<ParameterElement> parametersNotInRole = Arrays.stream(parameters)
                     .filter(p -> !parametersInRole.containsKey(p))
                     .toList();
-                SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole, parametersNotInRole);
+                SourcePersistentEntity entity = resolvePersistentEntity(currentRepository, method, parametersInRole, parametersNotInRole, entityResolver);
                 MethodMatchContext methodMatchContext = new MethodMatchContext(
                     queryEncoder,
                     currentRepository,
                     entity,
                     context,
                     genericReturnType,
-                    element,
+                    method,
                     parametersInRole,
                     currentClassTypeRoles,
                     COMMON_ANNOTATION_ROLES,
@@ -418,13 +411,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
                 if (matchContext.isPossiblyFailing()) {
                     matchContext.logPossibleFailures();
-                    throw new ProcessingException(element, "Failures found.");
+                    throw new ProcessingException(method, "Failures found.");
                 } else {
                     String messageStart = matchContext.getUnableToImplementMessage();
-                    throw new ProcessingException(element, messageStart + "No possible implementations found.");
+                    throw new ProcessingException(method, messageStart + "No possible implementations found.");
                 }
             } catch (MatchFailedException e) {
-                throw new ProcessingException(e.getElement() == null ? element : e.getElement(), matchContext.getUnableToImplementMessage() + e.getMessage());
+                throw new ProcessingException(e.getElement() == null ? method : e.getElement(), matchContext.getUnableToImplementMessage() + e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace(System.err);
                 if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
@@ -432,7 +425,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
                 }
-                throw new ProcessingException(element, "Exception occurred while processing: " + e.getMessage(), e);
+                throw new ProcessingException(method, "Exception occurred while processing: " + e.getMessage(), e);
             }
         }
     }
@@ -454,8 +447,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return parametersInRole;
     }
 
+    @Nullable
     private String findTypeRole(ClassElement type) {
-        Set<Map.Entry<String, String>> entries = currentClassTypeRoles.entrySet();
+        Set<Map.Entry<String, String>> entries = Objects.requireNonNull(currentClassTypeRoles).entrySet();
         for (Map.Entry<String, String> entry : entries) {
             // Find the role by the exact type name
             if (type.getName().equals(entry.getKey())) {
@@ -476,6 +470,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
+    @Nullable
     private String findAnnotationRole(Element element) {
         for (Map.Entry<String, String> e : COMMON_ANNOTATION_ROLES) {
             if (element.hasStereotype(e.getKey())) {
@@ -489,7 +484,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         List<ParameterElement> parametersNotInRole = new ArrayList<>();
         for (ParameterElement parameter : parameters) {
             ClassElement type = parameter.getType();
-            if (currentClassTypeRoles.keySet().stream().noneMatch(type::isAssignable)) {
+            if (Objects.requireNonNull(currentClassTypeRoles).keySet().stream().noneMatch(type::isAssignable)) {
                 parametersNotInRole.add(parameter);
             }
         }
@@ -511,7 +506,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         List<QueryParameterBinding> parameterBinding;
         QueryResult queryResult = methodInfo.getQueryResult();
         if (queryResult == null) {
-            parameterBinding = null;
+            parameterBinding = List.of();
         } else {
             parameterBinding = queryResult.getParameterBindings();
 
@@ -582,7 +577,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             ClassElement runtimeInterceptor = methodInfo.getRuntimeInterceptor();
             if (runtimeInterceptor == null) {
-                throw new MatchFailedException("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + method.getName() + "(..). No possible runtime implementations found.", method);
+                throw new MatchFailedException("Unable to implement Repository method: " + methodMatchContext.getRepositoryClass().getSimpleName() + "." + method.getName() + "(..). No possible runtime implementations found.", method);
             }
             annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, new AnnotationClassValue<>(runtimeInterceptor.getName()));
             if (methodMatchContext.getRootEntity() != null) {
@@ -666,7 +661,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private void addQueryDefinition(MethodMatchContext methodMatchContext,
                                     AnnotationValueBuilder<Annotation> annotationBuilder,
                                     DataMethod.OperationType operationType,
+                                    @Nullable
                                     QueryResult queryResult,
+                                    @Nullable
                                     TypedElement resultType,
                                     List<QueryParameterBinding> parameterBinding,
                                     boolean encodeEntityParameters) {
@@ -818,6 +815,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                           List<QueryParameterBinding> parameterBinding,
                                           Map<String, String> params) {
         SourcePersistentEntity entity = methodMatchContext.getRootEntity();
+        Objects.requireNonNull(entity);
         ParameterElement[] parameters = methodMatchContext.getParameters();
 
         Map<String, DataType> configuredDataTypes = Utils.getConfiguredDataTypes(methodMatchContext.getRepositoryClass());
@@ -831,7 +829,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         methodMatchContext,
                         entity,
                         parameters,
-                        additionalParameterBinding.getName(),
+                        Objects.requireNonNull(additionalParameterBinding.getName()),
                         configuredDataTypes
                     )
                 );
@@ -919,11 +917,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     @Nullable
-    private SourcePersistentEntity resolvePersistentEntity(MethodElement element,
+    private SourcePersistentEntity resolvePersistentEntity(ClassElement repositoryClass,
+                                                           MethodElement element,
                                                            Map<Element, String> parametersInRole,
-                                                           List<ParameterElement> parametersNotInRole) {
+                                                           List<ParameterElement> parametersNotInRole,
+                                                           Function<ClassElement, SourcePersistentEntity> entityResolver) {
         ClassElement returnType = element.getGenericReturnType();
-        SourcePersistentEntity entity = resolveEntityForCurrentClass();
+        SourcePersistentEntity entity = resolveEntityForCurrentClass(repositoryClass, entityResolver);
         if (entity == null) {
             entity = Utils.resolvePersistentEntity(returnType, entityResolver);
         }
@@ -940,7 +940,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
             return entity;
         }
-        SourcePersistentEntity sourcePersistentEntity = resolvePersistentEntityFromLifecycleMethods(element, parametersNotInRole);
+        SourcePersistentEntity sourcePersistentEntity = resolvePersistentEntityFromLifecycleMethods(element, parametersNotInRole, entityResolver);
         if (sourcePersistentEntity != null) {
             return sourcePersistentEntity;
         }
@@ -949,14 +949,15 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
         ClassElement owningType = element.getOwningType();
         for (MethodElement method : owningType.getMethods()) {
-            return resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()));
+            return resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
         }
         throw new MatchFailedException("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
     }
 
     @Nullable
     private SourcePersistentEntity resolvePersistentEntityFromLifecycleMethods(MethodElement element,
-                                                                               List<ParameterElement> parametersNotInRole) {
+                                                                               List<ParameterElement> parametersNotInRole,
+                                                                               Function<ClassElement, SourcePersistentEntity> entityResolver) {
         if (element.hasStereotype(Insert.class) || element.hasStereotype(Update.class) || element.hasStereotype(Delete.class)) {
             if (!parametersNotInRole.isEmpty()) {
                 ClassElement type = parametersNotInRole.iterator().next().getGenericType();
@@ -974,16 +975,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     @Nullable
-    private SourcePersistentEntity resolveEntityForCurrentClass() {
-        Map<String, ClassElement> typeArguments = currentRepository.getTypeArguments(GenericRepository.class);
+    private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        Map<String, ClassElement> typeArguments = repositoryClass.getTypeArguments(GenericRepository.class);
         String argName = "E";
         if (typeArguments.isEmpty()) {
             argName = "T";
-            typeArguments = currentRepository.getTypeArguments(SPRING_REPO);
+            typeArguments = repositoryClass.getTypeArguments(SPRING_REPO);
         }
         if (typeArguments.isEmpty()) {
             argName = "T";
-            typeArguments = currentRepository.getTypeArguments(JAKARTA_DATA_REPO);
+            typeArguments = repositoryClass.getTypeArguments(JAKARTA_DATA_REPO);
         }
         if (!typeArguments.isEmpty()) {
             ClassElement ce = typeArguments.get(argName);
@@ -994,17 +995,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    /**
-     * Annotates repository element with {@link EntityRepresentation} if an entity is marked with it.
-     *
-     * @param classElement the repository class element
-     */
-    private void annotateEntityRepresentationIfPresent(ClassElement classElement) {
-        SourcePersistentEntity entity = resolveEntityForCurrentClass();
+    private void annotateEntityRepresentationIfPresent(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        SourcePersistentEntity entity = resolveEntityForCurrentClass(repositoryClass, entityResolver);
         if (entity != null) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
             if (entityRepresentationAnnotationValue != null) {
-                classElement.annotate(entityRepresentationAnnotationValue);
+                repositoryClass.annotate(entityRepresentationAnnotationValue);
             }
         }
     }
@@ -1018,7 +1014,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      * @param entity     the root entity
      */
     private void annotateQueryResultIfApplicable(MethodElement element, MethodMatchInfo methodInfo, SourcePersistentEntity entity) {
-        if (methodInfo.getOperationType() == DataMethod.OperationType.QUERY && methodInfo.getResultType().equals(entity.getType())) {
+        TypedElement resultType = methodInfo.getResultType();
+        if (methodInfo.getOperationType() == DataMethod.OperationType.QUERY && resultType != null && resultType.equals(entity.getType())) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
             if (entityRepresentationAnnotationValue != null) {
                 EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);

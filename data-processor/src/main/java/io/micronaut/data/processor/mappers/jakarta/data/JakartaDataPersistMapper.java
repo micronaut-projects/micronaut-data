@@ -18,7 +18,6 @@ package io.micronaut.data.processor.mappers.jakarta.data;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -35,7 +34,6 @@ import java.util.List;
 @Internal
 public final class JakartaDataPersistMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.data.repository.stateful.Persist";

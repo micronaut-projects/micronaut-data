@@ -3,6 +3,7 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -12,14 +13,19 @@ public class Document {
 
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
 
+    @Nullable
     private String title;
 
+    @Nullable
     private List<String> tags;
 
+    @Nullable
     private Map<String, Owner> owners;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -28,6 +34,7 @@ public class Document {
         this.id = id;
     }
 
+    @Nullable
     public String getTitle() {
         return title;
     }
@@ -36,6 +43,7 @@ public class Document {
         this.title = title;
     }
 
+    @Nullable
     public List<String> getTags() {
         return tags;
     }
@@ -44,6 +52,7 @@ public class Document {
         this.tags = tags;
     }
 
+    @Nullable
     public Map<String, Owner> getOwners() {
         return owners;
     }

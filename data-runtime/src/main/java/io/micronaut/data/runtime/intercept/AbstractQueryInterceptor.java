@@ -424,7 +424,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param type          The type
      * @return The optional parameter
      */
-    @NonNull
     protected boolean hasReturnTypeInRole(@NonNull MethodInvocationContext<?, ?> context,
                                           @NonNull String role,
                                           @NonNull Class<?> type) {
@@ -565,15 +564,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
-        PersistentProperty identity = entity.getIdentity();
-        if (identity != null) {
-            setProperty(wrapper, identity, parameterValues);
-        } else {
-            PersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
-            if (compositeIdentities != null && compositeIdentities.length > 0) {
-                for (PersistentProperty compositeIdentity : compositeIdentities) {
-                    setProperty(wrapper, compositeIdentity, parameterValues);
-                }
+        if (entity.hasIdentity()) {
+            setProperty(wrapper, entity.getIdentity(), parameterValues);
+        }
+        if (entity.hasCompositeIdentity()) {
+            for (PersistentProperty compositeIdentity : entity.getCompositeIdentity()) {
+                setProperty(wrapper, compositeIdentity, parameterValues);
             }
         }
         for (PersistentProperty prop : persistentProperties) {
@@ -896,6 +892,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        @Nullable
         public StoredQuery<E, K> getStoredQuery() {
             return (StoredQuery<E, K>) super.getStoredQuery();
         }
@@ -914,6 +911,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        @Nullable
         public StoredQuery<E, K> getStoredQuery() {
             return (StoredQuery<E, K>) super.getStoredQuery();
         }
@@ -958,6 +956,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private abstract sealed class AbstractEntityOperation<E> extends AbstractPreparedDataOperation<E> implements EntityOperation<E> {
         protected final MethodInvocationContext<?, ?> method;
         protected final Class<E> rootEntity;
+        @Nullable
         protected StoredQuery<E, ?> storedQuery;
 
         AbstractEntityOperation(MethodInvocationContext<?, ?> method, Class<E> rootEntity) {
@@ -967,6 +966,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        @Nullable
         public StoredQuery<E, ?> getStoredQuery() {
             if (storedQuery == null) {
                 String queryString = method.stringValue(Query.class).orElse(null);

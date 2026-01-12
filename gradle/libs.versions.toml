@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.0.0-M6"
+micronaut = "5.0.0-M7"
 micronaut-platform = "4.10.1"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "4.6.1"
@@ -47,7 +47,10 @@ kotlin-gradle-plugin = "2.3.0"
 jmh-gradle-plugin = "0.7.3"
 spring-boot-gradle-plugin = "4.0.1"
 spring-dependency-management-gradle-plugin = "1.1.7"
-shadow-gradle-plugin = "9.3.0"
+shadow-gradle-plugin = "9.3.1"
+errorprone-gradle-plugin = "4.3.0"
+nullaway = "0.12.15"
+error_prone_core = "2.45.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
@@ -120,6 +123,9 @@ groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = 
 jakarta-data-tck = { module = 'jakarta.data:jakarta.data-tck', version.ref = "managed-jakarta-data" }
 junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 
+nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
+error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error_prone_core" }
+
 # Benchmark
 
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
@@ -142,4 +148,5 @@ gradle-jmh = { module = "me.champeau.jmh:jmh-gradle-plugin", version.ref = "jmh-
 gradle-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot-gradle-plugin" }
 gradle-spring-dependencies = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management-gradle-plugin" }
 gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-gradle-plugin" }
-
+gradle-errorprone = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version.ref = "errorprone-gradle-plugin"}
+gradle-nullaway = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version.ref = "errorprone-gradle-plugin"}

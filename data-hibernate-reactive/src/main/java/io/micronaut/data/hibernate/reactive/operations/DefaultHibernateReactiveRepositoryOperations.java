@@ -51,11 +51,13 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -91,12 +93,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value) {
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, @Nullable Object value) {
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value, Argument<?> argument) {
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, @Nullable Object value, Argument<?> argument) {
         query.setParameter(parameterName, value);
     }
 
@@ -111,12 +113,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value) {
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, @Nullable Object value) {
         query.setParameter(parameterIndex, value);
     }
 
     @Override
-    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value, Argument<?> argument) {
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, @Nullable Object value, Argument<?> argument) {
         query.setParameter(parameterIndex, value);
     }
 
@@ -198,7 +200,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
+    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, String query, @Nullable Class<?> resultType) {
         return session.createSelectionQuery(query, resultType);
     }
 
@@ -253,7 +255,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Mono<Long> count(PagedQuery<T> pagedQuery) {
-        return operation(session -> countOf(session, Long.class, null));
+        return operation(session -> countOf(session, Long.class, Limit.UNLIMITED));
     }
 
     private <T> Flux<T> findPaged(Stage.Session session, PagedQuery<T> pagedQuery) {
@@ -311,8 +313,10 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     private <T> Mono<Integer> executeEntityUpdate(Stage.Session session,
                                                   StoredQuery<T, ?> storedQuery,
+                                                  @Nullable
                                                   InvocationContext<?, ?> invocationContext,
                                                   T entity) {
+        Objects.requireNonNull(invocationContext, "Invocation context cannot be null");
         Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
         return helper.executeUpdate(query);
@@ -474,7 +478,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     private final class ListResultCollector<R> extends ResultCollector<R> {
 
-        private Flux<R> result;
+        private Flux<R> result = Flux.empty();
 
         @Override
         protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
@@ -490,7 +494,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     private final class SingleResultCollector<R> extends ResultCollector<R> {
 
-        private Mono<R> result;
+        private Mono<R> result = Mono.empty();
 
         @Override
         protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
@@ -507,7 +511,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
         private final boolean limitOne;
-        private Mono<R> result;
+        private Mono<R> result = Mono.empty();
 
         private FirstResultCollector(boolean limitOne) {
             this.limitOne = limitOne;

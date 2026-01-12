@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
     private final boolean isNew;
     private final ConnectionOperations<C> connectionOperations;
 
+    @Nullable
     private List<ConnectionSynchronization> connectionSynchronizations;
 
     public DefaultConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew, ConnectionOperations<C> connectionOperations) {

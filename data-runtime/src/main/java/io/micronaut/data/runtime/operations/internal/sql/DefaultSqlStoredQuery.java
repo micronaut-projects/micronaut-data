@@ -30,6 +30,7 @@ import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -51,6 +52,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
 
     private final boolean expandableQuery;
     private final SqlQueryBuilder queryBuilder;
+    @Nullable
     private final QueryResultInfo queryResultInfo;
 
     /**
@@ -86,6 +88,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
+    @Nullable
     public QueryResultInfo getQueryResultInfo() {
         return queryResultInfo;
     }
@@ -111,6 +114,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
+    @Nullable
     public Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity) {
         StoredQuery<E, R> storedQuery = getStoredQueryDelegate();
         if (storedQuery.getQueryBindings().isEmpty()) {

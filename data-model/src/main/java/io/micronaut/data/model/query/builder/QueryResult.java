@@ -50,16 +50,6 @@ public interface QueryResult {
     }
 
     /**
-     * @return A string representation of the aggregate part.
-     * @deprecated Not used
-     */
-    @Nullable
-    @Deprecated(forRemoval = true, since = "4.10")
-    default String getAggregate() {
-        return null;
-    }
-
-    /**
      * @return A string parts representation of the original query.
      */
     List<String> getQueryParts();
@@ -189,8 +179,8 @@ public interface QueryResult {
      * @return The query
      */
     static QueryResult of(String query,
-             List<String> queryParts,
-             List<QueryParameterBinding> parameterBindings) {
+                          List<String> queryParts,
+                          List<QueryParameterBinding> parameterBindings) {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
 
@@ -292,7 +282,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -347,7 +337,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -410,7 +400,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -451,7 +441,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }

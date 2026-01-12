@@ -123,7 +123,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final MongoClient mongoClient;
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
+    @Nullable
     private ExecutorAsyncOperations asyncOperations;
+    @Nullable
     private ExecutorService executorService;
 
     /**
@@ -300,6 +302,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return findAllFiltered(clientSession, preparedQuery, stream);
     }
 
+    @Nullable
     private <T, R> R findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         return findOne(find(clientSession, preparedQuery)
             .map(r -> {
@@ -312,6 +315,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             }));
     }
 
+    @Nullable
     private <T, R> R findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         MongoDatabase database = getDatabase(preparedQuery);
         Class<T> type = preparedQuery.getRootEntity();
@@ -329,6 +333,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         }));
     }
 
+    @Nullable
     private static <R> R findOne(MongoIterable<R> iterable) {
         try (MongoCursor<R> iterator = iterable.iterator()) {
             if (iterator.hasNext()) {
@@ -713,7 +718,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
-    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, Class<?> repositoryClass) {
+    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass) {
         return mongoClient.getDatabase(databaseNameProvider.provide(persistentEntity, repositoryClass));
     }
 
@@ -730,7 +735,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
-    public <T> List<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+    public <T> List<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, @Nullable Predicate<T> predicate) {
         MongoEntitiesOperation<T> op = createMongoInsertManyOperation(ctx, persistentEntity, values);
         if (predicate != null) {
             op.veto(predicate);
@@ -810,7 +815,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
-            Bson filter;
+            Bson filter = EMPTY;
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -826,7 +831,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 bsonDocument.remove("_id");
                 UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata));
                 modifiedCount = updateResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(1, (int) modifiedCount);
                 }
             }
@@ -859,7 +864,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates);
                 modifiedCount += bulkWriteResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(updates.size(), (int) modifiedCount);
                 }
             }
@@ -871,7 +876,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
-            Map<Data, Bson> filters;
+            Map<Data, Bson> filters = Map.of();
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -886,7 +891,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     if (d.vetoed) {
                         continue;
                     }
-                    Bson filter = filters.get(d);
+                    Bson filter = filters.getOrDefault(d, EMPTY);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'replaceOne' with filter: {}", filter.toBsonDocument().toJson());
                     }
@@ -896,7 +901,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = collection.bulkWrite(ctx.clientSession, replaces);
                 modifiedCount = bulkWriteResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(replaces.size(), (int) modifiedCount);
                 }
             }
@@ -908,7 +913,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
-            Bson filter;
+            Bson filter = EMPTY;
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -922,7 +927,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 DeleteResult deleteResult = collection.deleteOne(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                 modifiedCount = deleteResult.getDeletedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(1, (int) modifiedCount);
                 }
             }
@@ -934,7 +939,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
-            Map<Data, Bson> filters;
+            Map<Data, Bson> filters = Map.of();
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -952,7 +957,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     DeleteResult deleteResult = collection.deleteMany(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                     modifiedCount = deleteResult.getDeletedCount();
                 }
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     int expected = (int) entities.stream().filter(d -> !d.vetoed).count();
                     checkOptimisticLocking(expected, (int) modifiedCount);
                 }
@@ -981,7 +986,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, deletes);
                 modifiedCount = bulkWriteResult.getDeletedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(deletes.size(), (int) modifiedCount);
                 }
             }

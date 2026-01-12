@@ -21,6 +21,7 @@ import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link SaveAllInterceptor}.
@@ -41,6 +42,7 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
+    @Nullable
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
         Iterable<Object> rs = operations.persistAll(getInsertBatchOperation(context, iterable));

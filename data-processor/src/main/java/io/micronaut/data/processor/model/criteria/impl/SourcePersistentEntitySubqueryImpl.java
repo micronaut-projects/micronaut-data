@@ -27,6 +27,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntitySubquery
 import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -71,6 +72,7 @@ final class SourcePersistentEntitySubqueryImpl<T> extends AbstractPersistentEnti
     }
 
     @Override
+    @Nullable
     public String getQueryResultTypeName() {
         if (selection instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();

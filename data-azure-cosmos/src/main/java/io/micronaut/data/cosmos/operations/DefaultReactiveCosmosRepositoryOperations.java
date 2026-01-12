@@ -39,6 +39,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -122,6 +123,7 @@ import java.util.stream.Collectors;
 @Singleton
 @Internal
 @SuppressWarnings({"java:S110", "java:S107"}) // Disabled SonarLint rules: Inheritance tree of classes should not be too deep, Methods should not have too many parameters
+@NullUnmarked
 public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRepositoryOperations implements
     ReactorReactiveRepositoryOperations,
     ReactiveRepositoryOperations,
@@ -137,7 +139,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
+    @Nullable
     private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
+    @Nullable
     private final CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor;
     private final boolean queryMetricsEnabled;
 
@@ -532,7 +536,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                 return Mono.just(conversionService.convertRequired(item, resultType));
             }
         }
-        return null;
+        return Mono.empty();
     }
 
     /**
@@ -606,10 +610,10 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return true if persistent entity identity field matches with the container partition key for that entity
      */
     private boolean isIdPartitionKey(RuntimePersistentEntity<?> runtimePersistentEntity) {
-        PersistentProperty identity = runtimePersistentEntity.getIdentity();
-        if (identity == null) {
+        if (!runtimePersistentEntity.hasIdentity()) {
             return false;
         }
+        PersistentProperty identity = runtimePersistentEntity.getIdentity();
         String partitionKey = getPartitionKeyDefinition(runtimePersistentEntity);
         return partitionKey.equals(Constants.PARTITION_KEY_SEPARATOR + identity.getName());
     }
@@ -674,6 +678,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param item the item/document in the db
      * @return document id
      */
+    @Nullable
     private String getItemId(ObjectNode item) {
         JsonNode idNode = item.get(Constants.INTERNAL_ID);
         if (idNode == null) {
@@ -811,8 +816,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param handleItem function that will apply some changes before adding item to the list, if null then ignored
      * @return list of {@link CosmosItemOperation}s
      */
-    private List<CosmosItemOperation> createBulkOperations(Iterable<ObjectNode> items, BulkOperationType bulkOperationType, RuntimePersistentEntity<?> persistentEntity,
-                                                           Optional<PartitionKey> optPartitionKey, UnaryOperator<ObjectNode> handleItem) {
+    private List<CosmosItemOperation> createBulkOperations(Iterable<ObjectNode> items,
+                                                           BulkOperationType bulkOperationType,
+                                                           RuntimePersistentEntity<?> persistentEntity,
+                                                           Optional<PartitionKey> optPartitionKey,
+                                                           @Nullable UnaryOperator<ObjectNode> handleItem) {
         List<CosmosItemOperation> bulkOperations = new ArrayList<>();
         RequestOptions requestOptions = new RequestOptions();
         String partitionKeyDefinition = getPartitionKeyDefinition(persistentEntity);
@@ -843,8 +851,12 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param handleItem function that will apply some changes before adding item to the list, if null then ignored
      * @return number of affected items
      */
-    private Mono<Number> executeBulk(CosmosAsyncContainer container, CosmosPagedFlux<ObjectNode> items, BulkOperationType bulkOperationType, RuntimePersistentEntity<?> persistentEntity, Optional<PartitionKey> optPartitionKey,
-                                     UnaryOperator<ObjectNode> handleItem) {
+    private Mono<Number> executeBulk(CosmosAsyncContainer container,
+                                     CosmosPagedFlux<ObjectNode> items,
+                                     BulkOperationType bulkOperationType,
+                                     RuntimePersistentEntity<?> persistentEntity,
+                                     Optional<PartitionKey> optPartitionKey,
+                                     @Nullable UnaryOperator<ObjectNode> handleItem) {
 
         // Update/replace using provided partition key or partition key calculated from each item
         Flux<CosmosItemOperation> updateItems = items.byPage().flatMap(response -> {

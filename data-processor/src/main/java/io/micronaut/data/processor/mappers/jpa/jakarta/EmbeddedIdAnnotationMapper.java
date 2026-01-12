@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's embedded ID to {@link io.micronaut.data.annotation.EmbeddedId}.
  *
@@ -24,7 +22,7 @@ import org.jspecify.annotations.NonNull;
  * @since 2.4.8
  */
 public final class EmbeddedIdAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.EmbeddedIdAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.EmbeddedId";

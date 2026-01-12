@@ -25,6 +25,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,7 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
     }
 
     @Override
+    @Nullable
     public Path<?> getParentPath() {
         return null;
     }

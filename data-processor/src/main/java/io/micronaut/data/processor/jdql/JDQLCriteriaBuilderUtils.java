@@ -236,7 +236,7 @@ public final class JDQLCriteriaBuilderUtils {
                 }
                 JDQLParser.Id_expressionContext idExpressionContext = selectItem.id_expression();
                 if (idExpressionContext != null) {
-                    query.select(getExpression(idExpressionContext, root, criteriaBuilder));
+                    query.select(getExpression(idExpressionContext, root));
                 }
             }
         }
@@ -313,6 +313,7 @@ public final class JDQLCriteriaBuilderUtils {
         return deleteQuery;
     }
 
+    @Nullable
     private static Predicate getPredicate(JDQLParser. @Nullable Where_clauseContext whereClause,
                                           Root<?> root,
                                           PersistentEntityCriteriaBuilder criteriaBuilder) {
@@ -326,6 +327,7 @@ public final class JDQLCriteriaBuilderUtils {
     private static List<Order> getOrders(JDQLParser. @Nullable Orderby_clauseContext orderByClause,
                                          Root<?> root,
                                          PersistentEntityCriteriaBuilder criteriaBuilder,
+                                         @Nullable
                                          MethodElement methodElement) {
         List<Order> orders = new ArrayList<>();
         if (orderByClause != null) {
@@ -619,8 +621,7 @@ public final class JDQLCriteriaBuilderUtils {
     }
 
     private static Expression<?> getExpression(JDQLParser.Id_expressionContext idExpression,
-                                               Root<?> root,
-                                               CriteriaBuilder criteriaBuilder) {
+                                               Root<?> root) {
         String idText = idExpression.IDENTIFIER().getText().toLowerCase(Locale.ROOT);
         if (!idText.equals("id")) {
             throw new IllegalStateException("Invalid id expression, expected ID(THIS) but got " + idExpression.getText());

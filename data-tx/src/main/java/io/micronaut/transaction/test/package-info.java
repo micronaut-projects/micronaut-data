@@ -16,4 +16,5 @@
 /**
  * Integration with Micronaut Test.
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.transaction.test;

@@ -61,9 +61,10 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     /**
      * @return The join type
      */
-    io.micronaut.data.annotation.Join.Type getAssociationJoinType();
+    io.micronaut.data.annotation.Join. @Nullable Type getAssociationJoinType();
 
     @Override
+    @Nullable
     default JoinType getJoinType() {
         return null;
     }
@@ -91,13 +92,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    
+
     default Join<OwnerType, AssociatedEntityType> on(Expression<Boolean> restriction) {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Join<OwnerType, AssociatedEntityType> on(Predicate... restrictions) {
         throw notSupportedOperation();
     }
@@ -109,13 +110,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    
+
     default Attribute<? super OwnerType, ?> getAttribute() {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Bindable<AssociatedEntityType> getModel() {
         throw notSupportedOperation();
     }
@@ -147,10 +148,10 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     <X, Y> PersistentAssociationPath<X, Y> join(String attributeName);
 
     @Override
-    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType);
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type joinType);
 
     @Override
-    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType, String alias);
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type joinType, @Nullable String alias);
 
     @Override
     <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, JoinType jt);

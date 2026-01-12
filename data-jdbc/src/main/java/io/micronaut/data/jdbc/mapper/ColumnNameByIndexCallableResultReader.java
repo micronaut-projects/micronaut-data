@@ -84,11 +84,13 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(CallableStatement cs, String index) {
         return delegate.readTimestamp(cs, getIndex(index));
     }
 
     @Override
+    @Nullable
     public Time readTime(CallableStatement cs, String index) {
         return delegate.readTime(cs, getIndex(index));
     }
@@ -104,6 +106,7 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     @Override
+    @Nullable
     public Date readDate(CallableStatement cs, String name) {
         return delegate.readDate(cs, getIndex(name));
     }
@@ -145,6 +148,7 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     @Override
+    @Nullable
     public BigDecimal readBigDecimal(CallableStatement cs, String name) {
         return delegate.readBigDecimal(cs, getIndex(name));
     }
@@ -155,6 +159,7 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     @Override
+    @Nullable
     public <T> T getRequiredValue(CallableStatement cs, String name, Class<T> type) throws DataAccessException {
         return delegate.getRequiredValue(cs, getIndex(name), type);
     }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -33,10 +34,11 @@ import java.util.Map;
 final class R2dbcTuple implements Tuple {
 
     private final ConversionService conversionService;
+    @Nullable
     private final Object[] values;
     private final Map<String, Integer> aliasToPosition;
 
-    public R2dbcTuple(ConversionService conversionService, Object[] values, Map<String, Integer> aliasToPosition) {
+    public R2dbcTuple(ConversionService conversionService, @Nullable Object[] values, Map<String, Integer> aliasToPosition) {
         this.conversionService = conversionService;
         this.values = values;
         this.aliasToPosition = aliasToPosition;
@@ -53,8 +55,13 @@ final class R2dbcTuple implements Tuple {
     }
 
     @Override
+    @Nullable
     public Object get(String alias) {
-        return get(aliasToPosition.get(alias));
+        Integer index = aliasToPosition.get(alias);
+        if (index == null) {
+            throw new IllegalArgumentException("Unknown alias: " + alias);
+        }
+        return get(index);
     }
 
     @Override
@@ -63,11 +70,13 @@ final class R2dbcTuple implements Tuple {
     }
 
     @Override
+    @Nullable
     public Object get(int i) {
         return values[i];
     }
 
     @Override
+    @Nullable
     public Object[] toArray() {
         return values;
     }

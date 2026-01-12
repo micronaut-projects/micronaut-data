@@ -42,21 +42,24 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     }
 
     @Override
-    
+
     public String getRequiredName() {
         return delegate.getRequiredName();
     }
 
+    @Nullable
     @Override
     public DataType getDataType() {
         return delegate.getDataType();
     }
 
+    @Nullable
     @Override
     public JsonDataType getJsonDataType() {
         return delegate.getJsonDataType();
     }
 
+    @Nullable
     @Override
     public Class<?> getParameterConverterClass() {
         return delegate.getParameterConverterClass();
@@ -68,12 +71,12 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     }
 
     @Override
-    public String[] getParameterBindingPath() {
+    public String @Nullable [] getParameterBindingPath() {
         return delegate.getParameterBindingPath();
     }
 
     @Override
-    public String[] getPropertyPath() {
+    public String @Nullable [] getPropertyPath() {
         return delegate.getPropertyPath();
     }
 
@@ -92,6 +95,7 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.isRequiresPreviousPopulatedValue();
     }
 
+    @Nullable
     @Override
     public QueryParameterBinding getPreviousPopulatedValueParameter() {
         return delegate.getPreviousPopulatedValueParameter();
@@ -102,16 +106,19 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.isExpandable();
     }
 
+    @Nullable
     @Override
     public Object getValue() {
         return delegate.getValue();
     }
 
+    @Nullable
     @Override
     public String getRole() {
         return delegate.getRole();
     }
 
+    @Nullable
     @Override
     public String getTableAlias() {
         return delegate.getTableAlias();

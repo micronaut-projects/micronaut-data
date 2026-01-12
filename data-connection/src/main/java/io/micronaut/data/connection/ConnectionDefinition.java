@@ -117,7 +117,7 @@ public interface ConnectionDefinition extends AnnotationMetadataProvider {
      * @return A new connection definition with specified name
      */
     @NonNull
-    ConnectionDefinition withName(String name);
+    ConnectionDefinition withName(@Nullable String name);
 
     /**
      * Connection definition with new annotation metadata.

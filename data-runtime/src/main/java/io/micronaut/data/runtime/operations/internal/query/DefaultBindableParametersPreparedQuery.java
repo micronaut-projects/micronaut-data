@@ -30,6 +30,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +47,7 @@ import java.util.Optional;
 public class DefaultBindableParametersPreparedQuery<E, R> implements BindableParametersPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
     protected final PreparedQuery<E, R> preparedQuery;
+    @Nullable
     protected final MethodInvocationContext<?, ?> invocationContext;
     protected final BindableParametersStoredQuery<E, R> storedQuery;
 
@@ -56,6 +58,7 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
+                                                  @Nullable
                                                   MethodInvocationContext<?, ?> invocationContext,
                                                   BindableParametersStoredQuery<E, R> storedQuery) {
         this.preparedQuery = preparedQuery;
@@ -89,13 +92,13 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     @Override
-    public void bindParameters(Binder binder, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        storedQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
+    public void bindParameters(Binder binder, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        storedQuery.bindParameters(binder, invocationContext, entity, previousValues);
     }
 
     @Override
-    public void bindParameters(Binder binder, InvocationContext<?, ?> invocationContext, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        storedQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
+    public void bindParameters(Binder binder, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        storedQuery.bindParameters(binder, invocationContext, entity, previousValues);
     }
 
     @Override

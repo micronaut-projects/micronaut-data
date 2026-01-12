@@ -42,17 +42,13 @@ import java.util.Date;
 public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
     private final ConversionService conversionService;
 
-    public ColumnIndexR2dbcResultReader() {
-        this(null);
-    }
-
     /**
      * Constructs a new instance.
      *
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnIndexR2dbcResultReader(DataConversionService conversionService) {
+    public ColumnIndexR2dbcResultReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
@@ -115,6 +111,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     }
 
     @Override
+    @Nullable
     public Date readDate(Row resultSet, Integer name) {
         final LocalDate localDate = resultSet.get(name, LocalDate.class);
         if (localDate != null) {
@@ -124,6 +121,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(Row resultSet, Integer index) {
         final LocalDateTime localDateTime = resultSet.get(index, LocalDateTime.class);
         if (localDateTime != null) {
@@ -198,11 +196,13 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         }
     }
 
+    @Nullable
     @Override
     public BigDecimal readBigDecimal(Row resultSet, Integer name) {
         return resultSet.get(name, BigDecimal.class);
     }
 
+    @Nullable
     @Override
     public byte[] readBytes(Row resultSet, Integer name) {
         return resultSet.get(name, byte[].class);

@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
 import io.micronaut.data.annotation.Projection;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+@NullUnmarked
 @Internal
 public final class TestClassVisitor implements TypeElementVisitor<Object, Object> {
 
@@ -127,7 +129,6 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
                                     }
                                 }
                             }
-                            annotationMirror.toString();
                         }
                     }
                 }

@@ -139,7 +139,6 @@ public interface Pageable extends Sort {
             // unpaged
             return Pageable.from(0, size, getSort(), requestTotal());
         }
-        Pageable newPageable;
         // handle overflow
         if (newNumber < 0) {
             return Pageable.from(0, size, getSort(), requestTotal());
@@ -359,7 +358,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static CursoredPageable afterCursor(Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static CursoredPageable afterCursor(@Nullable Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }
@@ -376,7 +375,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static CursoredPageable beforeCursor(Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static CursoredPageable beforeCursor(@Nullable Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }

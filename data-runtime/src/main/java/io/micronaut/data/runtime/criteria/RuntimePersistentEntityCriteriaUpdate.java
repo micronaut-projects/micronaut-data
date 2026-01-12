@@ -27,6 +27,7 @@ import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -68,12 +69,12 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
     }
 
     @Override
-    protected void setValue(String attributeName, Object value) {
+    protected void setValue(String attributeName, @Nullable Object value) {
         super.setValue(attributeName, asParameter(value));
     }
 
     @NotNull
-    private ParameterExpression<?> asParameter(Object exp) {
+    private ParameterExpression<?> asParameter(@Nullable Object exp) {
         if (exp instanceof ParameterExpression<?> parameterExpression) {
             return parameterExpression;
         }

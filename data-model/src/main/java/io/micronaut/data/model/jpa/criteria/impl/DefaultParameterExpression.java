@@ -41,7 +41,7 @@ final class DefaultParameterExpression<T> extends IParameterExpression<T> {
     private final @Nullable Object value;
 
     public DefaultParameterExpression(Class<T> paramClass, @Nullable String name, @Nullable Object value) {
-        super(new ClassExpressionType<>(paramClass), name);
+        super(new ClassExpressionType<>(paramClass), name == null ? "default" : name);
         this.paramClass = paramClass;
         this.value = value;
     }

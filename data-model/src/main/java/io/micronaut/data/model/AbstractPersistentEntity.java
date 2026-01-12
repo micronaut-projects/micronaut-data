@@ -69,6 +69,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                 .orElseGet(() -> NamingStrategy.DEFAULT.mappedName(getSimpleName()) + "_");
     }
 
+    @Nullable
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
                 .stringValue(io.micronaut.data.annotation.NamingStrategy.class)

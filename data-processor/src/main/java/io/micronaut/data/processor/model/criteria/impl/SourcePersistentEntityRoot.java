@@ -22,6 +22,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +49,7 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
     }
 
     @Override
+    @Nullable
     public Path<?> getParentPath() {
         return null;
     }
