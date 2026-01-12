@@ -43,6 +43,9 @@ jobs:
         run: |
          sudo rm -rf "/usr/local/share/boost"
          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+         sudo rm -rf "/opt/ghc"
+         sudo rm -rf "/usr/share/dotnet"
+         sudo rm -rf "/usr/local/lib/android"
          sudo apt-get clean
          df -h
 
@@ -52,7 +55,7 @@ jobs:
           fetch-depth: 0
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.4.4
+        uses: graalvm/setup-graalvm@v1.4.5
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}

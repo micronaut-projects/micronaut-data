@@ -67,6 +67,7 @@ import jakarta.persistence.criteria.Selection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -238,7 +239,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         String projectionPart = findMatchPart(matches, QueryMatchId.PROJECTION).orElse(null);
 
         if (StringUtils.isNotEmpty(projectionPart)) {
-            Expression<?> propertyPath = getProperty(root, projectionPart);
+            Expression<?> propertyPath = getProperty(root, Objects.requireNonNull(projectionPart));
             Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
             query.select(count);
         } else {

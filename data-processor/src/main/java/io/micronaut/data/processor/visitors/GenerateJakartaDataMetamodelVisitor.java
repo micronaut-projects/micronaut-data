@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GenerateJakartaDataMetamodel;
 import io.micronaut.data.annotation.MappedEntity;
@@ -35,6 +34,7 @@ import io.micronaut.inject.writer.GeneratedFile;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -49,7 +49,7 @@ import java.util.function.Function;
 public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<GenerateJakartaDataMetamodel, Object>, PackageElementVisitor<GenerateJakartaDataMetamodel> {
 
     @Override
-    public void visitPackage(@NonNull PackageElement element, @NonNull VisitorContext context) throws ProcessingException {
+    public void visitPackage(PackageElement element, VisitorContext context) throws ProcessingException {
         for (ClassElement classElement : context.getClassElements(element)) {
             visitClass(classElement, context);
         }
@@ -93,6 +93,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
             // Add string constants for field names
             for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
                 SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
+                Objects.requireNonNull(persistentProperty);
                 String fieldName = persistentProperty.getName().toUpperCase();
                 writer.write("    public static final String " + fieldName + " = \"" + persistentProperty.getName() + "\";\n");
             }
@@ -101,6 +102,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
             // Add attribute fields
             for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
                 SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
+                Objects.requireNonNull(persistentProperty);
                 String fieldName = persistentProperty.getName();
                 ClassElement propertyType = persistentProperty.getType();
 
@@ -252,7 +254,7 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
     }
 
     @Override
-    public @NonNull VisitorKind getVisitorKind() {
+    public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
     }
 }

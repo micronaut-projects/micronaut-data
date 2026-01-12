@@ -30,5 +30,6 @@ public abstract class MSBookRepository extends BookRepository {
     }
 
     @Query(value = "SELECT book_.* FROM book book_ ORDER BY book_.title ASC OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY")
+    @Override
     public abstract List<Book> findBooks(int limit, int offset);
 }

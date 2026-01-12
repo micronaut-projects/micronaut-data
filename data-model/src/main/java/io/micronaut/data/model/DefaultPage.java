@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.serde.annotation.Serdeable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -51,6 +52,7 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable,
+            @Nullable
             @JsonProperty("totalSize")
             Long totalSize) {
         super(content, pageable);

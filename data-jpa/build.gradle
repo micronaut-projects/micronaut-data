@@ -9,9 +9,4 @@ dependencies {
     api projects.micronautDataRuntime
     api projects.micronautDataModel
     api(mnSql.jakarta.persistence.api)
-
-    // Add Jakarta Data APIs on the compile classpath so Javadoc can resolve links like
-    // {@link jakarta.data.repository.stateful.Detach}, {@link Persist}, etc.
-    compileOnly(libs.managed.jakarta.data.api)
-    compileOnly(libs.managed.jakarta.data.stateful)
 }

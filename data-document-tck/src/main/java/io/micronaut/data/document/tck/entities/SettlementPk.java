@@ -18,16 +18,21 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 @Embeddable
 public class SettlementPk {
     @MappedProperty(value = "code")
+    @Nullable
     private String code;
     @MappedProperty(value = "code_id")
+    @Nullable
     private Integer codeId;
     @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private County county;
 
+    @Nullable
     public String getCode() {
         return code;
     }
@@ -36,6 +41,7 @@ public class SettlementPk {
         this.code = code;
     }
 
+    @Nullable
     public Integer getCodeId() {
         return codeId;
     }
@@ -44,6 +50,7 @@ public class SettlementPk {
         this.codeId = codeId;
     }
 
+    @Nullable
     public County getCounty() {
         return county;
     }

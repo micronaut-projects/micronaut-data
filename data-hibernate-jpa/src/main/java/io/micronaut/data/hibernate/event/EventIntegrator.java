@@ -33,6 +33,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Integrates event handling.
@@ -197,16 +198,17 @@ public class EventIntegrator implements Integrator {
 
     private static class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         private final AbstractPreDatabaseOperationEvent event;
+        @Nullable
         private final Object[] state;
 
-        public StatefulHibernateEventContext(RuntimePersistentEntity<T> entity, AbstractPreDatabaseOperationEvent event, Object[] state) {
+        private StatefulHibernateEventContext(RuntimePersistentEntity<T> entity, AbstractPreDatabaseOperationEvent event, Object[] state) {
             super(entity, (T) event.getEntity());
             this.event = event;
             this.state = state;
         }
 
         @Override
-        public <P> void setProperty(BeanProperty<T, P> property, P newValue) {
+        public <P> void setProperty(BeanProperty<T, P> property, @Nullable P newValue) {
             super.setProperty(property, newValue);
             int i = -1;
             String[] propertyNames = event.getPersister().getPropertyNames();
@@ -227,13 +229,13 @@ public class EventIntegrator implements Integrator {
         }
     }
 
-    private static class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+    private static final class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         public SimpleHibernateEventContext(RuntimePersistentEntity<T> entity, T object) {
             super(entity, object);
         }
 
         @Override
-        public final boolean supportsEventSystem() {
+        public boolean supportsEventSystem() {
             return false;
         }
     }

@@ -33,6 +33,8 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
+
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,7 +88,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
 
     @Override
     @NonNull
-    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
         for (Map.Entry<Class<? extends Annotation>, PropertyAutoPopulator<?>> entry : propertyPopulators.entrySet()) {
             if (persistentProperty.getAnnotationMetadata().hasAnnotation(entry.getKey())) {
                 final PropertyAutoPopulator<?> populator = entry.getValue();

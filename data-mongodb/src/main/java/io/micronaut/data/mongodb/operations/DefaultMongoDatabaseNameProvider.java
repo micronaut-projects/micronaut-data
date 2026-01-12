@@ -80,7 +80,7 @@ public final class DefaultMongoDatabaseNameProvider implements MongoDatabaseName
     }
 
     @Override
-    public String provide(PersistentEntity persistentEntity, Class<?> repositoryClass) {
+    public String provide(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass) {
         if (tenantResolver != null) {
             String database = tenantResolver.resolveTenantSchemaName();
             if (database != null) {

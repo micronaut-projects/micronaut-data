@@ -43,9 +43,6 @@ import java.util.function.Function;
 @Singleton
 public class SpringPageableRequestArgumentBinder implements TypedRequestArgumentBinder<Pageable> {
 
-    /**
-     * Argument type representing Spring Data's {@link Pageable} for binding.
-     */
     public static final Argument<Pageable> TYPE = Argument.of(Pageable.class);
 
     private final DataConfiguration.PageableConfiguration configuration;

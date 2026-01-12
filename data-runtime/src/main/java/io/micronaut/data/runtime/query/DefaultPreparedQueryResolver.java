@@ -24,6 +24,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default prepared query resolver.
@@ -52,12 +53,12 @@ public abstract class DefaultPreparedQueryResolver implements PreparedQueryResol
     @Override
     public <E, R> PreparedQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context,
                                                         StoredQuery<E, R> storedQuery,
-                                                        Pageable pageable) {
+                                                        @Nullable Pageable pageable) {
         return new DefaultPreparedQuery<>(
                 context,
                 storedQuery,
                 storedQuery.getQuery(),
-                pageable,
+                pageable == null ? Pageable.UNPAGED : pageable,
                 Limit.UNLIMITED,
                 false,
                 getConversionService()

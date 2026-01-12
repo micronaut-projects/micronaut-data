@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -42,7 +41,7 @@ public interface MethodCandidate extends Ordered {
      * @param matchContext The match context. Never null.
      * @return true if it does
      */
-    boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext);
+    boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext);
 
     @Override
     default int getOrder() {
@@ -58,6 +57,6 @@ public interface MethodCandidate extends Ordered {
      * the passed {@link MethodMatchContext}
      */
     @Nullable
-    MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext);
+    MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext);
 
 }

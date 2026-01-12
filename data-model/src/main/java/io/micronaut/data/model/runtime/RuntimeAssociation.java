@@ -78,18 +78,19 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
     @Override
     public RuntimePersistentEntity<?> getAssociatedEntity() {
         switch (getKind()) {
-            case ONE_TO_MANY:
-            case MANY_TO_MANY:
+            case ONE_TO_MANY, MANY_TO_MANY -> {
                 Argument<?> typeArg = getProperty().asArgument().getFirstTypeVariable().orElse(null);
-                if (typeArg  != null) {
+                if (typeArg != null) {
                     //noinspection unchecked
                     return getOwner().getEntity((Class<T>) typeArg.getType());
                 } else {
                     throw new MappingException("Collection association [" + getName() + "] of entity [" + getOwner().getName() + "] does not specify a generic type argument");
                 }
-            default:
+            }
+            default -> {
                 //noinspection unchecked
                 return getOwner().getEntity((Class<T>) getProperty().getType());
+            }
         }
     }
 }

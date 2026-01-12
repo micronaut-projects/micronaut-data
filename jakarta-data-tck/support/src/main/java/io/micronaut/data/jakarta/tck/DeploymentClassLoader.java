@@ -16,6 +16,7 @@
 package io.micronaut.data.jakarta.tck;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
 
+@NullUnmarked
 @Internal
 final class DeploymentClassLoader extends URLClassLoader {
     static {

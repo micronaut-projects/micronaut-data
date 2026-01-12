@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.util.StringUtils;
+import org.jspecify.annotations.Nullable;
+
 import java.util.regex.Pattern;
 
 /**
@@ -41,6 +43,7 @@ public class DataConfiguration implements DataSettings {
         public static final String DEFAULT_PAGE_PARAMETER = "page";
         public static final String PREFIX = "pageable";
         private int maxPageSize = DEFAULT_MAX_PAGE_SIZE;
+        @Nullable
         private Integer defaultPageSize = null; // When is not specified the maxPageSize should be used
         private boolean sortIgnoreCase = DEFAULT_SORT_IGNORE_CASE;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;

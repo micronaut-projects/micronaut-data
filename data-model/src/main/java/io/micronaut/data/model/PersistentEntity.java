@@ -55,7 +55,7 @@ public interface PersistentEntity extends PersistentElement {
     /**
      * @return A name to use when referring to this element via an alias.
      */
-    
+
     String getAliasName();
 
     /**
@@ -63,66 +63,59 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return The true if composite identity present
      */
-    default boolean hasCompositeIdentity() {
-        return getCompositeIdentity() != null;
-    }
+    boolean hasCompositeIdentity();
 
     /**
      * Has identity.
      *
      * @return The true if identity present
      */
-    default boolean hasIdentity() {
-        return getIdentity() != null;
-    }
+    boolean hasIdentity();
 
     /**
      * The composite id.
-     *
+     * The method will throw an exception if there is none or one identity. {@link #hasCompositeIdentity()} should be used to check for presence of identity.
+
      * @return The composite id or null if there isn't one
      */
-    @Nullable PersistentProperty[] getCompositeIdentity();
+    PersistentProperty[] getCompositeIdentity();
 
     /**
      * Returns the identity of the instance.
+     * The method will throw an exception if there is none or more than one identity. {@link #hasIdentity()} should be used to check for presence of identity.
      *
      * @return The identity or null if there isn't one
      */
-    @Nullable PersistentProperty getIdentity();
+    PersistentProperty getIdentity();
 
     /**
      * Returns all identity properties.
      *
      * @return The identity properties
      */
-    
     default List<PersistentProperty> getIdentityProperties() {
-        if (getIdentity() != null) {
+        if (hasIdentity()) {
             return List.of(getIdentity());
-        } else {
-            PersistentProperty[] compositeIdentity = getCompositeIdentity();
-            if (compositeIdentity != null) {
-                return List.of(compositeIdentity);
-            }
+        } else if (hasCompositeIdentity()) {
+            return List.of(getCompositeIdentity());
         }
         return List.of();
     }
 
     /**
      * Returns the version property.
+     * The method will throw an exception if there is no version property. Use {@link #hasVersion()} to check for presence of version.
      *
      * @return the property
      */
-    @Nullable PersistentProperty getVersion();
+    PersistentProperty getVersion();
 
     /**
      * Is the entity versioned for optimistic locking.
      *
      * @return true if versioned
      */
-    default boolean isVersioned() {
-        return getVersion() != null;
-    }
+    boolean hasVersion();
 
     /**
      * A list of properties to be persisted.
@@ -136,7 +129,6 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return A list of associations
      */
-    
     default Collection<? extends Association> getAssociations() {
         return getPersistentProperties()
                 .stream()
@@ -182,14 +174,16 @@ public interface PersistentEntity extends PersistentElement {
      * @param name The name of the identity property
      * @return The PersistentProperty or null if it doesn't exist
      */
-    default @Nullable PersistentProperty getIdentityByName(String name) {
-        PersistentProperty identity = getIdentity();
-        if (identity != null && identity.getName().equals(name)) {
-            return identity;
+    @Nullable
+    default PersistentProperty getIdentityByName(String name) {
+        if (hasIdentity()) {
+            PersistentProperty identity = getIdentity();
+            if (identity.getName().equals(name)) {
+                return identity;
+            }
         }
-        PersistentProperty[] compositeIdentities = getCompositeIdentity();
-        if (compositeIdentities != null) {
-            for (PersistentProperty compositeIdentity : compositeIdentities) {
+        if (hasCompositeIdentity()) {
+            for (PersistentProperty compositeIdentity : getCompositeIdentity()) {
                 if (compositeIdentity.getName().equals(name)) {
                     return compositeIdentity;
                 }
@@ -214,7 +208,7 @@ public interface PersistentEntity extends PersistentElement {
     /**
      * @return The simple name without the package of entity
      */
-    
+
     default String getSimpleName() {
         return NameUtils.getSimpleName(getName());
     }
@@ -260,8 +254,8 @@ public interface PersistentEntity extends PersistentElement {
                 name = name == null ? i.next() : name + NameUtils.capitalize(i.next());
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
                 if (sp == null) {
-                    PersistentProperty identity = currentEntity.getIdentity();
-                    if (identity != null) {
+                    if (currentEntity.hasIdentity()) {
+                        PersistentProperty identity = currentEntity.getIdentity();
                         if (identity.getName().equals(name)) {
                             sp = identity;
                         } else if (identity instanceof Association association) {
@@ -316,8 +310,8 @@ public interface PersistentEntity extends PersistentElement {
         if (path.indexOf('.') == -1) {
             PersistentProperty pp = getPropertyByName(path);
             if (pp == null) {
-                PersistentProperty identity = getIdentity();
-                if (identity != null) {
+                if (hasIdentity()) {
+                    PersistentProperty identity = getIdentity();
                     if (identity.getName().equals(path)) {
                         pp = identity;
                     } else if (identity instanceof Embedded embedded) {
@@ -334,11 +328,13 @@ public interface PersistentEntity extends PersistentElement {
             for (String token : tokens) {
                 prop = startingEntity.getPropertyByName(token);
                 if (prop == null) {
-                    PersistentProperty identity = startingEntity.getIdentity();
-                    if (identity != null && identity.getName().equals(token)) {
-                        prop = identity;
-                    } else {
-                        return Optional.empty();
+                    if (hasIdentity()) {
+                        PersistentProperty identity = startingEntity.getIdentity();
+                        if (identity.getName().equals(token)) {
+                            prop = identity;
+                        } else {
+                            return Optional.empty();
+                        }
                     }
                 }
                 if (prop instanceof Association association) {
@@ -378,20 +374,22 @@ public interface PersistentEntity extends PersistentElement {
             String propertyName = propertyPath[0];
             PersistentProperty pp = getPropertyByName(propertyName);
             if (pp == null) {
-                PersistentProperty identity = getIdentity();
-                if (identity != null) {
-                    if (identity.getName().equals(propertyName)) {
-                        pp = identity;
-                    } else if (identity instanceof Embedded embedded) {
-                        PersistentEntity idEntity = embedded.getAssociatedEntity();
-                        pp = idEntity.getPropertyByName(propertyName);
-                        if (pp != null) {
-                            return PersistentPropertyPath.of(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
+                if (hasIdentity()) {
+                    PersistentProperty identity = getIdentity();
+                    if (identity != null) {
+                        if (identity.getName().equals(propertyName)) {
+                            pp = identity;
+                        } else if (identity instanceof Embedded embedded) {
+                            PersistentEntity idEntity = embedded.getAssociatedEntity();
+                            pp = idEntity.getPropertyByName(propertyName);
+                            if (pp != null) {
+                                return PersistentPropertyPath.of(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
+                            }
                         }
                     }
                 }
-                PersistentProperty version = getVersion();
-                if (version != null) {
+                if (hasVersion()) {
+                    PersistentProperty version = getVersion();
                     if (version.getName().equals(propertyName)) {
                         pp = version;
                     }
@@ -426,14 +424,14 @@ public interface PersistentEntity extends PersistentElement {
      * Obtain the naming strategy for the entity.
      * @return The naming strategy
      */
-    
+
     NamingStrategy getNamingStrategy();
 
     /**
      * Find the naming strategy that is defined for the entity.
      * @return The optional naming strategy
      */
-    
+
     Optional<NamingStrategy> findNamingStrategy();
 
     /**

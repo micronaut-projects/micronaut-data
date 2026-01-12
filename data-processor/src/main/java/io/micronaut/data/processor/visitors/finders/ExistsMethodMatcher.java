@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,6 +44,7 @@ public final class ExistsMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
             return new QueryCriteriaMethodMatch(matches) {

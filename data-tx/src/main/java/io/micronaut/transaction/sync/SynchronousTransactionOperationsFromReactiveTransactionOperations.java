@@ -16,6 +16,7 @@
 package io.micronaut.transaction.sync;
 
 import io.micronaut.core.annotation.Internal;
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
@@ -142,7 +143,7 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
         }
 
         @Override
-        public K getConnection() {
+        public @NotNull K getConnection() {
             throw noSupported();
         }
 

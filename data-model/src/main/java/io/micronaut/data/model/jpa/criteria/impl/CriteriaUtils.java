@@ -30,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Subquery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -145,11 +146,11 @@ public final class CriteriaUtils {
     public static boolean hasVersionPredicate(Expression<?> predicate) {
         if (predicate instanceof BinaryPredicate binaryPredicate) {
             if (binaryPredicate.getLeftExpression() instanceof PersistentPropertyPath<?> pp &&
-                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                pp.getProperty().getOwner().hasVersion() && pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
                 return true;
             }
             if (binaryPredicate.getRightExpression() instanceof PersistentPropertyPath<?> pp &&
-                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                pp.getProperty().getOwner().hasVersion() && pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
                 return true;
             }
         }
@@ -171,7 +172,7 @@ public final class CriteriaUtils {
         return false;
     }
 
-    public static Set<ParameterExpression<?>> extractPredicateParameters(Expression<?> predicate) {
+    public static Set<ParameterExpression<?>> extractPredicateParameters(@Nullable Expression<?> predicate) {
         if (predicate == null) {
             return Collections.emptySet();
         }

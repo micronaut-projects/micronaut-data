@@ -29,6 +29,7 @@ import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperation
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import jakarta.persistence.criteria.CriteriaQuery;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 
 /**
@@ -42,6 +43,7 @@ import org.reactivestreams.Publisher;
 public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends AbstractSpecificationInterceptor<T, R> {
 
     protected final ReactiveRepositoryOperations reactiveOperations;
+    @Nullable
     protected final ReactiveCriteriaRepositoryOperations reactiveCriteriaOperations;
 
     /**
@@ -74,7 +76,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
 
     final ReactiveCriteriaRepositoryOperations getReactiveCriteriaOperations(RepositoryMethodKey methodKey,
                                                                              MethodInvocationContext<?, ?> context,
-                                                                             Pageable pageable) {
+                                                                             @Nullable Pageable pageable) {
         if (reactiveCriteriaOperations != null) {
             return reactiveCriteriaOperations;
         }

@@ -22,6 +22,7 @@ import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
@@ -75,6 +76,7 @@ public final class AsyncUsingReactiveConnectionOperations<C> implements AsyncCon
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
         publisher.subscribe(new CoreSubscriber<>() {
 
+            @Nullable
             private T result;
 
             @NonNull

@@ -199,7 +199,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      * @param dataSource The datasource name
      * @param method     The method
      */
-    private record TenantExecutableMethod(String dataSource, ExecutableMethod<?, ?> method) {
+    private record TenantExecutableMethod(@Nullable String dataSource, ExecutableMethod<?, ?> method) {
     }
 
 }

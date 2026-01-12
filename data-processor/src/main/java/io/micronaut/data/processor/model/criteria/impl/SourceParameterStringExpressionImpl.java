@@ -20,8 +20,10 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import org.jspecify.annotations.Nullable;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -39,7 +41,7 @@ public final class SourceParameterStringExpressionImpl extends IParameterExpress
 
     public SourceParameterStringExpressionImpl(PersistentProperty persistentProperty,
                                                String expression) {
-        super(null, null);
+        super(new ClassExpressionType<>(Object.class), null);
         this.persistentProperty = persistentProperty;
         this.expression = expression;
     }
@@ -60,6 +62,7 @@ public final class SourceParameterStringExpressionImpl extends IParameterExpress
         return new QueryParameterBinding() {
 
             @Override
+            @Nullable
             public String getName() {
                 return SourceParameterStringExpressionImpl.this.getName();
             }

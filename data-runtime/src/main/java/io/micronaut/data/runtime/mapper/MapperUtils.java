@@ -43,9 +43,6 @@ final class MapperUtils {
      * @return the result collection
      */
     static Collection<?> toCollection(Object value) {
-        if (value == null) {
-            return null;
-        }
         Collection<?> collection;
         if (value instanceof Collection<?> aCollection) {
             collection = aCollection;

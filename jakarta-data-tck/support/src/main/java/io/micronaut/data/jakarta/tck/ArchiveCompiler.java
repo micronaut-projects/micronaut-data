@@ -24,6 +24,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jspecify.annotations.NullUnmarked;
 
 import javax.annotation.processing.Processor;
 import javax.tools.DiagnosticCollector;
@@ -52,6 +53,7 @@ import java.util.stream.Stream;
  * file in this class's classloader. In other words, the CDI TCK source JAR must
  * be on classpath.
  */
+@NullUnmarked
 @Internal
 final class ArchiveCompiler {
     private final DeploymentDir deploymentDir;

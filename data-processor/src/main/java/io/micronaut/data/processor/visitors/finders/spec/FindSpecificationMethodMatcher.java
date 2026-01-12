@@ -23,6 +23,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MatchUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Find all specification method.
@@ -46,6 +47,7 @@ public class FindSpecificationMethodMatcher extends AbstractSpecificationMethodM
     }
 
     @Override
+    @Nullable
     protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch interceptorMatch = FindersUtils.pickSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());

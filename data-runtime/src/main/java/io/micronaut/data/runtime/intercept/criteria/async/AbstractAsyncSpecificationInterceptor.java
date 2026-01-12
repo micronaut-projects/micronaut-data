@@ -48,6 +48,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected static final Argument<List<Object>> LIST_OF_OBJECTS = Argument.listOf(Object.class);
 
     protected final AsyncRepositoryOperations asyncOperations;
+    @Nullable
     protected final AsyncCriteriaRepositoryOperations asyncCriteriaOperations;
 
     /**
@@ -78,6 +79,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
                                                                                  MethodInvocationContext<?, ?> context,
+                                                                                 @Nullable
                                                                                  Pageable pageable) {
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;

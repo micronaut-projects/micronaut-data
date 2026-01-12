@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
@@ -50,7 +49,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnIndexResultSetReader(DataConversionService conversionService) {
+    public ColumnIndexResultSetReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
@@ -62,7 +61,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
 
     @Nullable
     @Override
-    public Object readDynamic(@NonNull ResultSet resultSet, @NonNull Integer index, @NonNull DataType dataType) {
+    public Object readDynamic(ResultSet resultSet, Integer index, DataType dataType) {
         Object val = ResultReader.super.readDynamic(resultSet, index, dataType);
 
         try {
@@ -203,6 +202,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
         }
     }
 
+    @Nullable
     @Override
     public <T> T getRequiredValue(ResultSet resultSet, Integer index, Class<T> type) throws DataAccessException {
         try {

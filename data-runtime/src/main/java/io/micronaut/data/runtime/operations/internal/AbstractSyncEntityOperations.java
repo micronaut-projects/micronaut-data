@@ -68,7 +68,7 @@ public abstract class AbstractSyncEntityOperations<Ctx extends OperationContext,
         this.cascadeOperations = cascadeOperations;
         this.ctx = ctx;
         this.insert = insert;
-        this.hasGeneratedId = insert && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().isGenerated();
+        this.hasGeneratedId = insert && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
         Objects.requireNonNull(entity, "Passed entity cannot be null");
         this.entity = entity;
     }

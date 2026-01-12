@@ -32,9 +32,11 @@ import io.micronaut.transaction.support.TransactionSynchronization;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.orm.jpa.hibernate.HibernateTransactionManager;
 
 import java.sql.Connection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -60,7 +62,7 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
      */
     SpringHibernateTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
         hibernateTransactionManager.setNestedTransactionAllowed(true);
-        this.sessionFactory = hibernateTransactionManager.getSessionFactory();
+        this.sessionFactory = Objects.requireNonNull(hibernateTransactionManager.getSessionFactory());
         this.transactionOperations = new SpringJdbcConnectionTransactionOperations(hibernateTransactionManager);
     }
 
@@ -121,7 +123,7 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
          */
         SpringJdbcConnectionTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
             super(hibernateTransactionManager);
-            this.sessionFactory = hibernateTransactionManager.getSessionFactory();
+            this.sessionFactory = Objects.requireNonNull(hibernateTransactionManager.getSessionFactory());
         }
 
         @Override
@@ -155,6 +157,7 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         }
 
         @Override
+        @Nullable
         public Object getTransaction() {
             return status.getTransaction();
         }

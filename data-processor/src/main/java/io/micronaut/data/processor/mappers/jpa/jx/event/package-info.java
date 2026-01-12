@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2020 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.transaction;
-
 /**
- * The transaction state.
- *
- * @author Denis Stepanov
- * @since 3.5.0
+ * JPA event annotation mappers (javax namespace).
  */
-public interface TransactionState {
-}
+@org.jspecify.annotations.NullMarked
+package io.micronaut.data.processor.mappers.jpa.jx.event;

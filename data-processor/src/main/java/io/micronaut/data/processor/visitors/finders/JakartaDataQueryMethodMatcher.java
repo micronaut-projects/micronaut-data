@@ -41,6 +41,7 @@ import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.processing.ProcessingException;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,14 +58,17 @@ import java.util.stream.Collectors;
 public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         Optional<String> jdqlQuery = matchContext.getMethodElement().stringValue("jakarta.data.repository.Query");
         if (jdqlQuery.isPresent()) {
 
             Function<String, ClassElement> findClassElementFn = name -> {
-                SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-                if (rootEntity != null && rootEntity.getSimpleName().equals(name)) {
-                    return rootEntity.getClassElement();
+                if (matchContext.hasRootEntity()) {
+                    SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                    if (rootEntity.getSimpleName().equals(name)) {
+                        return rootEntity.getClassElement();
+                    }
                 }
                 SourcePersistentEntity persistentEntity = matchContext.getEntityBySimplyNameResolver().apply(name);
                 if (persistentEntity != null) {
@@ -75,7 +79,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
             };
             PersistentEntityCommonAbstractCriteria criteriaQuery = JDQLCriteriaBuilderUtils.build(
                 jdqlQuery.get(),
-                matchContext.getRootEntity(),
+                matchContext.hasRootEntity() ? matchContext.getRootEntity() : null,
                 matchContext.getMethodElement(),
                 findClassElementFn,
                 new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext)
@@ -234,7 +238,6 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 }
 
                 QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
-
 
                 ClassElement genericReturnType = matchContext.getReturnType();
                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)

@@ -54,11 +54,12 @@ record PropertyPathParameterBinding(String getName,
     }
 
     @Override
-    public String[] getPropertyPath() {
+    public String @Nullable [] getPropertyPath() {
         return propertyPath.getArrayPath();
     }
 
     @Override
+    @Nullable
     public Object getValue() {
         return value;
     }

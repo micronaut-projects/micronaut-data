@@ -40,6 +40,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonRepresentation;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Date;
@@ -61,8 +62,8 @@ public final class MongoUtils {
                                           RuntimePersistentEntity<Object> persistentEntity,
                                           Object entity,
                                           CodecRegistry codecRegistry) {
-        RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
-        if (identity != null) {
+        if (persistentEntity.hasIdentity()) {
+            RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
             BeanProperty<Object, Object> property = identity.getProperty();
             return idValue(conversionService, persistentEntity, property.get(entity), codecRegistry);
         }
@@ -73,10 +74,10 @@ public final class MongoUtils {
                                         RuntimePersistentEntity<T> persistentEntity,
                                         Object idValue,
                                         CodecRegistry codecRegistry) {
-        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-        if (identity != null) {
+        if (persistentEntity.hasIdentity()) {
+            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
             if (identity instanceof Association) {
-                return toBsonValue(conversionService, idValue, codecRegistry);
+                return toBsonValue(idValue, codecRegistry);
             }
             AnnotationValue<BsonRepresentation> bsonRepresentation = identity.getAnnotationMetadata().getAnnotation(BsonRepresentation.class);
             if (bsonRepresentation != null) {
@@ -88,7 +89,7 @@ public final class MongoUtils {
                 if (type == String.class && idValue != null) {
                     return new BsonObjectId(new ObjectId(idValue.toString()));
                 }
-                return toBsonValue(conversionService, idValue, codecRegistry);
+                return toBsonValue(idValue, codecRegistry);
             }
         }
         throw new IllegalStateException("Cannot determine id!");
@@ -106,6 +107,7 @@ public final class MongoUtils {
         return codecRegistry.get(resultClass).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
     }
 
+    @Nullable
     static Object toValue(BsonValue bsonValue) {
         switch (bsonValue.getBsonType()) {
             case STRING:
@@ -129,7 +131,7 @@ public final class MongoUtils {
                 Set<String> keys = bsonDocument.keySet();
                 Map<String, Object> result = CollectionUtils.newHashMap(keys.size());
                 for (String key : keys) {
-                    result.put(key, toValue(bsonDocument.get(key)));
+                    result.put(key, toValue(bsonDocument.get(key, BsonNull.VALUE)));
                 }
                 return result;
             case ARRAY:
@@ -139,7 +141,7 @@ public final class MongoUtils {
         }
     }
 
-    public static BsonValue toBsonValue(ConversionService conversionService, Object value, CodecRegistry codecRegistry) {
+    public static BsonValue toBsonValue(@Nullable Object value, CodecRegistry codecRegistry) {
         if (value == null) {
             return BsonNull.VALUE;
         }
@@ -173,7 +175,7 @@ public final class MongoUtils {
         // Use default encoder context
         codec.encode(writer, value, EncoderContext.builder().build());
         writer.writeEndDocument();
-        return holder.get("value");
+        return holder.get("value", BsonNull.VALUE);
     }
 
     static BsonValue toBsonValue(ConversionService conversionService, BsonType bsonType, Object value) {

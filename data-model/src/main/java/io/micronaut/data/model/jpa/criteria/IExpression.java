@@ -38,7 +38,6 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
     /**
      * @return The expression type
      */
-    
     ExpressionType<T> getExpressionType();
 
     @Override
@@ -47,43 +46,43 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
     }
 
     @Override
-    
+
     default Predicate isNull() {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Predicate isNotNull() {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Predicate in(Object... values) {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Predicate in(Expression<?>... values) {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Predicate in(Collection<?> values) {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default Predicate in(Expression<Collection<?>> values) {
         throw notSupportedOperation();
     }
 
     @Override
-    
+
     default <X> Expression<X> as(Class<X> type) {
         throw notSupportedOperation();
     }

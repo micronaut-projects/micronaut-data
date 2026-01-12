@@ -75,6 +75,8 @@ import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.persistence.Tuple;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -102,6 +104,7 @@ import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
  * @author Denis Stepanov
  * @since 1.0.0
  */
+@NullUnmarked
 @Internal
 public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Exception>
     extends AbstractRepositoryOperations implements ApplicationContextProvider,
@@ -240,7 +243,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param value             The value
      * @param storedQuery       The SQL stored query
      */
-    protected void setStatementParameter(PS preparedStatement, int index, DataType dataType, JsonDataType jsonDataType, Object value, SqlStoredQuery<?, ?> storedQuery) {
+    protected void setStatementParameter(PS preparedStatement,
+                                         int index,
+                                         DataType dataType,
+                                         @Nullable JsonDataType jsonDataType,
+                                         @Nullable Object value,
+                                         SqlStoredQuery<?, ?> storedQuery) {
+        if (jsonDataType == null) {
+            jsonDataType = JsonDataType.DEFAULT;
+        }
         Dialect dialect = storedQuery.getDialect();
         switch (dataType) {
             case UUID:
@@ -281,7 +292,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
     }
 
-    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, JsonDataType jsonDataType, int index, Object value) {
+    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, JsonDataType jsonDataType, int index, @Nullable Object value) {
         if (value == null || value.getClass().equals(String.class)) {
             return value;
         }
@@ -548,7 +559,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return switch (dialect) {
             case SQL_SERVER -> false;
             case MYSQL, ORACLE -> {
-                if (persistentEntity.getIdentity() != null) {
+                if (persistentEntity.hasIdentity()) {
                     // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
                     yield !persistentEntity.getIdentity().isGenerated();
                 }
@@ -628,11 +639,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (!storedQuery.isJsonEntity()) {
             return false;
         }
-        PersistentProperty identity = persistentEntity.getIdentity();
-        if (identity == null) {
+        if (!persistentEntity.hasIdentity()) {
             return false;
         }
-        return identity.getDataType().isNumeric();
+        return persistentEntity.getIdentity().getDataType().isNumeric();
     }
 
     /**

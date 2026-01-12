@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -46,6 +47,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         List<MethodNameParser.Match> matches = parser.tryMatch(methodName);
@@ -62,6 +64,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
      * @param matches      The matches
      * @return The method match
      */
+    @Nullable
     protected abstract MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches);
 
 }

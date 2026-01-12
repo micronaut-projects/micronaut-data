@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -127,7 +128,9 @@ final class JakartaDataEntityEventListener implements EntityEventListener<Object
     }
 
     private <T> EventListeners<T> getListeners(EntityEventContext<T> context) {
-        return (EventListeners<T>) eventListeners.get(context.getPersistentEntity().getIntrospection().getBeanType());
+        return Objects.requireNonNull(
+            (EventListeners<T>) eventListeners.get(context.getPersistentEntity().getIntrospection().getBeanType())
+        );
     }
 
     private record EventListeners<T>(

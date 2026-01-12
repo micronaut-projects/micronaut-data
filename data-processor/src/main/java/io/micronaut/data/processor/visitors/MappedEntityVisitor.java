@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -38,6 +37,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -75,21 +75,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
         }
     };
-    private final boolean mappedEntity;
-
-    /**
-     * Default constructor.
-     */
-    public MappedEntityVisitor() {
-        mappedEntity = true;
-    }
-
-    /**
-     * @param mappedEntity Whether this applies to Mapped entity
-     */
-    MappedEntityVisitor(boolean mappedEntity) {
-        this.mappedEntity = mappedEntity;
-    }
 
     @Override
     public int getOrder() {
@@ -97,7 +82,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return POSITION;
     }
 
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
@@ -122,22 +106,20 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         for (PersistentProperty property : properties) {
             computeMappingDefaults(property, dataTypes, dataConverters, context);
         }
-        SourcePersistentProperty identity = entity.getIdentity();
-        if (identity != null) {
+        if (entity.hasIdentity()) {
+            SourcePersistentProperty identity = entity.getIdentity();
             computeMappingDefaults(identity, dataTypes, dataConverters, context);
             if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
                 handleJsonViewIdentity(identity);
             }
         }
-        SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
-        if (compositeIdentities != null) {
-            for (SourcePersistentProperty compositeIdentity : compositeIdentities) {
+        if (entity.hasCompositeIdentity()) {
+            for (SourcePersistentProperty compositeIdentity : entity.getCompositeIdentity()) {
                 computeMappingDefaults(compositeIdentity, dataTypes, dataConverters, context);
             }
         }
-        SourcePersistentProperty version = entity.getVersion();
-        if (version != null) {
-            computeMappingDefaults(version, dataTypes, dataConverters, context);
+        if (entity.hasVersion()) {
+            computeMappingDefaults(entity.getVersion(), dataTypes, dataConverters, context);
         }
     }
 
@@ -221,6 +203,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
+    @Nullable
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
         ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();
@@ -254,6 +237,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return null;
     }
 
+    @Nullable
     private ClassElement getPersistedClassFromConverter(String converter, VisitorContext context) {
         ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();

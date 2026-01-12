@@ -22,6 +22,7 @@ import io.micronaut.data.intercept.ProcedureReturningOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,7 @@ public final class DefaultProcedureReturningOneInterceptor<T, R> extends Abstrac
         super(datastore);
     }
 
+    @Nullable
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
