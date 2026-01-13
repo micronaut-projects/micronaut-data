@@ -38,7 +38,6 @@ class PostgresStreamingSpec extends AbstractReactiveStreamingSpec implements Pos
         return context.getBean(PostgresStreamingPersonRepository)
     }
 
-    @Override
     void seedPersons(long count) {
         Mono.from(r2dbcOperations.withConnection { c ->
             def sql = '''
