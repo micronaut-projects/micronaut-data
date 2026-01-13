@@ -19,8 +19,9 @@ class ReactiveConnectionSynchronizationSpec extends Specification {
     def "reactive: all registered synchronizations execute even if one throws"() {
         given:
         def tracker = new Tracker()
+        def connOperations = new ReactiveConnManager()
         // new reactive connection status with a dummy connection
-        def status = new DefaultReactiveConnectionStatus<>(new Object(), ConnectionDefinition.DEFAULT, true)
+        def status = new DefaultReactiveConnectionStatus<>(new Object(), ConnectionDefinition.DEFAULT, connOperations, true)
 
         and: "a normal synchronization that tracks all callbacks"
         status.registerSynchronization(new ConnectionSynchronization() {
