@@ -46,6 +46,12 @@ tasks.withType(Test).configureEach {
     }
 }
 
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
+}
+
 configurations.configureEach {
     resolutionStrategy.preferProjectModules()
 }
