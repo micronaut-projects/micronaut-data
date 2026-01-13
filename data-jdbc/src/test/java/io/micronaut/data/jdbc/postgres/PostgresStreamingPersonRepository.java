@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -27,8 +28,10 @@ import java.util.stream.Stream;
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresStreamingPersonRepository extends CrudRepository<Person, Long> {
 
+    @Fetch(1000)
     Stream<Person> list();
 
     @Query("SELECT id, name FROM person")
+    @Fetch(1000)
     Stream<PersonWithIdAndNameDto> listAll();
 }

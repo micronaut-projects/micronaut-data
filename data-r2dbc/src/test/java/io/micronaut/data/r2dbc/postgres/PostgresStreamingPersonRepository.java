@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -29,11 +30,13 @@ public interface PostgresStreamingPersonRepository extends ReactorCrudRepository
     /**
      * Stream all Person entities.
      */
+    @Fetch(1000)
     Flux<Person> list();
 
     /**
      * Stream a DTO projection (id, name) for all persons.
      */
     @Query("SELECT id, name FROM person")
+    @Fetch(1000)
     Flux<PersonWithIdAndNameDto> listAll();
 }
