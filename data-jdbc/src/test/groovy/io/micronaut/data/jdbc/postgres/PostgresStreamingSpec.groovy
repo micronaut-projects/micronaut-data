@@ -31,7 +31,6 @@ class PostgresStreamingSpec extends AbstractStreamingSpec implements PostgresTes
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    @AutoCleanup
     @Shared
     JdbcOperations jdbcOperations = context.getBean(JdbcOperations)
 

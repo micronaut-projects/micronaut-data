@@ -539,20 +539,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @NonNull
         @Override
-public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
-    SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-    return executeReadFlux(preparedQuery, connection -> {
-        Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
-        // Apply fetch size hint if present (driver may ignore)
-        int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(0);
-        if (fetchSize > 0) {
-            try {
-                statement = statement.fetchSize(fetchSize);
-            } catch (Throwable ignored) {
-                // Some drivers may not support fetchSize; ignore
-            }
-        }
-        preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+        public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
+            SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+            return executeReadFlux(preparedQuery, connection -> {
+                Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
+                // Apply fetch size hint if present (driver may ignore)
+                int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(0);
+                if (fetchSize > 0) {
+                    try {
+                        statement = statement.fetchSize(fetchSize);
+                    } catch (Throwable ignored) {
+                        // Some drivers may not support fetchSize; ignore
+                    }
+                }
+                preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {

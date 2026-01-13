@@ -31,7 +31,6 @@ class OracleStreamingSpec extends AbstractStreamingSpec implements OracleTestPro
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    @AutoCleanup
     @Shared
     JdbcOperations jdbcOperations = context.getBean(JdbcOperations)
 
