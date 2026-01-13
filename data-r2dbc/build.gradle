@@ -43,7 +43,6 @@ dependencies {
 
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
-    testImplementation mn.micronaut.inject.java.test
 
     testImplementation(mnTestResources.testcontainers.r2dbc)
 

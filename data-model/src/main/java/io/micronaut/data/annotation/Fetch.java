@@ -29,8 +29,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * Implementations may ignore the hint if unsupported by the underlying driver.
  *
- * @author Micronaut Data
- * @since 5.6
+ * @author radovanradic
+ * @since 5.0
  */
 @Documented
 @Retention(RUNTIME)
