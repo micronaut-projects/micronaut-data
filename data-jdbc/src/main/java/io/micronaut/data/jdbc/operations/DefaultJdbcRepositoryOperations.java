@@ -30,6 +30,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -478,6 +479,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         PreparedStatement ps;
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
+            // Apply fetch size hint if present
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(0);
+            if (fetchSize > 0) {
+                try {
+                    ps.setFetchSize(fetchSize);
+                } catch (SQLException ignored) {
+                    // driver may not support fetchSize; ignore
+                }
+            }
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
