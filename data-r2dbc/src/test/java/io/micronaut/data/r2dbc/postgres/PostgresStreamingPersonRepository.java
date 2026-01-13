@@ -15,28 +15,10 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
-import io.micronaut.data.annotation.Fetch;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.repository.reactive.ReactorCrudRepository;
-import io.micronaut.data.tck.entities.Person;
-import io.micronaut.data.tck.entities.PersonWithIdAndNameDto;
-import reactor.core.publisher.Flux;
+import io.micronaut.data.tck.repositories.StreamingPersonReactorRepository;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresStreamingPersonRepository extends ReactorCrudRepository<Person, Long> {
-
-    /**
-     * Stream all Person entities.
-     */
-    @Fetch(1000)
-    Flux<Person> list();
-
-    /**
-     * Stream a DTO projection (id, name) for all persons.
-     */
-    @Query("SELECT id, name FROM person")
-    @Fetch(1000)
-    Flux<PersonWithIdAndNameDto> listAll();
+public interface PostgresStreamingPersonRepository extends StreamingPersonReactorRepository {
 }

@@ -17,16 +17,14 @@ package io.micronaut.data.r2dbc.postgres
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.r2dbc.operations.R2dbcOperations
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.entities.PersonWithIdAndNameDto
-import reactor.core.publisher.Flux
+import io.micronaut.data.tck.repositories.StreamingPersonReactorRepository
+import io.micronaut.data.tck.tests.AbstractReactiveStreamingSpec
 import reactor.core.publisher.Mono
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
-import spock.lang.Specification
 
-class PostgresStreamingSpec extends Specification implements PostgresTestPropertyProvider {
+class PostgresStreamingSpec extends AbstractReactiveStreamingSpec implements PostgresTestPropertyProvider {
 
     @AutoCleanup
     @Shared
@@ -35,40 +33,13 @@ class PostgresStreamingSpec extends Specification implements PostgresTestPropert
     @Shared
     R2dbcOperations r2dbcOperations = context.getBean(R2dbcOperations)
 
-    @Shared
-    PostgresStreamingPersonRepository repository = context.getBean(PostgresStreamingPersonRepository)
-
-    def setup() {
-        // Clean before each test to avoid cross-test interference
-        repository.deleteAll().block()
+    @Override
+    StreamingPersonReactorRepository getStreamingPersonReactorRepository() {
+        return context.getBean(PostgresStreamingPersonRepository)
     }
 
-    void "stream all records with backpressure for entity and projection"() {
-        given:
-        long total = 15_000_000L
-        seedPersons(total)
-
-        when: 'process all entity rows without buffering'
-        Long entityCount = repository.list()
-                .limitRate(1)
-                .map { 1L }
-                .reduce(0L) { a, b -> a + b }
-                .block()
-        then:
-        entityCount == total
-
-        when: 'process all projection rows without buffering'
-        Long projCount = repository.listAll()
-                .limitRate(1)
-                .map { 1L }
-                .reduce(0L) { a, b -> a + b }
-                .block()
-
-        then:
-        projCount == total
-    }
-
-    private void seedPersons(long count) {
+    @Override
+    void seedPersons(long count) {
         Mono.from(r2dbcOperations.withConnection { c ->
             def sql = '''
                     INSERT INTO person(name, age, enabled)
@@ -81,6 +52,5 @@ class PostgresStreamingSpec extends Specification implements PostgresTestPropert
                     .bind(0, count - 1)
             return Mono.from(stmt.execute()).flatMap { r -> Mono.from(r.getRowsUpdated()) }
         }).block()
-        println("done")
     }
 }

@@ -17,61 +17,36 @@ package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.runtime.JdbcOperations
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.entities.PersonWithIdAndNameDto
+import io.micronaut.data.tck.repositories.StreamingPersonRepository
+import io.micronaut.data.tck.tests.AbstractStreamingSpec
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.AutoCleanup
 import spock.lang.Shared
-import spock.lang.Specification
 
 import javax.sql.DataSource
-import java.util.stream.Stream
 
-class PostgresStreamingSpec extends Specification implements PostgresTestPropertyProvider {
+class PostgresStreamingSpec extends AbstractStreamingSpec implements PostgresTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
+    @AutoCleanup
     @Shared
     JdbcOperations jdbcOperations = context.getBean(JdbcOperations)
 
-    @Shared
-    TransactionOperations<DataSource> txOperations = context.getBean(TransactionOperations)
-
-    @Shared
-    PostgresStreamingPersonRepository repository = context.getBean(PostgresStreamingPersonRepository)
-
-    def setup() {
-        // Clean before each test to avoid cross-test interference
-        repository.deleteAll()
+    @Override
+    TransactionOperations<DataSource> getTxOperations() {
+        return context.getBean(TransactionOperations)
     }
 
-    void "stream all records without loading into memory (JDBC)"() {
-        given:
-        long total = 15_000_000L
-        seedPersons(total)
-
-        expect: 'stream entities'
-        // NOTE: Streaming in Postgres requires setFetchSize(..) and autoCommit false
-        txOperations.executeRead {
-            long entityCount
-            try (Stream<Person> s = repository.list()) {
-                entityCount = s.map(p -> 1L).reduce(0L, Long::sum)
-            }
-
-            assert entityCount == total
-
-            long projCount
-            try (Stream<PersonWithIdAndNameDto> s = repository.listAll()) {
-                projCount = s.map(p -> 1L).reduce(0L, Long::sum)
-            }
-            assert projCount == total
-            true
-        }
+    @Override
+    StreamingPersonRepository getStreamingPersonRepository() {
+        return context.getBean(PostgresStreamingPersonRepository)
     }
 
-    private void seedPersons(long count) {
+    @Override
+    void seedPersons(long count) {
         jdbcOperations.execute { connection -> {
             jdbcOperations.prepareStatement("""
                 INSERT INTO person(name, age, enabled)
