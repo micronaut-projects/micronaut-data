@@ -21,7 +21,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.transaction.TransactionStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
@@ -681,15 +680,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        // Prefer an active transaction/session first
-        Optional<TransactionStatus<Session>> txStatus = transactionOperations.findTransactionStatus();
-        if (txStatus.isPresent()) {
-            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
-            StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
-            collectFindAll(txStatus.get().getConnection(), preparedQuery, resultCollector);
-            return Objects.requireNonNull(resultCollector.result);
-        }
-        // Otherwise, check for an active connection scope
         Optional<ConnectionStatus<Session>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isPresent()) {
             int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
