@@ -28,7 +28,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: |
-            21
             25
       - name: Set the current release version
         id: release_version
