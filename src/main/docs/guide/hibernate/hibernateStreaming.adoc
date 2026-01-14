@@ -102,6 +102,9 @@ public interface PersonRepository extends CrudRepository<Person, Long> {
 
 Streams are executed in read-only mode by default for performance.
 
+[NOTE]
+Hibernate Reactive: @Fetch is not applicable. Hibernate Reactive uses non-blocking drivers; there is no fetch size API on reactive queries.
+
 === Detaching Entities Per Row and/or Periodic Session Clear
 
 Detach entities after processing to remove them from the session cache:
