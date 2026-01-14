@@ -21,6 +21,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.transaction.TransactionStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
@@ -28,6 +29,7 @@ import io.micronaut.core.convert.value.ConvertibleValuesMap;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -347,7 +349,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
         return executeRead(session -> {
-            StreamResultCollector<T> collector = new StreamResultCollector<>();
+            int fetchSize = pagedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            StreamResultCollector<T> collector = new StreamResultCollector<>(fetchSize);
             collectPagedResults(session.getCriteriaBuilder(), session, pagedQuery, collector);
             return Objects.requireNonNull(collector.result);
         });
@@ -678,13 +681,23 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
+        // Prefer an active transaction/session first
+        Optional<TransactionStatus<Session>> txStatus = transactionOperations.findTransactionStatus();
+        if (txStatus.isPresent()) {
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
+            collectFindAll(txStatus.get().getConnection(), preparedQuery, resultCollector);
+            return Objects.requireNonNull(resultCollector.result);
+        }
+        // Otherwise, check for an active connection scope
         Optional<ConnectionStatus<Session>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isPresent()) {
-            StreamResultCollector<R> resultCollector = new StreamResultCollector<>();
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
             collectFindAll(connectionStatus.get().getConnection(), preparedQuery, resultCollector);
             return Objects.requireNonNull(resultCollector.result);
         }
-        // No session is present, resolve the list completely
+        // No session is present, resolve the list completely to avoid returning a Stream bound to a closed session
         return executeRead(session -> {
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
             collectFindAll(session, preparedQuery, resultCollector);
@@ -856,15 +869,56 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
         @Nullable
         private Stream<R> result;
+        private final int fetchSize;
+        private final boolean readOnly;
+
+        private StreamResultCollector(int fetchSize) {
+            this.fetchSize = fetchSize;
+            this.readOnly = true;
+        }
+
+        private StreamResultCollector(int fetchSize, boolean readOnly) {
+            this.fetchSize = fetchSize;
+            this.readOnly = readOnly;
+        }
 
         @Override
         protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
-            result = ((Stream<Tuple>) query.getResultStream()).map(fn);
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<Tuple> base = (Stream<Tuple>) query.getResultStream();
+            Stream<R> mapped = base.map(fn);
+            result = mapped;
         }
 
         @Override
         protected void collect(Query<?> query) {
-            result = (Stream<R>) query.getResultStream();
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<R> s = (Stream<R>) query.getResultStream();
+            result = s;
         }
     }
 

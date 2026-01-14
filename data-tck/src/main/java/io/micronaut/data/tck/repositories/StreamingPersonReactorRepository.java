@@ -14,7 +14,6 @@ public interface StreamingPersonReactorRepository extends ReactorCrudRepository<
      *
      * @return a Flux stream of Person entities
      */
-    @Fetch(1000)
     Flux<Person> list();
 
     /**

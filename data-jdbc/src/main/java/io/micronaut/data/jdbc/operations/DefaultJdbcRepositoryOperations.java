@@ -480,7 +480,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
             // Apply fetch size hint if present
-            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(0);
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
             if (fetchSize > 0) {
                 try {
                     ps.setFetchSize(fetchSize);

@@ -14,6 +14,5 @@ public interface StreamingPersonRepository extends CrudRepository<Person, Long> 
     Stream<Person> list();
 
     @Query("SELECT id, name FROM person")
-    @Fetch(1000)
     Stream<PersonWithIdAndNameDto> listAll();
 }

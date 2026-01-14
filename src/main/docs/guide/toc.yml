@@ -59,7 +59,9 @@ hibernate:
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
+  hibernateStreaming: Streaming Large Result Sets
   hibernateProcedures: Procedures
+
 hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC

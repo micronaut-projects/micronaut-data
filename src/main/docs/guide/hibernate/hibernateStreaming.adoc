@@ -1,0 +1,153 @@
+When dealing with large datasets in database queries, loading all results into memory at once can lead to OutOfMemoryError (OOM). Micronaut Data JPA Hibernate provides support for streaming query results using `java.util.stream.Stream`, allowing you to process data incrementally without loading everything into memory.
+
+This guide explains how to use streaming effectively, avoid common pitfalls, and manage resources properly.
+
+=== Why Streaming Can Cause OOM Without Detachment
+
+Hibernate maintains a first-level cache (the session cache) that keeps track of all loaded entities. When streaming large result sets without detaching entities, this cache grows indefinitely, potentially leading to OOM errors. Each entity loaded into the session remains managed, consuming memory until the session is cleared or closed.
+
+To mitigate this, you must detach entities after processing or periodically clear the session.
+
+=== Using TransactionOperations to Keep the Session Open
+
+Streams require an open Hibernate session to fetch data lazily. Use `TransactionOperations` to execute operations within a transaction, ensuring the session remains open while consuming the stream.
+
+Java example (service with programmatic transactions):
+
+[source,java]
+----
+import io.micronaut.transaction.TransactionOperations;
+import jakarta.inject.Singleton;
+import org.hibernate.Session;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
+
+@Singleton
+public class PersonStreamingService {
+    private final TransactionOperations<Session> txOps;
+    private final PersonRepository personRepository;
+
+    public PersonStreamingService(TransactionOperations<Session> txOps,
+                                  PersonRepository personRepository) {
+        this.txOps = txOps;
+        this.personRepository = personRepository;
+    }
+
+    public long streamAllAndCount() {
+        return txOps.executeRead(status -> {
+            Session session = status.getConnection();
+            AtomicLong n = new AtomicLong();
+            try (Stream<Person> s = personRepository.list()) {
+                return s.peek(p -> {
+                        session.detach(p);
+                        if (n.incrementAndGet() % 50_000 == 0) {
+                            session.clear();
+                        }
+                    })
+                    .map(p -> 1L)
+                    .reduce(0L, Long::sum);
+            }
+        });
+    }
+}
+
+import io.micronaut.data.hibernate.operations.HibernateTransactionOperations;
+import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionStatus;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class PersonService {
+    private final PersonRepository personRepository;
+    private final HibernateTransactionOperations transactionOperations;
+
+    public PersonService(PersonRepository personRepository, HibernateTransactionOperations transactionOperations) {
+        this.personRepository = personRepository;
+        this.transactionOperations = transactionOperations;
+    }
+
+    public void processPeople() {
+        transactionOperations.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRED), status -> {
+            try (var stream = personRepository.findActive()) {
+                stream.forEach(person -> {
+                    // Process person
+                    status.getConnection().detach(person); // Detach to free memory
+                });
+            }
+        });
+    }
+}
+----
+
+=== Using @Fetch for Fetch Size and Read-Only Queries
+
+The `@Fetch` annotation sets the JDBC fetch size, controlling how many rows are fetched from the database at a time. This optimizes memory usage for large streams.
+
+Example repository:
+
+[source,java]
+----
+import io.micronaut.data.annotation.Fetch;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.stream.Stream;
+
+@Repository
+public interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Fetch(1000)
+    Stream<Person> findActive();
+}
+----
+
+Streams are executed in read-only mode by default for performance.
+
+=== Detaching Entities Per Row and/or Periodic Session Clear
+
+Detach entities after processing to remove them from the session cache:
+
+[source,java]
+----
+stream.forEach(person -> {
+    // Process
+    session.detach(person);
+});
+----
+
+Periodically clear the session:
+
+[source,java]
+----
+int count = 0;
+try (var stream = repository.findAll()) {
+    stream.forEach(entity -> {
+        // Process
+        if (++count % 1000 == 0) {
+            session.clear();
+        }
+    });
+}
+----
+
+=== Using DTO or Native Projection Streams
+
+DTO projections or native queries returning DTOs do not create managed entities, avoiding session cache issues:
+
+[source,java]
+----
+public interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Fetch(1000)
+    Stream<PersonDto> findActiveDtos();
+}
+
+public record PersonDto(Long id, String name) {}
+----
+
+== Warnings
+
+- **Do not access lazy associations after detaching**: Detached entities cannot load lazy relationships.
+- **Consume the stream fully within the transaction**: Partial consumption may leave the session open unexpectedly.
+- **Do not leak the stream beyond the method**: Return streams only if consumed immediately; otherwise, convert to lists.
+
+

@@ -36,6 +36,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target(METHOD)
 public @interface Fetch {
+
+    /**
+     * Will be used in streaming operations if method is not {@link Fetch} annotated.
+     */
+    int DEFAULT_FETCH_SIZE = 1000;
+
     /**
      * The desired fetch size to use for streaming operations.
      * @return the fetch size (must be > 0 to take effect)

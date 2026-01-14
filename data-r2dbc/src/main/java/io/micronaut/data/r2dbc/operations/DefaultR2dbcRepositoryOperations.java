@@ -544,7 +544,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeReadFlux(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
                 // Apply fetch size hint if present (driver may ignore)
-                int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(0);
+                int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
                 if (fetchSize > 0) {
                     try {
                         statement = statement.fetchSize(fetchSize);
