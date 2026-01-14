@@ -51,7 +51,7 @@ class OracleStreamingSpec extends AbstractStreamingSpec implements OracleTestPro
 
     @Override
     void seedPersons(long count) {
-        long step = 100_000
+        long step = 500_000L
         long full = count / step
         long remainder = count % step
         txOperations.executeWrite {

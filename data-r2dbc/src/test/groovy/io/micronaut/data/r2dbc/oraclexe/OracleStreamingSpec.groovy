@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.r2dbc.operations.R2dbcOperations
 import io.micronaut.data.tck.repositories.StreamingPersonReactorRepository
 import io.micronaut.data.tck.tests.AbstractReactiveStreamingSpec
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
@@ -47,7 +48,7 @@ class OracleStreamingSpec extends AbstractReactiveStreamingSpec implements Oracl
     void seedPersons(long count) {
         Mono.from(r2dbcOperations.withTransaction { status ->
             r2dbcOperations.withConnection { c ->
-                long step = 100_000L
+                long step = 500_000L
                 long full = count / step
                 long remainder = count % step
                 def sql = '''
@@ -80,7 +81,7 @@ class OracleStreamingSpec extends AbstractReactiveStreamingSpec implements Oracl
                                         .execute()
                         ).flatMap { r -> Mono.from(r.getRowsUpdated()) }
                         : Mono.empty()
-                return fullFlux.concatWith(tailMono).then(Mono.just(true))
+                return fullFlux.concatWith(tailMono as Publisher<? extends Long>).then(Mono.just(true))
             }
         }).block()
     }
