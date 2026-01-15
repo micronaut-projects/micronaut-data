@@ -86,7 +86,8 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 }
                 RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
                 boolean hasId = identity.getProperty().get(child) != null;
-                if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
+                boolean generatedId = identity.isGenerated();
+                if ((cascadeType == Relation.Cascade.PERSIST) && (!hasId || identity instanceof Association || !generatedId)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
@@ -133,7 +134,17 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 } else if (cascadeType == Relation.Cascade.PERSIST) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                        Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                        RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeManyOp.ctx.getAssociation();
+                        Predicate<Object> veto = val -> {
+                            if (ctx.persisted.contains(val)) {
+                                return true;
+                            }
+                            Object idVal = identity.getProperty().get(val);
+                            if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                                return idVal != null;
+                            }
+                            return idVal != null && identity.isGenerated() && !(identity instanceof Association);
+                        };
                         entities = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
                     } else {
                         entities = CollectionUtils.iterableToList(cascadeManyOp.children);
@@ -157,10 +168,10 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
 
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
+                if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && CollectionUtils.iterableToList(cascadeManyOp.children).size() > 0) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         helper.persistManyAssociationBatch(ctx, association,
-                                cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, entities, childPersistentEntity);
+                                cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, cascadeManyOp.children, childPersistentEntity);
                     } else {
                         for (Object e : cascadeManyOp.children) {
                             if (ctx.persisted.contains(e)) {
