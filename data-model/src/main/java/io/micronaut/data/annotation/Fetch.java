@@ -26,6 +26,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Hint to drivers to use the given fetch size for streaming repository methods.
  * - For JDBC: applied to methods returning {@code java.util.stream.Stream<T>}, it will call {@code PreparedStatement#setFetchSize(int)}.
  * - For R2DBC: applied to methods returning {@code reactor.core.publisher.Flux<T>}, it will call {@code io.r2dbc.spi.Statement#fetchSize(int)}.
+ * - For Hibernate: applied to methods returning {@code java.util.stream.Stream<T>}.
  *
  * Implementations may ignore the hint if unsupported by the underlying driver.
  *

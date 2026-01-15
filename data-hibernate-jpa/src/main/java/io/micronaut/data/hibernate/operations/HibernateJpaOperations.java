@@ -154,7 +154,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
         this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
         this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
-            .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, Fetch.DEFAULT_FETCH_SIZE));
+            .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, 0));
     }
 
     @Override
