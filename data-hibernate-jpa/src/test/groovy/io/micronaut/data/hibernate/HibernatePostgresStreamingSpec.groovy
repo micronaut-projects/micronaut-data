@@ -31,7 +31,8 @@ import java.util.stream.Stream
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'datasources.default.db-type', value = 'postgres')
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-class PostgresStreamingSpec extends Specification {
+@Property(name = 'jpa.default.properties.default-fetch-size', value = '2000')
+class HibernatePostgresStreamingSpec extends Specification {
 
     @Inject
     PostgresStreamingPersonRepository streamingPersonRepository
@@ -59,6 +60,7 @@ class PostgresStreamingSpec extends Specification {
             Session session = status.getConnection()
 
             long entityCount
+            // Execute query with annotate FetchSize
             try (Stream<Person> s = streamingPersonRepository.list()) {
                 java.util.concurrent.atomic.AtomicLong n = new java.util.concurrent.atomic.AtomicLong()
                 entityCount = s
@@ -74,11 +76,36 @@ class PostgresStreamingSpec extends Specification {
 
             assert entityCount == total
 
+            // Execute query with default fetch size
+            try (Stream<Person> s = streamingPersonRepository.queryAll()) {
+                java.util.concurrent.atomic.AtomicLong n = new java.util.concurrent.atomic.AtomicLong()
+                entityCount = s
+                        .peek(p -> {
+                            session.detach(p)
+                            if ((n.incrementAndGet() % 50_000) == 0) {
+                                session.clear()
+                            }
+                        })
+                        .map(p -> 1L)
+                        .reduce(0L, Long::sum)
+            }
+
+            assert entityCount == total
+
+
             long projCount
-            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.listAll()) {
+            // Projection stream result with annotated FetchSize
+            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.listAllDto()) {
                 projCount = s.map(p -> 1L).reduce(0L, Long::sum)
             }
             assert projCount == total
+
+            // Projection stream result with configured fetch size
+            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.queryAllDto()) {
+                projCount = s.map(p -> 1L).reduce(0L, Long::sum)
+            }
+            assert projCount == total
+
             true
         }
     }

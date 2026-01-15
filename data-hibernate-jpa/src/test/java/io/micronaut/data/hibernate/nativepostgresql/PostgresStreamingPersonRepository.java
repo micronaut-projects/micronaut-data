@@ -30,6 +30,12 @@ public interface PostgresStreamingPersonRepository extends CrudRepository<Person
     @Fetch(1000)
     Stream<Person> list();
 
+    Stream<Person> queryAll();
+
     @Query(value = "SELECT id, name FROM person", nativeQuery = true)
-    Stream<PersonWithIdAndNameDto> listAll();
+    @Fetch(1000)
+    Stream<PersonWithIdAndNameDto> listAllDto();
+
+    @Query(value = "SELECT id, name FROM person", nativeQuery = true)
+    Stream<PersonWithIdAndNameDto> queryAllDto();
 }

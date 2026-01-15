@@ -149,12 +149,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
-        this.uniqueResultOnFindOne = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("uniqueResultOnFindOne", boolean.class, false);
-        this.persistOrMergeOnSave = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("persistOrMergeOnSave", boolean.class, false);
-        this.defaultFetchSize = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("defaultFetchSize", Integer.class, Fetch.DEFAULT_FETCH_SIZE);
+
+        ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
+        this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
+        this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
+        this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
+            .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, Fetch.DEFAULT_FETCH_SIZE));
     }
 
     @Override
