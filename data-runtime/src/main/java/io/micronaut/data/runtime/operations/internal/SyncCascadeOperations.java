@@ -170,8 +170,22 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
                 if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && CollectionUtils.iterableToList(cascadeManyOp.children).size() > 0) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
-                        helper.persistManyAssociationBatch(ctx, association,
-                                cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, cascadeManyOp.children, childPersistentEntity);
+                        // Build join list from already-existing children (with IDs) + newly persisted ones (entities)
+                        List<Object> joinChildren = new ArrayList<>();
+                        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                        for (Object c : cascadeManyOp.children) {
+                            Object idVal = identity.getProperty().get(c);
+                            if (idVal != null) {
+                                joinChildren.add(c);
+                            }
+                        }
+                        if (entities != null && !entities.isEmpty()) {
+                            joinChildren.addAll(entities);
+                        }
+                        if (!joinChildren.isEmpty()) {
+                            helper.persistManyAssociationBatch(ctx, association,
+                                    cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, joinChildren, childPersistentEntity);
+                        }
                     } else {
                         for (Object e : cascadeManyOp.children) {
                             if (ctx.persisted.contains(e)) {
