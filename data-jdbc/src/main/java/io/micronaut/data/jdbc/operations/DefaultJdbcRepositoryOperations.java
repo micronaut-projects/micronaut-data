@@ -169,6 +169,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -242,6 +243,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
             }
         }
+
+        this.defaultFetchSize = jdbcConfiguration.getDefaultFetchSize();
     }
 
     @Override
@@ -480,7 +483,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
             // Apply fetch size hint if present
-            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(this.defaultFetchSize);
             if (fetchSize > 0) {
                 try {
                     ps.setFetchSize(fetchSize);
@@ -496,7 +499,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ResultSet openedRs = null;
         ResultSet rs;
         try {
-            // For fetching set ps.setFetchSize(...);
             openedRs = ps.executeQuery();
             rs = openedRs;
             SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;

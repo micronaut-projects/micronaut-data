@@ -40,7 +40,7 @@ abstract class AbstractReactiveStreamingSpec extends Specification  {
         long total = defaultCount
         seedPersons(total)
 
-        when: 'process all entity rows without buffering'
+        when: 'process all entity rows without buffering using default fetch size'
         Long entityCount = streamingPersonReactorRepository.list()
                 .limitRate(1)
                 .map { 1L }
@@ -49,8 +49,27 @@ abstract class AbstractReactiveStreamingSpec extends Specification  {
         then:
         entityCount == total
 
-        when: 'process all projection rows without buffering'
-        Long projCount = streamingPersonReactorRepository.listAll()
+        when: 'process all entity rows without buffering using annotated fetch size value'
+        entityCount = streamingPersonReactorRepository.queryAll()
+                .limitRate(1)
+                .map { 1L }
+                .reduce(0L) { a, b -> a + b }
+                .block()
+        then:
+        entityCount == total
+
+        when: 'process all projection rows without buffering using default fetch size'
+        Long projCount = streamingPersonReactorRepository.listAllDto()
+                .limitRate(1)
+                .map { 1L }
+                .reduce(0L) { a, b -> a + b }
+                .block()
+
+        then:
+        projCount == total
+
+        when: 'process all projection rows without buffering using annotated fetch size value'
+        projCount = streamingPersonReactorRepository.queryAllDto()
                 .limitRate(1)
                 .map { 1L }
                 .reduce(0L) { a, b -> a + b }

@@ -123,6 +123,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private ExecutorService executorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -152,6 +153,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             .get("uniqueResultOnFindOne", boolean.class, false);
         this.persistOrMergeOnSave = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
             .get("persistOrMergeOnSave", boolean.class, false);
+        this.defaultFetchSize = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
+            .get("defaultFetchSize", Integer.class, Fetch.DEFAULT_FETCH_SIZE);
     }
 
     @Override
@@ -348,7 +351,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
         return executeRead(session -> {
-            int fetchSize = pagedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            int fetchSize = pagedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
             StreamResultCollector<T> collector = new StreamResultCollector<>(fetchSize);
             collectPagedResults(session.getCriteriaBuilder(), session, pagedQuery, collector);
             return Objects.requireNonNull(collector.result);
@@ -682,12 +685,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         Optional<ConnectionStatus<Session>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isPresent()) {
-            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(Fetch.DEFAULT_FETCH_SIZE);
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
             StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
             collectFindAll(connectionStatus.get().getConnection(), preparedQuery, resultCollector);
             return Objects.requireNonNull(resultCollector.result);
         }
-        // No session is present, resolve the list completely to avoid returning a Stream bound to a closed session
+        // No session is present, resolve the list completely
         return executeRead(session -> {
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
             collectFindAll(session, preparedQuery, resultCollector);

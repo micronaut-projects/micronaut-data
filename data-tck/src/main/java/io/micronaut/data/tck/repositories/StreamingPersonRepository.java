@@ -13,6 +13,12 @@ public interface StreamingPersonRepository extends CrudRepository<Person, Long> 
     @Fetch(1000)
     Stream<Person> list();
 
+    Stream<Person> queryAll();
+
     @Query("SELECT id, name FROM person")
-    Stream<PersonWithIdAndNameDto> listAll();
+    @Fetch(1000)
+    Stream<PersonWithIdAndNameDto> listAllDto();
+
+    @Query("SELECT id, name FROM person")
+    Stream<PersonWithIdAndNameDto> queryAllDto();
 }

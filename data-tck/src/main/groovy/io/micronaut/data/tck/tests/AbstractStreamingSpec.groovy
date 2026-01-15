@@ -58,8 +58,19 @@ abstract class AbstractStreamingSpec extends Specification  {
 
             assert entityCount == total
 
+            try (Stream<Person> s = streamingPersonRepository.queryAll()) {
+                entityCount = s.map(p -> 1L).reduce(0L, Long::sum)
+            }
+
+            assert entityCount == total
+
             long projCount
-            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.listAll()) {
+            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.listAllDto()) {
+                projCount = s.map(p -> 1L).reduce(0L, Long::sum)
+            }
+            assert projCount == total
+
+            try (Stream<PersonWithIdAndNameDto> s = streamingPersonRepository.queryAllDto()) {
                 projCount = s.map(p -> 1L).reduce(0L, Long::sum)
             }
             assert projCount == total
