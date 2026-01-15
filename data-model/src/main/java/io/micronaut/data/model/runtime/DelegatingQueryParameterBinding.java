@@ -47,13 +47,11 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.getRequiredName();
     }
 
-    @Nullable
     @Override
     public DataType getDataType() {
         return delegate.getDataType();
     }
 
-    @Nullable
     @Override
     public JsonDataType getJsonDataType() {
         return delegate.getJsonDataType();
