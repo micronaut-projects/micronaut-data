@@ -134,8 +134,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="annotations">@NullUnmarked
-@Internal
+<div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractSqlRepositoryOperations&lt;RS, PS, Exc extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&gt;</span>
 <span class="extends-implements">extends <a href="../AbstractRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractRepositoryOperations</a>
 implements io.micronaut.context.ApplicationContextProvider, <a href="../../../query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a>, <a href="../../../query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a>, <a href="../../../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></span></div>
@@ -185,7 +184,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#dataSourceName" class="member-name-link">dataSourceName</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final io.micronaut.json.JsonMapper</code></div>
+<div class="col-first odd-row-color"><code>protected final @Nullable io.micronaut.json.JsonMapper</code></div>
 <div class="col-second odd-row-color"><code><a href="#jsonMapper" class="member-name-link">jsonMapper</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>protected final <a href="../../../mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
@@ -231,7 +230,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
  io.micronaut.context.BeanContext&nbsp;beanContext,
  <a href="../../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- io.micronaut.json.JsonMapper&nbsp;jsonMapper,
+ @Nullable io.micronaut.json.JsonMapper&nbsp;jsonMapper,
  <a href="SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;sqlJsonColumnMapperProvider)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Default constructor.</div>
@@ -265,7 +264,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
  <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;resultSetType,
  <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates <a href="../../../mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlTypeMapper</code></a> for reading results from single column into an entity.</div>
 </div>
@@ -287,12 +286,12 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFirstResultSetIndex()" class="member-name-link">getFirstResultSetIndex</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonColumn</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonColumn</a><wbr>(@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets column name for JSON result.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonDataType</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonDataType</a><wbr>(@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets JSON data type for JSON result.</div>
 </div>
@@ -300,7 +299,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>R&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getSqlStoredQuery</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getSqlStoredQuery</a><wbr>(@Nullable <a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonEntityGeneratedId(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.PersistentEntity)" class="member-name-link">isJsonEntityGeneratedId</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery,
@@ -310,7 +309,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonResult(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
- <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+ @Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
 </div>
@@ -462,7 +461,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <section class="detail" id="jsonMapper">
 <h3>jsonMapper</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.json.JsonMapper</span>&nbsp;<span class="element-name">jsonMapper</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable io.micronaut.json.JsonMapper</span>&nbsp;<span class="element-name">jsonMapper</span></div>
 </div>
 </section>
 </li>
@@ -519,7 +518,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
  io.micronaut.context.BeanContext&nbsp;beanContext,
  <a href="../../../convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
  <a href="../../../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- io.micronaut.json.JsonMapper&nbsp;jsonMapper,
+ @Nullable io.micronaut.json.JsonMapper&nbsp;jsonMapper,
  <a href="SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;sqlJsonColumnMapperProvider)</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
@@ -755,7 +754,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <section class="detail" id="getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)">
 <h3>getSqlStoredQuery</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>R&gt;</span>&nbsp;<span class="return-type"><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</span>&nbsp;<span class="element-name">getSqlStoredQuery</span><wbr><span class="parameters">(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>R&gt;</span>&nbsp;<span class="return-type"><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</span>&nbsp;<span class="element-name">getSqlStoredQuery</span><wbr><span class="parameters">(@Nullable <a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</span></div>
 </div>
 </section>
 </li>
@@ -836,7 +835,7 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
  <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;resultSetType,
  <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener)</span></div>
 <div class="block">Creates <a href="../../../mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlTypeMapper</code></a> for reading results from single column into an entity. For now, we support reading from JSON column,
 however in support we might add XML support etc.</div>
 <dl class="notes">
@@ -861,7 +860,7 @@ however in support we might add XML support etc.</div>
 <h3>isJsonResult</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isJsonResult</span><wbr><span class="parameters">(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
- <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+ @Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
 <div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -894,7 +893,7 @@ however in support we might add XML support etc.</div>
 <section class="detail" id="getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)">
 <h3>getJsonColumn</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getJsonColumn</span><wbr><span class="parameters">(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getJsonColumn</span><wbr><span class="parameters">(@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
 <div class="block">Gets column name for JSON result. If <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation is present,
 takes column value from there, otherwise defaults to 'DATA' column name.</div>
 <dl class="notes">
@@ -910,7 +909,7 @@ takes column value from there, otherwise defaults to 'DATA' column name.</div>
 <section class="detail" id="getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)">
 <h3>getJsonDataType</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></span>&nbsp;<span class="element-name">getJsonDataType</span><wbr><span class="parameters">(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></span>&nbsp;<span class="element-name">getJsonDataType</span><wbr><span class="parameters">(@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</span></div>
 <div class="block">Gets JSON data type for JSON result. If <a href="../../../../annotation/QueryResult.html" title="annotation interface in io.micronaut.data.annotation"><code>QueryResult</code></a> annotation is present,
 takes data type value from there, otherwise defaults to <a href="../../../../model/JsonDataType.html#DEFAULT"><code>JsonDataType.DEFAULT</code></a>.</div>
 <dl class="notes">
