@@ -28,8 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -171,20 +173,26 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && CollectionUtils.iterableToList(cascadeManyOp.children).size() > 0) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         // Build join list from already-existing children (with IDs) + newly persisted ones (entities)
-                        List<Object> joinChildren = new ArrayList<>();
+                        // Build unique join list by child id from: existing children (with IDs) + newly persisted ones (entities)
                         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                        Map<Object, Object> byId = new LinkedHashMap<>();
                         for (Object c : cascadeManyOp.children) {
                             Object idVal = identity.getProperty().get(c);
                             if (idVal != null) {
-                                joinChildren.add(c);
+                                byId.putIfAbsent(idVal, c);
                             }
                         }
-                        if (entities != null && !entities.isEmpty()) {
-                            joinChildren.addAll(entities);
+                        if (entities != null) {
+                            for (Object c : entities) {
+                                Object idVal = identity.getProperty().get(c);
+                                if (idVal != null) {
+                                    byId.putIfAbsent(idVal, c);
+                                }
+                            }
                         }
-                        if (!joinChildren.isEmpty()) {
+                        if (!byId.isEmpty()) {
                             helper.persistManyAssociationBatch(ctx, association,
-                                    cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, joinChildren, childPersistentEntity);
+                                    cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, new java.util.ArrayList<>(byId.values()), childPersistentEntity);
                         }
                     } else {
                         for (Object e : cascadeManyOp.children) {
