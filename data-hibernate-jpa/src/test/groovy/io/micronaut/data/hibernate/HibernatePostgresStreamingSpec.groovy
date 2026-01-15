@@ -25,6 +25,7 @@ import jakarta.inject.Inject
 import org.hibernate.Session
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Stream
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", rollback = false, transactional = false)
@@ -60,9 +61,9 @@ class HibernatePostgresStreamingSpec extends Specification {
             Session session = status.getConnection()
 
             long entityCount
-            // Execute query with annotate FetchSize
+            // Execute query with annotated FetchSize
             try (Stream<Person> s = streamingPersonRepository.list()) {
-                java.util.concurrent.atomic.AtomicLong n = new java.util.concurrent.atomic.AtomicLong()
+                AtomicLong n = new AtomicLong()
                 entityCount = s
                     .peek(p -> {
                         session.detach(p)
@@ -78,7 +79,7 @@ class HibernatePostgresStreamingSpec extends Specification {
 
             // Execute query with default fetch size
             try (Stream<Person> s = streamingPersonRepository.queryAll()) {
-                java.util.concurrent.atomic.AtomicLong n = new java.util.concurrent.atomic.AtomicLong()
+                AtomicLong n = new AtomicLong()
                 entityCount = s
                         .peek(p -> {
                             session.detach(p)

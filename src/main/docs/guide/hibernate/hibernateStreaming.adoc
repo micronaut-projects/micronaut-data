@@ -12,72 +12,9 @@ To mitigate this, you must detach entities after processing or periodically clea
 
 Streams require an open Hibernate session to fetch data lazily. Use `TransactionOperations` to execute operations within a transaction, ensuring the session remains open while consuming the stream.
 
-Java example (service with programmatic transactions):
+Loading stream using programmatic transactions:
 
-[source,java]
-----
-import io.micronaut.transaction.TransactionOperations;
-import jakarta.inject.Singleton;
-import org.hibernate.Session;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
-
-@Singleton
-public class PersonStreamingService {
-    private final TransactionOperations<Session> txOps;
-    private final PersonRepository personRepository;
-
-    public PersonStreamingService(TransactionOperations<Session> txOps,
-                                  PersonRepository personRepository) {
-        this.txOps = txOps;
-        this.personRepository = personRepository;
-    }
-
-    public long streamAllAndCount() {
-        return txOps.executeRead(status -> {
-            Session session = status.getConnection();
-            AtomicLong n = new AtomicLong();
-            try (Stream<Person> s = personRepository.list()) {
-                return s.peek(p -> {
-                        session.detach(p);
-                        if (n.incrementAndGet() % 50_000 == 0) {
-                            session.clear();
-                        }
-                    })
-                    .map(p -> 1L)
-                    .reduce(0L, Long::sum);
-            }
-        });
-    }
-}
-
-import io.micronaut.data.hibernate.operations.HibernateTransactionOperations;
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.TransactionStatus;
-import jakarta.inject.Singleton;
-
-@Singleton
-public class PersonService {
-    private final PersonRepository personRepository;
-    private final HibernateTransactionOperations transactionOperations;
-
-    public PersonService(PersonRepository personRepository, HibernateTransactionOperations transactionOperations) {
-        this.personRepository = personRepository;
-        this.transactionOperations = transactionOperations;
-    }
-
-    public void processPeople() {
-        transactionOperations.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRED), status -> {
-            try (var stream = personRepository.findActive()) {
-                stream.forEach(person -> {
-                    // Process person
-                    status.getConnection().detach(person); // Detach to free memory
-                });
-            }
-        });
-    }
-}
-----
+snippet::example.UserRepositorySpec[project-base="doc-examples/hibernate-example", source="test", tags="stream_and_count"]
 
 === Using @Fetch for Fetch Size and Read-Only Queries
 
@@ -85,20 +22,10 @@ The `@Fetch` annotation sets the JDBC fetch size, controlling how many rows are 
 
 Example repository:
 
-[source,java]
-----
-import io.micronaut.data.annotation.Fetch;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.CrudRepository;
-import java.util.stream.Stream;
+snippet::example.UserRepository[project-base="doc-examples/hibernate-example", source="main", tags="fetch_size_streaming"]
 
-@Repository
-public interface PersonRepository extends CrudRepository<Person, Long> {
-
-    @Fetch(1000)
-    Stream<Person> findActive();
-}
-----
+For the operation without api:data.annotation.Fetch[] annotation telling what fetch size should be, the application will try to
+read from `jpa.<datasource>.properties.default-fetch-size` configuration and if not present fallback to default value 1000.
 
 Streams are executed in read-only mode by default for performance.
 
@@ -107,45 +34,14 @@ Hibernate Reactive: @Fetch is not applicable. Hibernate Reactive uses non-blocki
 
 === Detaching Entities Per Row and/or Periodic Session Clear
 
-Detach entities after processing to remove them from the session cache:
-
-[source,java]
-----
-stream.forEach(person -> {
-    // Process
-    session.detach(person);
-});
-----
-
-Periodically clear the session:
-
-[source,java]
-----
-int count = 0;
-try (var stream = repository.findAll()) {
-    stream.forEach(entity -> {
-        // Process
-        if (++count % 1000 == 0) {
-            session.clear();
-        }
-    });
-}
-----
+Detach entities after processing to remove them from the session cache is used in the example above.
+It also shows how to periodically clear the session which might not be required if entities are being detached.
 
 === Using DTO or Native Projection Streams
 
 DTO projections or native queries returning DTOs do not create managed entities, avoiding session cache issues:
 
-[source,java]
-----
-public interface PersonRepository extends CrudRepository<Person, Long> {
-
-    @Fetch(1000)
-    Stream<PersonDto> findActiveDtos();
-}
-
-public record PersonDto(Long id, String name) {}
-----
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="stream_projection"]
 
 == Warnings
 
