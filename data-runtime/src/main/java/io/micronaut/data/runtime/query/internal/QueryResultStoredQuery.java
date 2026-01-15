@@ -199,13 +199,11 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             return p.getKey();
         }
 
-        @Nullable
         @Override
         public DataType getDataType() {
             return p.getDataType();
         }
 
-        @Nullable
         @Override
         public JsonDataType getJsonDataType() {
             return p.getJsonDataType();

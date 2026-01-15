@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The stored query parameter.
@@ -100,15 +101,13 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
-    @Nullable
     public DataType getDataType() {
-        return dataType;
+        return Objects.requireNonNullElse(dataType, DataType.OBJECT);
     }
 
     @Override
-    @Nullable
     public JsonDataType getJsonDataType() {
-        return jsonDataType;
+        return Objects.requireNonNullElse(jsonDataType, JsonDataType.DEFAULT);
     }
 
     @Nullable
