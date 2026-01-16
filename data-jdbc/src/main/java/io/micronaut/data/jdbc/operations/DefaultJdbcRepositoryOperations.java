@@ -540,6 +540,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ResultSet openedRs = null;
         ResultSet rs;
         try {
+            // For fetching set ps.setFetchSize(...);
             openedRs = ps.executeQuery();
             rs = openedRs;
             SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
@@ -554,7 +555,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         while (rs.next()) {
                             manyMapper.processRow(rs);
                         }
-                        return manyMapper.getResult().stream();
+                        List<R> result = manyMapper.getResult();
+                        return result == null ? Stream.of() : result.stream();
                     } finally {
                         closeResultSet(connection, ps, rs, finished, closeConnection);
                     }
@@ -1040,6 +1042,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
 
             @Override
+            @Nullable
             public T next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
@@ -1107,7 +1110,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         columnNameResultSetReader,
                         jsonMapper != null ? () -> jsonMapper : null,
                         conversionService);
-                return introspectedDataMapper.map(rs, dtoType);
+                D dto = introspectedDataMapper.map(rs, dtoType);
+                if (dto == null) {
+                    throw new DataAccessException("Error reading DTO: " + dtoType.getName());
+                }
+                return dto;
             }
         };
     }
@@ -1228,11 +1235,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         @Override
         public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
-            JsonDataType jsonDataType = null;
-            if (binding.getDataType() == DataType.JSON) {
+            JsonDataType jsonDataType = JsonDataType.DEFAULT;
+            DataType dataType = binding.getDataType();
+            if (dataType == DataType.JSON) {
                 jsonDataType = binding.getJsonDataType();
             }
-            setStatementParameter(ps, index, binding.getDataType(), jsonDataType, value, sqlStoredQuery);
+            setStatementParameter(ps, index, dataType, jsonDataType, value, sqlStoredQuery);
             index++;
         }
 
