@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import jakarta.annotation.Nullable
 import spock.lang.AutoCleanup
@@ -16,7 +15,6 @@ import spock.lang.Specification
 
 import jakarta.validation.constraints.NotBlank
 
-@H2DBProperties
 class AssignedUuidCascadePersistSpec extends Specification implements H2TestPropertyProvider {
 
     @Shared @AutoCleanup ApplicationContext ctx = ApplicationContext.run(getProperties())
