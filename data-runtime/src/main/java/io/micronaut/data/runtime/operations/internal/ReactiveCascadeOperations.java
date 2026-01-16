@@ -185,7 +185,9 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                                 sourceChildren = byId.values();
                             } else {
                                 veto = val -> {
-                                    if (ctx.persisted.contains(val)) return true;
+                                    if (ctx.persisted.contains(val)) {
+                                        return true;
+                                    }
                                     Object idVal = identity.getProperty().get(val);
                                     // For non-join-table: skip only when id present AND identity is generated
                                     return idVal != null && identity.isGenerated() && !(identity instanceof Association);
