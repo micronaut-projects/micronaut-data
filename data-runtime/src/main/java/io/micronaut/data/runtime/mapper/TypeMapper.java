@@ -37,6 +37,7 @@ public interface TypeMapper<D, R> {
      * @return The mapped object
      * @throws DataAccessException If the object cannot be mapped.
      */
+    @Nullable
     R map(D object, Class<R> type) throws DataAccessException;
 
     /**
@@ -45,7 +46,8 @@ public interface TypeMapper<D, R> {
      * @param name The name
      * @return The value
      */
-    @Nullable Object read(D object, String name);
+    @Nullable
+    Object read(D object, String name);
 
     /**
      * Read a value for the given name from the given object.
@@ -53,7 +55,8 @@ public interface TypeMapper<D, R> {
      * @param argument The argument
      * @return The value
      */
-    default @Nullable Object read(D object, Argument<?> argument) {
+    @Nullable
+    default Object read(D object, Argument<?> argument) {
         return read(object, argument.getName());
     }
 

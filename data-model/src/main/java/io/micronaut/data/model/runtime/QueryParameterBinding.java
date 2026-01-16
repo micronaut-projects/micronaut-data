@@ -52,17 +52,15 @@ public interface QueryParameterBinding {
     /**
      * @return The data type
      */
-    @Nullable
     default DataType getDataType() {
-        return null;
+        return DataType.OBJECT;
     }
 
     /**
      * @return The JSON representation type if data type is JSON, default {@link JsonDataType#DEFAULT}
      */
-    @Nullable
     default JsonDataType getJsonDataType() {
-        return null;
+        return JsonDataType.DEFAULT;
     }
 
     /**
