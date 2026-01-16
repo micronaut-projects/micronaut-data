@@ -91,11 +91,12 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
 
                 monoEntity = monoEntity.flatMap(e -> {
 
-                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                boolean hasId = identity.getProperty().get(child) != null;
-                Mono<T> thisEntity;
-                Mono<Object> childMono;
-                if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
+                 RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                 boolean hasId = identity.getProperty().get(child) != null;
+                 boolean generatedId = identity.isGenerated();
+                 Mono<T> thisEntity;
+                 Mono<Object> childMono;
+                 if ((cascadeType == Relation.Cascade.PERSIST) && (!hasId || identity instanceof Association || !generatedId)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading one PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
@@ -183,7 +184,12 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                                 }
                                 sourceChildren = byId.values();
                             } else {
-                                veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                                veto = val -> {
+                                    if (ctx.persisted.contains(val)) return true;
+                                    Object idVal = identity.getProperty().get(val);
+                                    // For non-join-table: skip only when id present AND identity is generated
+                                    return idVal != null && identity.isGenerated() && !(identity instanceof Association);
+                                };
                                 sourceChildren = cascadeManyOp.children;
                             }
                             Flux<Object> childrenFlux = helper.persistBatch(ctx, sourceChildren, childPersistentEntity, veto);

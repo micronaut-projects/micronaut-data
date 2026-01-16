@@ -24,8 +24,8 @@ class AssignedUuidManyToManyPersistSpec extends Specification implements H2TestP
 
     @Shared @AutoCleanup ApplicationContext ctx = ApplicationContext.run(getProperties())
 
-    @Shared StudentRepository studentRepository = ctx.getBean(StudentRepository)
-    @Shared CourseRepository courseRepository = ctx.getBean(CourseRepository)
+    @Shared JdbcStudentRepository studentRepository = ctx.getBean(JdbcStudentRepository)
+    @Shared JdbcCourseRepository courseRepository = ctx.getBean(JdbcCourseRepository)
 
     def "should persist join rows with assigned UUIDs via cascade persist and support update"() {
         given:
@@ -94,10 +94,10 @@ class Course {
 }
 
 @JdbcRepository(dialect = Dialect.H2)
-interface StudentRepository extends CrudRepository<Student, UUID> {
+interface JdbcStudentRepository extends CrudRepository<Student, UUID> {
     @Join("courses")
     Optional<Student> findById(UUID id)
 }
 
 @JdbcRepository(dialect = Dialect.H2)
-interface CourseRepository extends CrudRepository<Course, UUID> {}
+interface JdbcCourseRepository extends CrudRepository<Course, UUID> {}
