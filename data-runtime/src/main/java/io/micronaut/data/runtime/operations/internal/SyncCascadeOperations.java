@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -143,11 +144,27 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                             }
                             Object idVal = identity.getProperty().get(val);
                             if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                                // Safer default for join-table: skip persisting any child with a non-null id (assigned or generated)
                                 return idVal != null;
                             }
                             return idVal != null && identity.isGenerated() && !(identity instanceof Association);
                         };
-                        entities = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
+                        Iterable<Object> sourceChildren;
+                        if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                            HashMap<Object, Object> byId = new LinkedHashMap<>();
+                            for (Object c : cascadeManyOp.children) {
+                                Object idVal = identity.getProperty().get(c);
+                                if (idVal != null) {
+                                    byId.putIfAbsent(idVal, c);
+                                } else {
+                                    byId.put(System.identityHashCode(c), c);
+                                }
+                            }
+                            sourceChildren = byId.values();
+                        } else {
+                            sourceChildren = cascadeManyOp.children;
+                        }
+                        entities = helper.persistBatch(ctx, sourceChildren, childPersistentEntity, veto);
                     } else {
                         entities = CollectionUtils.iterableToList(cascadeManyOp.children);
                         for (ListIterator<Object> iterator = entities.listIterator(); iterator.hasNext(); ) {

@@ -166,10 +166,29 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                                 LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                             }
                             RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                            Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
-                            Flux<Object> childrenFlux = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
-                            // Concat children inserted now with children that were persisted before
-                            for (Object child : cascadeManyOp.children) {
+                            RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) cascadeOp.ctx.getAssociation();
+                            // For join-table: veto any child with non-null id (existing), deduplicate source by id
+                            Predicate<Object> veto;
+                            Iterable<Object> sourceChildren;
+                            if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                                veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null;
+                                java.util.LinkedHashMap<Object, Object> byId = new java.util.LinkedHashMap<>();
+                                for (Object c : cascadeManyOp.children) {
+                                    Object idVal = identity.getProperty().get(c);
+                                    if (idVal != null) {
+                                        byId.putIfAbsent(idVal, c);
+                                    } else {
+                                        byId.put(System.identityHashCode(c), c);
+                                    }
+                                }
+                                sourceChildren = byId.values();
+                            } else {
+                                veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
+                                sourceChildren = cascadeManyOp.children;
+                            }
+                            Flux<Object> childrenFlux = helper.persistBatch(ctx, sourceChildren, childPersistentEntity, veto);
+                            // Concat children inserted now with children that were present (vetoed) to build union
+                            for (Object child : sourceChildren) {
                                 if (veto.test(child)) {
                                     childrenFlux = childrenFlux.concatWith(Flux.just(child));
                                 }
