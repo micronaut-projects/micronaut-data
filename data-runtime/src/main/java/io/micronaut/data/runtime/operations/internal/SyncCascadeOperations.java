@@ -209,7 +209,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                         }
                         if (!byId.isEmpty()) {
                             helper.persistManyAssociationBatch(ctx, association,
-                                    cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, new java.util.ArrayList<>(byId.values()), childPersistentEntity);
+                                    cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, new ArrayList<>(byId.values()), childPersistentEntity);
                         }
                     } else {
                         for (Object e : cascadeManyOp.children) {
