@@ -28,6 +28,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -173,7 +175,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                             Iterable<Object> sourceChildren;
                             if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
                                 veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null;
-                                java.util.LinkedHashMap<Object, Object> byId = new java.util.LinkedHashMap<>();
+                                HashMap<Object, Object> byId = new LinkedHashMap<>();
                                 for (Object c : cascadeManyOp.children) {
                                     Object idVal = identity.getProperty().get(c);
                                     if (idVal != null) {
