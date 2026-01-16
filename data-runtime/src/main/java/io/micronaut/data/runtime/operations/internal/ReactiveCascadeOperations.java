@@ -106,7 +106,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading one UPDATE for '{}' ({}) association: '{}'", persistentEntity.getName(),
-                            persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
+                                persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
                     }
                     Mono<Object> updated = helper.updateOne(ctx, child, childPersistentEntity).cache();
                     thisEntity = updated.map(updatedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, updatedEntity));
@@ -117,15 +117,15 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 }
 
                 if (!hasId
-                    && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                    && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                        && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
+                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
                     return childMono.flatMap(c -> {
                         if (ctx.persisted.contains(c)) {
                             return Mono.just(e);
                         }
                         ctx.persisted.add(c);
                         return thisEntity.flatMap(e2 -> {
-                             Mono<Void> op = helper.persistManyAssociation(ctx, association, e2, (RuntimePersistentEntity<Object>) persistentEntity, c, childPersistentEntity);
+                            Mono<Void> op = helper.persistManyAssociation(ctx, association, e2, (RuntimePersistentEntity<Object>) persistentEntity, c, childPersistentEntity);
                             return op.thenReturn(e2);
                         });
                     });
