@@ -29,6 +29,8 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
 import org.jspecify.annotations.Nullable;
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -77,4 +79,47 @@ public abstract class OracleXEBookRepository extends BookRepository {
     public abstract Book deleteReturning(Book book);
 
     public abstract String deleteReturningTitle(Book book);
+
+    @Query("""
+        INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated)
+        VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING *
+        """)
+    public abstract List<Book> customInsertReturningBooks(Long authorId,
+                                                          @Nullable Long genderId,
+                                                          String title,
+                                                          int totalPages,
+                                                          @Nullable Long publisherId,
+                                                          LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING *
+        """)
+    public abstract Book customInsertReturningBook(Long authorId,
+                                                   @Nullable Long genreId,
+                                                   String title,
+                                                   int totalPages,
+                                                   @Nullable Long publisherId,
+                                                   LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING "TITLE"
+        """)
+    public abstract String customInsertReturningTitle(Long authorId,
+                                                      @Nullable Long genreId,
+                                                      String title,
+                                                      int totalPages,
+                                                      @Nullable Long publisherId,
+                                                      LocalDateTime lastUpdated);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING *")
+    public abstract Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
+
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\"")
+    public abstract String customDeleteReturningTitle(Long bookId);
+
 }

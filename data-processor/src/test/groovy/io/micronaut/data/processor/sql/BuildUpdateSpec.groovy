@@ -822,12 +822,16 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
 
 @JdbcRepository(dialect= Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
     Book updateReturning(Book book);
     String updateReturningTitle(Book book);
+    @Query("UPDATE \\"BOOK\\" SET \\"TITLE\\"=:title,\\"TOTAL_PAGES\\"=:totalPages,\\"LAST_UPDATED\\"=:lastUpdated WHERE \\"ID\\"=:bookId RETURNING *")
+    Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
+
 }
 """)
         when:
@@ -835,6 +839,8 @@ interface BookRepository extends GenericRepository<Book, Long> {
         def updateOutBindingParameters = getOutBindingParameters(updateReturningMethod)
         def updateReturningTitleMethod = repository.findPossibleMethods("updateReturningTitle").findFirst().get()
         def updateTitleOutBindingParameters = getOutBindingParameters(updateReturningTitleMethod)
+        def customUpdateReturningMethod = repository.findPossibleMethods("customUpdateReturning").findFirst().get()
+        def customUpdateOutBindingParameters = getOutBindingParameters(customUpdateReturningMethod)
         then:
         getQuery(updateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
         getDataResultType(updateReturningMethod) == "io.micronaut.data.tck.entities.Book"
@@ -844,6 +850,10 @@ interface BookRepository extends GenericRepository<Book, Long> {
         getDataResultType(updateReturningTitleMethod) == "java.lang.String"
         getParameterPropertyPaths(updateReturningTitleMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
         getDataInterceptor(updateReturningTitleMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+
+        getRawQuery(customUpdateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "TITLE"=?,"TOTAL_PAGES"=?,"LAST_UPDATED"=? WHERE "ID"=? RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(customUpdateReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getDataInterceptor(customUpdateReturningMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
 
         updateOutBindingParameters.length == 7
         updateOutBindingParameters[0].name == "id"
@@ -864,6 +874,8 @@ interface BookRepository extends GenericRepository<Book, Long> {
         updateTitleOutBindingParameters.length == 1
         updateTitleOutBindingParameters[0].name == "title"
         updateTitleOutBindingParameters[0].dataType == DataType.STRING
+
+        customUpdateOutBindingParameters.length == 7
     }
 
 }

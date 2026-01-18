@@ -656,4 +656,64 @@ interface BookRepository extends GenericRepository<Book, Long> {
         outBindingParameters[6].name == "id"
         outBindingParameters[6].dataType == DataType.LONG
     }
+
+    void "ORACLE custom @Query insert returning multiple columns should fail"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated) VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING id, title")
+    String brokenInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, java.time.LocalDateTime lastUpdated);
+}
+""")
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("multiple columns in RETURNING are not supported")
+    }
+
+    void "ORACLE custom @Query insert returning produces valid SQL"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("INSERT INTO \\"BOOK\\" (\\"AUTHOR_ID\\",\\"GENRE_ID\\",\\"TITLE\\",\\"TOTAL_PAGES\\",\\"PUBLISHER_ID\\",\\"LAST_UPDATED\\") VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING *")
+    Book customInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+
+    @Query("INSERT INTO \\"BOOK\\" (\\"AUTHOR_ID\\",\\"GENRE_ID\\",\\"TITLE\\",\\"TOTAL_PAGES\\",\\"PUBLISHER_ID\\",\\"LAST_UPDATED\\") VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING \\"TITLE\\"")
+    String customInsertReturningTitle(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+}
+""")
+        when:
+        def customInsertReturningMethod = repository.findPossibleMethods("customInsertReturning").findFirst().get()
+        def outBindingEntityParameters = getOutBindingParameters(customInsertReturningMethod)
+        def customInsertReturningTitleMethod = repository.findPossibleMethods("customInsertReturningTitle").findFirst().get()
+        def outBindingTitleParameters = getOutBindingParameters(customInsertReturningTitleMethod)
+        then:
+        getRawQuery(customInsertReturningMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(customInsertReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getDataInterceptor(customInsertReturningMethod) == "io.micronaut.data.intercept.InsertReturningOneInterceptor"
+        getOperationType(customInsertReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
+        outBindingEntityParameters.length == 7
+
+        getRawQuery(customInsertReturningTitleMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "TITLE" INTO ?; END;'
+        getDataResultType(customInsertReturningTitleMethod) == "java.lang.String"
+        getDataInterceptor(customInsertReturningTitleMethod) == "io.micronaut.data.intercept.InsertReturningOneInterceptor"
+        getOperationType(customInsertReturningTitleMethod) == DataMethod.OperationType.INSERT_RETURNING
+        outBindingTitleParameters.length == 1
+    }
 }

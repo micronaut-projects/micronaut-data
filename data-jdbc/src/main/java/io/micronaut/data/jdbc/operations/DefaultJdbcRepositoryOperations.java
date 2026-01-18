@@ -403,8 +403,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
-        if (preparedQuery.getDialect() == Dialect.ORACLE && (preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
-            || preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
+        if (preparedQuery.getDialect() == Dialect.ORACLE && (
+            preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
+            preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
+            preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
                 preparedQuery.bindParameters(new JdbcParameterBinder(connection, cs, preparedQuery));
                 OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery);

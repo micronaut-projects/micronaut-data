@@ -49,9 +49,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -303,22 +311,229 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
         String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return finalQueryString;
-            }
 
-            @Override
-            public List<String> getQueryParts() {
-                return queryParts;
-            }
+        String cleanLower = SQL_COMMENT_PATTERN.matcher(finalQueryString).replaceAll("").trim().toLowerCase(Locale.ENGLISH);
+        boolean hasReturning = RETURNING_PATTERN.matcher(cleanLower).find();
+        if (hasReturning) {
+            Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
+                .orElse(Dialect.ANSI);
+            if (dialect == Dialect.ORACLE) {
+                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+                int returningIdx = cleanLower.lastIndexOf("returning");
+                String afterReturning = finalQueryString.substring(returningIdx + "returning".length()).trim();
+                int intoPos = indexOfIntoIgnoreCase(afterReturning);
+                String selection = intoPos > -1 ? afterReturning.substring(0, intoPos).trim() : afterReturning;
 
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
+                List<QueryOutParameterBinding> outBindings = new ArrayList<>();
+                List<String> outColumns = new ArrayList<>();
+                if (selection.equals("*")) {
+                    if (entity == null) {
+                        throw new MatchFailedException("RETURNING * requires a repository root entity to resolve columns");
+                    }
+                    entity.getPersistentProperties().forEach(pp -> {
+                        if (pp instanceof Association assoc) {
+                            switch (assoc.getKind()) {
+                                case ONE_TO_MANY, MANY_TO_MANY -> {
+                                }
+                                default -> {
+                                    String colName = pp.getPersistedName();
+                                    DataType dt = DataType.STRING;
+                                    try {
+                                        var ae = assoc.getAssociatedEntity();
+                                        if (ae != null && ae.hasIdentity()) {
+                                            dt = ae.getIdentity().getDataType();
+                                        }
+                                    } catch (Exception ignored) {
+                                    }
+                                    outColumns.add(colName);
+                                    DataType finalDt = dt;
+                                    outBindings.add(new QueryOutParameterBinding() {
+                                        @Override
+                                        public String getName() {
+                                            return colName;
+                                        }
+
+                                        @Override
+                                        public DataType getDataType() {
+                                            return finalDt;
+                                        }
+                                    });
+                                }
+                            }
+                        } else {
+                            String colName = pp.getPersistedName();
+                            DataType dt = pp.getDataType();
+                            outColumns.add(colName);
+                            DataType finalDt = dt;
+                            outBindings.add(new QueryOutParameterBinding() {
+                                @Override
+                                public String getName() {
+                                    return colName;
+                                }
+
+                                @Override
+                                public DataType getDataType() {
+                                    return finalDt;
+                                }
+                            });
+                        }
+                    });
+                    // Ensure id column is included last if not already present
+                    if (entity.hasIdentity() && outColumns.stream().noneMatch(c -> c.equals(entity.getIdentity().getPersistedName()))) {
+                        var id = entity.getIdentity();
+                        outColumns.add(id.getPersistedName());
+                        DataType dt = id.getDataType();
+                        outBindings.add(new QueryOutParameterBinding() {
+                            @Override
+                            public String getName() {
+                                return id.getPersistedName();
+                            }
+
+                            @Override
+                            public DataType getDataType() {
+                                return dt;
+                            }
+                        });
+                    }
+                } else {
+                    List<String> parts = splitByComma(selection).stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+                    if (parts.size() > 1) {
+                        throw new MatchFailedException("Non-custom returning methods support only entity (*) or a single property; multiple columns in RETURNING are not supported in custom @Query for Oracle");
+                    }
+                    for (String part : parts) {
+                        String col = part;
+                        if ((col.startsWith("\"") && col.endsWith("\"")) || (col.startsWith("`") && col.endsWith("`"))) {
+                            col = col.substring(1, col.length() - 1);
+                        }
+                        outColumns.add(col);
+                        DataType dt = DataType.STRING;
+                        if (entity != null) {
+                            var prop = entity.getPropertyByNameIgnoreCase(col);
+                            if (prop == null) {
+                                for (var p : entity.getPersistentProperties()) {
+                                    if (p.getPersistedName().equalsIgnoreCase(col)) {
+                                        prop = p;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (prop != null) {
+                                if (prop instanceof Association assocProp) {
+                                    try {
+                                        var ae = assocProp.getAssociatedEntity();
+                                        if (ae != null && ae.hasIdentity()) {
+                                            dt = ae.getIdentity().getDataType();
+                                        }
+                                    } catch (Exception ignored) {
+                                        dt = DataType.STRING;
+                                    }
+                                } else if (prop.getDataType() != null) {
+                                    dt = prop.getDataType();
+                                }
+                            }
+                        }
+                        DataType finalDt = dt;
+                        String finalCol = col;
+                        outBindings.add(new QueryOutParameterBinding() {
+                            @Override
+                            public String getName() {
+                                return finalCol;
+                            }
+
+                            @Override
+                            public DataType getDataType() {
+                                return finalDt;
+                            }
+                        });
+                    }
+                }
+                if (outBindings.isEmpty()) {
+                    throw new MatchFailedException("RETURNING clause must contain at least one column for Oracle");
+                }
+                int outCount = outBindings.size();
+                String intoPlaceholders = String.join(",", Collections.nCopies(outCount, "?"));
+
+                List<String> quotedColumns = outColumns.stream().map(RawQueryMethodMatcher::quoteOracleIdentifier).toList();
+                // Adjust query parts to produce final positional SQL via RepositoryTypeElementVisitor
+                if (!parameterBindings.isEmpty()) {
+                    // Prefix BEGIN to the first literal part
+                    if (!queryParts.isEmpty()) {
+                        queryParts.set(0, "BEGIN " + queryParts.get(0));
+                    } else {
+                        queryParts.add("BEGIN ");
+                    }
+                    // Replace the tail (after last param) to enforce RETURNING ... INTO ...; END;
+                    int last = queryParts.size() - 1;
+                    String tail = last >= 0 ? queryParts.get(last) : "";
+                    int idx = tail.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
+                    String newTail;
+                    if (idx >= 0) {
+                        newTail = tail.substring(0, idx) + "RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+                    } else {
+                        newTail = tail + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+                    }
+                    if (last >= 0) {
+                        queryParts.set(last, newTail);
+                    } else {
+                        queryParts.add(newTail);
+                    }
+                } else {
+                    // No parameters: construct single-part final SQL with positional markers only for OUT
+                    String withoutSemi = stripTrailingSemicolon(finalQueryString);
+                    int retIdx = withoutSemi.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
+                    String beforeReturning = withoutSemi.substring(0, retIdx);
+                    String finalSql = "BEGIN " + beforeReturning + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+                    queryParts = new ArrayList<>();
+                    queryParts.add(finalSql);
+                }
+                return QueryResult.of("", queryParts, parameterBindings, outBindings, Map.of());
             }
-        };
+        }
+
+        // Default: no transformation
+        return QueryResult.of(finalQueryString, queryParts, parameterBindings);
+    }
+
+    private static int indexOfIntoIgnoreCase(String s) {
+        String lower = s.toLowerCase(Locale.ENGLISH);
+        return lower.indexOf(" into ");
+    }
+
+    private static String stripTrailingSemicolon(String s) {
+        String t = s.trim();
+        if (t.endsWith(";")) {
+            return t.substring(0, t.length() - 1);
+        }
+        return s;
+    }
+
+    private static List<String> splitByComma(String s) {
+        List<String> parts = new ArrayList<>();
+        int depth = 0;
+        StringBuilder current = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '(') {
+                depth++;
+            }
+            if (c == ')') {
+                depth--;
+            }
+            if (c == ',' && depth == 0) {
+                parts.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        if (current.length() > 0) {
+            parts.add(current.toString());
+        }
+        return parts;
+    }
+
+    private static String quoteOracleIdentifier(String identifier) {
+        return '"' + identifier.toUpperCase(Locale.ENGLISH) + '"';
     }
 
     public static QueryParameterBinding addBinding(MethodMatchContext matchContext,

@@ -23,6 +23,8 @@ import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
+import java.time.LocalDateTime
+
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
     @Override
@@ -386,5 +388,41 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         restaurantRepository.findById(newRestaurant.id).get().name == "Una"
         cleanup:
         restaurantRepository.deleteAll()
+    }
+
+    void "test custom insert/update/delete returning book(s) with @Query"() {
+        given:
+        setupBooks()
+        def existing = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        def one = bookRepository.customInsertReturningBook(existing.author.id, null, "CI one", 111, null, LocalDateTime.now())
+        then:
+        one
+        one.id
+        one.title == "CI one"
+        when:
+        def current = LocalDateTime.now()
+        def updated = bookRepository.customUpdateReturning(one.id, "CI one - updated", 110, current)
+        then:
+        updated.title == "CI one - updated"
+        updated.totalPages == 110
+        updated.lastUpdated == current
+        when:
+        def title = bookRepository.customDeleteReturningTitle(updated.id)
+        then:
+        title == "CI one - updated"
+        !bookRepository.findById(updated.id).present
+        when:
+        def many = bookRepository.customInsertReturningBooks(existing.author.id, null, "CI many", 112, null, LocalDateTime.now())
+        then:
+        many
+        many.size() >= 1
+        when:
+        def onlyTitle = bookRepository.customInsertReturningTitle(existing.author.id, null, "CI title", 113, null, LocalDateTime.now())
+        then:
+        onlyTitle == "CI title"
+        bookRepository.findByTitle("CI title")
+        cleanup:
+        bookRepository.deleteAll()
     }
 }
