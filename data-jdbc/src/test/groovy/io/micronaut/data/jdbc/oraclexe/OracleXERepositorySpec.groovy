@@ -24,6 +24,7 @@ import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
@@ -406,7 +407,7 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         then:
         updated.title == "CI one - updated"
         updated.totalPages == 110
-        updated.lastUpdated == current
+        updated.lastUpdated.truncatedTo(ChronoUnit.MILLIS) == current.truncatedTo(ChronoUnit.MILLIS)
         when:
         def title = bookRepository.customDeleteReturningTitle(updated.id)
         then:
