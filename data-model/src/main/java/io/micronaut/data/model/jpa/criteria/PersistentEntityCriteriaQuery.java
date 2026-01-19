@@ -37,76 +37,60 @@ import java.util.List;
 @Experimental
 public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, PersistentEntityQuery<T> {
 
+    @Override
     <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity);
 
     @Override
-    
     <X> PersistentEntityRoot<X> from(Class<X> entityClass);
 
     @Override
-    
     <X> PersistentEntityRoot<X> from(EntityType<X> entity);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> limit(int limit);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> offset(int offset);
 
     @Internal
-    
     default PersistentEntityCriteriaQuery<T> forUpdate(boolean forUpdate) {
         return this;
     }
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> select(Selection<? extends T> selection);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> multiselect(Selection<?>... selections);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> multiselect(List<Selection<?>> selectionList);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> where(Expression<Boolean> restriction);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> where(Predicate... restrictions);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> groupBy(Expression<?>... grouping);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> groupBy(List<Expression<?>> grouping);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> having(Expression<Boolean> restriction);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> having(Predicate... restrictions);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> orderBy(Order... orders);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> orderBy(List<Order> orders);
 
     @Override
-    
     PersistentEntityCriteriaQuery<T> distinct(boolean distinct);
 
 }

@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -42,7 +43,8 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
     /**
      * @return The method parameters
      */
-    Object[] getParameterArray();
+    @Nullable
+    Object [] getParameterArray();
 
     /**
      * @return The method arguments
@@ -73,7 +75,7 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
     }
 
     @Override
-    default  ConversionService getConversionService() {
+    default ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

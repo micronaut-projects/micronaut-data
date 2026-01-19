@@ -37,6 +37,7 @@ public final class MultiTenancyConfiguration {
     /**
      * The multi-tenancy mode.
      */
+    @Nullable
     private MultiTenancyMode mode;
 
     /**

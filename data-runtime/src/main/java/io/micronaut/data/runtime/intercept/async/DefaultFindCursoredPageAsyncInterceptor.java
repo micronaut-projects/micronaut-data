@@ -58,21 +58,19 @@ public final class DefaultFindCursoredPageAsyncInterceptor extends AbstractConve
             return asyncDatastoreOperations.findPage(preparedQuery).thenCompose((Page<?> page) -> {
                 if (!page.hasTotalSize() && preparedQuery.getPageable().requestTotal()) {
                     PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-                    final Page<?> page0 = page;
                     return asyncDatastoreOperations.findOne(countQuery).thenApply(n -> {
-                        Long totalCount = n != null ? n.longValue() : -1;
-                        if (page0 instanceof CursoredPage<?> cursoredPage) {
+                        if (page instanceof CursoredPage<?> cursoredPage) {
                             return CursoredPage.of(
                                 cursoredPage.getContent(),
                                 cursoredPage.getPageable(),
                                 cursoredPage.getCursors(),
-                                totalCount
+                                n.longValue()
                             );
                         } else {
                             return Page.of(
-                                page0.getContent(),
-                                page0.getPageable(),
-                                totalCount
+                                page.getContent(),
+                                page.getPageable(),
+                                n.longValue()
                             );
                         }
                     });

@@ -117,7 +117,7 @@ public interface Sort {
         if (CollectionUtils.isEmpty(orderList)) {
             return UNSORTED;
         }
-        return new DefaultSort(orderList);
+        return new DefaultSort(Objects.requireNonNull(orderList));
     }
 
     /**

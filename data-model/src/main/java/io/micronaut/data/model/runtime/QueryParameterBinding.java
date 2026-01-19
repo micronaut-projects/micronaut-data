@@ -40,7 +40,7 @@ public interface QueryParameterBinding {
     /**
      * @return The required name of the parameter or throws exception
      */
-    
+
     default String getRequiredName() {
         String name = getName();
         if (name == null) {
@@ -52,17 +52,15 @@ public interface QueryParameterBinding {
     /**
      * @return The data type
      */
-    @Nullable
     default DataType getDataType() {
-        return null;
+        return DataType.OBJECT;
     }
 
     /**
      * @return The JSON representation type if data type is JSON, default {@link JsonDataType#DEFAULT}
      */
-    @Nullable
     default JsonDataType getJsonDataType() {
-        return null;
+        return JsonDataType.DEFAULT;
     }
 
     /**
@@ -83,23 +81,20 @@ public interface QueryParameterBinding {
     /**
      * @return The parameter binding property path.
      */
-    @Nullable
-    default String[] getParameterBindingPath() {
+    default String @Nullable [] getParameterBindingPath() {
         return null;
     }
 
     /**
      * @return The property path.
      */
-    @Nullable
-    default String[] getPropertyPath() {
+    default String @Nullable [] getPropertyPath() {
         return null;
     }
 
     /**
      * @return The required property path or throws and exception.
      */
-    
     default String[] getRequiredPropertyPath() {
         String[] propertyPath = getPropertyPath();
         if (propertyPath == null) {

@@ -57,14 +57,16 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
 
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
+    @Nullable
     private final RuntimePersistentProperty<T> version;
+    @Nullable
     private Boolean hasAutoPopulatedProperties;
-
+    @Nullable
     private List<String> allPersistentPropertiesNames;
+    @Nullable
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
-
+    @Nullable
     private EnumSet<Relation.Cascade> cascadedTypes;
-    private BeanIntrospection<?> idClassIntrospection;
 
     /**
      * Default constructor.
@@ -178,7 +180,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
      * @param converterClass The converter class
      * @return converter instance
      */
-    
+
     protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
         throw new MappingException("Converters not supported");
     }
@@ -296,16 +298,36 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         return identity.length == 1;
     }
 
-    @Nullable
     @Override
-    public RuntimePersistentProperty<T>[] getCompositeIdentity() {
-        return identity.length > 1 ? identity : null;
+    public boolean hasVersion() {
+        return version != null;
     }
 
-    @Nullable
+    @Override
+    public RuntimePersistentProperty<T>[] getCompositeIdentity() {
+        if (hasCompositeIdentity()) {
+            return identity;
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have composite identity");
+    }
+
     @Override
     public RuntimePersistentProperty<T> getIdentity() {
-        return identity.length == 1 ? identity[0] : null;
+        if (hasIdentity()) {
+            return identity[0];
+        }
+        if (hasCompositeIdentity()) {
+            throw new IllegalStateException("Entity [" + getName() + "] has composite identity");
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have an identity");
+    }
+
+    @Override
+    public RuntimePersistentProperty<T> getVersion() {
+        if (hasVersion()) {
+            return Objects.requireNonNull(version);
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have a version");
     }
 
     @Override
@@ -319,12 +341,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
      */
     public List<RuntimePersistentProperty<T>> getRuntimeIdentityProperties() {
         return List.of(identity);
-    }
-
-    @Nullable
-    @Override
-    public RuntimePersistentProperty<T> getVersion() {
-        return version;
     }
 
     @Override
@@ -351,6 +367,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
     }
 
     @Override
+    @Nullable
     public RuntimePersistentProperty<T> getPropertyByNameIgnoreCase(String name) {
         for (RuntimePersistentProperty<T> property : allPersistentProperties) {
             if (property != null && property.getName().equalsIgnoreCase(name)) {

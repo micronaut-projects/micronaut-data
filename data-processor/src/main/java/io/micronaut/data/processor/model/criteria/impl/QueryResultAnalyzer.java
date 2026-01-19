@@ -34,6 +34,7 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.Expression;
+import org.jspecify.annotations.Nullable;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
@@ -45,8 +46,10 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 final class QueryResultAnalyzer implements SelectionVisitor {
+    @Nullable
     private String queryResultTypeName;
 
+    @Nullable
     public String getQueryResultTypeName() {
         return queryResultTypeName;
     }
@@ -72,7 +75,6 @@ final class QueryResultAnalyzer implements SelectionVisitor {
 
     @Override
     public void visit(PersistentEntitySubquery<?> subquery) {
-
     }
 
     @Override
@@ -118,7 +120,10 @@ final class QueryResultAnalyzer implements SelectionVisitor {
 
     @Override
     public void visit(LiteralExpression<?> literalExpression) {
-        queryResultTypeName = literalExpression.getValue().getClass().getName();
+        Object value = literalExpression.getValue();
+        if (value != null) {
+            queryResultTypeName = value.getClass().getName();
+        }
     }
 
     @Override
@@ -127,7 +132,9 @@ final class QueryResultAnalyzer implements SelectionVisitor {
         if (persistentEntity.hasCompositeIdentity()) {
             throw new IllegalStateException("IdClass is unknown!");
         }
-        queryResultTypeName = persistentEntity.getIdentity().getType().getName();
+        if (persistentEntity.hasIdentity()) {
+            queryResultTypeName = persistentEntity.getIdentity().getType().getName();
+        }
     }
 
     @Override

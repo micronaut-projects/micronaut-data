@@ -20,6 +20,8 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.BindingParameter;
 
+import java.util.Objects;
+
 /**
  * The {@link QueryParameterBinding} of the additional parameter.
  *
@@ -39,7 +41,7 @@ public record AdditionalParameterBinding(BindingParameter.BindingContext binding
 
     @Override
     public String getKey() {
-        return bindingContext.getName();
+        return Objects.requireNonNull(bindingContext.getName());
     }
 
     @Override

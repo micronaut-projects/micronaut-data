@@ -37,6 +37,7 @@ public class JoinPath {
     private final String path;
     private final Association[] associationPath;
     private final Join.Type joinType;
+    @Nullable
     private final String alias;
 
     /**
@@ -60,7 +61,7 @@ public class JoinPath {
      * @return a new join path
      * @since 4.9.0
      */
-    
+
     public JoinPath withAlias(@Nullable String alias) {
         return new JoinPath(path, associationPath, joinType, alias);
     }
@@ -82,7 +83,7 @@ public class JoinPath {
     /**
      * @return The association
      */
-    
+
     public Association getAssociation() {
         return associationPath[associationPath.length - 1];
     }
@@ -104,7 +105,7 @@ public class JoinPath {
     /**
      * @return The association path
      */
-    
+
     public String getPath() {
         return path;
     }

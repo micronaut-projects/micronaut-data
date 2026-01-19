@@ -6,6 +6,8 @@ import io.micronaut.transaction.annotation.TransactionalEventListener;
 import jakarta.inject.Singleton;
 
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.Nullable;
+
 import java.io.IOException;
 
 @Singleton
@@ -13,6 +15,7 @@ public class TxEventsService extends AbstractBookService {
 
     private final ApplicationEventPublisher<NewBookEvent> eventPublisher;
 
+    @Nullable
     NewBookEvent lastEvent;
 
     public TxEventsService(ApplicationEventPublisher<NewBookEvent> eventPublisher, ApplicationContext beanContext) {
@@ -60,6 +63,7 @@ public class TxEventsService extends AbstractBookService {
         lastEvent = null;
     }
 
+    @Nullable
     public NewBookEvent getLastEvent() {
         return lastEvent;
     }

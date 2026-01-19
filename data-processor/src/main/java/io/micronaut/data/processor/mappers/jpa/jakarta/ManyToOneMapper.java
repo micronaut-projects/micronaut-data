@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's {@code ManyToOne} annotation to {@link io.micronaut.data.annotation.Relation}.
  *
@@ -24,7 +22,7 @@ import org.jspecify.annotations.NonNull;
  * @since 2.4.8
  */
 public class ManyToOneMapper extends io.micronaut.data.processor.mappers.jpa.jx.ManyToOneMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.ManyToOne";

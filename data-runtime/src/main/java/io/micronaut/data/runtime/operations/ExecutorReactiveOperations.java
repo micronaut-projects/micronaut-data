@@ -73,7 +73,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @param asyncOperations       The instance operations instance
      * @param dataConversionService The data conversion service
      */
-    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, DataConversionService dataConversionService) {
+    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, @Nullable DataConversionService dataConversionService) {
         ArgumentUtils.requireNonNull("asyncOperations", asyncOperations);
         this.asyncOperations = asyncOperations;
         // Backwards compatibility should be removed in the next version

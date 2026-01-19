@@ -36,14 +36,12 @@ public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCrite
      * The root entity.
      * @return The root entity
      */
-    
     PersistentEntityRoot<T> getRoot();
 
     /**
      * The persistent entity.
      * @return The persistent entity
      */
-    
     PersistentEntity getPersistentEntity();
 
     /**
@@ -55,7 +53,6 @@ public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCrite
     /**
      * @return The parameters
      */
-    
     Set<ParameterExpression<?>> getParameters();
 
 }

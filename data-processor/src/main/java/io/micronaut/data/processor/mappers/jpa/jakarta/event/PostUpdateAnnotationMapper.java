@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta.event;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's {@code PostUpdate} annotation to Micronaut's.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public final class PostUpdateAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.event.PostUpdateAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.PostUpdate";

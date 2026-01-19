@@ -16,7 +16,6 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.reflect.ReflectionUtils;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeDef;
 
 import java.math.BigDecimal;
@@ -178,7 +177,7 @@ public enum DataType {
      */
     DataType(boolean isArray, Class<?>... javaTypes) {
         this.isArray = isArray;
-        this.javaTypes = CollectionUtils.setOf(javaTypes);
+        this.javaTypes = Set.of(javaTypes);
     }
 
     /**

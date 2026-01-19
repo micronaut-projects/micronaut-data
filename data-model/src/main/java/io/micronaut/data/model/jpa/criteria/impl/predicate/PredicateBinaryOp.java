@@ -46,7 +46,7 @@ public enum PredicateBinaryOp {
     ARRAY_CONTAINS,
     ;
 
-    void validate(@Nullable Expression<?> left, @Nullable Expression<?> right) {
+    void validate(Expression<?> left, Expression<?> right) {
         switch (this) {
             case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE -> {
                 // Any type

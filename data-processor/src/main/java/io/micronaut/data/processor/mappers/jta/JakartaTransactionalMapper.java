@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JTA's Jakarta transaction annotation.
  *
@@ -24,7 +22,6 @@ import org.jspecify.annotations.NonNull;
  * @since 3.5.0
  */
 public final class JakartaTransactionalMapper extends JtaTransactionalMapper {
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.transaction.Transactional";

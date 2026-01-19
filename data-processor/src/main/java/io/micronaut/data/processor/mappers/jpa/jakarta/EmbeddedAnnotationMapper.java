@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA Embedded to Micronaut Data embedded.
  *
@@ -24,7 +22,7 @@ import org.jspecify.annotations.NonNull;
  * @since 2.4.8
  */
 public class EmbeddedAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.EmbeddedAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.Embedded";

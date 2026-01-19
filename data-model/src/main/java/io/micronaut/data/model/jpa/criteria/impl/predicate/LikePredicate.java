@@ -42,11 +42,11 @@ public final class LikePredicate extends AbstractPredicate {
         this(expression, pattern, null, false, false);
     }
 
-    public LikePredicate(Expression<String> expression, Expression<String> pattern, Expression<Character> escapeChar, boolean negated) {
+    public LikePredicate(Expression<String> expression, Expression<String> pattern, @Nullable Expression<Character> escapeChar, boolean negated) {
         this(expression, pattern, escapeChar, negated, false);
     }
 
-    public LikePredicate(Expression<String> expression, Expression<String> pattern, Expression<Character> escapeChar, boolean negated, boolean caseInsensitive) {
+    public LikePredicate(Expression<String> expression, Expression<String> pattern, @Nullable Expression<Character> escapeChar, boolean negated, boolean caseInsensitive) {
         CriteriaUtils.requireStringExpression(expression);
         CriteriaUtils.requireStringExpression(pattern);
         this.expression = expression;

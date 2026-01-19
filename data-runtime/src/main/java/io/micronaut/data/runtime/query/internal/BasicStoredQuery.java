@@ -91,7 +91,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
-        this.expandableQueryParts = expandableQueryParts == null ? new String[0] : expandableQueryParts;
+        this.expandableQueryParts = expandableQueryParts;
         this.queryParameterBindings = queryParameterBindings;
         this.rootEntity = rootEntity;
         this.resultType = resultType;

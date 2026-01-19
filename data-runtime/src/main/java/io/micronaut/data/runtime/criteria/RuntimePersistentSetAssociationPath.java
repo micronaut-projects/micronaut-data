@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentSetAssociationPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -40,7 +41,8 @@ final class RuntimePersistentSetAssociationPath<Owner, E> extends RuntimePersist
     RuntimePersistentSetAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                         RuntimeAssociation<Owner> association,
                                         List<Association> associations,
-                                        Join.Type associationJoinType,
+                                        Join. @Nullable Type associationJoinType,
+                                        @Nullable
                                         String alias,
                                         CriteriaBuilder criteriaBuilder) {
         super(parent, association, associations, associationJoinType, alias, criteriaBuilder);

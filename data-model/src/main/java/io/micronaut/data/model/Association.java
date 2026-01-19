@@ -57,10 +57,9 @@ public interface Association extends PersistentProperty {
     }
 
     /**
-     * The associated entity if any.
+     * The associated entity.
      * @return The associated entity
      */
-    
     PersistentEntity getAssociatedEntity();
 
     /**

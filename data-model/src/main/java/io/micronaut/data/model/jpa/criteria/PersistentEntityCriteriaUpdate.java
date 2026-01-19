@@ -43,15 +43,13 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
     PersistentEntityRoot<T> from(PersistentEntity persistentEntity);
 
     @Override
-    
+
     PersistentEntityRoot<T> from(Class<T> entityClass);
 
     @Override
-    
     PersistentEntityRoot<T> from(EntityType<T> entity);
 
     @Override
-    
     PersistentEntityRoot<T> getRoot();
 
     @Override
@@ -67,15 +65,15 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      <Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute,  Expression<? extends Y> value);
 
     @Override
-    
+
     PersistentEntityCriteriaUpdate<T> set(String attributeName, @Nullable Object value);
 
     @Override
-    
+
     PersistentEntityCriteriaUpdate<T> where(Expression<Boolean> restriction);
 
     @Override
-    
+
     PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions);
 
     Set<ParameterExpression<?>> getParameters();
@@ -88,7 +86,7 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    
+
     PersistentEntityCriteriaUpdate<T> returning(Selection<? extends T> selection);
 
     /**
@@ -99,7 +97,7 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    
+
     default PersistentEntityCriteriaUpdate<T> returningMulti(Selection<?>... selections) {
         return returningMulti(List.of(selections));
     }
@@ -112,7 +110,7 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    
+
     PersistentEntityCriteriaUpdate<T> returningMulti(List<Selection<?>> selectionList);
 
 }

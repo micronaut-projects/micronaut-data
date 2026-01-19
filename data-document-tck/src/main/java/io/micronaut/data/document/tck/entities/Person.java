@@ -29,8 +29,9 @@ import java.util.List;
 public class Person {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
-
+    @Nullable
     private String name;
     private int age;
     private boolean enabled = true;
@@ -43,6 +44,7 @@ public class Person {
     @io.micronaut.core.annotation.Nullable
     private List<Address> addresses;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -51,6 +53,7 @@ public class Person {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
@@ -75,6 +78,7 @@ public class Person {
         this.enabled = enabled;
     }
 
+    @Nullable
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
@@ -83,6 +87,7 @@ public class Person {
         this.dateOfBirth = dateOfBirth;
     }
 
+    @Nullable
     public List<Address> getAddresses() {
         return addresses;
     }

@@ -121,11 +121,10 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {
             RuntimePersistentEntity<Object> entity = getEntity(type);
-            RuntimePersistentProperty<Object> identity = entity.getIdentity();
-            if (identity == null) {
+            if (!entity.hasIdentity()) {
                 throw new DataAccessException("Entity has no ID: " + entity.getName());
             }
-            beanProperty = identity;
+            beanProperty = entity.getIdentity();
             idReaders.put(type, beanProperty);
         }
         return beanProperty;

@@ -16,6 +16,7 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -35,7 +36,9 @@ import java.util.List;
  * @since 4.13.0
  */
 @Internal
-public record SqlTableMapping(String schema,
+public record SqlTableMapping(
+    @Nullable
+    String schema,
     String name,
     boolean escape,
     TableType type,
@@ -43,12 +46,12 @@ public record SqlTableMapping(String schema,
     List<SqlColumnMapping> columns,
     List<SqlSequenceMapping> sequences,
     List<SqlIndexMapping> indexes) {
-    public SqlTableMapping(String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
-        this(schema, name, escape, type, primaryKeyColumns, columns, null, null);
+    public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns) {
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, List.of(), List.of());
     }
 
-    public SqlTableMapping(String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns, List<SqlSequenceMapping> sequences) {
-        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, null);
+    public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns, @Nullable List<SqlSequenceMapping> sequences) {
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, sequences == null ? List.of() : sequences, List.of());
     }
 
     /**

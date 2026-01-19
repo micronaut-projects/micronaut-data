@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -118,7 +117,6 @@ public final class Restrictions {
             return "GreaterThan";
         }
     }
-
 
     /**
      * Same as {@link PropertyGreaterThan}.
@@ -405,7 +403,6 @@ public final class Restrictions {
             return "EndingWithIgnoreCase";
         }
     }
-
 
     /**
      * Ends with criterion.
@@ -819,7 +816,7 @@ public final class Restrictions {
 
         private final OneExpressionOp<T> func;
 
-        public SinglePropertyRestriction(OneExpressionOp<T> func) {
+        private SinglePropertyRestriction(OneExpressionOp<T> func) {
             this.func = func;
         }
 
@@ -841,7 +838,7 @@ public final class Restrictions {
 
         private final TwoExpressionOp<T> func;
 
-        public SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
+        private SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
             this.func = func;
         }
 
@@ -859,7 +856,6 @@ public final class Restrictions {
         }
     }
 
-
     /**
      * Property restriction.
      *
@@ -871,11 +867,10 @@ public final class Restrictions {
 
         int getRequiredParameters();
 
-        @NonNull
-        Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
-                       @NonNull PersistentEntityCriteriaBuilder cb,
-                       @NonNull Expression<T> expression,
-                       @NonNull List<ParameterExpression<T>> parameters);
+        Predicate find(PersistentEntityRoot<?> entityRoot,
+                       PersistentEntityCriteriaBuilder cb,
+                       Expression<T> expression,
+                       List<ParameterExpression<T>> parameters);
     }
 
     /**
@@ -889,10 +884,9 @@ public final class Restrictions {
 
         int getRequiredParameters();
 
-        @NonNull
-        Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
-                       @NonNull PersistentEntityCriteriaBuilder cb,
-                       @NonNull List<ParameterExpression<T>> parameters);
+        Predicate find(PersistentEntityRoot<?> entityRoot,
+                       PersistentEntityCriteriaBuilder cb,
+                       List<ParameterExpression<T>> parameters);
 
     }
 

@@ -23,6 +23,7 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             annotationMetadata,
             queryResult.getQuery(),
             queryResult.getParameterBindings().stream()
-                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
+                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : new String[0],
             map(queryResult.getParameterBindings()),
             rootEntity,
             resultType,
@@ -83,7 +84,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             annotationMetadata,
             queryResult.getQuery(),
             queryResult.getParameterBindings().stream()
-                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
+                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : new String[0],
             map(queryResult.getParameterBindings()),
             rootEntity,
             resultType,
@@ -179,18 +180,20 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         return joinPaths;
     }
 
-    private static class QueryResultParameterBinding implements QueryParameterBinding {
+    private static final class QueryResultParameterBinding implements QueryParameterBinding {
         private final io.micronaut.data.model.query.builder.QueryParameterBinding p;
         private final List<QueryParameterBinding> all;
 
         private boolean previousInitialized;
+        @Nullable
         private QueryParameterBinding previousPopulatedValueParameter;
 
-        public QueryResultParameterBinding(io.micronaut.data.model.query.builder.QueryParameterBinding p, List<QueryParameterBinding> all) {
+        private QueryResultParameterBinding(io.micronaut.data.model.query.builder.QueryParameterBinding p, List<QueryParameterBinding> all) {
             this.p = p;
             this.all = all;
         }
 
+        @Nullable
         @Override
         public String getName() {
             return p.getKey();
@@ -207,6 +210,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         }
 
         @Override
+        @Nullable
         public Class<?> getParameterConverterClass() {
             if (p.getConverterClassName() == null) {
                 return null;
@@ -220,12 +224,12 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         }
 
         @Override
-        public String[] getParameterBindingPath() {
+        public String @Nullable [] getParameterBindingPath() {
             return p.getParameterBindingPath();
         }
 
         @Override
-        public String[] getPropertyPath() {
+        public String @Nullable [] getPropertyPath() {
             return p.getPropertyPath();
         }
 
@@ -239,6 +243,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             return p.isRequiresPreviousPopulatedValue();
         }
 
+        @Nullable
         @Override
         public QueryParameterBinding getPreviousPopulatedValueParameter() {
             if (!previousInitialized) {
@@ -258,6 +263,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             return p.isExpandable();
         }
 
+        @Nullable
         @Override
         public Object getValue() {
             return p.getValue();

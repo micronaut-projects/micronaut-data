@@ -21,6 +21,7 @@ import io.micronaut.data.runtime.multitenancy.conf.DataSourceMultiTenancyEnabled
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
 import io.micronaut.data.runtime.multitenancy.TenantResolver;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -45,6 +46,7 @@ final class DefaultDataSourceTenantResolver implements DataSourceTenantResolver 
         this.tenantResolver = tenantResolver;
     }
 
+    @Nullable
     @Override
     public String resolveTenantDataSourceName() {
         Serializable tenantId = tenantResolver.resolveTenantIdentifier();

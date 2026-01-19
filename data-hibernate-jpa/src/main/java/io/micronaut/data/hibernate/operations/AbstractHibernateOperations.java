@@ -171,7 +171,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param parameterName The parameter name
      * @param value         The value
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value);
+    protected abstract void setParameter(Q query, String parameterName, @Nullable Object value);
 
     /**
      * Sets parameter into query.
@@ -181,7 +181,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value, Argument<?> argument);
+    protected abstract void setParameter(Q query, String parameterName, @Nullable Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -209,7 +209,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param parameterIndex The parameter index
      * @param value          The value
      */
-    protected abstract void setParameter(Q query, int parameterIndex, Object value);
+    protected abstract void setParameter(Q query, int parameterIndex, @Nullable Object value);
 
     /**
      * Sets parameter into query.
@@ -219,7 +219,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value          The value
      * @param argument       The argument
      */
-    protected abstract void setParameter(Q query, int parameterIndex, Object value, Argument<?> argument);
+    protected abstract void setParameter(Q query, int parameterIndex, @Nullable Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -382,6 +382,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 Iterator<String> iterator = projection.iterator();
                 return (new BeanIntrospectionMapper<Tuple, R>() {
                     @Override
+                    @Nullable
                     public Object read(Tuple tuple1, String alias) {
                         String propertyName = alias;
                         if (iterator.hasNext()) {
@@ -466,22 +467,24 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             int index = 1;
 
             @Override
-            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
                 return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
             }
 
             @Override
-            public Object convert(Object value, RuntimePersistentProperty<?> property) {
+            @Nullable
+            public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
                 return value;
             }
 
             @Override
-            public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+            @Nullable
+            public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
                 return value;
             }
 
             @Override
-            public void bindOne(QueryParameterBinding binding, Object value) {
+            public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
                 if (binding.getParameterIndex() != -1) {
                     int parameterIndex = binding.getParameterIndex();
@@ -611,6 +614,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         return rootGraph;
     }
 
+    @Nullable
     protected final FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(QueryHint.class).stream().filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null))).map(av -> av.enumValue("value", FlushModeType.class)).findFirst().orElse(Optional.empty()).orElse(null);
     }

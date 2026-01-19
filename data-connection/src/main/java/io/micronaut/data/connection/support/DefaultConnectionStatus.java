@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
     private final boolean isNew;
     private final ConnectionOperations<C> connectionOperations;
 
+    @Nullable
     private List<ConnectionSynchronization> connectionSynchronizations;
 
     public DefaultConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew, ConnectionOperations<C> connectionOperations) {
@@ -81,11 +83,32 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
 
     private void forEachSynchronizations(Consumer<ConnectionSynchronization> consumer) {
         if (connectionSynchronizations != null) {
+            List<Exception> exceptions = new ArrayList<>(connectionSynchronizations.size());
             ListIterator<ConnectionSynchronization> listIterator = connectionSynchronizations.listIterator(connectionSynchronizations.size());
             while (listIterator.hasPrevious()) {
-                consumer.accept(listIterator.previous());
+                try {
+                    consumer.accept(listIterator.previous());
+                } catch (Exception e) {
+                    exceptions.add(e);
+                }
+            }
+            if (!exceptions.isEmpty()) {
+                if (exceptions.size() == 1) {
+                    sneakyThrow(exceptions.get(0));
+                } else {
+                    IllegalStateException e = new IllegalStateException("Error executing connection synchronizations", exceptions.get(0));
+                    for (int i = 1; i < exceptions.size(); i++) {
+                        e.addSuppressed(exceptions.get(i));
+                    }
+                    throw e;
+                }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable, R> R sneakyThrow(Throwable t) throws T {
+        throw (T) t;
     }
 
     public void complete() {
