@@ -70,6 +70,8 @@ dependencies {
     testImplementation(libs.managed.jakarta.data.api)
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+
+    testAnnotationProcessor mnSerde.micronaut.serde.processor
 }
 
 micronaut {

@@ -45,6 +45,9 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     ApartmentViewRepository apartmentViewRepository
 
+    @Inject
+    BuildingViewRepository buildingViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -401,7 +404,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
         String[] sql = builder.buildCreateTableStatements(studentViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id,'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'classes': [SELECT JSON {'id': sc.id,'class': (SELECT JSON {'classID': c.id,'teacher': (SELECT JSON {'teachID': t.id,'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id,'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id, 'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'classes': [SELECT JSON {'id': sc.id, 'class': (SELECT JSON {'classID': c.id, 'teacher': (SELECT JSON {'teachID': t.id, 'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id, 'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
     }
 
     def "test_generate_create_apartment_view"() {
@@ -422,6 +425,17 @@ class OracleJdbcJsonViewSpec extends Specification {
         def result = apartmentViewRepository.findById(apartmentId)
         then:
         result.present
+    }
+
+    def "test_building_view_repository"() {
+        when:
+        def ap1Id = new ApartmentId(1, 2)
+        def ap1 = new ApartmentSubView(ap1Id)
+        def apartments = new ArrayList()
+        apartments.add(ap1)
+        def buildingView = new BuildingView(123, apartments)
+        then:
+        buildingViewRepository.save(buildingView)
     }
 
     def "test_generate_drop_json_vew"() {
