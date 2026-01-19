@@ -452,7 +452,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
                 .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(identity.getName()));
-            String entityPersistedPropertyName;
+            String entityPersistedPropertyName = "";
             if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = identity.getPersistedName();
             } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
@@ -487,7 +487,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 }
                 continue;
             } else {
-                entityPersistedPropertyName = entity.getPropertyByName(viewPropertyName).getPersistedName();
+                PersistentProperty property = entity.getPropertyByName(viewPropertyName);
+                if (property != null) {
+                    entityPersistedPropertyName = property.getPersistedName();
+                }
             }
             sb.append("'")
                 .append(viewPropertyName)
@@ -540,6 +543,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             sb.append(CLOSE_CURLY_BRACKET);
 
                             Association joinAssociation = (Association) entity.getPropertyByName(association.getName());
+                            if (joinAssociation == null) {
+                                return;
+                            }
 
                             String joinTableName = joinAssociation.getAnnotationMetadata()
                                 .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
@@ -571,7 +577,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (column.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                     entityPersistedPropertyName = column.getPersistedName();
                 } else {
-                    entityPersistedPropertyName = entity.getPropertyByName(columnPropertyName).getPersistedName();
+                    PersistentProperty property = entity.getPropertyByName(columnPropertyName);
+                    if (property == null) {
+                        return;
+                    }
+                    entityPersistedPropertyName = property.getPersistedName();
                 }
                 sb.append("'")
                     .append(columnPropertyName)
@@ -621,6 +631,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
 
+        if (associationOwnerEntity == null) {
+            return "";
+        }
         PersistentAssociationPath joinAssociationPath = createAssociationPath(associationOwnerEntity, association);
         QueryState queryState = createQueryState(associatedViewEntity);
         buildJoin(null, sb, queryState, joinAssociationPath, associationOwnerEntity, associatedEntity.getAliasName(), associationOwnerEntity.getAliasName());
@@ -1290,6 +1303,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
                              String lastJoinAlias) {
+        if (joinType == null) {
+            joinType = JoinType.INNER.name();
+        }
         Association association = joinAssociation.getAssociation();
         List<Association> joinAssociationsPath = joinAssociation.getAssociations();
         PersistentEntity associatedEntity = association.getAssociatedEntity();
@@ -1300,7 +1316,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         boolean isManyToMany = association.getKind() == Relation.Kind.MANY_TO_MANY;
 
         if (isManyToMany || association.getKind() == Relation.Kind.MANY_TO_MANY || (association.isForeignKey() && StringUtils.isEmpty(mappedBy) && CollectionUtils.isEmpty(joinColumnValues))) {
-            PersistentProperty identity = associatedEntity.getIdentity();
             if (!associatedEntity.hasIdentity()) {
                 throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
             }
@@ -1543,16 +1558,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private PersistentAssociationPath createAssociationPath(PersistentEntity entity, Association association) {
         if (entity.getPropertyByName(association.getName()) != null) {
-            return new PersistentAssociationPath(
-                new ArrayList<>(),
-                (Association) entity.getPropertyByName(association.getName())
-            );
-        } else {
-            return new PersistentAssociationPath(
-                new ArrayList<>(),
-                association
-            );
+            PersistentProperty property = entity.getPropertyByName(association.getName());
+            if (property != null) {
+                return new PersistentAssociationPath(
+                    new ArrayList<>(),
+                    (Association) property
+                );
+            }
         }
+        return new PersistentAssociationPath(
+            new ArrayList<>(),
+            association
+        );
     }
 
     private QueryState createQueryState(PersistentEntity entity) {
@@ -1564,7 +1581,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
             @Override
             public Predicate predicate() {
-                return null;
+                return new RenderablePredicate() {
+                    @Override
+                    void render(StringBuilder query, PropertyParameterCreator propertyParameterCreator) {
+
+                    }
+                };
             }
 
             @Override
