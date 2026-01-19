@@ -195,7 +195,9 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.6</strong><span>Native queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateProcedures"><a href="#hibernateProcedures"><strong>4.7</strong><span>Procedures</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateStreaming"><a href="#hibernateStreaming"><strong>4.7</strong><span>Streaming Large Result Sets</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateProcedures"><a href="#hibernateProcedures"><strong>4.8</strong><span>Procedures</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernateReactive"><a href="#hibernateReactive"><strong>5</strong><span>Micronaut Data Hibernate Reactive</span></a></div>
         
@@ -416,6 +418,7 @@
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
@@ -427,6 +430,7 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -443,6 +447,7 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
+import java.util.stream.Stream
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -460,6 +465,8 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
+
+import java.util.stream.Stream
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -6737,6 +6744,7 @@ class Book {
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
@@ -6748,6 +6756,7 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -6764,6 +6773,7 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
+import java.util.stream.Stream
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -6781,6 +6791,8 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
+
+import java.util.stream.Stream
 
 @Repository // <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
@@ -7308,7 +7320,256 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-<h2 id="hibernateProcedures"><a class="anchor" href="#hibernateProcedures"></a>4.7 Procedures</h2>
+<h2 id="hibernateStreaming"><a class="anchor" href="#hibernateStreaming"></a>4.7 Streaming Large Result Sets</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/hibernate/hibernateStreaming.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>When dealing with large datasets in database queries, loading all results into memory at once can lead to OutOfMemoryError (OOM). Micronaut Data JPA Hibernate provides support for streaming query results using <code>java.util.stream.Stream</code>, allowing you to process data incrementally without loading everything into memory.</p>
+</div>
+<div class="paragraph">
+<p>This guide explains how to use streaming effectively, avoid common pitfalls, and manage resources properly.</p>
+</div>
+<div class="sect2">
+<h3 id="_why_streaming_can_cause_oom_without_detachment">Why Streaming Can Cause OOM Without Detachment</h3>
+<div class="paragraph">
+<p>Hibernate maintains a first-level cache (the session cache) that keeps track of all loaded entities. When streaming large result sets without detaching entities, this cache grows indefinitely, potentially leading to OOM errors. Each entity loaded into the session remains managed, consuming memory until the session is cleared or closed.</p>
+</div>
+<div class="paragraph">
+<p>To mitigate this, you must detach entities after processing or periodically clear the session.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_transactionoperations_to_keep_the_session_open">Using TransactionOperations to Keep the Session Open</h3>
+<div class="paragraph">
+<p>Streams require an open Hibernate session to fetch data lazily. Use <code>TransactionOperations</code> to execute operations within a transaction, ensuring the session remains open while consuming the stream.</p>
+</div>
+<div class="paragraph">
+<p>Loading stream using programmatic transactions:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">        long entityCount = transactionOperations.executeRead( status -&gt; {
+            Session session = status.getConnection();
+            long count;
+            // Execute query with annotated FetchSize
+            try (Stream&lt;User&gt; s = userRepository.listAll()) {
+                AtomicLong n = new AtomicLong();
+                count = s
+                    .peek(p -&gt; {
+                        session.detach(p);
+                        if ((n.incrementAndGet() % 50_000) == 0) {
+                            session.clear();
+                        }
+                    })
+                    .map(p -&gt; 1L)
+                    .reduce(0L, Long::sum);
+            }
+            return count;
+        });</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">        var entityCount: Long = transactionOperations.executeRead { status -&gt;
+            val session = status.connection
+            var count = 0L
+            userRepository.listAll().use { stream -&gt;
+                val n = AtomicLong()
+                stream.forEach { p -&gt;
+                    session.detach(p)
+                    if (n.incrementAndGet() % 50_000L == 0L) {
+                        session.clear()
+                    }
+                    count++
+                }
+            }
+            count
+        }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">        long entityCount = transactionOperations.executeRead( status -&gt; {
+            Session session = status.getConnection()
+            long count
+            // Execute query with annotated FetchSize
+            try (Stream&lt;User&gt; s = userRepository.listAll()) {
+                AtomicLong n = new AtomicLong()
+                count = s
+                        .peek(p -&gt; {
+                            session.detach(p)
+                            if ((n.incrementAndGet() % 50_000) == 0) {
+                                session.clear()
+                            }
+                        })
+                        .map(p -&gt; 1L)
+                        .reduce(0L, Long::sum)
+            }
+            return count
+        })</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_fetch_for_fetch_size_and_read_only_queries">Using @Fetch for Fetch Size and Read-Only Queries</h3>
+<div class="paragraph">
+<p>The <code>@Fetch</code> annotation sets the JDBC fetch size, controlling how many rows are fetched from the database at a time. This optimizes memory usage for large streams.</p>
+</div>
+<div class="paragraph">
+<p>Example repository:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    /**
+     * Retrieves all users from the data store in batches.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * The fetch size is set to 1500, which controls the number of rows fetched from the database at a time.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all enabled users
+     */
+    @Fetch(1500)
+    Stream&lt;User&gt; listAll();
+
+    /**
+     * Retrieves all users from the data store.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all users
+     */
+    Stream&lt;User&gt; queryAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    /**
+     * Retrieves all users from the data store in batches.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * The fetch size is set to 1500, which controls the number of rows fetched from the database at a time.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all enabled users
+     */
+    @Fetch(1500)
+    fun listAll(): Stream&lt;User&gt;
+
+    /**
+     * Retrieves all users from the data store.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all users
+     */
+    fun queryAll(): Stream&lt;User&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    /**
+     * Retrieves all users from the data store in batches.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * The fetch size is set to 1500, which controls the number of rows fetched from the database at a time.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all enabled users
+     */
+    @Fetch(1500)
+    Stream&lt;User&gt; listAll()
+
+    /**
+     * Retrieves all users from the data store.
+     *
+     * The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+     * It is the caller's responsibility to close the Stream to release any underlying resources.
+     *
+     * @return a Stream of all users
+     */
+    Stream&lt;User&gt; queryAll()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For the operation without <a href="../api/io/micronaut/data/annotation/Fetch.html">Fetch</a> annotation telling what fetch size should be, the application will try to
+read from <code>jpa.&lt;datasource&gt;.properties.default-fetch-size</code> configuration and if not present fallback to default value 1000.</p>
+</div>
+<div class="paragraph">
+<p>Streams are executed in read-only mode by default for performance.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Hibernate Reactive: @Fetch is not applicable. Hibernate Reactive uses non-blocking drivers; there is no fetch size API on reactive queries.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_detaching_entities_per_row_andor_periodic_session_clear">Detaching Entities Per Row and/or Periodic Session Clear</h3>
+<div class="paragraph">
+<p>Detach entities after processing to remove them from the session cache is used in the example above.
+It also shows how to periodically clear the session which might not be required if entities are being detached.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_dto_or_native_projection_streams">Using DTO or Native Projection Streams</h3>
+<div class="paragraph">
+<p>DTO projections or native queries returning DTOs do not create managed entities, avoiding session cache issues:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    @Fetch(1000)
+    Stream&lt;BookDTO&gt; listAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    @Fetch(1000)
+    fun listAll(): Stream&lt;BookDTO&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    @Fetch(1000)
+    abstract Stream&lt;BookDTO&gt; listAll();</code></pre>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_warnings">Warnings</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Do not access lazy associations after detaching</strong>: Detached entities cannot load lazy relationships.</p>
+</li>
+<li>
+<p><strong>Consume the stream fully within the transaction</strong>: Partial consumption may leave the session open unexpectedly.</p>
+</li>
+<li>
+<p><strong>Do not leak the stream beyond the method</strong>: Return streams only if consumed immediately; otherwise, convert to lists.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<h2 id="hibernateProcedures"><a class="anchor" href="#hibernateProcedures"></a>4.8 Procedures</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/hibernate/hibernateProcedures.adoc"'>
