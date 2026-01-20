@@ -50,6 +50,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedDataOperation;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -160,6 +161,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -237,6 +239,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 r2dbcExceptionMappers.put(dialect, dialectR2dbcExceptionMapperList);
             }
         }
+
+        this.defaultFetchSize = configuration.getDefaultFetchSize();
     }
 
     @Override
@@ -542,6 +546,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return executeReadFlux(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
+                // Apply fetch size hint if present (driver may ignore)
+                int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+                if (fetchSize > 0) {
+                    try {
+                        statement = statement.fetchSize(fetchSize);
+                    } catch (Throwable ignored) {
+                        // Some drivers may not support fetchSize; ignore
+                    }
+                }
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);

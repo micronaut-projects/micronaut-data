@@ -7,6 +7,7 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
+import java.util.stream.Stream
 
 @Repository // <1>
 interface BookRepository : CrudRepository<Book, Long> { // <2>
@@ -134,6 +135,11 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     @Query(value = "select * from books b where b.title like :title limit 5", nativeQuery = true)
     fun findNativeBooks(title: String): List<Book>
     // end::native[]
+
+    // tag::stream_projection[]
+    @Fetch(1000)
+    fun listAll(): Stream<BookDTO>
+    // end::stream_projection[]
 
 // tag::repository[]
 }
