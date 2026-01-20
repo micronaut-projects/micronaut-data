@@ -133,11 +133,9 @@ public final class SqlSchemaUtils {
                     -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                boolean areLeftColumnsPrimary = association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY;
-                boolean areRightColumnsPrimary = association.getKind() == Relation.Kind.MANY_TO_ONE || association.getKind() == Relation.Kind.MANY_TO_MANY;
                 List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>();
-                addColumns(entity, namingStrategy, columns, leftProperties, leftJoinTableColumns, areLeftColumnsPrimary, primaryKeyColumns);
-                addColumns(entity, namingStrategy, columns, rightProperties, rightJoinTableColumns, areRightColumnsPrimary, primaryKeyColumns);
+                addIdentityColumns(entity, namingStrategy, columns, leftProperties, leftJoinTableColumns, primaryKeyColumns);
+                addIdentityColumns(entity, namingStrategy, columns, rightProperties, rightJoinTableColumns, primaryKeyColumns);
                 SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, primaryKeyColumns, columns);
                 tables.add(joinTable);
             }
@@ -177,25 +175,17 @@ public final class SqlSchemaUtils {
         return tables;
     }
 
-    private static void addColumns(PersistentEntity entity, NamingStrategy namingStrategy, List<SqlColumnMapping> columns, List<PersistentPropertyPath> rightProperties, List<String> rightJoinTableColumns, boolean areRightColumnsPrimary, List<SqlColumnMapping> primaryKeyColumns) {
+    private static void addIdentityColumns(PersistentEntity entity, NamingStrategy namingStrategy, List<SqlColumnMapping> columns, List<PersistentPropertyPath> rightProperties, List<String> rightJoinTableColumns, List<SqlColumnMapping> primaryKeyColumns) {
         if (rightJoinTableColumns.size() == rightProperties.size()) {
             for (int i = 0; i < rightJoinTableColumns.size(); i++) {
                 PersistentPropertyPath pp = rightProperties.get(i);
                 String columnName = rightJoinTableColumns.get(i);
-                if (areRightColumnsPrimary) {
-                    primaryKeyColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
-                } else {
-                    columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                }
+                primaryKeyColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
             }
         } else {
             for (PersistentPropertyPath pp : rightProperties) {
                 String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                if (areRightColumnsPrimary) {
-                    primaryKeyColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
-                } else {
-                    columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                }
+                primaryKeyColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
             }
         }
     }
