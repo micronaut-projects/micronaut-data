@@ -1,25 +1,23 @@
+package example
 
-package example;
+import io.micronaut.data.annotation.Fetch
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.repository.CrudRepository
+import jakarta.validation.constraints.NotNull
+import org.jspecify.annotations.NonNull
 
-import io.micronaut.data.annotation.Fetch;
-import org.jspecify.annotations.NonNull;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.CrudRepository;
-
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Stream
 
 @Repository
-public interface UserRepository extends CrudRepository<User, Long> {
+interface UserRepository extends CrudRepository<User, Long> {
 
     @Override
     @Query("UPDATE User SET enabled = false WHERE id = :id")
-    void deleteById(@NonNull @NotNull Long id);
+    void deleteById(@NonNull @NotNull Long id)
 
     @Query("FROM User user WHERE enabled = false")
-    List<User> findDisabled();
+    List<User> findDisabled()
 
     // tag::fetch_size_streaming[]
 
@@ -33,7 +31,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
      * @return a Stream of all enabled users
      */
     @Fetch(1500)
-    Stream<User> listAll();
+    Stream<User> listAll()
 
     /**
      * Retrieves all users from the data store.
@@ -43,8 +41,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
      *
      * @return a Stream of all users
      */
-    Stream<User> queryAll();
+    Stream<User> queryAll()
 
     // end::fetch_size_streaming[]
 }
-

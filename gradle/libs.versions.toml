@@ -27,7 +27,7 @@ groovy = "5.0.3"
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M1"
 
-spring-data = "4.0.1"
+spring-data = "4.0.2"
 
 # Lombok
 
@@ -35,7 +35,7 @@ lombok = "1.18.42"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2025.1.1"
+benchmark-spring-data = "2025.1.2"
 spock = "2.4-groovy-5.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
@@ -49,8 +49,8 @@ spring-boot-gradle-plugin = "4.0.1"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.3.1"
 errorprone-gradle-plugin = "4.4.0"
-nullaway = "0.12.15"
-error_prone_core = "2.45.0"
+nullaway = "0.13.0"
+error_prone_core = "2.46.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
