@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.jdbc.oraclexe;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.StreamingPersonRepository;
 
-@JdbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresStreamingPersonRepository extends StreamingPersonRepository {
+@JdbcRepository(dialect = Dialect.ORACLE)
+public interface OracleStreamingPersonRepository extends StreamingPersonRepository {
 }

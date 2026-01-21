@@ -9,6 +9,12 @@ tasks.register("testExamples") {
     dependsOn "test"
 }
 
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
+}
+
 dependencies {
     micronautBoms(
             platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
