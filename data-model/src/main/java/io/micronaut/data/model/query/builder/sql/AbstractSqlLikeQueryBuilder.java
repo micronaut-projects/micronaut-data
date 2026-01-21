@@ -690,7 +690,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(order.getExpression()).getPropertyPath());
+            var expr = order.getExpression();
+            if (expr instanceof io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression<?> ue) {
+                expr = ue.getExpression();
+            }
+            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());
             String currentAlias = propertyPath.getTableAlias();
             boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
             if (ignoreCase) {

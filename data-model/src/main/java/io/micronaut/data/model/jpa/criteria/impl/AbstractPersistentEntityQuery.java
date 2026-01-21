@@ -155,7 +155,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
         if (orders != null) {
             for (Order o : orders) {
-                joiner.joinIfNeeded(requireProperty(o.getExpression()));
+                var expr = o.getExpression();
+                if (expr instanceof io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression<?> ue) {
+                    expr = ue.getExpression();
+                }
+                joiner.joinIfNeeded(requireProperty(expr));
             }
         }
         Map<String, JoinPath> joinPaths = new LinkedHashMap<>();
