@@ -456,35 +456,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = identity.getPersistedName();
             } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
-                if (isTopLevel) {
-                    sb.append("'_id': {");
-                }
-                Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
-                List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity).getFirst().primaryKeyColumns();
-                if (fields.length != columnMappings.size()) {
-                    return;
-                }
-                for (int i = 0; i < fields.length; i++) {
-                    String propertyPersistedName = columnMappings.get(i).getName();
-                    String propertyName = fields[i].getName();
-                    sb.append("'")
-                        .append(propertyName)
-                        .append("': ")
-                        .append(alias)
-                        .append(DOT)
-                        .append(propertyPersistedName);
-                    if (i != fields.length - 1) {
-                        sb.append(COMMA)
-                            .append(SPACE);
-                    }
-                }
-                if (isTopLevel) {
-                    sb.append('}');
-                }
-                if (it.hasNext() || !columns.isEmpty()) {
-                    sb.append(COMMA)
-                        .append(SPACE);
-                }
+                processEmbeddedId(sb, entity, identity, alias, it, columns, isTopLevel);
                 continue;
             } else {
                 PersistentProperty property = entity.getPropertyByName(viewPropertyName);
@@ -511,67 +483,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .orElse(column.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(column.getName()));
             if (column instanceof Association association) {
-                Relation.Kind kind = association.getKind();
-                Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(association.getAssociatedEntity());
-                if (associatedEntityOptional.isEmpty()) {
-                    return;
-                }
-                PersistentEntity associatedEntity = associatedEntityOptional.get();
-                switch (kind) {
-                    case ONE_TO_ONE, MANY_TO_ONE, EMBEDDED ->
-                        sb.append("'")
-                            .append(columnPropertyName)
-                            .append("': ")
-                            .append(OPEN_BRACKET)
-                            .append(createJsonSubViewQuery(association))
-                            .append(CLOSE_BRACKET);
-                    case ONE_TO_MANY, MANY_TO_MANY -> {
-                        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && hasEmbeddedId(associatedEntity)) {
-                            sb.append(SPACE)
-                                .append("UNNEST")
-                                .append(SPACE)
-                                .append(OPEN_BRACKET)
-                                .append(SELECT_JSON_CLAUSE)
-                                .append(OPEN_CURLY_BRACKET);
-
-                            sb.append("'")
-                                .append(columnPropertyName)
-                                .append("': [")
-                                .append(createJsonSubViewQuery(association))
-                                .append("]");
-
-                            sb.append(CLOSE_CURLY_BRACKET);
-
-                            Association joinAssociation = (Association) entity.getPropertyByName(association.getName());
-                            if (joinAssociation == null) {
-                                return;
-                            }
-
-                            String joinTableName = joinAssociation.getAnnotationMetadata()
-                                .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
-                                .orElseGet(() -> getMappedName(entity.getNamingStrategy(), joinAssociation));
-
-                            sb.append(FROM_CLAUSE)
-                                .append(joinTableName)
-                                .append(SPACE)
-                                .append("WITH UPDATE INSERT DELETE");
-
-                            PersistentAssociationPath joinAssociationPath = createAssociationPath(entity, association);
-                            QueryState queryState = createQueryState(association.getAssociatedEntity());
-                            buildJoin(JoinType.LEFT.name(), sb, queryState, joinAssociationPath, entity, joinAssociation.getAssociatedEntity().getAliasName(), entity.getAliasName());
-                            sb.append(CLOSE_BRACKET);
-                        } else {
-                            sb.append("'")
-                                .append(columnPropertyName)
-                                .append("': [")
-                                .append(createJsonSubViewQuery(association))
-                                .append("]");
-                        }
-                    }
-                    default -> {
-                        return;
-                    }
-                }
+                processAssociation(sb, association, entity, columnPropertyName);
             } else if (column.getDataType() != DataType.OBJECT) {
                 String entityPersistedPropertyName;
                 if (column.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
@@ -638,6 +550,102 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         QueryState queryState = createQueryState(associatedViewEntity);
         buildJoin(null, sb, queryState, joinAssociationPath, associationOwnerEntity, associatedEntity.getAliasName(), associationOwnerEntity.getAliasName());
         return sb.toString();
+    }
+
+    private void processEmbeddedId(StringBuilder sb, PersistentEntity entity, PersistentProperty identity, String alias, Iterator<PersistentProperty> it, List<PersistentProperty> columns, boolean isTopLevel) {
+        if (isTopLevel) {
+            sb.append("'_id': {");
+        }
+        Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
+        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity).getFirst().primaryKeyColumns();
+        if (fields.length != columnMappings.size()) {
+            throw new IllegalStateException("Declared fields array length (" + fields.length + ") != table mapping primary key array length (" + columnMappings.size() + ").");
+        }
+        for (int i = 0; i < fields.length; i++) {
+            String propertyPersistedName = columnMappings.get(i).getName();
+            String propertyName = fields[i].getName();
+            sb.append("'")
+                .append(propertyName)
+                .append("': ")
+                .append(alias)
+                .append(DOT)
+                .append(propertyPersistedName);
+            if (i != fields.length - 1) {
+                sb.append(COMMA)
+                    .append(SPACE);
+            }
+        }
+        if (isTopLevel) {
+            sb.append('}');
+        }
+        if (it.hasNext() || !columns.isEmpty()) {
+            sb.append(COMMA)
+                .append(SPACE);
+        }
+    }
+
+    private void processAssociation(StringBuilder sb, Association association, PersistentEntity entity, String columnPropertyName) {
+        Relation.Kind kind = association.getKind();
+        Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(association.getAssociatedEntity());
+        if (associatedEntityOptional.isEmpty()) {
+            throw new IllegalStateException("Associated entity not found, set the entity field inside @JsonView annotation.");
+        }
+        PersistentEntity associatedEntity = associatedEntityOptional.get();
+        switch (kind) {
+            case ONE_TO_ONE, MANY_TO_ONE, EMBEDDED ->
+                sb.append("'")
+                    .append(columnPropertyName)
+                    .append("': ")
+                    .append(OPEN_BRACKET)
+                    .append(createJsonSubViewQuery(association))
+                    .append(CLOSE_BRACKET);
+            case ONE_TO_MANY, MANY_TO_MANY -> {
+                if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && hasEmbeddedId(associatedEntity)) {
+                    sb.append(SPACE)
+                        .append("UNNEST")
+                        .append(SPACE)
+                        .append(OPEN_BRACKET)
+                        .append(SELECT_JSON_CLAUSE)
+                        .append(OPEN_CURLY_BRACKET);
+
+                    sb.append("'")
+                        .append(columnPropertyName)
+                        .append("': [")
+                        .append(createJsonSubViewQuery(association))
+                        .append("]");
+
+                    sb.append(CLOSE_CURLY_BRACKET);
+
+                    Association joinAssociation = (Association) entity.getPropertyByName(association.getName());
+                    if (joinAssociation == null) {
+                        throw new IllegalStateException("Join association missing");
+                    }
+
+                    String joinTableName = joinAssociation.getAnnotationMetadata()
+                        .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+                        .orElseGet(() -> getMappedName(entity.getNamingStrategy(), joinAssociation));
+
+                    sb.append(FROM_CLAUSE)
+                        .append(joinTableName)
+                        .append(SPACE)
+                        .append("WITH UPDATE INSERT DELETE");
+
+                    PersistentAssociationPath joinAssociationPath = createAssociationPath(entity, association);
+                    QueryState queryState = createQueryState(association.getAssociatedEntity());
+                    buildJoin(JoinType.LEFT.name(), sb, queryState, joinAssociationPath, entity, joinAssociation.getAssociatedEntity().getAliasName(), entity.getAliasName());
+                    sb.append(CLOSE_BRACKET);
+                } else {
+                    sb.append("'")
+                        .append(columnPropertyName)
+                        .append("': [")
+                        .append(createJsonSubViewQuery(association))
+                        .append("]");
+                }
+            }
+            default -> {
+                throw new IllegalStateException("Unsupported relation type");
+            }
+        }
     }
 
     private boolean hasEmbeddedId(PersistentEntity entity) {
@@ -891,7 +899,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " NOT NULL DEFAULT SYS_GUID()";
                 } else if (type == IDENTITY) {
                     if (isPk) {
-//                        column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                         column += " GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                     } else {
                         column += " NOT NULL";
