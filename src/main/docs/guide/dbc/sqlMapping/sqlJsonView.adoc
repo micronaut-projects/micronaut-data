@@ -72,13 +72,15 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
 <5> Column matching, specified by ann:io.micronaut.data.annotation.JoinColumn[]
 <6> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
 
+More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
+
 ==== Operations supported
 
 Users can specify sql operations supported for `JsonView` and `JsonSubView` using the `operations` field, if not specified, it defaults to `{ INSERT, UPDATE, DELETE }`.
 
 snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
-More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/using-json-relational-duality-views.html/[link]
+More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
 ==== Optimistic Locking
 
