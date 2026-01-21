@@ -456,7 +456,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = identity.getPersistedName();
             } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
-                processEmbeddedId(sb, entity, identity, alias, it, columns, isTopLevel);
+                processEmbeddedIdPropertyForJsonView(sb, entity, identity, alias, it, columns, isTopLevel);
                 continue;
             } else {
                 PersistentProperty property = entity.getPropertyByName(viewPropertyName);
@@ -552,7 +552,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return sb.toString();
     }
 
-    private void processEmbeddedId(StringBuilder sb, PersistentEntity entity, PersistentProperty identity, String alias, Iterator<PersistentProperty> it, List<PersistentProperty> columns, boolean isTopLevel) {
+    private void processEmbeddedIdPropertyForJsonView(StringBuilder sb, PersistentEntity entity, PersistentProperty identity, String alias, Iterator<PersistentProperty> it, List<PersistentProperty> columns, boolean isTopLevel) {
         if (isTopLevel) {
             sb.append("'_id': {");
         }
