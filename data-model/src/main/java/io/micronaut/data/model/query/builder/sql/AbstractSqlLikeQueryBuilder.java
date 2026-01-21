@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -691,7 +692,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         while (i.hasNext()) {
             Order order = i.next();
             var expr = order.getExpression();
-            if (expr instanceof UnaryExpression<?> ue) {
+            if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
                 expr = ue.getExpression();
             }
             QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());
