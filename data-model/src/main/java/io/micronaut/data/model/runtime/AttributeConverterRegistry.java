@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 /**
@@ -34,7 +33,7 @@ public interface AttributeConverterRegistry {
      * @param converterClass The converter class.
      * @return new instance of type converter.
      */
-    @NonNull
-    AttributeConverter<Object, Object> getConverter(@NonNull Class<?> converterClass);
+    
+    AttributeConverter<Object, Object> getConverter(Class<?> converterClass);
 
 }

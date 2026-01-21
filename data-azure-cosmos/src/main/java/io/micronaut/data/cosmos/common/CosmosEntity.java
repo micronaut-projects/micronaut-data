@@ -17,8 +17,8 @@ package io.micronaut.data.cosmos.common;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -55,6 +56,7 @@ public final class CosmosEntity {
 
     private final String containerName;
     private final String partitionKey;
+    @Nullable
     private final String versionField;
 
     private CosmosEntity(@NonNull String containerName, @NonNull String partitionKey, @Nullable String versionField) {
@@ -80,6 +82,7 @@ public final class CosmosEntity {
     /**
      * @return the version field, if any defined on the entity using {@link ETag} annotation
      */
+    @Nullable
     public String getVersionField() {
         return versionField;
     }
@@ -92,7 +95,7 @@ public final class CosmosEntity {
      * @return the {@link CosmosEntity} holding mapped entity/container metadata
      */
     @NonNull
-    public static CosmosEntity create(@NonNull RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
+    public static CosmosEntity create(@NonNull RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration. @Nullable CosmosContainerSettings cosmosContainerSettings) {
         return COSMOS_ENTITY_BY_PERSISTENT_ENTITY.computeIfAbsent(runtimePersistentEntity, e -> createCosmosEntity(runtimePersistentEntity, cosmosContainerSettings));
     }
 
@@ -104,10 +107,10 @@ public final class CosmosEntity {
      */
     @NonNull
     public static CosmosEntity get(@NonNull RuntimePersistentEntity<?> runtimePersistentEntity) {
-        return COSMOS_ENTITY_BY_PERSISTENT_ENTITY.get(runtimePersistentEntity);
+        return Objects.requireNonNull(COSMOS_ENTITY_BY_PERSISTENT_ENTITY.get(runtimePersistentEntity));
     }
 
-    private static CosmosEntity createCosmosEntity(RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
+    private static CosmosEntity createCosmosEntity(RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration. @Nullable CosmosContainerSettings cosmosContainerSettings) {
         String containerName = runtimePersistentEntity.getPersistedName();
         String partitionKey = getPartitionKey(runtimePersistentEntity, cosmosContainerSettings);
         String versionField = null;
@@ -123,7 +126,7 @@ public final class CosmosEntity {
         return new CosmosEntity(containerName, partitionKey, versionField);
     }
 
-    private static String getPartitionKey(RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings) {
+    private static String getPartitionKey(RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration. @Nullable CosmosContainerSettings cosmosContainerSettings) {
         String partitionKey;
         if (cosmosContainerSettings != null && StringUtils.isNotEmpty(cosmosContainerSettings.getPartitionKeyPath())) {
             partitionKey = cosmosContainerSettings.getPartitionKeyPath();
@@ -131,6 +134,7 @@ public final class CosmosEntity {
             partitionKey = findPartitionKey(runtimePersistentEntity);
         }
         if (StringUtils.isNotEmpty(partitionKey)) {
+            Objects.requireNonNull(partitionKey);
             if (!partitionKey.startsWith(Constants.PARTITION_KEY_SEPARATOR)) {
                 partitionKey = Constants.PARTITION_KEY_SEPARATOR + partitionKey;
             }
@@ -153,8 +157,8 @@ public final class CosmosEntity {
     private static String findPartitionKey(RuntimePersistentEntity<?> runtimePersistentEntity) {
         String partitionKeyPath = "";
         List<PersistentProperty> properties = new ArrayList<>(runtimePersistentEntity.getPersistentProperties());
-        PersistentProperty identity = runtimePersistentEntity.getIdentity();
-        if (identity != null) {
+        if (runtimePersistentEntity.hasIdentity()) {
+            PersistentProperty identity = runtimePersistentEntity.getIdentity();
             // check identity, we support only Short, Integer, Long, String and UUID
             // because we convert it to String when persisting and back when reading
             validateIdentity(runtimePersistentEntity, identity);

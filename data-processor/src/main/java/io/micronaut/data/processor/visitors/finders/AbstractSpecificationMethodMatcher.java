@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 
@@ -45,16 +44,20 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
         return DEFAULT_POSITION - 200;
     }
 
-    protected final boolean isQuerySpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_QUERY);
+    protected final boolean isQuerySpecification(MethodMatchContext methodMatchContext) {
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_QUERY);
     }
 
-    protected final boolean isDeleteSpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_DELETE);
+    protected final boolean isDeleteSpecification(MethodMatchContext methodMatchContext) {
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_DELETE);
     }
 
-    protected final boolean isUpdateSpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_UPDATE);
+    protected final boolean isUpdateSpecification(MethodMatchContext methodMatchContext) {
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_UPDATE);
+    }
+
+    private boolean isPredicateSpecification(MethodMatchContext methodMatchContext) {
+        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_CONSTRAINT);
     }
 
 }

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -38,90 +37,89 @@ import reactor.core.publisher.Mono;
 public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryOperations {
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Object id);
+    <T> Mono<T> findOne(Class<T> type,  Object id);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
+    <T> Mono<Boolean> exists(PreparedQuery<T, Boolean> preparedQuery);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
+    <T> Mono<T> findOptional(Class<T> type,  Object id);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T, R> Mono<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T, R> Mono<R> findOptional(PreparedQuery<T, R> preparedQuery);
 
     @Override
-    @NonNull
+    
     <T> Flux<T> findAll(PagedQuery<T> pagedQuery);
 
     @Override
-    @NonNull
+    
     @SingleResult
     <T> Mono<Long> count(PagedQuery<T> pagedQuery);
 
     @Override
-    @NonNull
-    <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
+    
+    <T, R> Flux<R> findAll(PreparedQuery<T, R> preparedQuery);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<T> persist(@NonNull InsertOperation<T> operation);
+    <T> Mono<T> persist(InsertOperation<T> operation);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<T> update(@NonNull UpdateOperation<T> operation);
+    <T> Mono<T> update(UpdateOperation<T> operation);
 
     @Override
-    @NonNull
-    <T> Flux<T> updateAll(@NonNull UpdateBatchOperation<T> operation);
+    
+    <T> Flux<T> updateAll(UpdateBatchOperation<T> operation);
 
     @Override
-    @NonNull
-    <T> Flux<T> persistAll(@NonNull InsertBatchOperation<T> operation);
+    
+    <T> Flux<T> persistAll(InsertBatchOperation<T> operation);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    Mono<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
+    Mono<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    Mono<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery);
+    Mono<Number> executeDelete(PreparedQuery<?, Number> preparedQuery);
 
-    @NonNull
     @Override
-    default <R> Flux<R> execute(@NonNull  PreparedQuery<?, R> preparedQuery) {
+    default <R> Flux<R> execute(PreparedQuery<?, R> preparedQuery) {
         return Flux.from(ReactiveRepositoryOperations.super.execute(preparedQuery));
     }
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation);
+    <T> Mono<Number> delete(DeleteOperation<T> operation);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <T> Mono<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
+    <T> Mono<Number> deleteAll(DeleteBatchOperation<T> operation);
 
     @Override
-    @NonNull
+    
     @SingleResult
-    <R> Mono<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
+    <R> Mono<Page<R>> findPage(PagedQuery<R> pagedQuery);
 
 }

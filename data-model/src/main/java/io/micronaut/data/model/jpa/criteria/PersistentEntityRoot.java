@@ -16,12 +16,13 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import jakarta.persistence.criteria.Root;
+
+import java.util.Objects;
 
 /**
  * The persistent entity {@link Root}.
@@ -39,11 +40,11 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @param <Y> The id type
      * @return The ID expression
      */
-    @NonNull
+
     default <Y> IExpression<Y> id() {
         PersistentEntity persistentEntity = getPersistentEntity();
         if (persistentEntity.hasIdentity()) {
-            return get(persistentEntity.getIdentity());
+            return get(Objects.requireNonNull(persistentEntity.getIdentity()));
         } else if (persistentEntity.hasCompositeIdentity()) {
             return new IdExpression<>(this);
         }
@@ -56,14 +57,9 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @param <Y> The version type
      * @return The version expression
      */
-    @NonNull
+
     default <Y> PersistentPropertyPath<Y> version() {
-        PersistentEntity persistentEntity = getPersistentEntity();
-        PersistentProperty version = persistentEntity.getVersion();
-        if (version == null) {
-            throw new IllegalStateException("No version is present");
-        }
-        return get(version);
+        return get(getPersistentEntity().getVersion());
     }
 
     /**
@@ -74,8 +70,8 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @return The property expression
      * @since 4.8.0
      */
-    @NonNull
-    default <Y> PersistentPropertyPath<Y> get(@NonNull PersistentProperty persistentProperty) {
+
+    default <Y> PersistentPropertyPath<Y> get(PersistentProperty persistentProperty) {
         return get(persistentProperty.getName());
     }
 

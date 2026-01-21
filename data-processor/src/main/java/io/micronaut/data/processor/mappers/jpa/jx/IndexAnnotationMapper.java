@@ -17,7 +17,6 @@ package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -35,13 +34,11 @@ import java.util.function.Function;
  * @since 2.4
  */
 public class IndexAnnotationMapper implements NamedAnnotationMapper {
-
     private static final Function<String, String[]> COLUMN_LIST_SPLITTER = cols ->
             Arrays.stream(cols.split(","))
                     .map(String::trim)
                     .toArray(String[]::new);
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Index";

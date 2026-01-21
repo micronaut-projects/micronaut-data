@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
@@ -55,14 +55,15 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     private final PersistentEntityFrom<?, Owner> parent;
     private final SourceAssociation association;
     private final List<Association> associations;
-    private Join.Type associationJoinType;
+    private Join. @Nullable Type associationJoinType;
     @Nullable
     private String alias;
 
     SourcePersistentAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                     SourceAssociation association,
                                     List<Association> associations,
-                                    Join.Type associationJoinType,
+                                    Join. @Nullable Type associationJoinType,
+                                    @Nullable
                                     String alias,
                                     CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
@@ -105,12 +106,12 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     }
 
     @Override
-    public Join.Type getAssociationJoinType() {
+    public Join. @Nullable Type getAssociationJoinType() {
         return associationJoinType;
     }
 
     @Override
-    public void setAssociationJoinType(@Nullable Join.Type type) {
+    public void setAssociationJoinType(Join. @Nullable Type type) {
         this.associationJoinType = type;
     }
 
@@ -168,6 +169,7 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     }
 
     @Override
+    @Nullable
     public JoinType getJoinType() {
         return PersistentAssociationPath.super.getJoinType();
     }

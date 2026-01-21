@@ -16,8 +16,7 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
@@ -36,8 +35,8 @@ public interface BindingParameter {
      * @param bindingContext The binding context
      * @return The query binding
      */
-    @NonNull
-    QueryParameterBinding bind(@NonNull BindingContext bindingContext);
+    
+    QueryParameterBinding bind(BindingContext bindingContext);
 
     /**
      * The binding context.
@@ -62,7 +61,7 @@ public interface BindingParameter {
          * @param index The index
          * @return this context
          */
-        @NonNull
+        
         BindingContext index(int index);
 
         /**
@@ -71,7 +70,7 @@ public interface BindingParameter {
          * @param name The name
          * @return this context
          */
-        @NonNull
+        
         BindingContext name(@Nullable String name);
 
         /**
@@ -80,7 +79,7 @@ public interface BindingParameter {
          * @param propertyPath The property path
          * @return this context
          */
-        @NonNull
+        
         BindingContext incomingMethodParameterProperty(@Nullable PersistentPropertyPath propertyPath);
 
         /**
@@ -89,7 +88,7 @@ public interface BindingParameter {
          * @param propertyPath The property path
          * @return this context
          */
-        @NonNull
+        
         BindingContext  outgoingQueryParameterProperty(@Nullable PersistentPropertyPath propertyPath);
 
         /**
@@ -99,7 +98,7 @@ public interface BindingParameter {
          * @param propertyPath The property path
          * @return this context
          */
-        @NonNull
+        
         BindingContext parameterBindingPath(@Nullable PersistentPropertyPath propertyPath);
 
         /**
@@ -107,7 +106,7 @@ public interface BindingParameter {
          *
          * @return this context
          */
-        @NonNull
+        
         BindingContext expandable();
 
         /**

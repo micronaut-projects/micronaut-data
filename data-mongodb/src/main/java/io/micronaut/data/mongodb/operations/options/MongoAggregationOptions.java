@@ -17,7 +17,8 @@ package io.micronaut.data.mongodb.operations.options;
 
 import com.mongodb.client.model.Collation;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -27,6 +28,7 @@ import org.bson.conversions.Bson;
  * @since 3.3.0
  */
 @Experimental
+@NullUnmarked
 public final class MongoAggregationOptions {
 
     private Boolean allowDiskUse;

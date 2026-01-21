@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Sort;
@@ -39,7 +38,7 @@ public interface QueryResult {
     /**
      * @return A string representation of the original query.
      */
-    @NonNull
+
     String getQuery();
 
     /**
@@ -51,19 +50,8 @@ public interface QueryResult {
     }
 
     /**
-     * @return A string representation of the aggregate part.
-     * @deprecated Not used
-     */
-    @Nullable
-    @Deprecated(forRemoval = true, since = "4.10")
-    default String getAggregate() {
-        return null;
-    }
-
-    /**
      * @return A string parts representation of the original query.
      */
-    @NonNull
     List<String> getQueryParts();
 
     /**
@@ -72,16 +60,14 @@ public interface QueryResult {
      *
      * @return The map
      */
-    default @NonNull
-    Map<String, String> getParameters() {
+    default Map<String, String> getParameters() {
         return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> String.join(".", p.getPropertyPath())));
     }
 
     /**
      * @return The computed parameter types.
      */
-    default @NonNull
-    Map<String, DataType> getParameterTypes() {
+    default Map<String, DataType> getParameterTypes() {
         return getParameterBindings().stream().collect(Collectors.toMap(p -> String.join(".", p.getPropertyPath()), QueryParameterBinding::getDataType, (d1, d2) -> d1));
     }
 
@@ -109,7 +95,6 @@ public interface QueryResult {
         return 0;
     }
 
-    @NonNull
     default Sort getSort() {
         return Sort.UNSORTED;
     }
@@ -119,7 +104,6 @@ public interface QueryResult {
      *
      * @return the join paths or empty
      */
-    @NonNull
     default Collection<JoinPath> getJoinPaths() {
         return Collections.emptyList();
     }
@@ -132,8 +116,7 @@ public interface QueryResult {
      * @return The query
      * @since 4.10
      */
-    @NonNull
-    static QueryResult of(@NonNull String query, @NonNull List<QueryParameterBinding> parameterBindings) {
+    static QueryResult of(String query,  List<QueryParameterBinding> parameterBindings) {
         return of(query, List.of(), parameterBindings);
     }
 
@@ -146,18 +129,16 @@ public interface QueryResult {
      * @param additionalRequiredParameters Additional required parameters to execute the query
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
-            @NonNull Map<String, String> additionalRequiredParameters) {
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
+             Map<String, String> additionalRequiredParameters) {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
 
         return new QueryResult() {
-            @NonNull
+
             @Override
             public String getQuery() {
                 return query;
@@ -188,16 +169,14 @@ public interface QueryResult {
      * @param parameterBindings            The parameters binding
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings) {
+    static QueryResult of(String query,
+                          List<String> queryParts,
+                          List<QueryParameterBinding> parameterBindings) {
         ArgumentUtils.requireNonNull("query", query);
         ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
 
         return new QueryResult() {
-            @NonNull
+
             @Override
             public String getQuery() {
                 return query;
@@ -227,12 +206,10 @@ public interface QueryResult {
      * @param offset                       The query offset
      * @return The query
      */
-    static @NonNull
-    QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
-            @NonNull Map<String, String> additionalRequiredParameters,
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
+             Map<String, String> additionalRequiredParameters,
             int max,
             long offset) {
         return of(query, queryParts, parameterBindings, additionalRequiredParameters, max, offset, Collections.emptyList());
@@ -250,12 +227,10 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
-            @NonNull Map<String, String> additionalRequiredParameters,
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
+             Map<String, String> additionalRequiredParameters,
             int max,
             long offset,
             @Nullable
@@ -276,7 +251,6 @@ public interface QueryResult {
                 return offset;
             }
 
-            @NonNull
             @Override
             public String getQuery() {
                 return query;
@@ -299,7 +273,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -315,11 +289,9 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
             int max,
             long offset,
             @Nullable
@@ -339,7 +311,6 @@ public interface QueryResult {
                 return offset;
             }
 
-            @NonNull
             @Override
             public String getQuery() {
                 return query;
@@ -357,7 +328,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -374,14 +345,12 @@ public interface QueryResult {
      * @param joinPaths         The join paths
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
             int max,
             long offset,
-            @NonNull
+
             Sort sort,
             @Nullable
             Collection<JoinPath> joinPaths) {
@@ -405,7 +374,6 @@ public interface QueryResult {
                 return sort;
             }
 
-            @NonNull
             @Override
             public String getQuery() {
                 return query;
@@ -423,7 +391,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }
@@ -437,11 +405,9 @@ public interface QueryResult {
      * @param joinPaths                    The join paths
      * @return The query
      */
-    @NonNull
-    static QueryResult of(
-            @NonNull String query,
-            @NonNull List<String> queryParts,
-            @NonNull List<QueryParameterBinding> parameterBindings,
+    static QueryResult of(String query,
+             List<String> queryParts,
+             List<QueryParameterBinding> parameterBindings,
             @Nullable
             Collection<JoinPath> joinPaths) {
         ArgumentUtils.requireNonNull("query", query);
@@ -449,7 +415,6 @@ public interface QueryResult {
 
         return new QueryResult() {
 
-            @NonNull
             @Override
             public String getQuery() {
                 return query;
@@ -467,7 +432,7 @@ public interface QueryResult {
 
             @Override
             public Collection<JoinPath> getJoinPaths() {
-                return joinPaths;
+                return joinPaths == null ? Collections.emptyList() : joinPaths;
             }
         };
     }

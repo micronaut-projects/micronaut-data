@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,16 +50,15 @@ final class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPag
     @JsonCreator
     @Creator
     @ReflectiveAccess
-    DefaultCursoredPage(
-            @JsonProperty("content")
+    DefaultCursoredPage(@JsonProperty("content")
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable,
             @JsonProperty("cursors")
             List<Cursor> cursors,
+            @Nullable
             @JsonProperty("totalSize")
-            Long totalSize
-    ) {
+            Long totalSize) {
         super(content, pageable, totalSize);
         if (content.size() != cursors.size()) {
             throw new IllegalArgumentException("The number of cursors must match the number of content items for a page");

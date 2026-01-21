@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
@@ -49,11 +48,9 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> extends PersistentEntityJoin<OwnerType, AssociatedEntityType>,
         PersistentPropertyPath<AssociatedEntityType> {
 
-    @NonNull
     @Override
     Association getProperty();
 
-    @NonNull
     Association getAssociation();
 
     @Override
@@ -64,10 +61,10 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     /**
      * @return The join type
      */
-    @Nullable
-    io.micronaut.data.annotation.Join.Type getAssociationJoinType();
+    io.micronaut.data.annotation.Join. @Nullable Type getAssociationJoinType();
 
     @Override
+    @Nullable
     default JoinType getJoinType() {
         return null;
     }
@@ -77,7 +74,7 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
      *
      * @param type The join type
      */
-    void setAssociationJoinType(@Nullable io.micronaut.data.annotation.Join.Type type);
+    void setAssociationJoinType(io.micronaut.data.annotation.Join.Type type);
 
     /**
      * Set join alias.
@@ -86,7 +83,6 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
      */
     void setAlias(String alias);
 
-    @NonNull
     default List<Association> asPath() {
         List<Association> associations = getAssociations();
         List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
@@ -96,13 +92,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    @NonNull
+
     default Join<OwnerType, AssociatedEntityType> on(Expression<Boolean> restriction) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+
     default Join<OwnerType, AssociatedEntityType> on(Predicate... restrictions) {
         throw notSupportedOperation();
     }
@@ -114,13 +110,13 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    @NonNull
+
     default Attribute<? super OwnerType, ?> getAttribute() {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+
     default Bindable<AssociatedEntityType> getModel() {
         throw notSupportedOperation();
     }
@@ -152,10 +148,10 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     <X, Y> PersistentAssociationPath<X, Y> join(String attributeName);
 
     @Override
-    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType);
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type joinType);
 
     @Override
-    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType, String alias);
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type joinType, @Nullable String alias);
 
     @Override
     <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, JoinType jt);

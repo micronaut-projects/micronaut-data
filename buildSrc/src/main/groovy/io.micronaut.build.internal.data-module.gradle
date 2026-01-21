@@ -15,6 +15,12 @@ dependencies {
     testRuntimeOnly(mnTest.junit.jupiter.engine)
 }
 
+micronautBuild {
+    descriptor {
+        parentModuleId = "io.micronaut.data:micronaut-data-model"
+    }
+}
+
 def testModulesOptional = rootProject.tasks.findByName("testModules")
 def testModules
 if (testModulesOptional) {

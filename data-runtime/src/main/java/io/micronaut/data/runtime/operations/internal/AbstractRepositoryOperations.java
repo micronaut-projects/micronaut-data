@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -121,11 +121,10 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {
             RuntimePersistentEntity<Object> entity = getEntity(type);
-            RuntimePersistentProperty<Object> identity = entity.getIdentity();
-            if (identity == null) {
+            if (!entity.hasIdentity()) {
                 throw new DataAccessException("Entity has no ID: " + entity.getName());
             }
-            beanProperty = identity;
+            beanProperty = entity.getIdentity();
             idReaders.put(type, beanProperty);
         }
         return beanProperty;

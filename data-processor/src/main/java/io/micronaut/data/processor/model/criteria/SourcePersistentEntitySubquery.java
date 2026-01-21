@@ -16,8 +16,7 @@
 package io.micronaut.data.processor.model.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.inject.ast.ClassElement;
@@ -39,8 +38,7 @@ public interface SourcePersistentEntitySubquery<T> extends PersistentEntitySubqu
      * @param <X>                The root type
      * @return new root
      */
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull ClassElement entityClassElement);
+    <X> PersistentEntityRoot<X> from(ClassElement entityClassElement);
 
     /**
      * @return The query result type name

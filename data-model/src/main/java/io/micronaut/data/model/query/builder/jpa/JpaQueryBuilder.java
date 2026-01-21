@@ -17,7 +17,6 @@ package io.micronaut.data.model.query.builder.jpa;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
@@ -36,6 +35,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import jakarta.persistence.criteria.Order;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -148,7 +148,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
 
             @Override
-            protected void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity persistentEntity, String tableAlias) {
+            protected void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity persistentEntity, @Nullable String tableAlias) {
                 query.append(tableAlias);
             }
 
@@ -220,12 +220,12 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
+    @Nullable
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
         // JPA doesn't require an insert statement
         return null;
     }
 
-    @NonNull
     @Override
     protected StringBuilder appendDeleteClause(StringBuilder queryString) {
         return queryString.append("DELETE ");

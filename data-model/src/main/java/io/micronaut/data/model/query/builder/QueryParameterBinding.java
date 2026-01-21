@@ -16,7 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -33,6 +33,7 @@ public interface QueryParameterBinding {
     /**
      * @return The parameter name.
      */
+    @Nullable
     String getName();
 
     /**
@@ -71,16 +72,14 @@ public interface QueryParameterBinding {
     /**
      * @return The parameter binding path
      */
-    @Nullable
-    default String[] getParameterBindingPath() {
+    default String @Nullable [] getParameterBindingPath() {
         return null;
     }
 
     /**
      * @return The property path
      */
-    @Nullable
-    default String[] getPropertyPath() {
+    default String @Nullable [] getPropertyPath() {
         return null;
     }
 
@@ -122,7 +121,6 @@ public interface QueryParameterBinding {
      * @return The value or null
      * @since 4.5.0
      */
-    @Nullable
     default boolean isExpression() {
         return false;
     }

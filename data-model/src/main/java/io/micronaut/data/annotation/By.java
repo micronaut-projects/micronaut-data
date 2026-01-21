@@ -20,7 +20,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 /**
  * <p>Annotates a parameter of a repository method, specifying a mapping to
  * a persistent field:</p>

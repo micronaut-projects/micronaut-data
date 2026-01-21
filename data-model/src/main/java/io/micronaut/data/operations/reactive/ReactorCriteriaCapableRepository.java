@@ -16,7 +16,6 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 
 /**
  * The operations capable of supporting reactive access.
@@ -31,6 +30,6 @@ public interface ReactorCriteriaCapableRepository extends ReactiveCriteriaCapabl
      * @return The reactive operations.
      */
     @Override
-    @NonNull
+    
     ReactorCriteriaRepositoryOperations reactive();
 }

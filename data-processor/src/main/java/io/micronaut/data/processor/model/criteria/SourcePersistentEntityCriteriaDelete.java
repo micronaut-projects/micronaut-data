@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.inject.ast.ClassElement;
@@ -37,7 +36,6 @@ public interface SourcePersistentEntityCriteriaDelete<T> extends PersistentEntit
      * @param entityClassElement The entity class element
      * @return new root
      */
-    @NonNull
-    PersistentEntityRoot<T> from(@NonNull ClassElement entityClassElement);
+    PersistentEntityRoot<T> from(ClassElement entityClassElement);
 
 }

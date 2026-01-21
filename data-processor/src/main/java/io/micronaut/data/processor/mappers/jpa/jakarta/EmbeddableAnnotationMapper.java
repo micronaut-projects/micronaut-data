@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA Embeddable to Micronaut Data Embedabble.
  *
@@ -24,7 +22,7 @@ import io.micronaut.core.annotation.NonNull;
  * @since 2.4.8
  */
 public class EmbeddableAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.EmbeddableAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.Embeddable";

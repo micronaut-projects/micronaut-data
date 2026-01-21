@@ -16,9 +16,9 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -49,7 +49,7 @@ public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
      * @param supportsProjections true of matcher supports projections
      * @param prefixes            The prefixes
      */
-    protected AbstractPatternMethodMatcher(boolean supportsProjections, @NonNull String... prefixes) {
+    protected AbstractPatternMethodMatcher(boolean supportsProjections, String... prefixes) {
         if (ArrayUtils.isEmpty(prefixes)) {
             throw new IllegalArgumentException("At least one prefix required");
         }
@@ -59,6 +59,7 @@ public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public final MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         Matcher matcher = patternWithBySyntax.matcher(methodName);

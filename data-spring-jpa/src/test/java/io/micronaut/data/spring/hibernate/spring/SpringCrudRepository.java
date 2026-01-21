@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.spring.hibernate.spring;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.tck.entities.Person;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.PredicateSpecification;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
@@ -70,7 +71,6 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaS
 
     List<Person> findByNameLikeOrderByAgeDesc(String name);
 
-
     class Specifications {
         public static Specification<Person> ageGreaterThanThirty() {
             return ageGreaterThanThirty(false);
@@ -91,6 +91,11 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaS
             return (root, query, criteriaBuilder) -> criteriaBuilder.equal(
                     root.get("name"), name
             );
+        }
+
+        public static PredicateSpecification<Person> whereNameEquals(String name) {
+            return
+                (from, criteriaBuilder) -> criteriaBuilder.equal(from.get("name"), name);
         }
 
     }

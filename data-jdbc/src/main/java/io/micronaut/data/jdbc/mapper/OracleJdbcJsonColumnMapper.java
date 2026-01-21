@@ -18,9 +18,7 @@ package io.micronaut.data.jdbc.mapper;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -34,6 +32,7 @@ import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonBinaryObjectMapper;
 import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import jakarta.inject.Singleton;
 import oracle.sql.json.OracleJsonParser;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -66,6 +65,7 @@ final class OracleJdbcJsonColumnMapper implements SqlJsonColumnReader<ResultSet>
     }
 
     @Override
+    @Nullable
     public <T> T readJsonColumn(ResultReader<ResultSet, String> resultReader, ResultSet resultSet, String columnName, JsonDataType jsonDataType, Argument<T> argument) {
         try {
             switch (jsonDataType) {
@@ -85,7 +85,7 @@ final class OracleJdbcJsonColumnMapper implements SqlJsonColumnReader<ResultSet>
                 }
                 case STRING -> {
                     String data = resultReader.readString(resultSet, columnName);
-                    if (StringUtils.isEmpty(data) || data.equals(NULL_VALUE)) {
+                    if (data == null || data.isEmpty() || data.equals(NULL_VALUE)) {
                         return null;
                     }
                     if (argument.getType().equals(String.class)) {
@@ -101,7 +101,6 @@ final class OracleJdbcJsonColumnMapper implements SqlJsonColumnReader<ResultSet>
     }
 
     @Override
-    @NonNull
     public JsonMapper getJsonMapper() {
         return textObjectMapper;
     }

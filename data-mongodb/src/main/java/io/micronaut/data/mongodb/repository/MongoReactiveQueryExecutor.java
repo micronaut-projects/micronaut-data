@@ -17,8 +17,8 @@ package io.micronaut.data.mongodb.repository;
 
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.UpdateOptions;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
@@ -44,7 +44,7 @@ public interface MongoReactiveQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The single result
      */
-    Mono<E> findOne(@Nullable Bson filter);
+    Mono<E> findOne(@Nullable @io.micronaut.core.annotation.Nullable Bson filter);
 
     /**
      * Finds one result.
@@ -61,7 +61,7 @@ public interface MongoReactiveQueryExecutor<E> {
      * @return The records
      */
     @NonNull
-    Flux<E> findAll(@Nullable Bson filter);
+    Flux<E> findAll(@Nullable @io.micronaut.core.annotation.Nullable Bson filter);
 
     /**
      * Finds all results.
@@ -80,7 +80,7 @@ public interface MongoReactiveQueryExecutor<E> {
      * @return The page
      */
     @NonNull
-    Mono<Page<E>> findAll(@Nullable Bson filter, @NonNull Pageable pageable);
+    Mono<Page<E>> findAll(@Nullable @io.micronaut.core.annotation.Nullable Bson filter, @NonNull Pageable pageable);
 
     /**
      * Finds a page of records.
@@ -134,7 +134,7 @@ public interface MongoReactiveQueryExecutor<E> {
      * @param filter The filter to be applied
      * @return The count
      */
-    Mono<Long> count(@Nullable Bson filter);
+    Mono<Long> count(@Nullable @io.micronaut.core.annotation.Nullable Bson filter);
 
     /**
      * Delete the records matching the filter.

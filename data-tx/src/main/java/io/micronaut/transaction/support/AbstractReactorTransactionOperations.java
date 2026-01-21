@@ -17,9 +17,8 @@ package io.micronaut.transaction.support;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
@@ -74,10 +73,18 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                                                            @NonNull TransactionDefinition transactionDefinition);
 
     @Override
+    public boolean managesTransaction(ReactiveTransactionStatus<C> transactionStatus) {
+        if (transactionStatus instanceof DefaultReactiveTransactionStatus<C> status) {
+            return status.reactiveTransactionOperations == this;
+        }
+        return false;
+    }
+
+    @Override
     public final Optional<ReactiveTransactionStatus<C>> findTransactionStatus(ContextView contextView) {
-        return ReactorPropagation.findAllContextElements(contextView, ReactiveTransactionPropagatedContext.class)
-            .filter(e -> e.transactionOperations == this)
-            .map(e -> (ReactiveTransactionStatus<C>) e.status)
+        return ReactorPropagation.findAllContextElements(contextView, ReactiveTransactionStatus.class)
+            .filter(this::managesTransaction)
+            .map(e -> (ReactiveTransactionStatus<C>) e)
             .findFirst();
     }
 
@@ -136,7 +143,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
     private <T> Flux<T> openNewConnectionAndTx(TransactionDefinition definition, TransactionalCallback<C, T> handler) {
         return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus -> {
-                DefaultReactiveTransactionStatus<C> txStatus = new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition);
+                DefaultReactiveTransactionStatus<C> txStatus = new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition, this);
                 return executeTransactionFlux(txStatus, handler);
             }
         );
@@ -172,7 +179,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     private <T> Mono<T> openNewConnectionAndTxMono(TransactionDefinition definition, Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
         return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
             executeTransactionMono(
-                new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition, this),
                 handler
             )
         );
@@ -271,7 +278,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                                               @NonNull Function<ReactiveTransactionStatus<C>, Mono<R>> handler) {
         try {
             return Mono.just(status)
-                .flatMap(handler::apply)
+                .flatMap(handler)
                 .contextWrite(context -> addTxStatus(context, status));
         } catch (Exception e) {
             return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
@@ -279,21 +286,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     }
 
     private ReactiveTransactionStatus<C> existingTransaction(ReactiveTransactionStatus<C> existing, TransactionDefinition transactionDefinition) {
-        return new ReactiveTransactionStatus<>() {
-            @Override
-            public C getConnection() {
-                return existing.getConnection();
-            }
-
-            @Override
-            public ConnectionStatus<C> getConnectionStatus() {
-                return existing.getConnectionStatus();
-            }
-
-            @Override
-            public boolean isNewTransaction() {
-                return false;
-            }
+        return new DefaultReactiveTransactionStatus<>(existing.getConnectionStatus(), false, transactionDefinition, this) {
 
             @Override
             public void setRollbackOnly() {
@@ -310,10 +303,6 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                 return existing.isCompleted();
             }
 
-            @Override
-            public TransactionDefinition getTransactionDefinition() {
-                return transactionDefinition;
-            }
         };
     }
 
@@ -332,20 +321,20 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     @NonNull
     private Publisher<Void> doCommit(@NonNull DefaultReactiveTransactionStatus<C> status) {
         Flux<Void> op;
-		try {
-			if (status.isRollbackOnly()) {
-				op = Flux.from(rollbackTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
-			} else {
-				op = Flux.from(commitTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
-			}
-		} catch (Exception e) {
-			// Sometimes an exception can be thrown creating the publishers for rollback or commit.
-			// An example of this, is if the connection has been closed prematurely by the DBMS.
-			// We should ensure we always return a Publisher to allow downstream consumers to properly
-			// detect and handle these type of errors.
-			op = Flux.error(e);
-		}
-		return op.as(flux -> doFinish(flux, status));
+        try {
+            if (status.isRollbackOnly()) {
+                op = Flux.from(rollbackTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
+            } else {
+                op = Flux.from(commitTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
+            }
+        } catch (Exception e) {
+            // Sometimes an exception can be thrown creating the publishers for rollback or commit.
+            // An example of this, is if the connection has been closed prematurely by the DBMS.
+            // We should ensure we always return a Publisher to allow downstream consumers to properly
+            // detect and handle these type of errors.
+            op = Flux.error(e);
+        }
+        return op.as(flux -> doFinish(flux, status));
     }
 
     @NonNull
@@ -354,20 +343,20 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
         }
         Flux<Void> abort;
-		try {
-			TransactionDefinition definition = status.getTransactionDefinition();
-			if (definition.rollbackOn(throwable)) {
-				abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
-			} else {
-				abort = Flux.error(throwable);
-			}
-		} catch (Exception e) {
-			// Sometimes an exception can be thrown creating the publishers for rollback or commit.
-			// An example of this, is if the connection has been closed prematurely by the DBMS.
-			// We should ensure we always return a Publisher to allow downstream consumers to properly
-			// detect and handle these type of errors.
-			abort = Flux.error(e);
-		}
+        try {
+            TransactionDefinition definition = status.getTransactionDefinition();
+            if (definition.rollbackOn(throwable)) {
+                abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
+            } else {
+                abort = Flux.error(throwable);
+            }
+        } catch (Exception e) {
+            // Sometimes an exception can be thrown creating the publishers for rollback or commit.
+            // An example of this, is if the connection has been closed prematurely by the DBMS.
+            // We should ensure we always return a Publisher to allow downstream consumers to properly
+            // detect and handle these type of errors.
+            abort = Flux.error(e);
+        }
         return abort.onErrorResume((rollbackError) -> {
             if (rollbackError != throwable && LOG.isWarnEnabled()) {
                 LOG.warn("Error occurred during transaction rollback: " + rollbackError.getMessage(), rollbackError);
@@ -385,10 +374,9 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
     @NonNull
     private Context addTxStatus(@NonNull Context context, @NonNull ReactiveTransactionStatus<C> status) {
-        return ReactorPropagation.addContextElement(
-            context,
-            new ReactiveTransactionPropagatedContext<>(this, status)
-        );
+        context = ReactorPropagation.addContextElement(context, status.getConnectionStatus());
+        context = ReactorPropagation.addContextElement(context, status);
+        return context;
     }
 
     @NonNull
@@ -401,30 +389,27 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         return new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior);
     }
 
-    private record ReactiveTransactionPropagatedContext<C>(
-        ReactiveTransactionOperations<?> transactionOperations,
-        ReactiveTransactionStatus<C> status)
-        implements PropagatedContextElement {
-    }
-
     /**
      * Represents the current reactive transaction status.
      *
      * @param <C> The connection type
      */
-    protected static final class DefaultReactiveTransactionStatus<C> implements ReactiveTransactionStatus<C> {
+    protected static class DefaultReactiveTransactionStatus<C> implements ReactiveTransactionStatus<C> {
         private final ConnectionStatus<C> connectionStatus;
         private final boolean isNew;
         private final TransactionDefinition transactionDefinition;
+        private final ReactiveTransactionOperations<C> reactiveTransactionOperations;
         private boolean rollbackOnly;
         private boolean completed;
 
         public DefaultReactiveTransactionStatus(ConnectionStatus<C> connectionStatus,
                                                 boolean isNew,
-                                                TransactionDefinition transactionDefinition) {
+                                                TransactionDefinition transactionDefinition,
+                                                ReactiveTransactionOperations<C> reactiveTransactionOperations) {
             this.connectionStatus = connectionStatus;
             this.isNew = isNew;
             this.transactionDefinition = transactionDefinition;
+            this.reactiveTransactionOperations = reactiveTransactionOperations;
         }
 
         @Override

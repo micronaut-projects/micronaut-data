@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.AnnotationValue;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
@@ -133,7 +132,7 @@ final class SqlQueryBuilderUtils {
      * @param columnType the type of column to retrieve (e.g., "name")
      * @return a list of joined column names, or an empty list if none are found
      */
-    @NonNull
+
     static List<String> getJoinedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, String columnType) {
         AnnotationValue<Annotation> joinTable = annotationMetadata.getAnnotation(ANN_JOIN_TABLE);
         if (joinTable != null) {
@@ -156,15 +155,14 @@ final class SqlQueryBuilderUtils {
      * @param namingStrategy the naming strategy to use for determining join table column names
      * @return a list of join table column names
      */
-    @NonNull
+
     static List<String> resolveJoinTableJoinColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
         List<String> joinColumns = getJoinedColumns(annotationMetadata, associationOwner, "name");
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
         List<String> columns = new ArrayList<>();
-        PersistentProperty property1 = entity.getIdentity();
-        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property1, (associations, property)
+        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
             -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
         return columns;
     }
@@ -199,9 +197,9 @@ final class SqlQueryBuilderUtils {
      * @param persistentEntity the entity to retrieve associations from
      * @return a non-empty collection of associations with a join table
      */
-    @NonNull
+
     static Collection<Association> getJoinTableAssociations(PersistentEntity persistentEntity) {
-        return Stream.concat(Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream())
+        return Stream.concat(persistentEntity.getIdentityProperties().stream(), persistentEntity.getPersistentProperties().stream())
             .flatMap(SqlQueryBuilderUtils::flatMapEmbedded)
             .filter(p -> {
                 if (p instanceof Association a) {
@@ -223,8 +221,7 @@ final class SqlQueryBuilderUtils {
      */
     static String getSchemaName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElseGet(() ->
-            entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null)
-        );
+            entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null));
     }
 
     /**
@@ -250,7 +247,7 @@ final class SqlQueryBuilderUtils {
      * @param association The association.
      * @return True if it is.
      */
-    static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
+    static boolean isForeignKeyWithJoinTable(Association association) {
         if (!association.isForeignKey()) {
             return false;
         }

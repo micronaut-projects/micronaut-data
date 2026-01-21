@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 
 /**
@@ -25,7 +24,6 @@ import io.micronaut.inject.annotation.NamedAnnotationMapper;
  * @since 2.4.8
  */
 public final class JoinTableAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.JoinTableAnnotationMapper {
-
     private final JoinColumnAnnotationMapper JOIN_COLUMN_ANNOTATION_MAPPER = new JoinColumnAnnotationMapper();
 
     /**
@@ -38,7 +36,6 @@ public final class JoinTableAnnotationMapper extends io.micronaut.data.processor
         return JOIN_COLUMN_ANNOTATION_MAPPER;
     }
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.JoinTable";

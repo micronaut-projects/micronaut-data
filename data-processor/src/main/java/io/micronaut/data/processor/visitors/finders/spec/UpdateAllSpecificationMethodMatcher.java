@@ -16,14 +16,14 @@
 package io.micronaut.data.processor.visitors.finders.spec;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Update;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-
-import java.util.regex.Matcher;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Delete all specification method.
@@ -42,7 +42,13 @@ public class UpdateAllSpecificationMethodMatcher extends AbstractSpecificationMe
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
+    protected boolean matches(MethodMatchContext matchContext) {
+        return matchContext.getMethodElement().hasStereotype(Update.class) || super.matches(matchContext);
+    }
+
+    @Override
+    @Nullable
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isUpdateSpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateAllSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.UPDATE, e.returnType(), e.interceptor());

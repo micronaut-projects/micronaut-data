@@ -17,7 +17,9 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.DeleteOptions;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import org.bson.BsonDocument;
+import org.jspecify.annotations.NonNull;
 import org.bson.conversions.Bson;
 
 /**
@@ -38,8 +40,8 @@ public final class MongoDelete {
      * @param filter  The delete filter
      * @param options The options
      */
-    public MongoDelete(@NonNull Bson filter, @NonNull DeleteOptions options) {
-        this.filter = filter;
+    public MongoDelete(@Nullable Bson filter, @NonNull DeleteOptions options) {
+        this.filter = filter == null ? new BsonDocument() : filter;
         this.options = options;
     }
 

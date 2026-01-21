@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -57,7 +57,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnNameR2dbcResultReader(DataConversionService conversionService) {
+    public ColumnNameR2dbcResultReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
@@ -118,7 +118,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         }
     }
 
-    private byte[] readBlob(@NonNull Row resultSet, @NonNull String index) {
+    private byte @Nullable [] readBlob(@NonNull Row resultSet, @NonNull String index) {
         try {
             return resultSet.get(index, byte[].class);
         } catch (Exception e) {
@@ -145,6 +145,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         return convertRequired(o, byte[].class);
     }
 
+    @Nullable
     private <T> T readDynamic(@NonNull Row resultSet, @NonNull String index, Class<T> type) {
         Object o = resultSet.get(index);
         if (o == null) {
@@ -176,6 +177,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
+    @Nullable
     public Date readDate(Row resultSet, String name) {
         final LocalDate localDate = resultSet.get(name, LocalDate.class);
         if (localDate != null) {
@@ -185,6 +187,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(Row resultSet, String index) {
         final LocalDateTime localDateTime = resultSet.get(index, LocalDateTime.class);
         if (localDateTime != null) {

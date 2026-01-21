@@ -17,8 +17,8 @@ package io.micronaut.data.cosmos.operations;
 
 import com.azure.cosmos.models.SqlParameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
@@ -68,21 +68,25 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
 
     @NonNull
     @Override
-    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
         return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
     }
 
+    @Nullable
     @Override
-    public Object convert(Object value, RuntimePersistentProperty<?> property) {
-        AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+    public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
+        if (property != null) {
+            AttributeConverter<Object, Object> converter = property.getConverter();
+            if (converter != null) {
+                return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+            }
         }
         return value;
     }
 
+    @Nullable
     @Override
-    public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+    public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
         if (converterClass == null) {
             return value;
         }
@@ -92,7 +96,7 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
     }
 
     @Override
-    public void bindOne(@NonNull QueryParameterBinding binding, Object value) {
+    public void bindOne(@NonNull QueryParameterBinding binding, @Nullable Object value) {
         String parameterName = getParameterName(binding, isRawQuery);
         doBind(binding, value, parameterName);
     }
@@ -139,7 +143,7 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
     }
 
     @SuppressWarnings("java:S3824") // Disabled Sonar Rule: "Map.get" and value test should be replaced with single method call
-    private void doBind(@NonNull QueryParameterBinding binding, Object value, String parameterName) {
+    private void doBind(@NonNull QueryParameterBinding binding, @Nullable Object value, String parameterName) {
         if (updateQuery) {
             String property = getUpdateProperty(binding, persistentEntity);
             if (property != null && !propertiesToUpdate.containsKey(property)) {
@@ -157,6 +161,7 @@ final class CosmosBinder implements BindableParametersStoredQuery.Binder {
         return binding.getRequiredName();
     }
 
+    @Nullable
     private String getUpdateProperty(QueryParameterBinding binding, PersistentEntity persistentEntity) {
         String[] propertyPath = binding.getRequiredPropertyPath();
         PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);

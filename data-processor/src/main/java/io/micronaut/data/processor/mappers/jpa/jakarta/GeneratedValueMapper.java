@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's generated value to Micronaut's.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public class GeneratedValueMapper extends io.micronaut.data.processor.mappers.jpa.jx.GeneratedValueMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.GeneratedValue";

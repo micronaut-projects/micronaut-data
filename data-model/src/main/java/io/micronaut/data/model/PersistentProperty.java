@@ -16,8 +16,7 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -27,7 +26,6 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 import java.util.List;
-
 
 /**
  * Models a persistent property. That is a property that is saved and retrieved from the database.
@@ -43,7 +41,6 @@ public interface PersistentProperty extends PersistentElement {
      * @return The property name
      */
     @Override
-    @NonNull
     String getName();
 
     /**
@@ -53,7 +50,7 @@ public interface PersistentProperty extends PersistentElement {
      * @deprecated The method with a type replaced with {@link #getCapitalizedName()}.
      */
     @Deprecated(forRemoval = true)
-    default @NonNull String getCapitilizedName() {
+    default  String getCapitilizedName() {
         return NameUtils.capitalize(getName());
     }
 
@@ -63,7 +60,7 @@ public interface PersistentProperty extends PersistentElement {
      * @return The capitalized name
      * @since 4.2.0
      */
-    default @NonNull String getCapitalizedName() {
+    default  String getCapitalizedName() {
         return NameUtils.capitalize(getName());
     }
 
@@ -72,7 +69,6 @@ public interface PersistentProperty extends PersistentElement {
      *
      * @return The property type
      */
-    @NonNull
     String getTypeName();
 
     /**
@@ -80,7 +76,6 @@ public interface PersistentProperty extends PersistentElement {
      *
      * @return The owner
      */
-    @NonNull
     PersistentEntity getOwner();
 
     /**
@@ -144,7 +139,7 @@ public interface PersistentProperty extends PersistentElement {
      * @param type The type name
      * @return True if it is
      */
-    boolean isAssignable(@NonNull String type);
+    boolean isAssignable(String type);
 
     /**
      * Is the property assignable to the given type.
@@ -152,7 +147,7 @@ public interface PersistentProperty extends PersistentElement {
      * @param type The type
      * @return True it is
      */
-    default boolean isAssignable(@NonNull Class<?> type) {
+    default boolean isAssignable(Class<?> type) {
         return isAssignable(type.getName());
     }
 
@@ -217,7 +212,7 @@ public interface PersistentProperty extends PersistentElement {
      * @param metadata The metadata
      * @return True if it is nullable
      */
-    static boolean isNullableMetadata(@NonNull AnnotationMetadata metadata) {
+    static boolean isNullableMetadata(AnnotationMetadata metadata) {
         return metadata
             .getDeclaredAnnotationNames()
             .stream()

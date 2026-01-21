@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -45,7 +44,7 @@ public interface QuerySpecification<T> {
      * @param spec The specification.
      * @return negated specification}.
      */
-    @NonNull
+    
     static <T> QuerySpecification<T> not(@Nullable QuerySpecification<T> spec) {
         if (spec == null) {
             return (QuerySpecification<T>) ALL;
@@ -60,7 +59,7 @@ public interface QuerySpecification<T> {
      * @param spec The specification.
      * @return guaranteed to be not {@literal null}.
      */
-    @NonNull
+    
     static <T> QuerySpecification<T> where(@Nullable QuerySpecification<T> spec) {
         if (spec == null) {
             return (QuerySpecification<T>) ALL;
@@ -75,7 +74,7 @@ public interface QuerySpecification<T> {
      * @param spec The specification.
      * @return query specification.
      */
-    @NonNull
+    
     static <T> QuerySpecification<T> where(@Nullable PredicateSpecification<T> spec) {
         if (spec == null) {
             return (QuerySpecification<T>) ALL;
@@ -89,7 +88,7 @@ public interface QuerySpecification<T> {
      * @param other The other predicate.
      * @return The conjunction of the specifications
      */
-    @NonNull
+    
     default QuerySpecification<T> and(@Nullable QuerySpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::and);
     }
@@ -100,7 +99,7 @@ public interface QuerySpecification<T> {
      * @param other The other predicate.
      * @return The disjunction of the specifications
      */
-    @NonNull
+    
     default QuerySpecification<T> or(@Nullable QuerySpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::or);
     }
@@ -111,7 +110,7 @@ public interface QuerySpecification<T> {
      * @param other The other predicate.
      * @return The conjunction of the specifications
      */
-    @NonNull
+    
     default QuerySpecification<T> and(@Nullable PredicateSpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::and);
     }
@@ -122,7 +121,7 @@ public interface QuerySpecification<T> {
      * @param other The other predicate.
      * @return The disjunction of the specifications
      */
-    @NonNull
+    
     default QuerySpecification<T> or(@Nullable PredicateSpecification<T> other) {
         return SpecificationComposition.composed(this, other, CriteriaBuilder::or);
     }
@@ -136,8 +135,8 @@ public interface QuerySpecification<T> {
      * @return a {@link Predicate}
      */
     @Nullable
-    Predicate toPredicate(@NonNull Root<T> root,
-                          @NonNull CriteriaQuery<?> query,
-                          @NonNull CriteriaBuilder criteriaBuilder);
+    Predicate toPredicate(Root<T> root,
+                           CriteriaQuery<?> query,
+                           CriteriaBuilder criteriaBuilder);
 
 }

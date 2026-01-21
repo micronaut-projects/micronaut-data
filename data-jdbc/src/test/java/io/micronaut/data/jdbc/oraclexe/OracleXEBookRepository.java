@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
@@ -27,7 +27,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,15 +39,16 @@ public abstract class OracleXEBookRepository extends BookRepository {
     }
 
     @Query(value = "SELECT book_.* FROM book book_ ORDER BY book_.title ASC OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY")
+    @Override
     public abstract List<Book> findBooks(int limit, int offset);
 
     @Override
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Override
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Procedure
     public abstract int add1(int input);

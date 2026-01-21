@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.naming;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.naming.NameUtils;
 
@@ -33,9 +32,9 @@ public class NamingStrategies {
      */
     @TypeHint(UnderScoreSeparatedUpperCase.class)
     public static class UnderScoreSeparatedUpperCase implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return NameUtils.environmentName(name);
         }
     }
@@ -44,9 +43,9 @@ public class NamingStrategies {
      */
     @TypeHint(UnderScoreSeparatedLowerCase.class)
     public static class UnderScoreSeparatedLowerCase implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return NameUtils.underscoreSeparate(name).toLowerCase(Locale.ENGLISH);
         }
     }
@@ -55,9 +54,9 @@ public class NamingStrategies {
      */
     @TypeHint(KebabCase.class)
     public static class KebabCase implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return NameUtils.hyphenate(name);
         }
     }
@@ -66,9 +65,9 @@ public class NamingStrategies {
      */
     @TypeHint(LowerCase.class)
     public static class LowerCase implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return name.toLowerCase(Locale.ENGLISH);
         }
     }
@@ -77,9 +76,9 @@ public class NamingStrategies {
      */
     @TypeHint(UpperCase.class)
     public static class UpperCase implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return name.toUpperCase(Locale.ENGLISH);
         }
     }
@@ -88,9 +87,9 @@ public class NamingStrategies {
      */
     @TypeHint(Raw.class)
     public static class Raw implements NamingStrategy {
-        @NonNull
+        
         @Override
-        public String mappedName(@NonNull String name) {
+        public String mappedName(String name) {
             return name;
         }
     }

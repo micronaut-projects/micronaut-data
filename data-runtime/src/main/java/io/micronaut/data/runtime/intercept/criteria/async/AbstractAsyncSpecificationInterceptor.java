@@ -17,8 +17,8 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -48,6 +48,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected static final Argument<List<Object>> LIST_OF_OBJECTS = Argument.listOf(Object.class);
 
     protected final AsyncRepositoryOperations asyncOperations;
+    @Nullable
     protected final AsyncCriteriaRepositoryOperations asyncCriteriaOperations;
 
     /**
@@ -78,6 +79,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
                                                                                  MethodInvocationContext<?, ?> context,
+                                                                                 @Nullable
                                                                                  Pageable pageable) {
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;

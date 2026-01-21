@@ -25,8 +25,7 @@ import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.hibernate.connection.HibernateConnectionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.springframework.orm.hibernate5.HibernateTemplate;
-import org.springframework.orm.hibernate5.SessionHolder;
+import org.springframework.orm.jpa.hibernate.SessionHolder;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
@@ -61,14 +60,23 @@ public final class SpringHibernateConnectionOperations implements ConnectionOper
 
     @Override
     public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<Session>, R> callback) {
-        return new HibernateTemplate(sessionFactory).execute(session -> callback.apply(createStatus(session)));
+        return callback.apply(createStatus(sessionFactory.getCurrentSession()));
+    }
+
+    @Override
+    public boolean managesConnection(ConnectionStatus<Session> connectionStatus) {
+        if (connectionStatus instanceof DefaultConnectionStatus<Session> status) {
+            return status.isConnectionOf(this);
+        }
+        return false;
     }
 
     private DefaultConnectionStatus<Session> createStatus(Session session) {
         return new DefaultConnectionStatus<>(
             session,
             ConnectionDefinition.DEFAULT,
-            true
+            true,
+            this
         );
     }
 

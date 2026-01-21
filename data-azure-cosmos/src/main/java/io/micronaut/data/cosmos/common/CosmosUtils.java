@@ -18,7 +18,7 @@ package io.micronaut.data.cosmos.common;
 import com.azure.cosmos.CosmosDiagnostics;
 import com.azure.cosmos.CosmosException;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor;
 import reactor.core.Exceptions;
@@ -43,7 +43,7 @@ public final class CosmosUtils {
      * @param throwable exception
      * @return CosmosAccessException for operations on Cosmos Db
      */
-    public static CosmosAccessException cosmosAccessException(CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String operationName, String message, Throwable throwable) {
+    public static CosmosAccessException cosmosAccessException(@Nullable CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String operationName, String message, Throwable throwable) {
         if (StringUtils.isEmpty(message)) {
             message = "Failed to access cosmos db database";
         }
@@ -65,7 +65,7 @@ public final class CosmosUtils {
      * @param activityId the activity id (will be null in case of cross partition queries)
      * @param requestCharge the request charge for the operation
      */
-    public static void processDiagnostics(CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics,
+    public static void processDiagnostics(@Nullable CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String operationName, @Nullable CosmosDiagnostics cosmosDiagnostics,
                                           @Nullable String activityId, double requestCharge) {
         if (cosmosDiagnosticsProcessor == null) {
             return;

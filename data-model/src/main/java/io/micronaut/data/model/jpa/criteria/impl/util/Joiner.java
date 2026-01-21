@@ -50,6 +50,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -65,9 +66,7 @@ import java.util.TreeMap;
 @Internal
 public class Joiner implements SelectionVisitor, PredicateVisitor {
 
-    private final Map<String, Joined> joins = new TreeMap<>(
-        Comparator.comparingInt(String::length).thenComparing(String::compareTo)
-    );
+    private final Map<String, Joined> joins = new TreeMap<>(Comparator.comparingInt(String::length).thenComparing(String::compareTo));
 
     /**
      * Returns required query joins.
@@ -285,10 +284,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Internal
     public static final class Joined {
         private final PersistentAssociationPath<?, ?> association;
-        private io.micronaut.data.annotation.Join.Type type;
+        private io.micronaut.data.annotation.Join. @Nullable Type type;
+        @Nullable
         private String alias;
 
-        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join.Type type, String alias) {
+        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join. @Nullable Type type, @Nullable String alias) {
             this.association = association;
             this.type = type;
             this.alias = alias;
@@ -298,7 +298,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             return association;
         }
 
-        public io.micronaut.data.annotation.Join.Type getType() {
+        public io.micronaut.data.annotation.Join. @Nullable Type getType() {
             return type;
         }
 
@@ -306,11 +306,12 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             this.type = type;
         }
 
+        @Nullable
         public String getAlias() {
             return alias;
         }
 
-        public void setAlias(String alias) {
+        public void setAlias(@Nullable String alias) {
             this.alias = alias;
         }
     }

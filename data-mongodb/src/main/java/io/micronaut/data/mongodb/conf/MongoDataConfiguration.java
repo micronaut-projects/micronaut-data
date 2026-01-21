@@ -19,12 +19,14 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Micronaut Data MongoDB integration configuration.
  */
 @ConfigurationProperties(MongoDataConfiguration.PREFIX)
 @ReflectiveAccess
+@NullUnmarked
 public final class MongoDataConfiguration {
 
     public static final String PREFIX = "micronaut.data.mongodb";

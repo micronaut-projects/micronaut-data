@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.exceptions.DataAccessException;
 
@@ -62,7 +61,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @throws DataAccessException if it is not possible read the result from the result set.
          * @return The entity result
          */
-        @NonNull <E> E readEntity(@NonNull String prefix, @NonNull Class<E> type) throws DataAccessException;
+        <E> E readEntity(String prefix, Class<E> type) throws DataAccessException;
 
         /**
          * Read an entity using the given prefix to be passes to result set lookups.
@@ -74,7 +73,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @throws DataAccessException if it is not possible read the result from the result set.
          * @return The entity result
          */
-        @NonNull <E, D> D readDTO(@NonNull String prefix, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException;
+        <E, D> D readDTO(String prefix, Class<E> rootEntity, Class<D> dtoType) throws DataAccessException;
 
         /**
          * Read a long value for the given name.
@@ -82,7 +81,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The long value
          */
-        default long readLong(@NonNull String name) {
+        default long readLong(String name) {
             return getResultReader().readLong(getResultSet(), name);
         }
 
@@ -92,7 +91,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The char value
          */
-        default char readChar(@NonNull String name) {
+        default char readChar(String name) {
             return getResultReader().readChar(getResultSet(), name);
         }
 
@@ -102,7 +101,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The char value
          */
-        default @Nullable Date readDate(@NonNull String name) {
+        default @Nullable Date readDate(String name) {
             return getResultReader().readDate(getResultSet(), name);
         }
 
@@ -112,7 +111,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The char value
          */
-        default @Nullable Date readTimestamp(@NonNull String name) {
+        default @Nullable Date readTimestamp(String name) {
             return getResultReader().readTimestamp(getResultSet(), name);
         }
 
@@ -121,7 +120,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The string value
          */
-        default @Nullable String readString(@NonNull String name) {
+        default @Nullable String readString(String name) {
             return getResultReader().readString(getResultSet(), name);
         }
 
@@ -131,7 +130,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The int value
          */
-        default int readInt(@NonNull String name) {
+        default int readInt(String name) {
             return getResultReader().readInt(getResultSet(), name);
         }
 
@@ -141,7 +140,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The boolean value
          */
-        default boolean readBoolean(@NonNull String name) {
+        default boolean readBoolean(String name) {
             return getResultReader().readBoolean(getResultSet(), name);
         }
 
@@ -151,7 +150,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The float value
          */
-        default float readFloat(@NonNull String name) {
+        default float readFloat(String name) {
             return getResultReader().readFloat(getResultSet(), name);
         }
 
@@ -161,7 +160,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The byte value
          */
-        default byte readByte(@NonNull String name) {
+        default byte readByte(String name) {
             return getResultReader().readByte(getResultSet(), name);
         }
 
@@ -171,7 +170,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The short value
          */
-        default short readShort(@NonNull String name) {
+        default short readShort(String name) {
             return getResultReader().readShort(getResultSet(), name);
         }
 
@@ -181,7 +180,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The double value
          */
-        default double readDouble(@NonNull String name) {
+        default double readDouble(String name) {
             return getResultReader().readDouble(getResultSet(), name);
         }
 
@@ -191,7 +190,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The BigDecimal value
          */
-        default @Nullable BigDecimal readBigDecimal(@NonNull String name) {
+        default @Nullable BigDecimal readBigDecimal(String name) {
             return getResultReader().readBigDecimal(getResultSet(), name);
         }
 
@@ -201,7 +200,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
          * @param name The name (such as the column name)
          * @return The byte[] value
          */
-        default byte[] readBytes(@NonNull String name) {
+        default byte @Nullable [] readBytes(String name) {
             return getResultReader().readBytes(getResultSet(), name);
         }
 

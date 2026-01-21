@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -38,10 +37,10 @@ public interface PrePersistEventListener<T> extends EntityEventListener<T> {
      * @param entity The entity
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    boolean prePersist(@NonNull T entity);
+    boolean prePersist(T entity);
 
     @Override
-    default boolean prePersist(@NonNull EntityEventContext<T> context) {
+    default boolean prePersist(EntityEventContext<T> context) {
         return prePersist(context.getEntity());
     }
 

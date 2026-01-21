@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
@@ -39,6 +40,7 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 @MappedEntity("document_basic_types")
+@NullUnmarked
 public class BasicTypes {
     @Id
     @GeneratedValue

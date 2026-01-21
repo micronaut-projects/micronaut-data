@@ -29,7 +29,7 @@ import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
@@ -158,6 +158,7 @@ public final class MongoOptionsUtils {
         return Optional.of(options);
     }
 
+    @Nullable
     public static Collation bsonDocumentAsCollation(@Nullable BsonDocument collationDocument) {
         if (collationDocument == null) {
             return null;

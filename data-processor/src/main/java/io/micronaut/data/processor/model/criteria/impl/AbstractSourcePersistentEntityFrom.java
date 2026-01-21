@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
@@ -27,6 +26,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +63,7 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
     }
 
     private static <Y> SourcePersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,
-                                                                      @NonNull SourcePersistentProperty property,
+                                                                      SourcePersistentProperty property,
                                                                       CriteriaBuilder criteriaBuilder) {
         List<Association> associations;
         if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {
@@ -89,8 +89,8 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
 
     @Override
     protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
-                                                                        io.micronaut.data.annotation.Join.Type associationJoinType,
-                                                                        String alias) {
+                                                                        io.micronaut.data.annotation.Join. @Nullable Type associationJoinType,
+                                                                        @Nullable String alias) {
         return new SourcePersistentAssociationPath<>(this,
             (SourceAssociation) association,
             getCurrentPath(),

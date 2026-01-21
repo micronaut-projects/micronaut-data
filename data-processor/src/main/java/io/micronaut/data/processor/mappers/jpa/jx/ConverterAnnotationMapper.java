@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 import jakarta.inject.Singleton;
@@ -33,7 +32,6 @@ import java.util.List;
  */
 public class ConverterAnnotationMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Converter";

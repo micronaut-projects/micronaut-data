@@ -18,8 +18,8 @@ package io.micronaut.data.cosmos.operations;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -33,6 +33,7 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -53,7 +54,9 @@ final class SyncCosmosRepositoryOperations implements
     PreparedQueryDecorator {
 
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
+    @Nullable
     private ExecutorService executorService;
+    @Nullable
     private ExecutorAsyncOperations asyncOperations;
 
     /**
@@ -62,8 +65,8 @@ final class SyncCosmosRepositoryOperations implements
      * @param reactiveCosmosRepositoryOperations    The reactive cosmos repository operations
      * @param executorService                       The executor service
      */
-    protected SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
-                                             @Named("io") @Nullable ExecutorService executorService) {
+    private SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
+                                           @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
         this.executorService = executorService;
     }
@@ -84,7 +87,7 @@ final class SyncCosmosRepositoryOperations implements
                 }
             }
         }
-        return asyncOperations;
+        return Objects.requireNonNull(executorAsyncOperations);
     }
 
     @NonNull

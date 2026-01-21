@@ -1,6 +1,6 @@
 package io.micronaut.data.hibernate;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.hibernate.entities.RelPerson;

@@ -17,9 +17,9 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The query builder.
@@ -37,8 +37,8 @@ public interface PersistentEntityCriteriaQueryBuilder {
      * @param queryBuilder       The query builder
      * @return The query result
      */
-    @NonNull
-    QueryResult build(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryBuilder queryBuilder);
+    @Nullable
+    QueryResult build(AnnotationMetadata annotationMetadata,  QueryBuilder queryBuilder);
 
     /**
      * Build the query.
@@ -46,8 +46,8 @@ public interface PersistentEntityCriteriaQueryBuilder {
      * @param queryBuilder The query builder
      * @return The query result
      */
-    @NonNull
-    default QueryResult build(@NonNull QueryBuilder queryBuilder) {
+    @Nullable
+    default QueryResult build(QueryBuilder queryBuilder) {
         return build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
     }
 

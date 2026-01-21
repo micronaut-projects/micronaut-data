@@ -16,8 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 
@@ -31,10 +29,9 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 @Internal
 public abstract class AbstractExpression<E> implements IExpression<E> {
 
-    @Nullable
     private final ExpressionType<E> expressionType;
 
-    public AbstractExpression(@Nullable ExpressionType<E> expressionType) {
+    public AbstractExpression(ExpressionType<E> expressionType) {
         this.expressionType = expressionType;
     }
 
@@ -43,7 +40,7 @@ public abstract class AbstractExpression<E> implements IExpression<E> {
         return expressionType.getJavaType();
     }
 
-    @NonNull
+    @Override
     public final ExpressionType<E> getExpressionType() {
         return expressionType;
     }

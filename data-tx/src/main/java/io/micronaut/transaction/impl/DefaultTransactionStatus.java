@@ -16,10 +16,12 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
@@ -34,29 +36,40 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     protected final ConnectionStatus<C> connectionStatus;
     private final TransactionDefinition definition;
+    private final TransactionOperations<C> transactionOperations;
     @Nullable
     private Object transaction;
     @Nullable
     private Object savepoint;
 
     private DefaultTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                     TransactionDefinition definition) {
+                                     TransactionDefinition definition,
+                                     TransactionOperations<C> transactionOperations) {
         this.connectionStatus = connectionStatus;
         this.definition = definition;
+        this.transactionOperations = transactionOperations;
     }
 
     public static <C> DefaultTransactionStatus<C> newTx(ConnectionStatus<C> connectionStatus,
-                                                        TransactionDefinition definition) {
-        return new NewTransactionStatus<>(connectionStatus, definition);
+                                                        TransactionDefinition definition,
+                                                        TransactionOperations<C> transactionOperations) {
+        return new NewTransactionStatus<>(connectionStatus, definition, transactionOperations);
     }
 
     public static <C> DefaultTransactionStatus<C> noTx(ConnectionStatus<C> connectionStatus,
-                                                       TransactionDefinition definition) {
-        return new NoTxTransactionStatus<>(connectionStatus, definition);
+                                                       TransactionDefinition definition,
+                                                       TransactionOperations<C> transactionOperations) {
+        return new NoTxTransactionStatus<>(connectionStatus, definition, transactionOperations);
     }
 
-    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus, DefaultTransactionStatus<C> existingTransaction) {
-        return new ExistingTransactionStatus<>(connectionStatus, existingTransaction);
+    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus,
+                                                             DefaultTransactionStatus<C> existingTransaction,
+                                                             TransactionOperations<C> transactionOperations) {
+        return new ExistingTransactionStatus<>(connectionStatus, existingTransaction, transactionOperations);
+    }
+
+    public boolean isTransactionOf(TransactionOperations<C> transactionOperations) {
+        return this.transactionOperations ==  transactionOperations;
     }
 
     @Override
@@ -99,7 +112,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     @Override
     @NonNull
-    public C getConnection() {
+    public @NotNull C getConnection() {
         return connectionStatus.getConnection();
     }
 
@@ -115,9 +128,10 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     private static final class NewTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NewTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                    TransactionDefinition definition) {
-            super(connectionStatus, definition);
+        private NewTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                    TransactionDefinition definition,
+                                    TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
         }
 
         @Override
@@ -129,9 +143,10 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     private static final class NoTxTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                     TransactionDefinition definition) {
-            super(connectionStatus, definition);
+        private NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                     TransactionDefinition definition,
+                                     TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
         }
 
         @Override
@@ -145,9 +160,10 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
         private final DefaultTransactionStatus<C> existingTransaction;
 
-        public ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                         DefaultTransactionStatus<C> existingTransaction) {
-            super(connectionStatus, existingTransaction.getTransactionDefinition());
+        private ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                         DefaultTransactionStatus<C> existingTransaction,
+                                         TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, existingTransaction.getTransactionDefinition(), transactionOperations);
             this.existingTransaction = existingTransaction;
         }
 

@@ -17,8 +17,7 @@ package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
@@ -37,50 +36,54 @@ import java.util.Optional;
 @Internal
 public final class BeanPropertyWithAnnotationMetadata<B, T> implements BeanProperty<B, T> {
 
+    private final String name;
     private final BeanProperty<B, T> delegate;
     private final Argument<T> argument;
     private final AnnotationMetadata annotationMetadata;
 
     public BeanPropertyWithAnnotationMetadata(BeanProperty<B, T> delegate, AnnotationMetadata annotationMetadata) {
+        this(delegate.getName(), delegate, annotationMetadata);
+    }
+
+    public BeanPropertyWithAnnotationMetadata(String name, BeanProperty<B, T> delegate, AnnotationMetadata annotationMetadata) {
+        this.name = name;
         this.delegate = delegate;
         this.annotationMetadata = annotationMetadata;
         Argument<T> originalArgument = delegate.asArgument();
-        this.argument = new DefaultArgument<>(
-            originalArgument.getType(),
+        this.argument = new DefaultArgument<>(originalArgument.getType(),
             originalArgument.getName(),
             annotationMetadata,
             originalArgument.getTypeVariables(),
-            originalArgument.getTypeParameters()
-        );
+            originalArgument.getTypeParameters());
     }
 
     @Override
-    public @NonNull BeanIntrospection<B> getDeclaringBean() {
+    public  BeanIntrospection<B> getDeclaringBean() {
         return delegate.getDeclaringBean();
     }
 
     @Override
-    public @Nullable T get(@NonNull B bean) {
+    public @Nullable T get(B bean) {
         return delegate.get(bean);
     }
 
     @Override
-    public @NonNull <T2> Optional<T2> get(@NonNull B bean, @NonNull Class<T2> type) {
+    public  <T2> Optional<T2> get(B bean,  Class<T2> type) {
         return delegate.get(bean, type);
     }
 
     @Override
-    public <T2> Optional<T2> get(@NonNull B bean, @NonNull Argument<T2> argument) {
+    public <T2> Optional<T2> get(B bean,  Argument<T2> argument) {
         return delegate.get(bean, argument);
     }
 
     @Override
-    public <T2> Optional<T2> get(@NonNull B bean, @NonNull ArgumentConversionContext<T2> conversionContext) {
+    public <T2> Optional<T2> get(B bean,  ArgumentConversionContext<T2> conversionContext) {
         return delegate.get(bean, conversionContext);
     }
 
     @Override
-    public <T2> @Nullable T2 get(@NonNull B bean, @NonNull Class<T2> type, @Nullable T2 defaultValue) {
+    public <T2> @Nullable T2 get(B bean,  Class<T2> type, @Nullable T2 defaultValue) {
         return delegate.get(bean, type, defaultValue);
     }
 
@@ -90,27 +93,27 @@ public final class BeanPropertyWithAnnotationMetadata<B, T> implements BeanPrope
     }
 
     @Override
-    public B withValue(@NonNull B bean, @Nullable T value) {
+    public B withValue(B bean, @Nullable T value) {
         return delegate.withValue(bean, value);
     }
 
     @Override
-    public void set(@NonNull B bean, @Nullable T value) {
+    public void set(B bean, @Nullable T value) {
         delegate.set(bean, value);
     }
 
     @Override
-    public void convertAndSet(@NonNull B bean, @Nullable Object value) {
+    public void convertAndSet(B bean, @Nullable Object value) {
         delegate.convertAndSet(bean, value);
     }
 
     @Override
-    public @NonNull Class<T> getType() {
+    public  Class<T> getType() {
         return delegate.getType();
     }
 
     @Override
-    public @NonNull Argument<T> asArgument() {
+    public  Argument<T> asArgument() {
         return argument;
     }
 
@@ -135,8 +138,8 @@ public final class BeanPropertyWithAnnotationMetadata<B, T> implements BeanPrope
     }
 
     @Override
-    public @NonNull String getName() {
-        return delegate.getName();
+    public  String getName() {
+        return name;
     }
 
     @Override

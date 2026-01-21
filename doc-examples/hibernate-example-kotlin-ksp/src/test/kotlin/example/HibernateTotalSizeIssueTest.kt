@@ -2,6 +2,7 @@ package example
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.Sort.Order
@@ -10,14 +11,17 @@ import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.annotation.Sql
 import io.micronaut.test.extensions.kotest5.annotation.MicronautTest
 import jakarta.persistence.criteria.JoinType
+import org.hibernate.Session
 
 @Sql("classpath:init.sql")
 @MicronautTest
 class HibernateTotalSizeIssueTest(
-    private val authorRepository: AuthorRepository
+    private val authorRepository: AuthorRepository,
+    private val connectionOperations: ConnectionOperations<Session>
 ) : StringSpec({
 
-    "test totalSize should match the number of authors" {
+    "test totalSize should match the number of authors" { connectionOperations.executeWrite {
+
         val criteria = where<Author> {
             val genresJoin = root.joinList<Author, Genre>("genres", JoinType.LEFT)
 
@@ -68,5 +72,5 @@ class HibernateTotalSizeIssueTest(
         page.content.size shouldBe 1
         page.content[0].name shouldBe "Stephen King"
         page.content[0].genres.map { it.name }.sorted() shouldBe listOf("Horror", "Thriller")
-    }
+    } }
 })

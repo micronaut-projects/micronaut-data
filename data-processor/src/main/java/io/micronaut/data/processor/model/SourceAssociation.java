@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -43,15 +42,14 @@ public class SourceAssociation extends SourcePersistentProperty implements Assoc
      * @param propertyElement The property element
      * @param entityResolver The entity resolver
      */
-    SourceAssociation(SourcePersistentEntity owner, PropertyElement propertyElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
+    SourceAssociation(SourcePersistentEntity owner, PropertyElement propertyElement, Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(owner, propertyElement);
         this.entityResolver = entityResolver;
         this.kind = Association.super.getKind();
     }
 
-    @NonNull
     @Override
-    public Relation.Kind getKind() {
+    public Relation. Kind getKind() {
         return kind;
     }
 
@@ -61,7 +59,6 @@ public class SourceAssociation extends SourcePersistentProperty implements Assoc
     }
 
     @Override
-    @NonNull
     public SourcePersistentEntity getAssociatedEntity() {
         ClassElement type = getType();
         switch (getKind()) {

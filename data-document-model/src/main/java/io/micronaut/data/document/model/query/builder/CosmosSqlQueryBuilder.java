@@ -18,8 +18,9 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -67,7 +68,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected String asLiteral(Object value) {
+    protected String asLiteral(@Nullable Object value) {
         if (value instanceof Boolean) {
             return value.toString();
         }
@@ -97,7 +98,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             }
 
             @Override
-            protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths, Map<JoinPath, String> joinAliasOverride) {
+            protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths, @Nullable Map<JoinPath, String> joinAliasOverride) {
                 // Does nothing since we don't select columns in joins
             }
 
@@ -322,6 +323,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
+    @NullUnmarked
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
         return null;
     }

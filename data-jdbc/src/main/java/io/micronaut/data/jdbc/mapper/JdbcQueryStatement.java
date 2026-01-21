@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
@@ -24,6 +24,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -40,10 +41,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
 
     private final ConversionService conversionService;
     private final DataJdbcConfiguration jdbcConfiguration;
-
-    public JdbcQueryStatement() {
-        this(null);
-    }
 
     /**
      * Constructs a new instance.
@@ -75,7 +72,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      * @return The SQL type
      */
     @Internal
-    public static int findSqlType(@NonNull DataType dataType, @NonNull Dialect dialect) {
+    public static int findSqlType(DataType dataType, Dialect dialect) {
         return switch (dataType) {
             case LONG -> Types.BIGINT;
             case STRING, JSON -> Types.VARCHAR;
@@ -110,7 +107,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
+    public QueryStatement<PreparedStatement, Integer> setDynamic(PreparedStatement statement, Integer index, DataType dataType, @Nullable Object value) {
         if (value == null) {
             try {
                 switch (dataType) {
@@ -140,7 +137,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Instant instant) {
+    public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, @Nullable Instant instant) {
         try {
             if (instant == null) {
                 statement.setNull(name, Types.TIMESTAMP);
@@ -154,7 +151,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setTime(PreparedStatement statement, Integer name, Time instant) {
+    public QueryStatement<PreparedStatement, Integer> setTime(PreparedStatement statement, Integer name, @Nullable Time instant) {
         try {
             if (instant == null) {
                 statement.setNull(name, Types.TIME);
@@ -168,7 +165,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
+    public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, @Nullable Object value) throws DataAccessException {
         try {
             if (value instanceof Clob clob) {
                 statement.setClob(index, clob);
@@ -176,7 +173,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 statement.setBlob(index, blob);
             } else if (value instanceof Array array) {
                 statement.setArray(index, array);
-            } else if (value != null) {
+            } else if (value == null) {
+                throw new DataAccessException("Cannot set null value");
+            } else {
                 if (value.getClass().isEnum()) {
                     statement.setObject(index, value, Types.OTHER);
                 } else {
@@ -189,7 +188,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, long value) {
         try {
@@ -200,7 +198,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, char value) {
         try {
@@ -211,9 +208,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
-    public QueryStatement<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, Date date) {
+    public QueryStatement<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, @Nullable Date date) {
         try {
             if (date == null) {
                 statement.setNull(name, Types.DATE);
@@ -227,7 +223,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, String string) {
+    public QueryStatement<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, @Nullable  String string) {
         try {
             if (string == null) {
                 statement.setNull(name, Types.VARCHAR);
@@ -240,7 +236,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, int integer) {
         try {
@@ -251,7 +246,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, boolean bool) {
         try {
@@ -262,7 +256,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, float f) {
         try {
@@ -273,7 +266,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, byte b) {
         try {
@@ -284,7 +276,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, short s) {
         try {
@@ -295,7 +286,6 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
     public QueryStatement<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, double d) {
         try {
@@ -306,9 +296,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
-    public QueryStatement<PreparedStatement, Integer> setBigDecimal(PreparedStatement statement, Integer name, BigDecimal bd) {
+    public QueryStatement<PreparedStatement, Integer> setBigDecimal(PreparedStatement statement, Integer name, @Nullable  BigDecimal bd) {
         try {
             statement.setBigDecimal(name, bd);
         } catch (SQLException e) {
@@ -317,9 +306,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
-    public QueryStatement<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte[] bytes) {
+    public QueryStatement<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte @Nullable [] bytes) {
         try {
             statement.setBytes(name, bytes);
         } catch (SQLException e) {
@@ -328,9 +316,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         return this;
     }
 
-    @NonNull
     @Override
-    public QueryStatement<PreparedStatement, Integer> setArray(PreparedStatement statement, Integer name, Object array) {
+    public QueryStatement<PreparedStatement, Integer> setArray(PreparedStatement statement, Integer name, @Nullable Object array) {
         try {
             if (array == null) {
                 statement.setNull(name, Types.ARRAY);

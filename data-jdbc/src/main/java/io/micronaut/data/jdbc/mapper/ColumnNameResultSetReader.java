@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -53,7 +52,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnNameResultSetReader(DataConversionService conversionService) {
+    public ColumnNameResultSetReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
@@ -65,7 +64,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
 
     @Nullable
     @Override
-    public Object readDynamic(@NonNull ResultSet resultSet, @NonNull String index, @NonNull DataType dataType) {
+    public Object readDynamic(ResultSet resultSet, String index, DataType dataType) {
         Object val = ResultReader.super.readDynamic(resultSet, index, dataType);
 
         try {
@@ -85,11 +84,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
-    public <T> T convertRequired(@NonNull Object value, Class<T> type) {
-        //noinspection ConstantConditions
-        if (value == null) {
-            throw new DataAccessException("Cannot convert type null value to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.");
-        }
+    public <T> T convertRequired(Object value, Class<T> type) {
         Class wrapperType = ReflectionUtils.getWrapperType(type);
         if (wrapperType.isInstance(value)) {
             return (T) value;
@@ -103,6 +98,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(ResultSet resultSet, String index) {
         try {
             return resultSet.getTimestamp(index);
@@ -112,6 +108,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
+    @Nullable
     public Time readTime(ResultSet resultSet, String index) {
         try {
             return resultSet.getTime(index);
@@ -143,6 +140,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
+    @Nullable
     public Date readDate(ResultSet resultSet, String name) {
         try {
             return resultSet.getDate(name);
@@ -216,6 +214,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
+    @Nullable
     public BigDecimal readBigDecimal(ResultSet resultSet, String name) {
         try {
             return resultSet.getBigDecimal(name);
@@ -234,6 +233,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
+    @Nullable
     public <T> T getRequiredValue(ResultSet resultSet, String name, Class<T> type) throws DataAccessException {
         try {
             Object o;

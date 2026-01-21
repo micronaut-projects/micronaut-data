@@ -16,8 +16,8 @@
 package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import org.bson.conversions.Bson;
 
@@ -33,6 +33,7 @@ import java.util.List;
 public final class MongoAggregation {
 
     private final List<Bson> pipeline;
+    @Nullable
     private final MongoAggregationOptions options;
 
     /**

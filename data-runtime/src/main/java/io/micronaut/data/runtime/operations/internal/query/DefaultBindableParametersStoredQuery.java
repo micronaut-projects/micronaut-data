@@ -19,7 +19,7 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
@@ -112,14 +112,14 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         boolean skipExpansion = false;
         if (value == null) {
             if (binding.isExpression()) {
-                requireInvocationContext(invocationContext);
+                Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                 AnnotationValue<?> annotationValue = storedQuery.getParameterExpressions().get(binding.getName());
                 if (annotationValue == null) {
                     throw new IllegalStateException("Required annotation value for parameter expression: " + binding.getName());
                 }
                 if (annotationValue instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
                     evaluatedAnnotationValue = evaluatedAnnotationValue.withArguments(
-                        invocationContext.getTarget(),
+                        Objects.requireNonNull(invocationContext.getTarget()),
                         invocationContext.getParameterValues()
                     );
                     value = evaluatedAnnotationValue.get("expression", Argument.OBJECT_ARGUMENT).orElseThrow();
@@ -127,7 +127,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     throw new IllegalStateException("Required evaluated annotation value for parameter expression: " + binding.getName());
                 }
             } else if (binding.getParameterIndex() != -1) {
-                requireInvocationContext(invocationContext);
+                Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
             } else if (binding.isAutoPopulated()) {
@@ -145,7 +145,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                             if (previousPopulatedValueParameter.getParameterIndex() == -1) {
                                 throw new IllegalStateException("Previous value parameter cannot be bind!");
                             }
-                            requireInvocationContext(invocationContext);
+                            Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                             previousValue = resolveParameterValue(previousPopulatedValueParameter, invocationContext.getParameterValues());
                         }
                         value = binder.autoPopulateRuntimeProperty(persistentProperty, previousValue);
@@ -178,13 +178,16 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     // Otherwise, value got from binding object meaning it was set to null, so we can at least check
                     // since value is null whether the property is nullable
                     String[] propertyPath = binding.getPropertyPath();
-                    PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-                    if (pp != null && pp.getProperty().isRequired()) {
-                        throw new IllegalStateException("Field [" + pp.getProperty().getName() + "] does not allow null value.");
+                    if (propertyPath != null) {
+                        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+                        if (pp != null && pp.getProperty().isRequired()) {
+                            throw new IllegalStateException("Field [" + pp.getProperty().getName() + "] does not allow null value.");
+                        }
                     }
                 }
             }
         } else if (value instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
+            Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
             value = evaluatedAnnotationValue.withArguments(
                 invocationContext.getTarget(),
                 invocationContext.getParameterValues()
@@ -269,7 +272,8 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         return value;
     }
 
-    private List<Object> expandValue(Object value, @Nullable DataType dataType) {
+    @Nullable
+    private List<Object> expandValue(@Nullable Object value, @Nullable DataType dataType) {
         // Special case for byte array, we want to support a list of byte[] convertible values
         if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
             // not expanded
@@ -303,10 +307,8 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         return pp;
     }
 
-    protected final void requireInvocationContext(InvocationContext<?, ?> invocationContext) {
-        if (invocationContext == null) {
-            throw new IllegalStateException("Invocation context is required!");
-        }
+    private String invocationIsRequiredMessage() {
+        return "Invocation context is required!";
     }
 
 }

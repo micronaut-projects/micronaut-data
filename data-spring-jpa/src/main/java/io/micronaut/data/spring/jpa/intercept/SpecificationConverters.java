@@ -24,6 +24,8 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The Spring to Micronaut Data specification converters.
@@ -36,6 +38,7 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 @Internal
 final class SpecificationConverters implements TypeConverterRegistrar {
     @Override
+    @NullUnmarked
     public void register(MutableConversionService conversionService) {
         conversionService.addConverter(
             org.springframework.data.jpa.domain.Specification.class,
@@ -51,6 +54,16 @@ final class SpecificationConverters implements TypeConverterRegistrar {
             org.springframework.data.jpa.domain.Specification.class,
             UpdateSpecification.class,
             specification -> (root, query, criteriaBuilder) -> specification.toPredicate(root, null, criteriaBuilder)
+        );
+        conversionService.addConverter(
+            org.springframework.data.jpa.domain.UpdateSpecification.class,
+            UpdateSpecification.class,
+            specification -> specification::toPredicate
+        );
+        conversionService.addConverter(
+            org.springframework.data.jpa.domain.DeleteSpecification.class,
+            DeleteSpecification.class,
+            specification -> specification::toPredicate
         );
         conversionService.addConverter(org.springframework.data.domain.Sort.class, Sort.class, springSort -> Sort.of(
             springSort.get().map(sort -> new Sort.Order(

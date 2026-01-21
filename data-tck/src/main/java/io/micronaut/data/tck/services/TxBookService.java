@@ -29,11 +29,13 @@ public class TxBookService extends AbstractBookService {
             ConnectionStatus<Object> outerConnection = getConnection();
             TransactionDefinition definition = new DefaultTransactionDefinition(TransactionDefinition.Propagation.NESTED);
             TransactionStatus<Object> status = transactionManager.getTransaction(definition);
-            ConnectionStatus<Object> txConnection = getConnection();
-            if (!txConnection.equals(outerConnection)) {
-                throw new IllegalStateException("Connection is not the same as the outer connection");
-            }
-            bookRepository.save(newBook("MandatoryBook"));
+            status.propagate(() -> {
+                ConnectionStatus<Object> txConnection = getConnection();
+                if (!txConnection.equals(outerConnection)) {
+                    throw new IllegalStateException("Connection is not the same as the outer connection");
+                }
+                bookRepository.save(newBook("MandatoryBook"));
+            });
             transactionManager.commit(status);
             ConnectionStatus<Object> afterTxConnection = getConnection();
             if (!afterTxConnection.equals(outerConnection)) {
@@ -81,11 +83,28 @@ public class TxBookService extends AbstractBookService {
         if (transactionManager.findTransactionStatus().isPresent()) {
             throw new IllegalStateException("No TX expected!");
         }
-        TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        if (transactionManager.findTransactionStatus().isEmpty()) {
-            throw new IllegalStateException("TX expected");
+        if (connectionOperations.findConnectionStatus().isPresent()) {
+            throw new IllegalStateException("No Connection expected!");
         }
-        mandatoryTransaction();
+        TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
+        boolean isSpringTX = transactionManager.getClass().getName().toLowerCase().contains("spring");
+        if (!isSpringTX) {
+            if (connectionOperations.findConnectionStatus().isPresent()) {
+                throw new IllegalStateException("Connection is not expected");
+            }
+            if (transactionManager.findTransactionStatus().isPresent()) {
+                throw new IllegalStateException("TX is not expected");
+            }
+        }
+        transaction.propagate(() -> {
+            if (connectionOperations.findConnectionStatus().isEmpty()) {
+                throw new IllegalStateException("Connection is expected");
+            }
+            if (transactionManager.findTransactionStatus().isEmpty()) {
+                throw new IllegalStateException("TX is expected");
+            }
+            mandatoryTransaction();
+        });
         transactionManager.commit(transaction);
     }
 
@@ -96,8 +115,10 @@ public class TxBookService extends AbstractBookService {
 
     public void bookAddedInNestedTransactionSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.of(TransactionDefinition.Propagation.NESTED));
-        bookRepository.save(newBook("Book1"));
-        transactionManager.commit(transaction);
+        transaction.propagate(() -> {
+            bookRepository.save(newBook("Book1"));
+            transactionManager.commit(transaction);
+        });
     }
 
     @Transactional(propagation = TransactionDefinition.Propagation.NESTED)
@@ -124,10 +145,12 @@ public class TxBookService extends AbstractBookService {
 
     public void bookAddedInNeverPropagationSync(Runnable noTxCheck) {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.of(TransactionDefinition.Propagation.NEVER));
-        bookRepository.save(newBook("MandatoryBook"));
-        // Spring TX manager will retain the connection and clean it up at the TX end
-        noTxCheck.run();
-        transactionManager.commit(transaction);
+        transaction.propagate(() -> {
+            bookRepository.save(newBook("MandatoryBook"));
+            // Spring TX manager will retain the connection and clean it up at the TX end
+            noTxCheck.run();
+            transactionManager.commit(transaction);
+        });
     }
 
     @jakarta.transaction.Transactional
@@ -138,7 +161,9 @@ public class TxBookService extends AbstractBookService {
     public void bookAddedInInnerNeverPropagationSync(Runnable noTxCheck) {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
         try {
-            bookAddedInNeverPropagationSync(noTxCheck);
+            transaction.propagate(() -> {
+                bookAddedInNeverPropagationSync(noTxCheck);
+            });
             transactionManager.commit(transaction);
         } catch (Exception e) {
             transactionManager.rollback(transaction);
@@ -174,7 +199,9 @@ public class TxBookService extends AbstractBookService {
 
     public void mandatoryTransactionSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.of(TransactionDefinition.Propagation.MANDATORY));
-        bookRepository.save(newBook("MandatoryBook"));
+        transaction.propagate(() -> {
+            bookRepository.save(newBook("MandatoryBook"));
+        });
         transactionManager.commit(transaction);
     }
 
@@ -195,7 +222,9 @@ public class TxBookService extends AbstractBookService {
 
     public void bookIsAddedInAnotherRequiresNewTxSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        addBookRequiresNewSync();
+        transaction.propagate(() -> {
+            addBookRequiresNewSync();
+        });
         transactionManager.commit(transaction);
     }
 
@@ -212,14 +241,16 @@ public class TxBookService extends AbstractBookService {
 
     public void bookIsAddedAndAnotherRequiresNewTxIsFailingSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        bookRepository.save(newBook("Book1"));
-        try {
-            transactionRequiresNewFailing();
-            transactionManager.commit(transaction);
-        } catch (Exception e) {
-            transactionManager.rollback(transaction);
-            throw e;
-        }
+        transaction.propagate(() -> {
+            bookRepository.save(newBook("Book1"));
+            try {
+                transactionRequiresNewFailing();
+                transactionManager.commit(transaction);
+            } catch (Exception e) {
+                transactionManager.rollback(transaction);
+                throw e;
+            }
+        });
     }
 
     @jakarta.transaction.Transactional
@@ -234,19 +265,23 @@ public class TxBookService extends AbstractBookService {
 
     public void innerTransactionHasSuppressedExceptionSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        transactionFailingSync();
-        bookRepository.save(newBook("Book1"));
+        transaction.propagate(() -> {
+            transactionFailingSync();
+            bookRepository.save(newBook("Book1"));
+        });
         transactionManager.commit(transaction);
     }
 
     public void innerTransactionHasSuppressedExceptionSync2() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        try {
-            transactionFailing();
-        } catch (Exception e) {
-            // Ignore
-        }
-        bookRepository.save(newBook("Book1"));
+        transaction.propagate(() -> {
+            try {
+                transactionFailing();
+            } catch (Exception e) {
+                // Ignore
+            }
+            bookRepository.save(newBook("Book1"));
+        });
         transactionManager.commit(transaction);
     }
 
@@ -285,7 +320,9 @@ public class TxBookService extends AbstractBookService {
 
     public void addBookRequiresNewSync() {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW));
-        bookRepository.save(newBook("Book1"));
+        transaction.propagate(() -> {
+            bookRepository.save(newBook("Book1"));
+        });
         transactionManager.commit(transaction);
     }
 

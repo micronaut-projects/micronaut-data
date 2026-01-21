@@ -9,6 +9,12 @@ tasks.register("testExamples") {
     dependsOn "test"
 }
 
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
+}
+
 dependencies {
     micronautBoms(
             platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
@@ -30,11 +36,21 @@ graalvmNative {
     }
     binaries {
         configureEach {
-            if (System.getenv("GRAALVM_HOME")?.contains("graal") && System.getenv("GRAALVM_HOME")?.contains("21")) {
-                logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
-                logger.quiet("Enabling strict image heap!")
-                buildArgs.add("--strict-image-heap")
+            if (System.getenv("GRAALVM_HOME")?.contains("graal")) {
+                if (System.getenv("GRAALVM_HOME")?.contains("21")) {
+                    logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
+                    logger.quiet("Enabling strict image heap!")
+                    buildArgs.add("--strict-image-heap")
+                }
+                if (System.getenv("GRAALVM_HOME")?.contains("25")) {
+                    logger.quiet("Enabling SharedArenaSupport for GraalVM 25")
+                    buildArgs.add("-H:+SharedArenaSupport")
+                }
             }
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger,org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter," +
+                    "ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger,ch.qos.logback.classic.LoggerContext,ch.qos.logback.classic.PatternLayout,ch.qos.logback.classic.spi,ch.qos.logback.classic.encoder," +
+                    "ch.qos.logback.core.spi,ch.qos.logback.core.util,ch.qos.logback.core,ch.qos.logback.classic.util,ch.qos.logback.classic.pattern.color,ch.qos.logback.classic.pattern," +
+                    "ch.qos.logback.classic.model.processor,ch.qos.logback.classic.model,ch.qos.logback.classic.joran,ch.qos.logback.core.helpers,org.xml.sax.helpers")
         }
     }
 }

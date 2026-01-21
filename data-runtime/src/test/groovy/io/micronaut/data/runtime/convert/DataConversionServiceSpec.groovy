@@ -15,9 +15,10 @@
  */
 package io.micronaut.data.runtime.convert
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.DefaultBeanContext
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.core.convert.DefaultMutableConversionService
 import io.micronaut.core.convert.MutableConversionService
 import io.micronaut.inject.BeanDefinitionReference
@@ -36,22 +37,8 @@ class DataConversionServiceSpec extends Specification {
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
-            BeanContext mockBeanContext = new DefaultBeanContext() {
-                @Override
-                MutableConversionService getConversionService() {
-                    return new DefaultMutableConversionService()
-                }
-
-                @Override
-                protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
-                    return []
-                }
-
-                @Override
-                void publishEvent(@NonNull Object event) {
-
-                }
-            }.start()
+            BeanContext mockBeanContext = ApplicationContext.builder().build()
+            mockBeanContext.start()
             DataConversionService conversionService = new DataConversionServiceFactory().build(mockBeanContext)
         when:
             def expectedValue = conversionService.convert(obj, targetType)

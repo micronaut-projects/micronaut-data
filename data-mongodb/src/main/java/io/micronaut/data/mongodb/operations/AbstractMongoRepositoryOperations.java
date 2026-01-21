@@ -25,8 +25,11 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -52,9 +55,12 @@ import org.bson.BsonNull;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -156,7 +162,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
-    protected <R> R convertResult(CodecRegistry codecRegistry,
+    protected <R> R convertResult(PreparedQuery<?, ?> preparedQuery,
+                                  CodecRegistry codecRegistry,
                                   Class<R> resultType,
                                   BsonDocument result,
                                   boolean isDtoProjection) {
@@ -164,7 +171,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             return (R) result;
         }
 
-        Optional<R> maybeConverted = convertUsingIntrospected(result, resultType);
+        Optional<R> maybeConverted = convertUsingIntrospected(preparedQuery, result, resultType);
         if (maybeConverted.isPresent()) {
             return maybeConverted.get();
         }
@@ -195,22 +202,23 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     /**
      * Attempts to convert a BSON document into an instance of the specified result type using introspection.
-     *
+     * <p>
      * If the result type has been annotated with `@Introspection`, this method will attempt to use the provided
      * `BeanIntrospection` to map the BSON document onto an instance of the result type.
-     *
+     * <p>
      * If the mapping fails or if no `BeanIntrospection` is found for the result type, an empty `Optional` is returned.
      *
-     * @param result      The BSON document containing the data to be mapped
-     * @param resultType  The type of the object being mapped
-     * @param <R>         The type parameter representing the result type
+     * @param preparedQuery The preparedQuery
+     * @param result        The BSON document containing the data to be mapped
+     * @param resultType    The type of the object being mapped
+     * @param <R>           The type parameter representing the result type
      * @return An `Optional` containing the mapped object, or an empty `Optional` if mapping failed or no `BeanIntrospection` was found
      */
-    protected <R> Optional<R> convertUsingIntrospected(BsonDocument result, Class<R> resultType) {
+    protected <R> Optional<R> convertUsingIntrospected(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<R> resultType) {
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {
             try {
-                return Optional.of(mapIntrospectedObject(result, resultType));
+                return Optional.of(mapIntrospectedObject(preparedQuery, result, resultType));
             } catch (Exception e) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Failed to map @Introspection annotated result. " +
@@ -224,15 +232,32 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
     /**
      * Maps an introspected object from a BSON document.
      *
+     * @param preparedQuery The prepared query
      * @param result      The BSON document containing the data to be mapped
      * @param resultType  The type of the object being mapped
      * @param <R>         The type parameter representing the result type
      * @return An instance of the specified result type, populated with data from the BSON document
      */
-    private <R> R mapIntrospectedObject(BsonDocument result, Class<R> resultType) {
+    private <R> R mapIntrospectedObject(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<R> resultType) {
+        List<String> projection = preparedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class)
+            .stream()
+            .flatMap(a -> a.stringValue().stream())
+            .toList();
+        Iterator<String> iterator = projection.iterator();
         return (new BeanIntrospectionMapper<BsonDocument, R>() {
+
+            final BeanIntrospection<R> rootEntity = BeanIntrospection.getIntrospection((Class<R>) preparedQuery.getRootEntity());
+
             @Override
+            @Nullable
             public Object read(BsonDocument document, String alias) {
+                if (iterator.hasNext()) {
+                    alias = iterator.next();
+                }
+                BeanProperty<R, Object> entityProperty = rootEntity.getProperty(alias).orElse(null);
+                if (entityProperty != null && entityProperty.hasAnnotation(Id.class)) {
+                    alias = MongoUtils.ID;
+                }
                 BsonValue bsonValue = document.get(alias);
                 if (bsonValue == null) {
                     return null;
@@ -261,8 +286,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         BsonDocument bsonDocument = BsonDocumentWrapper.asBsonDocument(entity, codecRegistry);
         BsonDocument filter = new BsonDocument();
         filter.put(MongoUtils.ID, bsonDocument.get(MongoUtils.ID));
-        RuntimePersistentProperty<T> version = persistentEntity.getVersion();
-        if (version != null) {
+        if (persistentEntity.hasVersion()) {
+            RuntimePersistentProperty<T> version = persistentEntity.getVersion();
             // We don't support naming strategy for Mongo entity properties
             String versionPropertyName = version.getName();
             BsonValue value = bsonDocument.get(versionPropertyName);

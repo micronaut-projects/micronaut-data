@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -38,7 +37,8 @@ public interface TypeMapper<D, R> {
      * @return The mapped object
      * @throws DataAccessException If the object cannot be mapped.
      */
-    @NonNull R map(@NonNull D object, @NonNull Class<R> type) throws DataAccessException;
+    @Nullable
+    R map(D object, Class<R> type) throws DataAccessException;
 
     /**
      * Read a value for the given name from the given object.
@@ -46,7 +46,8 @@ public interface TypeMapper<D, R> {
      * @param name The name
      * @return The value
      */
-    @Nullable Object read(@NonNull D object, @NonNull String name);
+    @Nullable
+    Object read(D object, String name);
 
     /**
      * Read a value for the given name from the given object.
@@ -54,14 +55,15 @@ public interface TypeMapper<D, R> {
      * @param argument The argument
      * @return The value
      */
-    default @Nullable Object read(@NonNull D object, @NonNull Argument<?> argument) {
+    @Nullable
+    default Object read(D object, Argument<?> argument) {
         return read(object, argument.getName());
     }
 
     /**
      * @return The conversion service to use.
      */
-    default @NonNull ConversionService getConversionService() {
+    default ConversionService getConversionService() {
         return ConversionService.SHARED;
     }
 }

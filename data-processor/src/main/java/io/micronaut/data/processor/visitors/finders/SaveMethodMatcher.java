@@ -20,6 +20,8 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.Insert;
+import io.micronaut.data.annotation.Save;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
@@ -36,12 +38,14 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,6 +70,21 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Insert.class) || matchContext.getMethodElement().hasStereotype(Save.class)) {
+            if (!matchContext.hasRootEntity()) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (!matchContext.hasRootEntity()) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+            }
+            return match(matchContext, List.of());
+        }
+        return super.match(matchContext);
+    }
+
+    @Override
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         MethodElement methodElement = matchContext.getMethodElement();
         boolean producesAnEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(methodElement);
@@ -73,6 +92,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             && !TypeUtils.doesMethodProducesANumber(methodElement)
             && !producesAnEntity) {
             ClassElement producingItem = TypeUtils.getMethodProducingItemType(methodElement);
+            if (producingItem == null) {
+                throw new ProcessingException(methodElement, "Unsupported return type for a save method: " + methodElement.getReturnType());
+            }
             throw new ProcessingException(methodElement, "Unsupported return type for a save method: " + producingItem.getName());
         }
 //        for (MethodNameParser.Match match : matches) {
@@ -123,7 +145,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 );
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(mc.getAnnotationMetadata());
                 SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
-                PersistentEntityCriteriaInsert<Object> criteriaInsert = criteriaBuilder.createCriteriaInsert(mc.getRootEntity());
+                SourcePersistentEntity rootEntity = mc.getRootEntity();
+                Objects.requireNonNull(rootEntity, "Root entity is required for save method");
+                PersistentEntityCriteriaInsert<Object> criteriaInsert = criteriaBuilder.createCriteriaInsert(rootEntity);
                 if (operationType == DataMethod.OperationType.INSERT_RETURNING) {
                     criteriaInsert.setReturning();
                 }
@@ -151,6 +175,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
                 List<ParameterElement> parameters = matchContext.getParametersNotInRole();
                 SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                Objects.requireNonNull(rootEntity, "Root entity is required for save method");
                 ClassElement returnType = matchContext.getReturnType();
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
                     returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -167,7 +192,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
                 Map<String, ParameterElement> constructorArgs = new HashMap<>(10);
                 if (ArrayUtils.isNotEmpty(parameterElements)) {
-                    for (ParameterElement parameterElement : parameterElements) {
+                    for (ParameterElement parameterElement : Objects.requireNonNull(parameterElements)) {
                         constructorArgs.put(getParameterValue(parameterElement), parameterElement);
                     }
                 }
@@ -187,7 +212,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                             throw new MatchFailedException("Type mismatch. Found parameter of type [" + type.getName() + "]. Required property of type: " + typeName);
                         }
                         requiredProps.remove(name);
-                    } else {
+                    } else if (constructorArg != null) {
                         ClassElement argType = constructorArg.getGenericType();
                         String typeName = argType.getName();
                         if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {

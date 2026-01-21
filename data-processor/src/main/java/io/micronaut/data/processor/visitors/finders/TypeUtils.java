@@ -17,8 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
@@ -67,7 +66,7 @@ public class TypeUtils {
     private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
     @Nullable
-    public static ClassElement getKotlinCoroutineProducedType(@NonNull MethodElement methodElement) {
+    public static ClassElement getKotlinCoroutineProducedType(MethodElement methodElement) {
         if (!methodElement.isSuspend()) {
             throw new IllegalStateException("Not a coroutine method!");
         }
@@ -178,7 +177,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesANumber(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesANumber(MethodElement methodElement) {
         return isNumber(getMethodProducingItemType(methodElement));
     }
 
@@ -187,13 +186,13 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it returns void
      */
-    public static boolean doesReturnVoid(@NonNull MethodElement methodElement) {
+    public static boolean doesReturnVoid(MethodElement methodElement) {
         ClassElement producingItemType = getMethodProducingItemType(methodElement);
         return producingItemType == null || isVoid(producingItemType);
     }
 
     @Nullable
-    public static ClassElement getMethodProducingItemType(@NonNull MethodElement methodElement) {
+    public static ClassElement getMethodProducingItemType(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -208,7 +207,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesABoolean(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesABoolean(MethodElement methodElement) {
         return isBoolean(getMethodProducingItemType(methodElement));
     }
 
@@ -391,7 +390,7 @@ public class TypeUtils {
         if (methodElement.isSuspend()) {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return returnType.isAssignable(Iterable.class);
+        return returnType != null && returnType.isAssignable(Iterable.class);
     }
 
     /**
@@ -435,7 +434,7 @@ public class TypeUtils {
      * @param parameter The parameter
      * @return The data type
      */
-    public static Optional<DataType> resolveDataType(@NonNull ParameterElement parameter) {
+    public static Optional<DataType> resolveDataType(ParameterElement parameter) {
         ClassElement genericType = parameter.getGenericType();
         Objects.requireNonNull(genericType);
         if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
@@ -455,7 +454,7 @@ public class TypeUtils {
      * @param dataConverters Configured data converters
      * @return The data type
      */
-    public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
+    public static @Nullable String resolveDataConverter(ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
         if (explicitConverter.isPresent()) {
             return explicitConverter.get();
@@ -472,7 +471,7 @@ public class TypeUtils {
      * @param dataTypes Configured data types
      * @return The data type
      */
-    public static @NonNull DataType resolveDataType(@NonNull ClassElement type, Map<String, DataType> dataTypes) {
+    public static DataType resolveDataType(ClassElement type, Map<String, DataType> dataTypes) {
         final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
 
         return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
@@ -590,17 +589,23 @@ public class TypeUtils {
      * @return True if they are
      */
     public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
+        if (leftType == null || rightType == null) {
+            return false;
+        }
         String rightTypeName = rightType.getName();
         if (leftType.getName().equals(rightTypeName)) {
             return true;
-        } else if (leftType.isAssignable(rightTypeName)) {
+        }
+        if (leftType.isAssignable(rightTypeName)) {
+            return true;
+        }
+        if (getTypeName(leftType).equals(getTypeName(rightType))) {
+            return true;
+        }
+        if (isNumber(leftType) && isNumber(rightType)) {
             return true;
         } else {
-            if (isNumber(leftType) && isNumber(rightType)) {
-                return true;
-            } else {
-                return isBoolean(leftType) && isBoolean(rightType);
-            }
+            return isBoolean(leftType) && isBoolean(rightType);
         }
     }
 
@@ -609,7 +614,7 @@ public class TypeUtils {
      * @param type The type
      * @return The ID type
      */
-    public static @NonNull String getTypeName(@NonNull ClassElement type) {
+    public static String getTypeName(ClassElement type) {
         String typeName = type.getName();
         return ClassUtils.getPrimitiveType(typeName).map(t ->
             ReflectionUtils.getWrapperType(t).getName()

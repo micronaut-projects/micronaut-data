@@ -24,7 +24,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
@@ -34,13 +34,13 @@ public abstract class PostgresBookRepository extends BookRepository {
     }
 
     @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable String arg0);
+    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArraySearch(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArraySearch(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Where(value = "total_pages > :pages")
     public abstract List<Book> findByTitleStartsWith(String title, int pages);

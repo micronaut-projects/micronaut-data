@@ -25,11 +25,16 @@ import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jd.SpecificationConstraint;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.data.Limit;
 import jakarta.data.Order;
 import jakarta.data.page.PageRequest;
 import jakarta.data.page.impl.CursoredPageRecord;
 import jakarta.data.page.impl.PageRecord;
+import jakarta.data.restrict.Restriction;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,8 +50,16 @@ import java.util.List;
 @Internal
 final class JakartaDataConverters implements TypeConverterRegistrar {
 
+    private final DateTimeProvider dateTimeProvider;
+
+    JakartaDataConverters(DateTimeProvider dateTimeProvider) {
+        this.dateTimeProvider = dateTimeProvider;
+    }
+
     @Override
     public void register(MutableConversionService conversionService) {
+        conversionService.addConverter(Restriction.class, PredicateSpecification.class, new JakartaDataRestrictionsConverter(dateTimeProvider));
+        conversionService.addConverter(SpecificationConstraint.class, PredicateSpecification.class, new JakartaDataConstraintConverter(dateTimeProvider));
         conversionService.addConverter(Limit.class, io.micronaut.data.model.Limit.class,
             limit -> io.micronaut.data.model.Limit.of(limit.maxResults(), (int) limit.startAt() - 1));
         conversionService.addConverter(Order.class, Sort.class, order -> Sort.of(
@@ -117,7 +130,8 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         return PageRequest.Cursor.forKey(c.elements().toArray());
     }
 
-    private static PageRequest convert(CursoredPageable pageable) {
+    @Nullable
+    private static PageRequest convert(@Nullable CursoredPageable pageable) {
         if (pageable == null) {
             return null;
         }
@@ -134,7 +148,8 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         throw new IllegalArgumentException("Unknown mode " + pageable.getMode());
     }
 
-    private static PageRequest convert(Pageable pageable) {
+    @Nullable
+    private static PageRequest convert(@Nullable Pageable pageable) {
         if (pageable == null) {
             return null;
         }

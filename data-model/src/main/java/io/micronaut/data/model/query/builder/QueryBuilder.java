@@ -17,10 +17,8 @@ package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
@@ -66,7 +64,7 @@ public interface QueryBuilder {
      * @param query              The query model
      * @return The query result
      */
-    QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition query);
+    QueryResult buildSelect(AnnotationMetadata annotationMetadata,  SelectQueryDefinition query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -75,7 +73,7 @@ public interface QueryBuilder {
      * @param definition         The definition
      * @return The encoded query
      */
-    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull UpdateQueryDefinition definition);
+    QueryResult buildUpdate(AnnotationMetadata annotationMetadata,  UpdateQueryDefinition definition);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -84,7 +82,7 @@ public interface QueryBuilder {
      * @param definition         The query definition
      * @return The encoded query
      */
-    QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull DeleteQueryDefinition definition);
+    QueryResult buildDelete(AnnotationMetadata annotationMetadata,  DeleteQueryDefinition definition);
 
     /**
      * Generate the limit and offset query.
@@ -93,7 +91,7 @@ public interface QueryBuilder {
      * @param offset The offset (0 if not set)
      * @return The encoded query
      */
-    @NonNull
+
     String buildLimitAndOffset(long limit, long offset);
 
     /**
@@ -104,20 +102,19 @@ public interface QueryBuilder {
         /**
          * @return The root
          */
-        @NonNull
-        Root<?> root();
 
+        Root<?> root();
 
         /**
          * @return The selection
          */
-        @NonNull
+
         Selection<?> selection();
 
         /**
          * @return The order
          */
-        @NonNull
+
         List<Order> order();
 
         /**
@@ -186,13 +183,12 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-        @NonNull
+
         PersistentEntity persistentEntity();
 
         /**
          * @return Is returning selection
          */
-        @Nullable
         boolean returning();
 
     }
@@ -205,7 +201,7 @@ public interface QueryBuilder {
         /**
          * @return The properties to update
          */
-        @NonNull
+
         Map<String, Object> propertiesToUpdate();
 
         /**
@@ -224,7 +220,7 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-        @NonNull
+
         PersistentEntity persistentEntity();
 
         /**

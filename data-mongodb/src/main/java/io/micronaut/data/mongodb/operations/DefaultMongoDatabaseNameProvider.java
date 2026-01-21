@@ -17,7 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -80,7 +80,7 @@ public final class DefaultMongoDatabaseNameProvider implements MongoDatabaseName
     }
 
     @Override
-    public String provide(PersistentEntity persistentEntity, Class<?> repositoryClass) {
+    public String provide(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass) {
         if (tenantResolver != null) {
             String database = tenantResolver.resolveTenantSchemaName();
             if (database != null) {

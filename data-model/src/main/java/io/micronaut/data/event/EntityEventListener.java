@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -66,7 +65,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      * @param context The context object
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    default boolean prePersist(@NonNull EntityEventContext<T> context) {
+    default boolean prePersist(EntityEventContext<T> context) {
         return true;
     }
 
@@ -75,7 +74,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      *
      * @param context The context object
      */
-    default void postPersist(@NonNull EntityEventContext<T> context) {
+    default void postPersist(EntityEventContext<T> context) {
     }
 
     /**
@@ -83,7 +82,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      *
      * @param context The context object
      */
-    default void postLoad(@NonNull EntityEventContext<T> context) {
+    default void postLoad(EntityEventContext<T> context) {
     }
 
     /**
@@ -92,7 +91,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      * @param context The context object
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    default boolean preRemove(@NonNull EntityEventContext<T> context) {
+    default boolean preRemove(EntityEventContext<T> context) {
         return true;
     }
 
@@ -101,7 +100,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      *
      * @param context The context object
      */
-    default void postRemove(@NonNull EntityEventContext<T> context) {
+    default void postRemove(EntityEventContext<T> context) {
     }
 
     /**
@@ -110,7 +109,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      * @param context The context object
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    default boolean preUpdate(@NonNull EntityEventContext<T> context) {
+    default boolean preUpdate(EntityEventContext<T> context) {
         return true;
     }
 
@@ -120,7 +119,7 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      * @param context The context object
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    default boolean preQuery(@NonNull QueryEventContext<T> context) {
+    default boolean preQuery(QueryEventContext<T> context) {
         return true;
     }
 
@@ -129,6 +128,6 @@ public interface EntityEventListener<T> extends EventListener, Ordered  {
      *
      * @param context The context object
      */
-    default void postUpdate(@NonNull EntityEventContext<T> context) {
+    default void postUpdate(EntityEventContext<T> context) {
     }
 }

@@ -16,8 +16,7 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 
@@ -43,7 +42,7 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     }
 
     @Override
-    @NonNull
+
     public String getRequiredName() {
         return delegate.getRequiredName();
     }
@@ -58,6 +57,7 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.getJsonDataType();
     }
 
+    @Nullable
     @Override
     public Class<?> getParameterConverterClass() {
         return delegate.getParameterConverterClass();
@@ -69,12 +69,12 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
     }
 
     @Override
-    public String[] getParameterBindingPath() {
+    public String @Nullable [] getParameterBindingPath() {
         return delegate.getParameterBindingPath();
     }
 
     @Override
-    public String[] getPropertyPath() {
+    public String @Nullable [] getPropertyPath() {
         return delegate.getPropertyPath();
     }
 
@@ -93,6 +93,7 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.isRequiresPreviousPopulatedValue();
     }
 
+    @Nullable
     @Override
     public QueryParameterBinding getPreviousPopulatedValueParameter() {
         return delegate.getPreviousPopulatedValueParameter();
@@ -103,16 +104,19 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.isExpandable();
     }
 
+    @Nullable
     @Override
     public Object getValue() {
         return delegate.getValue();
     }
 
+    @Nullable
     @Override
     public String getRole() {
         return delegate.getRole();
     }
 
+    @Nullable
     @Override
     public String getTableAlias() {
         return delegate.getTableAlias();

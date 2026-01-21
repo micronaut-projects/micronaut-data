@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta.event;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's {@code PostRemove} annotation to Micronaut's.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public final class PostRemoveAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.event.PostRemoveAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.PostRemove";

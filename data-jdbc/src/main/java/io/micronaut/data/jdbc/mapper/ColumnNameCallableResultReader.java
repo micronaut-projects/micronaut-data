@@ -16,8 +16,7 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -61,7 +60,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
 
     @Nullable
     @Override
-    public Object readDynamic(@NonNull CallableStatement cs, @NonNull String index, @NonNull DataType dataType) {
+    public Object readDynamic(CallableStatement cs, String index, DataType dataType) {
         Object val = ResultReader.super.readDynamic(cs, index, dataType);
 
         try {
@@ -77,11 +76,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
     }
 
     @Override
-    public <T> T convertRequired(@NonNull Object value, Class<T> type) {
-        //noinspection ConstantConditions
-        if (value == null) {
-            throw new DataAccessException("Cannot convert type null value to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.");
-        }
+    public <T> T convertRequired(Object value, Class<T> type) {
         Class wrapperType = ReflectionUtils.getWrapperType(type);
         if (wrapperType.isInstance(value)) {
             return (T) value;
@@ -94,6 +89,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
         );
     }
 
+    @Nullable
     @Override
     public Date readTimestamp(CallableStatement cs, String index) {
         try {
@@ -103,6 +99,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
         }
     }
 
+    @Nullable
     @Override
     public Time readTime(CallableStatement cs, String index) {
         try {
@@ -134,6 +131,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
         }
     }
 
+    @Nullable
     @Override
     public Date readDate(CallableStatement cs, String name) {
         try {
@@ -226,6 +224,7 @@ public final class ColumnNameCallableResultReader implements ResultReader<Callab
     }
 
     @Override
+    @Nullable
     public <T> T getRequiredValue(CallableStatement cs, String name, Class<T> type) throws DataAccessException {
         try {
             Object o;

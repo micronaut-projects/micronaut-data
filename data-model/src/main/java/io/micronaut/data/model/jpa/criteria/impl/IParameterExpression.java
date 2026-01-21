@@ -21,6 +21,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.AbstractExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import jakarta.persistence.criteria.ParameterExpression;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The abstract implementation of {@link ParameterExpression}.
@@ -32,9 +33,10 @@ import jakarta.persistence.criteria.ParameterExpression;
 @Internal
 public abstract class IParameterExpression<T> extends AbstractExpression<T> implements ParameterExpression<T>, IExpression<T>, BindingParameter {
 
+    @Nullable
     private final String name;
 
-    public IParameterExpression(ExpressionType<T> type, String name) {
+    public IParameterExpression(ExpressionType<T> type, @Nullable String name) {
         super(type);
         this.name = name;
     }
@@ -50,11 +52,13 @@ public abstract class IParameterExpression<T> extends AbstractExpression<T> impl
     }
 
     @Override
+    @Nullable
     public String getName() {
         return name;
     }
 
     @Override
+    @Nullable
     public Integer getPosition() {
         return null;
     }

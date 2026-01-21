@@ -92,7 +92,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractP
 
     @Override
     public List<Order> getOrderList() {
-        return orders;
+        return orders == null ? List.of() : orders;
     }
 
     @Override

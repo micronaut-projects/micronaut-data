@@ -16,9 +16,8 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
 /**
@@ -48,16 +47,7 @@ record SimpleParameterBinding(String getName,
     }
 
     @Override
-    public JsonDataType getJsonDataType() {
-        return JsonDataType.DEFAULT;
-    }
-
-    @Override
-    public String[] getPropertyPath() {
-        return null;
-    }
-
-    @Override
+    @Nullable
     public Object getValue() {
         return value;
     }

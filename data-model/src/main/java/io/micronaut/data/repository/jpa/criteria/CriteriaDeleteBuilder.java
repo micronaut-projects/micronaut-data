@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 
@@ -34,7 +33,7 @@ public interface CriteriaDeleteBuilder<E> {
      * @param criteriaBuilder The criteria builder
      * @return a query
      */
-    @NonNull
-    CriteriaDelete<E> build(@NonNull CriteriaBuilder criteriaBuilder);
+    
+    CriteriaDelete<E> build(CriteriaBuilder criteriaBuilder);
 
 }

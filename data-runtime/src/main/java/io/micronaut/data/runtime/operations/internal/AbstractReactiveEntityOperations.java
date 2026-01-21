@@ -25,6 +25,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -72,10 +73,8 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
         this.cascadeOperations = cascadeOperations;
         this.ctx = ctx;
         this.insert = insert;
-        this.hasGeneratedId = insert && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().isGenerated();
-        Data data = new Data();
-        data.entity = entity;
-        this.data = Mono.just(data);
+        this.hasGeneratedId = insert && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
+        this.data = Mono.just(new Data(entity));
     }
 
     @Override
@@ -108,12 +107,12 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
                 return Mono.just(d);
             }
             return Mono.deferContextual(contextView -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
                     d.vetoed = !fn.apply((EntityEventContext<Object>) event);
                     d.entity = event.getEntity();
                     return Mono.just(d);
-                }
+                });
             });
         });
         return false;
@@ -126,11 +125,11 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
                 return Mono.just(d);
             }
             return Mono.deferContextual(contextView -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
                     fn.accept((EntityEventContext<Object>) event);
                     return Mono.just(d);
-                }
+                });
             });
         });
     }
@@ -171,9 +170,25 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
     @SuppressWarnings("VisibilityModifier")
     protected final class Data {
         public T entity;
+        @Nullable
         public Object filter;
+        @Nullable
         public Map<QueryParameterBinding, Object> previousValues;
         public long rowsUpdated;
         public boolean vetoed = false;
+
+        Data(T entity) {
+            this.entity = entity;
+        }
+
+        /**
+         * Get filter or the default value.
+         * @param defaultFilter The default value
+         * @param <B> The filter type
+         * @return The value
+         */
+        public <B> B getFilterOrDefault(B defaultFilter) {
+            return filter == null ? defaultFilter : (B) filter;
+        }
     }
 }

@@ -16,7 +16,7 @@
 package io.micronaut.data.jpa.repository.intercept;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -26,7 +26,7 @@ import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 /**
  * Interceptor for flushing.
- * @param <T>
+ * @param <T> The entity type
  */
 @Internal
 public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DataInterceptor<T, Void> {

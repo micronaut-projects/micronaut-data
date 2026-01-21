@@ -17,11 +17,14 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Delete;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.DeleteCriteriaMethodMatch;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +55,22 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Delete.class)) {
+            if (!matchContext.hasRootEntity()) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (!matchContext.hasRootEntity()) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+            }
+            return match(matchContext, List.of());
+        }
+        return super.match(matchContext);
+    }
+
+    @Override
+    @Nullable
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         ParameterElement[] parameters = matchContext.getParameters();
         boolean isSpecificDelete = matches.stream().anyMatch(m -> m.id() == QueryMatchId.PREDICATE);
@@ -100,11 +119,13 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntityParameter() {
                 return finalEntityParameter;
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntitiesParameter() {
                 return finalEntitiesParameter;
             }

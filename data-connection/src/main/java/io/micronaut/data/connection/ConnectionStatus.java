@@ -15,7 +15,11 @@
  */
 package io.micronaut.data.connection;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.propagation.PropagatedContextElement;
+
+import java.util.function.Supplier;
 
 /**
  * The connection status.
@@ -24,17 +28,19 @@ import io.micronaut.core.annotation.NonNull;
  * @author Denis Stepanov
  * @since 4.0.0
  */
-public interface ConnectionStatus<C> {
+public interface ConnectionStatus<C> extends PropagatedContextElement {
 
     /**
      * A new connection value.
      * Based on the propagation value the connection manager might decide to reuse the existing connection.
+     *
      * @return true if the connection is new
      */
     boolean isNew();
 
     /**
      * The connection representation.
+     *
      * @return The connection representation
      */
     @NonNull
@@ -42,6 +48,7 @@ public interface ConnectionStatus<C> {
 
     /**
      * The connection definition.
+     *
      * @return The connection definition
      */
     @NonNull
@@ -49,7 +56,46 @@ public interface ConnectionStatus<C> {
 
     /**
      * Register connection synchronization.
+     *
      * @param synchronization The synchronization
      */
     void registerSynchronization(@NonNull ConnectionSynchronization synchronization);
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param propagatedContext The propagated context
+     * @param supplier The supplier
+     * @param <V>      The value type
+     * @return The value
+     * @since 5.0
+     */
+    default <V> V propagate(PropagatedContext propagatedContext, Supplier<V> supplier) {
+        return propagatedContext.plus(this).propagate(supplier);
+    }
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param supplier The supplier
+     * @param <V>      The value type
+     * @return The value
+     * @since 5.0
+     */
+    default <V> V propagate(Supplier<V> supplier) {
+        return propagate(PropagatedContext.getOrEmpty(), supplier);
+    }
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param runnable The runnable
+     * @since 5.0
+     */
+    default void propagate(Runnable runnable) {
+        propagate(() -> {
+            runnable.run();
+            return null;
+        });
+    }
 }

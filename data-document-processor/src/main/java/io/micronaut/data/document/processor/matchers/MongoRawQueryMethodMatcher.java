@@ -18,7 +18,7 @@ package io.micronaut.data.document.processor.matchers;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
@@ -41,6 +41,7 @@ import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +66,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         AnnotationMetadata annotationMetadata = matchContext.getAnnotationMetadata();
         if (!annotationMetadata.hasAnnotation(MongoAnnotations.REPOSITORY)) {
@@ -156,7 +158,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
     private void buildRawQuery(@NonNull MethodMatchContext matchContext,
                                MethodMatchInfo methodMatchInfo,
+                               @Nullable
                                ParameterElement entityParameter,
+                               @Nullable
                                ParameterElement entitiesParameter,
                                DataMethod.OperationType operationType) {
         MethodElement methodElement = matchContext.getMethodElement();
@@ -195,7 +199,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
     private QueryResult getQueryResult(MethodMatchContext matchContext,
                                        List<ParameterElement> parameters,
+                                       @Nullable
                                        ParameterElement entityParam,
+                                       @Nullable
                                        SourcePersistentEntity persistentEntity) {
         String filterQueryString;
         if (matchContext.getMethodElement().hasAnnotation(MongoAnnotations.AGGREGATION_QUERY)) {
@@ -224,9 +230,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
     }
 
     private QueryResult getUpdateQueryResult(MethodMatchContext matchContext,
-                                       List<ParameterElement> parameters,
-                                       ParameterElement entityParam,
-                                       SourcePersistentEntity persistentEntity) {
+                                             List<ParameterElement> parameters,
+                                             @Nullable ParameterElement entityParam,
+                                             @Nullable SourcePersistentEntity persistentEntity) {
         String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElse("{}");
         String updateQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.UPDATE_QUERY, "update").orElseThrow(() ->
                 new MatchFailedException("Update query is missing!")
@@ -260,7 +266,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         };
     }
 
-    private String processCustomQuery(MethodMatchContext matchContext, String queryString, List<ParameterElement> parameters, ParameterElement entityParam, SourcePersistentEntity persistentEntity, List<QueryParameterBinding> parameterBindings) {
+    private String processCustomQuery(MethodMatchContext matchContext,
+                                      String queryString,
+                                      List<ParameterElement> parameters,
+                                      @Nullable
+                                      ParameterElement entityParam,
+                                      @Nullable
+                                      SourcePersistentEntity persistentEntity,
+                                      List<QueryParameterBinding> parameterBindings) {
         List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
             .getAnnotationMetadata()
             .getAnnotationValuesByType(ParameterExpression.class);

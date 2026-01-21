@@ -46,6 +46,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,9 +78,13 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     protected Map<Integer, String> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
     protected final ExpressionType<T> resultType;
+    @Nullable
     protected Predicate predicate;
+    @Nullable
     protected Selection<?> selection;
+    @Nullable
     protected PersistentEntityRoot<?> entityRoot;
+    @Nullable
     protected List<Order> orders;
     protected int max = -1;
     protected int offset = 0;
@@ -93,7 +98,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
 
     @Override
     public PersistentEntity getPersistentEntity() {
-        return entityRoot.getPersistentEntity();
+        return Objects.requireNonNull(entityRoot).getPersistentEntity();
     }
 
     public final Map<Integer, String> getParametersInRole() {
@@ -123,8 +128,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
                 throw new IllegalStateException("Root entity has to be specified");
             }
         }
-        return new SelectQueryDefinitionImpl(
-            root,
+        return new SelectQueryDefinitionImpl(root,
             root.getPersistentEntity(),
             predicate,
             selection == null ? root : selection,
@@ -134,11 +138,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             orders == null ? List.of() : orders,
             max,
             offset,
-            parametersInRole
-        );
+            parametersInRole);
     }
 
     private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity) {
+        Objects.requireNonNull(entityRoot);
         Joiner joiner = new Joiner();
         if (predicate instanceof IPredicate predicateVisitable) {
             predicateVisitable.visitPredicate(joiner);
@@ -165,10 +169,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             }
             Association[] associationPath;
             if (propertyPath.getProperty() instanceof Association) {
-                associationPath = Stream.concat(
-                    propertyPath.getAssociations().stream(),
-                    Stream.of(propertyPath.getProperty())
-                ).toArray(Association[]::new);
+                associationPath = Stream.concat(propertyPath.getAssociations().stream(),
+                    Stream.of(propertyPath.getProperty())).toArray(Association[]::new);
             } else {
                 associationPath = propertyPath.getAssociations().toArray(new Association[0]);
             }
@@ -196,8 +198,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         return isProjected(selection, join);
     }
 
-    private boolean isProjected(Selection<?> selection, jakarta.persistence.criteria.Join<?, ?> join) {
-        if (selection instanceof CompoundSelection<?> compoundSelection) {
+    private boolean isProjected(@Nullable Selection<?> selection, jakarta.persistence.criteria.Join<?, ?> join) {
+        if (selection instanceof CompoundSelection<?>) {
             // Avoid this check for now, we would need to support equals of different property paths
             return true;
 //            for (Selection<?> compoundSelectionItem : compoundSelection.getCompoundSelectionItems()) {
@@ -229,6 +231,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     public abstract <X> PersistentEntityRoot<X> from(Class<X> entityClass);
 
     @Override
+    @Nullable
     public <X> PersistentEntityRoot<X> from(EntityType<X> entity) {
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
@@ -236,6 +239,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         return null;
     }
 
+    @Override
     public abstract <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity);
 
     /**
@@ -244,6 +248,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
      * @param limit The max ros
      * @return self
      */
+    @Override
     public Self limit(int limit) {
         this.max = limit;
         return self();
@@ -255,6 +260,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
      * @param offset The offset
      * @return self
      */
+    @Override
     public Self offset(int offset) {
         this.offset = offset;
         return self();
@@ -274,7 +280,26 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     @Override
     public Self where(Expression<Boolean> restriction) {
         if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
-            predicate = conjunctionPredicate;
+            int size = conjunctionPredicate.getPredicates().size();
+            if (size == 1) {
+                return where(conjunctionPredicate.getPredicates().iterator().next());
+            }
+            if (size == 0) {
+                predicate = null;
+            } else {
+                predicate = conjunctionPredicate;
+            }
+        } else if (restriction instanceof DisjunctionPredicate disjunctionPredicate) {
+            int size = disjunctionPredicate.getPredicates().size();
+            if (size == 1) {
+                return where(disjunctionPredicate.getPredicates().iterator().next());
+            }
+            if (size == 0) {
+                // Empty disjunction should result into unmatchable query
+                predicate = criteriaBuilder.equal(criteriaBuilder.literal(1), criteriaBuilder.literal(2));
+            } else {
+                predicate = disjunctionPredicate;
+            }
         } else {
             predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
         }
@@ -284,10 +309,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     @Override
     public Self where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
+        if (restrictions.length == 1) {
+            return where(restrictions[0]);
+        }
         if (restrictions.length > 0) {
-            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
-            );
+            predicate = new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
         }
@@ -345,30 +371,40 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
 
     @Override
     public Class<T> getResultType() {
+        if (resultType.getJavaType() == Object.class && selection != null) {
+            if (!selection.isCompoundSelection()) {
+                return (Class<T>) selection.getJavaType();
+            }
+        }
         return resultType.getJavaType();
     }
 
     @Override
+    @Nullable
     public Selection<T> getSelection() {
         return (Selection<T>) selection;
     }
 
     @Override
+    @Nullable
     public Predicate getRestriction() {
         return predicate;
     }
 
     public final boolean hasOnlyIdRestriction() {
+        if (predicate == null) {
+            return false;
+        }
         return isOnlyIdRestriction(predicate);
     }
 
     private boolean isOnlyIdRestriction(Expression<?> predicate) {
         if (predicate instanceof BinaryPredicate binaryPredicate) {
             if (binaryPredicate.getLeftExpression() instanceof PersistentPropertyPath<?> pp) {
-                return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
+                return pp.getProperty().getOwner().hasIdentity() &&  pp.getProperty() == pp.getProperty().getOwner().getIdentity();
             }
             if (binaryPredicate.getRightExpression() instanceof PersistentPropertyPath<?> pp) {
-                return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
+                return pp.getProperty().getOwner().hasIdentity() && pp.getProperty() == pp.getProperty().getOwner().getIdentity();
             }
         }
         if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
@@ -385,7 +421,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     public final boolean hasVersionRestriction() {
-        if (entityRoot.getPersistentEntity().getVersion() == null) {
+        if (predicate == null) {
+            return false;
+        }
+        Objects.requireNonNull(entityRoot);
+        if (!entityRoot.getPersistentEntity().hasVersion()) {
             return false;
         }
         return hasVersionPredicate(predicate);
@@ -403,8 +443,9 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         private final int offset;
         private final Map<Integer, String> parametersInRole;
 
-        public SelectQueryDefinitionImpl(Root<?> root,
+        private SelectQueryDefinitionImpl(Root<?> root,
                                          PersistentEntity persistentEntity,
+                                         @Nullable
                                          Predicate predicate,
                                          Selection<?> selection,
                                          Map<String, JoinPath> joinPaths,
@@ -470,10 +511,12 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     abstract static class BaseQueryDefinitionImpl implements QueryBuilder.BaseQueryDefinition {
 
         private final PersistentEntity persistentEntity;
+        @Nullable
         private final Predicate predicate;
         private final Map<String, JoinPath> joinPaths;
 
         protected BaseQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                          @Nullable
                                           Predicate predicate,
                                           Map<String, JoinPath> joinPaths) {
             this.persistentEntity = persistentEntity;
@@ -487,6 +530,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
 
         @Override
+        @Nullable
         public Predicate predicate() {
             return predicate;
         }

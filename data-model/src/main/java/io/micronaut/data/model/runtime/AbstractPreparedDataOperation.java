@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.convert.value.ConvertibleValues;
@@ -39,31 +38,26 @@ public abstract class AbstractPreparedDataOperation<R> implements PreparedDataOp
         this.context = context;
     }
 
-    @NonNull
     @Override
     public final Optional<Object> getAttribute(CharSequence name) {
         return context.getAttribute(name);
     }
 
-    @NonNull
     @Override
     public final <T> Optional<T> getAttribute(CharSequence name, Class<T> type) {
         return context.getAttribute(name, type);
     }
 
-    @NonNull
     @Override
     public final ConvertibleValues<Object> getAttributes() {
         return context.getAttributes();
     }
 
-    @NonNull
     @Override
     public final Argument<R> getResultArgument() {
         return storedDataOperation.getResultArgument();
     }
 
-    @NonNull
     @Override
     public final AnnotationMetadata getAnnotationMetadata() {
         return storedDataOperation.getAnnotationMetadata();

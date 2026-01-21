@@ -17,8 +17,7 @@ package io.micronaut.data.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
@@ -40,16 +39,14 @@ import java.util.Optional;
  * @since 4.8.0
  */
 @Serdeable
-record DefaultCursoredPageable(
-    int size,
+record DefaultCursoredPageable(int size,
     @Nullable
     @JsonProperty("cursor")
     Cursor currentCursor,
     Mode mode,
     @JsonProperty("number") int page,
     Sort sort,
-    boolean requestTotal
-) implements CursoredPageable {
+    boolean requestTotal) implements CursoredPageable {
 
     /**
      * Default constructor.
@@ -82,7 +79,6 @@ record DefaultCursoredPageable(
         return page;
     }
 
-    @NonNull
     @Override
     public Sort getSort() {
         return sort;
@@ -185,9 +181,7 @@ record DefaultCursoredPageable(
      * @param elements The currentCursor elements
      */
     @Serdeable
-    record DefaultCursor(
-        List<Object> elements
-    ) implements Cursor {
+    record DefaultCursor(List<Object> elements) implements Cursor {
         @Override
         public Object get(int index) {
             return elements.get(index);

@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Translates the {@code jakarta.persistence} annotation model into the generic model understood by Micronaut Data.
  *
@@ -24,7 +22,7 @@ import io.micronaut.core.annotation.NonNull;
  * @since 2.4.8
  */
 public final class EntityAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.EntityAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.Entity";

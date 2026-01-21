@@ -16,7 +16,6 @@
 package io.micronaut.data.operations.async;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 
 /**
  * The repository operations capable of supporting asynchronous access.
@@ -30,6 +29,6 @@ public interface AsyncCriteriaCapableRepository {
     /**
      * @return The async operations.
      */
-    @NonNull
+    
     AsyncCriteriaRepositoryOperations async();
 }

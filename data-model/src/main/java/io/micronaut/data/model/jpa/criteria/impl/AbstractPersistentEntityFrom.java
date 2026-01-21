@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -67,19 +66,19 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
     @Override
     public abstract PersistentEntity getPersistentEntity();
 
-    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(@NonNull Association association,
-                                                                                 @Nullable io.micronaut.data.annotation.Join.Type type,
+    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
+                                                                                 io.micronaut.data.annotation.Join. @Nullable Type type,
                                                                                  @Nullable String alias);
 
     private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName) {
         return getJoin(attributeName, null, null);
     }
 
-    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
         return getJoin(attributeName, type, null);
     }
 
-    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
+    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type, @Nullable String alias) {
         PersistentProperty persistentProperty = getPersistentEntity().getPropertyByName(attributeName);
 
         if (persistentProperty == null && attributeName.contains(".")) {
@@ -112,7 +111,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return (PersistentAssociationPath<X, Y>) path;
     }
 
-    private <Y> PersistentCollectionAssociationPath<E, Y> getCollectionJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+    private <Y> PersistentCollectionAssociationPath<E, Y> getCollectionJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
         PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
         if (!(join instanceof PersistentCollectionAssociationPath<E, Y> persistentCollectionAssociationPath)) {
             throw new IllegalStateException("Join is not a Collection!");
@@ -120,7 +119,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return persistentCollectionAssociationPath;
     }
 
-    private <Y> PersistentSetAssociationPath<E, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+    private <Y> PersistentSetAssociationPath<E, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
         PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
         if (!(join instanceof PersistentSetAssociationPath<E, Y> persistentSetAssociationPath)) {
             throw new IllegalStateException("Join is not a Set!");
@@ -128,7 +127,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return persistentSetAssociationPath;
     }
 
-    private <Y> PersistentListAssociationPath<E, Y> getListJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+    private <Y> PersistentListAssociationPath<E, Y> getListJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
         PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
         if (!(join instanceof PersistentListAssociationPath<E, Y> persistentListAssociationPath)) {
             throw new IllegalStateException("Join is not a List!");
@@ -147,17 +146,16 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
     }
 
     @Override
-    public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+    public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
         return getJoin(attributeName, type);
     }
 
     @Override
-    public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
+    public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type, String alias) {
         return getJoin(attributeName, type, Objects.requireNonNull(alias));
     }
 
-    @Nullable
-    private io.micronaut.data.annotation.Join.Type convert(@Nullable JoinType joinType) {
+    private io.micronaut.data.annotation.Join. @Nullable Type convert(@Nullable JoinType joinType) {
         if (joinType == null) {
             return null;
         }
@@ -324,11 +322,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         return (Fetch<X, Y>) join(attributeName, convertFetch(jt));
     }
 
-    @Nullable
-    private io.micronaut.data.annotation.Join.Type convertFetch(@Nullable JoinType joinType) {
-        if (joinType == null) {
-            return null;
-        }
+    private io.micronaut.data.annotation.Join. Type convertFetch(JoinType joinType) {
         return switch (joinType) {
             case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
             case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;

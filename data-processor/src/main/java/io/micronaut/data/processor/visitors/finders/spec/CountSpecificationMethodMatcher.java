@@ -22,8 +22,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-
-import java.util.regex.Matcher;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code count(Specification)} for JPA specifications.
@@ -42,7 +41,8 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
+    @Nullable
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (TypeUtils.isValidCountReturnType(matchContext) && isQuerySpecification(matchContext)) {
             return mc -> {
                 FindersUtils.InterceptorMatch e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.event.EntityEventMapping;
@@ -30,7 +29,6 @@ import io.micronaut.inject.visitor.VisitorContext;
  * @since 2.3.0
  */
 public class EntityEventVisitor implements TypeElementVisitor<Object, EntityEventMapping> {
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;

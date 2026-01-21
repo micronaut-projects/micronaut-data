@@ -17,8 +17,9 @@ package io.micronaut.data.processor.jdql;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.jdql.JDQLBaseListener;
 import io.micronaut.data.jdql.JDQLParser;
 import io.micronaut.data.model.PersistentEntity;
@@ -28,6 +29,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaDelete;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
@@ -39,6 +42,7 @@ import io.micronaut.inject.ast.MethodElement;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
@@ -63,6 +67,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The utils to generate Criteria queries from Jakarta Data Query Language statements.
@@ -177,7 +182,7 @@ public final class JDQLCriteriaBuilderUtils {
                                                                JDQLParser.Select_statementContext selectStatementContext,
                                                                Function<String, ClassElement> classElementResolver,
                                                                SourcePersistentEntityCriteriaBuilder criteriaBuilder,
-                                                               MethodElement methodElement,
+                                                               @Nullable MethodElement methodElement,
                                                                String q) {
 
         SourcePersistentEntityCriteriaQuery<Object> query = criteriaBuilder
@@ -200,16 +205,39 @@ public final class JDQLCriteriaBuilderUtils {
         );
         JDQLParser.Select_clauseContext selectClauseContext = selectStatementContext.select_clause();
         if (selectClauseContext != null) {
-            JDQLParser.Select_listContext selectList = selectClauseContext.select_list();
-            JDQLParser.Aggregate_expressionContext aggregateExpression = selectList.aggregate_expression();
-            if (aggregateExpression != null) {
-                query.select(criteriaBuilder.count(root));
-            } else {
+            JDQLParser.Select_itemsContext selectItems = selectClauseContext.select_items();
+            if (selectItems != null) {
                 query.multiselect(
-                    selectList.state_field_path_expression().stream()
-                        .<Selection<?>>map(s -> getExpression(s, root, criteriaBuilder))
-                        .toList()
+                    selectItems.state_field_path_expression()
+                        .stream()
+                        .map(sfp -> {
+                            Selection<?> expression = getExpression(sfp, true, root, criteriaBuilder);
+                            if (methodElement != null) {
+                                if (expression instanceof Path<?> path) {
+                                    methodElement.annotate(Projection.class, b -> b.value(((PersistentPropertyPath<Object>) path).getProperty().getName()));
+                                } else if (expression instanceof AliasedSelection<?> aliasedSelection) {
+                                    methodElement.annotate(Projection.class, b -> b.value(((PersistentPropertyPath<Object>) aliasedSelection.getSelection()).getProperty().getName()));
+                                }
+                            }
+                            return expression;
+                        })
+                        .collect(Collectors.toUnmodifiableList())
                 );
+            }
+            JDQLParser.Select_itemContext selectItem = selectClauseContext.select_item();
+            if (selectItem != null) {
+                JDQLParser.Aggregate_expressionContext aggregateExpression = selectItem.aggregate_expression();
+                if (aggregateExpression != null) {
+                    query.select(criteriaBuilder.count(root));
+                }
+                JDQLParser.State_field_path_expressionContext sfp = selectItem.state_field_path_expression();
+                if (sfp != null) {
+                    query.select(getExpression(sfp, false, root, criteriaBuilder));
+                }
+                JDQLParser.Id_expressionContext idExpressionContext = selectItem.id_expression();
+                if (idExpressionContext != null) {
+                    query.select(getExpression(idExpressionContext, root));
+                }
             }
         }
         return query;
@@ -285,7 +313,8 @@ public final class JDQLCriteriaBuilderUtils {
         return deleteQuery;
     }
 
-    private static Predicate getPredicate(@Nullable JDQLParser.Where_clauseContext whereClause,
+    @Nullable
+    private static Predicate getPredicate(JDQLParser. @Nullable Where_clauseContext whereClause,
                                           Root<?> root,
                                           PersistentEntityCriteriaBuilder criteriaBuilder) {
         if (whereClause == null) {
@@ -295,15 +324,16 @@ public final class JDQLCriteriaBuilderUtils {
         return getPredicate(conditionalExpression, root, criteriaBuilder);
     }
 
-    private static List<Order> getOrders(@Nullable JDQLParser.Orderby_clauseContext orderByClause,
+    private static List<Order> getOrders(JDQLParser. @Nullable Orderby_clauseContext orderByClause,
                                          Root<?> root,
                                          PersistentEntityCriteriaBuilder criteriaBuilder,
+                                         @Nullable
                                          MethodElement methodElement) {
         List<Order> orders = new ArrayList<>();
         if (orderByClause != null) {
             List<JDQLParser.Orderby_itemContext> orderbyItemContexts = orderByClause.orderby_item();
             for (JDQLParser.Orderby_itemContext orderbyItemContext : orderbyItemContexts) {
-                Expression<?> expression = getExpression(orderbyItemContext.state_field_path_expression(), root, criteriaBuilder);
+                Expression<?> expression = getExpression(orderbyItemContext.scalar_expression(), root, criteriaBuilder);
                 orders.add(
                     orderbyItemContext.DESC() == null ? criteriaBuilder.asc(expression) : criteriaBuilder.desc(expression)
                 );
@@ -397,7 +427,7 @@ public final class JDQLCriteriaBuilderUtils {
         }
         JDQLParser.In_expressionContext inExpression = conditionalExpression.in_expression();
         if (inExpression != null) {
-            Expression<?> expression = getExpression(inExpression.state_field_path_expression(), root, criteriaBuilder);
+            Expression<?> expression = getExpression(inExpression.scalar_expression(), root, criteriaBuilder);
             CriteriaBuilder.In<?> in = criteriaBuilder.in(expression);
             for (JDQLParser.In_itemContext item : inExpression.in_item()) {
                 Expression e = getExpression(item, criteriaBuilder);
@@ -422,7 +452,7 @@ public final class JDQLCriteriaBuilderUtils {
         }
         JDQLParser.Null_comparison_expressionContext nullComparisonExpression = conditionalExpression.null_comparison_expression();
         if (nullComparisonExpression != null) {
-            Expression<?> expression = getExpression(nullComparisonExpression.state_field_path_expression(), root, criteriaBuilder);
+            Expression<?> expression = getExpression(nullComparisonExpression.scalar_expression(), root, criteriaBuilder);
             if (nullComparisonExpression.NOT() != null) {
                 return criteriaBuilder.isNotNull(expression);
             }
@@ -493,7 +523,7 @@ public final class JDQLCriteriaBuilderUtils {
         }
         if (context.state_field_path_expression() != null) {
             var stateContext = context.state_field_path_expression();
-            return getExpression(stateContext, root, criteriaBuilder);
+            return (Expression<?>) getExpression(stateContext, false, root, criteriaBuilder);
         }
         JDQLParser.Function_expressionContext functionExpression = context.function_expression();
         if (functionExpression != null) {
@@ -516,6 +546,10 @@ public final class JDQLCriteriaBuilderUtils {
                 default ->
                     throw new UnsupportedOperationException("Unsupported function expression: " + functionName);
             };
+        }
+        JDQLParser.Id_expressionContext idExpression = context.id_expression();
+        if (idExpression != null) {
+            return ((PersistentEntityRoot<?>) root).id();
         }
         throw new UnsupportedOperationException("Not supported expression: " + context.getText());
     }
@@ -541,12 +575,16 @@ public final class JDQLCriteriaBuilderUtils {
         throw new IllegalStateException("Unknown literal parameter: " + literal);
     }
 
-    private static Expression<?> getExpression(JDQLParser.State_field_path_expressionContext stateFieldPathExpression,
+    private static Selection<?> getExpression(JDQLParser.State_field_path_expressionContext stateFieldPathExpression,
+                                               boolean alias,
                                                Root<?> root,
                                                CriteriaBuilder criteriaBuilder) {
         var text = stateFieldPathExpression.getText();
         if (stateFieldPathExpression.FULLY_QUALIFIED_IDENTIFIER() != null) {
             return criteriaBuilder.literal(text);
+        }
+        if (alias) {
+            return root.get(text).alias(text);
         }
         return root.get(text);
     }
@@ -580,6 +618,15 @@ public final class JDQLCriteriaBuilderUtils {
             return getExpression(inputParameter, criteriaBuilder);
         }
         throw new IllegalStateException("Unknown IN item: " + inItem);
+    }
+
+    private static Expression<?> getExpression(JDQLParser.Id_expressionContext idExpression,
+                                               Root<?> root) {
+        String idText = idExpression.IDENTIFIER().getText().toLowerCase(Locale.ROOT);
+        if (!idText.equals("id")) {
+            throw new IllegalStateException("Invalid id expression, expected ID(THIS) but got " + idExpression.getText());
+        }
+        return ((PersistentEntityRoot<?>) root).id();
     }
 
 }

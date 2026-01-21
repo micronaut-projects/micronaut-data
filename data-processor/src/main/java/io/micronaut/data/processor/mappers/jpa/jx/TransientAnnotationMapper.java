@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -33,7 +32,6 @@ import java.util.List;
  */
 public class TransientAnnotationMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Transient";

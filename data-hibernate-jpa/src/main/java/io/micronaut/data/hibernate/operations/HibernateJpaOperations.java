@@ -21,13 +21,14 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValuesMap;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -51,7 +52,6 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
@@ -91,6 +91,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -116,10 +117,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
+    @Nullable
     private ExecutorAsyncOperations asyncOperations;
+    @Nullable
     private ExecutorService executorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -145,10 +149,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
-        this.uniqueResultOnFindOne = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("uniqueResultOnFindOne", boolean.class, false);
-        this.persistOrMergeOnSave = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("persistOrMergeOnSave", boolean.class, false);
+
+        ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
+        this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
+        this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
+        this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
+            .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, 0));
     }
 
     @Override
@@ -167,12 +173,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected void setParameter(CommonQueryContract query, String parameterName, Object value) {
+    protected void setParameter(CommonQueryContract query, String parameterName, @Nullable Object value) {
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameter(CommonQueryContract query, String parameterName, Object value, Argument<?> argument) {
+    protected void setParameter(CommonQueryContract query, String parameterName, @Nullable Object value, Argument<?> argument) {
         // How to provide type, if needed at all? Was needed prior to Hibernate 6
         query.setParameter(parameterName, value);
     }
@@ -196,12 +202,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected void setParameter(CommonQueryContract query, int parameterIndex, Object value) {
+    protected void setParameter(CommonQueryContract query, int parameterIndex, @Nullable Object value) {
         query.setParameter(parameterIndex, value);
     }
 
     @Override
-    protected void setParameter(CommonQueryContract query, int parameterIndex, Object value, Argument<?> argument) {
+    protected void setParameter(CommonQueryContract query, int parameterIndex, @Nullable Object value, Argument<?> argument) {
         query.setParameter(parameterIndex, value);
     }
 
@@ -238,7 +244,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected Query<?> createQuery(Session session, String query, Class<?> resultType) {
+    protected Query<?> createQuery(Session session, String query, @Nullable Class<?> resultType) {
         return session.createQuery(query, resultType);
     }
 
@@ -279,6 +285,38 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return executeWrite(session -> session.merge(entity));
     }
 
+    @Override
+    public <T> void persist(@NonNull T entity) {
+        executeWrite(session -> {
+            session.persist(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void refresh(@NonNull T entity) {
+        executeWrite(session -> {
+            session.refresh(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void remove(@NonNull T entity) {
+        executeWrite(session -> {
+            session.remove(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void detach(@NonNull T entity) {
+        executeWrite(session -> {
+            session.detach(entity);
+            return null;
+        });
+    }
+
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
@@ -313,9 +351,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
         return executeRead(session -> {
-            StreamResultCollector<T> collector = new StreamResultCollector<>();
+            int fetchSize = pagedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+            StreamResultCollector<T> collector = new StreamResultCollector<>(fetchSize);
             collectPagedResults(session.getCriteriaBuilder(), session, pagedQuery, collector);
-            return collector.result;
+            return Objects.requireNonNull(collector.result);
         });
     }
 
@@ -344,17 +383,17 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             }
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
             collectFindAll(session, preparedQuery, resultCollector);
-            return Page.of(resultCollector.result, pageable, -1L);
+            return Page.of(Objects.requireNonNull(resultCollector.result), pageable, -1L);
         }
         ListResultCollector<T> collector = new ListResultCollector<>();
         collectPagedResults(sessionFactory.getCriteriaBuilder(), session, pagedQuery, collector);
-        return Page.of((List<R>) collector.result, pagedQuery.getPageable(), -1L);
+        return Page.of(Objects.requireNonNull((List<R>) collector.result), pagedQuery.getPageable(), -1L);
     }
 
     private <T> Long countOf(Session session, PagedQuery<T> pagedQuery, Limit limit) {
         SingleResultCollector<Long> collector = new SingleResultCollector<>();
         collectCountOf(sessionFactory.getCriteriaBuilder(), session, pagedQuery.getRootEntity(), limit, collector);
-        return collector.result;
+        return Objects.requireNonNull(collector.result);
     }
 
     @NonNull
@@ -370,14 +409,14 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         }
         ListResultCollector<R> resultCollector = new ListResultCollector<>();
         collectFindAll(session, preparedQuery, resultCollector);
-        return resultCollector.result;
+        return Objects.requireNonNull(resultCollector.result);
     }
 
     private <T, R> KeyedResultList<R> getKeyedResult(PreparedQuery<T, R> preparedQuery, Session session, Pageable pageable) {
         KeyedPage<T> keyedPage = getKeyedPage(preparedQuery, pageable);
         KeyedResultListCollector<R> resultCollector = new KeyedResultListCollector<>(keyedPage);
         collectResults(session, preparedQuery.getQuery(), preparedQuery, Limit.UNLIMITED, Sort.UNSORTED, resultCollector);
-        return resultCollector.result;
+        return Objects.requireNonNull(resultCollector.result);
     }
 
     private static <T, R> KeyedPage<T> getKeyedPage(PreparedQuery<T, R> preparedQuery, Pageable pageable) {
@@ -407,8 +446,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             T entity = operation.getEntity();
             if (persistOrMergeOnSave) {
                 RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                if (identity != null && identity.getProperty().get(entity) == null) {
+                if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
                     session.persist(entity);
                 } else {
                     entity = session.merge(entity);
@@ -484,9 +522,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             }
             if (persistOrMergeOnSave) {
                 RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                 for (T entity : operation) {
-                    if (identity != null && identity.getProperty().get(entity) == null) {
+                    if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
                         session.persist(entity);
                     } else {
                         session.merge(entity);
@@ -636,7 +673,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
        });
     }
 
-    private <T> int executeUpdate(QueryProducer session, StoredQuery<T, ?> storedQuery, InvocationContext<?, ?> invocationContext, T entity) {
+    private <T> int executeUpdate(QueryProducer session, StoredQuery<T, ?> storedQuery, @Nullable InvocationContext<?, ?> invocationContext, T entity) {
+        Objects.requireNonNull(invocationContext, "Invocation context is required!");
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
         return query.executeUpdate();
@@ -647,15 +685,16 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         Optional<ConnectionStatus<Session>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isPresent()) {
-            StreamResultCollector<R> resultCollector = new StreamResultCollector<>();
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+            StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
             collectFindAll(connectionStatus.get().getConnection(), preparedQuery, resultCollector);
-            return resultCollector.result;
+            return Objects.requireNonNull(resultCollector.result);
         }
         // No session is present, resolve the list completely
         return executeRead(session -> {
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
             collectFindAll(session, preparedQuery, resultCollector);
-            return resultCollector.result.stream();
+            return Objects.requireNonNull(resultCollector.result).stream();
         });
     }
 
@@ -690,7 +729,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 }
             }
         }
-        return executorAsyncOperations;
+        return Objects.requireNonNull(executorAsyncOperations);
     }
 
     @NonNull
@@ -777,6 +816,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private final class KeyedResultListCollector<R> extends ResultCollector<R> {
 
+        @Nullable
         private KeyedResultList<R> result;
         private final KeyedPage<?> keyedPage;
 
@@ -804,6 +844,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private final class ListResultCollector<R> extends ResultCollector<R> {
 
+        @Nullable
         private List<R> result;
 
         @Override
@@ -819,21 +860,64 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private final class StreamResultCollector<R> extends ResultCollector<R> {
 
+        @Nullable
         private Stream<R> result;
+        private final int fetchSize;
+        private final boolean readOnly;
+
+        private StreamResultCollector(int fetchSize) {
+            this.fetchSize = fetchSize;
+            this.readOnly = true;
+        }
+
+        private StreamResultCollector(int fetchSize, boolean readOnly) {
+            this.fetchSize = fetchSize;
+            this.readOnly = readOnly;
+        }
 
         @Override
         protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
-            result = ((Stream<Tuple>) query.getResultStream()).map(fn);
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<Tuple> base = (Stream<Tuple>) query.getResultStream();
+            Stream<R> mapped = base.map(fn);
+            result = mapped;
         }
 
         @Override
         protected void collect(Query<?> query) {
-            result = (Stream<R>) query.getResultStream();
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<R> s = (Stream<R>) query.getResultStream();
+            result = s;
         }
     }
 
     private final class SingleResultCollector<R> extends ResultCollector<R> {
 
+        @Nullable
         private R result;
 
         @Override
@@ -852,6 +936,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private final class UniqueResultCollector<R> extends ResultCollector<R> {
 
+        @Nullable
         private R result;
 
         @Override
@@ -871,6 +956,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final class FirstResultCollector<R> extends ResultCollector<R> {
 
         private final boolean limitOne;
+        @Nullable
         private R result;
 
         private FirstResultCollector(boolean limitOne) {
@@ -890,6 +976,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             result = getFirst(query);
         }
 
+        @Nullable
         private <T> T getFirst(Query<?> q) {
             if (limitOne) {
                 q.setMaxResults(1);

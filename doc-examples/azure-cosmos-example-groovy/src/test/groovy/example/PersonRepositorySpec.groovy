@@ -6,8 +6,6 @@ import jakarta.inject.Inject
 import spock.lang.IgnoreIf
 
 import static example.PersonRepository.Specifications.*
-import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
-import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
 @MicronautTest
 @IgnoreIf({ env["GITHUB_WORKFLOW"] })
@@ -42,9 +40,9 @@ class PersonRepositorySpec extends AbstractAzureCosmosSpec {
 
             long countAgeLess20 = personRepository.count(ageIsLessThan(20))
 
-            long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) & not(nameEquals("Denis")))
+            long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) & PredicateSpecification.not(nameEquals("Denis")))
 
-            List<Person> people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))
+            List<Person> people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis") | nameEquals("Josh")))
             // end::find[]
 
         then:
@@ -57,26 +55,26 @@ class PersonRepositorySpec extends AbstractAzureCosmosSpec {
 
     void "delete spec"() {
         when:
-            List<Person> all = personRepository.findAll((PredicateSpecification<Person>) null)
+            List<Person> all = personRepository.findAll(PredicateSpecification.where (ageIsLessThan(30)))
         then:
             all.size() == 2
 
         when:
             // tag::delete[]
-            long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))
+            long recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))
             // end::delete[]
         then:
             recordsDeleted == 1
 
         when:
-            all = personRepository.findAll((PredicateSpecification<Person>) null)
+            all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)))
         then:
             all.size() == 1
     }
 
     void "update spec"() {
         when:
-            List<Person> all = personRepository.findAll((PredicateSpecification<Person>) null)
+            List<Person> all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)))
         then:
             all.size() == 2
             all.stream().anyMatch(p -> p.getName() == "Denis")
@@ -90,7 +88,7 @@ class PersonRepositorySpec extends AbstractAzureCosmosSpec {
             recordsUpdated == 1
 
         when:
-            all = personRepository.findAll((PredicateSpecification<Person>) null)
+            all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)))
         then:
             all.size() == 2
             all.stream().anyMatch(p -> p.getName() == "Steven")

@@ -19,12 +19,13 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.PREFIX;
 
@@ -39,10 +40,13 @@ public final class CosmosDatabaseConfiguration {
 
     public static final String PREFIX = "azure.cosmos.database";
 
+    @Nullable
     private ThroughputSettings throughput;
 
+    @Nullable
     private List<CosmosContainerSettings> containers;
 
+    @Nullable
     private String databaseName;
 
     private StorageUpdatePolicy updatePolicy = StorageUpdatePolicy.NONE;
@@ -53,6 +57,7 @@ public final class CosmosDatabaseConfiguration {
 
     private boolean disableNonStreamingOrderBy = false;
 
+    @Nullable
     public ThroughputSettings getThroughput() {
         return throughput;
     }
@@ -62,6 +67,7 @@ public final class CosmosDatabaseConfiguration {
         this.throughput = throughput;
     }
 
+    @Nullable
     public List<CosmosContainerSettings> getContainers() {
         return containers;
     }
@@ -76,7 +82,7 @@ public final class CosmosDatabaseConfiguration {
      */
     @NonNull
     public String getDatabaseName() {
-        return databaseName;
+        return Objects.requireNonNull(databaseName);
     }
 
     /**
@@ -172,10 +178,13 @@ public final class CosmosDatabaseConfiguration {
     @EachProperty(value = "container-settings", list = true)
     public static class CosmosContainerSettings {
 
+        @Nullable
         private String containerName;
 
+        @Nullable
         private String partitionKeyPath;
 
+        @Nullable
         private ThroughputSettings throughput;
 
         public CosmosContainerSettings(@Parameter @Nullable ContainerThroughputSettings throughput) {
@@ -185,6 +194,7 @@ public final class CosmosDatabaseConfiguration {
         /**
          * @return the container name
          */
+        @Nullable
         public String getContainerName() {
             return containerName;
         }
@@ -201,6 +211,7 @@ public final class CosmosDatabaseConfiguration {
         /**
          * @return the partition key path for the container
          */
+        @Nullable
         public String getPartitionKeyPath() {
             return partitionKeyPath;
         }
@@ -217,6 +228,7 @@ public final class CosmosDatabaseConfiguration {
         /**
          * @return container throughput settings
          */
+        @Nullable
         public ThroughputSettings getThroughput() {
             return throughput;
         }
@@ -229,7 +241,6 @@ public final class CosmosDatabaseConfiguration {
         public void setThroughput(ContainerThroughputSettings throughput) {
             this.throughput = throughput;
         }
-
 
         /**
          * Throughput settings for container.

@@ -15,12 +15,11 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
@@ -50,7 +49,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
-     * @param conversionService
+     * @param conversionService The conversion service
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
@@ -63,7 +62,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param resultReader The result reader
      * @param jsonColumnReader The JSON column reader
-     * @param conversionService
+     * @param conversionService The conversion service
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      ResultReader<S, String> resultReader,
@@ -78,7 +77,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param dtoEntity The dto entity
      * @param resultReader The result reader
      * @param jsonColumnReader The JSON column reader
-     * @param conversionService
+     * @param conversionService The conversion service
      */
     public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
                      RuntimePersistentEntity<?> dtoEntity,
@@ -144,7 +143,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
         String aliasPropertyName = property.getAlias();
-        if (StringUtils.isNotEmpty(aliasPropertyName)) {
+        if (aliasPropertyName != null && !aliasPropertyName.isEmpty()) {
             propertyName = aliasPropertyName;
         }
         if (dataType == DataType.JSON && jsonColumnReader != null) {

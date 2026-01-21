@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.operations;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Page;
@@ -68,13 +68,14 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
         CompletableFuture<T> cf = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(supplier), executor).whenComplete((value, throwable) -> {
-            try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+            propagatedContext.propagate(() -> {
                 if (throwable != null) {
                     cf.completeExceptionally(throwable);
                 } else {
                     cf.complete(value);
                 }
-            }
+                return null;
+            });
         });
         return cf;
     }

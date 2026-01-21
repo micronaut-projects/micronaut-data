@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.runtime.operations;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
@@ -73,7 +73,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @param asyncOperations       The instance operations instance
      * @param dataConversionService The data conversion service
      */
-    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, DataConversionService dataConversionService) {
+    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, @Nullable DataConversionService dataConversionService) {
         ArgumentUtils.requireNonNull("asyncOperations", asyncOperations);
         this.asyncOperations = asyncOperations;
         // Backwards compatibility should be removed in the next version
