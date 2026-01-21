@@ -691,7 +691,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         while (i.hasNext()) {
             Order order = i.next();
             var expr = order.getExpression();
-            if (expr instanceof io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression<?> ue) {
+            if (expr instanceof UnaryExpression<?> ue) {
                 expr = ue.getExpression();
             }
             QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());

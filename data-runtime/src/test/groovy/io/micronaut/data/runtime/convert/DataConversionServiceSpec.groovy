@@ -22,7 +22,6 @@ import org.jspecify.annotations.NonNull
 import io.micronaut.core.convert.DefaultMutableConversionService
 import io.micronaut.core.convert.MutableConversionService
 import io.micronaut.inject.BeanDefinitionReference
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -30,7 +29,6 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.*
 
-@Ignore
 class DataConversionServiceSpec extends Specification {
 
     static def DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
