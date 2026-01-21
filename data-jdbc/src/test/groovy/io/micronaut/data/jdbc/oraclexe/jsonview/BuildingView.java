@@ -8,10 +8,27 @@ import io.micronaut.data.annotation.Relation;
 import java.util.List;
 
 @JsonView(entity = Building.class, alias = "bw")
-public record BuildingView (
+public class BuildingView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    Long id,
+    private Long id;
+
     @Relation(Relation.Kind.ONE_TO_MANY)
-    List<ApartmentSubView> apartments
-) {}
+    private List<ApartmentSubView> apartments;
+
+    public void setApartments(List<ApartmentSubView> apartments) {
+        this.apartments = apartments;
+    }
+
+    public List<ApartmentSubView> getApartments() {
+        return this.apartments;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}

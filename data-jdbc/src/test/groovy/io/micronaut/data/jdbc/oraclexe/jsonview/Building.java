@@ -8,11 +8,27 @@ import io.micronaut.data.annotation.Relation;
 import java.util.List;
 
 @MappedEntity(value = "TBL_BUILDING", alias = "b")
-public record Building (
+public class Building {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    Long id,
+    private Long id;
     @Relation(Relation.Kind.ONE_TO_MANY)
-    List<Apartment> apartments
-) {}
+    private List<Apartment> apartments;
+
+    public void setApartments(List<Apartment> apartments) {
+        this.apartments = apartments;
+    }
+
+    public List<Apartment> getApartments() {
+        return this.apartments;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
 

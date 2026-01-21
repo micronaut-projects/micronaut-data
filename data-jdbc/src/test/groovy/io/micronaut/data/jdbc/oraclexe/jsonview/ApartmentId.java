@@ -6,6 +6,6 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 @Serdeable
 public record ApartmentId (
-    int buildingId,
-    int flatId
+    Long buildingId,
+    Long flatId
 ) {}

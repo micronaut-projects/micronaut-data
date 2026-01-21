@@ -429,13 +429,20 @@ class OracleJdbcJsonViewSpec extends Specification {
 
     def "test_building_view_repository"() {
         when:
-        def ap1Id = new ApartmentId(1, 2)
-        def ap1 = new ApartmentSubView(ap1Id)
-        def apartments = new ArrayList()
-        apartments.add(ap1)
-        def buildingView = new BuildingView(123, apartments)
-        then:
+        def buildingView = new BuildingView()
         buildingViewRepository.save(buildingView)
+
+        def apartmentId = new ApartmentId(buildingView.getId(), 1)
+        def apartment = new ApartmentSubView(apartmentId)
+        def apartments = new ArrayList()
+        apartments.add(apartment)
+        buildingView.setApartments(apartments)
+
+        buildingViewRepository.update(buildingView)
+        def result = buildingViewRepository.findById(buildingView.getId())
+        then:
+        result.present
+        result.get().apartments.size() == 1
     }
 
     def "test_generate_drop_json_vew"() {
