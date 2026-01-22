@@ -50,11 +50,68 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
-        List<MethodNameParser.Match> matches = parser.tryMatch(methodName);
+        String parseInput = methodName;
+        if (isPureSnakeCase(methodName)) {
+            // Prefer parsing normalized snake_case first to avoid partial matches on raw underscores
+            String normalized = normalizeSnakeCase(methodName);
+            if (!normalized.equals(methodName)) {
+                parseInput = normalized;
+            }
+        }
+        List<MethodNameParser.Match> matches = parser.tryMatch(parseInput);
         if (matches.isEmpty()) {
             return null;
         }
         return match(matchContext, matches);
+    }
+
+    private static boolean isPureSnakeCase(String name) {
+        if (name == null || name.indexOf('_') < 0) {
+            return false;
+        }
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (Character.isUpperCase(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Convert snake_case repository method names to camelCase.
+     * Only applies when underscores are present. The first token is lower-cased
+     * and subsequent tokens are capitalized.
+     *
+     * Examples:
+     *  - find_by_title -> findByTitle
+     *  - count_distinct_by_name -> countDistinctByName
+     *  - find_first_10_by_name -> findFirst10ByName
+     */
+    @Internal
+    private static String normalizeSnakeCase(String name) {
+        if (name == null || name.indexOf('_') < 0) {
+            return name;
+        }
+        StringBuilder sb = new StringBuilder(name.length());
+        String[] parts = name.split("_+");
+        int outIndex = 0;
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (outIndex == 0) {
+                sb.append(part.toLowerCase());
+            } else {
+                char first = part.charAt(0);
+                sb.append(Character.toUpperCase(first));
+                if (part.length() > 1) {
+                    sb.append(part.substring(1));
+                }
+            }
+            outIndex++;
+        }
+        return sb.toString();
     }
 
     /**
