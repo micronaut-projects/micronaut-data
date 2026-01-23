@@ -57,7 +57,17 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
-        AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> UUID.randomUUID());
+        AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> {
+            // Honor skipIfPresent if declared
+            boolean skipIfPresent = p.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
+            if (skipIfPresent) {
+                Object current = p.getProperty().get(context.getEntity());
+                if (current != null) {
+                    return null; // skip
+                }
+            }
+            return UUID.randomUUID();
+        });
 
         // 2) Embedded properties (recursive via util)
         AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
@@ -70,6 +80,13 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
+            }
+            boolean skipIfPresent = embeddedPersistentProperty.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
+            if (skipIfPresent) {
+                Object existing = prop.get(current);
+                if (existing != null) {
+                    return current; // skip
+                }
             }
             UUID value = UUID.randomUUID();
             if (prop.isReadOnly()) {

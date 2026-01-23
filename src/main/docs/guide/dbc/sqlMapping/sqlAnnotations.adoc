@@ -7,7 +7,7 @@ The following table summarizes the different annotations and what they enable. I
 |*Description*
 
 |ann:data.annotation.AutoPopulated[]
-|Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)
+|Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs). Use `skipIfPresent = true` to preserve an existing non-null value instead of overwriting it during auto-population (for example, UUID identifiers you assign yourself).
 
 |ann:data.annotation.DateCreated[]
 |Allows assigning a data created value (such as a `java.time.Instant`) prior to an insert
