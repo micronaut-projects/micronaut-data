@@ -114,3 +114,20 @@ snippet::example.BookRepository[project-base="doc-examples/hibernate-example", s
 The above example uses `Or` to express a greater than condition and a like condition.
 
 You can also negate any of the aforementioned expressions by adding `Not` prior the name of the expression (example `NotTrue` or `NotContain`).
+
+=== Repository Methods
+
+==== Method Name Query Derivation
+
+Micronaut Data can derive queries from repository method names. Traditionally, this uses CamelCase tokens like `findByTitle`, `countDistinctByName`, `findFirst10ByName`, and `findAllByAuthorNameOrTitleLikeOrderByTotalPagesDesc`.
+
+Starting with this version, repository method names written in snake_case are also supported and are normalized to CamelCase during compilation:
+
+- `find_by_title(String title)` -> `findByTitle(String title)`
+- `count_distinct_by_name(String name)` -> `countDistinctByName(String name)`
+- `find_first_10_by_name(String name)` -> `findFirst10ByName(String name)`
+- `find_all_by_author_name_or_title_like_order_by_total_pages_desc(String a, String b)` -> `findAllByAuthorNameOrTitleLikeOrderByTotalPagesDesc(String a, String b)`
+
+Notes:
+- This is syntactic sugar; behavior and semantics are identical to the CamelCase equivalent.
+- Operators and clauses (By, And, Or, OrderBy, Distinct, First/Top, restriction endings like Equals, Like, Between, …) follow the same rules once normalized.
