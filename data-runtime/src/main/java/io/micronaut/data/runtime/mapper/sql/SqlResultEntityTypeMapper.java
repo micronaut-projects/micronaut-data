@@ -507,7 +507,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     RuntimePersistentProperty<K> prop = constructorArguments[i];
                     if (prop instanceof RuntimeAssociation<K> entityAssociation) {
                         if (prop instanceof Embedded embedded) {
-                            args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                            // If this embedded is the identity and an id was resolved, use it instead of reading columns
+                            if (identity != null && prop.equals(identity) && id != null) {
+                                args[i] = id;
+                            } else {
+                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                            }
                         } else {
                             final Relation.Kind kind = entityAssociation.getKind();
                             final boolean isInverse = parent != null && ctx.association != null && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -516,7 +521,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                                 Object resolvedId = null;
-                                if (!entityAssociation.isForeignKey()) {
+                                // Try to reuse owner's id for shared embedded id 1:1 regardless of FK flag
+                                resolvedId = maybeResolveSharedId(ctx, entityAssociation, id);
+                                if (resolvedId == null && !entityAssociation.isForeignKey()) {
                                     resolvedId = readEntityId(rs, ctx.path(entityAssociation));
                                 }
                                 if (kind.isSingleEnded()) {
@@ -614,8 +621,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             entity = setProperty(property, entity, parent);
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
-                            Object associatedId = null;
-                            if (!entityAssociation.isForeignKey()) {
+                            Object associatedId = maybeResolveSharedId(ctx, entityAssociation, id);
+                            if (associatedId == null && !entityAssociation.isForeignKey()) {
                                 associatedId = readEntityId(rs, ctx.path(entityAssociation));
                                 if (associatedId == null) {
                                     continue;
@@ -737,6 +744,39 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             finalEntity = entity;
         }
         return finalEntity;
+    }
+
+    @Nullable
+    private <K> Object maybeResolveSharedId(MappingContext<K> ctx, RuntimeAssociation<K> association, @Nullable Object ownerId) {
+        if (ownerId == null) {
+            return null;
+        }
+        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+        if (ctx.persistentEntity.hasIdentity() && associatedEntity.hasIdentity()) {
+            RuntimePersistentProperty<?> ownerIdentity = ctx.persistentEntity.getIdentity();
+            RuntimePersistentProperty<?> assocIdentity = associatedEntity.getIdentity();
+            if (ownerIdentity instanceof Embedded && assocIdentity instanceof Embedded) {
+                // If both identities are embedded and types match, reuse owner's id
+                if (ownerId.getClass() == assocIdentity.getType()) {
+                    return ownerId;
+                }
+            }
+        }
+        // Composite id case: if ownerId is a map and keys cover associated identity property names, reuse map
+        if (ownerId instanceof java.util.Map<?, ?> map) {
+            java.util.List<? extends RuntimePersistentProperty<?>> assocIds = associatedEntity.getRuntimeIdentityProperties();
+            boolean allPresent = true;
+            for (RuntimePersistentProperty<?> p : assocIds) {
+                if (!map.containsKey(p.getName())) {
+                    allPresent = false;
+                    break;
+                }
+            }
+            if (allPresent) {
+                return ownerId;
+            }
+        }
+        return null;
     }
 
     @Nullable

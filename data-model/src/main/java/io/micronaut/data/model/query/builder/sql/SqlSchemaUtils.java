@@ -177,8 +177,16 @@ public final class SqlSchemaUtils {
             }
         }
 
+        java.util.Set<String> existingColumnNames = new java.util.HashSet<>();
+        for (SqlColumnMapping pkCol : primaryKeyColumns) {
+            existingColumnNames.add(pkCol.getName());
+        }
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
+            // avoid duplicate columns when association id columns duplicate PK columns (e.g., shared EmbeddedId 1:1)
+            if (!existingColumnNames.add(columnName)) {
+                return;
+            }
             SqlColumnMapping column = getColumnDefinition(property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations));
             columns.add(column);

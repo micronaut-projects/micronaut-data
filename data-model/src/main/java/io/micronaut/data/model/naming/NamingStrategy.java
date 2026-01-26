@@ -168,6 +168,25 @@ public interface NamingStrategy {
             }
         }
         if (foreignAssociation != null) {
+            // If composite @JoinColumns are present on the association, and this property corresponds
+            // to one of the referencedColumnName values, map to the owner-side column name defined by @JoinColumn(name)
+            // This avoids generating association-prefixed column names like metadata_container_id.
+            io.micronaut.core.annotation.AnnotationValue<io.micronaut.data.annotation.sql.JoinColumns> joinColumnsAnn =
+                foreignAssociation.getAnnotationMetadata().getAnnotation(io.micronaut.data.annotation.sql.JoinColumns.class);
+            if (joinColumnsAnn != null) {
+                java.util.List<io.micronaut.core.annotation.AnnotationValue<io.micronaut.data.annotation.sql.JoinColumn>> joinCols =
+                    joinColumnsAnn.getAnnotations(io.micronaut.core.annotation.AnnotationMetadata.VALUE_MEMBER);
+                if (!joinCols.isEmpty()) {
+                    String targetRef = property.getPersistedName();
+                    for (io.micronaut.core.annotation.AnnotationValue<io.micronaut.data.annotation.sql.JoinColumn> jc : joinCols) {
+                        String ref = jc.stringValue("referencedColumnName").orElse(null);
+                        String name = jc.stringValue("name").orElse(null);
+                        if (ref != null && name != null && ref.equals(targetRef)) {
+                            return name;
+                        }
+                    }
+                }
+            }
             PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
             if (associatedEntity.equals(property.getOwner()) && associatedEntity.hasIdentity() && associatedEntity.getIdentity().equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);

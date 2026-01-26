@@ -27,6 +27,8 @@ import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
+import io.micronaut.data.tck.entities.Asset
+import io.micronaut.data.tck.entities.AssetId
 import io.micronaut.data.processor.entity.SomeEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
@@ -2480,10 +2482,6 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.processor.entity.SomeEntity;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import java.util.Optional;
 @JdbcRepository(dialect = Dialect.H2)
 interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.PrimaryKey> {
@@ -2500,5 +2498,34 @@ interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.
         findByIdQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_ WHERE (some_entity_.`some_column` = ? AND some_entity_.`other_entity_id` = ?)'
         saveQuery == 'INSERT INTO `some_table` (`col`,`some_column`,`other_entity_id`) VALUES (?,?,?)'
         findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
+    }
+
+    void "test EmbeddedId one-to-one naming strategy"() {
+        given:
+        def repository = buildRepository('test.AssetRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Asset;
+import io.micronaut.data.tck.entities.AssetId;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.H2)
+interface AssetRepository extends GenericRepository<Asset, AssetId> {
+    Optional<Asset> findById(AssetId id);
+    Asset save(Asset asset);
+    @Join("metadata")
+    List<Asset> findAll();
+}
+""")
+
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", AssetId))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", Asset))
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT asset_.`container_id`,asset_.`asset_id`,asset_.`title` FROM `asset` asset_ WHERE (asset_.`container_id` = ? AND asset_.`asset_id` = ?)'
+        saveQuery == 'INSERT INTO `asset` (`title`,`container_id`,`asset_id`) VALUES (?,?,?)'
+        // Order of ANDed join conditions is not significant; accept either ordering
+        findAllQuery == 'SELECT asset_.`container_id`,asset_.`asset_id`,asset_.`title`,asset_metadata_.`author` AS metadata_author FROM `asset` asset_ INNER JOIN `assetmetadata` asset_metadata_ ON asset_.`container_id`=asset_metadata_.`container_id` AND asset_.`asset_id`=asset_metadata_.`asset_id`'
+            || findAllQuery == 'SELECT asset_.`container_id`,asset_.`asset_id`,asset_.`title`,asset_metadata_.`author` AS metadata_author FROM `asset` asset_ INNER JOIN `assetmetadata` asset_metadata_ ON asset_.`asset_id`=asset_metadata_.`asset_id` AND asset_.`container_id`=asset_metadata_.`container_id`'
     }
 }

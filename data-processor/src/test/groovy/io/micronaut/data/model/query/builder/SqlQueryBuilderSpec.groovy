@@ -552,6 +552,20 @@ interface MyRepository {
             ]
     }
 
+    void "test build create for shared embedded id one-to-one"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            def statements = encoder.buildCreateTableStatements([
+                getRuntimePersistentEntity(io.micronaut.data.tck.entities.Asset),
+                getRuntimePersistentEntity(io.micronaut.data.tck.entities.AssetMetadata)
+            ] as PersistentEntity[])
+
+        then:
+            // Content varies slightly by dialect defaults (INTEGER vs INT, PK emission); accept canonical shape
+            statements.contains('CREATE TABLE "asset" ("container_id" UUID NOT NULL,"asset_id" INT NOT NULL,"title" VARCHAR(255) NOT NULL, PRIMARY KEY("container_id","asset_id"));')
+            statements.contains('CREATE TABLE "assetmetadata" ("container_id" UUID NOT NULL,"asset_id" INT NOT NULL,"author" VARCHAR(255) NOT NULL, PRIMARY KEY("container_id","asset_id"));')
+    }
+
     void "test build create index from table annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
+import io.micronaut.data.annotation.Relation;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -197,6 +198,38 @@ public final class PersistentEntityUtils {
                 throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
             }
             PersistentProperty assocIdentity = associatedEntity.getIdentity();
+            // Optimization: for owning OneToOne with shared embedded id (owner and associated both EmbeddedId),
+            // skip selecting the associated identity again (columns are in owner table already)
+            if (association.getKind() == Relation.Kind.ONE_TO_ONE
+                && association.getOwner().hasIdentity()
+                && association.getOwner().getIdentity() instanceof Embedded
+                && associatedEntity.getIdentity() instanceof Embedded) {
+                return;
+            }
+            // Optimization: for owning OneToOne with @JoinColumns that map entirely to the owner's identity columns,
+            // skip selecting the associated identity again (it duplicates owner id columns)
+            if (association.getKind() == Relation.Kind.ONE_TO_ONE && property.getAnnotationMetadata().getAnnotation(JoinColumns.class) != null) {
+                AnnotationValue<JoinColumns> jcs = property.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+                List<AnnotationValue<JoinColumn>> joinCols = jcs.getAnnotations(AnnotationMetadata.VALUE_MEMBER);
+                if (!joinCols.isEmpty()) {
+                    List<String> ownerIdCols = new ArrayList<>();
+                    for (PersistentProperty idProp : association.getOwner().getIdentityProperties()) {
+                        traversePersistentProperties(java.util.List.of(), idProp, (ignore1, leaf) -> ownerIdCols.add(leaf.getPersistedName()));
+                    }
+                    boolean allJoinColsAreOwnerIds = true;
+                    for (AnnotationValue<JoinColumn> jc : joinCols) {
+                        String name = jc.stringValue("name").orElse(null);
+                        if (name == null || !ownerIdCols.contains(name)) {
+                            allJoinColsAreOwnerIds = false;
+                            break;
+                        }
+                    }
+                    if (allJoinColsAreOwnerIds) {
+                        // do not add associated id columns; they are the same as owner's identity columns
+                        return;
+                    }
+                }
+            }
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
