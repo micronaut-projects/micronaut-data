@@ -15,20 +15,11 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Person;
-import io.micronaut.data.tck.entities.PersonWithIdAndNameDto;
-
-import java.util.stream.Stream;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresStreamingPersonRepository extends CrudRepository<Person, Long> {
-
-    Stream<Person> list();
-
-    @Query("SELECT id, name FROM person")
-    Stream<PersonWithIdAndNameDto> listAll();
 }
