@@ -180,6 +180,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     @NonNull
     @Override
     public ConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Getting a connection for a definition: [{}]", definition);
+        }
         ConnectionPropagatedContextElement<C> existingContextElement = findContextElement().orElse(null);
         return switch (definition.getPropagationBehavior()) {
             case REQUIRED -> {
@@ -207,6 +210,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     @Override
     public void complete(@NonNull ConnectionStatus<C> status) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Completing a connection status: [{}]", status);
+        }
         DefaultConnectionStatus<C> connectionStatus = (DefaultConnectionStatus<C>) status;
         try {
             connectionStatus.complete();

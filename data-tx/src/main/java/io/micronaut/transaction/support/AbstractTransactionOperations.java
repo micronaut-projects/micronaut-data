@@ -463,6 +463,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public TransactionStatus<C> getTransaction(TransactionDefinition definition) throws TransactionException {
+        boolean debugEnabled = logger.isDebugEnabled();
+        if (debugEnabled) {
+            logger.debug("Getting transaction for definition [{}]", definition);
+        }
         if (synchronousConnectionManager == null) {
             throw new TransactionUsageException("Synchronous connection manager not supported!");
         }
@@ -470,6 +474,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         Optional<T> existingTransactionStatus = findTransactionStatus();
         if (existingTransactionStatus.isPresent()) {
             T existingTransaction = existingTransactionStatus.get();
+            if (debugEnabled) {
+                logger.debug("Found existing transaction [{}]", existingTransaction);
+            }
             return switch (definition.getPropagationBehavior()) {
                 case REQUIRED, SUPPORTS, MANDATORY, NESTED ->
                     reuseTransaction(definition, connectionStatus, existingTransaction);
@@ -479,6 +486,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                     throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
             };
         } else {
+            if (debugEnabled) {
+                logger.debug("Creating a new transaction with definition [{}]", definition);
+            }
             if (connectionStatus != null) {
                 return switch (definition.getPropagationBehavior()) {
                     case REQUIRED, REQUIRES_NEW, NESTED -> openNewTransaction(connectionStatus, definition); // Nested propagation applies only for the existing TX
@@ -596,11 +606,17 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
     @Override
     public void commit(TransactionStatus<C> status) throws TransactionException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Committing transaction status [{}]", status);
+        }
         commitInternal((T) status);
     }
 
     @Override
     public void rollback(TransactionStatus<C> status) throws TransactionException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rolling back transaction status [{}]", status);
+        }
         rollbackInternal((T) status);
     }
 }
