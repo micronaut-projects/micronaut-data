@@ -4,7 +4,7 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
@@ -29,7 +29,7 @@ class H2AssignedUuidCascadePersistSpec extends Specification implements H2TestPr
         tenantRepository.save(t).block()
 
         then:
-        tenantRepository.findById(tenantId).present
+        tenantRepository.findById(tenantId).block() != null
         roleRepository.countByTenantId(tenantId).block() == 3
     }
 }
@@ -63,11 +63,10 @@ class Role {
 }
 
 @R2dbcRepository(dialect = Dialect.H2)
-interface R2dbcTenantRepository extends CrudRepository<Tenant, UUID> {
-    Mono<Tenant> save(Tenant t)
+interface R2dbcTenantRepository extends ReactorCrudRepository<Tenant, UUID> {
 }
 
 @R2dbcRepository(dialect = Dialect.H2)
-interface R2dbcRoleRepository extends CrudRepository<Role, UUID> {
+interface R2dbcRoleRepository extends ReactorCrudRepository<Role, UUID> {
     Mono<Long> countByTenantId(UUID tenantId)
 }

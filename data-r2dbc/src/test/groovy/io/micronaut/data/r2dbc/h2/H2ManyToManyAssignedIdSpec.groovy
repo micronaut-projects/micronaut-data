@@ -3,7 +3,7 @@ package io.micronaut.data.r2dbc.h2
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
@@ -30,7 +30,7 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
 
         when:
         studentRepository.save(s).block()
-        def s2 = studentRepository.findById(s.id).get()
+        def s2 = studentRepository.findById(s.id).block()
 
         then:
         s2 != null
@@ -40,7 +40,7 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
         def s3 = new Student(id: UUID.randomUUID(), name: 'John')
         s3.addCourse(c1)
         studentRepository.save(s3).block()
-        def found = studentRepository.findById(s3.id).get()
+        def found = studentRepository.findById(s3.id).block()
 
         then:
         found != null
@@ -50,7 +50,7 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
         c1.name = 'Mathematics'
         s3.courses = [c1]
         studentRepository.update(s3).block()
-        def found2 = studentRepository.findById(s3.id).get()
+        def found2 = studentRepository.findById(s3.id).block()
 
         then:
         found2 != null
@@ -78,16 +78,12 @@ class Course {
 }
 
 @R2dbcRepository(dialect = Dialect.H2)
-interface R2dbcStudentRepository extends CrudRepository<Student, UUID> {
+interface R2dbcStudentRepository extends ReactorCrudRepository<Student, UUID> {
     @Join("courses")
     @Override
-    Optional<Student> findById(UUID id)
-
-    Mono<Student> save(Student s)
-    Mono<Student> update(Student s)
+    Mono<Student> findById(UUID id)
 }
 
 @R2dbcRepository(dialect = Dialect.H2)
-interface R2dbcCourseRepository extends CrudRepository<Course, UUID> {
-    Mono<Course> save(Course c)
+interface R2dbcCourseRepository extends ReactorCrudRepository<Course, UUID> {
 }
