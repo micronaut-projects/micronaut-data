@@ -499,6 +499,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ResultSet openedRs = null;
         ResultSet rs;
         try {
+            // For fetching set ps.setFetchSize(...);
             openedRs = ps.executeQuery();
             rs = openedRs;
             SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
