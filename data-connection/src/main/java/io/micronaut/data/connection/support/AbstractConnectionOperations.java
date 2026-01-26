@@ -140,8 +140,12 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     }
 
     private <R> R withExistingConnectionInternal(@NonNull ConnectionPropagatedContextElement<C> existingContextElement, @NonNull Function<ConnectionStatus<C>, R> callback) {
+        C connection = existingContextElement.status.getConnection();
+        if (logger.isDebugEnabled()) {
+            logger.debug("Executing with an existing connection: [{}]", connection);
+        }
         DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(
-            existingContextElement.status.getConnection(),
+            connection,
             existingContextElement.status.getDefinition(),
             false);
         try {
@@ -158,6 +162,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     private <R> R executeWithNewConnection(@NonNull ConnectionDefinition definition,
                                            @NonNull Function<ConnectionStatus<C>, R> callback) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Opening new connection for a definition: [{}]", definition);
+        }
         C connection = openConnection(definition);
         DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
         try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty()

@@ -113,6 +113,17 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         return definition;
     }
 
+    @Override
+    public String toString() {
+        return "DefaultTransactionStatus{" +
+            "connectionStatus=" + connectionStatus +
+            ", definition=" + definition +
+            ", transaction=" + transaction +
+            ", savepoint=" + savepoint +
+            ", synchronizations=" + synchronizations +
+            '}';
+    }
+
     private static final class NewTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
         public NewTransactionStatus(ConnectionStatus<C> connectionStatus,
@@ -125,6 +136,16 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             return true;
         }
 
+        @Override
+        public String toString() {
+            return "NewTransactionStatus{" +
+                "transaction=" + getTransaction() +
+                ", connectionStatus=" + connectionStatus +
+                ", definition=" + getTransactionDefinition() +
+                ", savepoint=" + getSavepoint() +
+                ", synchronizations=" + synchronizations +
+                '}';
+        }
     }
 
     private static final class NoTxTransactionStatus<C> extends DefaultTransactionStatus<C> {
@@ -139,6 +160,10 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             return false;
         }
 
+        @Override
+        public String toString() {
+            return "NoTxTransactionStatus{}";
+        }
     }
 
     private static final class ExistingTransactionStatus<C> extends DefaultTransactionStatus<C> {
@@ -166,6 +191,13 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         public void registerSynchronization(TransactionSynchronization synchronization) {
             // The synchronization should be bound to the current TX
             existingTransaction.registerSynchronization(synchronization);
+        }
+
+        @Override
+        public String toString() {
+            return "ExistingTransactionStatus{" +
+                "existingTransaction=" + existingTransaction +
+                '}';
         }
     }
 }

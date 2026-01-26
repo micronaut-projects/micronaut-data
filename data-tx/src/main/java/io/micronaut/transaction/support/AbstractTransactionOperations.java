@@ -297,6 +297,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private <R> R openConnectionAndExecuteTransaction(TransactionDefinition definition,
                                                       T existingTransaction,
                                                       TransactionCallback<C, R> callback) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Executing with an existing transaction: [{}]", existingTransaction);
+        }
         ConnectionDefinition txConnectionDefinition = txConnectionDefinition(definition);
         return connectionOperations.execute(txConnectionDefinition,
             status -> executeTransactional(
@@ -327,6 +330,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     }
 
     private <R> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Executing in a new transaction with a definition [{}]", definition);
+        }
         begin(transaction);
         R result;
         try {
