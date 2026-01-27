@@ -112,6 +112,27 @@ interface BookRepository extends GenericRepository<Book, Long> {
         ]
     }
 
+    @Unroll
+    void "test invalid snake_case #name is rejected"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    Book ${name}(String title);
+}
+""")
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains('Unable to implement Repository method')
+        where:
+        name << ['_find_by_title', 'find__by_title', 'find_by__title', 'find_by_title_']
+    }
+
     void "test find_first_10_by_name parses"() {
         given:
         def repository = buildRepository('test.PersonRepository', """

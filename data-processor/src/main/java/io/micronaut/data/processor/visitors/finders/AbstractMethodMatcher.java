@@ -51,12 +51,8 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         String parseInput = methodName;
-        if (isPureSnakeCase(methodName)) {
-            // Prefer parsing normalized snake_case first to avoid partial matches on raw underscores
-            String normalized = normalizeSnakeCase(methodName);
-            if (!normalized.equals(methodName)) {
-                parseInput = normalized;
-            }
+        if (isStrictSnakeCase(methodName)) {
+            parseInput = normalizeSnakeCase(methodName);
         }
         List<MethodNameParser.Match> matches = parser.tryMatch(parseInput);
         if (matches.isEmpty()) {
@@ -65,17 +61,31 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
         return match(matchContext, matches);
     }
 
-    private static boolean isPureSnakeCase(String name) {
-        if (name == null || name.indexOf('_') < 0) {
+    private static boolean isStrictSnakeCase(String name) {
+        if (name == null || name.isEmpty()) {
             return false;
         }
+        boolean prevUnderscore = false;
+        boolean seenUnderscore = false;
+        boolean seenLetter = false;
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);
-            if (Character.isUpperCase(c)) {
+            if (c == '_') {
+                if (!seenLetter || prevUnderscore) {
+                    return false;
+                }
+                prevUnderscore = true;
+                seenUnderscore = true;
+                continue;
+            }
+            if (!(c >= 'a' && c <= 'z') && !(c >= '0' && c <= '9')) {
                 return false;
             }
+            seenLetter = true;
+            prevUnderscore = false;
         }
-        return true;
+        // require at least one underscore (snake_case) and not end with underscore
+        return seenUnderscore && !prevUnderscore;
     }
 
     /**
