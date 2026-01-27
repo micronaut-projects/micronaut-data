@@ -684,6 +684,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         if (isJsonEntity(repositoryMetadata, entity)) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue == null) {
+                throw new MappingException("Cannot find entity representation annotation for entity: " + entity.getName());
+            }
             String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
             int key = 1;
             builder = INSERT_INTO + getTableName(entity) + " VALUES (" + formatParameter(key) + ")";
