@@ -134,19 +134,26 @@ interface BookRepository extends GenericRepository<Book, Long> {
     }
 
     void "test find_first_10_by_name parses"() {
-        given:
+        when:
         def repository = buildRepository('test.PersonRepository', """
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.GenericRepository;
 
-@Repository
-interface PersonRepository extends CrudRepository<Person, Long> {
+@JdbcRepository(dialect = Dialect.H2)
+interface PersonRepository extends GenericRepository<Person, Long> {
 
     java.util.List<Person> find_first_10_by_name(String name);
+    java.util.List<Person> findFirst10ByName(String name);
 }
 """)
-        expect:
-        repository.findPossibleMethods("find_first_10_by_name").findFirst().isPresent()
+        def snakeCaseMethod = repository.findPossibleMethods("find_first_10_by_name").findFirst().orElseThrow()
+        def snakeCaseQuery = getQuery(snakeCaseMethod)
+        def camelCaseMethod = repository.findPossibleMethods("findFirst10ByName").findFirst().orElseThrow()
+        def camelCaseQuery = getQuery(camelCaseMethod)
+        then:
+        snakeCaseQuery == 'SELECT person_.`id`,person_.`name`,person_.`age`,person_.`some_id`,person_.`enabled`,person_.`public_id`,person_.`company_id` FROM `person` person_ WHERE (person_.`name` = ?) LIMIT 10'
+        snakeCaseQuery == camelCaseQuery
     }
 }

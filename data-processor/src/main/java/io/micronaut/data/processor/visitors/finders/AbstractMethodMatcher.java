@@ -17,11 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * The method matcher that is using {@link MethodNameParser}.
@@ -41,8 +41,6 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     protected static final String DISTINCT = "Distinct";
     protected static final String FOR_UPDATE = "ForUpdate";
     protected static final String RETURNING = "Returning";
-
-    private static final Pattern SNAKE_CASE = Pattern.compile("^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$");
 
     private final MethodNameParser parser;
 
@@ -65,8 +63,36 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
         return match(matchContext, matches);
     }
 
-    private static boolean isSnakeCase(String name) {
-        return name != null && name.indexOf('_') >= 0 && SNAKE_CASE.matcher(name).matches();
+    private static boolean isSnakeCase(String s) {
+        if (StringUtils.isEmpty(s)) {
+            return false;
+        }
+        int n = s.length();
+        char first = s.charAt(0);
+        if (first < 'a' || first > 'z') {
+            return false;
+        }
+        boolean seenUnderscore = false;
+        boolean prevUnderscore = false;
+        for (int i = 1; i < n; i++) {
+            char c = s.charAt(i);
+            if (c == '_') {
+                if (prevUnderscore) {
+                    return false;
+                }
+                seenUnderscore = true;
+                prevUnderscore = true;
+            } else if (!isAsciiLowerAlnum(c)) {
+                return false;
+            } else {
+                prevUnderscore = false;
+            }
+        }
+        return seenUnderscore && !prevUnderscore;
+    }
+
+    private static boolean isAsciiLowerAlnum(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
     }
 
     /**
