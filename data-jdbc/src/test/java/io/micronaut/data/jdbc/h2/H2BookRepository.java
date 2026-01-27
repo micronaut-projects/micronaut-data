@@ -50,4 +50,6 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
     abstract void delete_all();
 
     abstract List<Book> query_all();
+
+    abstract List<Book> find();
 }

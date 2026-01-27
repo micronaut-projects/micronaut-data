@@ -43,6 +43,10 @@ class H2SnakeCaseSpec extends Specification {
         def books = bookRepository.query_all()
         then:
         books.size() > 0
+        when:
+        books = bookRepository.find()
+        then:
+        books.size() > 0
         cleanup:
         bookRepository.delete_all()
         authorRepository.deleteAll()

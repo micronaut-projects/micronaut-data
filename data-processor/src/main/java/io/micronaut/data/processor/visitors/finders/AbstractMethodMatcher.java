@@ -20,6 +20,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * The method matcher that is using {@link MethodNameParser}.
@@ -40,6 +41,8 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     protected static final String FOR_UPDATE = "ForUpdate";
     protected static final String RETURNING = "Returning";
 
+    private static final Pattern SNAKE_CASE = Pattern.compile("^[a-z][a-z0-9]*(?:_[a-z0-9]+)+()$");
+
     private final MethodNameParser parser;
 
     public AbstractMethodMatcher(MethodNameParser parser) {
@@ -51,7 +54,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         String parseInput = methodName;
-        if (isStrictSnakeCase(methodName)) {
+        if (isSnakeCase(methodName)) {
             parseInput = normalizeSnakeCase(methodName);
         }
         List<MethodNameParser.Match> matches = parser.tryMatch(parseInput);
@@ -61,31 +64,8 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
         return match(matchContext, matches);
     }
 
-    private static boolean isStrictSnakeCase(String name) {
-        if (name == null || name.isEmpty()) {
-            return false;
-        }
-        boolean prevUnderscore = false;
-        boolean seenUnderscore = false;
-        boolean seenLetter = false;
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '_') {
-                if (!seenLetter || prevUnderscore) {
-                    return false;
-                }
-                prevUnderscore = true;
-                seenUnderscore = true;
-                continue;
-            }
-            if (!(c >= 'a' && c <= 'z') && !(c >= '0' && c <= '9')) {
-                return false;
-            }
-            seenLetter = true;
-            prevUnderscore = false;
-        }
-        // require at least one underscore (snake_case) and not end with underscore
-        return seenUnderscore && !prevUnderscore;
+    private static boolean isSnakeCase(String name) {
+        return name != null && name.indexOf('_') >= 0 && SNAKE_CASE.matcher(name).matches();
     }
 
     /**
@@ -104,7 +84,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
             return name;
         }
         StringBuilder sb = new StringBuilder(name.length());
-        String[] parts = name.split("_+");
+        String[] parts = name.split("_");
         int outIndex = 0;
         for (String part : parts) {
             if (part.isEmpty()) {
