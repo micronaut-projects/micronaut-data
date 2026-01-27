@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import org.jspecify.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     protected static final String FOR_UPDATE = "ForUpdate";
     protected static final String RETURNING = "Returning";
 
-    private static final Pattern SNAKE_CASE = Pattern.compile("^[a-z][a-z0-9]*(?:_[a-z0-9]+)+()$");
+    private static final Pattern SNAKE_CASE = Pattern.compile("^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$");
 
     private final MethodNameParser parser;
 
@@ -55,7 +56,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
         String methodName = matchContext.getMethodElement().getName();
         String parseInput = methodName;
         if (isSnakeCase(methodName)) {
-            parseInput = normalizeSnakeCase(methodName);
+            parseInput = NameUtils.camelCase(methodName);
         }
         List<MethodNameParser.Match> matches = parser.tryMatch(parseInput);
         if (matches.isEmpty()) {
