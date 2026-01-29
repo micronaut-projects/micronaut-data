@@ -4892,7 +4892,7 @@ The generator supports only Jakarta Persistence annotation (located in the <code
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">sourceSets {
     generated {
         java {
-            srcDirs = ["$build/generated/java"]
+            srcDirs = [layout.buildDirectory.dir("generated/java")]
         }
     }
 }</code></pre>
