@@ -70,16 +70,16 @@ loadScripts(document, 'script');</script>
 <li><a href="#setTimestamp(java.sql.PreparedStatement,java.lang.Integer,java.time.Instant)" tabindex="0">setTimestamp(PreparedStatement, Integer, Instant)</a></li>
 <li><a href="#setTime(java.sql.PreparedStatement,java.lang.Integer,java.sql.Time)" tabindex="0">setTime(PreparedStatement, Integer, Time)</a></li>
 <li><a href="#setValue(java.sql.PreparedStatement,java.lang.Integer,java.lang.Object)" tabindex="0">setValue(PreparedStatement, Integer, Object)</a></li>
-<li><a href="#setLong(java.sql.PreparedStatement,java.lang.Integer,long)" tabindex="0">setLong(PreparedStatement, Integer, long)</a></li>
-<li><a href="#setChar(java.sql.PreparedStatement,java.lang.Integer,char)" tabindex="0">setChar(PreparedStatement, Integer, char)</a></li>
+<li><a href="#setLong(java.sql.PreparedStatement,java.lang.Integer,java.lang.Long)" tabindex="0">setLong(PreparedStatement, Integer, Long)</a></li>
+<li><a href="#setChar(java.sql.PreparedStatement,java.lang.Integer,java.lang.Character)" tabindex="0">setChar(PreparedStatement, Integer, Character)</a></li>
 <li><a href="#setDate(java.sql.PreparedStatement,java.lang.Integer,java.util.Date)" tabindex="0">setDate(PreparedStatement, Integer, Date)</a></li>
 <li><a href="#setString(java.sql.PreparedStatement,java.lang.Integer,java.lang.String)" tabindex="0">setString(PreparedStatement, Integer, String)</a></li>
-<li><a href="#setInt(java.sql.PreparedStatement,java.lang.Integer,int)" tabindex="0">setInt(PreparedStatement, Integer, int)</a></li>
-<li><a href="#setBoolean(java.sql.PreparedStatement,java.lang.Integer,boolean)" tabindex="0">setBoolean(PreparedStatement, Integer, boolean)</a></li>
-<li><a href="#setFloat(java.sql.PreparedStatement,java.lang.Integer,float)" tabindex="0">setFloat(PreparedStatement, Integer, float)</a></li>
-<li><a href="#setByte(java.sql.PreparedStatement,java.lang.Integer,byte)" tabindex="0">setByte(PreparedStatement, Integer, byte)</a></li>
-<li><a href="#setShort(java.sql.PreparedStatement,java.lang.Integer,short)" tabindex="0">setShort(PreparedStatement, Integer, short)</a></li>
-<li><a href="#setDouble(java.sql.PreparedStatement,java.lang.Integer,double)" tabindex="0">setDouble(PreparedStatement, Integer, double)</a></li>
+<li><a href="#setInt(java.sql.PreparedStatement,java.lang.Integer,java.lang.Integer)" tabindex="0">setInt(PreparedStatement, Integer, Integer)</a></li>
+<li><a href="#setBoolean(java.sql.PreparedStatement,java.lang.Integer,java.lang.Boolean)" tabindex="0">setBoolean(PreparedStatement, Integer, Boolean)</a></li>
+<li><a href="#setFloat(java.sql.PreparedStatement,java.lang.Integer,java.lang.Float)" tabindex="0">setFloat(PreparedStatement, Integer, Float)</a></li>
+<li><a href="#setByte(java.sql.PreparedStatement,java.lang.Integer,java.lang.Byte)" tabindex="0">setByte(PreparedStatement, Integer, Byte)</a></li>
+<li><a href="#setShort(java.sql.PreparedStatement,java.lang.Integer,java.lang.Short)" tabindex="0">setShort(PreparedStatement, Integer, Short)</a></li>
+<li><a href="#setDouble(java.sql.PreparedStatement,java.lang.Integer,java.lang.Double)" tabindex="0">setDouble(PreparedStatement, Integer, Double)</a></li>
 <li><a href="#setBigDecimal(java.sql.PreparedStatement,java.lang.Integer,java.math.BigDecimal)" tabindex="0">setBigDecimal(PreparedStatement, Integer, BigDecimal)</a></li>
 <li><a href="#setBytes(java.sql.PreparedStatement,java.lang.Integer,byte%5B%5D)" tabindex="0">setBytes(PreparedStatement, Integer, byte[])</a></li>
 <li><a href="#setArray(java.sql.PreparedStatement,java.lang.Integer,java.lang.Object)" tabindex="0">setArray(PreparedStatement, Integer, Object)</a></li>
@@ -173,16 +173,16 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="block">Write a BigDecimal value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setBoolean(java.sql.PreparedStatement,java.lang.Integer,boolean)" class="member-name-link">setBoolean</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setBoolean(java.sql.PreparedStatement,java.lang.Integer,java.lang.Boolean)" class="member-name-link">setBoolean</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- boolean&nbsp;bool)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;bool)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a boolean value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setByte(java.sql.PreparedStatement,java.lang.Integer,byte)" class="member-name-link">setByte</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setByte(java.sql.PreparedStatement,java.lang.Integer,java.lang.Byte)" class="member-name-link">setByte</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- byte&nbsp;b)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Byte.html" title="class or interface in java.lang" class="external-link">Byte</a>&nbsp;b)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a byte value for the given name.</div>
 </div>
@@ -194,9 +194,9 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="block">Write a byte[] value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setChar(java.sql.PreparedStatement,java.lang.Integer,char)" class="member-name-link">setChar</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setChar(java.sql.PreparedStatement,java.lang.Integer,java.lang.Character)" class="member-name-link">setChar</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- char&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a char value for the given name.</div>
 </div>
@@ -208,9 +208,9 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="block">Write a date value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDouble(java.sql.PreparedStatement,java.lang.Integer,double)" class="member-name-link">setDouble</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDouble(java.sql.PreparedStatement,java.lang.Integer,java.lang.Double)" class="member-name-link">setDouble</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- double&nbsp;d)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;d)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a double value for the given name.</div>
 </div>
@@ -223,30 +223,30 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="block">Write a value dynamically using the result set and the given name and data type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setFloat(java.sql.PreparedStatement,java.lang.Integer,float)" class="member-name-link">setFloat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setFloat(java.sql.PreparedStatement,java.lang.Integer,java.lang.Float)" class="member-name-link">setFloat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- float&nbsp;f)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&nbsp;f)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a float value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInt(java.sql.PreparedStatement,java.lang.Integer,int)" class="member-name-link">setInt</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setInt(java.sql.PreparedStatement,java.lang.Integer,java.lang.Integer)" class="member-name-link">setInt</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- int&nbsp;integer)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;integer)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write an int value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setLong(java.sql.PreparedStatement,java.lang.Integer,long)" class="member-name-link">setLong</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setLong(java.sql.PreparedStatement,java.lang.Integer,java.lang.Long)" class="member-name-link">setLong</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- long&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a long value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setShort(java.sql.PreparedStatement,java.lang.Integer,short)" class="member-name-link">setShort</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setShort(java.sql.PreparedStatement,java.lang.Integer,java.lang.Short)" class="member-name-link">setShort</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- short&nbsp;s)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link">Short</a>&nbsp;s)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Write a short value for the given name.</div>
 </div>
@@ -466,17 +466,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setLong(java.sql.PreparedStatement,java.lang.Integer,long)">
+<section class="detail" id="setLong(java.sql.PreparedStatement,java.lang.Integer,java.lang.Long)">
 <h3>setLong</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setLong</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- long&nbsp;value)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setLong(PS,IDX,long)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;value)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setLong(PS,IDX,java.lang.Long)">QueryStatement</a></code></span></div>
 <div class="block">Write a long value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setLong(PS,IDX,long)">setLong</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setLong(PS,IDX,java.lang.Long)">setLong</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -488,17 +488,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setChar(java.sql.PreparedStatement,java.lang.Integer,char)">
+<section class="detail" id="setChar(java.sql.PreparedStatement,java.lang.Integer,java.lang.Character)">
 <h3>setChar</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setChar</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- char&nbsp;value)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setChar(PS,IDX,char)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&nbsp;value)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setChar(PS,IDX,java.lang.Character)">QueryStatement</a></code></span></div>
 <div class="block">Write a char value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setChar(PS,IDX,char)">setChar</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setChar(PS,IDX,java.lang.Character)">setChar</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -554,17 +554,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setInt(java.sql.PreparedStatement,java.lang.Integer,int)">
+<section class="detail" id="setInt(java.sql.PreparedStatement,java.lang.Integer,java.lang.Integer)">
 <h3>setInt</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setInt</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- int&nbsp;integer)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setInt(PS,IDX,int)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;integer)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setInt(PS,IDX,java.lang.Integer)">QueryStatement</a></code></span></div>
 <div class="block">Write an int value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setInt(PS,IDX,int)">setInt</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setInt(PS,IDX,java.lang.Integer)">setInt</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -576,17 +576,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setBoolean(java.sql.PreparedStatement,java.lang.Integer,boolean)">
+<section class="detail" id="setBoolean(java.sql.PreparedStatement,java.lang.Integer,java.lang.Boolean)">
 <h3>setBoolean</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setBoolean</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- boolean&nbsp;bool)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBoolean(PS,IDX,boolean)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;bool)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setBoolean(PS,IDX,java.lang.Boolean)">QueryStatement</a></code></span></div>
 <div class="block">Write a boolean value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setBoolean(PS,IDX,boolean)">setBoolean</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setBoolean(PS,IDX,java.lang.Boolean)">setBoolean</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -598,17 +598,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setFloat(java.sql.PreparedStatement,java.lang.Integer,float)">
+<section class="detail" id="setFloat(java.sql.PreparedStatement,java.lang.Integer,java.lang.Float)">
 <h3>setFloat</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setFloat</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- float&nbsp;f)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setFloat(PS,IDX,float)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&nbsp;f)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setFloat(PS,IDX,java.lang.Float)">QueryStatement</a></code></span></div>
 <div class="block">Write a float value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setFloat(PS,IDX,float)">setFloat</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setFloat(PS,IDX,java.lang.Float)">setFloat</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -620,17 +620,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setByte(java.sql.PreparedStatement,java.lang.Integer,byte)">
+<section class="detail" id="setByte(java.sql.PreparedStatement,java.lang.Integer,java.lang.Byte)">
 <h3>setByte</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setByte</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- byte&nbsp;b)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setByte(PS,IDX,byte)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Byte.html" title="class or interface in java.lang" class="external-link">Byte</a>&nbsp;b)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setByte(PS,IDX,java.lang.Byte)">QueryStatement</a></code></span></div>
 <div class="block">Write a byte value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setByte(PS,IDX,byte)">setByte</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setByte(PS,IDX,java.lang.Byte)">setByte</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -642,17 +642,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setShort(java.sql.PreparedStatement,java.lang.Integer,short)">
+<section class="detail" id="setShort(java.sql.PreparedStatement,java.lang.Integer,java.lang.Short)">
 <h3>setShort</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setShort</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- short&nbsp;s)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setShort(PS,IDX,short)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link">Short</a>&nbsp;s)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setShort(PS,IDX,java.lang.Short)">QueryStatement</a></code></span></div>
 <div class="block">Write a short value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setShort(PS,IDX,short)">setShort</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setShort(PS,IDX,java.lang.Short)">setShort</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -664,17 +664,17 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </section>
 </li>
 <li>
-<section class="detail" id="setDouble(java.sql.PreparedStatement,java.lang.Integer,double)">
+<section class="detail" id="setDouble(java.sql.PreparedStatement,java.lang.Integer,java.lang.Double)">
 <h3>setDouble</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">setDouble</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>&nbsp;statement,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- double&nbsp;d)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDouble(PS,IDX,double)">QueryStatement</a></code></span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;d)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html#setDouble(PS,IDX,java.lang.Double)">QueryStatement</a></code></span></div>
 <div class="block">Write a double value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/QueryStatement.html#setDouble(PS,IDX,double)">setDouble</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/QueryStatement.html#setDouble(PS,IDX,java.lang.Double)">setDouble</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>statement</code> - The statement</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>

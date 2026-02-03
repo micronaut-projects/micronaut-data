@@ -60,18 +60,18 @@ loadScripts(document, 'script');</script>
 <li><a href="#setValue(PS,IDX,java.lang.Object)" tabindex="0">setValue(PS, IDX, Object)</a></li>
 <li><a href="#setDynamic(PS,IDX,io.micronaut.data.model.DataType,java.lang.Object)" tabindex="0">setDynamic(PS, IDX, DataType, Object)</a></li>
 <li><a href="#convertRequired(java.lang.Object,java.lang.Class)" tabindex="0">convertRequired(Object, Class)</a></li>
-<li><a href="#setLong(PS,IDX,long)" tabindex="0">setLong(PS, IDX, long)</a></li>
-<li><a href="#setChar(PS,IDX,char)" tabindex="0">setChar(PS, IDX, char)</a></li>
+<li><a href="#setLong(PS,IDX,java.lang.Long)" tabindex="0">setLong(PS, IDX, Long)</a></li>
+<li><a href="#setChar(PS,IDX,java.lang.Character)" tabindex="0">setChar(PS, IDX, Character)</a></li>
 <li><a href="#setDate(PS,IDX,java.util.Date)" tabindex="0">setDate(PS, IDX, Date)</a></li>
 <li><a href="#setTimestamp(PS,IDX,java.time.Instant)" tabindex="0">setTimestamp(PS, IDX, Instant)</a></li>
 <li><a href="#setTime(PS,IDX,java.sql.Time)" tabindex="0">setTime(PS, IDX, Time)</a></li>
 <li><a href="#setString(PS,IDX,java.lang.String)" tabindex="0">setString(PS, IDX, String)</a></li>
-<li><a href="#setInt(PS,IDX,int)" tabindex="0">setInt(PS, IDX, int)</a></li>
-<li><a href="#setBoolean(PS,IDX,boolean)" tabindex="0">setBoolean(PS, IDX, boolean)</a></li>
-<li><a href="#setFloat(PS,IDX,float)" tabindex="0">setFloat(PS, IDX, float)</a></li>
-<li><a href="#setByte(PS,IDX,byte)" tabindex="0">setByte(PS, IDX, byte)</a></li>
-<li><a href="#setShort(PS,IDX,short)" tabindex="0">setShort(PS, IDX, short)</a></li>
-<li><a href="#setDouble(PS,IDX,double)" tabindex="0">setDouble(PS, IDX, double)</a></li>
+<li><a href="#setInt(PS,IDX,java.lang.Integer)" tabindex="0">setInt(PS, IDX, Integer)</a></li>
+<li><a href="#setBoolean(PS,IDX,java.lang.Boolean)" tabindex="0">setBoolean(PS, IDX, Boolean)</a></li>
+<li><a href="#setFloat(PS,IDX,java.lang.Float)" tabindex="0">setFloat(PS, IDX, Float)</a></li>
+<li><a href="#setByte(PS,IDX,java.lang.Byte)" tabindex="0">setByte(PS, IDX, Byte)</a></li>
+<li><a href="#setShort(PS,IDX,java.lang.Short)" tabindex="0">setShort(PS, IDX, Short)</a></li>
+<li><a href="#setDouble(PS,IDX,java.lang.Double)" tabindex="0">setDouble(PS, IDX, Double)</a></li>
 <li><a href="#setBigDecimal(PS,IDX,java.math.BigDecimal)" tabindex="0">setBigDecimal(PS, IDX, BigDecimal)</a></li>
 <li><a href="#setBytes(PS,IDX,byte%5B%5D)" tabindex="0">setBytes(PS, IDX, byte[])</a></li>
 <li><a href="#setArray(PS,IDX,java.lang.Object)" tabindex="0">setArray(PS, IDX, Object)</a></li>
@@ -114,7 +114,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;T</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@Nullable T</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
@@ -140,16 +140,16 @@ loadScripts(document, 'script');</script>
 <div class="block">Write a BigDecimal value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setBoolean(PS,IDX,boolean)" class="member-name-link">setBoolean</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setBoolean(PS,IDX,java.lang.Boolean)" class="member-name-link">setBoolean</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- boolean&nbsp;bool)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;bool)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a boolean value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setByte(PS,IDX,byte)" class="member-name-link">setByte</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setByte(PS,IDX,java.lang.Byte)" class="member-name-link">setByte</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- byte&nbsp;b)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Byte.html" title="class or interface in java.lang" class="external-link">Byte</a>&nbsp;b)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a byte value for the given name.</div>
 </div>
@@ -161,9 +161,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Write a byte[] value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setChar(PS,IDX,char)" class="member-name-link">setChar</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setChar(PS,IDX,java.lang.Character)" class="member-name-link">setChar</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- char&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a char value for the given name.</div>
 </div>
@@ -175,9 +175,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Write a date value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setDouble(PS,IDX,double)" class="member-name-link">setDouble</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setDouble(PS,IDX,java.lang.Double)" class="member-name-link">setDouble</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- double&nbsp;d)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;d)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a double value for the given name.</div>
 </div>
@@ -190,30 +190,30 @@ loadScripts(document, 'script');</script>
 <div class="block">Write a value dynamically using the result set and the given name and data type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setFloat(PS,IDX,float)" class="member-name-link">setFloat</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setFloat(PS,IDX,java.lang.Float)" class="member-name-link">setFloat</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- float&nbsp;f)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&nbsp;f)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a float value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setInt(PS,IDX,int)" class="member-name-link">setInt</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setInt(PS,IDX,java.lang.Integer)" class="member-name-link">setInt</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- int&nbsp;integer)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;integer)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write an int value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setLong(PS,IDX,long)" class="member-name-link">setLong</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setLong(PS,IDX,java.lang.Long)" class="member-name-link">setLong</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- long&nbsp;value)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a long value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a><wbr>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setShort(PS,IDX,short)" class="member-name-link">setShort</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#setShort(PS,IDX,java.lang.Short)" class="member-name-link">setShort</a><wbr>(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- short&nbsp;s)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link">Short</a>&nbsp;s)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Write a short value for the given name.</div>
 </div>
@@ -308,7 +308,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="convertRequired(java.lang.Object,java.lang.Class)">
 <h3>convertRequired</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">convertRequired</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
 <div class="block">Convert the value to the given type.</div>
 <dl class="notes">
@@ -326,12 +326,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setLong(PS,IDX,long)">
-<h3 id="setLong(java.lang.Object,java.lang.Object,long)">setLong</h3>
+<section class="detail" id="setLong(PS,IDX,java.lang.Long)">
+<h3 id="setLong(java.lang.Object,java.lang.Object,java.lang.Long)">setLong</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setLong</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- long&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;value)</span></div>
 <div class="block">Write a long value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -345,12 +345,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setChar(PS,IDX,char)">
-<h3 id="setChar(java.lang.Object,java.lang.Object,char)">setChar</h3>
+<section class="detail" id="setChar(PS,IDX,java.lang.Character)">
+<h3 id="setChar(java.lang.Object,java.lang.Object,java.lang.Character)">setChar</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setChar</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- char&nbsp;value)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&nbsp;value)</span></div>
 <div class="block">Write a char value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -444,12 +444,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setInt(PS,IDX,int)">
-<h3 id="setInt(java.lang.Object,java.lang.Object,int)">setInt</h3>
+<section class="detail" id="setInt(PS,IDX,java.lang.Integer)">
+<h3 id="setInt(java.lang.Object,java.lang.Object,java.lang.Integer)">setInt</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setInt</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- int&nbsp;integer)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;integer)</span></div>
 <div class="block">Write an int value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -463,12 +463,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setBoolean(PS,IDX,boolean)">
-<h3 id="setBoolean(java.lang.Object,java.lang.Object,boolean)">setBoolean</h3>
+<section class="detail" id="setBoolean(PS,IDX,java.lang.Boolean)">
+<h3 id="setBoolean(java.lang.Object,java.lang.Object,java.lang.Boolean)">setBoolean</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setBoolean</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- boolean&nbsp;bool)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;bool)</span></div>
 <div class="block">Write a boolean value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -482,12 +482,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setFloat(PS,IDX,float)">
-<h3 id="setFloat(java.lang.Object,java.lang.Object,float)">setFloat</h3>
+<section class="detail" id="setFloat(PS,IDX,java.lang.Float)">
+<h3 id="setFloat(java.lang.Object,java.lang.Object,java.lang.Float)">setFloat</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setFloat</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- float&nbsp;f)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&nbsp;f)</span></div>
 <div class="block">Write a float value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -501,12 +501,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setByte(PS,IDX,byte)">
-<h3 id="setByte(java.lang.Object,java.lang.Object,byte)">setByte</h3>
+<section class="detail" id="setByte(PS,IDX,java.lang.Byte)">
+<h3 id="setByte(java.lang.Object,java.lang.Object,java.lang.Byte)">setByte</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setByte</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- byte&nbsp;b)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Byte.html" title="class or interface in java.lang" class="external-link">Byte</a>&nbsp;b)</span></div>
 <div class="block">Write a byte value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -520,12 +520,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setShort(PS,IDX,short)">
-<h3 id="setShort(java.lang.Object,java.lang.Object,short)">setShort</h3>
+<section class="detail" id="setShort(PS,IDX,java.lang.Short)">
+<h3 id="setShort(java.lang.Object,java.lang.Object,java.lang.Short)">setShort</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setShort</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- short&nbsp;s)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link">Short</a>&nbsp;s)</span></div>
 <div class="block">Write a short value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -539,12 +539,12 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="setDouble(PS,IDX,double)">
-<h3 id="setDouble(java.lang.Object,java.lang.Object,double)">setDouble</h3>
+<section class="detail" id="setDouble(PS,IDX,java.lang.Double)">
+<h3 id="setDouble(java.lang.Object,java.lang.Object,java.lang.Double)">setDouble</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>,<wbr><a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&gt;</span>&nbsp;<span class="element-name">setDouble</span><wbr><span class="parameters">(<a href="#type-param-PS" title="type parameter in QueryStatement">PS</a>&nbsp;statement,
  <a href="#type-param-IDX" title="type parameter in QueryStatement">IDX</a>&nbsp;name,
- double&nbsp;d)</span></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;d)</span></div>
 <div class="block">Write a double value for the given name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
