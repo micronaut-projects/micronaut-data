@@ -523,7 +523,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(associatedViewEntity);
         if (associatedEntityOptional.isEmpty()) {
-            return "";
+            throw new IllegalStateException("Associated entity not found, set the entity field inside @JsonSubView annotation.");
         }
         PersistentEntity associatedEntity = associatedEntityOptional.get();
         StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
@@ -588,7 +588,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         Relation.Kind kind = association.getKind();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(association.getAssociatedEntity());
         if (associatedEntityOptional.isEmpty()) {
-            throw new IllegalStateException("Associated entity not found, set the entity field inside @JsonView annotation.");
+            throw new IllegalStateException("Associated entity not found, set the entity field inside @JsonSubView annotation.");
         }
         PersistentEntity associatedEntity = associatedEntityOptional.get();
         switch (kind) {

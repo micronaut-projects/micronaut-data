@@ -23,8 +23,6 @@ by ann:io.micronaut.data.annotation.JoinColumn[], those columns will be used.
 
 NOTE: If ann:io.micronaut.data.annotation.JoinColumn[] is not specified, property name of Json View class needs to match the name of the corresponding entity class property name.
 
-NOTE: Using many to many relations in Json Duality View classes is not supported.
-
 For example, to associate a `StudentView` with its related `StudentScheduleSubView` entries in a one-to-many relationship,
 annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
 is the identifier for `StudentScheduleSubView`, as follows:

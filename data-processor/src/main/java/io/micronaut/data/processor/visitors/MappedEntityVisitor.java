@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.annotation.processing.visitor.JavaClassElement;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -23,10 +24,16 @@ import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.model.Association;
+import io.micronaut.inject.ast.FieldElement;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -62,6 +69,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     public static final int POSITION = 100;
 
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
+    private static final String JSON_SUB_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonSubView";
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
@@ -119,6 +127,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         if (entity.hasVersion()) {
             computeMappingDefaults(entity.getVersion(), dataTypes, dataConverters, context);
+        }
+
+        if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
+            checkPropertyMappings(entity, context);
         }
     }
 
@@ -199,6 +211,56 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         if (isRelation) {
             useJoinColumnNameIfSet(annotationMetadata, propertyElement);
+        }
+    }
+
+    private void checkPropertyMappings(SourcePersistentEntity entity, VisitorContext context) {
+        String entityName = null;
+
+        if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
+            AnnotationValue<JsonView> annotation = entity.getAnnotationMetadata().getAnnotation(JsonView.class);
+            if (annotation != null) {
+                Object value = annotation.getValues().get("entity");
+                if (value != null) {
+                    entityName = value.toString();
+                }
+            }
+        } else {
+            AnnotationValue<JsonSubView> annotation = entity.getAnnotationMetadata().getAnnotation(JsonSubView.class);
+            if (annotation != null) {
+                Object value = annotation.getValues().get("entity");
+                if (value != null) {
+                    entityName = value.toString();
+                }
+            }
+        }
+
+        Optional<ClassElement> correspondingEntityOptional = context.getClassElement(entityName);
+        if (correspondingEntityOptional.isEmpty()) {
+            throw new ProcessingException(entity, "Entity field not set in the @JsonView/@JsonSubView annotation");
+        }
+        JavaClassElement correspondingEntity = (JavaClassElement) correspondingEntityOptional.get();
+
+        if (entity.hasIdentity()) {
+            checkPropertyMapping(entity.getIdentity(), entity, correspondingEntity);
+        }
+
+        for (SourcePersistentProperty property : entity.getPersistentProperties()) {
+            checkPropertyMapping(property, entity, correspondingEntity);
+        }
+    }
+
+    private void checkPropertyMapping(SourcePersistentProperty property, SourcePersistentEntity entity, JavaClassElement correspondingEntity) {
+        if (property.getDataType() == DataType.OBJECT || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()) {
+            return;
+        }
+        checkEntityHasField(property.getName(), entity, correspondingEntity);
+    }
+
+    private void checkEntityHasField(String field, SourcePersistentEntity entity, JavaClassElement correspondingEntity) {
+        Optional<FieldElement> correspondingField = correspondingEntity.findField(field);
+        if (correspondingField.isEmpty()) {
+            throw new ProcessingException(entity, "Property `" + field + "` doesn't exist in entity class");
         }
     }
 

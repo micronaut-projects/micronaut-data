@@ -11,6 +11,7 @@ dependencies {
 
 	compileOnly mn.micronaut.core.processor
     compileOnly libs.managed.jakarta.data.stateful
+    compileOnly mn.micronaut.inject.java
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
