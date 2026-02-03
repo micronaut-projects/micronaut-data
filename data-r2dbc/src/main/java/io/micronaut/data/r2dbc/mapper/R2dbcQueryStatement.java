@@ -138,21 +138,25 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     }
 
     @Override
-    public <T> T convertRequired(Object value, Class<T> type) {
+    public @Nullable <T> T convertRequired(Object value, Class<T> type) {
         return conversionService.convertRequired(value, type);
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setLong(Statement statement, Integer name, long value) {
+    public QueryStatement<Statement, Integer> setLong(Statement statement, Integer name, @Nullable Long value) {
         setValue(statement, name, value);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setChar(Statement statement, Integer name, char value) {
-        setValue(statement, name, String.valueOf(value));
+    public QueryStatement<Statement, Integer> setChar(Statement statement, Integer name, @Nullable Character value) {
+        if (value == null) {
+            statement.bindNull(name, Object.class);
+        } else {
+            statement.bind(name, String.valueOf(value));
+        }
         return this;
     }
 
@@ -204,42 +208,42 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setInt(Statement statement, Integer name, int integer) {
+    public QueryStatement<Statement, Integer> setInt(Statement statement, Integer name, @Nullable Integer integer) {
         setValue(statement, name, integer);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setBoolean(Statement statement, Integer name, boolean bool) {
+    public QueryStatement<Statement, Integer> setBoolean(Statement statement, Integer name, @Nullable Boolean bool) {
         setValue(statement, name, bool);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setFloat(Statement statement, Integer name, float f) {
+    public QueryStatement<Statement, Integer> setFloat(Statement statement, Integer name, @Nullable Float f) {
         setValue(statement, name, f);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setByte(Statement statement, Integer name, byte b) {
+    public QueryStatement<Statement, Integer> setByte(Statement statement, Integer name, @Nullable Byte b) {
         setValue(statement, name, b);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setShort(Statement statement, Integer name, short s) {
+    public QueryStatement<Statement, Integer> setShort(Statement statement, Integer name, @Nullable Short s) {
         setValue(statement, name, s);
         return this;
     }
 
     @NonNull
     @Override
-    public QueryStatement<Statement, Integer> setDouble(Statement statement, Integer name, double d) {
+    public QueryStatement<Statement, Integer> setDouble(Statement statement, Integer name, @Nullable Double d) {
         setValue(statement, name, d);
         return this;
     }

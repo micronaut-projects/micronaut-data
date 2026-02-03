@@ -32,7 +32,7 @@ dependencies {
 sourceSets {
     generated {
         java {
-            srcDirs = ["$build/generated/java"]
+            srcDirs = [layout.buildDirectory.dir("generated/java")]
         }
     }
 }
