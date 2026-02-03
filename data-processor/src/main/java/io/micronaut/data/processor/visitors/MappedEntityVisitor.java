@@ -28,12 +28,10 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.model.Association;
 import io.micronaut.inject.ast.FieldElement;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -251,7 +249,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private void checkPropertyMapping(SourcePersistentProperty property, SourcePersistentEntity entity, JavaClassElement correspondingEntity) {
-        if (property.getDataType() == DataType.OBJECT || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()) {
+        if (property.getDataType() == DataType.OBJECT || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent() || (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED)) {
             return;
         }
         checkEntityHasField(property.getName(), entity, correspondingEntity);
