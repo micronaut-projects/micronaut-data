@@ -204,7 +204,11 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, @Nullable Character value) {
         try {
-            statement.setString(name, String.valueOf(value));
+            if (value == null) {
+                statement.setNull(name, Types.CHAR);
+            } else {
+                statement.setString(name, String.valueOf(value));
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
