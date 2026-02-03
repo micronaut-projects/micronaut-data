@@ -50,7 +50,7 @@ final class R2dbcTuple implements Tuple {
     }
 
     @Override
-    public <X> X get(String alias, Class<X> type) {
+    public @Nullable <X> X get(String alias, Class<X> type) {
         return conversionService.convertRequired(get(alias), type);
     }
 
@@ -65,7 +65,7 @@ final class R2dbcTuple implements Tuple {
     }
 
     @Override
-    public <X> X get(int i, Class<X> type) {
+    public @Nullable <X> X get(int i, Class<X> type) {
         return conversionService.convertRequired(get(i), type);
     }
 

@@ -101,7 +101,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 if (throwable == null) {
                     Class<Object> target = context.getReturnType().asArgument().getType();
                     Object v = value;
-                    if (v == null) {
+                    if (v == null && target.getName().equals("kotlinx.coroutines.flow.Flow")) {
                         v = conversionService.convert(new NullValue(), target).orElse(v);
                     } else {
                         v = conversionService.convert(v, target).orElse(v);

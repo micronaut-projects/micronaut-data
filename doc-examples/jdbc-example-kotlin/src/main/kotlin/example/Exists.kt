@@ -24,6 +24,6 @@ interface RecordCoroutineRepository : CoroutineCrudRepository<Record, UUID> {
 
 @JdbcRepository(dialect = Dialect.H2)
 interface RecordReactiveRepository : ReactorCrudRepository<Record, UUID> {
-    fun existsByFoo(foo: UUID): Mono<Boolean?>
+    fun existsByFoo(foo: UUID): Mono<Boolean>
     fun existsByBar(bar: UUID): Mono<Boolean>
 }
