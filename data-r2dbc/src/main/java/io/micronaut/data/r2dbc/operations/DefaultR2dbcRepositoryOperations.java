@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.beans.BeanProperty;
@@ -259,7 +260,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     @Override
-    public <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
+    public @NullUnmarked @Nullable <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return Mono.defer(() -> supplier.apply(reactive())
                 .contextWrite(ReactorPropagation.addPropagatedContext(Context.empty(), propagatedContext)))
