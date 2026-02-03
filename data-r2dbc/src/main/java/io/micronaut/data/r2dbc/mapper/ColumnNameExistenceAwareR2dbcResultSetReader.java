@@ -62,6 +62,6 @@ public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelega
                 knownColumns.add(columnMetadata.getName().toLowerCase(Locale.ENGLISH));
             }
         }
-        return knownColumns.contains(name.toLowerCase());
+        return knownColumns.contains(name.toLowerCase(Locale.ENGLISH));
     }
 }
