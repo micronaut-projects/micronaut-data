@@ -28,6 +28,7 @@ import io.micronaut.core.convert.value.ConvertibleValuesMap;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -122,6 +123,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private ExecutorService executorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -147,10 +149,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
-        this.uniqueResultOnFindOne = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("uniqueResultOnFindOne", boolean.class, false);
-        this.persistOrMergeOnSave = new ConvertibleValuesMap<>(jpaConfiguration.getProperties())
-            .get("persistOrMergeOnSave", boolean.class, false);
+
+        ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
+        this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
+        this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
+        this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
+            .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, 0));
     }
 
     @Override
@@ -347,7 +351,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
         return executeRead(session -> {
-            StreamResultCollector<T> collector = new StreamResultCollector<>();
+            int fetchSize = pagedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+            StreamResultCollector<T> collector = new StreamResultCollector<>(fetchSize);
             collectPagedResults(session.getCriteriaBuilder(), session, pagedQuery, collector);
             return Objects.requireNonNull(collector.result);
         });
@@ -680,7 +685,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         Optional<ConnectionStatus<Session>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isPresent()) {
-            StreamResultCollector<R> resultCollector = new StreamResultCollector<>();
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+            StreamResultCollector<R> resultCollector = new StreamResultCollector<>(fetchSize, true);
             collectFindAll(connectionStatus.get().getConnection(), preparedQuery, resultCollector);
             return Objects.requireNonNull(resultCollector.result);
         }
@@ -856,15 +862,56 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
         @Nullable
         private Stream<R> result;
+        private final int fetchSize;
+        private final boolean readOnly;
+
+        private StreamResultCollector(int fetchSize) {
+            this.fetchSize = fetchSize;
+            this.readOnly = true;
+        }
+
+        private StreamResultCollector(int fetchSize, boolean readOnly) {
+            this.fetchSize = fetchSize;
+            this.readOnly = readOnly;
+        }
 
         @Override
         protected void collectTuple(Query<?> query, Function<Tuple, R> fn) {
-            result = ((Stream<Tuple>) query.getResultStream()).map(fn);
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<Tuple> base = (Stream<Tuple>) query.getResultStream();
+            Stream<R> mapped = base.map(fn);
+            result = mapped;
         }
 
         @Override
         protected void collect(Query<?> query) {
-            result = (Stream<R>) query.getResultStream();
+            if (fetchSize > 0) {
+                try {
+                    query.setFetchSize(fetchSize);
+                } catch (Throwable ignored) {
+                    // Some drivers may not support fetchSize; ignore
+                }
+            }
+            if (readOnly) {
+                try {
+                    query.setReadOnly(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            Stream<R> s = (Stream<R>) query.getResultStream();
+            result = s;
         }
     }
 

@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.beans.BeanProperty;
@@ -50,6 +51,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedDataOperation;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -147,7 +149,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
-    private final String dataSourceName;
     @Nullable
     private ExecutorService ioExecutorService;
     @Nullable
@@ -160,6 +161,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -220,12 +222,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.transactionOperations = transactionOperations;
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
-        this.dataSourceName = dataSourceName;
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
-        String name = dataSourceName;
-        if (name == null) {
-            name = "default";
-        }
         if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
             for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
                 Dialect dialect = r2dbcExceptionMapper.getDialect();
@@ -237,6 +234,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 r2dbcExceptionMappers.put(dialect, dialectR2dbcExceptionMapperList);
             }
         }
+
+        this.defaultFetchSize = configuration.getDefaultFetchSize();
     }
 
     @Override
@@ -255,7 +254,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     @Override
-    public <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
+    public @NullUnmarked <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return Mono.defer(() -> supplier.apply(reactive())
                 .contextWrite(ReactorPropagation.addPropagatedContext(Context.empty(), propagatedContext)))
@@ -542,6 +541,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return executeReadFlux(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
+                // Apply fetch size hint if present (driver may ignore)
+                int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(defaultFetchSize);
+                if (fetchSize > 0) {
+                    try {
+                        statement = statement.fetchSize(fetchSize);
+                    } catch (Throwable ignored) {
+                        // Some drivers may not support fetchSize; ignore
+                    }
+                }
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);

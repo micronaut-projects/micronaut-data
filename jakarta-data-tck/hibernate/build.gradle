@@ -22,7 +22,7 @@ dependencies {
 }
 
 test {
-    scanForTestClasses false
+    scanForTestClasses true
     systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
     useJUnitPlatform()
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1

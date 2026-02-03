@@ -53,6 +53,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -72,6 +74,8 @@ import java.util.function.Function;
 @Internal
 final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
         implements HibernateReactorRepositoryOperations, ReactorCriteriaRepositoryOperations {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveRepositoryOperations.class);
 
     private final SessionFactory sessionFactory;
     private final Stage.SessionFactory stageSessionFactory;
@@ -273,6 +277,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T, R> Flux<R> findAll(PreparedQuery<T, R> preparedQuery) {
         return operationFlux(session -> {
+            AnnotationMetadata am = preparedQuery.getAnnotationMetadata();
+            am.intValue(io.micronaut.data.annotation.Fetch.class).ifPresent(fetch -> {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("@Fetch({}) present on reactive query for {}. Ignoring: not supported by Hibernate Reactive.", fetch, preparedQuery.getRootEntity());
+                }
+            });
             ListResultCollector<R> resultCollector = new ListResultCollector<>();
             collectFindAll(session, preparedQuery, resultCollector);
             return resultCollector.result;

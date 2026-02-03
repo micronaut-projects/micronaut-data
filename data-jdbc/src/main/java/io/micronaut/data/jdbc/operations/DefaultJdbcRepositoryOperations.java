@@ -30,6 +30,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -168,6 +169,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -241,6 +243,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
             }
         }
+
+        this.defaultFetchSize = jdbcConfiguration.getDefaultFetchSize();
     }
 
     @Override
@@ -478,6 +482,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         PreparedStatement ps;
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
+            // Apply fetch size hint if present
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(this.defaultFetchSize);
+            if (fetchSize > 0) {
+                try {
+                    ps.setFetchSize(fetchSize);
+                } catch (SQLException ignored) {
+                    // driver may not support fetchSize; ignore
+                }
+            }
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
@@ -486,7 +499,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ResultSet openedRs = null;
         ResultSet rs;
         try {
-            // For fetching set ps.setFetchSize(...);
             openedRs = ps.executeQuery();
             rs = openedRs;
             SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
