@@ -24,6 +24,6 @@ interface RecordCoroutineRepository : CoroutineCrudRepository<Record, UUID> {
 
 @R2dbcRepository(dialect = Dialect.MYSQL)
 interface RecordReactiveRepository : ReactorCrudRepository<Record, UUID> {
-    fun existsByFoo(foo: UUID): Mono<Boolean?>
+    fun existsByFoo(foo: UUID): Mono<Boolean>
     fun existsByBar(bar: UUID): Mono<Boolean>
 }

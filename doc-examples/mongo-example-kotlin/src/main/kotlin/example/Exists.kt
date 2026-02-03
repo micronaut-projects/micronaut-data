@@ -23,6 +23,6 @@ interface RecordCoroutineRepository : CoroutineCrudRepository<Record, UUID> {
 
 @MongoRepository
 interface RecordReactiveRepository : ReactorCrudRepository<Record, UUID> {
-    fun existsByFoo(foo: UUID): Mono<Boolean?>
+    fun existsByFoo(foo: UUID): Mono<Boolean>
     fun existsByBar(bar: UUID): Mono<Boolean>
 }
