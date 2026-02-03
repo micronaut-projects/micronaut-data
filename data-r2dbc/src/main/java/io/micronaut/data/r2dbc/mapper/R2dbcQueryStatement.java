@@ -152,7 +152,11 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     @NonNull
     @Override
     public QueryStatement<Statement, Integer> setChar(Statement statement, Integer name, @Nullable Character value) {
-        setValue(statement, name, String.valueOf(value));
+        if (value == null) {
+            statement.bindNull(name, Object.class);
+        } else {
+            statement.bind(name, String.valueOf(value));
+        }
         return this;
     }
 
