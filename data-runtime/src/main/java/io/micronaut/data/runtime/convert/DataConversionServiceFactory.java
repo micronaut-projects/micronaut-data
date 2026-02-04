@@ -714,7 +714,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.intValue();
         }
-        return dataConversionService.convertRequired(value, Argument.of(Integer.class));
+        return dataConversionService.convertRequired(value, Integer.class);
     }
 
     private Long asLong(Object value, DataConversionService dataConversionService) {
@@ -724,7 +724,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.longValue();
         }
-        return dataConversionService.convertRequired(value, Argument.of(Long.class));
+        return dataConversionService.convertRequired(value, Long.class);
     }
 
     private Double asDouble(Object value, DataConversionService dataConversionService) {
@@ -734,14 +734,14 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.doubleValue();
         }
-        return dataConversionService.convertRequired(value, Argument.of(Double.class));
+        return dataConversionService.convertRequired(value, Double.class);
     }
 
     private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
         if (value instanceof Boolean boolValue) {
             return boolValue;
         }
-        return dataConversionService.convertRequired(value, Argument.of(Boolean.class));
+        return dataConversionService.convertRequired(value, Boolean.class);
     }
 
     private Float asFloat(Object value, DataConversionService dataConversionService) {
@@ -751,7 +751,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.floatValue();
         }
-        return dataConversionService.convertRequired(value, Argument.of(Float.class));
+        return dataConversionService.convertRequired(value, Float.class);
     }
 
     private Short asShort(Object value, DataConversionService dataConversionService) {
@@ -761,13 +761,13 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.shortValue();
         }
-        return dataConversionService.convertRequired(value, Argument.of(Short.class));
+        return dataConversionService.convertRequired(value, Short.class);
     }
 
     private Character asCharacter(Object value, DataConversionService dataConversionService) {
         if (value instanceof Character charValue) {
             return charValue;
         }
-        return dataConversionService.convertRequired(value, Argument.of(Character.class));
+        return dataConversionService.convertRequired(value, Character.class);
     }
 }

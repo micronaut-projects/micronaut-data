@@ -117,7 +117,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
 
                 if (!hasId
                         && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                        && association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
                     return childMono.flatMap(c -> {
                         if (ctx.persisted.contains(c)) {
                             return Mono.just(e);
@@ -209,7 +209,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
         monoEntity = monoEntity.flatMap(e -> fn.apply(e).flatMap(newChildren -> {
             T entityAfterCascade = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
             RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-            if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+            if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
                 if (helper.isSupportsBatchInsert(ctx, cascadeOp.ctx.parentPersistentEntity)) {
                     Predicate<Object> veto = ctx.persisted::contains;
                     Mono<Void> op = helper.persistManyAssociationBatch(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, newChildren, childPersistentEntity, veto);

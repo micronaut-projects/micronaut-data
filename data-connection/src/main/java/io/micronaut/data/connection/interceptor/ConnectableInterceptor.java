@@ -84,7 +84,6 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     @Override
-    @Nullable
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         String tenantDataSourceName;
         if (tenantResolver != null) {

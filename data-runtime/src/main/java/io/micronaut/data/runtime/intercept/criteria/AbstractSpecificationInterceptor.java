@@ -416,11 +416,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return criteriaBuilder -> {
             List<AnnotationValue<Projection>> projections = context.getAnnotationValuesByType(Projection.class);
             AnnotationValue<DataMethod> dataAnnotation = context.getAnnotation(DataMethod.class);
-            boolean isDto = dataAnnotation != null && dataAnnotation.isTrue(DataMethod.META_MEMBER_DTO);
+            boolean isDto = dataAnnotation.isTrue(DataMethod.META_MEMBER_DTO);
             QuerySpecification<K> specification = getQuerySpecification(context, rootEntity);
             CriteriaQuery<Object> criteriaQuery;
             if (isDto || !projections.isEmpty()) {
-                Class<?> dtoClass = dataAnnotation != null ? dataAnnotation.classValue(DataMethod.META_MEMBER_RESULT_TYPE).orElse(Object.class) : Object.class;
+                Class<?> dtoClass = dataAnnotation.classValue(DataMethod.META_MEMBER_RESULT_TYPE).orElse(Object.class);
                 criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(dtoClass);
             } else {
                 criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(rootEntity);

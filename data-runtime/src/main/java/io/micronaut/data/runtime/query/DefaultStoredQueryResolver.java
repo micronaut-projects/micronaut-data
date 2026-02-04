@@ -56,15 +56,13 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
     @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
         AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
-        if (dataMethodQuery != null) {
-            AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
-            if (countQuery != null) {
-                return new DefaultStoredQuery<>(
-                    context.getExecutableMethod(),
-                    countQuery,
-                    getHintsCapableRepository()
-                );
-            }
+        AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
+        if (countQuery != null) {
+            return new DefaultStoredQuery<>(
+                context.getExecutableMethod(),
+                countQuery,
+                getHintsCapableRepository()
+            );
         }
         // Previous way
         return new DefaultStoredQuery<>(

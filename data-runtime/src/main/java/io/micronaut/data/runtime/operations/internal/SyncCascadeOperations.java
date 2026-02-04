@@ -91,26 +91,21 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                         LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
                     Object persisted = helper.persistOne(ctx, child, childPersistentEntity);
-                    if (entity != null) {
-                        entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, persisted);
-                    }
+                    entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, persisted);
                     child = persisted;
                 } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
                     if (LOG.isDebugEnabled()) {
-                        Object value = entity != null ? persistentEntity.getIdentity().getProperty().get(entity) : null;
                         LOG.debug("Cascading MERGE for '{}' ({}) association: '{}'", persistentEntity.getName(),
-                                value, cascadeOp.ctx.associations);
+                                persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
                     }
                     Object updated = helper.updateOne(ctx, child, childPersistentEntity);
-                    if (entity != null) {
-                        entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, updated);
-                    }
+                    entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, updated);
                     child = updated;
                 }
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                if (!hasId && entity != null
+                if (!hasId
                         && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                        && association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
 
                     helper.persistManyAssociation(ctx, association, entity, (RuntimePersistentEntity<Object>) persistentEntity, child, childPersistentEntity);
                 }
@@ -159,12 +154,10 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                     continue;
                 }
 
-                if (entity != null) {
-                    entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
-                }
+                entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
 
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
+                if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         helper.persistManyAssociationBatch(ctx, association,
                                 cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, entities, childPersistentEntity);
@@ -180,10 +173,6 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 }
                 ctx.persisted.addAll(entities);
             }
-        }
-        if (entity == null) {
-            // TODO: Makes no much sense
-            throw new IllegalStateException("Entity is null");
         }
         return entity;
     }

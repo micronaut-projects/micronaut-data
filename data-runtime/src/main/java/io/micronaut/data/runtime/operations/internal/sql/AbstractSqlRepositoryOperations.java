@@ -437,16 +437,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    AnnotationValue<TypeDef> typeDefAnnotationValue = property.getKey()
+                    return property.getKey()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class);
-                    if (typeDefAnnotationValue != null) {
-                        return
-                            typeDefAnnotationValue.annotationClassValue("converter")
-                                .flatMap(AnnotationClassValue::getType)
-                                .orElse(null);
-                    }
-                    return null;
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
                 }
 
                 @Override
@@ -482,17 +478,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    AnnotationValue<TypeDef> typeDefAnnotationValue = pp.getProperty()
+                    return pp.getProperty()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class);
-                    if (typeDefAnnotationValue != null) {
-                        return typeDefAnnotationValue
-                            .annotationClassValue("converter")
-                            .flatMap(AnnotationClassValue::getType)
-                            .orElse(null);
-                    } else {
-                        return null;
-                    }
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
                 }
             });
         }

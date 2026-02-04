@@ -19,7 +19,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.aop.InvocationContext;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -215,10 +214,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     @Nullable
     private String getParameterInRole(String role) {
         if (storedQuery instanceof DefaultStoredQuery) {
-            AnnotationValue<DataMethod> dataMethodAnnotationValue = storedQuery.getAnnotationMetadata().getAnnotation(DataMethod.class);
-            if (dataMethodAnnotationValue != null) {
-                return dataMethodAnnotationValue.stringValue(role).orElse(null);
-            }
+            return storedQuery.getAnnotationMetadata().getAnnotation(DataMethod.class).stringValue(role).orElse(null);
         }
         return null;
     }

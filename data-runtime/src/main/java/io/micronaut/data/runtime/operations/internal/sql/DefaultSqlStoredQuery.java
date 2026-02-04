@@ -77,14 +77,10 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
 
         if (storedQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
             AnnotationValue<QueryResult> queryResultAnn = storedQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
-            if (queryResultAnn != null) {
-                QueryResult.Type type = queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
-                String columnName = queryResultAnn.getRequiredValue("column", String.class);
-                JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
-                queryResultInfo = new QueryResultInfo(type, columnName, jsonDataType);
-            } else {
-                queryResultInfo = null;
-            }
+            QueryResult.Type type = queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
+            String columnName = queryResultAnn.getRequiredValue("column", String.class);
+            JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+            queryResultInfo = new QueryResultInfo(type, columnName, jsonDataType);
         } else {
             queryResultInfo = null;
         }

@@ -65,10 +65,7 @@ public final class MongoUtils {
         if (persistentEntity.hasIdentity()) {
             RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
             BeanProperty<Object, Object> property = identity.getProperty();
-            Object value = property.get(entity);
-            if (value != null) {
-                return idValue(conversionService, persistentEntity, value, codecRegistry);
-            }
+            return idValue(conversionService, persistentEntity, property.get(entity), codecRegistry);
         }
         throw new IllegalStateException("Cannot determine id!");
     }
