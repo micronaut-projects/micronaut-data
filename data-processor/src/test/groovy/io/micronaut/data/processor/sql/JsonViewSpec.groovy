@@ -128,7 +128,7 @@ record Person(@Id @GeneratedValue @MappedProperty("_id") Long id, String name, i
         ex.message.contains("@JsonView mapped entities do not support @Version fields")
     }
 
-    void "test JsonView property name doesn't match with JsonSubView property"() {
+    void "test JsonView property name doesn't match MappedEntity property name"() {
         when:
         buildEntity('test.Person', '''
 import io.micronaut.data.annotation.JsonView;
@@ -144,7 +144,25 @@ record PersonView (@Id @GeneratedValue @MappedProperty("_id") Long id, String su
 ''')
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("Property `surname` doesn't exist in entity class")
+        ex.message.contains("Json View property surname doesn't exist in the defined entity class Person")
+    }
+
+    void "test JsonView property name matches MappedEntity with @MappedProperty annotation"() {
+        when:
+        buildEntity('test.Person', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class)
+record PersonView (@Id @GeneratedValue @MappedProperty("_id") Long id, @MappedProperty("name") String surname, int age) {}
+''')
+        then:
+        notThrown(RuntimeException)
     }
 
 }
