@@ -162,6 +162,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
+    @Nullable
     protected <R> R convertResult(PreparedQuery<?, ?> preparedQuery,
                                   CodecRegistry codecRegistry,
                                   Class<R> resultType,

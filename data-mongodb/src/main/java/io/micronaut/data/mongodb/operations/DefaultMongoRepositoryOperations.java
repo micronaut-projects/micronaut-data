@@ -39,6 +39,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -151,11 +152,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                      MongoCollectionNameProvider collectionNameProvider,
                                      @Named("io") @Nullable ExecutorService executorService) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
-            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName)));
+            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : serverName != null ? Qualifiers.byName(serverName) : null));
         this.mongoClient = mongoClient;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
-        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : Qualifiers.byName(serverName));
+        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
         this.executorService = executorService;
     }
 
@@ -201,7 +202,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                     .first();
             if (result == null) {
-                result = conversionService.convertRequired(0, resultType);
+                result = conversionService.convertRequired(0, Argument.of(resultType));
             }
             return result;
         } else {
@@ -214,7 +215,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             }
             long count = getCollection(database, persistentEntity, BsonDocument.class)
                     .countDocuments(clientSession, filter);
-            return conversionService.convertRequired(count, resultType);
+            return conversionService.convertRequired(count, Argument.of(resultType));
         }
     }
 
