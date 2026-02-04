@@ -21,6 +21,7 @@ import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.CollectionUtils;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -109,7 +110,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         @NonNull ExecutableMethod<?, ?> method,
         boolean isCount,
         HintsCapableRepository repositoryOperations) {
-        this(method, method.getAnnotation(DataMethod.NAME), isCount, repositoryOperations);
+        this(method, getRequiredDataMethod(method), isCount, repositoryOperations);
     }
 
     /**
@@ -159,22 +160,25 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             dataMethodQuery.stringValue(TypeRole.SORT).isPresent() ||
             dataMethodQuery.intValue(META_MEMBER_LIMIT).orElse(-1) > -1 ||
             dataMethodQuery.intValue(META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
-        String query;
+
         if (isCount) {
             // Legacy count definition
-            AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
-            query = queryAnnotation.stringValue(DataMethod.META_MEMBER_COUNT_QUERY)
+            final AnnotationValue<Annotation> queryAnnotation = Objects.requireNonNull(
+                method.getAnnotation(Query.class.getName()),
+                () -> "No @Query present on method: " + method
+            );
+            final String baseQuery = queryAnnotation.stringValue(DataMethod.META_MEMBER_COUNT_QUERY)
                 .orElseGet(() -> queryAnnotation.stringValue()
-                    .orElseThrow(() -> new IllegalStateException("No query present in method")));
-            Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
+                    .orElseThrow(() -> new IllegalStateException("No query present in method: " + method)));
+            final Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
             this.rawQuery = rawCountQueryString.isPresent();
-            this.query = rawCountQueryString.orElse(query);
-            String[] countQueryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
+            this.query = rawCountQueryString.orElse(baseQuery);
+            final String[] countQueryParts = getQueryParts(getRequiredDataMethod(method), DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
             // for countBy queries this is empty, and we should use DataMethod.META_MEMBER_EXPANDABLE_QUERY value
             if (ArrayUtils.isNotEmpty(countQueryParts)) {
                 this.queryParts = countQueryParts;
             } else {
-                this.queryParts = method.stringValues(DataMethodQuery.class, DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
+                this.queryParts = getQueryParts(dataMethodQuery, DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
             }
             this.isNative = queryAnnotation.isTrue(DataMethodQuery.META_MEMBER_NATIVE);
             //noinspection unchecked
@@ -189,14 +193,17 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 this.rawQuery = rawQueryString.isPresent();
                 this.query = rawQueryString.orElseGet(q::get);
             } else {
-                AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
-                query = queryAnnotation.stringValue().orElseThrow(() ->
-                    new IllegalStateException("No query present in method")
+                final AnnotationValue<Annotation> queryAnnotation = Objects.requireNonNull(
+                    method.getAnnotation(Query.class.getName()),
+                    () -> "No @Query present on method: " + method
                 );
-                Optional<String> rawQueryString = queryAnnotation.stringValue(DataMethodQuery.META_MEMBER_RAW_QUERY);
+                final String baseQuery = queryAnnotation.stringValue().orElseThrow(() ->
+                    new IllegalStateException("No query present in method: " + method)
+                );
+                final Optional<String> rawQueryString = queryAnnotation.stringValue(DataMethodQuery.META_MEMBER_RAW_QUERY);
                 this.isNative = queryAnnotation.isTrue(DataMethodQuery.META_MEMBER_NATIVE);
                 this.rawQuery = rawQueryString.isPresent();
-                this.query = rawQueryString.orElse(query);
+                this.query = rawQueryString.orElse(baseQuery);
             }
             this.resultDataType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, DataType.class).orElse(DataType.OBJECT);
             this.queryParts = getQueryParts(dataMethodQuery, DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
@@ -224,7 +231,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
         }
         Map<String, Object> queryHints = repositoryOperations.getQueryHints(this);
-        if (queryHints != Collections.EMPTY_MAP) {
+        if (CollectionUtils.isNotEmpty(queryHints)) {
             if (this.queryHints != null) {
                 this.queryHints.putAll(queryHints);
             } else {
@@ -253,20 +260,31 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         );
     }
 
+    private static AnnotationValue<Annotation> getRequiredDataMethod(ExecutableMethod<?, ?> method) {
+        AnnotationValue<Annotation> av = method.getAnnotation(DataMethod.NAME);
+        if (av == null) {
+            av = method.getDeclaredAnnotation(DataMethod.NAME);
+        }
+        if (av == null) {
+            throw new IllegalStateException("No @DataMethod metadata present on method: " + method);
+        }
+        return av;
+    }
+
     private static <E> Class<E> getRequiredRootEntity(ExecutableMethod<?, ?> context) {
-        Class aClass = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
-        if (aClass != null) {
-            return aClass;
-        } else {
+        Class<?> clazz = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+        if (clazz == null) {
             final AnnotationValue<Annotation> ann = context.getDeclaredAnnotation(DataMethod.NAME);
             if (ann != null) {
-                aClass = ann.classValue(DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
-                if (aClass != null) {
-                    return aClass;
-                }
+                clazz = ann.classValue(DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
             }
+        }
+        if (clazz == null) {
             throw new IllegalStateException("No root entity present in method");
         }
+        @SuppressWarnings("unchecked")
+        Class<E> ce = (Class<E>) clazz;
+        return ce;
     }
 
     private static List<QueryParameterBinding> getQueryParameters(List<AnnotationValue<DataMethodQueryParameter>> params,

@@ -27,6 +27,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Projection;
@@ -193,11 +194,11 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             if (resultType.isInstance(dtoResult)) {
                 return dtoResult;
             }
-            return conversionService.convertRequired(dtoResult, resultType);
+            return conversionService.convertRequired(dtoResult, Argument.of(resultType));
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
-        return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+        return conversionService.convertRequired(MongoUtils.toValue(value), Argument.of(resultType));
     }
 
     /**

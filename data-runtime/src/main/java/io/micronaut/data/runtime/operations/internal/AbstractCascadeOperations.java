@@ -29,6 +29,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,6 +140,7 @@ abstract class AbstractCascadeOperations {
      * @param <T>          The entity type
      * @return The entity instance
      */
+    @Nullable
     protected <T> T afterCascadedOne(T entity, List<Association> associations, Object prevChild, Object newChild) {
         RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
@@ -156,9 +158,11 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
-            Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
-            if (newInnerEntity != innerEntity) {
-                innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
+            if (innerEntity != null) {
+                Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
+                if (newInnerEntity != null && newInnerEntity != innerEntity) {
+                    innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
+                }
             }
             return (T) innerEntity;
         }
@@ -174,6 +178,7 @@ abstract class AbstractCascadeOperations {
      * @param <T>          The entity type
      * @return The entity instance
      */
+    @Nullable
     protected <T> T afterCascadedMany(T entity, List<Association> associations, Iterable<Object> prevChildren, List<Object> newChildren) {
         RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
@@ -196,9 +201,11 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
-            Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
-            if (newInnerEntity != innerEntity) {
-                innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
+            if (innerEntity != null) {
+                Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
+                if (newInnerEntity != null && newInnerEntity != innerEntity) {
+                    innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
+                }
             }
             return (T) innerEntity;
         }
@@ -359,6 +366,7 @@ abstract class AbstractCascadeOperations {
          *
          * @return last association
          */
+        @Nullable
         public Association getAssociation() {
             return CollectionUtils.last(associations);
         }

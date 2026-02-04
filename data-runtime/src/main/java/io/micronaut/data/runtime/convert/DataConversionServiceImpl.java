@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.convert;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.DefaultMutableConversionService;
@@ -55,7 +56,7 @@ final class DataConversionServiceImpl implements DataConversionService {
     }
 
     @Override
-    public <T> Optional<T> convert(Object object, Class<T> targetType, ConversionContext context) {
+    public <T> Optional<T> convert(@Nullable Object object, Class<T> targetType, ConversionContext context) {
         Optional<T> result = internalConversionService.convert(object, targetType, context);
         if (result.isPresent()) {
             return result;

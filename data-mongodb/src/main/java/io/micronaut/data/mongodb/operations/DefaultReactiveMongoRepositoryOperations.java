@@ -33,6 +33,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
@@ -360,7 +361,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             }
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
                 .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
-                .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
+                .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, Argument.of(resultType)))));
         } else {
             MongoFind find = preparedQuery.getFind();
             MongoFindOptions options = find.getOptions();
