@@ -140,7 +140,6 @@ abstract class AbstractCascadeOperations {
      * @param <T>          The entity type
      * @return The entity instance
      */
-    @Nullable
     protected <T> T afterCascadedOne(T entity, List<Association> associations, Object prevChild, Object newChild) {
         RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
@@ -158,11 +157,12 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
-            if (innerEntity != null) {
-                Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
-                if (newInnerEntity != null && newInnerEntity != innerEntity) {
-                    innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
-                }
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
+            Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
+            if (newInnerEntity != innerEntity) {
+                innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
             }
             return (T) innerEntity;
         }
@@ -178,7 +178,6 @@ abstract class AbstractCascadeOperations {
      * @param <T>          The entity type
      * @return The entity instance
      */
-    @Nullable
     protected <T> T afterCascadedMany(T entity, List<Association> associations, Iterable<Object> prevChildren, List<Object> newChildren) {
         RuntimeAssociation<T> association = (RuntimeAssociation<T>) associations.iterator().next();
         if (associations.size() == 1) {
@@ -201,11 +200,12 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
-            if (innerEntity != null) {
-                Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
-                if (newInnerEntity != null && newInnerEntity != innerEntity) {
-                    innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
-                }
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
+            Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
+            if (newInnerEntity != innerEntity) {
+                innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
             }
             return (T) innerEntity;
         }
