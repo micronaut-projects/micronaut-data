@@ -739,10 +739,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.intValue();
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.INT);
+        return dataConversionService.convertRequired(value, Integer.class);
     }
 
     @Nullable
@@ -753,10 +750,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.longValue();
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.LONG);
+        return dataConversionService.convertRequired(value, Long.class);
     }
 
     @Nullable
@@ -767,10 +761,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.doubleValue();
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.DOUBLE);
+        return dataConversionService.convertRequired(value, Double.class);
     }
 
     @Nullable
@@ -778,10 +769,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Boolean boolValue) {
             return boolValue;
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.BOOLEAN);
+        return dataConversionService.convertRequired(value, Boolean.class);
     }
 
     @Nullable
@@ -792,10 +780,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.floatValue();
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.FLOAT);
+        return dataConversionService.convertRequired(value, Float.class);
     }
 
     @Nullable
@@ -806,10 +791,7 @@ final class DataConversionServiceFactory {
         if (value instanceof Number number) {
             return number.shortValue();
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.SHORT);
+        return dataConversionService.convertRequired(value, Short.class);
     }
 
     @Nullable
@@ -817,9 +799,6 @@ final class DataConversionServiceFactory {
         if (value instanceof Character charValue) {
             return charValue;
         }
-        if (value == null) {
-            return null;
-        }
-        return dataConversionService.convertRequired(value, Argument.CHAR);
+        return dataConversionService.convertRequired(value, Character.class);
     }
 }
