@@ -48,6 +48,9 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     BuildingViewRepository buildingViewRepository
 
+    @Inject
+    CrocodileViewRepository crocodileViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -397,6 +400,25 @@ class OracleJdbcJsonViewSpec extends Specification {
         dialect << [Dialect.H2, Dialect.ANSI, Dialect.MYSQL, Dialect.POSTGRES, Dialect.SQL_SERVER]
     }
 
+
+    def "embedded object test"() {
+        when:
+        def crocodile = new CrocodileView(null, "Bob", new Crocodile.Characteristics(10, 11))
+        def created = crocodileViewRepository.save(crocodile)
+
+        then:
+        created.name() == "Bob"
+        created.characteristics().weight() == 10
+
+        when:
+        def get = crocodileViewRepository.findById(created.id()).orElse(null)
+
+        then:
+        get != null
+        get.name() == "Bob"
+        get.characteristics().weight() == 10
+    }
+
     def "test_generate_create_student_view"() {
         when:
         Dialect dialect = Dialect.ORACLE
@@ -464,5 +486,18 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         teacherPersistedView.name == "Mr. Dimitrije"
         teacherPersistedView.schedule.name.get(0) == "English"
+    }
+
+    def "test_generate_create_crocodile_view"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity crocodileViewEntity = getRuntimePersistentEntity(CrocodileView)
+        String[] sql = builder.buildCreateTableStatements(crocodileViewEntity)
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW crocodile_view AS SELECT JSON " +
+                "{'_id': crocodile_.id, 'name': crocodile_.name, 'characteristics': " +
+                "(JSON {'weight': crocodile_.characteristics_weight, 'length': crocodile_.characteristics_length})" +
+                "} FROM crocodile crocodile_ WITH UPDATE INSERT DELETE "
     }
 }

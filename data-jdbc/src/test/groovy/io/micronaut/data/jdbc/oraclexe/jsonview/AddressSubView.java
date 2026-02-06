@@ -46,8 +46,8 @@ public class AddressSubView {
     public static AddressSubView fromAddress(Address address) {
         AddressSubView addressSubView = new AddressSubView();
         addressSubView.setAddressID(address.getId());
-        addressSubView.setCity(addressSubView.getCity());
-        addressSubView.setStreet(addressSubView.getStreet());
+        addressSubView.setCity(address.getCity());
+        addressSubView.setStreet(address.getStreet());
         return addressSubView;
     }
 }

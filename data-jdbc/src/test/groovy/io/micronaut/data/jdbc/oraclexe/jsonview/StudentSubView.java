@@ -25,7 +25,7 @@ public class StudentSubView {
 
     private boolean active;
 
-    @Relation(Relation.Kind.EMBEDDED)
+    @Relation(Relation.Kind.MANY_TO_ONE)
     private AddressSubView address;
 
     @JsonProperty("_metadata")

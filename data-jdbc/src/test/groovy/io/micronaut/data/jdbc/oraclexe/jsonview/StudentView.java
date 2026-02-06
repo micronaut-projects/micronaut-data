@@ -29,7 +29,7 @@ public class StudentView {
     @Relation(Relation.Kind.ONE_TO_MANY)
     private List<StudentScheduleSubView> classes;
 
-    @Relation(Relation.Kind.EMBEDDED)
+    @Relation(Relation.Kind.MANY_TO_ONE)
     private AddressSubView address;
 
     @JsonProperty("_metadata")
