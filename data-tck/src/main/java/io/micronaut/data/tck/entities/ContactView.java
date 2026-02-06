@@ -22,7 +22,7 @@ public class ContactView {
     private Metadata metadata;
 
     @Relation(Relation.Kind.EMBEDDED)
-    private AddressSubView address;
+    private Address address;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -47,11 +47,11 @@ public class ContactView {
         this.active = active;
     }
 
-    public AddressSubView getAddress() {
+    public Address getAddress() {
         return address;
     }
 
-    public void setAddress(AddressSubView address) {
+    public void setAddress(Address address) {
         this.address = address;
     }
 

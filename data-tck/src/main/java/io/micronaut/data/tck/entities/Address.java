@@ -22,25 +22,12 @@ import io.micronaut.data.annotation.Id;
 @Embeddable
 public class Address {
 
-    @Id
-    @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    private Long id;
-
     private final String street;
     private final String zipCode;
 
     public Address(String street, String zipCode) {
-        this.id = null;
         this.street = street;
         this.zipCode = zipCode;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getStreet() {
