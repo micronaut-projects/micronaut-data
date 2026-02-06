@@ -18,9 +18,11 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonSubView;
 
 @Embeddable
-public class Address {
+@JsonSubView(entity = Address.class)
+public class AddressSubView {
 
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
@@ -29,7 +31,7 @@ public class Address {
     private final String street;
     private final String zipCode;
 
-    public Address(String street, String zipCode) {
+    public AddressSubView(String street, String zipCode) {
         this.id = null;
         this.street = street;
         this.zipCode = zipCode;
