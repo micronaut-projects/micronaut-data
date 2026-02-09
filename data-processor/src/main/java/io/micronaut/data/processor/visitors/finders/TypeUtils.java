@@ -154,8 +154,7 @@ public class TypeUtils {
             return false;
         }
         // Ensure the entity matches the expected type
-        String expected = entityType.getName();
-        return type.getName().equals(expected) || type.isAssignable(expected);
+        return type.equals(entityType) || type.isAssignable(entityType);
     }
 
     /**
