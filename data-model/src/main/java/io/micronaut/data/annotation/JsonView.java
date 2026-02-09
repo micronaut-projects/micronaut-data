@@ -61,9 +61,17 @@ public @interface JsonView {
      * Specify an entity class annotated with {@link MappedEntity} that this JSON view corresponds to.
      * Valid entity class is one that defines the properties used in this class.
      *
-     * @return the entity class
+     * @return the entity class, defaults to void
      */
-    Class<?> entity();
+    Class<?> entity() default void.class;
+
+    /**
+     * The corresponding table name.
+     * Users can specify the table name, but if the entity is not provided, json view will not be created.
+     *
+     * @return the corresponding table name (default empty string)
+     */
+    String table_name() default "";
 
     /**
      * The possible sql operations.
