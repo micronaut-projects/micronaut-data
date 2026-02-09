@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.DeleteReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Author
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
@@ -121,8 +122,32 @@ interface BookRepository extends CrudRepository<Book, Long> {
 
     int deleteAllByAuthor(Author author);
 
+    //void remove(Author author);
+
+    //void removeAll(List<Author> authors);
+
+    void deleteByAuthor(Author author);
+
 }
 """)
+        /*when:
+            def removeAuthorMethod = repository.findMethod("remove", Author).get()
+        then:
+            removeAuthorMethod
+            getDataInterceptor(removeAuthorMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getQuery(removeAuthorMethod) == "DELETE  FROM `book`  WHERE (`author_id` = ?)"
+        when:
+            def removeAllAuthorsMethod = repository.findPossibleMethods("removeAll").findFirst().get()
+        then:
+            removeAllAuthorsMethod
+            getDataInterceptor(removeAllAuthorsMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getQuery(removeAllAuthorsMethod) == "DELETE  FROM `book`  WHERE (`id` IN (?))"*/
+        when:
+            def deleteByAuthorMethod = repository.findMethod("deleteByAuthor", Author).get()
+        then:
+            deleteByAuthorMethod
+            getDataInterceptor(deleteByAuthorMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getQuery(deleteByAuthorMethod) == "DELETE  FROM `book`  WHERE (`author_id` = ?)"
         when:
             def deleteByIdAndAuthorIdMethod = repository.findPossibleMethods("deleteByIdAndAuthorId").findFirst().get()
         then:
@@ -150,6 +175,48 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingPaths(deleteAllByAuthor) == ["id"] as String[]
             getParameterPropertyPaths(deleteAllByAuthor) == ["author.id"] as String[]
             getDataInterceptor(deleteAllByAuthor) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+    }
+
+    void "test unsupported delete other entity"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    void delete(Book book);
+    void remove(Author author);
+}
+"""
+        )
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot delete entity of type: author')
+    }
+
+    void "test unsupported delete other entities"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    void deleteAll(List<Book> book);
+    void removeAll(List<Author> author);
+}
+"""
+        )
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot delete entities of type: author')
     }
 
     void  "test build delete query with DataTransformer"() {

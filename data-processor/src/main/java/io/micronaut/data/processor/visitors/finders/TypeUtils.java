@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -133,6 +134,38 @@ public class TypeUtils {
             return false;
         }
         return !type.isArray() && type.hasStereotype(MappedEntity.class);
+    }
+
+    /**
+     * Does the given type have an {@link MappedEntity} and is of given type.
+     * @param type The type
+     * @param entityType The type to check equality with
+     * @return True if it does
+     */
+    public static boolean isEntityOfType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
+        if (type == null) {
+            return false;
+        }
+        if (!isEntity(type)) {
+            return false;
+        }
+        // Ensure the entity matches the expected type
+        String expected = entityType.getName();
+        return type.getName().equals(expected) || type.isAssignable(expected);
+    }
+
+    public static boolean isIterableOfEntityType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
+        if (type == null) {
+            return false;
+        }
+        if (!isIterableOfEntity(type)) {
+            return false;
+        }
+        ClassElement elementType = type.getFirstTypeArgument().orElse(null);
+        if (elementType == null) {
+            return false;
+        }
+        return isEntityOfType(elementType, entityType);
     }
 
 //    /**
