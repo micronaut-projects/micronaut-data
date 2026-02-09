@@ -104,11 +104,11 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
             if (!isSpecificDelete && matchContext.getParametersNotInRole().size() == 1) {
                 entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
                 if (entityParameter != null) {
-                    throw new MatchFailedException("Cannot delete entity of type: " + entityParameter);
+                    throw new MatchFailedException("Cannot delete entity of type: " + entityParameter.getName());
                 }
                 entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
                 if (entitiesParameter != null) {
-                    throw new MatchFailedException("Cannot delete entities of type: " + entitiesParameter);
+                    throw new MatchFailedException("Cannot delete entities of type: " + entitiesParameter.getName());
                 }
             }
 
