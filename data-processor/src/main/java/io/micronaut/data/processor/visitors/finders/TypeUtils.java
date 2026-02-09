@@ -137,16 +137,20 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have an {@link MappedEntity} and is of given type.
-     * @param type The type
-     * @param entityType The type to check equality with
-     * @return True if it does
+     * Checks if the given type is an entity of the specified type.
+     *
+     * A type is considered an entity if it is annotated with {@link MappedEntity} and is not an array.
+     * The type is considered to be of the given entity type if its name matches or if it is assignable to the given entity type.
+     *
+     * @param type The type to check. May be null.
+     * @param entityType The expected entity type. Must not be null.
+     * @return true if the type is an entity of the given type, false otherwise.
      */
     public static boolean isEntityOfType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
         if (type == null) {
             return false;
         }
-        if (!isEntity(type)) {
+        if (type.isArray() || !type.hasStereotype(MappedEntity.class)) {
             return false;
         }
         // Ensure the entity matches the expected type
@@ -154,18 +158,31 @@ public class TypeUtils {
         return type.getName().equals(expected) || type.isAssignable(expected);
     }
 
+    /**
+     * Checks if the given type is an iterable (or array) of entities of the specified type.
+     *
+     * A type is considered an iterable of entities if it is an array or implements {@link Iterable} and its element type
+     * is an entity of the given type.
+     *
+     * @param type The type to check. May be null.
+     * @param entityType The expected entity type. Must not be null.
+     * @return true if the type is an iterable of entities of the given type, false otherwise.
+     */
     public static boolean isIterableOfEntityType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
         if (type == null) {
             return false;
         }
-        if (!isIterableOfEntity(type)) {
+        ClassElement actualElementType = null;
+        if (type.isArray() && isEntity(type.fromArray())) {
+            actualElementType = type.fromArray();
+        }
+        if (actualElementType == null) {
+            actualElementType = type.getFirstTypeArgument().orElse(null);
+        }
+        if (actualElementType == null) {
             return false;
         }
-        ClassElement elementType = type.getFirstTypeArgument().orElse(null);
-        if (elementType == null) {
-            return false;
-        }
-        return isEntityOfType(elementType, entityType);
+        return isEntityOfType(actualElementType, entityType);
     }
 
 //    /**

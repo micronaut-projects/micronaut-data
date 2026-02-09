@@ -121,33 +121,8 @@ interface BookRepository extends CrudRepository<Book, Long> {
     int deleteAllByIdAndAuthorId(Long id, Long authorId);
 
     int deleteAllByAuthor(Author author);
-
-    //void remove(Author author);
-
-    //void removeAll(List<Author> authors);
-
-    void deleteByAuthor(Author author);
-
 }
 """)
-        /*when:
-            def removeAuthorMethod = repository.findMethod("remove", Author).get()
-        then:
-            removeAuthorMethod
-            getDataInterceptor(removeAuthorMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
-            getQuery(removeAuthorMethod) == "DELETE  FROM `book`  WHERE (`author_id` = ?)"
-        when:
-            def removeAllAuthorsMethod = repository.findPossibleMethods("removeAll").findFirst().get()
-        then:
-            removeAllAuthorsMethod
-            getDataInterceptor(removeAllAuthorsMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
-            getQuery(removeAllAuthorsMethod) == "DELETE  FROM `book`  WHERE (`id` IN (?))"*/
-        when:
-            def deleteByAuthorMethod = repository.findMethod("deleteByAuthor", Author).get()
-        then:
-            deleteByAuthorMethod
-            getDataInterceptor(deleteByAuthorMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
-            getQuery(deleteByAuthorMethod) == "DELETE  FROM `book`  WHERE (`author_id` = ?)"
         when:
             def deleteByIdAndAuthorIdMethod = repository.findPossibleMethods("deleteByIdAndAuthorId").findFirst().get()
         then:
@@ -217,6 +192,77 @@ interface BookRepository extends GenericRepository<Book, Long> {
         then:
         def e = thrown(Exception)
         e.message.contains('Cannot delete entities of type: author')
+    }
+
+    void "test build delete with embedded id"() {
+        given:
+        def repository = buildRepository('test.CustomerRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@MappedEntity
+class Customer {
+    @EmbeddedId
+    private CustomerId customerId;
+    private String fullName;
+    private String email;
+    public CustomerId getCustomerId() {
+        return customerId;
+    }
+    public void setCustomerId(CustomerId customerId) {
+        this.customerId = customerId;
+    }
+    public String getFullName() {
+        return fullName;
+    }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+
+@Embeddable
+@MappedEntity // To test deleteById matching
+class CustomerId  {
+    private String regionCode;
+    private String tenantId;
+    public String getRegionCode() {
+        return regionCode;
+    }
+    public void setRegionCode(String regionCode) {
+        this.regionCode = regionCode;
+    }
+    public String getTenantId() {
+        return tenantId;
+    }
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface CustomerRepository extends CrudRepository<Customer, CustomerId> {
+    int deleteAllByCustomerIdRegionCode(String regionCode);
+}
+""")
+        when:
+        def deleteAllByCustomerIdRegionCodeMethod = repository.findPossibleMethods("deleteAllByCustomerIdRegionCode").findFirst().get()
+        then:
+        getQuery(deleteAllByCustomerIdRegionCodeMethod) == 'DELETE  FROM `customer`  WHERE (`customer_id_region_code` = ?)'
+        getDataInterceptor(deleteAllByCustomerIdRegionCodeMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+        when:
+        def deleteByIdMethod = repository.findPossibleMethods("deleteById").findFirst().get()
+        then:
+        getQuery(deleteByIdMethod) == 'DELETE  FROM `customer`  WHERE (`customer_id_region_code` = ? AND `customer_id_tenant_id` = ?)'
+        getDataInterceptor(deleteByIdMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
     }
 
     void  "test build delete query with DataTransformer"() {
