@@ -38,6 +38,7 @@ public @interface DateCreated {
      * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
      * Default false preserves existing behavior of always setting the value on insert.
      *
+     * @return {@code true} if an existing non-null value should be preserved, {@code false} otherwise
      * @since 5.0
      */
     boolean skipIfPresent() default false;

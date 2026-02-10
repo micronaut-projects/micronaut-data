@@ -51,6 +51,7 @@ public @interface AutoPopulated {
      *
      * Default is false to preserve the existing behavior of always generating a value.
      *
+     * @return {@code true} if auto-population should be skipped if a non-null value is present, {@code false} otherwise
      * @since 5.0
      */
     boolean skipIfPresent() default false;

@@ -39,6 +39,7 @@ public @interface DateUpdated {
      * Note: On updates, {@code @DateUpdated} is always refreshed by Micronaut Data regardless of this flag.
      * Default is {@code false} to preserve existing behavior.
      *
+     * @return true if the existing value should be preserved, false otherwise
      * @since 5.0
      */
     boolean skipIfPresent() default false;
