@@ -160,11 +160,18 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
+        boolean debugEnabled = logger.isDebugEnabled();
+        if (debugEnabled) {
+            logger.debug("Getting transaction for definition [{}]", definition);
+        }
         if (synchronousConnectionManager == null) {
             throw new TransactionUsageException("Synchronous connection manager not supported!");
         }
         final T existingTransaction = findTransactionStatusInternal().orElse(null);
         if (existingTransaction == null) {
+            if (debugEnabled) {
+                logger.debug("Creating a new transaction with definition [{}]", definition);
+            }
             ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
             if (connectionStatus == null) {
                 ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(txConnectionDefinition(definition));
@@ -178,6 +185,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 return transactionStatus;
             }
             return createAndBeginTransaction(definition, connectionStatus);
+        }
+        if (debugEnabled) {
+            logger.debug("Found existing transaction [{}]", existingTransaction);
         }
         checkNeverTransactionPropagation(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
@@ -302,6 +312,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private <R> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
         R result;
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Executing in a transaction with a definition [{}]", definition);
+            }
             result = callback.apply(transaction);
         } catch (Throwable e) {
             if (definition.rollbackOn(e)) {
@@ -450,11 +463,17 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
     @Override
     public void commit(TransactionStatus<C> status) throws TransactionException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Committing transaction status [{}]", status);
+        }
         commitInternal((T) status);
     }
 
     @Override
     public void rollback(TransactionStatus<C> status) throws TransactionException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rolling back transaction status [{}]", status);
+        }
         rollbackInternal((T) status);
     }
 }
