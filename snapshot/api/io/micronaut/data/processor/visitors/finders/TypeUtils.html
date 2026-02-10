@@ -69,8 +69,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#isEntityContainerType(io.micronaut.inject.ast.ClassElement)" tabindex="0">isEntityContainerType(ClassElement)</a></li>
 <li><a href="#isEntityOrDto(io.micronaut.inject.ast.ClassElement)" tabindex="0">isEntityOrDto(ClassElement)</a></li>
 <li><a href="#isEntity(io.micronaut.inject.ast.ClassElement)" tabindex="0">isEntity(ClassElement)</a></li>
-<li><a href="#isEntityOfType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" tabindex="0">isEntityOfType(ClassElement, ClassElement)</a></li>
-<li><a href="#isIterableOfEntityType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" tabindex="0">isIterableOfEntityType(ClassElement, ClassElement)</a></li>
 <li><a href="#isDto(io.micronaut.inject.ast.ClassElement)" tabindex="0">isDto(ClassElement)</a></li>
 <li><a href="#hasPersistedTypeArgument(io.micronaut.inject.ast.ClassElement)" tabindex="0">hasPersistedTypeArgument(ClassElement)</a></li>
 <li><a href="#doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)" tabindex="0">doesMethodProducesANumber(MethodElement)</a></li>
@@ -233,36 +231,24 @@ loadScripts(document, 'script');</script>
 <div class="block">Is the given type a container type of entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntityOfType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOfType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;entityType)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntityOrDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOrDto</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Checks if the given type is an entity of the specified type.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEntityOrDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOrDto</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Does the given type have an <a href="../../../annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> or <code>Introspected</code>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isFutureType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a future type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfDto</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfDto</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the element an iterable of a DTO.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Is the element an iterable of an entity.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfEntityType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntityType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;entityType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Checks if the given type is an iterable (or array) of entities of the specified type.</div>
+<div class="block">Is the element an iterable of an entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isNumber(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isNumber</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
@@ -433,46 +419,6 @@ loadScripts(document, 'script');</script>
 <dd><code>type</code> - The type</dd>
 <dt>Returns:</dt>
 <dd>True if it does</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="isEntityOfType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)">
-<h3>isEntityOfType</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEntityOfType</span><wbr><span class="parameters">(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;entityType)</span></div>
-<div class="block">Checks if the given type is an entity of the specified type.
-
-A type is considered an entity if it is annotated with <a href="../../../annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> and is not an array.
-The type is considered to be of the given entity type if its name matches or if it is assignable to the given entity type.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>type</code> - The type to check. May be null.</dd>
-<dd><code>entityType</code> - The expected entity type. Must not be null.</dd>
-<dt>Returns:</dt>
-<dd>true if the type is an entity of the given type, false otherwise.</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="isIterableOfEntityType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)">
-<h3>isIterableOfEntityType</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isIterableOfEntityType</span><wbr><span class="parameters">(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type,
- @NonNull io.micronaut.inject.ast.ClassElement&nbsp;entityType)</span></div>
-<div class="block">Checks if the given type is an iterable (or array) of entities of the specified type.
-
-A type is considered an iterable of entities if it is an array or implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link"><code>Iterable</code></a> and its element type
-is an entity of the given type.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>type</code> - The type to check. May be null.</dd>
-<dd><code>entityType</code> - The expected entity type. Must not be null.</dd>
-<dt>Returns:</dt>
-<dd>true if the type is an iterable of entities of the given type, false otherwise.</dd>
 </dl>
 </div>
 </section>
