@@ -35,6 +35,14 @@ public @interface DateCreated {
     String NAME = DateCreated.class.getName();
 
     /**
+     * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
+     * Default false preserves existing behavior of always setting the value on insert.
+     *
+     * @since 5.0
+     */
+    boolean skipIfPresent() default false;
+
+    /**
      * Allows to truncate the auto set date value.
      *
      * @return the truncated to constant

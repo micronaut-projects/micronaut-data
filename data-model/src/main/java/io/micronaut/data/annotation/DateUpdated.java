@@ -35,6 +35,15 @@ public @interface DateUpdated {
     String NAME = DateUpdated.class.getName();
 
     /**
+     * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
+     * Note: On updates, {@code @DateUpdated} is always refreshed by Micronaut Data regardless of this flag.
+     * Default is {@code false} to preserve existing behavior.
+     *
+     * @since 5.0
+     */
+    boolean skipIfPresent() default false;
+
+    /**
      * Allows to truncate the auto set date value.
      *
      * @return the truncated to constant

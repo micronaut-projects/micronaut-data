@@ -144,7 +144,24 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return null;
             }
-            Object propertyNow = computePropertyNow(prop.getAnnotationMetadata(), isUpdate, now);
+            // Respect skipIfPresent on DateCreated/DateUpdated
+            final AnnotationMetadata am = prop.getAnnotationMetadata();
+            boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+            boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+            if (hasDateCreated && am.booleanValue(DateCreated.class, "skipIfPresent").orElse(false)) {
+                Object current = prop.getProperty().get(context.getEntity());
+                if (current != null) {
+                    return null; // skip
+                }
+            }
+            // DateUpdated.skipIfPresent applies only on insert (prePersist), not on updates
+            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, "skipIfPresent").orElse(false)) {
+                Object current = prop.getProperty().get(context.getEntity());
+                if (current != null) {
+                    return null; // skip
+                }
+            }
+            Object propertyNow = computePropertyNow(am, isUpdate, now);
             return convertIfNeeded(propertyNow, prop.getType());
         });
         // 2) Embedded properties (recursive via util)
@@ -158,13 +175,20 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return current;
             }
-            Object propertyNow = computePropertyNow(am, isUpdate, now);
-            Class<?> propertyType = embeddedPersistentProperty.getType();
-            Object newValue = convertIfNeeded(propertyNow, propertyType);
             BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
+            if (hasDateCreated && am.booleanValue(DateCreated.class, "skipIfPresent").orElse(false) && prop.get(current) != null) {
+                return current;
+            }
+            // DateUpdated.skipIfPresent applies only on insert
+            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, "skipIfPresent").orElse(false) && prop.get(current) != null) {
+                return current;
+            }
+            Object propertyNow = computePropertyNow(am, isUpdate, now);
+            Class<?> propertyType = embeddedPersistentProperty.getType();
+            Object newValue = convertIfNeeded(propertyNow, propertyType);
             if (prop.isReadOnly()) {
                 return prop.withValue(current, newValue);
             } else {
