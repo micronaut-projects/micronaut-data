@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.beans.BeanProperty;
@@ -148,7 +149,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
-    private final String dataSourceName;
     @Nullable
     private ExecutorService ioExecutorService;
     @Nullable
@@ -222,12 +222,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.transactionOperations = transactionOperations;
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
-        this.dataSourceName = dataSourceName;
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
-        String name = dataSourceName;
-        if (name == null) {
-            name = "default";
-        }
         if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
             for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
                 Dialect dialect = r2dbcExceptionMapper.getDialect();
@@ -259,7 +254,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     @Override
-    public <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
+    public @NullUnmarked <T> T block(Function<io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations, Mono<T>> supplier) {
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return Mono.defer(() -> supplier.apply(reactive())
                 .contextWrite(ReactorPropagation.addPropagatedContext(Context.empty(), propagatedContext)))

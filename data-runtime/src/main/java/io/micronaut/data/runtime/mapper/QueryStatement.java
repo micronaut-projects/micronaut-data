@@ -245,7 +245,7 @@ public interface QueryStatement<PS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(Object value, Class<T> type) {
+    default @Nullable <T> T convertRequired(Object value, Class<T> type) {
         if (type.isInstance(value)) {
             return (T) value;
         }
@@ -264,7 +264,7 @@ public interface QueryStatement<PS, IDX> {
      * @param value The value
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setLong(PS statement, IDX name, long value) {
+    default QueryStatement<PS, IDX> setLong(PS statement, IDX name, @Nullable Long value) {
         setValue(statement, name, value);
         return this;
     }
@@ -276,7 +276,7 @@ public interface QueryStatement<PS, IDX> {
      * @param value The char value
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setChar(PS statement, IDX name, char value) {
+    default QueryStatement<PS, IDX> setChar(PS statement, IDX name, @Nullable Character value) {
         return setValue(statement, name, value);
     }
 
@@ -335,7 +335,7 @@ public interface QueryStatement<PS, IDX> {
      * @param integer The integer
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setInt(PS statement, IDX name, int integer) {
+    default QueryStatement<PS, IDX> setInt(PS statement, IDX name, @Nullable Integer integer) {
         return setValue(statement, name, integer);
     }
 
@@ -346,7 +346,7 @@ public interface QueryStatement<PS, IDX> {
      * @param bool The boolean
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setBoolean(PS statement, IDX name, boolean bool) {
+    default QueryStatement<PS, IDX> setBoolean(PS statement, IDX name, @Nullable Boolean bool) {
         return setValue(statement, name, bool);
     }
 
@@ -357,7 +357,7 @@ public interface QueryStatement<PS, IDX> {
      * @param f The float
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setFloat(PS statement, IDX name, float f) {
+    default QueryStatement<PS, IDX> setFloat(PS statement, IDX name, @Nullable Float f) {
         return setValue(statement, name, f);
     }
 
@@ -368,7 +368,7 @@ public interface QueryStatement<PS, IDX> {
      * @param b The byte
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setByte(PS statement, IDX name, byte b) {
+    default QueryStatement<PS, IDX> setByte(PS statement, IDX name, @Nullable Byte b) {
         return setValue(statement, name, b);
     }
 
@@ -379,7 +379,7 @@ public interface QueryStatement<PS, IDX> {
      * @param s The short
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setShort(PS statement, IDX name, short s) {
+    default QueryStatement<PS, IDX> setShort(PS statement, IDX name, @Nullable Short s) {
         return setValue(statement, name, s);
     }
 
@@ -390,7 +390,7 @@ public interface QueryStatement<PS, IDX> {
      * @param d The double
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setDouble(PS statement, IDX name, double d) {
+    default QueryStatement<PS, IDX> setDouble(PS statement, IDX name, @Nullable Double d) {
         return setValue(statement, name, d);
     }
 
