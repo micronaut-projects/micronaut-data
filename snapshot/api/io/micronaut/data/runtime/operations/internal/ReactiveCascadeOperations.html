@@ -68,6 +68,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#cascade(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,boolean,io.micronaut.data.annotation.Relation.Cascade,io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,java.util.List)" tabindex="0">cascade(AnnotationMetadata, Class, boolean, Relation.Cascade, AbstractCascadeOperations.CascadeContext, RuntimePersistentEntity, T, List)</a></li>
 <li><a href="#afterCascadedOne(T,java.util.List,java.lang.Object,java.lang.Object)" tabindex="0">afterCascadedOne(T, List, Object, Object)</a></li>
 <li><a href="#afterCascadedMany(T,java.util.List,java.lang.Iterable,java.util.List)" tabindex="0">afterCascadedMany(T, List, Iterable, List)</a></li>
+<li><a href="#shouldPersistChildOnPersist(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object)" tabindex="0">shouldPersistChildOnPersist(RuntimePersistentEntity, Object)</a></li>
+<li><a href="#batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation,java.util.Set)" tabindex="0">batchPersistVeto(RuntimePersistentEntity, RuntimeAssociation, Set)</a></li>
+<li><a href="#uniqueByIdForJoin(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable...)" tabindex="0">uniqueByIdForJoin(RuntimePersistentEntity, Iterable...)</a></li>
+<li><a href="#deduplicateSourceForJoinBatch(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable)" tabindex="0">deduplicateSourceForJoinBatch(RuntimePersistentEntity, Iterable)</a></li>
 </ol>
 </li>
 </ol>
@@ -138,7 +142,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -160,8 +164,15 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Process after a child element has been cascaded.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cascade(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,boolean,io.micronaut.data.annotation.Relation.Cascade,io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,java.util.List)" class="member-name-link">cascade</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation,java.util.Set)" class="member-name-link">batchPersistVeto</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="../../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;association,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;alreadyPersisted)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Build a veto predicate for batch persist of many children.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cascade(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,boolean,io.micronaut.data.annotation.Relation.Cascade,io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,java.util.List)" class="member-name-link">cascade</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
  boolean&nbsp;fkOnly,
  <a href="../../../annotation/Relation.Cascade.html" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a>&nbsp;cascadeType,
@@ -169,17 +180,35 @@ loadScripts(document, 'script');</script>
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  T&nbsp;entity,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeOp&gt;&nbsp;cascadeOps)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Cascade on the entity instance and collect cascade operations.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cascadeEntity(Ctx,T,io.micronaut.data.model.runtime.RuntimePersistentEntity,boolean,io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadeEntity</a><wbr>(<a href="#type-param-Ctx" title="type parameter in ReactiveCascadeOperations">Ctx</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cascadeEntity(Ctx,T,io.micronaut.data.model.runtime.RuntimePersistentEntity,boolean,io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadeEntity</a><wbr>(<a href="#type-param-Ctx" title="type parameter in ReactiveCascadeOperations">Ctx</a>&nbsp;ctx,
  T&nbsp;entity,
  <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  boolean&nbsp;isPost,
  <a href="../../../annotation/Relation.Cascade.html" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a>&nbsp;cascadeType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Cascade the entity operation.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#deduplicateSourceForJoinBatch(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable)" class="member-name-link">deduplicateSourceForJoinBatch</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;source)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">For join-table batch persist source, include children without IDs and de-duplicate by id or instance identity.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#shouldPersistChildOnPersist(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object)" class="member-name-link">shouldPersistChildOnPersist</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Common decision if a child should be persisted on PERSIST cascade for single association.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#uniqueByIdForJoin(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable...)" class="member-name-link">uniqueByIdForJoin</a><wbr>(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;...&nbsp;sources)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">For join-table batch operations, build a unique list of children by id combining old and new values.</div>
 </div>
 </div>
 </div>
@@ -318,6 +347,48 @@ loadScripts(document, 'script');</script>
 <dt>Returns:</dt>
 <dd>The entity instance</dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="shouldPersistChildOnPersist(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object)">
+<h3>shouldPersistChildOnPersist</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">shouldPersistChildOnPersist</span><wbr><span class="parameters">(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child)</span></div>
+<div class="block">Common decision if a child should be persisted on PERSIST cascade for single association.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation,java.util.Set)">
+<h3>batchPersistVeto</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">batchPersistVeto</span><wbr><span class="parameters">(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="../../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;association,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;alreadyPersisted)</span></div>
+<div class="block">Build a veto predicate for batch persist of many children.
+For join-table associations, veto any child with a non-null id (existing). For direct FKs, veto when id present and generated.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="uniqueByIdForJoin(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable...)">
+<h3>uniqueByIdForJoin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">uniqueByIdForJoin</span><wbr><span class="parameters">(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;...&nbsp;sources)</span></div>
+<div class="block">For join-table batch operations, build a unique list of children by id combining old and new values.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="deduplicateSourceForJoinBatch(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable)">
+<h3>deduplicateSourceForJoinBatch</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">deduplicateSourceForJoinBatch</span><wbr><span class="parameters">(<a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;source)</span></div>
+<div class="block">For join-table batch persist source, include children without IDs and de-duplicate by id or instance identity.</div>
 </div>
 </section>
 </li>

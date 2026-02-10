@@ -1306,6 +1306,14 @@ is issues.</div>
 <dd>
 <div class="block">A batch operation is an operation performed on one or more entities of the same type.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation,java.util.Set)" class="member-name-link">batchPersistVeto(RuntimePersistentEntity, RuntimeAssociation, Set)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
+<dd>
+<div class="block">Build a veto predicate for batch persist of many children.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation,java.util.Set)" class="member-name-link">batchPersistVeto(RuntimePersistentEntity, RuntimeAssociation, Set)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dd>
+<div class="block">Build a veto predicate for batch persist of many children.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html#batchSize()" class="member-name-link">batchSize()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoFindOptions</a></dt>
 <dd>
 <div class="block">The batchSize.</div>
@@ -3887,6 +3895,14 @@ switching.</div>
 <dt><a href="io/micronaut/data/runtime/query/StoredQueryDecorator.html#decorate(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate(StoredQuery)</a> - Method in interface io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/StoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">StoredQueryDecorator</a></dt>
 <dd>
 <div class="block">Decorate stored query.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#deduplicateSourceForJoinBatch(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable)" class="member-name-link">deduplicateSourceForJoinBatch(RuntimePersistentEntity, Iterable)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
+<dd>
+<div class="block">For join-table batch persist source, include children without IDs and de-duplicate by id or instance identity.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#deduplicateSourceForJoinBatch(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable)" class="member-name-link">deduplicateSourceForJoinBatch(RuntimePersistentEntity, Iterable)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dd>
+<div class="block">For join-table batch persist source, include children without IDs and de-duplicate by id or instance identity.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/Join.Type.html#DEFAULT" class="member-name-link">DEFAULT</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></dt>
 <dd>&nbsp;</dd>
@@ -15355,6 +15371,10 @@ whether it has already been committed or rolled back.</div>
 <dd>
 <div class="block">Is the given type a container type of entity.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isEntityOfType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOfType(ClassElement, ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Checks if the given type is an entity of the specified type.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isEntityOrDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isEntityOrDto(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Does the given type have an <a href="io/micronaut/data/annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> or <code>Introspected</code>.</div>
@@ -15439,6 +15459,10 @@ underlying transaction, if any.</div>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isIterableOfEntity(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntity(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the element an iterable of an entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isIterableOfEntityType(io.micronaut.inject.ast.ClassElement,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfEntityType(ClassElement, ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Checks if the given type is an iterable (or array) of entities of the specified type.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html#isJoined(java.lang.String)" class="member-name-link">isJoined(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>
@@ -24394,6 +24418,14 @@ in them.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#shouldEscape(io.micronaut.data.model.PersistentEntity)" class="member-name-link">shouldEscape(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#shouldPersistChildOnPersist(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object)" class="member-name-link">shouldPersistChildOnPersist(RuntimePersistentEntity, Object)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
+<dd>
+<div class="block">Common decision if a child should be persisted on PERSIST cascade for single association.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#shouldPersistChildOnPersist(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object)" class="member-name-link">shouldPersistChildOnPersist(RuntimePersistentEntity, Object)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dd>
+<div class="block">Common decision if a child should be persisted on PERSIST cascade for single association.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html#showRecordId()" class="member-name-link">showRecordId()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoFindOptions</a></dt>
 <dd>
 <div class="block">The showRecordId.</div>
@@ -25747,6 +25779,8 @@ or none if timeouts are not supported.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html#toString()" class="member-name-link">toString()</a> - Method in enum class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html" title="enum class in io.micronaut.transaction.exceptions">HeuristicCompletionException.State</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#toString(jakarta.persistence.criteria.Expression)" class="member-name-link">toString(Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
@@ -26565,6 +26599,14 @@ in an unexpected rollback.</div>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html#unique()" class="member-name-link">unique()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlIndexMapping.html#param-unique"><code>unique</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#uniqueByIdForJoin(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable...)" class="member-name-link">uniqueByIdForJoin(RuntimePersistentEntity, Iterable...)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
+<dd>
+<div class="block">For join-table batch operations, build a unique list of children by id combining old and new values.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#uniqueByIdForJoin(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable...)" class="member-name-link">uniqueByIdForJoin(RuntimePersistentEntity, Iterable...)</a> - Static method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dd>
+<div class="block">For join-table batch operations, build a unique list of children by id combining old and new values.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html#UNKNOWN" class="member-name-link">UNKNOWN</a> - Enum constant in enum class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html" title="enum class in io.micronaut.transaction.exceptions">HeuristicCompletionException.State</a></dt>
 <dd>
