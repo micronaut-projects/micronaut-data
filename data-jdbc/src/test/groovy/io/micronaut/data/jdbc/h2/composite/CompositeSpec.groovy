@@ -598,6 +598,7 @@ class CountyPk {
 @MappedEntity("comp_country")
 class County {
     @EmbeddedId
+    @MappedProperty("id")
     CountyPk id
     @MappedProperty
     String countyName
@@ -620,6 +621,7 @@ class SettlementPk {
 @MappedEntity("comp_settlement")
 class Settlement {
     @EmbeddedId
+    @MappedProperty("id")
     SettlementPk id
     @MappedProperty
     String description
