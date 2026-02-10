@@ -256,12 +256,12 @@ interface CustomerRepository extends CrudRepository<Customer, CustomerId> {
         when:
         def deleteAllByCustomerIdRegionCodeMethod = repository.findPossibleMethods("deleteAllByCustomerIdRegionCode").findFirst().get()
         then:
-        getQuery(deleteAllByCustomerIdRegionCodeMethod) == 'DELETE  FROM `customer`  WHERE (`customer_id_region_code` = ?)'
+        getQuery(deleteAllByCustomerIdRegionCodeMethod) == 'DELETE  FROM `customer`  WHERE (`region_code` = ?)'
         getDataInterceptor(deleteAllByCustomerIdRegionCodeMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
         when:
         def deleteByIdMethod = repository.findPossibleMethods("deleteById").findFirst().get()
         then:
-        getQuery(deleteByIdMethod) == 'DELETE  FROM `customer`  WHERE (`customer_id_region_code` = ? AND `customer_id_tenant_id` = ?)'
+        getQuery(deleteByIdMethod) == 'DELETE  FROM `customer`  WHERE (`region_code` = ? AND `tenant_id` = ?)'
         getDataInterceptor(deleteByIdMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
     }
 

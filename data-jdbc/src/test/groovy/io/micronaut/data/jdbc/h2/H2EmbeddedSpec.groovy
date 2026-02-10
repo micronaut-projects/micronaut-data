@@ -43,6 +43,12 @@ class H2EmbeddedSpec extends Specification {
         restaurant.address.street == 'Smith St.'
         restaurant.address.zipCode == '1234'
 
+        when:"Find restaurant by street name"
+        restaurant = restaurantRepository.findByAddressStreet("Smith St.").orElse(null)
+        then:"Found restaurant"
+        restaurant
+        restaurant.name == "Joe's Cafe"
+
         when:"Max by embedded property"
         def maxStreet = restaurantRepository.getMaxAddressStreetByName("Fred's Cafe")
         def minStreet = restaurantRepository.getMinAddressStreetByName("Fred's Cafe")
