@@ -123,6 +123,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @Override
     protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
         Pageable pageable = super.getPageable(context);
+        List<Sort.Order> orders = getOrders(context);
+        if (!orders.isEmpty()) {
+            pageable = pageable.orders(orders);
+        }
+        return pageable;
+    }
+
+    private List<Sort.Order> getOrders(MethodInvocationContext<?, ?> context) {
         List<Sort.Order> orders =
             context.getExecutableMethod().getAnnotationValuesByStereotype(OrderBy.class.getName())
                 .stream()
@@ -132,10 +140,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                     av.booleanValue("ignoreCase").orElse(false)
                 ))
                 .toList();
-        if (!orders.isEmpty()) {
-            pageable = pageable.orders(orders);
-        }
-        return pageable;
+        return orders;
     }
 
     final CriteriaRepositoryOperations getCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
@@ -425,6 +430,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             } else {
                 criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(rootEntity);
             }
+            //
             Root<K> root = criteriaQuery.from(rootEntity);
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : sortJoinPaths(joinPaths)) {
@@ -449,6 +455,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                             .toArray(Selection[]::new)
                     );
                 }
+            }
+            List<Sort.Order> orders = getOrders(context);
+            if (!orders.isEmpty()) {
+                criteriaQuery.orderBy(getOrders(Sort.of(orders), root, criteriaBuilder));
             }
             return criteriaQuery;
         };

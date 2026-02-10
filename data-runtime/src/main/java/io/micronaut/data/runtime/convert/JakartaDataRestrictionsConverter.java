@@ -172,14 +172,16 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
             case NotNull<V> ignored -> criteriaBuilder.isNotNull(expression);
             case Like like -> criteriaBuilder.like(
                 (jakarta.persistence.criteria.Expression<String>) expression,
-                asExpression(root, criteriaBuilder, like.pattern())
+                asExpression(root, criteriaBuilder, like.pattern()),
+                like.escape()
             );
             case NotLike notLike -> criteriaBuilder.not(criteriaBuilder.like(
                 (jakarta.persistence.criteria.Expression<String>) expression,
-                asExpression(root, criteriaBuilder, notLike.pattern())
+                asExpression(root, criteriaBuilder, notLike.pattern()),
+                notLike.escape()
             ));
             case null, default ->
-                throw new IllegalStateException("Unknown constraint: " + constraint + " of type: " + constraint.getClass());
+                throw new IllegalStateException("Unknown constraint: " + constraint + " of type: " + (constraint == null ? "null" : constraint.getClass()));
         };
     }
 
