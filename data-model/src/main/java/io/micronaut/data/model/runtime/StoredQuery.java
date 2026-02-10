@@ -64,7 +64,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query to execute
      */
-
     String[] getExpandableQueryParts();
 
     /**
