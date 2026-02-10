@@ -101,6 +101,8 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
                 return null;
             }
 
+            // If not delete/remove 'By' syntax is used, check provided parameter (if single) type
+            // and throw an error since not matching with expected entity type
             if (!isSpecificDelete && matchContext.getParametersNotInRole().size() == 1) {
                 entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
                 if (entityParameter != null) {

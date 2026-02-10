@@ -140,7 +140,7 @@ public class TypeUtils {
      * Checks if the given type is an entity of the specified type.
      *
      * A type is considered an entity if it is annotated with {@link MappedEntity} and is not an array.
-     * The type is considered to be of the given entity type if its name matches or if it is assignable to the given entity type.
+     * The type is considered to be of the specified entity type if it is the same type or a subtype of the entity type.
      *
      * @param type The type to check. May be null.
      * @param entityType The expected entity type. Must not be null.
