@@ -241,7 +241,7 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
         expect:
         repository != null
         repository.getRequiredMethod("countByLikeIdImageIdentifier", UUID).stringValue(Query).get() ==
-            'SELECT COUNT(*) FROM "likes" like_ WHERE (like_."like_id_image_identifier" = ?)'
+            'SELECT COUNT(*) FROM "likes" like_ WHERE (like_."image_identifier" = ?)'
     }
 
     void "test jdbc compile embedded id count query"() {
@@ -295,7 +295,7 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
         expect:
         repository != null
         repository.getRequiredMethod("deleteAll", Iterable).stringValue(Query).get() ==
-                    'DELETE  FROM "likes"  WHERE ("like_id_image_identifier" = ? AND "like_id_user_identifier" = ?)'
+                    'DELETE  FROM "likes"  WHERE ("image_identifier" = ? AND "user_identifier" = ?)'
     }
 
 }

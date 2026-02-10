@@ -135,7 +135,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def findRoleByUserMethod = repository.findPossibleMethods("findRoleByUser").findFirst().get()
 
         then:
-        getQuery(findRoleByUserMethod) == 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)'
+        getQuery(findRoleByUserMethod) == 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."role_id"=user_role_id_role_."id" WHERE (user_role_."user_id" = ?)'
         getParameterBindingIndexes(findRoleByUserMethod) == ["0"]
         getParameterPropertyPaths(findRoleByUserMethod) == ["id.user.id"] as String[]
         getParameterBindingPaths(findRoleByUserMethod) == ["id"] as String[]
@@ -144,7 +144,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def deleteByIdMethod = repository.findPossibleMethods("deleteById").findFirst().get()
 
         then:
-        getQuery(deleteByIdMethod) == 'DELETE  FROM "user_role"  WHERE ("id_user_id" = ? AND "id_role_id" = ?)'
+        getQuery(deleteByIdMethod) == 'DELETE  FROM "user_role"  WHERE ("user_id" = ? AND "role_id" = ?)'
         getParameterBindingIndexes(deleteByIdMethod) == ["0", "0"]
         getParameterPropertyPaths(deleteByIdMethod) == ["id.user.id", "id.role.id"] as String[]
         getParameterBindingPaths(deleteByIdMethod) == ["user", "role"] as String[]
@@ -208,7 +208,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'
+        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id"));'
     }
 
     void "test build insert"() {
@@ -234,7 +234,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
-        sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
+        sql == 'SELECT project_."department_id",project_."project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id" = ?)'
     }
 
     void "test build query projection"() {
@@ -248,7 +248,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
-        sql1.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
+        sql1.startsWith('SELECT project_."department_id",project_."project_id"')
 
         when:"an id project ins used"
         def query2 = builder.createQuery()
@@ -256,6 +256,6 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
-        sql2.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
+        sql2.startsWith('SELECT project_."department_id",project_."project_id"')
     }
 }

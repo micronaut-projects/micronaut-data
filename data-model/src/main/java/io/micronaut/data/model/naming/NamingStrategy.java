@@ -158,11 +158,13 @@ public interface NamingStrategy {
                 foreignAssociation = association;
             }
             final String originalAssocName = association.getName();
-            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(originalAssocName) : originalAssocName;
-            if (!sb.isEmpty()) {
-                sb.append(mappedAssociatedName(assocName));
-            } else {
-                sb.append(assocName);
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(StringUtils.EMPTY_STRING) : originalAssocName;
+            if (StringUtils.isNotEmpty(assocName)) {
+                if (!sb.isEmpty()) {
+                    sb.append(mappedAssociatedName(assocName));
+                } else {
+                    sb.append(assocName);
+                }
             }
         }
         if (foreignAssociation != null) {
