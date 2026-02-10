@@ -479,7 +479,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         it = columns.iterator();
         while (it.hasNext()) {
-            createJsonViewColumnQuery(sb, it.next(), entity, alias, "");
+            createJsonViewColumnQuery(sb, it.next(), entity, alias);
             if (it.hasNext()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -497,7 +497,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias, String propertyPrefix) {
+    private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
         String columnPropertyName = column.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
             .orElse(column.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                 .orElse(column.getName()));
@@ -519,7 +519,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append("': ")
                 .append(alias)
                 .append(DOT)
-                .append(propertyPrefix + entityPersistedPropertyName);
+                .append(entityPersistedPropertyName);
         }
     }
 
@@ -528,10 +528,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("JSON ");
         sb.append(OPEN_CURLY_BRACKET);
-        String propertyPrefix = association.getName() + "_";
         Iterator<PersistentProperty> properties = ((Collection<PersistentProperty>) embedded.getPersistentProperties()).iterator();
         while (properties.hasNext()) {
-            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName(), propertyPrefix);
+            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName());
             if (properties.hasNext()) {
                 sb.append(COMMA).append(SPACE);
             }

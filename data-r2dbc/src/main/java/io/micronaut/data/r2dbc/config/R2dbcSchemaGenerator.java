@@ -133,10 +133,11 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
+                    LOG.warn("Create table :{}", sql);
                     return execute(connection, sql)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
-                                    LOG.warn("Unable to create table :{}", throwable.getMessage());
+                                    LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
                                 }
                                 return Mono.empty();
                             }));

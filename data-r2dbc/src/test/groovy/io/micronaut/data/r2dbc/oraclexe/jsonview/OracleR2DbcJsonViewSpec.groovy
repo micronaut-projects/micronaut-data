@@ -1,24 +1,34 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
+import groovy.transform.Memoized
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.r2dbc.oraclexe.OracleXETestPropertyProvider
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
-import io.micronaut.data.tck.entities.Address
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@MicronautTest(environments = ["oracle-jsonview"], transactional = false)
-class OracleR2DbcJsonViewSpec extends Specification {
+class OracleR2DbcJsonViewSpec extends Specification implements OracleXETestPropertyProvider {
 
-    @Inject
-    OracleXEContactRepository contactRepository
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
-    @Inject
-    ContactViewRepository contactViewRepository
+    @Memoized
+    OracleXEContactRepository getContactRepository() {
+        return context.getBean(OracleXEContactRepository)
+    }
+
+    @Memoized
+    ContactViewRepository getContactViewRepository() {
+        return context.getBean(ContactViewRepository)
+    }
 
     def "test CRUD"() {
         when:

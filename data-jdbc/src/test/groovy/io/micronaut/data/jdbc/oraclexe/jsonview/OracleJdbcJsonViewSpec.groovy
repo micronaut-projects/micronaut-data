@@ -436,7 +436,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity apartmentViewEntity = getRuntimePersistentEntity(ApartmentView)
         String[] sql = builder.buildCreateTableStatements(apartmentViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW apartment_view AS SELECT JSON {'_id': {'buildingId': ap.apartment_id_building_id, 'flatId': ap.apartment_id_flat_id}} FROM TBL_APARTMENT ap WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW apartment_view AS SELECT JSON {'_id': {'buildingId': ap.building_id, 'flatId': ap.flat_id}} FROM TBL_APARTMENT ap WITH UPDATE INSERT DELETE "
     }
 
     def "test_apartment_view_repository"() {
@@ -497,7 +497,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW crocodile_view AS SELECT JSON " +
                 "{'_id': crocodile_.id, 'name': crocodile_.name, 'characteristics': " +
-                "(JSON {'weight': crocodile_.characteristics_weight, 'length': crocodile_.characteristics_length})" +
+                "(JSON {'weight': crocodile_.weight, 'length': crocodile_.length})" +
                 "} FROM crocodile crocodile_ WITH UPDATE INSERT DELETE "
     }
 }
