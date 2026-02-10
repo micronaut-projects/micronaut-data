@@ -5,12 +5,13 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.tck.entities.Metadata;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@JsonSubView(entity = Student.class)
+@JsonSubView(entity = Student.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
 public class StudentSubView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
