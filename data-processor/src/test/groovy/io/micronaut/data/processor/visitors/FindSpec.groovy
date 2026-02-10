@@ -388,8 +388,8 @@ interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
                 .stringValue(Query).get()
 
         expect: "The query contains the correct embedded property name"
-        query1.contains('WHERE (restaurant_.`address_zip_code` LIKE ?')
-        query2.contains('WHERE (LOWER(restaurant_.`address_zip_code`) LIKE LOWER(?)')
+        query1.contains('WHERE (restaurant_.`zip_code` LIKE ?')
+        query2.contains('WHERE (LOWER(restaurant_.`zip_code`) LIKE LOWER(?)')
     }
 
     void "test top"() {

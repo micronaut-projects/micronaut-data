@@ -17,7 +17,6 @@ package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -95,7 +94,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 boolean hasId = identity.getProperty().get(child) != null;
                 Mono<T> thisEntity;
                 Mono<Object> childMono;
-                if ((!hasId || identity instanceof Association) && (cascadeType == Relation.Cascade.PERSIST)) {
+                if ((cascadeType == Relation.Cascade.PERSIST) && shouldPersistChildOnPersist(childPersistentEntity, child)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading one PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
@@ -165,11 +164,14 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                             }
-                            RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                            Predicate<Object> veto = val -> ctx.persisted.contains(val) || identity.getProperty().get(val) != null && !(identity instanceof Association);
-                            Flux<Object> childrenFlux = helper.persistBatch(ctx, cascadeManyOp.children, childPersistentEntity, veto);
-                            // Concat children inserted now with children that were persisted before
-                            for (Object child : cascadeManyOp.children) {
+                            RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) cascadeOp.ctx.getAssociation();
+                            Predicate<Object> veto = batchPersistVeto(childPersistentEntity, association, ctx.persisted);
+                            Iterable<Object> sourceChildren = association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)
+                                    ? deduplicateSourceForJoinBatch(childPersistentEntity, cascadeManyOp.children)
+                                    : cascadeManyOp.children;
+                            Flux<Object> childrenFlux = helper.persistBatch(ctx, sourceChildren, childPersistentEntity, veto);
+                            // Concat children inserted now with children that were present (vetoed) to build union
+                            for (Object child : sourceChildren) {
                                 if (veto.test(child)) {
                                     childrenFlux = childrenFlux.concatWith(Flux.just(child));
                                 }
