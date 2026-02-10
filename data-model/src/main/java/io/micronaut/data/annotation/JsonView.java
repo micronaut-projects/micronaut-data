@@ -66,14 +66,6 @@ public @interface JsonView {
     Class<?> entity() default void.class;
 
     /**
-     * The corresponding table name.
-     * Users can specify the table name, but if the entity is not provided, json view will not be created.
-     *
-     * @return the corresponding table name (default empty string)
-     */
-    String table_name() default "";
-
-    /**
      * The possible sql operations.
      */
     enum Operation {
