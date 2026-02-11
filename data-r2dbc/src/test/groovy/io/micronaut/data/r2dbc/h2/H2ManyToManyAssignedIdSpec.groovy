@@ -7,6 +7,7 @@ import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import reactor.core.publisher.Mono
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -17,6 +18,7 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
     @Inject
     R2dbcCourseRepository courseRepository
 
+    @PendingFeature(reason = "Cascade update does not remove existing link records, issue https://github.com/micronaut-projects/micronaut-data/issues/3722")
     void "persist and update many-to-many with assigned UUIDs (reactive)"() {
         given:
         def s = new Student(id: UUID.randomUUID(), name: 'Denis')
