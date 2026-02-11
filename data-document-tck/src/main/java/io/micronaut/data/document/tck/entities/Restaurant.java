@@ -41,8 +41,13 @@ public class Restaurant {
     private Address hqAddress;
 
     public Restaurant(String name, Address address) {
+        this(name, address, null);
+    }
+
+    public Restaurant(String name, Address address, Address hqAddress) {
         this.name = name;
         this.address = address;
+        this.hqAddress = hqAddress;
     }
 
     @Nullable
