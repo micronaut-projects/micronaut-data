@@ -62,12 +62,16 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#ORDER_BY_CLAUSE" tabindex="0">ORDER_BY_CLAUSE</a></li>
 <li><a href="#SELECT_CLAUSE" tabindex="0">SELECT_CLAUSE</a></li>
+<li><a href="#SELECT_JSON_CLAUSE" tabindex="0">SELECT_JSON_CLAUSE</a></li>
 <li><a href="#AS_CLAUSE" tabindex="0">AS_CLAUSE</a></li>
 <li><a href="#FROM_CLAUSE" tabindex="0">FROM_CLAUSE</a></li>
 <li><a href="#WHERE_CLAUSE" tabindex="0">WHERE_CLAUSE</a></li>
+<li><a href="#WITH_CLAUSE" tabindex="0">WITH_CLAUSE</a></li>
 <li><a href="#COMMA" tabindex="0">COMMA</a></li>
 <li><a href="#CLOSE_BRACKET" tabindex="0">CLOSE_BRACKET</a></li>
 <li><a href="#OPEN_BRACKET" tabindex="0">OPEN_BRACKET</a></li>
+<li><a href="#CLOSE_CURLY_BRACKET" tabindex="0">CLOSE_CURLY_BRACKET</a></li>
+<li><a href="#OPEN_CURLY_BRACKET" tabindex="0">OPEN_CURLY_BRACKET</a></li>
 <li><a href="#SPACE" tabindex="0">SPACE</a></li>
 <li><a href="#DOT" tabindex="0">DOT</a></li>
 <li><a href="#NOT" tabindex="0">NOT</a></li>
@@ -79,6 +83,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#DISTINCT" tabindex="0">DISTINCT</a></li>
 <li><a href="#ALIAS_REPLACE_QUOTED" tabindex="0">ALIAS_REPLACE_QUOTED</a></li>
 <li><a href="#CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID" tabindex="0">CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID</a></li>
+<li><a href="#JSON_PROPERTY_ANNOTATION" tabindex="0">JSON_PROPERTY_ANNOTATION</a></li>
+<li><a href="#SERDE_CONFIG_ANNOTATION" tabindex="0">SERDE_CONFIG_ANNOTATION</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -259,16 +265,22 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="col-second even-row-color"><code><a href="#CLOSE_BRACKET" class="member-name-link">CLOSE_BRACKET</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected static final char</code></div>
-<div class="col-second odd-row-color"><code><a href="#COMMA" class="member-name-link">COMMA</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#CLOSE_CURLY_BRACKET" class="member-name-link">CLOSE_CURLY_BRACKET</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DISTINCT" class="member-name-link">DISTINCT</a></code></div>
+<div class="col-first even-row-color"><code>protected static final char</code></div>
+<div class="col-second even-row-color"><code><a href="#COMMA" class="member-name-link">COMMA</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected static final char</code></div>
-<div class="col-second odd-row-color"><code><a href="#DOT" class="member-name-link">DOT</a></code></div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DISTINCT" class="member-name-link">DISTINCT</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final char</code></div>
+<div class="col-second even-row-color"><code><a href="#DOT" class="member-name-link">DOT</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#FROM_CLAUSE" class="member-name-link">FROM_CLAUSE</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#FROM_CLAUSE" class="member-name-link">FROM_CLAUSE</a></code></div>
+<div class="col-second even-row-color"><code><a href="#JSON_PROPERTY_ANNOTATION" class="member-name-link">JSON_PROPERTY_ANNOTATION</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#LOGICAL_AND" class="member-name-link">LOGICAL_AND</a></code></div>
@@ -282,23 +294,35 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="col-first even-row-color"><code>protected static final char</code></div>
 <div class="col-second even-row-color"><code><a href="#OPEN_BRACKET" class="member-name-link">OPEN_BRACKET</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#OR" class="member-name-link">OR</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ORDER_BY_CLAUSE" class="member-name-link">ORDER_BY_CLAUSE</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#RETURNING" class="member-name-link">RETURNING</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#SELECT_CLAUSE" class="member-name-link">SELECT_CLAUSE</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected static final char</code></div>
-<div class="col-second odd-row-color"><code><a href="#SPACE" class="member-name-link">SPACE</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#OPEN_CURLY_BRACKET" class="member-name-link">OPEN_CURLY_BRACKET</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#WHERE_CLAUSE" class="member-name-link">WHERE_CLAUSE</a></code></div>
+<div class="col-second even-row-color"><code><a href="#OR" class="member-name-link">OR</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ORDER_BY_CLAUSE" class="member-name-link">ORDER_BY_CLAUSE</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#RETURNING" class="member-name-link">RETURNING</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#SELECT_CLAUSE" class="member-name-link">SELECT_CLAUSE</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#SELECT_JSON_CLAUSE" class="member-name-link">SELECT_JSON_CLAUSE</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#SERDE_CONFIG_ANNOTATION" class="member-name-link">SERDE_CONFIG_ANNOTATION</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final char</code></div>
+<div class="col-second even-row-color"><code><a href="#SPACE" class="member-name-link">SPACE</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#WHERE_CLAUSE" class="member-name-link">WHERE_CLAUSE</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#WITH_CLAUSE" class="member-name-link">WITH_CLAUSE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -731,6 +755,22 @@ JSON entity representations this will throw <a href="https://docs.oracle.com/en/
 </section>
 </li>
 <li>
+<section class="detail" id="SELECT_JSON_CLAUSE">
+<h3>SELECT_JSON_CLAUSE</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SELECT_JSON_CLAUSE</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.SELECT_JSON_CLAUSE">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="AS_CLAUSE">
 <h3>AS_CLAUSE</h3>
 <div class="horizontal-scroll">
@@ -779,6 +819,22 @@ JSON entity representations this will throw <a href="https://docs.oracle.com/en/
 </section>
 </li>
 <li>
+<section class="detail" id="WITH_CLAUSE">
+<h3>WITH_CLAUSE</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">WITH_CLAUSE</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.WITH_CLAUSE">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="COMMA">
 <h3>COMMA</h3>
 <div class="horizontal-scroll">
@@ -820,6 +876,38 @@ JSON entity representations this will throw <a href="https://docs.oracle.com/en/
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.OPEN_BRACKET">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="CLOSE_CURLY_BRACKET">
+<h3>CLOSE_CURLY_BRACKET</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type">char</span>&nbsp;<span class="element-name">CLOSE_CURLY_BRACKET</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.CLOSE_CURLY_BRACKET">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="OPEN_CURLY_BRACKET">
+<h3>OPEN_CURLY_BRACKET</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type">char</span>&nbsp;<span class="element-name">OPEN_CURLY_BRACKET</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.OPEN_CURLY_BRACKET">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -996,6 +1084,38 @@ JSON entity representations this will throw <a href="https://docs.oracle.com/en/
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="JSON_PROPERTY_ANNOTATION">
+<h3>JSON_PROPERTY_ANNOTATION</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">JSON_PROPERTY_ANNOTATION</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.JSON_PROPERTY_ANNOTATION">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="SERDE_CONFIG_ANNOTATION">
+<h3>SERDE_CONFIG_ANNOTATION</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SERDE_CONFIG_ANNOTATION</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.SERDE_CONFIG_ANNOTATION">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
