@@ -160,12 +160,4 @@ public interface Association extends PersistentProperty {
         }
         return EnumSet.copyOf(Arrays.asList(cascades));
     }
-
-    /**
-     * Whether the relationship is unique and therefore not repeatable.
-     * @return Whether the association is unique
-     */
-    default boolean isUnique() {
-        return getAnnotationMetadata().booleanValue(Relation.class, "unique").orElse(false);
-    }
 }

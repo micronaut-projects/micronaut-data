@@ -45,14 +45,6 @@ public @interface Relation {
     Cascade[] cascade() default Cascade.NONE;
 
     /**
-     * Whether the combination of left entity and right entity should be unique and therefore
-     * not repeatable.
-     * For example, if true, a primary key might be created in the mapping table to enforce uniqueness.
-     * @return Whether the relation is unique.
-     */
-    boolean unique() default false;
-
-    /**
      * Cascade type handling for different associations. Cascading delete is not yet supported.
      */
     enum Cascade {

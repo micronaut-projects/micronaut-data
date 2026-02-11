@@ -12,7 +12,7 @@ public class Building {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
-    @Relation(value = Relation.Kind.ONE_TO_MANY, unique = true)
+    @Relation(Relation.Kind.ONE_TO_MANY)
     private List<Apartment> apartments;
 
     public void setApartments(List<Apartment> apartments) {
