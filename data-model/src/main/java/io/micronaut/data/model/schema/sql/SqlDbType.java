@@ -321,6 +321,12 @@ public enum SqlDbType {
     JSON(11001),
 
     /**
+     * A type code representing the generic SQL type {@code JSON_OBJECT}.
+     * It does not have corresponding value in {@link Types}.
+     */
+    JSON_OBJECT(11002),
+
+    /**
      * A type code representing the generic SQL type {@code ENUM}.
      * It does not have corresponding value in {@link Types}.
      */

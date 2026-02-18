@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
@@ -24,6 +26,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.schema.sql.*;
 import jakarta.persistence.criteria.JoinType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
@@ -57,10 +60,6 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlIndexMapping;
-import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
-import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
@@ -439,6 +438,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createStatements.add(sb.toString());
     }
 
+    private boolean isFlexColumn(PersistentProperty column) {
+        AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
+        return annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class);
+    }
+
     private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity, boolean isTopLevel) {
         String alias = entity.getAliasName();
 
@@ -446,7 +450,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         Iterator<PersistentProperty> it = identities.iterator();
 
         List<PersistentProperty> allColumns = (List<PersistentProperty>) viewEntity.getPersistentProperties();
-        List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT).toList();
+        List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT || isFlexColumn(column)).toList();
 
         while (it.hasNext()) {
             PersistentProperty identity = it.next();
@@ -498,14 +502,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
-        String columnPropertyName = column.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
-            .orElse(column.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+        AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
+        String columnPropertyName = annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
+            .orElse(annotationMetadata.stringValue(JSON_PROPERTY_ANNOTATION)
                 .orElse(column.getName()));
         if (column instanceof Association association) {
             processAssociation(sb, association, entity, columnPropertyName);
         } else if (column.getDataType() != DataType.OBJECT) {
             String entityPersistedPropertyName;
-            if (column.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
+            if (annotationMetadata.hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = column.getPersistedName();
             } else {
                 PersistentProperty property = entity.getPropertyByName(columnPropertyName);
@@ -520,7 +525,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append(alias)
                 .append(DOT)
                 .append(entityPersistedPropertyName);
+        } else {
+            if (isFlexColumn(column)) {
+                sb.append(alias)
+                    .append(DOT)
+                    .append(column.getPersistedName())
+                    .append(SPACE)
+                    .append(AS_CLAUSE)
+                    .append(FLEX_COLUMN);
+            }
         }
+    }
+
+    private void addFlexColumn(StringBuilder sb, PersistentProperty property) {
+
     }
 
     private String createJsonEmbeddedQuery(PersistentEntity entity, Association association) {
@@ -740,7 +758,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
-            } else {
+            }
+            else if (tableColumn.getDbType() == SqlDbType.JSON_OBJECT) {
+                column += " JSON(OBJECT)";
+            }
+            else {
                 column += " " + tableColumn.getSqlType(dialect);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
