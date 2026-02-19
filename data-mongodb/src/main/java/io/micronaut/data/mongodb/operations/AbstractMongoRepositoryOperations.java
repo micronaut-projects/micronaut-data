@@ -198,7 +198,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
-        return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+        return conversionService.convert(MongoUtils.toValue(value), resultType).orElse(null);
     }
 
     /**
