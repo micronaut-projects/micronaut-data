@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -11,20 +12,22 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-@MappedEntity("TBL_STUDENT")
+@MappedEntity(value = "TBL_STUDENT", alias = "s")
 public class Student {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
     private LocalDate birthDate;
+    @Nullable
     private Double averageGrade;
 
+    @Nullable
     private LocalDateTime startDateTime;
 
     private boolean active;
 
-    @JoinTable(name = "TBL_STUDENT_CLASSES")
+    @JoinTable(name = "TBL_STUDENT_CLASSES", alias = "sc")
     @Relation(Relation.Kind.MANY_TO_MANY)
     private List<Class> classes;
 

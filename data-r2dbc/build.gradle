@@ -86,12 +86,6 @@ dependencies {
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
-
-    testRuntimeOnly (mnFlyway.micronaut.flyway) {
-        // It is imported already and flyway might bring different version
-        exclude group: 'io.micronaut.sql', module: 'micronaut-jdbc'
-    }
-    testRuntimeOnly mnFlyway.flyway.oracle
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
 }
 
