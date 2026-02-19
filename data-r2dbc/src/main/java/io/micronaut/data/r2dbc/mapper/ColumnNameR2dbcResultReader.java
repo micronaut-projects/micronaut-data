@@ -297,7 +297,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
-                return conversionService.convertRequired(resultSet.get(name), type);
+                return conversionService.convert(resultSet.get(name), type).orElse(null);
             } catch (Exception exception) {
                 throw exceptionForColumn(name, e);
             }

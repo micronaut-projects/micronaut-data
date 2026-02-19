@@ -216,7 +216,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
-                return conversionService.convertRequired(resultSet.get(name), type);
+                return conversionService.convert(resultSet.get(name), type).orElse(null);
             } catch (Exception exception) {
                 throw exceptionForColumn(name, e);
             }
