@@ -228,8 +228,7 @@ final class DataConversionServiceFactory {
             Integer[] ints = new Integer[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Integer integer = asInteger(value, conversionService);
-                ints[i++] = integer == null ? null : integer.intValue();
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
