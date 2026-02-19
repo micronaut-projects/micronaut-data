@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.runtime.event.listeners;
 
-import io.micronaut.core.type.Argument;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -133,7 +132,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     private Object newTemporal(Class<?> type) {
         Object now = dateTimeProvider.getNow();
-        return conversionService.convertRequired(now, Argument.of(type));
+        return conversionService.convertRequired(now, type);
     }
 
 }

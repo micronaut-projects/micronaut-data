@@ -39,7 +39,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.type.Argument;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -202,7 +201,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                     .first();
             if (result == null) {
-                result = conversionService.convertRequired(0, Argument.of(resultType));
+                result = conversionService.convertRequired(0, resultType);
             }
             return result;
         } else {
@@ -215,7 +214,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             }
             long count = getCollection(database, persistentEntity, BsonDocument.class)
                     .countDocuments(clientSession, filter);
-            return conversionService.convertRequired(count, Argument.of(resultType));
+            return conversionService.convertRequired(count, resultType);
         }
     }
 

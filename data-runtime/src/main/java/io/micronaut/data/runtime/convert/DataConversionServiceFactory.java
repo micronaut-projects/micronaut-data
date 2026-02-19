@@ -29,7 +29,6 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -129,8 +128,7 @@ final class DataConversionServiceFactory {
             char[] chars = new char[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Character character = asCharacter(value, conversionService);
-                chars[i++] = character != null ? character.charValue() : 0;
+                chars[i++] = asCharacter(value, conversionService);
             }
             return chars;
         });
@@ -161,8 +159,7 @@ final class DataConversionServiceFactory {
             short[] shorts = new short[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Short s = asShort(value, conversionService);
-                shorts[i++] = s != null ? s.shortValue() : 0;
+                shorts[i++] = asShort(value, conversionService);
             }
             return shorts;
         });
@@ -193,8 +190,7 @@ final class DataConversionServiceFactory {
             float[] floats = new float[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Float f = asFloat(value, conversionService);
-                floats[i++] = f != null ? f.floatValue() : 0f;
+                floats[i++] = asFloat(value, conversionService);
             }
             return floats;
         });
@@ -241,8 +237,7 @@ final class DataConversionServiceFactory {
             int[] ints = new int[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Integer integer = asInteger(value, conversionService);
-                ints[i++] = integer == null ? 0 : integer.intValue();
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
@@ -273,8 +268,7 @@ final class DataConversionServiceFactory {
             long[] longs = new long[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Long longValue = asLong(value, conversionService);
-                longs[i++] = longValue == null ? 0 : longValue.longValue();
+                longs[i++] = asLong(value, conversionService);
             }
             return longs;
         });
@@ -297,8 +291,7 @@ final class DataConversionServiceFactory {
             Double[] doubles = new Double[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Double doubleValue = asDouble(value, conversionService);
-                doubles[i++] = doubleValue == null ? 0d : doubleValue.doubleValue();
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -306,8 +299,7 @@ final class DataConversionServiceFactory {
             double[] doubles = new double[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Double doubleValue = asDouble(value, conversionService);
-                doubles[i++] = doubleValue == null ? 0d : doubleValue.doubleValue();
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -352,8 +344,7 @@ final class DataConversionServiceFactory {
             boolean[] booleans = new boolean[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                Boolean booleanValue = asBoolean(value, conversionService);
-                booleans[i++] = booleanValue != null ? booleanValue.booleanValue() : false;
+                booleans[i++] = asBoolean(value, conversionService);
             }
             return booleans;
         });
@@ -410,8 +401,7 @@ final class DataConversionServiceFactory {
             int[] ints = new int[array.length];
             int i = 0;
             for (Object value : array) {
-                Integer integer = asInteger(value, conversionService);
-                ints[i++] = integer != null ? integer.intValue() : 0;
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
@@ -439,8 +429,7 @@ final class DataConversionServiceFactory {
             short[] shorts = new short[array.length];
             int i = 0;
             for (Object value : array) {
-                Short s = asShort(value, conversionService);
-                shorts[i++] = s != null ? s.shortValue() : 0;
+                shorts[i++] = asShort(value, conversionService);
             }
             return shorts;
         });
@@ -468,8 +457,7 @@ final class DataConversionServiceFactory {
             long[] longs = new long[array.length];
             int i = 0;
             for (Object value : array) {
-                Long longValue = asLong(value, conversionService);
-                longs[i++] = longValue != null ? longValue.longValue() : 0;
+                longs[i++] = asLong(value, conversionService);
             }
             return longs;
         });
@@ -497,8 +485,7 @@ final class DataConversionServiceFactory {
             float[] floats = new float[array.length];
             int i = 0;
             for (Object value : array) {
-                Float f = asFloat(value, conversionService);
-                floats[i++] = f != null ? f.floatValue() : 0f;
+                floats[i++] = asFloat(value, conversionService);
             }
             return floats;
         });
@@ -526,8 +513,7 @@ final class DataConversionServiceFactory {
             double[] doubles = new double[array.length];
             int i = 0;
             for (Object value : array) {
-                Double doubleValue = asDouble(value, conversionService);
-                doubles[i++] = doubleValue != null ? doubleValue.doubleValue() : 0d;
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -555,8 +541,7 @@ final class DataConversionServiceFactory {
             boolean[] booleans = new boolean[array.length];
             int i = 0;
             for (Object value : array) {
-                Boolean booleanValue = asBoolean(value, conversionService);
-                booleans[i++] = booleanValue != null ? booleanValue.booleanValue() : false;
+                booleans[i++] = asBoolean(value, conversionService);
             }
             return booleans;
         });
@@ -584,8 +569,7 @@ final class DataConversionServiceFactory {
             char[] chars = new char[array.length];
             int i = 0;
             for (Object value : array) {
-                Character character = asCharacter(value, conversionService);
-                chars[i++] = character != null ? character.charValue() : 0;
+                chars[i++] = asCharacter(value, conversionService);
             }
             return chars;
         });
@@ -594,8 +578,7 @@ final class DataConversionServiceFactory {
            short[] shorts = new short[array.length];
             int i = 0;
             for (Object value : array) {
-                Short s = asShort(value, conversionService);
-                shorts[i++] = s != null ? s.shortValue() : 0;
+                shorts[i++] = asShort(value, conversionService);
             }
             return shorts;
         });
@@ -603,8 +586,7 @@ final class DataConversionServiceFactory {
             int[] ints = new int[array.length];
             int i = 0;
             for (Object value : array) {
-                Integer integer = asInteger(value, conversionService);
-                ints[i++] = integer != null ? integer.intValue() : 0;
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
@@ -612,8 +594,7 @@ final class DataConversionServiceFactory {
             long[] longs = new long[array.length];
             int i = 0;
             for (Object value : array) {
-                Long longValue = asLong(value, conversionService);
-                longs[i++] = longValue != null ? longValue.longValue() : 0;
+                longs[i++] = asLong(value, conversionService);
             }
             return longs;
         });
@@ -621,8 +602,7 @@ final class DataConversionServiceFactory {
             float[] floats = new float[array.length];
             int i = 0;
             for (Object value : array) {
-                Float f = asFloat(value, conversionService);
-                floats[i++] = f != null ? f.floatValue() : 0f;
+                floats[i++] = asFloat(value, conversionService);
             }
             return floats;
         });
@@ -630,8 +610,7 @@ final class DataConversionServiceFactory {
             double[] doubles = new double[array.length];
             int i = 0;
             for (Object value : array) {
-                Double doubleValue = asDouble(value, conversionService);
-                doubles[i++] = doubleValue != null ? doubleValue.doubleValue() : 0d;
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -639,8 +618,7 @@ final class DataConversionServiceFactory {
             boolean[] booleans = new boolean[array.length];
             int i = 0;
             for (Object value : array) {
-                Boolean booleanValue = asBoolean(value, conversionService);
-                booleans[i++] = booleanValue != null ? booleanValue.booleanValue() : false;
+                booleans[i++] = asBoolean(value, conversionService);
             }
             return booleans;
         });
@@ -648,8 +626,7 @@ final class DataConversionServiceFactory {
             char[] chars = new char[array.length];
             int i = 0;
             for (Object value : array) {
-                Character character = asCharacter(value, conversionService);
-                chars[i++] = character != null ? character.charValue() : 0;
+                chars[i++] = asCharacter(value, conversionService);
             }
             return chars;
         });
@@ -731,7 +708,6 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(dateType, Timestamp.class, dateToZonedDateTime.andThen(zonedDateTime -> Timestamp.from(zonedDateTime.toInstant())));
     }
 
-    @Nullable
     private Integer asInteger(Object value, DataConversionService dataConversionService) {
         if (value instanceof Integer intValue) {
             return intValue;
@@ -742,7 +718,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Integer.class);
     }
 
-    @Nullable
     private Long asLong(Object value, DataConversionService dataConversionService) {
         if (value instanceof Long longValue) {
             return longValue;
@@ -753,7 +728,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Long.class);
     }
 
-    @Nullable
     private Double asDouble(Object value, DataConversionService dataConversionService) {
         if (value instanceof Double doubleValue) {
             return doubleValue;
@@ -764,7 +738,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Double.class);
     }
 
-    @Nullable
     private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
         if (value instanceof Boolean boolValue) {
             return boolValue;
@@ -772,7 +745,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Boolean.class);
     }
 
-    @Nullable
     private Float asFloat(Object value, DataConversionService dataConversionService) {
         if (value instanceof Float floatValue) {
             return floatValue;
@@ -783,7 +755,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Float.class);
     }
 
-    @Nullable
     private Short asShort(Object value, DataConversionService dataConversionService) {
         if (value instanceof Short shortValue) {
             return shortValue;
@@ -794,7 +765,6 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Short.class);
     }
 
-    @Nullable
     private Character asCharacter(Object value, DataConversionService dataConversionService) {
         if (value instanceof Character charValue) {
             return charValue;
