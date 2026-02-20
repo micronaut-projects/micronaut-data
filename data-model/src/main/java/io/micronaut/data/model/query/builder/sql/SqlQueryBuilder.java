@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder.sql;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
@@ -537,15 +538,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private void addFlexColumn(StringBuilder sb, PersistentProperty property) {
-
-    }
-
-    private String createJsonEmbeddedQuery(PersistentEntity entity, Association association) {
+    private String createJsonEmbeddedProperties(PersistentEntity entity, Association association) {
         PersistentEntity embedded = association.getAssociatedEntity();
         StringBuilder sb = new StringBuilder();
-        sb.append("JSON ");
-        sb.append(OPEN_CURLY_BRACKET);
         Iterator<PersistentProperty> properties = ((Collection<PersistentProperty>) embedded.getPersistentProperties()).iterator();
         while (properties.hasNext()) {
             createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName());
@@ -553,7 +548,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 sb.append(COMMA).append(SPACE);
             }
         }
-        sb.append(CLOSE_CURLY_BRACKET);
         return sb.toString();
     }
 
@@ -629,21 +623,41 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             throw new IllegalStateException("Associated entity not found, set the entity field inside @JsonSubView annotation of " + association.getAssociatedEntity().getName());
         }
         switch (kind) {
-            case ONE_TO_ONE, MANY_TO_ONE, EMBEDDED ->
-                sb.append("'")
-                    .append(columnPropertyName)
-                    .append("': ")
-                    .append(OPEN_BRACKET)
-                    .append(kind == Kind.EMBEDDED
-                        ? createJsonEmbeddedQuery(entity, association)
-                        : createJsonSubViewQuery(association))
-                    .append(CLOSE_BRACKET);
+            case ONE_TO_ONE, MANY_TO_ONE -> {
+                if (association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class)) {
+                    sb.append("UNNEST ")
+                        .append(OPEN_BRACKET)
+                        .append(createJsonSubViewQuery(association))
+                        .append(CLOSE_BRACKET);
+                } else {
+                    sb.append("'")
+                        .append(columnPropertyName)
+                        .append("': ")
+                        .append(OPEN_BRACKET)
+                        .append(createJsonSubViewQuery(association))
+                        .append(CLOSE_BRACKET);
+                }
+            }
+            case EMBEDDED -> {
+                if (association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class)) {
+                    sb.append(createJsonEmbeddedProperties(entity, association));
+                } else {
+                    sb.append("'")
+                        .append(columnPropertyName)
+                        .append("': ")
+                        .append(OPEN_BRACKET)
+                        .append("JSON ")
+                        .append(OPEN_CURLY_BRACKET)
+                        .append(createJsonEmbeddedProperties(entity, association))
+                        .append(CLOSE_CURLY_BRACKET)
+                        .append(CLOSE_BRACKET);
+                }
+            }
             case ONE_TO_MANY, MANY_TO_MANY -> {
                 PersistentEntity associatedEntity = associatedEntityOptional.get();
                 if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && hasEmbeddedId(associatedEntity)) {
                     sb.append(SPACE)
-                        .append("UNNEST")
-                        .append(SPACE)
+                        .append("UNNEST ")
                         .append(OPEN_BRACKET)
                         .append(SELECT_JSON_CLAUSE)
                         .append(OPEN_CURLY_BRACKET);

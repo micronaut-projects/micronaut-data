@@ -54,6 +54,15 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     PersonViewRepository personViewRepository
 
+    @Inject
+    AirplaneViewRepository airplaneViewRepository
+
+    @Inject
+    CarViewRepository carViewRepository
+
+    @Inject
+    CarDetailsRepository carDetailsRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -534,5 +543,49 @@ class OracleJdbcJsonViewSpec extends Specification {
         def result = personViewRepository.findAll()
         then:
         result.size() == 1
+    }
+
+    def "test_json_unwrapped_embedded_sql"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity airplaneViewEntity = getRuntimePersistentEntity(AirplaneView)
+        String[] sql = builder.buildCreateTableStatements(airplaneViewEntity)
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW airplane_view AS SELECT JSON {'_id': airplane_.id, 'model': airplane_.model, 'year': airplane_.year} FROM TBL_AIRPLANE airplane_ WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_json_unwrapped_embedded_usage"() {
+        when:
+        def airplaneDetails = new AirplaneDetails("model A", 1999)
+        def airplaneView = new AirplaneView(null, airplaneDetails)
+        airplaneViewRepository.save(airplaneView)
+        def result = airplaneViewRepository.findAll()[0]
+        then:
+        result.airplaneDetails().model() == airplaneDetails.model()
+    }
+
+    def "test_json_unwrapped_subview_sql"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity carViewEntity = getRuntimePersistentEntity(CarView)
+        String[] sql = builder.buildCreateTableStatements(carViewEntity)
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW car_view AS SELECT JSON {'_id': car.id, UNNEST (SELECT JSON {'id': cd.id, 'model': cd.model, 'year': cd.year} FROM TBL_CAR_DETAILS cd WITH UPDATE INSERT DELETE  WHERE car.\"CAR_DETAILS_ID\"=cd.\"ID\")} FROM TBL_CAR car WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_json_unwrapped_subview_usage"() {
+        when:
+        def carDetails = new CarDetails(null, "Model B", 2000)
+        carDetailsRepository.save(carDetails)
+        def id = carDetailsRepository.findAll()[0].id()
+        def carDetailsSubView = new CarDetailsSubView(id, carDetails.model(), carDetails.year())
+        def carView = new CarView(null, carDetailsSubView)
+        carViewRepository.save(carView)
+        def result = carViewRepository.findAll()[0]
+        then:
+        result.carDetails().model() == carDetailsSubView.model()
+        result.carDetails().id() == id
     }
 }
