@@ -24,7 +24,8 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +46,7 @@ import java.util.stream.Stream;
  * @author Denis Stepanov
  * @since 3.3
  */
+@NullMarked
 @Internal
 public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContext, T, Exc extends Exception> extends SyncEntitiesOperations<T, Exc> {
 
