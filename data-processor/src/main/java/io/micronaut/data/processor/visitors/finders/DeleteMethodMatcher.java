@@ -22,8 +22,10 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.DeleteCriteriaMethodMatch;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -54,12 +56,13 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Delete.class)) {
-            if (matchContext.getRootEntity() == null) {
+            if (!matchContext.hasRootEntity()) {
                 matchContext.findImplicitRootEntity();
             }
-            if (matchContext.getRootEntity() == null) {
+            if (!matchContext.hasRootEntity()) {
                 throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
             }
             return match(matchContext, List.of());
@@ -68,15 +71,17 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         ParameterElement[] parameters = matchContext.getParameters();
         boolean isSpecificDelete = matches.stream().anyMatch(m -> m.id() == QueryMatchId.PREDICATE);
         boolean isReturning = matches.stream().anyMatch(m -> m.id() == QueryMatchId.RETURNING);
         ParameterElement entityParameter = null;
         ParameterElement entitiesParameter = null;
+        ClassElement entityType = matchContext.getRootEntity().getType();
         if (matchContext.getParametersNotInRole().size() == 1) {
-            entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
-            entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+            entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntityOfType(p.getGenericType(), entityType)).findFirst().orElse(null);
+            entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntityType(p.getGenericType(), entityType)).findFirst().orElse(null);
         }
         if (isSpecificDelete) {
             // Un-mark the entity parameter if there is a property named the same and 'By' syntax is used
@@ -95,6 +100,20 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
             if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
                 return null;
             }
+
+            // If not delete/remove 'By' syntax is used, check provided parameter (if single) type
+            // and throw an error since not matching with expected entity type
+            if (!isSpecificDelete && matchContext.getParametersNotInRole().size() == 1) {
+                entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
+                if (entityParameter != null) {
+                    throw new MatchFailedException("Cannot delete entity of type: " + entityParameter.getName());
+                }
+                entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+                if (entitiesParameter != null) {
+                    throw new MatchFailedException("Cannot delete entities of type: " + entitiesParameter.getName());
+                }
+            }
+
             return new DeleteCriteriaMethodMatch(matches, isReturning);
         }
 
@@ -116,11 +135,13 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntityParameter() {
                 return finalEntityParameter;
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntitiesParameter() {
                 return finalEntitiesParameter;
             }

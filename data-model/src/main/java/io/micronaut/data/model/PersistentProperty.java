@@ -41,7 +41,6 @@ public interface PersistentProperty extends PersistentElement {
      * @return The property name
      */
     @Override
-    
     String getName();
 
     /**
@@ -70,7 +69,6 @@ public interface PersistentProperty extends PersistentElement {
      *
      * @return The property type
      */
-    
     String getTypeName();
 
     /**
@@ -78,7 +76,6 @@ public interface PersistentProperty extends PersistentElement {
      *
      * @return The owner
      */
-    
     PersistentEntity getOwner();
 
     /**

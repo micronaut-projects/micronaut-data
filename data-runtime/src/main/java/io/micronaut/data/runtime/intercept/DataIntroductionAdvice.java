@@ -32,13 +32,14 @@ import io.micronaut.data.runtime.support.NullValue;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Inject;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
  * The root Data introduction advice, which simply delegates to an appropriate interceptor
- * declared in the io.micronaut.data.intercept package (for example {@link io.micronaut.data.intercept.DataInterceptor}).
+ * declared in the {@link io.micronaut.data.intercept} package.
  *
  * @author graemerocher
  * @since 1.0
@@ -70,6 +71,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         this.conversionService = conversionService;
     }
 
+    @Nullable
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
@@ -94,12 +96,12 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletionStage<Object> completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        completionStage.whenComplete((value, throwable) -> {
+        Objects.requireNonNull(completionStage).whenComplete((value, throwable) -> {
             propagatedContext.propagate(() -> {
                 if (throwable == null) {
                     Class<Object> target = context.getReturnType().asArgument().getType();
                     Object v = value;
-                    if (v == null) {
+                    if (v == null && target.getName().equals("kotlinx.coroutines.flow.Flow")) {
                         v = conversionService.convert(new NullValue(), target).orElse(v);
                     } else {
                         v = conversionService.convert(v, target).orElse(v);

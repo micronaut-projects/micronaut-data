@@ -56,6 +56,17 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
         this.criteriaBuilder = criteriaBuilder;
     }
 
+    @SuppressWarnings("NullAway")
+    public DefaultPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> associations) {
+        this(new io.micronaut.data.model.PersistentPropertyPath(associations, persistentProperty), null);
+    }
+
+    @SuppressWarnings("NullAway")
+    public DefaultPersistentPropertyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+        this.propertyPath = propertyPath;
+        this.criteriaBuilder = null;
+    }
+
     @Override
     public Predicate in(Object... values) {
         return in(Arrays.asList(Objects.requireNonNull(values)));

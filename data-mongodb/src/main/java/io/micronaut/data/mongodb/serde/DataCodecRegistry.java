@@ -65,6 +65,7 @@ final class DataCodecRegistry implements CodecRegistry {
     }
 
     @Override
+    @Nullable
     public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
         Codec codec = codecs.get(clazz);
         if (codec != null) {

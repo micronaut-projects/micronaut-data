@@ -132,7 +132,7 @@ final class SqlQueryBuilderUtils {
      * @param columnType the type of column to retrieve (e.g., "name")
      * @return a list of joined column names, or an empty list if none are found
      */
-    
+
     static List<String> getJoinedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, String columnType) {
         AnnotationValue<Annotation> joinTable = annotationMetadata.getAnnotation(ANN_JOIN_TABLE);
         if (joinTable != null) {
@@ -155,15 +155,14 @@ final class SqlQueryBuilderUtils {
      * @param namingStrategy the naming strategy to use for determining join table column names
      * @return a list of join table column names
      */
-    
+
     static List<String> resolveJoinTableJoinColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
         List<String> joinColumns = getJoinedColumns(annotationMetadata, associationOwner, "name");
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
         List<String> columns = new ArrayList<>();
-        PersistentProperty property1 = entity.getIdentity();
-        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property1, (associations, property)
+        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
             -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
         return columns;
     }
@@ -198,9 +197,9 @@ final class SqlQueryBuilderUtils {
      * @param persistentEntity the entity to retrieve associations from
      * @return a non-empty collection of associations with a join table
      */
-    
+
     static Collection<Association> getJoinTableAssociations(PersistentEntity persistentEntity) {
-        return Stream.concat(Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream())
+        return Stream.concat(persistentEntity.getIdentityProperties().stream(), persistentEntity.getPersistentProperties().stream())
             .flatMap(SqlQueryBuilderUtils::flatMapEmbedded)
             .filter(p -> {
                 if (p instanceof Association a) {

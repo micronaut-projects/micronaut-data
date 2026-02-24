@@ -17,14 +17,18 @@ package io.micronaut.data.document.tck.entities;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Publisher {
     @Id
+    @Nullable
     private String id;
 
+    @Nullable
     private String zipCode;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -33,6 +37,7 @@ public class Publisher {
         this.id = id;
     }
 
+    @Nullable
     public String getZipCode() {
         return zipCode;
     }

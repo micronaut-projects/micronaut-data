@@ -47,11 +47,12 @@ final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<String
         return String.class;
     }
 
+    @Override
     public List<Class<? extends Vector>> supportedVectorTypes() {
         return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
     }
 
-@Override
+    @Override
     public DatabaseType databaseType() {
         return DatabaseType.ORACLE;
     }

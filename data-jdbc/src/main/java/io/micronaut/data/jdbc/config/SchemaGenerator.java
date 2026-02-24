@@ -27,6 +27,7 @@ import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -64,6 +65,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 /**
  * Schema generator used for testing purposes.
@@ -141,7 +143,8 @@ public class SchemaGenerator {
                 // filter out inner / internal / abstract(MappedSuperClass) classes
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                .filter(i -> !i.hasAnnotation(JsonView.class))
+                .filter(i -> !i.hasAnnotation(JsonSubView.class))
+                .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {
@@ -276,6 +279,9 @@ public class SchemaGenerator {
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                continue;
+            }
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();

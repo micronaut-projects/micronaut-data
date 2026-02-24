@@ -48,6 +48,7 @@ final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGve
         return PGvector.class;
     }
 
+    @Override
     public List<Class<? extends Vector>> supportedVectorTypes() {
         return List.of(Vector.class, FloatVector.class);
     }

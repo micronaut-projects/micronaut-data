@@ -16,7 +16,6 @@
 package io.micronaut.transaction;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.exceptions.*;
 
 /**
@@ -68,7 +67,7 @@ public interface SynchronousTransactionManager<T> extends TransactionManager, Tr
      * @see TransactionDefinition#isReadOnly
      */
     @NonNull
-    TransactionStatus<T> getTransaction(@Nullable TransactionDefinition definition)
+    TransactionStatus<T> getTransaction(TransactionDefinition definition)
             throws TransactionException;
 
     /**

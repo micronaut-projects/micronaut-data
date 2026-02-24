@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
@@ -70,6 +69,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -110,7 +110,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         RESTRICTIONS_PATTERN = Pattern.compile("^(" + rExpressionPattern + ")$");
     }
 
-    @Nullable
     protected final List<MethodNameParser.Match> matches;
 
     protected AbstractCriteriaMethodMatch(List<MethodNameParser.Match> matches) {
@@ -136,7 +135,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @return The operation type
      */
-    protected abstract DataMethod. @NonNull OperationType getOperationType();
+    protected abstract DataMethod. OperationType getOperationType();
 
     /**
      * @return true of the operation is supported by implicit queries
@@ -209,7 +208,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 }
                 PersistentPropertyPath propPath;
                 if (isId && rootEntity.hasIdentity()) {
-                    propPath = new PersistentPropertyPath(rootEntity.getIdentity());
+                    propPath = new PersistentPropertyPath(Objects.requireNonNull(rootEntity.getIdentity()));
                 } else {
                     propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
                 }
@@ -222,9 +221,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     }
                 } else {
                     PersistentProperty property = propPath.getProperty();
-                    if (property == rootEntity.getIdentity()) {
+                    if (rootEntity.hasIdentity() && property == rootEntity.getIdentity()) {
                         predicates.add(cb.equal(root.id(), param));
-                    } else if (property == rootEntity.getVersion()) {
+                    } else if (rootEntity.hasVersion() && property == rootEntity.getVersion()) {
                         predicates.add(cb.equal(root.version(), param));
                     } else {
                         if (propPath.getAssociations().isEmpty()) {
@@ -314,7 +313,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return existingPredicate;
     }
 
-    protected final <T> Predicate extractPredicates(String querySequence,
+    @Nullable
+    protected final <T> Predicate extractPredicates(@Nullable String querySequence,
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
                                                     PersistentEntityCriteriaBuilder cb) {
@@ -333,12 +333,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     String[] queryParameters = querySequence.split(operatorInUse);
                     List<Predicate> opPredicates = new ArrayList<>();
                     Pattern orPattern = OPERATOR_PATTERNS.get(OPERATOR_OR);
+                    Objects.requireNonNull(orPattern);
                     for (String queryParameter : queryParameters) {
                         // Since split was done first by And operator we may have queryParameters with Or predicate
                         // If queryParameters is actual Or expression we need to further extract predicates
                         // And not try to find actual method predicate from the property (queryParameter) containing Or expression
                         if (!OPERATOR_OR.equals(operatorInUse) && orPattern.matcher(queryParameter).find()) {
-                            opPredicates.add(extractPredicates(queryParameter, parametersIt, root, cb));
+                            Predicate innerPredicate = extractPredicates(queryParameter, parametersIt, root, cb);
+                            if (innerPredicate != null) {
+                                opPredicates.add(innerPredicate);
+                            }
                         } else {
                             opPredicates.add(
                                 findMethodPredicate(queryParameter, root, cb, parametersIt)
@@ -404,6 +408,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
         }
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
+        Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
     }
 
@@ -533,7 +538,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return genericType.isAssignable(Iterable.class);
     }
 
-    @NonNull
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
@@ -578,7 +582,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return CriteriaUtils.requireProperty(exp);
     }
 
-    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, @NonNull List<AnnotationValue<Join>> joinSpecs) {
+    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);
             Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
@@ -607,8 +611,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
      * @param isQuery      true if is a query criteria
      * @return a List of annotations values for {@link Join} annotation.
      */
-    @NonNull
-    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext, boolean isQuery) {
+
+    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(MethodMatchContext matchContext, boolean isQuery) {
         List<AnnotationValue<Join>> joins;
         if (!isQuery) {
             return matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
@@ -620,7 +624,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return matchContext.getRepositoryClass().getAnnotationMetadata().getAnnotationValuesByType(Join.class);
     }
 
-    protected final boolean hasNoWhereAndJoinDeclaration(@NonNull MethodMatchContext matchContext) {
+    protected final boolean hasNoWhereAndJoinDeclaration(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasAnnotation(Join.class)) {
             return false;
         }
@@ -673,7 +677,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
+                                                     @Nullable
                                                      String selectedType,
+                                                     @Nullable
                                                      ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
@@ -693,7 +699,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
-                                                     ClassElement queryResultType,
+                                                     @Nullable ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
         return MatchUtils.analyzeMethodResult(matchContext.getRepositoryClass(), matchContext.getRootEntity().getClassElement(), queryResultType, interceptorMatch, allowEntityResultByDefault);

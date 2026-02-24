@@ -46,8 +46,6 @@ public @interface EntityGraph {
     String name() default "";
 
     /**
-     * Returns the name of the JPA entity graph hint to use.
-     *
      * @return The name of the hint to use.
      * @see <a href="https://download.oracle.com/otn-pub/jcp/persistence-2_1-fr-eval-spec/JavaPersistence.pdf">JPA 2.1
      *      Specification: 3.7.4.2 Load Graph Semantics</a>

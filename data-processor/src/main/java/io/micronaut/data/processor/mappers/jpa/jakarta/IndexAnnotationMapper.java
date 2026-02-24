@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's {@code Index} annotation to Micronaut's.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public class IndexAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.IndexAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Index";

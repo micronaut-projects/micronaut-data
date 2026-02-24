@@ -34,6 +34,7 @@ import jakarta.data.page.PageRequest;
 import jakarta.data.page.impl.CursoredPageRecord;
 import jakarta.data.page.impl.PageRecord;
 import jakarta.data.restrict.Restriction;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -129,7 +130,8 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         return PageRequest.Cursor.forKey(c.elements().toArray());
     }
 
-    private static PageRequest convert(CursoredPageable pageable) {
+    @Nullable
+    private static PageRequest convert(@Nullable CursoredPageable pageable) {
         if (pageable == null) {
             return null;
         }
@@ -146,7 +148,8 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         throw new IllegalArgumentException("Unknown mode " + pageable.getMode());
     }
 
-    private static PageRequest convert(Pageable pageable) {
+    @Nullable
+    private static PageRequest convert(@Nullable Pageable pageable) {
         if (pageable == null) {
             return null;
         }

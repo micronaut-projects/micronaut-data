@@ -18,6 +18,7 @@ package io.micronaut.data.model.schema.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,7 +33,11 @@ import java.util.Objects;
  * @param vectorIndexMetadata Vector index metadata, if any
  */
 @Internal
-public record SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider, VectorIndexMetadata vectorIndexMetadata) {
+public record SqlIndexMapping(String name,
+                              boolean unique,
+                              String[] columns,
+                              @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
+                              @Nullable VectorIndexMetadata vectorIndexMetadata) {
 
     /**
      * Backwards-compatible constructor (non-vector index).

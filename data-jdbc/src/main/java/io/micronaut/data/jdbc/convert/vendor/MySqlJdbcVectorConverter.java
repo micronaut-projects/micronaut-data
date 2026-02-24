@@ -52,6 +52,7 @@ final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]>
         return byte[].class;
     }
 
+    @Override
     public List<Class<? extends Vector>> supportedVectorTypes() {
         return List.of(Vector.class, FloatVector.class);
     }

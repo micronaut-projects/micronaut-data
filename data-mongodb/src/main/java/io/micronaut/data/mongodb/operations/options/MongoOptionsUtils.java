@@ -158,6 +158,7 @@ public final class MongoOptionsUtils {
         return Optional.of(options);
     }
 
+    @Nullable
     public static Collation bsonDocumentAsCollation(@Nullable BsonDocument collationDocument) {
         if (collationDocument == null) {
             return null;

@@ -51,24 +51,31 @@ public class HibernateJakartaDataTest extends AbstractJakartaDataTest {
 
     // Enable after https://github.com/jakartaee/data/issues/1290
 
+    @Override
     public void testRuntimeRestrictionsWithLength() {
     }
 
+    @Override
     public void testRuntimeRestrictionsWithLengthGreaterThan() {
     }
 
+    @Override
     public void testRuntimeRestrictionsWithLikeCustomWildcardsAndEscape() {
     }
 
+    @Override
     public void testRuntimeRestrictionsWithNotLikeCustomWildcardsAndEscape() {
     }
 
+    @Override
     public void testAbs() {
     }
 
+    @Override
     public void testRuntimeRestrictionsWithNumericNegated() {
     }
 
+    @Override
     public void testRuntimeRestrictionsWithNumericAbsOnEmbedded() {
     }
 

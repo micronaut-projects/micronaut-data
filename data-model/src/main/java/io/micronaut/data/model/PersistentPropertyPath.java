@@ -36,6 +36,7 @@ import java.util.StringJoiner;
 public class PersistentPropertyPath {
     private final List<Association> associations;
     private final PersistentProperty property;
+    @Nullable
     private String path;
 
     /**
@@ -144,6 +145,7 @@ public class PersistentPropertyPath {
      * @param bean The root bean
      * @return The value
      */
+    @Nullable
     public Object getPropertyValue(Object bean) {
         if (!(property instanceof RuntimePersistentProperty p)) {
             throw new IllegalStateException("Expected runtime property!");
@@ -157,17 +159,13 @@ public class PersistentPropertyPath {
                 return null;
             }
         }
-        if (value != null) {
-            BeanProperty<Object, Object> beanProperty = p.getProperty();
-            value = beanProperty.get(value);
-        }
-        return value;
+        BeanProperty<Object, Object> beanProperty = p.getProperty();
+        return beanProperty.get(value);
     }
 
     /**
      * @return The associations
      */
-    
     public List<Association> getAssociations() {
         return associations;
     }
@@ -175,7 +173,6 @@ public class PersistentPropertyPath {
     /**
      * @return The property
      */
-    
     public PersistentProperty getProperty() {
         return property;
     }
@@ -183,7 +180,6 @@ public class PersistentPropertyPath {
     /**
      * @return The path
      */
-    
     public String getPath() {
         if (path == null) {
             if (associations.isEmpty()) {
@@ -202,7 +198,6 @@ public class PersistentPropertyPath {
     /**
      * @return The associations path
      */
-    
     public String getAssociationsPath() {
         if (associations.isEmpty()) {
             return "";
@@ -217,7 +212,6 @@ public class PersistentPropertyPath {
     /**
      * @return The array path
      */
-    
     public String[] getArrayPath() {
         if (associations.isEmpty()) {
             return new String[]{property.getName()};
@@ -233,7 +227,6 @@ public class PersistentPropertyPath {
     /**
      * @return The array path
      */
-    
     public List<PersistentProperty> getPropertyPath() {
         if (associations.isEmpty()) {
             return List.of(property);

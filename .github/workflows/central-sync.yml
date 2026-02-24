@@ -29,7 +29,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: |
-            21
             25
       - name: Publish to Sonatype OSSRH
         env:

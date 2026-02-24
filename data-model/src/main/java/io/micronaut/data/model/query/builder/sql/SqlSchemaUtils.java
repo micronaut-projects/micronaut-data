@@ -49,6 +49,7 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
@@ -122,7 +123,6 @@ public final class SqlSchemaUtils {
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                List<SqlColumnMapping> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);
@@ -143,38 +143,14 @@ public final class SqlSchemaUtils {
                     isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
                     !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                PersistentProperty property2 = entity.getIdentity();
-                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property2, (associations1, property3)
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations1, property3)
                     -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
-                PersistentProperty property1 = associatedEntity.getIdentity();
-                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property1, (associations, property)
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                if (leftJoinTableColumns.size() == leftProperties.size()) {
-                    for (int i = 0; i < leftJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = leftProperties.get(i);
-                        String columnName = leftJoinTableColumns.get(i);
-                        // TODO: Should we treat join table fields as primary keys?
-                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : leftProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
-                    }
-                }
-                if (rightJoinTableColumns.size() == rightProperties.size()) {
-                    for (int i = 0; i < rightJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = rightProperties.get(i);
-                        String columnName = rightJoinTableColumns.get(i);
-                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : rightProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, false, true, true, dialect));
-                    }
-                }
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, null, columns);
+                List<SqlColumnMapping> joinColumns = new ArrayList<>();
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, joinColumns);
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, joinColumns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
                 tables.add(joinTable);
             }
         }
@@ -184,11 +160,13 @@ public final class SqlSchemaUtils {
 
         List<SqlColumnMapping> columns = new ArrayList<>();
 
-        PersistentProperty version = entity.getVersion();
-        if (version != null && !version.isGenerated()) {
-            String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-            SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect);
-            columns.add(column);
+        if (entity.hasVersion()) {
+            PersistentProperty version = entity.getVersion();
+            if (!version.isGenerated()) {
+                String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
+                SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect);
+                columns.add(column);
+            }
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
@@ -209,6 +187,36 @@ public final class SqlSchemaUtils {
             indexes);
         tables.add(table);
         return tables;
+    }
+
+    /**
+     * Create Join table columns.
+     *
+     * @param entity The entity
+     * @param namingStrategy The naming strategy
+     * @param joinProperties The properties that are used for joining (typically left or right identity)
+     * @param joinColumns The corresponding columns that are used for joining
+     * @param joinTableColumns The resulting columns used for joing table
+     */
+    private static void addJoinTableColumns(List<SqlColumnDefinitionProvider> sqlColumnDefinitionProviders,
+                                            PersistentEntity entity,
+                                            NamingStrategy namingStrategy,
+                                            List<PersistentPropertyPath> joinProperties,
+                                            List<String> joinColumns,
+                                            Dialect dialect,
+                                            List<SqlColumnMapping> joinTableColumns) {
+        if (joinColumns.size() == joinProperties.size()) {
+            for (int i = 0; i < joinColumns.size(); i++) {
+                PersistentPropertyPath pp = joinProperties.get(i);
+                String columnName = joinColumns.get(i);
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect));
+            }
+        } else {
+            for (PersistentPropertyPath pp : joinProperties) {
+                String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect));
+            }
+        }
     }
 
     /**
@@ -267,7 +275,7 @@ public final class SqlSchemaUtils {
         }
         boolean autoGenerated = !isForeign && prop.isGenerated();
         GeneratedValue.Type generatedValueType = autoGenerated ? prop.getAnnotationMetadata().enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-            .orElse(AUTO) : null;
+            .orElse(AUTO) : AUTO;
         OptionalInt optPrecision = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "precision");
         OptionalInt optScale = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "scale");
 
@@ -293,7 +301,7 @@ public final class SqlSchemaUtils {
                 LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> new SqlColumnMapping(column, dataType, dbType, primaryKey,
                 null, required, autoGenerated, generatedValueType, definition);
             case CHARACTER -> new SqlColumnMapping(column, dataType, dbType, primaryKey, 1, required, autoGenerated, generatedValueType, definition);
-            case JSON -> new SqlColumnMapping(column, dataType, dbType, primaryKey, null, null, null, required, autoGenerated, generatedValueType,
+            case JSON -> new SqlColumnMapping(column, dataType, dbType, null, null, null, required, autoGenerated, generatedValueType,
                 definition, prop.getJsonDataType());
             case INTEGER -> {
                 if (optPrecision.isPresent()) {
@@ -311,7 +319,7 @@ public final class SqlSchemaUtils {
                 if (optScale.isPresent()) {
                     scale = optScale.getAsInt();
                 }
-                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
+                yield new SqlColumnMapping(column, dataType, dbType, null, precision, scale, required, autoGenerated, generatedValueType,
                     definition, null);
             }
             default -> {
@@ -331,7 +339,7 @@ public final class SqlSchemaUtils {
      * @throws IllegalStateException if the property is an association
      * @throws MappingException if the data type of the property is unknown
      */
-    private static SqlDbType getDbType(PersistentProperty property, String definition) {
+    private static SqlDbType getDbType(PersistentProperty property, @Nullable String definition) {
         DataType dataType = property.getDataType();
 
         return switch (dataType) {

@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -40,14 +39,11 @@ import java.util.stream.Collectors;
  */
 @Internal
 public class MatchContext implements AnnotationMetadataProvider {
-    @NonNull
     protected final VisitorContext visitorContext;
-    @NonNull
     protected final MethodElement methodElement;
     protected final Map<String, String> typeRoles;
     protected final List<Map.Entry<String, String>> annotationRoles;
     protected final ClassElement returnType;
-    @NonNull
     protected final ParameterElement[] parameters;
     private final ClassElement repositoryClass;
     private final QueryBuilder queryBuilder;
@@ -68,15 +64,15 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param findInterceptors The find interceptors
      */
     MatchContext(
-        @NonNull QueryBuilder queryBuilder,
-        @NonNull ClassElement repositoryClass,
-        @NonNull VisitorContext visitorContext,
-        @NonNull MethodElement methodElement,
-        @NonNull Map<String, String> typeRoles,
-        @NonNull List<Map.Entry<String, String>> annotationRoles,
-        @NonNull ClassElement returnType,
-        @NonNull ParameterElement[] parameters,
-        @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
+        QueryBuilder queryBuilder,
+        ClassElement repositoryClass,
+        VisitorContext visitorContext,
+        MethodElement methodElement,
+        Map<String, String> typeRoles,
+        List<Map.Entry<String, String>> annotationRoles,
+        ClassElement returnType,
+        ParameterElement[] parameters,
+        Map<ClassElement, FindInterceptorDef> findInterceptors) {
         this.queryBuilder = queryBuilder;
         this.repositoryClass = repositoryClass;
         this.visitorContext = visitorContext;
@@ -106,7 +102,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param role The role
      * @return True if it is
      */
-    public boolean isTypeInRole(@NonNull ClassElement type, @NonNull String role) {
+    public boolean isTypeInRole(ClassElement type, String role) {
         //noinspection ConstantConditions
         if (type != null && role != null) {
             String r = this.typeRoles.get(type.getName());
@@ -125,7 +121,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The visitor context
      */
-    @NonNull
     public VisitorContext getVisitorContext() {
         return visitorContext;
     }
@@ -133,7 +128,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The method element
      */
-    @NonNull
     public MethodElement getMethodElement() {
         return methodElement;
     }
@@ -141,7 +135,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The return type
      */
-    @NonNull
     public ClassElement getReturnType() {
         return returnType;
     }
@@ -157,7 +150,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * Fail compilation with the given message for the current method.
      * @param message The message
      */
-    public void fail(@NonNull String message) {
+    public void fail(String message) {
         getVisitorContext().fail(getUnableToImplementMessage() + message, getMethodElement());
     }
 
@@ -193,7 +186,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The repository class.
      */
-    public @NonNull ClassElement getRepositoryClass() {
+    public ClassElement getRepositoryClass() {
         return repositoryClass;
     }
 

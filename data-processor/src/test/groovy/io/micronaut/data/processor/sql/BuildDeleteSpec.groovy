@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.DeleteReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Author
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
@@ -120,7 +121,6 @@ interface BookRepository extends CrudRepository<Book, Long> {
     int deleteAllByIdAndAuthorId(Long id, Long authorId);
 
     int deleteAllByAuthor(Author author);
-
 }
 """)
         when:
@@ -150,6 +150,119 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingPaths(deleteAllByAuthor) == ["id"] as String[]
             getParameterPropertyPaths(deleteAllByAuthor) == ["author.id"] as String[]
             getDataInterceptor(deleteAllByAuthor) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+    }
+
+    void "test unsupported delete other entity"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    void delete(Book book);
+    void remove(Author author);
+}
+"""
+        )
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot delete entity of type: author')
+    }
+
+    void "test unsupported delete other entities"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    void deleteAll(List<Book> book);
+    void removeAll(List<Author> author);
+}
+"""
+        )
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot delete entities of type: author')
+    }
+
+    void "test build delete with embedded id"() {
+        given:
+        def repository = buildRepository('test.CustomerRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@MappedEntity
+class Customer {
+    @EmbeddedId
+    private CustomerId customerId;
+    private String fullName;
+    private String email;
+    public CustomerId getCustomerId() {
+        return customerId;
+    }
+    public void setCustomerId(CustomerId customerId) {
+        this.customerId = customerId;
+    }
+    public String getFullName() {
+        return fullName;
+    }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+
+@Embeddable
+@MappedEntity // To test deleteById matching
+class CustomerId  {
+    private String regionCode;
+    private String tenantId;
+    public String getRegionCode() {
+        return regionCode;
+    }
+    public void setRegionCode(String regionCode) {
+        this.regionCode = regionCode;
+    }
+    public String getTenantId() {
+        return tenantId;
+    }
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface CustomerRepository extends CrudRepository<Customer, CustomerId> {
+    int deleteAllByCustomerIdRegionCode(String regionCode);
+}
+""")
+        when:
+        def deleteAllByCustomerIdRegionCodeMethod = repository.findPossibleMethods("deleteAllByCustomerIdRegionCode").findFirst().get()
+        then:
+        getQuery(deleteAllByCustomerIdRegionCodeMethod) == 'DELETE  FROM `customer`  WHERE (`region_code` = ?)'
+        getDataInterceptor(deleteAllByCustomerIdRegionCodeMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+        when:
+        def deleteByIdMethod = repository.findPossibleMethods("deleteById").findFirst().get()
+        then:
+        getQuery(deleteByIdMethod) == 'DELETE  FROM `customer`  WHERE (`region_code` = ? AND `tenant_id` = ?)'
+        getDataInterceptor(deleteByIdMethod) == "io.micronaut.data.intercept.DeleteAllInterceptor"
     }
 
     void  "test build delete query with DataTransformer"() {

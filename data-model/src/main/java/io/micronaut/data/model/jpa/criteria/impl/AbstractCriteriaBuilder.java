@@ -91,7 +91,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @NonNull
     @NextMajorVersion("Require non null y")
-    private Predicate predicate(Expression<?> x, Object y, PredicateBinaryOp op) {
+    private Predicate predicate(Expression<?> x, @Nullable Object y, PredicateBinaryOp op) {
         Objects.requireNonNull(x);
         return new BinaryPredicate(x, literal(y), op);
     }
@@ -177,7 +177,6 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
-
     public <N extends Number> Expression<N> min(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.MIN);
     }
@@ -273,86 +272,103 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+
     public Predicate equalStringIgnoreCase(Expression<String> x,  String y) {
         return new BinaryPredicate(x, literal(y), PredicateBinaryOp.EQUALS_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate equalStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.EQUALS_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate notEqualStringIgnoreCase(Expression<String> x,  String y) {
         return new BinaryPredicate(x, literal(y), PredicateBinaryOp.NOT_EQUALS_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate notEqualStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.NOT_EQUALS_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate startsWithStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.STARTS_WITH_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate endingWithStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.ENDS_WITH_IGNORE_CASE);
     }
 
     @Override
+
     public Predicate or(Expression<Boolean> x,  Expression<Boolean> y) {
         return new DisjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
     }
 
     @Override
+
     public Predicate or(Predicate... restrictions) {
         return or(List.of(restrictions));
     }
 
     @Override
+
     public Predicate or(Iterable<Predicate> restrictions) {
         return new DisjunctionPredicate(requireBoolExpressions(restrictions));
     }
 
     @Override
+
     public Predicate not(Expression<Boolean> restriction) {
         return new NegatedPredicate(requireBoolExpression(restriction));
     }
 
     @Override
+
     public Predicate conjunction() {
         return new ConjunctionPredicate(Collections.emptyList());
     }
 
     @Override
+
     public Predicate disjunction() {
         return new DisjunctionPredicate(Collections.emptyList());
     }
 
     @Override
+
     public Predicate isTrue(Expression<Boolean> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_TRUE);
     }
 
     @Override
+
     public Predicate isFalse(Expression<Boolean> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_FALSE);
     }
 
     @Override
+
     public Predicate isNull(Expression<?> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_NULL);
     }
 
     @Override
+
     public Predicate isNotNull(Expression<?> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_NON_NULL);
     }
 
     @Override
+
     public Predicate equal(Expression<?> x,  Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
@@ -655,7 +671,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public <T> Expression<T> literal(@Nullable T value) {
-        if (value instanceof Expression<?> expression) {
+        if (value instanceof Expression<?>) {
             throw new IllegalArgumentException("An expression cannot be literal");
         }
         return new LiteralExpression<>(value);

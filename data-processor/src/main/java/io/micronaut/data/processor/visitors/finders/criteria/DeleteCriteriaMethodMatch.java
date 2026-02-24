@@ -113,7 +113,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         Predicate predicate;
         if (entityParameter != null) {
             final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
-            if (rootEntity.getVersion() != null) {
+            if (rootEntity.hasVersion()) {
                 predicate = cb.and(
                     cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
                     cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))

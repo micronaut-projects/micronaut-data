@@ -54,7 +54,7 @@ public interface NamingStrategy {
      * @param name The name
      * @return The mapped name
      */
-    
+
     String mappedName(String name);
 
     /**
@@ -142,7 +142,7 @@ public interface NamingStrategy {
      * @return the name in a proper format
      * @since 4.2.0
      */
-    
+
     default String mappedAssociatedName(String associatedName) {
         return NameUtils.capitalize(associatedName);
     }
@@ -158,18 +158,18 @@ public interface NamingStrategy {
                 foreignAssociation = association;
             }
             final String originalAssocName = association.getName();
-            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(originalAssocName) : originalAssocName;
-            if (!sb.isEmpty()) {
-                sb.append(mappedAssociatedName(assocName));
-            } else {
-                sb.append(assocName);
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(StringUtils.EMPTY_STRING) : originalAssocName;
+            if (StringUtils.isNotEmpty(assocName)) {
+                if (!sb.isEmpty()) {
+                    sb.append(mappedAssociatedName(assocName));
+                } else {
+                    sb.append(assocName);
+                }
             }
         }
         if (foreignAssociation != null) {
             PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
-            PersistentProperty associatedEntityIdentity = associatedEntity != null ? associatedEntity.getIdentity() : null;
-            if (associatedEntity != null && associatedEntity.equals(property.getOwner())
-                && associatedEntityIdentity != null && associatedEntityIdentity.equals(property)) {
+            if (associatedEntity.equals(property.getOwner()) && associatedEntity.hasIdentity() && associatedEntity.getIdentity().equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;

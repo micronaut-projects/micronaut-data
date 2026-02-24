@@ -19,17 +19,21 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Page {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
     private long num;
 
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private Book book;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -46,6 +50,7 @@ public class Page {
         this.num = num;
     }
 
+    @Nullable
     public Book getBook() {
         return book;
     }

@@ -8,6 +8,7 @@ data class Client(
     @field:Id @GeneratedValue val id: Long? = null,
     val name: String,
     @Relation(value = Relation.Kind.EMBEDDED)
+    @MappedProperty(value = "relationship")
     val relationship: Relationship,
 
     @DateCreated

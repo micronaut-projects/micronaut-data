@@ -33,6 +33,7 @@ import java.util.List;
 public final class MongoAggregation {
 
     private final List<Bson> pipeline;
+    @Nullable
     private final MongoAggregationOptions options;
 
     /**

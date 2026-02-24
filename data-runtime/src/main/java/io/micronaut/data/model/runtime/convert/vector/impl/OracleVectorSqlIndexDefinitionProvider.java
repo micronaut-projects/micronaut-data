@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.VectorIndexType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
@@ -62,7 +63,10 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
             ? String.join(", ", Arrays.stream(columns).map(quoter).toList())
             : columnNames;
 
-        var meta = mapping.vectorIndexMetadata();
+        VectorIndexMetadata meta = mapping.vectorIndexMetadata();
+        if (meta == null) {
+            throw new IllegalArgumentException("Vector index metadata is required for Oracle vector index definition");
+        }
         boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
         String organization = hnsw ? "ORGANIZATION NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
         String distance = switch (meta.distanceType()) {

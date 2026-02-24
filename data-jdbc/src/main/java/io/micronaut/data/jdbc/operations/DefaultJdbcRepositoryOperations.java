@@ -31,6 +31,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -156,7 +157,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
+    @Nullable
     private ExecutorAsyncOperations asyncOperations;
+    @Nullable
     private ExecutorService executorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
@@ -166,6 +169,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
+    private final Integer defaultFetchSize;
 
     /**
      * Default constructor.
@@ -241,6 +245,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
             }
         }
+
+        this.defaultFetchSize = jdbcConfiguration.getDefaultFetchSize();
     }
 
     @Override
@@ -353,9 +359,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(pq);
-        return executeRead(connection -> findOne(connection, getSqlPreparedQuery(pq)), sqlPreparedQuery.getInvocationContext());
+        return executeRead(connection -> findOne(connection, getSqlPreparedQuery(pq)), sqlPreparedQuery.getAnnotationMetadata());
     }
 
+    @Nullable
     private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
         boolean limitToSingleResult = !jdbcConfiguration.isUniqueResultOnFindOne();
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, limitToSingleResult)) {
@@ -455,7 +462,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL query: " + e.getMessage(), e);
             }
-        }, preparedQuery.getInvocationContext());
+        }, preparedQuery.getAnnotationMetadata());
     }
 
     @NonNull
@@ -477,6 +484,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         PreparedStatement ps;
         try {
             ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
+            // Apply fetch size hint if present
+            int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(this.defaultFetchSize);
+            if (fetchSize > 0) {
+                try {
+                    ps.setFetchSize(fetchSize);
+                } catch (SQLException ignored) {
+                    // driver may not support fetchSize; ignore
+                }
+            }
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
@@ -499,7 +515,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         while (rs.next()) {
                             manyMapper.processRow(rs);
                         }
-                        return manyMapper.getResult().stream();
+                        List<R> result = manyMapper.getResult();
+                        return result == null ? Stream.of() : result.stream();
                     } finally {
                         closeResultSet(connection, ps, rs, finished, closeConnection);
                     }
@@ -534,7 +551,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private void closeResultSet(Connection connection, PreparedStatement ps, ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
+    private void closeResultSet(Connection connection, @Nullable PreparedStatement ps, @Nullable ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
         if (finished.compareAndSet(false, true)) {
             try {
                 if (rs != null) {
@@ -556,7 +573,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T, R> List<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
-        return executeRead(connection -> findAll(connection, sqlPreparedQuery, true), sqlPreparedQuery.getInvocationContext());
+        return executeRead(connection -> findAll(connection, sqlPreparedQuery, true), sqlPreparedQuery.getAnnotationMetadata());
     }
 
     @NonNull
@@ -577,7 +594,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (SQLException e) {
                 throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
-        }, preparedQuery.getInvocationContext());
+        }, preparedQuery.getAnnotationMetadata());
     }
 
     @Override
@@ -593,7 +610,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (SQLException e) {
                 throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
-        }, preparedQuery.getInvocationContext());
+        }, preparedQuery.getAnnotationMetadata());
     }
 
     private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
@@ -645,7 +662,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         return op.rowsUpdated;
                     })
             );
-        }, operation.getInvocationContext()));
+        }, operation.getAnnotationMetadata()));
     }
 
     @Override
@@ -656,7 +673,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.delete();
             return op;
-        }, operation.getInvocationContext()).rowsUpdated;
+        }, operation.getAnnotationMetadata()).rowsUpdated;
     }
 
     @Override
@@ -667,7 +684,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.delete();
             return (R) op.getEntity();
-        }, operation.getInvocationContext());
+        }, operation.getAnnotationMetadata());
     }
 
     @Override
@@ -687,7 +704,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         op.delete();
                         return op.getEntity();
                     }).toList();
-        }, operation.getInvocationContext());
+        }, operation.getAnnotationMetadata());
     }
 
     @NonNull
@@ -699,7 +716,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.update();
             return op.getEntity();
-        }, operation.getInvocationContext());
+        }, operation.getAnnotationMetadata());
     }
 
     @NonNull
@@ -722,7 +739,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
             op.update();
             return op.getEntities();
-        }, operation.getInvocationContext());
+        }, operation.getAnnotationMetadata());
     }
 
     @NonNull
@@ -734,7 +751,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(), operation.getEntity(), true);
             op.persist();
             return op;
-        }, operation.getInvocationContext()).getEntity();
+        }, operation.getAnnotationMetadata()).getEntity();
     }
 
     @Nullable
@@ -808,7 +825,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 return op.getEntities();
             }
 
-        }, operation.getInvocationContext());
+        }, operation.getAnnotationMetadata());
     }
 
     private <I> I executeRead(Function<Connection, I> fn, AnnotationMetadata annotationMetadata) {
@@ -848,7 +865,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private void applySchema(Connection connection) {
         if (schemaTenantResolver != null) {
             String schema = schemaTenantResolver.resolveTenantSchemaName();
-            schemaHandler.useSchema(connection, jdbcConfiguration.getDialect(), schema);
+            if (schema != null) {
+                schemaHandler.useSchema(connection, jdbcConfiguration.getDialect(), schema);
+            }
         }
     }
 
@@ -983,6 +1002,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
 
             @Override
+            @Nullable
             public T next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
@@ -1050,7 +1070,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         columnNameResultSetReader,
                         jsonMapper != null ? () -> jsonMapper : null,
                         conversionService);
-                return introspectedDataMapper.map(rs, dtoType);
+                D dto = introspectedDataMapper.map(rs, dtoType);
+                if (dto == null) {
+                    throw new DataAccessException("Error reading DTO: " + dtoType.getName());
+                }
+                return dto;
             }
         };
     }
@@ -1070,9 +1094,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
         if (dialect == Dialect.POSTGRES) {
             // Postgres returns all fields, not just id, so we need to access generated id by the name
-            return columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType());
+            return Objects.requireNonNull(columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType()));
         }
-        return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
+        return Objects.requireNonNull(columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType()));
     }
 
     /**
@@ -1104,28 +1128,32 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         private final PreparedStatement ps;
         private int index = 1;
 
-        public JdbcParameterBinder(Connection connection, PreparedStatement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        private JdbcParameterBinder(Connection connection, PreparedStatement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this.connection = connection;
             this.ps = ps;
             this.sqlStoredQuery = sqlStoredQuery;
         }
 
         @Override
-        public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+        public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
             return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
         }
 
+        @Nullable
         @Override
-        public Object convert(Object value, RuntimePersistentProperty<?> property) {
-            AttributeConverter<Object, Object> converter = property.getConverter();
-            if (converter != null) {
-                return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+        public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
+            if (property != null) {
+                AttributeConverter<Object, Object> converter = property.getConverter();
+                if (converter != null) {
+                    return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                }
             }
             return value;
         }
 
+        @Nullable
         @Override
-        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+        public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
             if (converterClass == null) {
                 return value;
             }
@@ -1134,8 +1162,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return converter.convertToPersistedValue(value, conversionContext);
         }
 
-        private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property,
-                                                              Argument<?> argument) {
+        private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
+                                                              @Nullable Argument<?> argument) {
             Objects.requireNonNull(connection);
             if (property != null) {
                 return new RuntimePersistentPropertyJdbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), property);
@@ -1147,12 +1175,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public void bindOne(QueryParameterBinding binding, Object value) {
-            JsonDataType jsonDataType = null;
-            if (binding.getDataType() == DataType.JSON) {
+        public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
+            JsonDataType jsonDataType = JsonDataType.DEFAULT;
+            DataType dataType = binding.getDataType();
+            if (dataType == DataType.JSON) {
                 jsonDataType = binding.getJsonDataType();
             }
-            setStatementParameter(ps, index, binding.getDataType(), jsonDataType, value, sqlStoredQuery);
+            setStatementParameter(ps, index, dataType, jsonDataType, value, sqlStoredQuery);
             index++;
         }
 
@@ -1173,7 +1202,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final class JdbcEntityOperations<T> extends AbstractSyncEntityOperations<JdbcOperationContext, T, SQLException> {
 
         private final SqlStoredQuery<T, ?> storedQuery;
-        private Integer rowsUpdated;
+        private int rowsUpdated;
+        @Nullable
         private Map<QueryParameterBinding, Object> previousValues;
 
         private JdbcEntityOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery) {
@@ -1390,6 +1420,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         public final Connection connection;
         public final Dialect dialect;
+        @Nullable
         private final InvocationContext<?, ?> invocationContext;
 
         /**
@@ -1401,7 +1432,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
          * @param dialect            the dialect
          * @param connection         the connection
          */
-        public JdbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
+        public JdbcOperationContext(AnnotationMetadata annotationMetadata, @Nullable InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
             this.dialect = dialect;
             this.connection = connection;
@@ -1428,7 +1459,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final Argument argument;
 
-        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
+        public ArgumentJdbcCC(@Nullable Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
@@ -1442,21 +1473,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     static class JdbcConversionContextImpl extends AbstractConversionContext
         implements JdbcConversionContext {
 
-        private final Connection connection;
+        private final @Nullable Connection connection;
         private final DatabaseType databaseType;
 
-        public JdbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
+        public JdbcConversionContextImpl(@Nullable Connection connection, DatabaseType databaseType) {
             this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
+        public JdbcConversionContextImpl(ConversionContext conversionContext, @Nullable Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
             this.databaseType = databaseType;
         }
 
         @Override
-        public Connection getConnection() {
+        public @Nullable Connection getConnection() {
             return connection;
         }
 
@@ -1466,19 +1497,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static final class ConnectionContext {
-
-        private final Connection connection;
-        private final boolean needsToBeClosed;
-
-        private ConnectionContext(Connection connection, boolean needsToBeClosed) {
-            this.connection = connection;
-            this.needsToBeClosed = needsToBeClosed;
-        }
-
-        public Connection getConnection() {
-            return connection;
-        }
+    private record ConnectionContext(Connection connection, boolean needsToBeClosed) {
     }
 
 }

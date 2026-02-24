@@ -62,6 +62,9 @@ public final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexD
 
         // Choose method and operator class from metadata
         VectorIndexMetadata meta = mapping.vectorIndexMetadata();
+        if (meta == null) {
+            throw new IllegalArgumentException("Vector index metadata is required for PostgreSQL vector index definition");
+        }
         boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
         String usingMethod = hnsw ? "hnsw" : "ivfflat";
 

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.event;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 
 /**
@@ -35,7 +36,7 @@ public interface EntityEventContext<T> extends PersistenceEventContext<T> {
      * @param newValue The new value
      * @param <P> THe property type
      */
-    <P> void setProperty(BeanProperty<T, P> property, P newValue);
+    <P> void setProperty(BeanProperty<T, P> property, @Nullable P newValue);
 
     /**
      * @return Does the underlying persistence engine have its own event system.

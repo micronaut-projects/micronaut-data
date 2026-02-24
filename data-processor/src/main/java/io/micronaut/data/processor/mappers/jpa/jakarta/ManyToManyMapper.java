@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import org.jspecify.annotations.NonNull;
-
 /**
  * Maps JPA's {@code ManyToMany} annotation to {@link io.micronaut.data.annotation.Relation}.
  *
@@ -25,7 +23,6 @@ import org.jspecify.annotations.NonNull;
  */
 public final class ManyToManyMapper extends io.micronaut.data.processor.mappers.jpa.jx.ManyToManyMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.ManyToMany";

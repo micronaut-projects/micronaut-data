@@ -18,12 +18,14 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -38,6 +40,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -62,10 +65,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     public static final int POSITION = 100;
 
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
+    private static final String JSON_SUB_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonSubView";
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
-    private static final String VALUE = "value";
     private static final String PROPERTY = "property";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
@@ -75,21 +78,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
         }
     };
-    private final boolean mappedEntity;
-
-    /**
-     * Default constructor.
-     */
-    public MappedEntityVisitor() {
-        mappedEntity = true;
-    }
-
-    /**
-     * @param mappedEntity Whether this applies to Mapped entity
-     */
-    MappedEntityVisitor(boolean mappedEntity) {
-        this.mappedEntity = mappedEntity;
-    }
 
     @Override
     public int getOrder() {
@@ -97,7 +85,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return POSITION;
     }
 
-    @NonNull
     @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
@@ -122,22 +109,24 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         for (PersistentProperty property : properties) {
             computeMappingDefaults(property, dataTypes, dataConverters, context);
         }
-        SourcePersistentProperty identity = entity.getIdentity();
-        if (identity != null) {
+        if (entity.hasIdentity()) {
+            SourcePersistentProperty identity = entity.getIdentity();
             computeMappingDefaults(identity, dataTypes, dataConverters, context);
             if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
                 handleJsonViewIdentity(identity);
             }
         }
-        SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
-        if (compositeIdentities != null) {
-            for (SourcePersistentProperty compositeIdentity : compositeIdentities) {
+        if (entity.hasCompositeIdentity()) {
+            for (SourcePersistentProperty compositeIdentity : entity.getCompositeIdentity()) {
                 computeMappingDefaults(compositeIdentity, dataTypes, dataConverters, context);
             }
         }
-        SourcePersistentProperty version = entity.getVersion();
-        if (version != null) {
-            computeMappingDefaults(version, dataTypes, dataConverters, context);
+        if (entity.hasVersion()) {
+            computeMappingDefaults(entity.getVersion(), dataTypes, dataConverters, context);
+        }
+
+        if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
+            validateJsonView(entity, context);
         }
     }
 
@@ -221,6 +210,52 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
+    /**
+     * Validate JSON view or JSON subview entity definition.
+     * The validation includes that if {@code @JsonView(entity=)} is specified, all defined
+     * properties must exist on the corresponding entity class.
+     *
+     * @param entity The entity
+     * @param context context
+     */
+    private void validateJsonView(SourcePersistentEntity entity, VisitorContext context) {
+        String entityName = entity.stringValue(JsonView.class, "entity")
+            .orElse(entity.stringValue(JsonSubView.class, "entity").orElse(null));
+
+        if (entityName != null) {
+            Optional<ClassElement> entityTypeOptional = context.getClassElement(entityName);
+            if (entityTypeOptional.isPresent()) {
+                ClassElement entityType = entityTypeOptional.get();
+                if (entity.hasIdentity()) {
+                    validateJsonViewProperty(entity.getIdentity(), entityType);
+                }
+                for (SourcePersistentProperty property : entity.getPersistentProperties()) {
+                    validateJsonViewProperty(property, entityType);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validates that a JSON view property corresponds to a property in the defined entity.
+     * If a property has {@code @MappedProperty} or is embedded, the verification is skipped.
+     *
+     * @param property The property
+     * @param entityType The type of the defined entity
+     */
+    private void validateJsonViewProperty(SourcePersistentProperty property, ClassElement entityType) {
+        if (property.getDataType() == DataType.OBJECT
+                || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()
+                || (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED)
+        ) {
+            return;
+        }
+        if (entityType.findField(property.getName()).isEmpty()) {
+            throw new ProcessingException(property.getPropertyElement(), "Json View property " + property.getName() + " doesn't exist in the defined entity class " + entityType.getSimpleName());
+        }
+    }
+
+    @Nullable
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
         ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();
@@ -254,6 +289,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return null;
     }
 
+    @Nullable
     private ClassElement getPersistedClassFromConverter(String converter, VisitorContext context) {
         ClassElement classElement = context.getClassElement(converter).orElseThrow(IllegalStateException::new);
         ClassElement genericType = classElement.getGenericType();
@@ -305,12 +341,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     private void handleJsonViewIdentity(SourcePersistentProperty identity) {
         PropertyElement identityPropertyElement = identity.getPropertyElement();
-        String mappedPropertyIdName = identity.stringValue(MappedProperty.class).orElse(null);
-        if (mappedPropertyIdName == null) {
-            identityPropertyElement.annotate(MappedProperty.class, builder -> builder.member(VALUE, JSON_VIEW_ID));
-        } else if (!mappedPropertyIdName.equals(JSON_VIEW_ID)) {
-            throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
-        }
         String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
         if (jsonPropertyIdName != null && !jsonPropertyIdName.equals(JSON_VIEW_ID)) {
             throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");

@@ -23,6 +23,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Delete all specification method.
@@ -46,6 +47,7 @@ public class UpdateAllSpecificationMethodMatcher extends AbstractSpecificationMe
     }
 
     @Override
+    @Nullable
     protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isUpdateSpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateAllSpecInterceptor(matchContext, matchContext.getReturnType());

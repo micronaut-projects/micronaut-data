@@ -55,7 +55,8 @@ final class MicronautDataJakartaDataExceptionConverter implements JakartaDataExc
             return new DataException(exception.getMessage(), exception);
         }
         if (exception instanceof DataAccessException e) {
-            if (e.getMessage().contains("Unique index or primary key violation")) {
+            String message = e.getMessage();
+            if (message != null && message.contains("Unique index or primary key violation")) {
                 throw new EntityExistsException(exception.getMessage(), exception);
             }
             return new DataException(exception.getMessage(), exception);

@@ -24,6 +24,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
+import io.micronaut.core.annotation.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -77,7 +78,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
         this.conversionService = conversionService;
         this.ctx = ctx;
         this.insert = insert;
-        this.hasGeneratedId = insert && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().isGenerated();
+        this.hasGeneratedId = insert && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
         Objects.requireNonNull(entities, "Entities cannot be null");
         Stream<T> stream;
         if (entities instanceof Collection collection) {
@@ -85,11 +86,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
         } else {
             stream = CollectionUtils.iterableToList(entities).stream();
         }
-        this.entities = stream.map(entity -> {
-            Data d = new Data();
-            d.entity = entity;
-            return d;
-        }).toList();
+        this.entities = stream.map(entity -> new Data(entity)).toList();
     }
 
     @Override
@@ -165,7 +162,12 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
     @SuppressWarnings("VisibilityModifier")
     protected class Data {
         public T entity;
+        @Nullable
         public Map<QueryParameterBinding, Object> previousValues;
         public boolean vetoed = false;
+
+        Data(T entity) {
+            this.entity = entity;
+        }
     }
 }

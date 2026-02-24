@@ -67,7 +67,7 @@ public class TypeUtils {
     private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
     @Nullable
-    public static ClassElement getKotlinCoroutineProducedType(@NonNull MethodElement methodElement) {
+    public static ClassElement getKotlinCoroutineProducedType(MethodElement methodElement) {
         if (!methodElement.isSuspend()) {
             throw new IllegalStateException("Not a coroutine method!");
         }
@@ -136,6 +136,54 @@ public class TypeUtils {
         return !type.isArray() && type.hasStereotype(MappedEntity.class);
     }
 
+    /**
+     * Checks if the given type is an entity of the specified type.
+     *
+     * A type is considered an entity if it is annotated with {@link MappedEntity} and is not an array.
+     * The type is considered to be of the specified entity type if it is the same type or a subtype of the entity type.
+     *
+     * @param type The type to check. May be null.
+     * @param entityType The expected entity type. Must not be null.
+     * @return true if the type is an entity of the given type, false otherwise.
+     */
+    public static boolean isEntityOfType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
+        if (type == null) {
+            return false;
+        }
+        if (type.isArray() || !type.hasStereotype(MappedEntity.class)) {
+            return false;
+        }
+        // Ensure the entity matches the expected type
+        return type.equals(entityType) || type.isAssignable(entityType);
+    }
+
+    /**
+     * Checks if the given type is an iterable (or array) of entities of the specified type.
+     *
+     * A type is considered an iterable of entities if it is an array or implements {@link Iterable} and its element type
+     * is an entity of the given type.
+     *
+     * @param type The type to check. May be null.
+     * @param entityType The expected entity type. Must not be null.
+     * @return true if the type is an iterable of entities of the given type, false otherwise.
+     */
+    public static boolean isIterableOfEntityType(@Nullable ClassElement type, @NonNull ClassElement entityType) {
+        if (type == null) {
+            return false;
+        }
+        ClassElement actualElementType = null;
+        if (type.isArray() && isEntity(type.fromArray())) {
+            actualElementType = type.fromArray();
+        }
+        if (actualElementType == null) {
+            actualElementType = type.getFirstTypeArgument().orElse(null);
+        }
+        if (actualElementType == null) {
+            return false;
+        }
+        return isEntityOfType(actualElementType, entityType);
+    }
+
 //    /**
 //     * Does the given type have an {@link MappedEntity}.
 //     * @param parameterElement The type
@@ -178,7 +226,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesANumber(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesANumber(MethodElement methodElement) {
         return isNumber(getMethodProducingItemType(methodElement));
     }
 
@@ -187,13 +235,13 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it returns void
      */
-    public static boolean doesReturnVoid(@NonNull MethodElement methodElement) {
+    public static boolean doesReturnVoid(MethodElement methodElement) {
         ClassElement producingItemType = getMethodProducingItemType(methodElement);
         return producingItemType == null || isVoid(producingItemType);
     }
 
     @Nullable
-    public static ClassElement getMethodProducingItemType(@NonNull MethodElement methodElement) {
+    public static ClassElement getMethodProducingItemType(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
@@ -208,7 +256,7 @@ public class TypeUtils {
      * @param methodElement The method element
      * @return True if it does
      */
-    public static boolean doesMethodProducesABoolean(@NonNull MethodElement methodElement) {
+    public static boolean doesMethodProducesABoolean(MethodElement methodElement) {
         return isBoolean(getMethodProducingItemType(methodElement));
     }
 
@@ -391,7 +439,7 @@ public class TypeUtils {
         if (methodElement.isSuspend()) {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
-        return returnType.isAssignable(Iterable.class);
+        return returnType != null && returnType.isAssignable(Iterable.class);
     }
 
     /**
@@ -435,7 +483,7 @@ public class TypeUtils {
      * @param parameter The parameter
      * @return The data type
      */
-    public static Optional<DataType> resolveDataType(@NonNull ParameterElement parameter) {
+    public static Optional<DataType> resolveDataType(ParameterElement parameter) {
         ClassElement genericType = parameter.getGenericType();
         Objects.requireNonNull(genericType);
         if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
@@ -455,7 +503,7 @@ public class TypeUtils {
      * @param dataConverters Configured data converters
      * @return The data type
      */
-    public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
+    public static @Nullable String resolveDataConverter(ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
         return explicitConverter.orElseGet(() -> dataConverters.keySet()
             .stream()
@@ -469,7 +517,7 @@ public class TypeUtils {
      * @param dataTypes Configured data types
      * @return The data type
      */
-    public static @NonNull DataType resolveDataType(@NonNull ClassElement type, Map<String, DataType> dataTypes) {
+    public static DataType resolveDataType(ClassElement type, Map<String, DataType> dataTypes) {
         final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
 
         return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
@@ -612,7 +660,7 @@ public class TypeUtils {
      * @param type The type
      * @return The ID type
      */
-    public static @NonNull String getTypeName(@NonNull ClassElement type) {
+    public static String getTypeName(ClassElement type) {
         String typeName = type.getName();
         return ClassUtils.getPrimitiveType(typeName).map(t ->
             ReflectionUtils.getWrapperType(t).getName()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.transaction;
+package io.micronaut.data.r2dbc.oraclexe;
 
-/**
- * The transaction state.
- *
- * @author Denis Stepanov
- * @since 3.5.0
- */
-public interface TransactionState {
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.repositories.StreamingPersonReactorRepository;
+
+@R2dbcRepository(dialect = Dialect.ORACLE)
+public interface OracleStreamingPersonRepository extends StreamingPersonReactorRepository {
 }

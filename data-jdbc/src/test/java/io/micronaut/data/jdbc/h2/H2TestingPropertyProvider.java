@@ -37,6 +37,7 @@ public interface H2TestingPropertyProvider extends TestPropertyProvider {
         return true;
     }
 
+    @Override
     default Map<String, String> getProperties() {
         return shouldAddDefaultDbProperties() ? getH2DataSourceProperties("default") : Map.of();
     }

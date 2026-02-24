@@ -25,6 +25,7 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -43,6 +44,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         Optional<ClassElement> executor = matchContext.getVisitorContext().getClassElement(MongoAnnotations.EXECUTOR_REPOSITORY);
         if (executor.isPresent() && executor.get().isAssignable(matchContext.getRepositoryClass())) {

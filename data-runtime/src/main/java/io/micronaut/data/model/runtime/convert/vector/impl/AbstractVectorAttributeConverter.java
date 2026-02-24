@@ -92,7 +92,13 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                                               IDX columnName) {
         VectorTypeConverter<?> vectorTypeConverter = converterMap.get(conversionContext.getDatabaseType());
         if (vectorTypeConverter != null) {
-            return reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
+            Object value = reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
+            if (value == null) {
+                // ResultReader#getRequiredValue is expected to be non-null, but its signature is @Nullable.
+                // Guard to satisfy NullAway and provide a better error message.
+                throw new IllegalStateException("Required value for column [" + columnName + "] was null");
+            }
+            return value;
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
     }

@@ -29,6 +29,7 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,6 +58,7 @@ public interface CursoredPage<T> extends Page<T> {
      * @return Whether this {@link CursoredPage} contains the total count of the records
      * @since 4.8.0
      */
+    @Override
     boolean hasTotalSize();
 
     /**
@@ -66,6 +68,7 @@ public interface CursoredPage<T> extends Page<T> {
      *
      * @return The total size of the all records.
      */
+    @Override
     long getTotalSize();
 
     /**
@@ -75,6 +78,7 @@ public interface CursoredPage<T> extends Page<T> {
      *
      * @return The total page of pages
      */
+    @Override
     default int getTotalPages() {
         int size = getSize();
         return size == 0 ? 1 : (int) Math.ceil((double) getTotalSize() / (double) size);
@@ -146,7 +150,7 @@ public interface CursoredPage<T> extends Page<T> {
         @JsonProperty("pageable")  Pageable pageable,
         @JsonProperty("cursors") @Nullable List<Cursor> cursors,
         @JsonProperty("totalSize") @Nullable Long totalSize) {
-        return new DefaultCursoredPage<>(content, pageable, cursors, totalSize);
+        return new DefaultCursoredPage<>(content, pageable, Objects.requireNonNullElse(cursors, List.of()), totalSize);
     }
 
     /**
