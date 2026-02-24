@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
+import org.jspecify.annotations.Nullable;
 
 @Internal
 abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T> {
@@ -32,7 +33,9 @@ abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T>
     @Override
     public T convert(Vector vector) {
         if (supportedVectorTypes().stream().anyMatch(x -> vector.getClass().isAssignableFrom(x))) {
-            return conversionService.convert(vector, getPersistedType()).orElse(null);
+            return conversionService.convert(vector, getPersistedType())
+                .orElseThrow(() -> new IllegalArgumentException("Conversion service cannot convert " + vector.getClass().getName() + " to " + getPersistedType().getName()));
+
         }
         throw new IllegalArgumentException(databaseType() + " does not support " + vector.getClass().getName());
     }
@@ -40,7 +43,8 @@ abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T>
     @Override
     public Vector convert(T object, Class<Vector> targetType) {
         if (supportedVectorTypes().stream().anyMatch(targetType::isAssignableFrom)) {
-            return conversionService.convert(object, targetType).orElse(null);
+            return conversionService.convert(object, targetType)
+                .orElseThrow(() -> new IllegalArgumentException("Conversion service cannot convert " + object.getClass().getName() + " to " + targetType.getName()));
         }
         throw new IllegalArgumentException(databaseType() + " does not support " + targetType.getName());
     }

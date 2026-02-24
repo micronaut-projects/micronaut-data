@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.convert;
 
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.r2dbc.spi.Connection;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Conversion context for R2DBC implementation.
@@ -31,6 +32,6 @@ public interface R2dbcConversionContext extends DatabaseTypeConversionContext {
      *
      * @return the connection
      */
-    Connection getConnection();
+    @Nullable Connection getConnection();
 
 }

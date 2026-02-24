@@ -1237,7 +1237,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
+        public ArgumentR2dbcCC(@Nullable Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
@@ -1251,21 +1251,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private static class R2dbcConversionContextImpl extends AbstractConversionContext
         implements R2dbcConversionContext {
 
-        private final Connection connection;
+        private final @Nullable Connection connection;
         private final DatabaseType databaseType;
 
         public R2dbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
             this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, @Nullable Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
             this.databaseType = databaseType;
         }
 
         @Override
-        public Connection getConnection() {
+        public @Nullable Connection getConnection() {
             return connection;
         }
 
