@@ -115,7 +115,7 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         q.bindParameters(binder, null, null, null)
 
         then:
-        def e = thrown(IllegalStateException)
+        def e = thrown(NullPointerException)
         e.message.contains("Invocation context is required")
     }
 
