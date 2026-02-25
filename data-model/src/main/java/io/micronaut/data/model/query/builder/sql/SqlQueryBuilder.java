@@ -317,6 +317,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association);
     }
 
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity.
+     * <p>
+     * This method is {@code public} and the class is non-final; therefore it can be overridden.
+     * If you override it, ensure you preserve the following behavior expected by callers:
+     * <ul>
+     *     <li>Return a non-null {@code String[]} containing SQL statements in execution order.</li>
+     *     <li>Respect the current {@link #getDialect()} and escaping rules (see {@link #shouldEscape(PersistentEntity)}).</li>
+     *     <li>Keep special handling for {@link JsonView} entities (Oracle-only) consistent with the base implementation.</li>
+     * </ul>
+     *
+     * @param entity The entity
+     * @param definitionProviders The definition providers
+     * @return The {@code CREATE TABLE} statements
+     */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
         List<String> createStatements = new ArrayList<>();
