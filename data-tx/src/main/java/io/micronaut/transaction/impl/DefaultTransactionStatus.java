@@ -55,8 +55,10 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         return new NoTxTransactionStatus<>(connectionStatus, definition);
     }
 
-    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus, DefaultTransactionStatus<C> existingTransaction) {
-        return new ExistingTransactionStatus<>(connectionStatus, existingTransaction);
+    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus,
+                                                                TransactionDefinition definition,
+                                                                DefaultTransactionStatus<C> existingTransaction) {
+        return new ExistingTransactionStatus<>(connectionStatus, definition, existingTransaction);
     }
 
     @Override
@@ -171,8 +173,9 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         private final DefaultTransactionStatus<C> existingTransaction;
 
         public ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                         TransactionDefinition definition,
                                          DefaultTransactionStatus<C> existingTransaction) {
-            super(connectionStatus, existingTransaction.getTransactionDefinition());
+            super(connectionStatus, definition);
             this.existingTransaction = existingTransaction;
         }
 
@@ -184,7 +187,13 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         @Override
         public void setRollbackOnly() {
             super.setRollbackOnly();
-            existingTransaction.setGlobalRollbackOnly();
+            // Nested transactions use savepoints for isolation: rollback-only should
+            // only affect the savepoint, not doom the outer transaction. For all other
+            // propagation types (REQUIRED, SUPPORTS, MANDATORY) the inner block shares
+            // the outer transaction, so rollback-only must propagate.
+            if (!isNestedTransaction()) {
+                existingTransaction.setGlobalRollbackOnly();
+            }
         }
 
         @Override

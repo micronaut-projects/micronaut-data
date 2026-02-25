@@ -44,7 +44,7 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
 
     @Override
     protected DefaultTransactionStatus<C> createExistingTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition, DefaultTransactionStatus<C> existingTransaction) {
-        return DefaultTransactionStatus.existingTx(connectionStatus, existingTransaction);
+        return DefaultTransactionStatus.existingTx(connectionStatus, definition, existingTransaction);
     }
 
     @Override

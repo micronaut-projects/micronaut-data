@@ -1,0 +1,143 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.transaction.impl;
+
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.transaction.TransactionDefinition;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class DefaultTransactionStatusTest {
+
+    private static final TransactionDefinition NESTED_DEFINITION =
+        TransactionDefinition.of(TransactionDefinition.Propagation.NESTED);
+
+    @Test
+    void existingTxWithNestedDefinitionReportsIsNestedTransaction() {
+        DefaultTransactionStatus<Object> outerTx = newOuterTx();
+
+        DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+        );
+
+        assertTrue(nestedTx.isNestedTransaction(),
+            "ExistingTransactionStatus created with NESTED definition must report isNestedTransaction() == true");
+        assertFalse(nestedTx.isNewTransaction());
+        assertEquals(TransactionDefinition.Propagation.NESTED,
+            nestedTx.getTransactionDefinition().getPropagationBehavior());
+    }
+
+    @Test
+    void existingTxWithRequiredDefinitionDoesNotReportNested() {
+        DefaultTransactionStatus<Object> outerTx = newOuterTx();
+
+        DefaultTransactionStatus<Object> existingTx = DefaultTransactionStatus.existingTx(
+            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx
+        );
+
+        assertFalse(existingTx.isNestedTransaction());
+        assertFalse(existingTx.isNewTransaction());
+    }
+
+    @Test
+    void nestedTransactionPreservesOwnDefinitionNotParents() {
+        // Verify the incoming definition is stored, not the parent's.
+        // This is the core assertion for issue #3334: before the fix,
+        // ExistingTransactionStatus copied the outer transaction's definition.
+        DefaultTransactionStatus<Object> outerTx = newOuterTx();
+
+        DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+        );
+
+        assertEquals(TransactionDefinition.Propagation.REQUIRED,
+            outerTx.getTransactionDefinition().getPropagationBehavior(),
+            "Outer tx should still have REQUIRED");
+        assertEquals(TransactionDefinition.Propagation.NESTED,
+            nestedTx.getTransactionDefinition().getPropagationBehavior(),
+            "Nested tx must have NESTED, not the outer's REQUIRED");
+    }
+
+    @Test
+    void nestedSetRollbackOnlyDoesNotPropagateToParent() {
+        // NESTED uses savepoints for isolation: setRollbackOnly should only
+        // affect the savepoint, not doom the outer transaction.
+        DefaultTransactionStatus<Object> outerTx = newOuterTx();
+
+        DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+        );
+
+        nestedTx.setRollbackOnly();
+
+        assertTrue(nestedTx.isLocalRollbackOnly(),
+            "Nested tx should be marked as local rollback-only");
+        assertFalse(outerTx.isGlobalRollbackOnly(),
+            "Outer tx must NOT be marked as global rollback-only when nested tx sets rollback-only");
+    }
+
+    @Test
+    void nonNestedExistingTxSetRollbackOnlyPropagatesToParent() {
+        // For REQUIRED/SUPPORTS/MANDATORY, the inner block shares the outer
+        // transaction, so rollback-only must propagate.
+        DefaultTransactionStatus<Object> outerTx = newOuterTx();
+
+        DefaultTransactionStatus<Object> existingTx = DefaultTransactionStatus.existingTx(
+            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx
+        );
+
+        existingTx.setRollbackOnly();
+
+        assertTrue(existingTx.isLocalRollbackOnly());
+        assertTrue(outerTx.isGlobalRollbackOnly(),
+            "Outer tx SHOULD be marked as global rollback-only for non-nested existing tx");
+    }
+
+    private static DefaultTransactionStatus<Object> newOuterTx() {
+        return DefaultTransactionStatus.newTx(stubConnectionStatus(), TransactionDefinition.DEFAULT);
+    }
+
+    private static ConnectionStatus<Object> stubConnectionStatus() {
+        return new ConnectionStatus<>() {
+            @Override
+            public boolean isNew() {
+                return false;
+            }
+
+            @NonNull
+            @Override
+            public Object getConnection() {
+                throw new UnsupportedOperationException("stub");
+            }
+
+            @NonNull
+            @Override
+            public ConnectionDefinition getDefinition() {
+                return ConnectionDefinition.DEFAULT;
+            }
+
+            @Override
+            public void registerSynchronization(@NonNull ConnectionSynchronization synchronization) {
+            }
+        };
+    }
+}
