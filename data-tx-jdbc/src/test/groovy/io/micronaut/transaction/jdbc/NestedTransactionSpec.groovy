@@ -4,6 +4,8 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
+import io.micronaut.transaction.impl.InternalTransaction
+import io.micronaut.transaction.support.TransactionSynchronization
 import jakarta.inject.Inject
 import spock.lang.Issue
 import spock.lang.Specification
@@ -157,6 +159,32 @@ class NestedTransactionSpec extends Specification {
 
         then:
         getNames().sort() == ["A", "B"]
+    }
+
+    void "beforeCommit failure in nested transaction preserves outer transaction"() {
+        when:
+        transactionManager.executeWrite({ status ->
+            insertRow("A")
+            try {
+                transactionManager.execute(NESTED, { nestedStatus ->
+                    insertRow("B")
+                    ((InternalTransaction) nestedStatus).registerInvocationSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            void beforeCommit(boolean readOnly) {
+                                throw new RuntimeException("simulated beforeCommit failure")
+                            }
+                        }
+                    )
+                    return null
+                })
+            } catch (RuntimeException ignored) {
+            }
+            return null
+        })
+
+        then:
+        getNames() == ["A"]
     }
 
     private void insertRow(String name) {
