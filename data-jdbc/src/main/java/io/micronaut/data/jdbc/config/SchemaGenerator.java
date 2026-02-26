@@ -266,6 +266,7 @@ public class SchemaGenerator {
         }
     }
 
+    @SuppressWarnings("java:S3776")
     private void validate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PersistentEntity[] entities,
