@@ -8,6 +8,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Metadata
+import io.micronaut.json.JsonMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -62,6 +63,9 @@ class OracleJdbcJsonViewSpec extends Specification {
 
     @Inject
     CarDetailsRepository carDetailsRepository
+
+    @Inject
+    JsonMapper jsonMapper
 
     def setup() {
         studentClassRepository.deleteAll()
@@ -539,7 +543,6 @@ class OracleJdbcJsonViewSpec extends Specification {
         map.put("extra_key", "extra_value")
         def personView = new PersonView("Dimitrije", "Zdravkovic", map)
         personViewRepository.save(personView)
-//        def result = personViewRepository.findById(personView.getId())
         def result = personViewRepository.findAll()
         then:
         result.size() == 1

@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 
 import java.util.Map;
+import java.util.Objects;
 
 @JsonView(entity = Person.class)
 public class PersonView {
@@ -56,5 +57,18 @@ public class PersonView {
 
     public void setExtras(Map<String, Object> extras) {
         this.extras = extras;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PersonView that = (PersonView) o;
+        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(extras, that.extras);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstname, lastname, extras);
     }
 }
