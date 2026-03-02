@@ -18,6 +18,8 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
+    implementation mn.jackson.annotations
+
     compileOnly mnRxjava2.micronaut.rxjava2
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
