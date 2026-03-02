@@ -350,7 +350,10 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         }
         if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
-            return MONGO_PARAM_PATTERN.matcher(pattern).matches();
+            if (MONGO_PARAM_PATTERN.matcher(pattern).matches()) {
+                return true;
+            }
+            return bsonRegularExpression.getOptions().contains("l");
         }
         return false;
     }
@@ -542,6 +545,11 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
             Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
+            String originalOptions = bsonRegularExpression.getOptions();
+            String sanitizedOptions = originalOptions.contains("l") ? originalOptions.replace("l", "") : originalOptions;
+            if (!sanitizedOptions.equals(originalOptions) && !matcher.matches()) {
+                return new BsonRegularExpression(pattern, sanitizedOptions);
+            }
             if (matcher.matches()) {
                 Integer queryParamIndex = null;
                 try {
@@ -557,8 +565,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
                     }
                     pattern = pattern.replace(matcher.group(1), e.getValue().toString());
-                    String options = bsonRegularExpression.getOptions();
-                    if (options.contains("l")) {
+                    if (originalOptions.contains("l")) {
                         pattern = pattern
                             .replace("_", ".")
                             .replace("%", ".*");
@@ -568,9 +575,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         if (!pattern.startsWith("$")) {
                             pattern = pattern + "$";
                         }
-                        options = options.replace("l", "");
                     }
-                    return new BsonRegularExpression(pattern, options);
+                    return new BsonRegularExpression(pattern, sanitizedOptions);
                 }
             }
         }
