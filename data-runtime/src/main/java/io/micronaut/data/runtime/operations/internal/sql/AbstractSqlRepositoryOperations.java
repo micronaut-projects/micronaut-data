@@ -437,12 +437,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return property.getKey()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = property.getKey()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return
+                            typeDefAnnotationValue.annotationClassValue("converter")
+                                .flatMap(AnnotationClassValue::getType)
+                                .orElse(null);
+                    }
+                    return null;
                 }
 
                 @Override
@@ -478,12 +482,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return pp.getProperty()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = pp.getProperty()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return typeDefAnnotationValue
+                            .annotationClassValue("converter")
+                            .flatMap(AnnotationClassValue::getType)
+                            .orElse(null);
+                    } else {
+                        return null;
+                    }
                 }
             });
         }

@@ -162,6 +162,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
+    @Nullable
     protected <R> R convertResult(PreparedQuery<?, ?> preparedQuery,
                                   CodecRegistry codecRegistry,
                                   Class<R> resultType,
@@ -197,7 +198,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
-        return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+        return conversionService.convert(MongoUtils.toValue(value), resultType).orElse(null);
     }
 
     /**
