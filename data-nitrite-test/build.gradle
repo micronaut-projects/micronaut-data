@@ -1,0 +1,29 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id "groovy"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+
+    implementation projects.micronautDataNitrite
+
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnTest.micronaut.test.spock
+
+    testImplementation projects.micronautDataRuntime
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation libs.spock.core
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Disable baseline check for new module until first release
+tasks.named("findBaseline").configure {
+    enabled = false
+}

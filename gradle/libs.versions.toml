@@ -20,6 +20,7 @@ micronaut-validation = "4.12.0"
 micronaut-logging = "1.7.1"
 micronaut-flyway = "7.9.1"
 micronaut-coherence = "5.0.6"
+nitrite = "4.3.2"
 
 groovy = "4.0.29"
 
@@ -82,6 +83,7 @@ micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-pr
 
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
@@ -91,6 +93,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
 managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
+jakarta-persistence-api = { module = 'jakarta.persistence:jakarta.persistence-api', version = '3.1.0' }
 
 # JPA
 
@@ -105,6 +108,11 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
 
+# Nitrite
+nitrite = { module = "org.dizitart:nitrite", version.ref = "nitrite" }
+nitrite-mvstore-adapter = { module = "org.dizitart:nitrite-mvstore-adapter", version.ref = "nitrite" }
+nitrite-jackson-mapper = { module = "org.dizitart:nitrite-jackson-mapper", version.ref = "nitrite" }
+
 # Antlr
 
 antlr = { module = "org.antlr:antlr4", version.ref = "antlr"}
@@ -114,6 +122,7 @@ antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr"}
 
 jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 jupiter-api = { module = 'org.junit.jupiter:junit-jupiter-api' }
+spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 

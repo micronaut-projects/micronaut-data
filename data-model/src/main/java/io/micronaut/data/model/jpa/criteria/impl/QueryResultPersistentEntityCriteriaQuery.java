@@ -70,6 +70,19 @@ public interface QueryResultPersistentEntityCriteriaQuery {
                 throw new RuntimeException(e);
             }
         }
+        if (queryBuilderClass.getSimpleName().equals("NitriteQueryBuilder")) {
+            // Use new implementation
+            try {
+                return (QueryBuilder2) queryBuilderClass
+                    .getClassLoader().loadClass("io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder2")
+                    .getDeclaredConstructor()
+                    .newInstance();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         if (queryBuilderClass == SqlQueryBuilder.class) {
             // Use new implementation
             AnnotationMetadata builderAnnotationMetadata = ((SqlQueryBuilder) queryBuilder).getAnnotationMetadata();

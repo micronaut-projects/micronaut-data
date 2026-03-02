@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
+    api projects.micronautDataConnection
+
+    api libs.nitrite
+    api libs.nitrite.mvstore.adapter
+    api libs.nitrite.jackson.mapper
+    api libs.jackson.datatype.jsr310
+    api libs.jakarta.persistence.api
+
+    compileOnly mn.micronaut.inject.groovy
+}
+
+// Disable baseline check for new module until first release
+tasks.named("findBaseline").configure {
+    enabled = false
+}

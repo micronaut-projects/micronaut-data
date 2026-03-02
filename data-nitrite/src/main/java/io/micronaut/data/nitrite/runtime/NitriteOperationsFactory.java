@@ -1,0 +1,97 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.nitrite.runtime;
+
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
+import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
+import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.date.DateTimeProvider;
+import jakarta.inject.Singleton;
+import java.io.File;
+import java.nio.file.Path;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.NitriteBuilder;
+import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
+import org.dizitart.no2.mvstore.MVStoreModule;
+
+/** Factory for NitriteDB beans. */
+@Factory
+@Internal
+public final class NitriteOperationsFactory {
+
+  /**
+   * Create a Nitrite database instance.
+   *
+   * @param config the configuration
+   * @return the database
+   */
+  @Bean
+  @Singleton
+  public Nitrite nitriteDatabase(NitriteConfiguration config) {
+    String dbPath = config.getDbPath();
+    MVStoreModule storeModule;
+    if ("memory".equalsIgnoreCase(dbPath)) {
+      storeModule = MVStoreModule.withConfig().build();
+    } else {
+      File file = Path.of(dbPath).toFile();
+      File parent = file.getParentFile();
+      if (parent != null && !parent.exists() && !parent.mkdirs()) {
+        throw new RuntimeException("Could not create directory " + parent);
+      }
+      storeModule = MVStoreModule.withConfig().filePath(file).build();
+    }
+    NitriteBuilder builder =
+        Nitrite.builder()
+            .loadModule(storeModule)
+            .loadModule(new JacksonMapperModule(new JavaTimeModule()));
+    String username = config.getUsername();
+    String password = config.getPassword();
+    if (username != null && password != null) {
+      return builder.openOrCreate(username, password);
+    }
+    return builder.openOrCreate();
+  }
+
+  /**
+   * Create a Nitrite repository operations instance.
+   *
+   * @param database the database
+   * @param dateTimeProvider the date time provider
+   * @param runtimeEntityRegistry the runtime entity registry
+   * @param conversionService the conversion service
+   * @param transactionHolder the transaction holder
+   * @return the repository operations
+   */
+  @Bean
+  @Primary
+  @Singleton
+  public NitriteRepositoryOperations nitriteRepositoryOperations(
+      Nitrite database,
+      DateTimeProvider dateTimeProvider,
+      RuntimeEntityRegistry runtimeEntityRegistry,
+      DataConversionService conversionService,
+      NitriteTransactionHolder transactionHolder) {
+    return new DefaultNitriteRepositoryOperations(
+        database, dateTimeProvider, runtimeEntityRegistry, conversionService, transactionHolder);
+  }
+}
