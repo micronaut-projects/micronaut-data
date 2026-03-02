@@ -572,7 +572,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         if (!pattern.startsWith("^")) {
                             pattern = "^" + pattern;
                         }
-                        if (!pattern.startsWith("$")) {
+                        if (!pattern.endsWith("$")) {
                             pattern = pattern + "$";
                         }
                     }
