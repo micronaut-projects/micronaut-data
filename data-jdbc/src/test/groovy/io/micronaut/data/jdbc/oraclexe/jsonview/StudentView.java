@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@JsonView
+@JsonView(entity = Student.class)
 public class StudentView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
@@ -27,10 +27,10 @@ public class StudentView {
     private boolean active;
 
     @Relation(Relation.Kind.ONE_TO_MANY)
-    private List<StudentScheduleView> schedule;
+    private List<StudentScheduleSubView> classes;
 
-    @Relation(Relation.Kind.EMBEDDED)
-    private AddressView address;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private AddressSubView address;
 
     @JsonProperty("_metadata")
     private Metadata metadata;
@@ -83,19 +83,19 @@ public class StudentView {
         this.active = active;
     }
 
-    public List<StudentScheduleView> getSchedule() {
-        return schedule;
+    public List<StudentScheduleSubView> getClasses() {
+        return classes;
     }
 
-    public void setSchedule(List<StudentScheduleView> schedule) {
-        this.schedule = schedule;
+    public void setClasses(List<StudentScheduleSubView> classes) {
+        this.classes = classes;
     }
 
-    public AddressView getAddress() {
+    public AddressSubView getAddress() {
         return address;
     }
 
-    public void setAddress(AddressView address) {
+    public void setAddress(AddressSubView address) {
         this.address = address;
     }
 

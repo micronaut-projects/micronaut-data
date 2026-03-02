@@ -108,7 +108,6 @@ public final class SqlSchemaUtils {
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                List<SqlColumnMapping> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);
@@ -133,32 +132,10 @@ public final class SqlSchemaUtils {
                     -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                if (leftJoinTableColumns.size() == leftProperties.size()) {
-                    for (int i = 0; i < leftJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = leftProperties.get(i);
-                        String columnName = leftJoinTableColumns.get(i);
-                        // TODO: Should we treat join table fields as primary keys?
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : leftProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                }
-                if (rightJoinTableColumns.size() == rightProperties.size()) {
-                    for (int i = 0; i < rightJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = rightProperties.get(i);
-                        String columnName = rightJoinTableColumns.get(i);
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : rightProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                }
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, List.of(), columns);
+                List<SqlColumnMapping> joinColumns = new ArrayList<>();
+                addJoinTableColumns(entity, namingStrategy, leftProperties, leftJoinTableColumns, joinColumns);
+                addJoinTableColumns(entity, namingStrategy, rightProperties, rightJoinTableColumns, joinColumns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
                 tables.add(joinTable);
             }
         }
@@ -195,6 +172,30 @@ public final class SqlSchemaUtils {
             indexes);
         tables.add(table);
         return tables;
+    }
+
+    /**
+     * Create Join table columns.
+     *
+     * @param entity The entity
+     * @param namingStrategy The naming strategy
+     * @param joinProperties The properties that are used for joining (typically left or right identity)
+     * @param joinColumns The corresponding columns that are used for joining
+     * @param joinTableColumns The resulting columns used for joing table
+     */
+    private static void addJoinTableColumns(PersistentEntity entity, NamingStrategy namingStrategy, List<PersistentPropertyPath> joinProperties, List<String> joinColumns, List<SqlColumnMapping> joinTableColumns) {
+        if (joinColumns.size() == joinProperties.size()) {
+            for (int i = 0; i < joinColumns.size(); i++) {
+                PersistentPropertyPath pp = joinProperties.get(i);
+                String columnName = joinColumns.get(i);
+                joinTableColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
+            }
+        } else {
+            for (PersistentPropertyPath pp : joinProperties) {
+                String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
+                joinTableColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
+            }
+        }
     }
 
     /**

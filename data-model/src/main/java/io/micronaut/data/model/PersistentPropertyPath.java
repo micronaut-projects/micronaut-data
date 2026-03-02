@@ -123,9 +123,11 @@ public class PersistentPropertyPath {
         RuntimePersistentProperty<?> p = (RuntimePersistentProperty) association;
         BeanProperty beanProperty = p.getProperty();
         Object prevBean = beanProperty.get(bean);
-        Object newBean = setProperty(associations.subList(1, associations.size()), property, prevBean, value);
-        if (prevBean != newBean) {
-            return setProperty(beanProperty, bean, newBean);
+        if (prevBean != null) {
+            Object newBean = setProperty(associations.subList(1, associations.size()), property, prevBean, value);
+            if (prevBean != newBean) {
+                return setProperty(beanProperty, bean, newBean);
+            }
         }
         return bean;
     }

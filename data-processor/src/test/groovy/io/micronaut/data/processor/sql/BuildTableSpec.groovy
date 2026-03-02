@@ -508,8 +508,8 @@ class Teacher {
         then:
         sql.length == 4
         sql[0] == 'CREATE SCHEMA "students";'
-        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
-        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
+        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL, PRIMARY KEY("st_id","cs_id"));'
+        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL, PRIMARY KEY("st_id","te_id"));'
         sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 }
