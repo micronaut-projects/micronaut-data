@@ -22,6 +22,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 
 import java.util.List;
+import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.H2)
 public abstract class H2BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
@@ -41,4 +42,14 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
+
+    abstract Book find_by_title(String title);
+
+    abstract Optional<Book> find_by_author_name(String authorName);
+
+    abstract void delete_all();
+
+    abstract List<Book> query_all();
+
+    abstract List<Book> find();
 }

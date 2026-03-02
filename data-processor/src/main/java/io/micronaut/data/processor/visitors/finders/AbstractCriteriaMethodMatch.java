@@ -210,7 +210,32 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 if (isId && rootEntity.hasIdentity()) {
                     propPath = new PersistentPropertyPath(Objects.requireNonNull(rootEntity.getIdentity()));
                 } else {
-                    propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
+                    String candidate = paramName;
+                    Optional<String> resolved = rootEntity.getPath(candidate);
+                    if (resolved.isEmpty()) {
+                        if (candidate.indexOf('_') >= 0) {
+                            String camel = NameUtils.decapitalize(NameUtils.camelCase(candidate));
+                            resolved = rootEntity.getPath(camel);
+                            if (resolved.isEmpty()) {
+                                resolved = PersistentEntityUtils.getPersistentPropertyPath(rootEntity, camel);
+                            }
+                        } else {
+                            String snake = NameUtils.underscoreSeparate(candidate).toLowerCase(java.util.Locale.ENGLISH);
+                            resolved = rootEntity.getPath(snake);
+                            if (resolved.isEmpty()) {
+                                resolved = PersistentEntityUtils.getPersistentPropertyPath(rootEntity, snake);
+                            }
+                        }
+                    }
+                    if (resolved.isPresent()) {
+                        propPath = rootEntity.getPropertyPath(resolved.get());
+                    } else {
+                        propPath = rootEntity.getPropertyPath(candidate);
+                        if (propPath == null) {
+                            Optional<String> p = PersistentEntityUtils.getPersistentPropertyPath(rootEntity, candidate);
+                            propPath = p.map(rootEntity::getPropertyPath).orElse(null);
+                        }
+                    }
                 }
                 ParameterExpression<Object> param = ((SourcePersistentEntityCriteriaBuilder) cb).parameter(queryParam, propPath);
                 if (propPath == null) {
@@ -553,17 +578,65 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         PersistentProperty prop = entity.getPropertyByName(propertyName);
-        PersistentPropertyPath pp;
+        PersistentPropertyPath pp = null;
         if (prop == null) {
             Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
             if (propertyPath.isPresent()) {
                 String path = propertyPath.get();
                 pp = entity.getPropertyPath(path);
+            }
+            if (pp == null) {
+                String snakeCase = NameUtils.underscoreSeparate(propertyName).toLowerCase(java.util.Locale.ENGLISH);
+                prop = entity.getPropertyByName(snakeCase);
+                if (prop == null) {
+                    try {
+                        Optional<String> snakePath = PersistentEntityUtils.getPersistentPropertyPath(entity, snakeCase);
+                        if (snakePath.isPresent()) {
+                            pp = entity.getPropertyPath(snakePath.get());
+                        }
+                    } catch (IllegalArgumentException e) {
+                    }
+                } else {
+                    pp = PersistentPropertyPath.of(Collections.emptyList(), prop, snakeCase);
+                }
+            }
+            if (pp == null) {
+                for (PersistentProperty candidate : entity.getPersistentProperties()) {
+                    if (candidate instanceof Association association) {
+                        String assocName = association.getName();
+                        if (propertyName.startsWith(assocName)) {
+                            String leaf = propertyName.substring(assocName.length());
+                            if (!leaf.isEmpty()) {
+                                String leafDecap = NameUtils.decapitalize(leaf);
+                                PersistentEntity assocEntity = association.getAssociatedEntity();
+                                PersistentProperty leafProp = assocEntity.getPropertyByName(leafDecap);
+                                if (leafProp == null) {
+                                    String leafSnake = NameUtils.underscoreSeparate(leafDecap).toLowerCase(java.util.Locale.ENGLISH);
+                                    leafProp = assocEntity.getPropertyByName(leafSnake);
+                                    if (leafProp == null) {
+                                        for (PersistentProperty assocProp : assocEntity.getPersistentProperties()) {
+                                            String assocPropSnake = NameUtils.underscoreSeparate(assocProp.getName()).toLowerCase(java.util.Locale.ENGLISH);
+                                            if (assocPropSnake.equals(leafSnake) || assocPropSnake.endsWith("_" + leafSnake)) {
+                                                leafProp = assocProp;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (leafProp != null) {
+                                    String p = assocName + "." + leafProp.getName();
+                                    pp = entity.getPropertyPath(p);
+                                    if (pp != null) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (pp == null) {
                     return null;
                 }
-            } else {
-                return null;
             }
         } else {
             pp = PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);

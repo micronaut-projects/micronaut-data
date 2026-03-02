@@ -223,4 +223,23 @@ interface FamilyRepository extends GenericRepository<Family, String> {
     static String getQuery(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotation(Query).stringValue().get()
     }
+
+    void "snake_case ArrayContains equals camelCase"() {
+        given:
+        def repository = buildRepository('test.FamilyRepository2', """
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.azure.entities.Family;
+@CosmosRepository
+interface FamilyRepository2 extends GenericRepository<Family, String> {
+    java.util.List<Family> findByTagsArrayContains(String tag);
+    java.util.List<Family> find_by_tags_array_contains(String tag);
+}
+""")
+        when:
+        def camel = getQuery(repository.getRequiredMethod("findByTagsArrayContains", String))
+        def snake = getQuery(repository.getRequiredMethod("find_by_tags_array_contains", String))
+        then:
+        camel == snake
+        camel == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.tags,@p1,true))"
+    }
 }
