@@ -562,6 +562,12 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         pattern = pattern
                             .replace("_", ".")
                             .replace("%", ".*");
+                        if (!pattern.startsWith("^")) {
+                            pattern = "^" + pattern;
+                        }
+                        if (!pattern.startsWith("$")) {
+                            pattern = pattern + "$";
+                        }
                         options = options.replace("l", "");
                     }
                     return new BsonRegularExpression(pattern, options);

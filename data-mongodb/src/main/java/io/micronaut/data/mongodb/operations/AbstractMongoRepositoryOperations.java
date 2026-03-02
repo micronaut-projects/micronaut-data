@@ -190,6 +190,14 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 value = result.values().iterator().next();
             }
         } else if (isDtoProjection) {
+            if (resultType.equals(Object[].class)) {
+                Object[] array = result.asDocument().entrySet().
+                    stream()
+                    .filter(e -> !e.getKey().equals(MongoUtils.ID))
+                    .map(e -> MongoUtils.toValue(e.getValue()))
+                    .toArray();
+                return (R) array;
+            }
             R dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {
                 return dtoResult;

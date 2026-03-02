@@ -25,7 +25,6 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import org.jspecify.annotations.NullUnmarked;
-import org.jspecify.annotations.Nullable;
 
 /**
  * The Spring to Micronaut Data specification converters.
