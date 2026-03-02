@@ -268,9 +268,9 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   }
 
   @Override
-  public void visitRegexp(final Expression<?> leftExpression, final Expression<?> expression) {
-    Expression<?> value = expression;
-    if (expression instanceof LiteralExpression<?> literalExpression
+  public void visitRegexp(final Expression<?> leftExpression, final Expression<?> rightExpression) {
+    Expression<?> value = rightExpression;
+    if (rightExpression instanceof LiteralExpression<?> literalExpression
         && literalExpression.getValue() instanceof String pattern) {
       value = new LiteralExpression<>(new RegexPattern(pattern));
     }

@@ -21,9 +21,6 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import java.util.List;
 
-/**
- * Repository for Document entity.
- */
 @NitriteRepository
 public interface DocumentRepository
     extends CrudRepository<Document, String>, PageableRepository<Document, String> {

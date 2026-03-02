@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.repository;
+package io.micronaut.data.nitrite.tck;
 
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.document.tck.repositories.DocumentRepository;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.model.Widget;
-import io.micronaut.data.repository.CrudRepository;
-import java.util.List;
-import java.util.UUID;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder2;
 
 @NitriteRepository
-public interface WidgetRepository extends CrudRepository<Widget, UUID> {
-
-  List<Widget> findByName(String name);
+@RepositoryConfiguration(queryBuilder = NitriteQueryBuilder2.class)
+public interface NitriteDocumentRepository extends DocumentRepository {
 }

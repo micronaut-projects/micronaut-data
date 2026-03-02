@@ -19,9 +19,6 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
-/**
- * Person entity for testing.
- */
 @MappedEntity("persons")
 public class Person {
   @Id @GeneratedValue private String id;
@@ -30,7 +27,7 @@ public class Person {
   private Integer age;
   private Boolean active;
 
-  public Person() { }
+  public Person() {}
 
   public Person(String name, Integer age) {
     this.name = name;
@@ -44,58 +41,34 @@ public class Person {
     this.active = active;
   }
 
-  /**
-   * @return the id
-   */
   public String getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(String id) {
     this.id = id;
   }
 
-  /**
-   * @return the name
-   */
   public String getName() {
     return name;
   }
 
-  /**
-   * @param name the name
-   */
   public void setName(String name) {
     this.name = name;
   }
 
-  /**
-   * @return the age
-   */
   public Integer getAge() {
     return age;
   }
 
-  /**
-   * @param age the age
-   */
   public void setAge(Integer age) {
     this.age = age;
   }
 
-  /**
-   * @return is active
-   */
   public Boolean isActive() {
     return active;
   }
 
-  /**
-   * @param active is active
-   */
   public void setActive(Boolean active) {
     this.active = active;
   }

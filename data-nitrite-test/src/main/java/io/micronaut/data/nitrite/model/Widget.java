@@ -27,36 +27,24 @@ public class Widget {
 
   private String name;
 
-  public Widget() { }
+  public Widget() {}
 
   public Widget(String name) {
     this.name = name;
   }
 
-  /**
-   * @return the id
-   */
   public UUID getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(UUID id) {
     this.id = id;
   }
 
-  /**
-   * @return the name
-   */
   public String getName() {
     return name;
   }
 
-  /**
-   * @param name the name
-   */
   public void setName(String name) {
     this.name = name;
   }

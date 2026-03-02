@@ -31,7 +31,7 @@ public class PersonWithAddress {
   private int age;
   private Address address;
 
-  public PersonWithAddress() { }
+  public PersonWithAddress() {}
 
   public PersonWithAddress(String name, int age, Address address) {
     this.name = name;
@@ -39,58 +39,34 @@ public class PersonWithAddress {
     this.address = address;
   }
 
-  /**
-   * @return the id
-   */
   public String getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(String id) {
     this.id = id;
   }
 
-  /**
-   * @return the name
-   */
   public String getName() {
     return name;
   }
 
-  /**
-   * @param name the name
-   */
   public void setName(String name) {
     this.name = name;
   }
 
-  /**
-   * @return the age
-   */
   public int getAge() {
     return age;
   }
 
-  /**
-   * @param age the age
-   */
   public void setAge(int age) {
     this.age = age;
   }
 
-  /**
-   * @return the address
-   */
   public Address getAddress() {
     return address;
   }
 
-  /**
-   * @param address the address
-   */
   public void setAddress(Address address) {
     this.address = address;
   }
@@ -102,7 +78,7 @@ public class PersonWithAddress {
     private String state;
     private String zipCode;
 
-    public Address() { }
+    public Address() {}
 
     public Address(String street, String city, String state, String zipCode) {
       this.street = street;
@@ -111,58 +87,34 @@ public class PersonWithAddress {
       this.zipCode = zipCode;
     }
 
-    /**
-     * @return the street
-     */
     public String getStreet() {
       return street;
     }
 
-    /**
-     * @param street the street
-     */
     public void setStreet(String street) {
       this.street = street;
     }
 
-    /**
-     * @return the city
-     */
     public String getCity() {
       return city;
     }
 
-    /**
-     * @param city the city
-     */
     public void setCity(String city) {
       this.city = city;
     }
 
-    /**
-     * @return the state
-     */
     public String getState() {
       return state;
     }
 
-    /**
-     * @param state the state
-     */
     public void setState(String state) {
       this.state = state;
     }
 
-    /**
-     * @return the zip code
-     */
     public String getZipCode() {
       return zipCode;
     }
 
-    /**
-     * @param zipCode the zip code
-     */
     public void setZipCode(String zipCode) {
       this.zipCode = zipCode;
     }

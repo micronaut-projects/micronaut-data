@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Document entity for testing.
- */
 @MappedEntity("documents")
 public class Document {
   @Id @GeneratedValue private String id;
@@ -33,7 +30,7 @@ public class Document {
   private List<String> tags;
   private Boolean published;
 
-  public Document() { }
+  public Document() {}
 
   public Document(String title, List<String> tags, Boolean published) {
     this.title = title;
@@ -42,60 +39,36 @@ public class Document {
     this.published = published;
   }
 
-  /**
-   * @return the id
-   */
   public String getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(String id) {
     this.id = id;
   }
 
-  /**
-   * @return the title
-   */
   public String getTitle() {
     return title;
   }
 
-  /**
-   * @param title the title
-   */
   public void setTitle(String title) {
     this.title = title;
   }
 
-  /**
-   * @return the tags
-   */
   public List<String> getTags() {
     // Return unmodifiable view to prevent external modification
     return (tags != null) ? Collections.unmodifiableList(tags) : Collections.emptyList();
   }
 
-  /**
-   * @param tags the tags
-   */
   public void setTags(List<String> tags) {
     // Defensive copy to prevent external modification
     this.tags = (tags != null) ? new ArrayList<>(tags) : new ArrayList<>();
   }
 
-  /**
-   * @return is published
-   */
   public Boolean isPublished() {
     return published;
   }
 
-  /**
-   * @param published is published
-   */
   public void setPublished(Boolean published) {
     this.published = published;
   }

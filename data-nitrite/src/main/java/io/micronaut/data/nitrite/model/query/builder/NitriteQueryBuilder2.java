@@ -205,6 +205,15 @@ public final class NitriteQueryBuilder2 implements QueryBuilder, QueryBuilder2 {
     return obj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(obj);
   }
 
+  public boolean supportsRegex() {
+    return true;
+  }
+
+  @Override
+  public boolean shouldAliasProjections() {
+    return true;
+  }
+
   private Map<String, Object> buildWhereClause(
       final Predicate predicate, final NitriteQueryState queryState) {
     if (predicate == null) {

@@ -1270,7 +1270,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return collection.find(filter).firstOrNull() != null;
   }
 
-  @Override
   public <T, R> Iterable<R> findAll(@NonNull final PreparedQuery<T, R> q) {
     LOG.trace("findAll query={} pageable={}", q.getQuery(), q.getPageable());
     Class<T> rootEntity = q.getRootEntity();

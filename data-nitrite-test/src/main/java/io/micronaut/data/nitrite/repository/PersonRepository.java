@@ -25,9 +25,6 @@ import io.micronaut.data.repository.PageableRepository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repository for Person entity.
- */
 @NitriteRepository
 public interface PersonRepository
     extends CrudRepository<Person, String>, PageableRepository<Person, String> {

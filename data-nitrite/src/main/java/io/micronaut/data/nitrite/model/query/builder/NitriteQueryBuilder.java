@@ -119,6 +119,15 @@ public class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
   @Override
   @NonNull
   public String buildLimitAndOffset(final long limit, final long offset) {
-    return delegate.buildLimitAndOffset(limit, offset);
+      return delegate.buildLimitAndOffset(limit, offset);
   }
-}
+
+  public boolean supportsRegex() {
+      return true;
+  }
+
+  @Override
+  public boolean shouldAliasProjections() {
+      return true;
+  }
+  }

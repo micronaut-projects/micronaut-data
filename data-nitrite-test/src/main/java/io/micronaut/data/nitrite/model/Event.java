@@ -31,7 +31,7 @@ public class Event {
   private Boolean processed;
   private Instant occurredAt;
 
-  public Event() { }
+  public Event() {}
 
   public Event(String type, String payload) {
     this.type = type;
@@ -40,86 +40,50 @@ public class Event {
     this.processed = false;
   }
 
-  /**
-   * @return the id
-   */
   public String getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(String id) {
     this.id = id;
   }
 
-  /**
-   * @return the type
-   */
   public String getType() {
     return type;
   }
 
-  /**
-   * @param type the type
-   */
   public void setType(String type) {
     this.type = type;
   }
 
-  /**
-   * @return the payload
-   */
   public String getPayload() {
     return payload;
   }
 
-  /**
-   * @param payload the payload
-   */
   public void setPayload(String payload) {
     this.payload = payload;
   }
 
-  /**
-   * @return the priority
-   */
   public Integer getPriority() {
     return priority;
   }
 
-  /**
-   * @param priority the priority
-   */
   public void setPriority(Integer priority) {
     this.priority = priority;
   }
 
-  /**
-   * @return is processed
-   */
   public Boolean isProcessed() {
     return processed;
   }
 
-  /**
-   * @param processed is processed
-   */
   public void setProcessed(Boolean processed) {
     this.processed = processed;
   }
 
-  /**
-   * @return the occurred at
-   */
   public Instant getOccurredAt() {
     return occurredAt;
   }
 
-  /**
-   * @param occurredAt the occurred at
-   */
   public void setOccurredAt(Instant occurredAt) {
     this.occurredAt = occurredAt;
   }

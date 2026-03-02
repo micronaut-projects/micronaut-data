@@ -32,7 +32,7 @@ public class Product {
   private Boolean available;
   private UUID sku;
 
-  public Product() { }
+  public Product() {}
 
   public Product(String name, BigDecimal price, Integer quantity) {
     this.name = name;
@@ -42,86 +42,50 @@ public class Product {
     this.sku = UUID.randomUUID();
   }
 
-  /**
-   * @return the id
-   */
   public Long getId() {
     return id;
   }
 
-  /**
-   * @param id the id
-   */
   public void setId(Long id) {
     this.id = id;
   }
 
-  /**
-   * @return the name
-   */
   public String getName() {
     return name;
   }
 
-  /**
-   * @param name the name
-   */
   public void setName(String name) {
     this.name = name;
   }
 
-  /**
-   * @return the price
-   */
   public BigDecimal getPrice() {
     return price;
   }
 
-  /**
-   * @param price the price
-   */
   public void setPrice(BigDecimal price) {
     this.price = price;
   }
 
-  /**
-   * @return the quantity
-   */
   public Integer getQuantity() {
     return quantity;
   }
 
-  /**
-   * @param quantity the quantity
-   */
   public void setQuantity(Integer quantity) {
     this.quantity = quantity;
   }
 
-  /**
-   * @return is available
-   */
   public Boolean isAvailable() {
     return available;
   }
 
-  /**
-   * @param available is available
-   */
   public void setAvailable(Boolean available) {
     this.available = available;
   }
 
-  /**
-   * @return the sku
-   */
   public UUID getSku() {
     return sku;
   }
 
-  /**
-   * @param sku the sku
-   */
   public void setSku(UUID sku) {
     this.sku = sku;
   }
