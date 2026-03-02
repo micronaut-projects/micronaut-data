@@ -772,11 +772,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
-            }
-            else if (tableColumn.getDbType() == SqlDbType.JSON_OBJECT) {
+            } else if (tableColumn.getDbType() == SqlDbType.JSON_OBJECT) {
                 column += " JSON(OBJECT)";
-            }
-            else {
+            } else {
                 column += " " + tableColumn.getSqlType(dialect);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
