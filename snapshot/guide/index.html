@@ -806,6 +806,22 @@ void "test annotation metadata"() {
 <h2 id="_5_0">5.0</h2>
 <div class="sectionbody">
 <div class="sect2">
+<h3 id="_mapping_between_java_time_types_and_oracle_database_interval_types">Mapping between Java time types and Oracle database INTERVAL types</h3>
+<div class="paragraph">
+<p>The following Java time types are now mapped to INTERVAL database types instead of string database types when using Oracle database:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>java.time.Duration</code> is mapped to <code>INTERVAL DAY TO SECOND (INTERVALDS)</code></p>
+</li>
+<li>
+<p><code>java.time.Period</code> is mapped to <code>INTERVAL YEAR TO MONTH (INTERVALYM)</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_interactions_with_synchronous_transaction_and_connection_manager">Interactions with synchronous transaction and connection manager</h3>
 <div class="paragraph">
 <p>Creating a new transaction with <code>io.micronaut.transaction.SynchronousTransactionManager</code> or a connection with <code>io.micronaut.data.connection.SynchronousConnectionManager</code> no longer places the resulting status into the current <code>PropagatedContext</code> automatically.
@@ -12808,6 +12824,25 @@ Generated values and relations that cannot be created during the entity initiali
 </div>
 <div class="paragraph">
 <p>If you wish to define a custom data type then you can do so by defining a class that is annotated with <a href="../api/io/micronaut/data/annotation/TypeDef.html">@TypeDef</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="_oracle_database_custom_data_types">Oracle database custom data types</h4>
+<div class="paragraph">
+<p>Since 5.0.0, the following Java time types are mapped to Oracle Database INTERVAL types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>java.time.Duration</code> is mapped to <code>INTERVAL DAY TO SECOND (INTERVALDS)</code></p>
+</li>
+<li>
+<p><code>java.time.Period</code> is mapped to <code>INTERVAL YEAR TO MONTH (INTERVALYM)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Only year and month components are supported for <code>java.time.Period</code>, day component must be zero.</p>
+</div>
 </div>
 
 <h2 id="dbcAttributeConverter"><a class="anchor" href="#dbcAttributeConverter"></a>6.7 Using Attribute Converter</h2>

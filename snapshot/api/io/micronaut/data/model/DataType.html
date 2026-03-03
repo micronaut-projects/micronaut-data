@@ -68,6 +68,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#DATE" tabindex="0">DATE</a></li>
 <li><a href="#TIMESTAMP" tabindex="0">TIMESTAMP</a></li>
 <li><a href="#TIME" tabindex="0">TIME</a></li>
+<li><a href="#DURATION" tabindex="0">DURATION</a></li>
+<li><a href="#PERIOD" tabindex="0">PERIOD</a></li>
 <li><a href="#DOUBLE" tabindex="0">DOUBLE</a></li>
 <li><a href="#FLOAT" tabindex="0">FLOAT</a></li>
 <li><a href="#INTEGER" tabindex="0">INTEGER</a></li>
@@ -198,41 +200,49 @@ switching.</div>
 <div class="col-last odd-row-color">
 <div class="block">A double array.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#ENTITY" class="member-name-link">ENTITY</a></code></div>
+<div class="col-first even-row-color"><code><a href="#DURATION" class="member-name-link">DURATION</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link"><code>Duration</code></a> value.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="#ENTITY" class="member-name-link">ENTITY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">A class annotated with <a href="../annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a>.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#FLOAT" class="member-name-link">FLOAT</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#FLOAT" class="member-name-link">FLOAT</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link"><code>Float</code></a> value.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#FLOAT_ARRAY" class="member-name-link">FLOAT_ARRAY</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#FLOAT_ARRAY" class="member-name-link">FLOAT_ARRAY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">A long array.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#INTEGER" class="member-name-link">INTEGER</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#INTEGER" class="member-name-link">INTEGER</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link"><code>Integer</code></a> value.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#INTEGER_ARRAY" class="member-name-link">INTEGER_ARRAY</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#INTEGER_ARRAY" class="member-name-link">INTEGER_ARRAY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">An integer array.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#JSON" class="member-name-link">JSON</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#JSON" class="member-name-link">JSON</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">A JSON type.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#LONG" class="member-name-link">LONG</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#LONG" class="member-name-link">LONG</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link"><code>Long</code></a> value.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#LONG_ARRAY" class="member-name-link">LONG_ARRAY</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#LONG_ARRAY" class="member-name-link">LONG_ARRAY</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">A long array.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#OBJECT" class="member-name-link">OBJECT</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#OBJECT" class="member-name-link">OBJECT</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">An object of an indeterminate type.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="#PERIOD" class="member-name-link">PERIOD</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link"><code>Period</code></a> value.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="#SHORT" class="member-name-link">SHORT</a></code></div>
 <div class="col-last odd-row-color">
@@ -410,6 +420,24 @@ the order they are declared.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">TIME</span></div>
 <div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link"><code>Time</code></a> value.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="DURATION">
+<h3>DURATION</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">DURATION</span></div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link"><code>Duration</code></a> value.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="PERIOD">
+<h3>PERIOD</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">PERIOD</span></div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link"><code>Period</code></a> value.</div>
 </div>
 </section>
 </li>

@@ -5563,6 +5563,14 @@ definition.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html#%3Cinit%3E(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">DummyPreparedQuery(StoredQuery)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DummyPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/DataType.html#DURATION" class="member-name-link">DURATION</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
+<dd>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link"><code>Duration</code></a> value.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#DURATION" class="member-name-link">DURATION</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
+<dd>
+<div class="block">A type code representing oracle jdbc type <code>oracle.sql.INTERVALDS</code>.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
 <dl class="index">
@@ -8344,6 +8352,8 @@ WHERE :nullableValue IS NULL AND nullable_value IS NULL
 <dd>
 <div class="block">An interceptor that finds a cursored page reactively.</div>
 </dd>
+<dt><a href="io/micronaut/data/tck/repositories/IntervalRepository.html#findCustom(java.time.Duration,java.time.Period)" class="member-name-link">findCustom(Duration, Period)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/IntervalRepository.html" title="interface in io.micronaut.data.tck.repositories">IntervalRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#findDistinct()" class="member-name-link">findDistinct()</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#findDistinctName()" class="member-name-link">findDistinctName()</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
@@ -10209,6 +10219,8 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#getDuration()" class="member-name-link">getDuration()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#getDuration()" class="member-name-link">getDuration()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchFailedException.html#getElement()" class="member-name-link">getElement()</a> - Method in exception class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchFailedException.html" title="class in io.micronaut.data.processor.visitors">MatchFailedException</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/User.html#getEmail()" class="member-name-link">getEmail()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a></dt>
@@ -10618,6 +10630,8 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/Employee.html#getId()" class="member-name-link">getId()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/Employee.html" title="class in io.micronaut.data.tck.jdbc.entities">Employee</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/EmployeeGroup.html#getId()" class="member-name-link">getId()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/EmployeeGroup.html" title="class in io.micronaut.data.tck.jdbc.entities">EmployeeGroup</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#getId()" class="member-name-link">getId()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/Organization.html#getId()" class="member-name-link">getId()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/Organization.html" title="class in io.micronaut.data.tck.jdbc.entities">Organization</a></dt>
 <dd>&nbsp;</dd>
@@ -11980,6 +11994,8 @@ i.e.</div>
 <div class="block">Get the alias name for just the join path.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/LikePredicate.html#getPattern()" class="member-name-link">getPattern()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#getPeriod()" class="member-name-link">getPeriod()</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/AbstractPersistentEntity.html#getPersistedName()" class="member-name-link">getPersistedName()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></dt>
 <dd>&nbsp;</dd>
@@ -14635,6 +14651,12 @@ preserving the original exception despite the overriding TransactionSystemExcept
 <dd>
 <div class="block">The internal transaction representation.</div>
 </dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" class="type-name-link" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a> - Class in <a href="io/micronaut/data/tck/jdbc/entities/package-summary.html">io.micronaut.data.tck.jdbc.entities</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#%3Cinit%3E()" class="member-name-link">IntervalEntity()</a> - Constructor for class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/repositories/IntervalRepository.html" class="type-name-link" title="interface in io.micronaut.data.tck.repositories">IntervalRepository</a> - Interface in <a href="io/micronaut/data/tck/repositories/package-summary.html">io.micronaut.data.tck.repositories</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/exceptions/InvalidIsolationLevelException.html" class="type-name-link" title="class in io.micronaut.transaction.exceptions">InvalidIsolationLevelException</a> - Exception Class in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
 <dd>
 <div class="block">Exception that gets thrown when an invalid isolation level is specified,
@@ -15683,6 +15705,10 @@ entity.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isPage(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isPage(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isPeriod(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isPeriod(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Is the type a period.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#isPossiblyFailing()" class="member-name-link">isPossiblyFailing()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>
 <div class="block">Are there possible failures.</div>
@@ -19225,6 +19251,14 @@ a direction.</div>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/data/model/DataType.html#PERIOD" class="member-name-link">PERIOD</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
+<dd>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link"><code>Period</code></a> value.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#PERIOD" class="member-name-link">PERIOD</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
+<dd>
+<div class="block">A type code representing oracle jdbc type <code>oracle.sql.INTERVALYM</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#persist()" class="member-name-link">persist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
 <dd>
 <div class="block">Persist one operation.</div>
@@ -21252,6 +21286,10 @@ can occur.</div>
 <dd>
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readDuration(RS,IDX)" class="member-name-link">readDuration(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
+<dd>
+<div class="block">Read a duration value for the given name.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html#readDynamic(io.r2dbc.spi.Row,java.lang.Integer,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(Row, Integer, DataType)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnIndexR2dbcResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readDynamic(io.r2dbc.spi.Row,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(Row, String, DataType)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a></dt>
@@ -21391,6 +21429,10 @@ can occur.</div>
 <dt><a href="io/micronaut/data/connection/DefaultConnectionDefinition.html#readOnlyValue()" class="member-name-link">readOnlyValue()</a> - Method in record class io.micronaut.data.connection.<a href="io/micronaut/data/connection/DefaultConnectionDefinition.html" title="class in io.micronaut.data.connection">DefaultConnectionDefinition</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/connection/DefaultConnectionDefinition.html#param-readOnlyValue"><code>readOnlyValue</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readPeriod(RS,IDX)" class="member-name-link">readPeriod(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
+<dd>
+<div class="block">Read a period value for the given name.</div>
 </dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html#readShort(io.r2dbc.spi.Row,java.lang.Integer)" class="member-name-link">readShort(Row, Integer)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnIndexR2dbcResultReader</a></dt>
 <dd>&nbsp;</dd>
@@ -22526,6 +22568,8 @@ can be produced by this query.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#saveCustom(java.lang.String,int)" class="member-name-link">saveCustom(String, int)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/repositories/IntervalRepository.html#saveCustom(java.time.Duration,java.time.Period)" class="member-name-link">saveCustom(Duration, Period)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/IntervalRepository.html" title="interface in io.micronaut.data.tck.repositories">IntervalRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonAsyncRepository.html#saveCustom(java.util.List)" class="member-name-link">saveCustom(List)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonAsyncRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonAsyncRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html#saveCustom(java.util.List)" class="member-name-link">saveCustom(List)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonReactiveRepository</a></dt>
@@ -23216,6 +23260,8 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#setDuration(java.time.Duration)" class="member-name-link">setDuration(Duration)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#setDuration(java.time.Duration)" class="member-name-link">setDuration(Duration)</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setDynamic(io.r2dbc.spi.Statement,java.lang.Integer,io.micronaut.data.model.DataType,java.lang.Object)" class="member-name-link">setDynamic(Statement, Integer, DataType, Object)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setDynamic(java.sql.PreparedStatement,java.lang.Integer,io.micronaut.data.model.DataType,java.lang.Object)" class="member-name-link">setDynamic(PreparedStatement, Integer, DataType, Object)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
@@ -23357,6 +23403,8 @@ after a participating transaction failed.</div>
 <dt><a href="io/micronaut/data/document/tck/entities/County.html#setId(io.micronaut.data.document.tck.entities.CountyPk)" class="member-name-link">setId(CountyPk)</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/County.html" title="class in io.micronaut.data.document.tck.entities">County</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Settlement.html#setId(io.micronaut.data.document.tck.entities.SettlementPk)" class="member-name-link">setId(SettlementPk)</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Settlement.html" title="class in io.micronaut.data.document.tck.entities">Settlement</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#setId(java.lang.Integer)" class="member-name-link">setId(Integer)</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/CountyPk.html#setId(java.lang.Long)" class="member-name-link">setId(Long)</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/CountyPk.html" title="class in io.micronaut.data.document.tck.entities">CountyPk</a></dt>
 <dd>&nbsp;</dd>
@@ -23871,6 +23919,8 @@ after a participating transaction failed.</div>
 <div class="block">Sets the container partition key path.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Car.html#setParts(java.util.Set)" class="member-name-link">setParts(Set)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Car.html" title="class in io.micronaut.data.tck.entities">Car</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html#setPeriod(java.time.Period)" class="member-name-link">setPeriod(Period)</a> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Food.html#setPortionGrams(int)" class="member-name-link">setPortionGrams(int)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Food.html" title="class in io.micronaut.data.tck.entities">Food</a></dt>
 <dd>&nbsp;</dd>
@@ -27088,6 +27138,8 @@ in an unexpected rollback.</div>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/tck/repositories/IntervalRepository.html#updateCustom(java.lang.Integer,java.time.Duration,java.time.Period)" class="member-name-link">updateCustom(Integer, Duration, Period)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/IntervalRepository.html" title="interface in io.micronaut.data.tck.repositories">IntervalRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#updateCustomOnlyNames(java.util.List)" class="member-name-link">updateCustomOnlyNames(List)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/SaleRepository.html#updateData(java.lang.Long,java.util.Map,java.util.List)" class="member-name-link">updateData(Long, Map, List)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/SaleRepository.html" title="interface in io.micronaut.data.tck.repositories">SaleRepository</a></dt>

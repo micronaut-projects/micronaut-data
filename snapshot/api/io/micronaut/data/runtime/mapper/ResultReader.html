@@ -66,6 +66,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#readLong(RS,IDX)" tabindex="0">readLong(RS, IDX)</a></li>
 <li><a href="#readChar(RS,IDX)" tabindex="0">readChar(RS, IDX)</a></li>
 <li><a href="#readDate(RS,IDX)" tabindex="0">readDate(RS, IDX)</a></li>
+<li><a href="#readDuration(RS,IDX)" tabindex="0">readDuration(RS, IDX)</a></li>
+<li><a href="#readPeriod(RS,IDX)" tabindex="0">readPeriod(RS, IDX)</a></li>
 <li><a href="#readTimestamp(RS,IDX)" tabindex="0">readTimestamp(RS, IDX)</a></li>
 <li><a href="#readTime(RS,IDX)" tabindex="0">readTime(RS, IDX)</a></li>
 <li><a href="#readString(RS,IDX)" tabindex="0">readString(RS, IDX)</a></li>
@@ -195,30 +197,42 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a double value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDynamic(RS,IDX,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDuration(RS,IDX)" class="member-name-link">readDuration</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Read a duration value for the given name.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readDynamic(RS,IDX,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;index,
  <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default float</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readFloat(RS,IDX)" class="member-name-link">readFloat</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
- <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Read a float value for the given name.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readInt(RS,IDX)" class="member-name-link">readInt</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default float</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readFloat(RS,IDX)" class="member-name-link">readFloat</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Read an int value for the given name.</div>
+<div class="block">Read a float value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default long</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readLong(RS,IDX)" class="member-name-link">readLong</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readInt(RS,IDX)" class="member-name-link">readInt</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Read an int value for the given name.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default long</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readLong(RS,IDX)" class="member-name-link">readLong</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Read a long value for the given name.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link">Period</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readPeriod(RS,IDX)" class="member-name-link">readPeriod</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Read a period value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default short</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#readShort(RS,IDX)" class="member-name-link">readShort</a><wbr>(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
@@ -437,6 +451,44 @@ loadScripts(document, 'script');</script>
 <dd><code>name</code> - The name (such as the column name)</dd>
 <dt>Returns:</dt>
 <dd>The char value</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="readDuration(RS,IDX)">
+<h3 id="readDuration(java.lang.Object,java.lang.Object)">readDuration</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">readDuration</span><wbr><span class="parameters">(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</span></div>
+<div class="block">Read a duration value for the given name.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>name</code> - The name (such as the column name)</dd>
+<dt>Returns:</dt>
+<dd>The duration value</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="readPeriod(RS,IDX)">
+<h3 id="readPeriod(java.lang.Object,java.lang.Object)">readPeriod</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link">Period</a></span>&nbsp;<span class="element-name">readPeriod</span><wbr><span class="parameters">(<a href="#type-param-RS" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-IDX" title="type parameter in ResultReader">IDX</a>&nbsp;name)</span></div>
+<div class="block">Read a period value for the given name.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>name</code> - The name (such as the column name)</dd>
+<dt>Returns:</dt>
+<dd>The period value</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </div>
 </section>
