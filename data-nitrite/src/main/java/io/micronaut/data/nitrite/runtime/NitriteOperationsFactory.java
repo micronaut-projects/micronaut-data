@@ -42,6 +42,10 @@ public final class NitriteOperationsFactory {
   /**
    * Create a Nitrite database instance.
    *
+   * <p>Note: the mapper is configured with Jackson's {@link JavaTimeModule}. The runtime normalizes
+   * certain values (notably {@link java.time.Instant}) to match the mapper’s stored representation
+   * when building query filters (see {@code DefaultNitriteRepositoryOperations.toFilterValue}).
+   *
    * @param config the configuration
    * @return the database
    */

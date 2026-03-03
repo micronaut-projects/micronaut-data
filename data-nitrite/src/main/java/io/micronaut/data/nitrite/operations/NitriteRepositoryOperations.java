@@ -26,12 +26,35 @@ import org.dizitart.no2.repository.ObjectRepository;
  *
  * <p>This interface extends {@link RepositoryOperations} to integrate with Micronaut Data's
  * repository abstraction.
+ *
+ * <p>It also implements {@link PrimaryRepositoryOperations} so Micronaut Data can reliably pick
+ * Nitrite as the primary {@link RepositoryOperations} implementation for repositories annotated
+ * with {@code @NitriteRepository}.
  */
 public interface NitriteRepositoryOperations
     extends RepositoryOperations, PrimaryRepositoryOperations {
+  /**
+   * @return the underlying Nitrite database instance
+   */
   Nitrite getDatabase();
 
+  /**
+   * Get (or create) the Nitrite {@link ObjectRepository} for an entity type.
+   *
+   * @param entityType the entity type
+   * @return the repository
+   * @param <T> the entity type
+   * @param <ID> the ID type
+   */
   <T, ID extends Serializable> ObjectRepository<T> getRepository(Class<T> entityType);
 
+  /**
+   * Get (or create) the Nitrite {@link ObjectRepository} for an entity type and discriminator.
+   *
+   * @param entityType the entity type
+   * @param discriminator the discriminator (for {@code @MappedEntity(discriminator=...)} use-cases)
+   * @return the repository
+   * @param <T> the entity type
+   */
   <T> ObjectRepository<T> getRepository(Class<T> entityType, String discriminator);
 }

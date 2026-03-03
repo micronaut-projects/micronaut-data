@@ -73,9 +73,26 @@ public final class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
    */
   public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
 
-  public NitriteQueryBuilder() {}
+  /**
+   * Default constructor required for reflective instantiation and service loading.
+   *
+   * <p>Nitrite does not currently require repository-level annotation metadata to build criteria
+   * queries.
+   */
+  public NitriteQueryBuilder() {
+  }
 
-  public NitriteQueryBuilder(AnnotationMetadata annotationMetadata) {}
+  /**
+   * Metadata constructor used by some Micronaut Data versions.
+   *
+   * <p>The parameter is intentionally unused; it is kept for signature parity with other modules
+   * and for forward compatibility with Micronaut Data 5.0.x where query builder instantiation
+   * rules may differ.
+   *
+   * @param annotationMetadata Repository annotation metadata
+   */
+  public NitriteQueryBuilder(AnnotationMetadata annotationMetadata) {
+  }
 
   @Override
   public QueryResult buildInsert(
@@ -267,6 +284,9 @@ public final class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
     return obj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(obj);
   }
 
+  /**
+   * @return {@code true} if Nitrite query filters support regex matching
+   */
   public boolean supportsRegex() {
     return true;
   }

@@ -10,6 +10,11 @@ import spock.lang.Specification
 /**
  * Comprehensive test suite for Micronaut Data NitriteDB implementation.
  * Based on patterns from data-document-tck AbstractDocumentRepositorySpec.
+ *
+ * <p>In addition to derived queries, this spec contains a small set of regression tests for
+ * “update by query” behavior. Those tests are important because update queries use criteria
+ * bindings, and Nitrite must encode update parameters as bindable placeholders (not as
+ * {@code ParameterExpressionImpl{...}} strings).
  */
 @MicronautTest(transactional = false)
 class PersonRepositorySpec extends Specification {

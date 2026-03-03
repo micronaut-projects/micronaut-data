@@ -8,7 +8,19 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 /**
- * Tests for ProductRepository - tests Long ID, BigDecimal, LocalDate, UUID, Boolean types.
+ * Integration tests for Nitrite-backed repositories using {@link ProductRepository}.
+ *
+ * <p>This spec intentionally mixes “normal” derived-query coverage with a few targeted regression
+ * tests that protect Nitrite-specific contracts:
+ *
+ * <ul>
+ *   <li><b>Numeric equality stability</b>: depending on the mapping path, numeric values may be
+ *       stored as different Java numeric types (for example {@code Long} vs {@code BigDecimal}).
+ *       ID lookups must remain stable (see the “Gap 4” test).</li>
+ *   <li><b>UUID round-tripping</b>: UUID fields are stored as strings by Jackson; equality must work
+ *       after reload (see the “Gap 5” tests).</li>
+ *   <li><b>BigDecimal ordering</b>: comparisons must be numeric, not lexicographic (see “Gap 8”).</li>
+ * </ul>
  */
 @MicronautTest(transactional = false)
 class ProductRepositorySpec extends Specification {
@@ -220,7 +232,13 @@ class ProductRepositorySpec extends Specification {
 
     // ========== Gap Coverage Tests ==========
 
-    // Gap 4: Long ID in filter (findOne path)
+    /**
+     * Gap 4: Long ID in filter (findOne path).
+     *
+     * <p>Regression guard for numeric equality coercion. If the stored {@code id} is represented as
+     * a different numeric type than the query parameter (e.g. {@code BigDecimal} vs {@code Long}),
+     * a strict equality filter can return {@code Optional.empty}.
+     */
     void "test findById with Long ID"() {
         given:
         def product = new Product("TestProduct", new BigDecimal("15.99"), 10)
@@ -236,7 +254,12 @@ class ProductRepositorySpec extends Specification {
         found.get().name == "TestProduct"
     }
 
-    // Gap 5: UUID sku field - test persistence (query by UUID not supported by SQL parser)
+    /**
+     * Gap 5: UUID sku field persistence.
+     *
+     * <p>Regression guard for UUID mapping. The Nitrite Jackson mapper serializes UUIDs as strings;
+     * the runtime must preserve value equality across save + reload.
+     */
     void "test UUID sku field persistence - Gap 5"() {
         given:
         def product = new Product("TestProduct", new BigDecimal("19.99"), 10)
@@ -294,7 +317,12 @@ class ProductRepositorySpec extends Specification {
         found.sku == sku
     }
 
-    // Gap 8: BigDecimal comparison ordering (lexicographic vs numeric)
+    /**
+     * Gap 8: BigDecimal comparison ordering (lexicographic vs numeric).
+     *
+     * <p>Regression guard that comparisons are numeric. A buggy implementation that coerces values
+     * to strings can produce lexicographic ordering (e.g. "9.99" > "10.00").
+     */
     void "test BigDecimal comparison with edge cases"() {
         given:
         // These values would fail under lexicographic ordering: "9.99" > "10.00"

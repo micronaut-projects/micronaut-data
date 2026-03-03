@@ -11,12 +11,18 @@ import spock.lang.Ignore
 import java.time.Instant
 
 /**
- * TDD tests demonstrating 7 bugs in NitriteQueryBuilder.
- * 
- * These tests FAIL initially, proving the bugs exist.
- * After fixes, all tests should PASS.
- * 
- * Bugs being tested:
+ * Regression-focused tests for Nitrite query builder/runtime edge cases.
+ *
+ * <p>This spec started life as “TDD for known bugs”. Today it acts as a compact regression suite
+ * that protects the contract between:
+ *
+ * <ul>
+ *   <li>annotation processor output (query strings + bindings),</li>
+ *   <li>{@code NitriteQueryBuilder} JSON encoding, and</li>
+ *   <li>{@code DefaultNitriteRepositoryOperations} parameter binding and execution.</li>
+ * </ul>
+ *
+ * <p>Bugs being tested:
  * 1. buildInsert returns null (will cause NPE)
  * 2. Duplicate methods getFieldName/getPropertyPersistName (refactoring test)
  * 3. MONGO_ID_FIELD naming leak (naming test)

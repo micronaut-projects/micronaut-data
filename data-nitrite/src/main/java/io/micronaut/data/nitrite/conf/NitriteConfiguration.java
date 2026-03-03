@@ -33,6 +33,7 @@ import io.micronaut.core.annotation.Nullable;
 @ConfigurationProperties(NitriteConfiguration.PREFIX)
 public final class NitriteConfiguration {
 
+  /** Configuration prefix used for binding Nitrite settings (e.g. {@code nitrite.db-path}). */
   public static final String PREFIX = "nitrite";
 
   /**

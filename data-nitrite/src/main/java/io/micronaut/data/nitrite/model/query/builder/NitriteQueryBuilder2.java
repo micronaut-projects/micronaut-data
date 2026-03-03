@@ -43,10 +43,22 @@ public final class NitriteQueryBuilder2 implements QueryBuilder, QueryBuilder2 {
 
     private final NitriteQueryBuilder delegate;
 
+    /**
+     * Create a delegating {@code QueryBuilder2} wrapper.
+     *
+     * <p>Prefer using {@link NitriteQueryBuilder} directly. This class exists only to satisfy
+     * versions of Micronaut Data 4.x that attempt to load a dedicated {@code *QueryBuilder2}
+     * implementation.
+     */
     public NitriteQueryBuilder2() {
         this.delegate = new NitriteQueryBuilder();
     }
 
+    /**
+     * Create a delegating {@code QueryBuilder2} wrapper.
+     *
+     * @param annotationMetadata Repository annotation metadata
+     */
     public NitriteQueryBuilder2(AnnotationMetadata annotationMetadata) {
         this.delegate = new NitriteQueryBuilder(annotationMetadata);
     }

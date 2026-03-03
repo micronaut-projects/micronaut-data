@@ -135,6 +135,15 @@ import org.slf4j.LoggerFactory;
   private final NitriteMapper nitriteMapper;
   private final NitriteTransactionHolder transactionHolder;
 
+  /**
+   * Create Nitrite repository operations.
+   *
+   * @param database The Nitrite database
+   * @param dateTimeProvider Date/time provider used by the base operations
+   * @param runtimeEntityRegistry Entity metadata registry
+   * @param conversionService Conversion service
+   * @param transactionHolder Transaction context holder
+   */
   public DefaultNitriteRepositoryOperations(
       final Nitrite database,
       final DateTimeProvider dateTimeProvider,
@@ -452,17 +461,19 @@ import org.slf4j.LoggerFactory;
   private FindOptions buildFindOptions(final Pageable pageable, final String jsonQuery) {
     FindOptions options = buildFindOptions(pageable, (Sort) null);
     if (jsonQuery != null && jsonQuery.contains("\"$skip\"")) {
-        try {
-            Object parsed = parseJson(jsonQuery);
-            if (parsed instanceof Map m) {
-                if (m.get("$skip") instanceof Number n) {
-                    options.skip(n.longValue());
-                }
-                if (m.get("$limit") instanceof Number n) {
-                    options.limit(n.intValue());
-                }
-            }
-        } catch (Exception ignored) {}
+      try {
+        Object parsed = parseJson(jsonQuery);
+        if (parsed instanceof Map m) {
+          if (m.get("$skip") instanceof Number n) {
+            options.skip(n.longValue());
+          }
+          if (m.get("$limit") instanceof Number n) {
+            options.limit(n.intValue());
+          }
+        }
+      } catch (Exception ignored) {
+        // Ignore pagination hints parsing errors; fall back to Pageable-only options.
+      }
     }
     return options;
   }
@@ -1501,6 +1512,7 @@ import org.slf4j.LoggerFactory;
     return (R) fromDocument(doc, rootEntity);
   }
 
+  /** {@inheritDoc} */
   public <T, R> Optional<R> findOptional(@NonNull final PreparedQuery<T, R> q) {
     return Optional.ofNullable(findOne(q));
   }
@@ -1560,10 +1572,12 @@ import org.slf4j.LoggerFactory;
     return Page.of(list, q.getPageable(), count(q));
   }
 
+  /** {@inheritDoc} */
   public <T, R> R findSlice(@NonNull final PreparedQuery<T, R> q) {
     return (R) findAll(q);
   }
 
+  /** {@inheritDoc} */
   public <T, R> R findPage(@NonNull final PreparedQuery<T, R> q) {
     Class<T> rootEntity = q.getRootEntity();
     NitriteCollection collection = getCollection(rootEntity);
@@ -1592,6 +1606,7 @@ import org.slf4j.LoggerFactory;
     return (R) Page.of(list, q.getPageable(), total);
   }
 
+  /** {@inheritDoc} */
   public <T> long count(@NonNull final PreparedQuery<T, Long> q) {
     Class<T> rootEntity = q.getRootEntity();
     NitriteCollection collection = getCollection(rootEntity);
@@ -1833,6 +1848,15 @@ import org.slf4j.LoggerFactory;
     return parseWhereClause(where, params);
   }
 
+  /**
+   * Execute a prepared delete query and return affected count.
+   *
+   * <p>This method is invoked by Micronaut Data runtime for {@code @Query} delete operations and
+   * for generated deletes (including implicit {@code CrudRepository} methods).
+   *
+   * @param q The prepared query
+   * @return Optional affected count
+   */
   public Optional<Number> executeDelete(@NonNull final PreparedQuery<?, Number> q) {
     Class<?> rootEntity = q.getRootEntity();
     NitriteCollection collection = getCollection(rootEntity);
@@ -1841,6 +1865,13 @@ import org.slf4j.LoggerFactory;
     return Optional.of(result.getAffectedCount());
   }
 
+  /**
+   * Execute a prepared query and return results as a list.
+   *
+   * @param q The prepared query
+   * @return Results list
+   * @param <R> result type
+   */
   public <R> List<R> execute(@NonNull final PreparedQuery<?, R> q) {
     List<R> list = new ArrayList<>();
     findAll(q).forEach(list::add);
@@ -1849,39 +1880,79 @@ import org.slf4j.LoggerFactory;
 
   // ========== Unsupported QueryModel-based methods (deprecated API) ==========
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R findOptional(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R findOne(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> Iterable<R> findAll(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R findSlice(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R findPage(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T> long count(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T> boolean exists(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R update(
       @NonNull final QueryModel q,
       @NonNull final Class<T> e,
@@ -1889,6 +1960,11 @@ import org.slf4j.LoggerFactory;
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T, R> R updateAll(
       @NonNull final List<QueryModel> q,
       @NonNull final Class<T> e,
@@ -1896,43 +1972,93 @@ import org.slf4j.LoggerFactory;
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T> int delete(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T> int deleteAll(@NonNull final Iterable<QueryModel> q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   */
   public <T> int deleteAll(@NonNull final Class<T> e, @NonNull final Serializable... ids) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite does not support batch deletes via {@link DeleteBatchOperation}.
+   */
   public <T> int deleteAll(
       @NonNull final DeleteBatchOperation<T> op, @NonNull final Iterable<T> entities) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite merge operations are not currently supported.
+   */
   public <T> T merge(@NonNull final UpdateOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Nitrite merge operations are not currently supported.
+   */
   public <T> Iterable<T> mergeAll(@NonNull final UpdateBatchOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>EntityOperation API is not currently supported by Nitrite module.
+   */
   public <T> Optional<T> findOne(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>EntityOperation API is not currently supported by Nitrite module.
+   */
   public <T> Iterable<T> findAll(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>EntityOperation API is not currently supported by Nitrite module.
+   */
   public <T> T delete(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>EntityOperation API is not currently supported by Nitrite module.
+   */
   public <T> Iterable<T> deleteAll(
       @NonNull final EntityOperation<T> op, @NonNull final Iterable<T> entities) {
     throw new UnsupportedOperationException();
