@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.document.annotation.DocumentProcessorRequired;
-import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder2;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -32,6 +32,12 @@ import java.lang.annotation.Target;
  *
  * <p>This annotation configures the Micronaut Data annotation processor to generate repository
  * implementations that use NitriteDB as the backing store.
+ *
+ * <p>Note: {@code implicitQueries=true} enables generation of standard {@link
+ * io.micronaut.data.repository.CrudRepository} methods (for example {@code deleteById}). Query
+ * builders must treat {@link io.micronaut.data.model.query.builder.QueryResult}
+ * {@code additionalRequiredParameters} as a compile-time binding contract (method-parameter
+ * bindings), not as a generic metadata channel.
  *
  * <p>Example usage:
  *
@@ -46,7 +52,7 @@ import java.lang.annotation.Target;
  * @since 1.0.0
  */
 @RepositoryConfiguration(
-    queryBuilder = NitriteQueryBuilder2.class,
+    queryBuilder = NitriteQueryBuilder.class,
     operations = NitriteRepositoryOperations.class,
     implicitQueries = true)
 @Retention(RetentionPolicy.RUNTIME)

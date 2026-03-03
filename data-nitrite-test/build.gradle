@@ -5,17 +5,25 @@ plugins {
 
 dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
+    // Needed so repository interfaces in this module can be compiled with the Nitrite-specific
+    // query builder/operations configuration.
+    annotationProcessor projects.micronautDataNitrite
     annotationProcessor mn.micronaut.inject.java
 
     implementation projects.micronautDataNitrite
     implementation projects.micronautDataDocumentTck
 
     testAnnotationProcessor projects.micronautDataDocumentProcessor
+    // Ensure generated test repositories see the Nitrite repository configuration.
+    testAnnotationProcessor projects.micronautDataNitrite
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor mnTest.micronaut.test.spock
 
-    testImplementation projects.micronautDataRuntime
+    testImplementation project(':micronaut-data-runtime')
+    testImplementation project(':micronaut-data-nitrite')
+    testImplementation project(':micronaut-data-tck')
     testImplementation mn.micronaut.inject.groovy
+    testRuntimeOnly project(':micronaut-data-nitrite')
     testImplementation mnTest.micronaut.test.spock
     testImplementation libs.spock.core
 }

@@ -41,6 +41,14 @@ See the [Documentation](https://micronaut-projects.github.io/micronaut-data/late
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-data/snapshot/guide/) for the current development docs.
 
+## Modules
+
+This repository contains multiple datastore implementations (JDBC, JPA/Hibernate, MongoDB, Azure Cosmos, etc.).
+
+For NitriteDB-specific implementation notes (query encoding, parameter binding, update semantics), see:
+
+- `data-nitrite/README.md`
+
 ## Snapshots and Releases
 
 Snaphots are automatically published to [JFrog OSS](https://oss.jfrog.org/artifactory/oss-snapshot-local/) using [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).

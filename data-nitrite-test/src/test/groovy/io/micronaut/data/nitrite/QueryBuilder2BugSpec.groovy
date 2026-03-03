@@ -11,7 +11,7 @@ import spock.lang.Ignore
 import java.time.Instant
 
 /**
- * TDD tests demonstrating 7 bugs in NitriteQueryBuilder2.
+ * TDD tests demonstrating 7 bugs in NitriteQueryBuilder.
  * 
  * These tests FAIL initially, proving the bugs exist.
  * After fixes, all tests should PASS.
@@ -67,7 +67,7 @@ class QueryBuilder2BugSpec extends Specification {
 
     // ========== Bug #4: MongoDB $expr/$multiply/$strLenCP operators ==========
 
-    @Ignore('NitriteDB does not support $expr/$strLenCP - bug #4')
+    @Ignore('Placeholder: requires a repository method that triggers $expr/$strLenCP; Nitrite does not support it (bug #4)')
     void "test string length query throws UnsupportedOperationException"() {
         given: "Events with different payload lengths"
         eventRepository.save(new Event("E1", "a"))      // length 1
@@ -83,7 +83,7 @@ class QueryBuilder2BugSpec extends Specification {
         thrown(UnsupportedOperationException)
     }
 
-    @Ignore('NitriteDB does not support $expr/$strLenCP - bug #4')
+    @Ignore('Placeholder: requires a repository method that triggers $expr/$multiply; Nitrite does not support it (bug #4)')
     void "test multiplication expression throws UnsupportedOperationException"() {
         given: "Events with priorities"
         def e1 = new Event("E1", "p1")

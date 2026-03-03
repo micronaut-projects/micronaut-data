@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.nitrite.operations;
 
+import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import java.io.Serializable;
 import org.dizitart.no2.Nitrite;
@@ -26,7 +27,8 @@ import org.dizitart.no2.repository.ObjectRepository;
  * <p>This interface extends {@link RepositoryOperations} to integrate with Micronaut Data's
  * repository abstraction.
  */
-public interface NitriteRepositoryOperations extends RepositoryOperations {
+public interface NitriteRepositoryOperations
+    extends RepositoryOperations, PrimaryRepositoryOperations {
   Nitrite getDatabase();
 
   <T, ID extends Serializable> ObjectRepository<T> getRepository(Class<T> entityType);

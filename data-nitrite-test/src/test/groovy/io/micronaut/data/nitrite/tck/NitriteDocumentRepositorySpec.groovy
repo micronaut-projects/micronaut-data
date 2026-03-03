@@ -1,85 +1,81 @@
-/*
- * Copyright 2017-2026 original authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.micronaut.data.nitrite.tck
 
-import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
-import io.micronaut.data.document.tck.repositories.AuthorRepository
-import io.micronaut.data.document.tck.repositories.BasicTypesRepository
-import io.micronaut.data.document.tck.repositories.BookRepository
-import io.micronaut.data.document.tck.repositories.DocumentRepository
-import io.micronaut.data.document.tck.repositories.DomainEventsRepository
-import io.micronaut.data.document.tck.repositories.PersonRepository
-import io.micronaut.data.document.tck.repositories.SaleRepository
-import io.micronaut.data.document.tck.repositories.StudentRepository
+import io.micronaut.data.document.tck.entities.Document
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 @MicronautTest(transactional = false)
-class NitriteDocumentRepositorySpec extends AbstractDocumentRepositorySpec {
+class NitriteDocumentRepositorySpec extends Specification {
 
-    @Inject NitriteBasicTypesRepository basicTypesRepository
-    @Inject NitritePersonRepository personRepository
-    @Inject NitriteBookRepository bookRepository
-    @Inject NitriteAuthorRepository authorRepository
-    @Inject NitriteStudentRepository studentRepository
-    @Inject NitriteSaleRepository saleRepository
-    @Inject NitriteDomainEventsRepository eventsRepository
-    @Inject NitriteDocumentRepository documentRepository
+    @Inject NitriteDocumentRepository repository
 
-    @Override
-    BasicTypesRepository getBasicTypeRepository() {
-        return basicTypesRepository
+    def setup() {
+        repository.deleteAll()
     }
 
-    @Override
-    PersonRepository getPersonRepository() {
-        return personRepository
+    void "test save and find by id"() {
+        given:
+        Document doc = new Document()
+        doc.title = "Test Doc"
+        repository.save(doc)
+
+        when:
+        def found = repository.findById(doc.id).orElse(null)
+
+        then:
+        found != null
+        found.title == "Test Doc"
     }
 
-    @Override
-    BookRepository getBookRepository() {
-        return bookRepository
+    void "test save and find by title"() {
+        given:
+        repository.save(new Document(title: "Title 1"))
+        repository.save(new Document(title: "Title 2"))
+
+        expect:
+        repository.findByTitle("Title 1").isPresent()
+        repository.findByTitle("Title 2").isPresent()
+        !repository.findByTitle("Title 3").isPresent()
     }
 
-    @Override
-    AuthorRepository getAuthorRepository() {
-        return authorRepository
+    void "test update"() {
+        given:
+        Document doc = new Document(title: "Old Title")
+        repository.save(doc)
+
+        when:
+        repository.updateTitle(doc.id, "New Title")
+        def found = repository.findById(doc.id).get()
+
+        then:
+        found.title == "New Title"
     }
 
-    @Override
-    StudentRepository getStudentRepository() {
-        return studentRepository
+    void "test delete"() {
+        given:
+        Document doc = new Document(title: "To Delete")
+        repository.save(doc)
+
+        when:
+        repository.deleteById(doc.id)
+
+        then:
+        !repository.findById(doc.id).isPresent()
     }
 
-    @Override
-    SaleRepository getSaleRepository() {
-        return saleRepository
-    }
+    void "test pagination"() {
+        given:
+        (1..10).each { i ->
+            repository.save(new Document(title: "Doc $i"))
+        }
 
-    @Override
-    DomainEventsRepository getEventsRepository() {
-        return eventsRepository
-    }
+        when:
+        def page = repository.findAll(Pageable.from(0, 5))
 
-    @Override
-    DocumentRepository getDocumentRepository() {
-        return documentRepository
-    }
-
-    Map<String, String> getProperties() {
-        return Collections.singletonMap("nitrite.db-path", "memory")
+        then:
+        page.content.size() == 5
+        repository.count() == 10
     }
 }

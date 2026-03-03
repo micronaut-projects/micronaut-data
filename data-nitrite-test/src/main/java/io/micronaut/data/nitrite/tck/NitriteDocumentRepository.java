@@ -15,12 +15,27 @@
  */
 package io.micronaut.data.nitrite.tck;
 
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.document.tck.entities.Document;
 import io.micronaut.data.document.tck.repositories.DocumentRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder2;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
+import java.util.Optional;
 
 @NitriteRepository
-@RepositoryConfiguration(queryBuilder = NitriteQueryBuilder2.class)
+@RepositoryConfiguration(queryBuilder = NitriteQueryBuilder.class)
 public interface NitriteDocumentRepository extends DocumentRepository {
+
+  @Query("{\"title\": :title}")
+  Optional<Document> findByTitle(String title);
+
+  @Query("{\"id\": :id, \"$set\": {\"title\": :title}}")
+  void updateTitle(@Id String id, String title);
+
+  @Query(value = "{}", countQuery = "{}")
+  Page<Document> findAll(Pageable pageable);
 }

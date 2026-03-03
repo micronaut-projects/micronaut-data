@@ -423,7 +423,8 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {
-          String path = asPath(associations, property);
+          PersistentPropertyPath ppp = PersistentPropertyPath.of(associations, property);
+          String path = getFieldName(ppp);
           query.put(
               path,
               Collections.singletonMap(
@@ -431,7 +432,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                   valueRepresentation(
                       queryState,
                       propertyPath,
-                      PersistentPropertyPath.of(associations, property),
+                      ppp,
                       value)));
         });
   }
@@ -540,7 +541,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final PersistentPropertyPath propertyPath) {
     BindingParameter.BindingContext context = newBindingContext(propertyPath, propertyPath);
     int index = queryState.pushParameter(bindingParameter, context);
-    return Map.of(NitriteQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, index);
+    return NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index;
   }
 
   private static Object convertValue(final Object value) {
@@ -573,7 +574,8 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     if (identity != null && identity.equals(property)) {
       return ID_FIELD;
     }
-    return propertyPath.getPath();
+    // Return simple name for top-level properties
+    return property.getName();
   }
 
   static BindingParameter.BindingContext newBindingContext(
