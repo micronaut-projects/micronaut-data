@@ -575,7 +575,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity carViewEntity = getRuntimePersistentEntity(CarView)
         String[] sql = builder.buildCreateTableStatements(carViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW car_view AS SELECT JSON {'_id': car.id, UNNEST (SELECT JSON {'id': cd.id, 'model': cd.model, 'year': cd.year} FROM TBL_CAR_DETAILS cd WITH UPDATE INSERT DELETE  WHERE car.\"CAR_DETAILS_ID\"=cd.\"ID\")} FROM TBL_CAR car WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW car_view AS SELECT JSON {'_id': car.id, UNNEST (SELECT JSON {'id': cd.id, 'model': cd.model, 'year': cd.year} FROM TBL_CAR_DETAILS cd WITH UPDATE INSERT  WHERE car.\"CAR_DETAILS_ID\"=cd.\"ID\")} FROM TBL_CAR car WITH UPDATE INSERT DELETE "
     }
 
     def "test_json_unwrapped_subview_usage"() {
