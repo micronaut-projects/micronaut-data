@@ -426,7 +426,7 @@ public final class SqlColumnMapping {
         return "FLOAT(" + precision + ")";
     }
 
-    private static String varcharType(Integer length) {
-        return "VARCHAR(" + length + ")";
+    private static String varcharType(@Nullable Integer length) {
+        return length == null ? "VARCHAR" : "VARCHAR(" + length + ")";
     }
 }
