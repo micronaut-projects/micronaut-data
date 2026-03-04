@@ -14,12 +14,11 @@ NOTE: For Kotlin, add `micronaut-data-document-processor` in kapt or ksp scope. 
 
 == Configure Nitrite
 
-Configure Nitrite (in-memory example):
+By default, Nitrite will create an in-memory database if no storage path is provided:
 
 [source,yaml]
 ----
-nitrite:
-  storage-mode: IN_MEMORY
+nitrite: {}
 ----
 
 == Create an Entity
