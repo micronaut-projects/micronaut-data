@@ -30,8 +30,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Benchmark for simple query in Nitrite.
+ */
 @State(Scope.Benchmark)
 public class SimpleQuery {
+
+    @Param({"MVSTORE", "IN_MEMORY", "ROCKSDB"})
+    public String storageMode;
 
     ApplicationContext applicationContext;
     BookRepository bookRepository;
@@ -41,7 +47,10 @@ public class SimpleQuery {
     public void prepare() throws Exception {
         tempDir = Files.createTempDirectory("nitrite-benchmark").toFile();
         Map<String, Object> props = new HashMap<>();
-        props.put("nitrite.path", new File(tempDir, "test.db").getAbsolutePath());
+        props.put("nitrite.storage-mode", storageMode);
+        if (!"IN_MEMORY".equals(storageMode)) {
+            props.put("nitrite.db-path", new File(tempDir, "test.db").getAbsolutePath());
+        }
         this.applicationContext = ApplicationContext.run(props);
         this.bookRepository = applicationContext.getBean(BookRepository.class);
         this.bookRepository.saveAll(Arrays.asList(
@@ -58,7 +67,9 @@ public class SimpleQuery {
 
     @TearDown
     public void cleanup() {
-        applicationContext.close();
+        if (applicationContext != null) {
+            applicationContext.close();
+        }
         if (tempDir != null) {
             deleteDirectory(tempDir);
         }

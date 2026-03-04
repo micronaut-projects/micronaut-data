@@ -16,6 +16,7 @@ dependencies {
     api libs.nitrite
     api libs.nitrite.mvstore.adapter
     api libs.nitrite.jackson.mapper
+    api libs.nitrite.rocksdb.adapter
     api libs.jackson.datatype.jsr310
     api libs.jakarta.persistence.api
 

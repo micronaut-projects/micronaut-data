@@ -112,6 +112,7 @@ micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos",
 nitrite = { module = "org.dizitart:nitrite", version.ref = "nitrite" }
 nitrite-mvstore-adapter = { module = "org.dizitart:nitrite-mvstore-adapter", version.ref = "nitrite" }
 nitrite-jackson-mapper = { module = "org.dizitart:nitrite-jackson-mapper", version.ref = "nitrite" }
+nitrite-rocksdb-adapter = { module = "org.dizitart:nitrite-rocksdb-adapter", version.ref = "nitrite" }
 
 # Antlr
 

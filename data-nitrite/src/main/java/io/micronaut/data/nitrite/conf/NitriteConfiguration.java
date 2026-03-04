@@ -26,6 +26,7 @@ import io.micronaut.core.annotation.Nullable;
  * <pre>
  * nitrite:
  *   db-path: /data/myapp.db
+ *   storage-mode: MVSTORE
  *   username: admin
  *   password: secret
  * </pre>
@@ -37,10 +38,20 @@ public final class NitriteConfiguration {
   public static final String PREFIX = "nitrite";
 
   /**
-   * Path to the NitriteDB file, or {@code "memory"} for in-memory mode. Defaults to {@code
-   * "memory"}.
+   * Path to the NitriteDB file. If not provided and storage-mode is MVSTORE,
+   * an in-memory database is created.
    */
-  private String dbPath = "memory";
+  @Nullable private String dbPath;
+
+  /**
+   * The storage mode to use. Defaults to {@code MVSTORE}.
+   */
+  private StorageMode storageMode = StorageMode.MVSTORE;
+
+  /**
+   * The field separator character used for nested properties. Defaults to {@code "."}.
+   */
+  private String fieldSeparator = ".";
 
   /** Optional username for authenticated databases. */
   @Nullable private String username;
@@ -51,6 +62,7 @@ public final class NitriteConfiguration {
   /**
    * @return the db path
    */
+  @Nullable
   public String getDbPath() {
     return dbPath;
   }
@@ -58,7 +70,7 @@ public final class NitriteConfiguration {
   /**
    * @param dbPath the db path
    */
-  public void setDbPath(final String dbPath) {
+  public void setDbPath(@Nullable final String dbPath) {
     this.dbPath = dbPath;
   }
 
@@ -90,5 +102,51 @@ public final class NitriteConfiguration {
    */
   public void setPassword(@Nullable final String password) {
     this.password = password;
+  }
+
+  /**
+   * @return the storage mode
+   */
+  public StorageMode getStorageMode() {
+    return storageMode;
+  }
+
+  /**
+   * @param storageMode the storage mode
+   */
+  public void setStorageMode(StorageMode storageMode) {
+    this.storageMode = storageMode;
+  }
+
+  /**
+   * @return the field separator
+   */
+  public String getFieldSeparator() {
+    return fieldSeparator;
+  }
+
+  /**
+   * @param fieldSeparator the field separator
+   */
+  public void setFieldSeparator(String fieldSeparator) {
+    this.fieldSeparator = fieldSeparator;
+  }
+
+  /**
+   * Storage modes supported by NitriteDB.
+   */
+  public enum StorageMode {
+    /**
+     * MVStore-backed persistent database.
+     */
+    MVSTORE,
+    /**
+     * In-memory database.
+     */
+    IN_MEMORY,
+    /**
+     * RocksDB-backed persistent database.
+     */
+    ROCKSDB
   }
 }

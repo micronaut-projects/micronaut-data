@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
@@ -32,13 +33,19 @@ import java.io.File;
 import java.nio.file.Path;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
+import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.mvstore.MVStoreModule;
+import org.dizitart.no2.rocksdb.RocksDBModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Factory for NitriteDB beans. */
 @Factory
 @Internal
 public final class NitriteOperationsFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(NitriteOperationsFactory.class);
 
   /**
    * Create a Nitrite database instance.
@@ -54,27 +61,45 @@ public final class NitriteOperationsFactory {
   @Singleton
   public Nitrite nitriteDatabase(NitriteConfiguration config) {
     String dbPath = config.getDbPath();
-    MVStoreModule storeModule;
-    if ("memory".equalsIgnoreCase(dbPath)) {
-      storeModule = MVStoreModule.withConfig().build();
-    } else {
-      File file = Path.of(dbPath).toFile();
-      File parent = file.getParentFile();
-      if (parent != null && !parent.exists() && !parent.mkdirs()) {
-        throw new RuntimeException("Could not create directory " + parent);
+    NitriteConfiguration.StorageMode mode = config.getStorageMode();
+    NitriteBuilder builder = Nitrite.builder();
+
+    if (mode == NitriteConfiguration.StorageMode.IN_MEMORY) {
+      LOG.info("Nitrite configured for pure in-memory storage.");
+    } else if (StringUtils.isEmpty(dbPath)) {
+      if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
+        throw new IllegalStateException("RocksDB storage mode requires a valid nitrite.db-path.");
       }
-      storeModule = MVStoreModule.withConfig().filePath(file).build();
+      LOG.info("No nitrite.db-path provided, falling back to Nitrite pure in-memory storage.");
+    } else {
+      File file = prepareDbFile(dbPath);
+      NitriteModule storeModule;
+      if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
+        storeModule = RocksDBModule.withConfig().filePath(file).build();
+      } else {
+        storeModule = MVStoreModule.withConfig().filePath(file).build();
+      }
+      builder.loadModule(storeModule);
     }
-    NitriteBuilder builder =
-        Nitrite.builder()
-            .loadModule(storeModule)
-            .loadModule(new JacksonMapperModule(new JavaTimeModule()));
+
+    builder.loadModule(new JacksonMapperModule(new JavaTimeModule()));
+    builder.fieldSeparator(config.getFieldSeparator());
+
     String username = config.getUsername();
     String password = config.getPassword();
     if (username != null && password != null) {
       return builder.openOrCreate(username, password);
     }
     return builder.openOrCreate();
+  }
+
+  private File prepareDbFile(String dbPath) {
+    File file = Path.of(dbPath).toFile();
+    File parent = file.getParentFile();
+    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+      throw new RuntimeException("Could not create directory " + parent);
+    }
+    return file;
   }
 
   /**
