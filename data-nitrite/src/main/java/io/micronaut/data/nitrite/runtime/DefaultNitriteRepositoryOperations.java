@@ -16,10 +16,12 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -40,6 +42,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.DefaultNitritePreparedQuery;
@@ -66,7 +69,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -78,9 +83,13 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.index.IndexOptions;
+import org.dizitart.no2.index.IndexType;
 import org.dizitart.no2.repository.ObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.dizitart.no2.index.IndexOptions.indexOptions;
 
 /**
  * Default Nitrite repository operations. Implements core CRUD using Nitrite's Document codec.
@@ -144,16 +153,19 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private static final Pattern SQL_LITERAL_EMPTY_STR = Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*=\\s*''");
 
   private final Nitrite database;
+  private final NitriteConfiguration configuration;
   private final NitriteEntityMapper entityMapper;
   private final NitriteTransactionHolder transactionHolder;
   private final NitriteQueryParser queryParser;
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
+  private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
 
   /**
    * Create Nitrite repository operations.
    *
    * @param database The Nitrite database
+   * @param configuration The Nitrite configuration
    * @param dateTimeProvider Date/time provider used by the base operations
    * @param runtimeEntityRegistry Entity metadata registry
    * @param conversionService Conversion service
@@ -162,6 +174,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   public DefaultNitriteRepositoryOperations(
       final Nitrite database,
+      final NitriteConfiguration configuration,
       final DateTimeProvider<Object> dateTimeProvider,
       final RuntimeEntityRegistry runtimeEntityRegistry,
       final DataConversionService conversionService,
@@ -169,6 +182,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       final NitriteTransactionHolder transactionHolder) {
     super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
     this.database = database;
+    this.configuration = configuration;
     this.entityMapper =
         new NitriteEntityMapper(
             conversionService, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
@@ -218,13 +232,72 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   /** Get Nitrite collection for entity type. */
   private NitriteCollection getCollection(final Class<?> type) {
     String name = getCollectionName(type);
+    NitriteCollection collection;
     if (transactionHolder.isActive()) {
       // Nitrite transactions require the collection to pre-exist before the transaction started.
       // Touch the collection on the database first (idempotent: creates if absent).
       database.getCollection(name);
-      return transactionHolder.get().getCollection(name);
+      collection = transactionHolder.get().getCollection(name);
+    } else {
+      collection = database.getCollection(name);
     }
-    return database.getCollection(name);
+    ensureIndexes(type, collection);
+    return collection;
+  }
+
+  private void ensureIndexes(Class<?> type, NitriteCollection collection) {
+    if (!configuration.isCreateIndexes() || indexedCollections.contains(collection.getName())) {
+      return;
+    }
+    indexedCollections.add(collection.getName());
+    RuntimePersistentEntity<?> entity = getEntity(type);
+    List<AnnotationValue<Index>> indexes = entity.getAnnotationMetadata().getAnnotationValuesByType(Index.class);
+    for (AnnotationValue<Index> index : indexes) {
+      String[] columns = index.getRequiredValue("columns", String[].class);
+      boolean unique = index.booleanValue("unique").orElse(false);
+      IndexOptions options = indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE);
+      try {
+        collection.createIndex(options, columns);
+      } catch (Exception e) {
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Could not create index for collection {}: {}", collection.getName(), e.getMessage());
+        }
+      }
+    }
+    // Also check for @Index on properties
+    for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+      if (property.getAnnotationMetadata().hasAnnotation(Index.class)) {
+        AnnotationValue<Index> index = property.getAnnotationMetadata().getAnnotation(Index.class);
+        boolean unique = index.booleanValue("unique").orElse(false);
+        try {
+          collection.createIndex(indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE), property.getPersistedName());
+        } catch (Exception e) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Could not create index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
+          }
+        }
+      }
+    }
+    // Also index the identity property field ("id") if it's not already indexed
+    RuntimePersistentProperty<?> idProperty = entity.getIdentity();
+    if (idProperty != null) {
+      String idField = "id";
+      boolean alreadyIndexed = false;
+      for (AnnotationValue<Index> index : indexes) {
+        String[] columns = index.getRequiredValue("columns", String[].class);
+        if (columns.length == 1 && idField.equals(columns[0])) {
+          alreadyIndexed = true;
+          break;
+        }
+      }
+      if (!alreadyIndexed) {
+        try {
+          collection.createIndex(indexOptions(IndexType.UNIQUE), idField);
+        } catch (Exception e) {
+          // Ignore if already exists or other error
+        }
+      }
+    }
   }
 
   /** Generate and set ID on entity if @GeneratedValue is present. */

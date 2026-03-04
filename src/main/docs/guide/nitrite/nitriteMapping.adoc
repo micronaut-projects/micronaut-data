@@ -6,5 +6,6 @@ Nitrite entities are standard Micronaut Data entities (see <<shared, Shared Conc
 See the following sections for Nitrite-specific mapping notes:
 
 - <<nitriteAnnotations, Mapping annotations>>
+- <<nitriteIndexes, Automated Index Creation>>
 - <<nitriteIdGenerator, ID generation>>
 - <<nitriteCompositeId, Composite primary keys>>

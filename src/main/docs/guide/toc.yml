@@ -149,6 +149,7 @@ nitrite:
   nitriteMapping:
     title: Mapping Entities
     nitriteAnnotations: Mapping Annotations
+    nitriteIndexes: Automated Index Creation
     nitriteIdGenerator: ID Generation
     nitriteCompositeId: Composite Primary Keys
   nitriteTransactions: Transactions

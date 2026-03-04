@@ -27,6 +27,7 @@ import io.micronaut.core.annotation.Nullable;
  * nitrite:
  *   db-path: /data/myapp.db
  *   storage-mode: MVSTORE
+ *   create-indexes: true
  *   username: admin
  *   password: secret
  * </pre>
@@ -52,6 +53,12 @@ public final class NitriteConfiguration {
    * The field separator character used for nested properties. Defaults to {@code "."}.
    */
   private String fieldSeparator = ".";
+
+  /**
+   * Whether to automatically create indexes based on {@code @Index} annotations.
+   * Defaults to {@code true}.
+   */
+  private boolean createIndexes = true;
 
   /** Optional username for authenticated databases. */
   @Nullable private String username;
@@ -130,6 +137,20 @@ public final class NitriteConfiguration {
    */
   public void setFieldSeparator(String fieldSeparator) {
     this.fieldSeparator = fieldSeparator;
+  }
+
+  /**
+   * @return whether to create indexes
+   */
+  public boolean isCreateIndexes() {
+    return createIndexes;
+  }
+
+  /**
+   * @param createIndexes whether to create indexes
+   */
+  public void setCreateIndexes(boolean createIndexes) {
+    this.createIndexes = createIndexes;
   }
 
   /**

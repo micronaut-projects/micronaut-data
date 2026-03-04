@@ -106,6 +106,7 @@ public final class NitriteOperationsFactory {
    * Create a Nitrite repository operations instance.
    *
    * @param database the database
+   * @param configuration the configuration
    * @param dateTimeProvider the date time provider
    * @param runtimeEntityRegistry the runtime entity registry
    * @param conversionService the conversion service
@@ -118,6 +119,7 @@ public final class NitriteOperationsFactory {
   @Singleton
   public NitriteRepositoryOperations nitriteRepositoryOperations(
       Nitrite database,
+      NitriteConfiguration configuration,
       DateTimeProvider dateTimeProvider,
       RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
@@ -125,6 +127,7 @@ public final class NitriteOperationsFactory {
       NitriteTransactionHolder transactionHolder) {
     return new DefaultNitriteRepositoryOperations(
         database,
+        configuration,
         dateTimeProvider,
         runtimeEntityRegistry,
         conversionService,
