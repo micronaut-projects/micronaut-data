@@ -19,7 +19,7 @@ Configure Nitrite (in-memory example):
 [source,yaml]
 ----
 nitrite:
-  db-path: memory
+  storage-mode: IN_MEMORY
 ----
 
 == Create an Entity

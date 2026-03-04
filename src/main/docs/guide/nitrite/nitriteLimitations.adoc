@@ -1,8 +1,10 @@
+== Scope and Limitations
+
 Nitrite is intended as an embedded datastore for basic Micronaut Data usage.
 
 In particular:
 
 - Nitrite is not a BSON/driver-native query-document store like MongoDB.
 - MongoDB-specific features such as aggregation pipelines, BSON filters, and Mongo-only annotations are out of scope for this module.
+- Persistent storage engines other than the default MVStore (for example RocksDB) require additional Nitrite adapter dependencies in your build configuration.
 - If you need full MongoDB feature parity, use Micronaut Data MongoDB instead (see <<mongo>>).
-

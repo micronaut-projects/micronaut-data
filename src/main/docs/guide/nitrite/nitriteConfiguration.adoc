@@ -1,12 +1,15 @@
+== Configuration
+
 Nitrite configuration is bound from `nitrite.*` properties.
 
 The following settings are supported:
 
-- `nitrite.db-path`: Path to the database file (default: `memory`).
+- `nitrite.db-path`: Path to the database file. If not provided and `storage-mode` is `MVSTORE`, an in-memory database is created.
 - `nitrite.storage-mode`: The storage engine to use. Supported values are:
     * `MVSTORE`: (Default) MVStore-backed persistent database.
-    * `IN_MEMORY`: In-memory database.
+    * `IN_MEMORY`: Pure in-memory database.
     * `ROCKSDB`: RocksDB-backed persistent database.
+- `nitrite.field-separator`: The character used to separate nested fields in query strings (default: `.`).
 - `nitrite.username`: Optional username (for authenticated databases).
 - `nitrite.password`: Optional password.
 
@@ -17,6 +20,7 @@ Example:
 nitrite:
   storage-mode: MVSTORE
   db-path: /data/myapp.db
+  field-separator: "."
   username: admin
   password: secret
 ----
