@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.nitrite.runtime;
 
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
@@ -23,6 +24,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -36,7 +38,6 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
@@ -52,18 +53,10 @@ import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
+import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
+import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Singleton;
-import org.dizitart.no2.Nitrite;
-import org.dizitart.no2.collection.Document;
-import org.dizitart.no2.collection.FindOptions;
-import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.common.SortOrder;
-import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.repository.ObjectRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +71,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.collection.FindOptions;
+import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.common.SortOrder;
+import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.repository.ObjectRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default Nitrite repository operations. Implements core CRUD using Nitrite's Document codec.
@@ -122,7 +125,7 @@ import java.util.stream.StreamSupport;
 @Internal
 @SuppressWarnings({"removal", "unchecked", "rawtypes"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
-    implements NitriteRepositoryOperations {
+    implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -611,6 +614,16 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
   }
 
+  @Override
+  public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
+    return createNitritePreparedQuery(preparedQuery);
+  }
+
+  @Override
+  public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
+    return createNitriteStoredQuery(storedQuery);
+  }
+
   /**
    * Create a specialized NitriteStoredQuery.
    *
@@ -621,6 +634,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @NonNull
   public <E, R> NitriteStoredQuery<E, R> createNitriteStoredQuery(@NonNull StoredQuery<E, R> storedQuery) {
+    if (storedQuery instanceof NitriteStoredQuery nsq) {
+      return nsq;
+    }
     Map<String, Object> filterMap = null;
     Map<String, Object> updateMap = null;
     boolean sql = false;
@@ -638,7 +654,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String upper = query.trim().toUpperCase();
       sql = upper.startsWith("SELECT") || upper.startsWith("DELETE") || upper.startsWith("UPDATE");
     }
-    return new DefaultNitriteStoredQuery<>(storedQuery, filterMap, updateMap, sql);
+    return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, updateMap, sql);
   }
 
   /**
@@ -651,8 +667,23 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @NonNull
   public <E, R> NitritePreparedQuery<E, R> createNitritePreparedQuery(@NonNull PreparedQuery<E, R> preparedQuery) {
-    NitriteStoredQuery<E, R> storedQuery = createNitriteStoredQuery(preparedQuery);
+    if (preparedQuery instanceof NitritePreparedQuery npq) {
+      return npq;
+    }
+    NitriteStoredQuery<E, R> storedQuery;
+    if (preparedQuery instanceof DelegateStoredQuery dsq && dsq.getStoredQueryDelegate() instanceof NitriteStoredQuery nsq) {
+      storedQuery = nsq;
+    } else {
+      storedQuery = createNitriteStoredQuery(preparedQuery);
+    }
     return new DefaultNitritePreparedQuery<>(preparedQuery, buildFilterFromPreparedQuery(preparedQuery, storedQuery), storedQuery.getFilterMap(), storedQuery.getUpdateMap(), storedQuery.isSql());
+  }
+
+  private <E, R> NitritePreparedQuery<E, R> getNitritePreparedQuery(PreparedQuery<E, R> q) {
+    if (q instanceof NitritePreparedQuery nq) {
+      return nq;
+    }
+    return createNitritePreparedQuery(q);
   }
 
   private Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
@@ -913,7 +944,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @Override
   public <T, R> R findOne(@NonNull final PreparedQuery<T, R> q) {
-    NitritePreparedQuery<T, R> nq = (q instanceof NitritePreparedQuery) ? (NitritePreparedQuery<T, R>) q : createNitritePreparedQuery(q);
+    NitritePreparedQuery<T, R> nq = getNitritePreparedQuery(q);
     NitriteCollection coll = getCollection(nq.getRootEntity());
     String query = nq.getQuery();
     boolean isUpdate = nq.getUpdateMap() != null
@@ -950,13 +981,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @Override
   public <T> boolean exists(@NonNull final PreparedQuery<T, Boolean> q) {
-    NitritePreparedQuery nq = (q instanceof NitritePreparedQuery) ? (NitritePreparedQuery) q : createNitritePreparedQuery(q);
+    NitritePreparedQuery nq = getNitritePreparedQuery(q);
     return getCollection(nq.getRootEntity()).find(nq.getNitriteFilter()).firstOrNull() != null;
   }
 
   @Override
   public <T, R> Iterable<R> findAll(@NonNull final PreparedQuery<T, R> q) {
-    NitritePreparedQuery<T, R> nq = (q instanceof NitritePreparedQuery) ? (NitritePreparedQuery<T, R>) q : createNitritePreparedQuery(q);
+    NitritePreparedQuery<T, R> nq = getNitritePreparedQuery(q);
     NitriteCollection coll = getCollection(nq.getRootEntity());
     if (Number.class.isAssignableFrom(nq.getResultType())) {
       return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
@@ -1056,7 +1087,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public Optional<Number> executeUpdate(@NonNull final PreparedQuery<?, Number> q) {
-    NitritePreparedQuery<?, Number> nq = (q instanceof NitritePreparedQuery) ? (NitritePreparedQuery<?, Number>) q : createNitritePreparedQuery(q);
+    NitritePreparedQuery<?, Number> nq = getNitritePreparedQuery(q);
     Map<String, Object> setFields = null;
     Filter filter = null;
     Object[] jsonParams = buildJsonParameterValues(nq);
@@ -1137,7 +1168,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @Override
   public Optional<Number> executeDelete(@NonNull final PreparedQuery<?, Number> q) {
-    NitritePreparedQuery nq = (q instanceof NitritePreparedQuery) ? (NitritePreparedQuery) q : createNitritePreparedQuery(q);
+    NitritePreparedQuery nq = getNitritePreparedQuery(q);
     return Optional.of(getCollection(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount());
   }
 

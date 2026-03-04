@@ -1,0 +1,9 @@
+plugins {
+    id "io.micronaut.build.internal.data-micronaut-benchmark"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    implementation projects.micronautDataNitrite
+    runtimeOnly mn.snakeyaml
+}

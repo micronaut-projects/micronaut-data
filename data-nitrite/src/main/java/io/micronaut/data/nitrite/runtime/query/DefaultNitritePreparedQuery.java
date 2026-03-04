@@ -15,26 +15,14 @@
  */
 package io.micronaut.data.nitrite.runtime.query;
 
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.value.ConvertibleValues;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Limit;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import org.dizitart.no2.filters.Filter;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Delegating implementation of {@link NitritePreparedQuery}.
@@ -44,9 +32,8 @@ import java.util.Set;
  * @since 1.0.0
  */
 @Internal
-public class DefaultNitritePreparedQuery<E, R> implements NitritePreparedQuery<E, R> {
+public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements NitritePreparedQuery<E, R> {
 
-    private final PreparedQuery<E, R> delegate;
     private final Filter nitriteFilter;
     private final Map<String, Object> filterMap;
     private final Map<String, Object> updateMap;
@@ -67,7 +54,7 @@ public class DefaultNitritePreparedQuery<E, R> implements NitritePreparedQuery<E
         @Nullable Map<String, Object> filterMap,
         @Nullable Map<String, Object> updateMap,
         boolean sql) {
-        this.delegate = delegate;
+        super(delegate);
         this.nitriteFilter = nitriteFilter;
         this.filterMap = filterMap;
         this.updateMap = updateMap;
@@ -97,189 +84,4 @@ public class DefaultNitritePreparedQuery<E, R> implements NitritePreparedQuery<E
         return sql;
     }
 
-    @Override
-    @NonNull
-    public String getName() {
-        return delegate.getName();
-    }
-
-    @Override
-    @NonNull
-    public Class<E> getRootEntity() {
-        return delegate.getRootEntity();
-    }
-
-    @Override
-    public boolean hasPageable() {
-        return delegate.hasPageable();
-    }
-
-    @Override
-    @NonNull
-    public String getQuery() {
-        return delegate.getQuery();
-    }
-
-    @Override
-    @NonNull
-    public String[] getExpandableQueryParts() {
-        return delegate.getExpandableQueryParts();
-    }
-
-    @Override
-    @NonNull
-    public List<QueryParameterBinding> getQueryBindings() {
-        return delegate.getQueryBindings();
-    }
-
-    @Override
-    @NonNull
-    public Class<R> getResultType() {
-        return delegate.getResultType();
-    }
-
-    @Override
-    @NonNull
-    public Argument<R> getResultArgument() {
-        return delegate.getResultArgument();
-    }
-
-    @Override
-    @NonNull
-    public DataType getResultDataType() {
-        return delegate.getResultDataType();
-    }
-
-    @Override
-    public boolean isNative() {
-        return delegate.isNative();
-    }
-
-    @Override
-    public boolean isProcedure() {
-        return delegate.isProcedure();
-    }
-
-    @Override
-    public OperationType getOperationType() {
-        return delegate.getOperationType();
-    }
-
-    @Override
-    @Deprecated(forRemoval = true)
-    public boolean useNumericPlaceholders() {
-        return delegate.useNumericPlaceholders();
-    }
-
-    @Override
-    public boolean isDtoProjection() {
-        return delegate.isDtoProjection();
-    }
-
-    @Override
-    public boolean isCount() {
-        return delegate.isCount();
-    }
-
-    @Override
-    @NonNull
-    public Map<String, Object> getQueryHints() {
-        return delegate.getQueryHints();
-    }
-
-    @Override
-    @NonNull
-    public Set<JoinPath> getJoinPaths() {
-        return delegate.getJoinPaths();
-    }
-
-    @Override
-    public boolean hasResultConsumer() {
-        return delegate.hasResultConsumer();
-    }
-
-    @Override
-    public boolean isOptimisticLock() {
-        return delegate.isOptimisticLock();
-    }
-
-    @Override
-    public boolean isRawQuery() {
-        return delegate.isRawQuery();
-    }
-
-    @Override
-    public boolean isJsonEntity() {
-        return delegate.isJsonEntity();
-    }
-
-    @Override
-    public Map<String, AnnotationValue<?>> getParameterExpressions() {
-        return delegate.getParameterExpressions();
-    }
-
-    @Override
-    @NonNull
-    public Limit getQueryLimit() {
-        return delegate.getQueryLimit();
-    }
-
-    @Override
-    @NonNull
-    public Sort getSort() {
-        return delegate.getSort();
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return delegate.isSingleResult();
-    }
-
-    @Override
-    @NonNull
-    public Optional<Class<?>> getEntityIdentifierType() {
-        return delegate.getEntityIdentifierType();
-    }
-
-    @Override
-    @NonNull
-    public Class<?>[] getArgumentTypes() {
-        return delegate.getArgumentTypes();
-    }
-
-    @Override
-    @NonNull
-    public Object[] getParameterArray() {
-        return delegate.getParameterArray();
-    }
-
-    @Override
-    @NonNull
-    public Argument[] getArguments() {
-        return delegate.getArguments();
-    }
-
-    @Override
-    @NonNull
-    public Class<?> getRepositoryType() {
-        return delegate.getRepositoryType();
-    }
-
-    @Override
-    @NonNull
-    public Pageable getPageable() {
-        return delegate.getPageable();
-    }
-
-    @Override
-    @NonNull
-    public ConversionService getConversionService() {
-        return delegate.getConversionService();
-    }
-
-    @Override
-    @NonNull
-    public ConvertibleValues<Object> getAttributes() {
-        return delegate.getAttributes();
-    }
 }
