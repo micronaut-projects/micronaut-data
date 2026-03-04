@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
@@ -83,6 +84,7 @@ public final class NitriteOperationsFactory {
    * @param dateTimeProvider the date time provider
    * @param runtimeEntityRegistry the runtime entity registry
    * @param conversionService the conversion service
+   * @param attributeConverterRegistry the attribute converter registry
    * @param transactionHolder the transaction holder
    * @return the repository operations
    */
@@ -94,8 +96,14 @@ public final class NitriteOperationsFactory {
       DateTimeProvider dateTimeProvider,
       RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
+      AttributeConverterRegistry attributeConverterRegistry,
       NitriteTransactionHolder transactionHolder) {
     return new DefaultNitriteRepositoryOperations(
-        database, dateTimeProvider, runtimeEntityRegistry, conversionService, transactionHolder);
+        database,
+        dateTimeProvider,
+        runtimeEntityRegistry,
+        conversionService,
+        attributeConverterRegistry,
+        transactionHolder);
   }
 }

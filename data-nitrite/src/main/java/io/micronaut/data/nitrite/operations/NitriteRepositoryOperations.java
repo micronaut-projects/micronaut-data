@@ -16,30 +16,24 @@
 package io.micronaut.data.nitrite.operations;
 
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
-import io.micronaut.data.operations.RepositoryOperations;
 import java.io.Serializable;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.repository.ObjectRepository;
 
 /**
- * Nitrite-specific repository operations.
+ * Nitrite specialized repository operations.
  *
- * <p>This interface extends {@link RepositoryOperations} to integrate with Micronaut Data's
- * repository abstraction.
- *
- * <p>It also implements {@link PrimaryRepositoryOperations} so Micronaut Data can reliably pick
- * Nitrite as the primary {@link RepositoryOperations} implementation for repositories annotated
- * with {@code @NitriteRepository}.
+ * @since 1.0.0
  */
-public interface NitriteRepositoryOperations
-    extends RepositoryOperations, PrimaryRepositoryOperations {
+public interface NitriteRepositoryOperations extends PrimaryRepositoryOperations {
+
   /**
    * @return the underlying Nitrite database instance
    */
   Nitrite getDatabase();
 
   /**
-   * Get (or create) the Nitrite {@link ObjectRepository} for an entity type.
+   * Get the Nitrite repository for the given entity type.
    *
    * @param entityType the entity type
    * @return the repository
@@ -49,7 +43,7 @@ public interface NitriteRepositoryOperations
   <T, ID extends Serializable> ObjectRepository<T> getRepository(Class<T> entityType);
 
   /**
-   * Get (or create) the Nitrite {@link ObjectRepository} for an entity type and discriminator.
+   * Get the Nitrite repository for the given entity type and discriminator.
    *
    * @param entityType the entity type
    * @param discriminator the discriminator (for {@code @MappedEntity(discriminator=...)} use-cases)
