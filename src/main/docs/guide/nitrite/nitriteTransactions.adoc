@@ -5,16 +5,17 @@ Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.
 === Examples by language
 
 ==== Java
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-java", source="main", tags="transaction-managed", indent="0"]
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-java", source="main", tags="transaction-manual-rollback", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
 
 ==== Groovy
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-groovy", source="main", tags="transaction-managed", indent="0"]
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-groovy", source="main", tags="transaction-manual-rollback", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
 
 ==== Kotlin
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-kotlin", source="main", tags="transaction-managed", indent="0"]
-snippet::example.TransactionService[project-base="doc-examples/nitrite-example-kotlin", source="main", tags="transaction-manual-rollback", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
 
-==== Rollback control
+=== Rollback control
+
 If you need to mark the current transaction rollback-only after some condition, use the `TransactionOperations` helper (`executeWrite`/`executeRead`) to set the status without throwing an exception.

@@ -1,3 +1,5 @@
+== Mapping Annotations
+
 Micronaut Data Nitrite uses the same core entity mapping annotations as the other Micronaut Data implementations:
 
 - ann:data.annotation.MappedEntity[]

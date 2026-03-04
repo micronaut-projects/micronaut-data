@@ -1,3 +1,5 @@
+== Composite Primary Keys
+
 Composite primary keys can be defined using ann:data.annotation.EmbeddedId[].
 
 A composite ID requires an additional class to represent the key. The class should define fields that correspond to the attributes making up the key.
