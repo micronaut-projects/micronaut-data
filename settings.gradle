@@ -69,7 +69,6 @@ include 'data-tx-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-nitrite'
-include 'data-nitrite-test'
 include 'data-azure-cosmos'
 
 // Spring compatibility
@@ -125,6 +124,10 @@ include 'doc-examples:mongo-jackson-example-java'
 include 'doc-examples:mongo-multitenancy-database-example-java'
 include 'doc-examples:mongo-multitenancy-datasource-example-java'
 include 'doc-examples:mongo-multitenancy-discriminator-example-java'
+
+include 'doc-examples:nitrite-example-java'
+include 'doc-examples:nitrite-example-groovy'
+include 'doc-examples:nitrite-example-kotlin'
 
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'

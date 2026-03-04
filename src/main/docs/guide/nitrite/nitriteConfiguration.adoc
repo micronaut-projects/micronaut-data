@@ -1,0 +1,18 @@
+Nitrite configuration is bound from `nitrite.*` properties.
+
+The following settings are supported:
+
+- `nitrite.db-path`: Path to the database file, or `memory` for in-memory mode (default: `memory`)
+- `nitrite.username`: Optional username (for authenticated databases)
+- `nitrite.password`: Optional password
+
+Example:
+
+[source,yaml]
+----
+nitrite:
+  db-path: /data/myapp.db
+  username: admin
+  password: secret
+----
+

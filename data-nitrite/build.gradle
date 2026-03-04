@@ -1,5 +1,6 @@
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id "groovy"
 }
 
 dependencies {
@@ -19,6 +20,22 @@ dependencies {
     api libs.jakarta.persistence.api
 
     compileOnly mn.micronaut.inject.groovy
+
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataNitrite
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnTest.micronaut.test.spock
+
+    testImplementation project(':micronaut-data-document-tck')
+    testImplementation project(':micronaut-data-tck')
+    testImplementation project(':micronaut-data-runtime')
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation libs.spock.core
+}
+
+test {
+    useJUnitPlatform()
 }
 
 // Disable baseline check for new module until first release

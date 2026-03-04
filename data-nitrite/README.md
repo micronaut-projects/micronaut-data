@@ -10,6 +10,12 @@ Nitrite is intended to be a practical embedded document store for **basic Micron
 - Common derived finders (`findByX`, `findByXAndY`, comparisons, basic `Like`/`Contains`)
 - Paging and sorting (`Pageable`, method-name `OrderBy`)
 
+Nitrite does not currently provide the broader JPA-style infrastructure (naming strategies, automatic association mapping/fetching, etc.) that some other persistence modules expose. Treat entities as flat documents and handle any related entity traversal manually or via custom helper methods.
+
+## Transactions
+
+Nitrite supports Micronaut `@Transactional` methods via `NitriteTransactionManager` and the `NitriteTransactionHolder`. When a transaction is active, repository operations use the `Transaction` returned by the holder instead of the raw database so that all reads/writes participate in the same MVStore transaction and are committed or rolled back together. See `io.micronaut.data.nitrite.service.NitriteTransactionManagementService` and its spec (`data-nitrite/src/test/groovy/io/micronaut/data/nitrite/service/NitriteTransactionManagementSpec.groovy`) for examples that exercise the various propagation modes and rollback behavior.
+
 Nitrite is **not** a feature-equivalent MongoDB replacement. Mongo-specific features such as BSON
 filters, aggregation pipelines, and Mongo-only annotations are out of scope for this module.
 
@@ -22,11 +28,11 @@ Nitrite’s implementation is intentionally aligned with the **Micronaut Data 5.
 
 ## Building, Testing, and Publishing
 
-Run Nitrite’s tests:
+Run Nitrite’s tests (the specs now live under `data-nitrite/src/test`):
 
-- All Nitrite tests: `./gradlew :data-nitrite-test:test` (or `./gradlew :micronaut-data-nitrite-test:test` with standardized project names)
-- Single test class: `./gradlew :data-nitrite-test:test --tests '*NitriteDocumentRepositorySpec'`
-- Single test method: `./gradlew :data-nitrite-test:test --tests '*NitriteDocumentRepositorySpec.test update'`
+- All Nitrite tests: `./gradlew :data-nitrite:test`
+- Single test class: `./gradlew :data-nitrite:test --tests '*NitriteDocumentRepositorySpec'`
+- Single test method: `./gradlew :data-nitrite:test --tests '*NitriteDocumentRepositorySpec.test update'`
 
 Publish to Maven Local (so another project can consume it):
 

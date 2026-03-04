@@ -1,0 +1,67 @@
+Micronaut Launch does not currently offer a dedicated `data-nitrite` feature. The quickest way to get started is to add the Nitrite implementation and the Micronaut Data annotation processors to an existing Micronaut application.
+
+=== Dependency Setup
+
+Add the following dependency to your annotation processor path:
+
+dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor"]
+
+Then add a compile-scoped dependency on the Nitrite implementation:
+
+dependency:io.micronaut.data:micronaut-data-nitrite[scope="implementation"]
+
+NOTE: For Kotlin, add `micronaut-data-document-processor` in kapt or ksp scope. For Groovy, add it in compileOnly scope.
+
+=== Configure Nitrite
+
+Configure Nitrite (in-memory example):
+
+[source,yaml]
+----
+nitrite:
+  db-path: memory
+----
+
+=== Create an Entity
+
+To persist an entity, define a class annotated with ann:data.annotation.MappedEntity[]:
+
+snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book"]
+
+=== Create a Repository
+
+Followed by an interface that extends from api:data.repository.CrudRepository[]:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="repository"]
+
+You can now perform CRUD operations on the entity. The implementation is created at compilation time. To obtain a reference to it simply inject the bean:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", tags="inject", indent="0"]
+
+=== Saving an Instance (Create)
+
+To save an instance use the `save` method of the `CrudRepository` interface:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", tags="save", indent="0"]
+
+=== Retrieving an Instance (Read)
+
+To read an entity back use `findById`:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", tags="read", indent="0"]
+
+=== Updating an Instance (Update)
+
+Nitrite updates are executed via explicit update methods (for example, update by ID):
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="update", indent="0"]
+
+Which can then be called like so:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", tags="update", indent="0"]
+
+=== Deleting an Instance (Delete)
+
+To delete an instance use `deleteById`:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", tags="delete", indent="0"]

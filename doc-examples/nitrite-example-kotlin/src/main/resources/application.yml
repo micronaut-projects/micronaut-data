@@ -1,0 +1,3 @@
+nitrite:
+  db-path: memory
+

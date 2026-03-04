@@ -1,0 +1,14 @@
+Micronaut Data Nitrite uses the same core entity mapping annotations as the other Micronaut Data implementations:
+
+- ann:data.annotation.MappedEntity[]
+- ann:data.annotation.Id[]
+- ann:data.annotation.GeneratedValue[]
+
+Example entity:
+
+snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book"]
+
+Nitrite-specific notes:
+
+- Nitrite reserves `_id` for its internal document identifier (NitriteId). Micronaut Data Nitrite stores your entity identifier in the `id` field to avoid conflicts.
+- Nitrite also maintains internal fields like `_revision` and `_modified`. These are not mapped to your entity and are ignored during entity conversion.

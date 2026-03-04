@@ -291,11 +291,6 @@ public final class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
     return true;
   }
 
-  @Override
-  public boolean shouldAliasProjections() {
-    return true;
-  }
-
   private Map<String, Object> buildWhereClause(
       final Predicate predicate, final NitriteQueryState queryState) {
     if (predicate == null) {

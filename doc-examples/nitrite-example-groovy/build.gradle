@@ -1,0 +1,25 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    // Override app plugin version
+    compileOnly projects.micronautDataProcessor
+    compileOnly projects.micronautDataDocumentProcessor
+
+    implementation projects.micronautDataNitrite
+
+    runtimeOnly mnLogging.logback.classic
+}
+

@@ -141,6 +141,23 @@ azureCosmos:
   azureCosmosSpecifics: Azure Cosmos Specifics
   azureCosmosAttributeConverter: Using Attribute Converter
   azureCosmosOptimisticLocking: Optimistic locking
+nitrite:
+  title: Micronaut Data Nitrite
+  nitriteQuickStart: Quick Start
+  nitriteConfiguration: Configuration
+  nitriteRepositories: Repositories
+  nitriteMapping:
+    title: Mapping Entities
+    nitriteAnnotations: Mapping Annotations
+    nitriteIdGenerator: ID Generation
+    nitriteCompositeId: Composite Primary Keys
+  nitriteTransactions: Transactions
+  nitriteCriteriaSpecifications:
+    title: Repositories with Criteria API
+    nitriteCriteriaExecuteQuery: Querying
+    nitriteCriteriaExecuteUpdate: Updating
+    nitriteCriteriaExecuteDelete: Deleting
+  nitriteLimitations: Scope and limitations
 howItWorks:
   title: How Micronaut Data Works
 graal:
@@ -148,4 +165,3 @@ graal:
 spring:
   title: Spring Data Support
 dataGuides: Guides
-

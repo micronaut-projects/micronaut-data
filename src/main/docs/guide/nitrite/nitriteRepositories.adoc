@@ -1,0 +1,18 @@
+As seen in the <<nitriteQuickStart, Quick Start>> repositories are defined using the ann:data.nitrite.annotation.NitriteRepository[] stereotype annotation.
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="repository"]
+
+Micronaut Data generates an implementation at compile time and executes queries via the Nitrite runtime implementation.
+
+You can use standard repository method patterns:
+
+- CRUD methods from `CrudRepository`
+- Derived finders (for example `findByTitle`, `findByAgeGreaterThan`, `existsBySku`)
+- Paging and sorting via `Pageable` and `Sort`
+
+For complex query logic, Micronaut Data provides:
+
+- Criteria API repositories (see <<criteriaSpecifications>>)
+- `@Query` for explicit queries (see <<explicitQueries>>)
+
+NOTE: Nitrite’s runtime query execution supports the query strings encoded by Micronaut Data’s document processor and the Nitrite query builder. If you use `@Query` with JSON, use named placeholders like `:name` and keep update documents separate from filter documents.

@@ -15,10 +15,15 @@
  */
 package io.micronaut.data.nitrite.runtime;
 
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -45,6 +50,7 @@ import jakarta.inject.Singleton;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -182,7 +188,6 @@ import org.slf4j.LoggerFactory;
    * @param discriminator the discriminator
    * @return the repository
    */
-  @SuppressWarnings("unchecked")
   public <T> ObjectRepository<T> getRepository(
       final Class<T> entityType, final String discriminator) {
     return (ObjectRepository<T>) database.getRepository(entityType, discriminator);
@@ -219,6 +224,30 @@ import org.slf4j.LoggerFactory;
       doc.remove("_id");
       doc.put("id", toFilterValue(reservedId));
     }
+
+    // EmbeddedId: document implementations can encode embedded-id fields as root attributes.
+    // To support both encodings, store the embedded-id object under its property name *and* flatten
+    // its component properties into top-level fields. If a component field name collides with the
+    // wrapper property name, skip flattening that field.
+    RuntimePersistentEntity<T> persistentEntity = getEntity((Class<T>) entity.getClass());
+    RuntimePersistentProperty<T> idProperty = persistentEntity.getIdentity();
+    if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class)) {
+      Object embeddedId = idProperty.getProperty().get(entity);
+      if (embeddedId != null) {
+        try {
+          Document idDoc = (Document) nitriteMapper.tryConvert(embeddedId, Document.class);
+          doc.put(idProperty.getName(), idDoc);
+          for (String field : idDoc.getFields()) {
+            if (field.equals(idProperty.getName())) {
+              continue;
+            }
+            doc.put(field, toFilterValue(idDoc.get(field)));
+          }
+        } catch (Exception ignored) {
+          // Keep original mapping
+        }
+      }
+    }
     return doc;
   }
 
@@ -233,7 +262,32 @@ import org.slf4j.LoggerFactory;
     for (String field : doc.getFields()) {
       docCopy.put(field, doc.get(field));
     }
-    T entity = (T) nitriteMapper.tryConvert(docCopy, type);
+    T entity;
+    try {
+      entity = (T) nitriteMapper.tryConvert(docCopy, type);
+    } catch (Exception e) {
+      // Jackson mapper can't always construct immutable embedded-id types from nested documents
+      // (no default constructor / no JsonCreator). Retry without the wrapper field and rebuild the
+      // embedded id from flattened top-level fields below.
+      var idProp = getEntity(type).getIdentity();
+      if (idProp != null && idProp.isAnnotationPresent(EmbeddedId.class)) {
+        Document retryDoc = Document.createDocument();
+        RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+        for (RuntimePersistentProperty<T> p : persistentEntity.getPersistentProperties()) {
+          String name = p.getName();
+          if (name.equals(idProp.getName())) {
+            continue;
+          }
+          Object v = doc.get(name);
+          if (v != null) {
+            retryDoc.put(name, v);
+          }
+        }
+        entity = (T) nitriteMapper.tryConvert(retryDoc, type);
+      } else {
+        throw e;
+      }
+    }
     // Post-process: entities with @JsonProperty("_id") have their id field mapped to "_id" key.
     // Since we stripped "_id" (NitriteId) from docCopy, Jackson left id=null. Restore from "id".
     var idProp = getEntity(type).getIdentity();
@@ -241,6 +295,72 @@ import org.slf4j.LoggerFactory;
       Object storedId = doc.get("id");
       if (storedId != null) {
         idProp.getProperty().set(entity, convertIdValue(storedId, idProp.getType()));
+      }
+    }
+
+    // EmbeddedId: reconstruct the embedded id object from flattened top-level fields.
+    if (idProp != null
+        && idProp.isAnnotationPresent(EmbeddedId.class)
+        && idProp.getProperty().get(entity) == null) {
+      try {
+        Class<?> embeddedIdType = idProp.getType();
+        BeanIntrospection<?> idIntrospection = BeanIntrospection.getIntrospection(embeddedIdType);
+        Object embeddedId = null;
+
+        // Prefer BeanIntrospection constructor instantiation for immutable embedded-id classes.
+        Argument<?>[] ctorArgs = idIntrospection.getConstructorArguments();
+        if (ctorArgs.length > 0) {
+          Object[] values = new Object[ctorArgs.length];
+          for (int i = 0; i < ctorArgs.length; i++) {
+            String name = ctorArgs[i].getName();
+            Optional<? extends BeanProperty<?, ?>> property = idIntrospection.getProperty(name);
+            String storedName = property
+                .flatMap(p -> p.getAnnotationMetadata()
+                    .stringValue(MappedProperty.class)
+                    .filter(v -> !v.isBlank()))
+                .orElse(name);
+            Object storedValue = doc.get(storedName);
+            values[i] = conversionService.convertRequired(storedValue, ctorArgs[i]);
+          }
+          embeddedId = idIntrospection.instantiate(values);
+        } else {
+          // Mutable embedded-id (default constructor): set known bean properties from storage.
+          embeddedId = idIntrospection.instantiate();
+          for (BeanProperty<?, ?> property : idIntrospection.getBeanProperties()) {
+            if (property.isReadOnly()) {
+              continue;
+            }
+            String storedName = property.getAnnotationMetadata()
+                .stringValue(MappedProperty.class)
+                .filter(v -> !v.isBlank())
+                .orElse(property.getName());
+            Object storedValue = doc.get(storedName);
+            if (storedValue != null) {
+              @SuppressWarnings({"rawtypes", "unchecked"})
+              BeanProperty raw = (BeanProperty) property;
+              raw.set(embeddedId, conversionService.convertRequired(storedValue, property.asArgument()));
+            }
+          }
+        }
+
+        if (embeddedId == null) {
+          Document embeddedIdDoc = Document.createDocument();
+          for (BeanProperty<?, ?> property : idIntrospection.getBeanProperties()) {
+            String storedName = property.getAnnotationMetadata()
+                .stringValue(MappedProperty.class)
+                .filter(v -> !v.isBlank())
+                .orElse(property.getName());
+            Object storedValue = doc.get(storedName);
+            if (storedValue != null) {
+              embeddedIdDoc.put(property.getName(), storedValue);
+            }
+          }
+          embeddedId = nitriteMapper.tryConvert(embeddedIdDoc, embeddedIdType);
+        }
+        if (embeddedId != null) {
+          idProp.getProperty().set(entity, embeddedId);
+        }
+      } catch (Exception ignored) {
       }
     }
     return entity;
@@ -276,6 +396,27 @@ import org.slf4j.LoggerFactory;
       return instant.getEpochSecond() + instant.getNano() / 1_000_000_000.0;
     }
     return val;
+  }
+
+  /**
+   * Normalize a query parameter for use in Nitrite filters, including Micronaut Data embedded-id
+   * values (which may appear as a single parameter in SQL where clauses).
+   */
+  private Object toNitriteFilterValue(final Object val) {
+    Object normalized = toFilterValue(val);
+    if (normalized == null) {
+      return null;
+    }
+    if (normalized.getClass().isAnnotationPresent(Embeddable.class)) {
+      Object converted = nitriteMapper.tryConvert(normalized, Document.class);
+      if (converted instanceof Document doc) {
+        for (String field : doc.getFields()) {
+          doc.put(field, toFilterValue(doc.get(field)));
+        }
+        return doc;
+      }
+    }
+    return normalized;
   }
 
   /**
@@ -348,11 +489,61 @@ import org.slf4j.LoggerFactory;
 
   // ========== Core CRUD Operations ==========
 
+  /**
+   * Build an ID filter for the given entity type.
+   *
+   * <p>Nitrite stores user IDs in regular document fields (not in Nitrite's internal {@code _id}).
+   * For typical entities this is {@code id}, but for {@link EmbeddedId} it is the embedded property
+   * name (e.g. {@code projectId}).
+   */
+  private <T> Filter idEqualsFilter(final Class<T> type, final Object id) {
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+    RuntimePersistentProperty idProperty = persistentEntity.getIdentity();
+    String idField = "id";
+    if (idProperty != null) {
+      try {
+        idField = normalizeFieldName(idProperty.getName());
+      } catch (Exception ignored) {
+        // Fall back to "id"
+      }
+    }
+
+    if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class) && id != null) {
+      try {
+        Document idDoc = (Document) nitriteMapper.tryConvert(id, Document.class);
+        List<Filter> parts = new ArrayList<>();
+        for (String field : idDoc.getFields()) {
+          parts.add(eqWithNumericCoercion(field, toFilterValue(idDoc.get(field))));
+        }
+        if (parts.isEmpty()) {
+          return Filter.ALL;
+        }
+        if (parts.size() == 1) {
+          return parts.get(0);
+        }
+        return Filter.and(parts.toArray(new Filter[0]));
+      } catch (Exception ignored) {
+        return FluentFilter.where(idField).eq(id);
+      }
+    }
+
+    return eqWithNumericCoercion(idField, toFilterValue(id));
+  }
+
+  /** Read the entity ID value using the runtime entity metadata. */
+  private <T> Object getEntityIdValue(final T entity, final Class<T> type) {
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+    RuntimePersistentProperty idProperty = persistentEntity.getIdentity();
+    if (idProperty == null) {
+      return null;
+    }
+    return idProperty.getProperty().get(entity);
+  }
+
   @Override
   public <T> T findOne(final Class<T> type, final Object id) {
     NitriteCollection collection = getCollection(type);
-    // Use "id" field filter instead of NitriteId (which is for internal Nitrite doc IDs)
-    Document doc = collection.find(eqWithNumericCoercion("id", toFilterValue(id))).firstOrNull();
+    Document doc = collection.find(idEqualsFilter(type, id)).firstOrNull();
     if (doc == null) {
       return null;
     }
@@ -387,9 +578,9 @@ import org.slf4j.LoggerFactory;
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
     Document doc = toDocument(entity);
-    Object idValue = doc.get("id");
+    Object idValue = getEntityIdValue(entity, type);
     if (idValue != null) {
-      collection.update(eqWithNumericCoercion("id", idValue), doc);
+      collection.update(idEqualsFilter(type, idValue), doc);
     }
     // Nitrite doesn't modify documents server-side, so return entity directly
     return entity;
@@ -401,9 +592,9 @@ import org.slf4j.LoggerFactory;
     NitriteCollection collection = getCollection(type);
     for (T entity : operation) {
       Document doc = toDocument(entity);
-      Object idValue = doc.get("id");
+      Object idValue = getEntityIdValue(entity, type);
       if (idValue != null) {
-        collection.update(eqWithNumericCoercion("id", idValue), doc);
+        collection.update(idEqualsFilter(type, idValue), doc);
       }
     }
     return operation;
@@ -414,12 +605,11 @@ import org.slf4j.LoggerFactory;
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
     T entity = operation.getEntity();
-    Document doc = toDocument(entity);
-    Object idValue = doc.get("id");
+    Object idValue = getEntityIdValue(entity, type);
     if (idValue == null) {
       return 0;
     }
-    var result = collection.remove(eqWithNumericCoercion("id", idValue), false);
+    var result = collection.remove(idEqualsFilter(type, idValue), false);
     return result.getAffectedCount();
   }
 
@@ -444,8 +634,7 @@ import org.slf4j.LoggerFactory;
       if (idProperty != null) {
         Object idValue = idProperty.getProperty().get(entity);
         if (idValue != null) {
-          var result =
-              collection.remove(FluentFilter.where("id").eq(toFilterValue(idValue)), false);
+          var result = collection.remove(idEqualsFilter(type, idValue), false);
               // Note: keep ID comparisons flexible for numeric IDs, as Nitrite/Jackson may store
               // them as either integral types or BigDecimal depending on the conversion path.
           if (result.getAffectedCount() > 0) {
@@ -629,6 +818,179 @@ import org.slf4j.LoggerFactory;
   // ========== Filter construction from PreparedQuery ==========
 
   /**
+   * Build the positional parameter array used by JSON criteria encoding ({@code "$mn_qp:<index>"}).
+   *
+   * <p>For simple methods, {@link PreparedQuery#getParameterArray()} already matches the JSON
+   * placeholder indices. For more complex bindings (for example {@link EmbeddedId}), Micronaut Data
+   * provides a {@link PreparedQuery#getQueryBindings()} list that includes binding paths used to
+   * extract individual placeholder values from a single method argument.
+   */
+  private Object[] buildJsonParameterValues(@NonNull final PreparedQuery<?, ?> q) {
+    Object[] methodParams = q.getParameterArray();
+    List<QueryParameterBinding> bindings = q.getQueryBindings();
+    if (bindings == null || bindings.isEmpty()) {
+      return methodParams;
+    }
+    Object[] values = new Object[bindings.size()];
+    for (int i = 0; i < bindings.size(); i++) {
+      values[i] = resolveJsonBindingValue(bindings.get(i), methodParams);
+    }
+    return values;
+  }
+
+  private Object resolveJsonBindingValue(
+      @NonNull final QueryParameterBinding binding, final Object[] methodParams) {
+    if (binding.getValue() != null) {
+      return toFilterValue(binding.getValue());
+    }
+    int idx = binding.getParameterIndex();
+    Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
+    String[] path = binding.getParameterBindingPath();
+    if (path == null || path.length == 0) {
+      path = binding.getPropertyPath();
+    }
+    if (path == null || path.length == 0) {
+      return toFilterValue(base);
+    }
+
+    Object current = base;
+    boolean conversionFailed = false;
+    for (String segment : path) {
+      if (current == null) {
+        break;
+      }
+      if (current instanceof Map<?, ?> m) {
+        current = m.get(segment);
+      } else if (current instanceof Document d) {
+        current = d.get(segment);
+      } else {
+        try {
+          Document doc = (Document) nitriteMapper.tryConvert(current, Document.class);
+          current = doc.get(segment);
+        } catch (Exception ignored) {
+          conversionFailed = true;
+          break;
+        }
+      }
+    }
+    // Some query bindings include a property path (e.g. "id") even when the method parameter
+    // already represents that scalar value. If we cannot traverse the path (because the parameter
+    // isn't an object we can convert to a Document), fall back to the raw parameter value.
+    return conversionFailed ? toFilterValue(base) : toFilterValue(current);
+  }
+
+  private Object[] ensureJsonParamsForFilter(
+      @NonNull final Map<String, Object> filterMap,
+      @NonNull final Object[] methodParams,
+      final Object[] jsonParams) {
+    int maxIdx = findMaxPlaceholderIndex(filterMap);
+    if (maxIdx < 0) {
+      return jsonParams;
+    }
+    Object[] out = jsonParams == null ? new Object[0] : jsonParams;
+    if (out.length <= maxIdx) {
+      out = Arrays.copyOf(out, maxIdx + 1);
+    }
+    fillMissingParamsFromFilter(filterMap, methodParams, out);
+    return out;
+  }
+
+  private int findMaxPlaceholderIndex(final Map<String, Object> filterMap) {
+    int max = -1;
+    for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
+      Object value = entry.getValue();
+      if (value instanceof Map<?, ?> m) {
+        // Recurse for logical operators
+        String key = entry.getKey();
+        if ("$and".equals(key) || "$or".equals(key)) {
+          if (value instanceof List<?> list) {
+            for (Object item : list) {
+              if (item instanceof Map<?, ?> im) {
+                max = Math.max(max, findMaxPlaceholderIndex((Map<String, Object>) im));
+              }
+            }
+          }
+          continue;
+        }
+        // Operator maps
+        for (Object opVal : m.values()) {
+          Integer idx = extractPlaceholderIndex(opVal);
+          if (idx != null) {
+            max = Math.max(max, idx);
+          }
+        }
+      } else {
+        Integer idx = extractPlaceholderIndex(value);
+        if (idx != null) {
+          max = Math.max(max, idx);
+        }
+      }
+    }
+    return max;
+  }
+
+  private void fillMissingParamsFromFilter(
+      final Map<String, Object> filterMap, final Object[] methodParams, final Object[] out) {
+    for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+      if ("$and".equals(key) || "$or".equals(key)) {
+        if (value instanceof List<?> list) {
+          for (Object item : list) {
+            if (item instanceof Map<?, ?> im) {
+              fillMissingParamsFromFilter((Map<String, Object>) im, methodParams, out);
+            }
+          }
+        }
+        continue;
+      }
+      if (value instanceof Map<?, ?> ops) {
+        for (Object opVal : ops.values()) {
+          Integer idx = extractPlaceholderIndex(opVal);
+          if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
+            out[idx] = extractPropertyFromSingleArg(methodParams, key);
+          }
+        }
+      } else {
+        Integer idx = extractPlaceholderIndex(value);
+        if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
+          out[idx] = extractPropertyFromSingleArg(methodParams, key);
+        }
+      }
+    }
+  }
+
+  private Integer extractPlaceholderIndex(final Object value) {
+    if (value instanceof String s && s.startsWith("$mn_qp:")) {
+      try {
+        return Integer.parseInt(s.substring(7));
+      } catch (NumberFormatException ignored) {
+        return null;
+      }
+    }
+    if (value instanceof Map<?, ?> vm
+        && vm.size() == 1
+        && vm.containsKey("$mn_qp")
+        && vm.get("$mn_qp") instanceof Integer idx) {
+      return idx;
+    }
+    return null;
+  }
+
+  private Object extractPropertyFromSingleArg(final Object[] methodParams, final String property) {
+    if (methodParams == null || methodParams.length != 1 || methodParams[0] == null) {
+      return null;
+    }
+    Object base = methodParams[0];
+    try {
+      Document doc = (Document) nitriteMapper.tryConvert(base, Document.class);
+      return toFilterValue(doc.get(property));
+    } catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  /**
    * Build a Nitrite {@link Filter} from a {@link PreparedQuery}.
    *
    * <p>The query may be:
@@ -650,6 +1012,7 @@ import org.slf4j.LoggerFactory;
     }
 
     Object[] params = q.getParameterArray();
+    Object[] jsonParams = buildJsonParameterValues(q);
     Map<String, Object> namedParameters = buildNamedParameterValues(q);
 
     // Check for JSON filter generated by NitriteQueryBuilder (usually starts with { )
@@ -658,7 +1021,9 @@ import org.slf4j.LoggerFactory;
         Object filterObj = parseJson(queryString);
         if (filterObj instanceof Map m) {
           // If it's an update query with $set, we still want the filter part
-          return buildFilterFromJson((Map<String, Object>) m, params, namedParameters);
+          Object[] effectiveParams =
+              ensureJsonParamsForFilter((Map<String, Object>) m, params, jsonParams);
+          return buildFilterFromJson((Map<String, Object>) m, effectiveParams, namedParameters);
         }
       } catch (Exception ignored) {
         // Fall through to SQL parsing
@@ -1277,12 +1642,12 @@ import org.slf4j.LoggerFactory;
       if (value instanceof String s && s.startsWith("$mn_qp:")) {
         int paramIdx = Integer.parseInt(s.substring(7));
         if (params != null && paramIdx >= 0 && paramIdx < params.length) {
-          value = toFilterValue(params[paramIdx]);
+          value = toNitriteFilterValue(params[paramIdx]);
         }
       } else if (value instanceof String s && s.startsWith(":")) {
         String name = s.substring(1);
         if (namedParameters.containsKey(name)) {
-          value = namedParameters.get(name);
+          value = toNitriteFilterValue(namedParameters.get(name));
         }
       }
       if (value instanceof Map<?, ?> vm
@@ -1290,18 +1655,11 @@ import org.slf4j.LoggerFactory;
           && vm.containsKey("$mn_qp")
           && vm.get("$mn_qp") instanceof Integer paramIdx) {
         if (params != null && paramIdx >= 0 && paramIdx < params.length) {
-          value = toFilterValue(params[paramIdx]);
+          value = toNitriteFilterValue(params[paramIdx]);
         }
       }
 
-      Object finalValue = value;
-
-      LOG.debug(
-          "buildFieldFilter field={} op={} finalValueType={} finalValue={}",
-          field,
-          op,
-          (finalValue != null ? finalValue.getClass().getName() : "null"),
-          finalValue);
+      Object finalValue = toNitriteFilterValue(value);
 
       Filter f =
           switch (op) {
@@ -1339,12 +1697,12 @@ import org.slf4j.LoggerFactory;
                     if (item instanceof String s && s.startsWith("$mn_qp:")) {
                         int paramIdx = Integer.parseInt(s.substring(7));
                         if (params != null && paramIdx >= 0 && paramIdx < params.length) {
-                            resolved = toFilterValue(params[paramIdx]);
+                            resolved = toNitriteFilterValue(params[paramIdx]);
                         }
                     } else if (item instanceof String s && s.startsWith(":")) {
                         String name = s.substring(1);
                         if (namedParameters.containsKey(name)) {
-                            resolved = namedParameters.get(name);
+                            resolved = toNitriteFilterValue(namedParameters.get(name));
                         }
                     }
                     if (resolved instanceof Comparable c) {
@@ -1365,12 +1723,12 @@ import org.slf4j.LoggerFactory;
                     if (item instanceof String s && s.startsWith("$mn_qp:")) {
                         int paramIdx = Integer.parseInt(s.substring(7));
                         if (params != null && paramIdx >= 0 && paramIdx < params.length) {
-                            resolved = toFilterValue(params[paramIdx]);
+                            resolved = toNitriteFilterValue(params[paramIdx]);
                         }
                     } else if (item instanceof String s && s.startsWith(":")) {
                         String name = s.substring(1);
                         if (namedParameters.containsKey(name)) {
-                            resolved = namedParameters.get(name);
+                            resolved = toNitriteFilterValue(namedParameters.get(name));
                         }
                     }
                     if (resolved instanceof Comparable c) {
@@ -1512,7 +1870,15 @@ import org.slf4j.LoggerFactory;
     return (R) fromDocument(doc, rootEntity);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Returns a single result (optional) for the supplied prepared query by delegating to {@link
+   * #findOne(PreparedQuery)}.
+   *
+   * @param q prepared query
+   * @param <T> entity type
+   * @param <R> result type
+   * @return optional matched result or empty when none
+   */
   public <T, R> Optional<R> findOptional(@NonNull final PreparedQuery<T, R> q) {
     return Optional.ofNullable(findOne(q));
   }
@@ -1572,12 +1938,27 @@ import org.slf4j.LoggerFactory;
     return Page.of(list, q.getPageable(), count(q));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Materializes a slice (list of results) from the supplied prepared query.
+   *
+   * @param q prepared query
+   * @param <T> entity type
+   * @param <R> result type
+   * @return slice contents
+   */
   public <T, R> R findSlice(@NonNull final PreparedQuery<T, R> q) {
     return (R) findAll(q);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Executes the prepared page query against Nitrite, applying any JSON/SQL sort hints and
+   * building a runtime page result.
+   *
+   * @param q prepared query
+   * @param <T> entity type
+   * @param <R> projection type
+   * @return page of matching rows
+   */
   public <T, R> R findPage(@NonNull final PreparedQuery<T, R> q) {
     Class<T> rootEntity = q.getRootEntity();
     NitriteCollection collection = getCollection(rootEntity);
@@ -1606,7 +1987,13 @@ import org.slf4j.LoggerFactory;
     return (R) Page.of(list, q.getPageable(), total);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Counts the number of rows that match the supplied prepared query.
+   *
+   * @param q prepared query
+   * @param <T> entity type
+   * @return row count
+   */
   public <T> long count(@NonNull final PreparedQuery<T, Long> q) {
     Class<T> rootEntity = q.getRootEntity();
     NitriteCollection collection = getCollection(rootEntity);
@@ -1649,6 +2036,7 @@ import org.slf4j.LoggerFactory;
   public Optional<Number> executeUpdate(@NonNull final PreparedQuery<?, Number> q) {
     String query = q.getQuery();
     Object[] params = q.getParameterArray();
+    Object[] jsonParams = buildJsonParameterValues(q);
     Map<String, Object> setFields;
     Filter filter;
 
@@ -1665,7 +2053,9 @@ import org.slf4j.LoggerFactory;
           if (value instanceof String s) {
               if (s.startsWith("$mn_qp:")) {
                 int idx = Integer.parseInt(s.substring(7));
-                entry.setValue(toFilterValue(params[idx]));
+                if (idx >= 0 && idx < jsonParams.length) {
+                  entry.setValue(toFilterValue(jsonParams[idx]));
+                }
               } else if (s.startsWith(":")) {
                   String pname = s.substring(1);
                   for (QueryParameterBinding b : bindings) {
@@ -1680,12 +2070,14 @@ import org.slf4j.LoggerFactory;
               && vm.size() == 1
               && vm.containsKey("$mn_qp")
               && vm.get("$mn_qp") instanceof Integer paramIdx) {
-            entry.setValue(toFilterValue(params[paramIdx]));
+            if (paramIdx >= 0 && paramIdx < jsonParams.length) {
+              entry.setValue(toFilterValue(jsonParams[paramIdx]));
+            }
           }
         }
       }
       Map<String, Object> namedParameters = buildNamedParameterValues(q);
-      filter = buildFilterFromJson(filterMap, params, namedParameters);
+      filter = buildFilterFromJson(filterMap, jsonParams, namedParameters);
     } else if (query.trim().toUpperCase().startsWith("UPDATE")) {
       Object[] sqlParams = reorderParamsForSql(q);
       setFields = parseSetClause(query, sqlParams);
@@ -1710,7 +2102,7 @@ import org.slf4j.LoggerFactory;
 
     var result = collection.update(filter, updateDoc, UpdateOptions.updateOptions(false));
     int count = result.getAffectedCount();
-    
+
     LOG.debug("executeUpdate updated {} documents", count);
     return Optional.of(count);
   }
@@ -1779,6 +2171,7 @@ import org.slf4j.LoggerFactory;
   private int executeJsonUpdate(
       @NonNull final PreparedQuery<?, ?> q, @NonNull final Map<String, Object> queryMap) {
     Object[] params = q.getParameterArray();
+    Object[] jsonParams = buildJsonParameterValues(q);
     Map<String, Object> namedParameters = buildNamedParameterValues(q);
 
     Object rawSet = queryMap.get("$set");
@@ -1787,7 +2180,7 @@ import org.slf4j.LoggerFactory;
     }
 
     // Filter is the query map minus $set (buildFilterFromJson already skips $set)
-    Filter filter = buildFilterFromJson(queryMap, params, namedParameters);
+    Filter filter = buildFilterFromJson(queryMap, jsonParams, namedParameters);
     NitriteCollection collection = getCollection(q.getRootEntity());
 
     Document updateDoc = Document.createDocument();
@@ -1799,8 +2192,8 @@ import org.slf4j.LoggerFactory;
       Object value = e.getValue();
       if (value instanceof String s && s.startsWith("$mn_qp:")) {
         int idx = Integer.parseInt(s.substring(7));
-        if (params != null && idx >= 0 && idx < params.length) {
-          value = toFilterValue(params[idx]);
+        if (idx >= 0 && idx < jsonParams.length) {
+          value = toFilterValue(jsonParams[idx]);
         }
       } else if (value instanceof String s && s.startsWith(":")) {
         String name = s.substring(1);
@@ -1878,12 +2271,17 @@ import org.slf4j.LoggerFactory;
     return list;
   }
 
-  // ========== Unsupported QueryModel-based methods (deprecated API) ==========
+// ========== Unsupported QueryModel-based methods (deprecated API) ==========
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based find operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p projection class
+   * @return never returns (unsupported)
    */
   public <T, R> R findOptional(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -1891,9 +2289,14 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based find operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p projection class
+   * @return never returns (unsupported)
    */
   public <T, R> R findOne(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -1901,9 +2304,14 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based find operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p projection class
+   * @return never returns (unsupported)
    */
   public <T, R> Iterable<R> findAll(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -1911,9 +2319,14 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based find operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p projection class
+   * @return never returns (unsupported)
    */
   public <T, R> R findSlice(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -1921,9 +2334,14 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based find operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p projection class
+   * @return never returns (unsupported)
    */
   public <T, R> R findPage(
       @NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -1931,27 +2349,38 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based count operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param q query model
+   * @param e entity class being queried
+   * @return never returns (unsupported)
    */
   public <T> long count(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based exists operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param q query model
+   * @param e entity class being queried
+   * @return never returns (unsupported)
    */
   public <T> boolean exists(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based update operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query model
+   * @param e entity class being queried
+   * @param p parameter map for the update
+   * @return never returns (unsupported)
    */
   public <T, R> R update(
       @NonNull final QueryModel q,
@@ -1961,9 +2390,14 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based update operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param <R> projection or result type
+   * @param q query models
+   * @param e entity class being queried
+   * @param p parameter maps for the updates
+   * @return never returns (unsupported)
    */
   public <T, R> R updateAll(
       @NonNull final List<QueryModel> q,
@@ -1973,36 +2407,48 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based delete operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param q query model
+   * @param e entity class being deleted
+   * @return never returns (unsupported)
    */
   public <T> int delete(@NonNull final QueryModel q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based delete operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param q iterable of query models
+   * @param e entity class being deleted
+   * @return never returns (unsupported)
    */
   public <T> int deleteAll(@NonNull final Iterable<QueryModel> q, @NonNull final Class<T> e) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported in the Nitrite module; QueryModel-based delete operations were deprecated.
    *
-   * <p>Nitrite implementation is criteria-first. The legacy QueryModel-based API is not supported.
+   * @param <T> root entity type
+   * @param e entity class being deleted
+   * @param ids identifiers targeted for deletion
+   * @return never returns (unsupported)
    */
   public <T> int deleteAll(@NonNull final Class<T> e, @NonNull final Serializable... ids) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Nitrite does not support batch deletes created via {@link DeleteBatchOperation}.
    *
-   * <p>Nitrite does not support batch deletes via {@link DeleteBatchOperation}.
+   * @param <T> root entity type
+   * @param op delete batch operation metadata
+   * @param entities entities to delete
+   * @return never returns (unsupported)
    */
   public <T> int deleteAll(
       @NonNull final DeleteBatchOperation<T> op, @NonNull final Iterable<T> entities) {
@@ -2010,54 +2456,67 @@ import org.slf4j.LoggerFactory;
   }
 
   /**
-   * {@inheritDoc}
+   * Nitrite merge operations are not supported.
    *
-   * <p>Nitrite merge operations are not currently supported.
+   * @param <T> root entity type
+   * @param op merge operation metadata
+   * @return never returns (unsupported)
    */
   public <T> T merge(@NonNull final UpdateOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * Nitrite merge operations are not supported.
    *
-   * <p>Nitrite merge operations are not currently supported.
+   * @param <T> root entity type
+   * @param op merge batch operation metadata
+   * @return never returns (unsupported)
    */
   public <T> Iterable<T> mergeAll(@NonNull final UpdateBatchOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * EntityOperation-based APIs are not supported in the Nitrite module.
    *
-   * <p>EntityOperation API is not currently supported by Nitrite module.
+   * @param <T> root entity type
+   * @param op entity operation metadata
+   * @return never returns (unsupported)
    */
   public <T> Optional<T> findOne(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * EntityOperation-based APIs are not supported in the Nitrite module.
    *
-   * <p>EntityOperation API is not currently supported by Nitrite module.
+   * @param <T> root entity type
+   * @param op entity operation metadata
+   * @return never returns (unsupported)
    */
   public <T> Iterable<T> findAll(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * EntityOperation-based APIs are not supported in the Nitrite module.
    *
-   * <p>EntityOperation API is not currently supported by Nitrite module.
+   * @param <T> root entity type
+   * @param op entity operation metadata
+   * @return never returns (unsupported)
    */
   public <T> T delete(@NonNull final EntityOperation<T> op) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * {@inheritDoc}
+   * EntityOperation-based APIs are not supported in the Nitrite module.
    *
-   * <p>EntityOperation API is not currently supported by Nitrite module.
+   * @param <T> root entity type
+   * @param op entity operation metadata
+   * @param entities entities to delete
+   * @return never returns (unsupported)
    */
   public <T> Iterable<T> deleteAll(
       @NonNull final EntityOperation<T> op, @NonNull final Iterable<T> entities) {
