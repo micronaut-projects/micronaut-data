@@ -82,7 +82,6 @@ public final class JpaMetamodelProcessor {
         classDefBuilder.addFields(constantPropertyName);
         classDefBuilder.addFields(attributeFields);
         classDefBuilder.addField(createEntityTypeField(elementType));
-        classDefBuilder.addMethod(MethodDef.constructor().build());
         return classDefBuilder;
     }
 
