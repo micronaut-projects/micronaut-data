@@ -1,9 +1,11 @@
-package io.micronaut.data.nitrite.model;
+package example;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.nitrite.annotation.FullTextIndex;
+import io.micronaut.data.nitrite.annotation.SpatialIndex;
 
 // tag::compound-index[]
 @MappedEntity
@@ -20,6 +22,12 @@ public class IndexedBook {
     // end::property-index[]
 
     private int pages;
+
+    @FullTextIndex
+    private String description;
+
+    @SpatialIndex
+    private String location;
 
     public IndexedBook() {
     }
@@ -51,5 +59,21 @@ public class IndexedBook {
 
     public void setPages(int pages) {
         this.pages = pages;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

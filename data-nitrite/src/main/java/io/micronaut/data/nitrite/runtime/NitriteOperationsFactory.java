@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -31,12 +32,12 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.mvstore.MVStoreModule;
-import org.dizitart.no2.rocksdb.RocksDBModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,9 @@ import org.slf4j.LoggerFactory;
 public final class NitriteOperationsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(NitriteOperationsFactory.class);
+
+  private static final String ROCKSDB_MODULE_CLASS = "org.dizitart.no2.rocksdb.RocksDBModule";
+  private static final String SPATIAL_MODULE_CLASS = "org.dizitart.no2.spatial.SpatialModule";
 
   /**
    * Create a Nitrite database instance.
@@ -75,7 +79,7 @@ public final class NitriteOperationsFactory {
       File file = prepareDbFile(dbPath);
       NitriteModule storeModule;
       if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
-        storeModule = RocksDBModule.withConfig().filePath(file).build();
+        storeModule = loadRocksDbModule(file);
       } else {
         storeModule = MVStoreModule.withConfig().filePath(file).build();
       }
@@ -83,6 +87,10 @@ public final class NitriteOperationsFactory {
     }
 
     builder.loadModule(new JacksonMapperModule(new JavaTimeModule()));
+    
+    // Load Spatial module if present on classpath
+    loadSpatialModule().ifPresent(builder::loadModule);
+    
     builder.fieldSeparator(config.getFieldSeparator());
 
     String username = config.getUsername();
@@ -91,6 +99,35 @@ public final class NitriteOperationsFactory {
       return builder.openOrCreate(username, password);
     }
     return builder.openOrCreate();
+  }
+
+  private NitriteModule loadRocksDbModule(File file) {
+    if (ClassUtils.isPresent(ROCKSDB_MODULE_CLASS, null)) {
+        // Use reflection to avoid hard dependency
+        try {
+            Class<?> rocksDbModuleClass = Class.forName(ROCKSDB_MODULE_CLASS);
+            Object config = rocksDbModuleClass.getMethod("withConfig").invoke(null);
+            config.getClass().getMethod("filePath", File.class).invoke(config, file);
+            return (NitriteModule) config.getClass().getMethod("build").invoke(config);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize RocksDB module even though it is on the classpath", e);
+        }
+    }
+    throw new IllegalStateException("RocksDB storage mode requested but 'nitrite-rocksdb-adapter' is not on the classpath.");
+  }
+
+  private Optional<NitriteModule> loadSpatialModule() {
+    if (ClassUtils.isPresent(SPATIAL_MODULE_CLASS, null)) {
+        try {
+            Class<?> spatialModuleClass = Class.forName(SPATIAL_MODULE_CLASS);
+            return Optional.of((NitriteModule) spatialModuleClass.getDeclaredConstructor().newInstance());
+        } catch (Exception e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Spatial module found on classpath but could not be initialized: {}", e.getMessage());
+            }
+        }
+    }
+    return Optional.empty();
   }
 
   private File prepareDbFile(String dbPath) {

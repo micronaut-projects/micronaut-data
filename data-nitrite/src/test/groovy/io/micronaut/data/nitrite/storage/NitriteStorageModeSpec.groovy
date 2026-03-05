@@ -37,10 +37,9 @@ class NitriteStorageModeSpec extends Specification {
             // No db-path
         }
 
+        when:
         def ctx = ApplicationContext.run(props)
         def repository = ctx.getBean(BookRepository)
-
-        when:
         def saved = repository.save(new Book("Mode: $mode"))
 
         then:
@@ -51,6 +50,6 @@ class NitriteStorageModeSpec extends Specification {
         ctx.close()
 
         where:
-        mode << ["MVSTORE", "IN_MEMORY", "ROCKSDB", "DEFAULT_IN_MEMORY"]
+        mode << ["MVSTORE", "IN_MEMORY", "DEFAULT_IN_MEMORY"]
     }
 }

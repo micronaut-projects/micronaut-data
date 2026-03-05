@@ -5,5 +5,7 @@ plugins {
 dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
     implementation projects.micronautDataNitrite
+    implementation libs.nitrite.rocksdb.adapter
+    implementation libs.nitrite.spatial
     runtimeOnly mn.snakeyaml
 }

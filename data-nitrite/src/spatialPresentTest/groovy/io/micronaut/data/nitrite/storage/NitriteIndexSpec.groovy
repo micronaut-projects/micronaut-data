@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.IndexedBook
 import io.micronaut.data.nitrite.repository.IndexedBookRepository
 import org.dizitart.no2.Nitrite
+import org.dizitart.no2.index.IndexType
 import spock.lang.Specification
 
 class NitriteIndexSpec extends Specification {
@@ -22,11 +23,15 @@ class NitriteIndexSpec extends Specification {
         then: "Indexes should be present in the collection"
         def collection = db.getCollection("IndexedBook")
         def indices = collection.listIndices()
-        
-        // fields property in IndexDescriptor is a Fields object which has getFieldNames()
-        indices.any { it.fields.fieldNames.contains("title") && it.fields.fieldNames.size() == 1 }
+
+        indices.any { it.fields.fieldNames.contains("title") && it.fields.fieldNames.size() == 1 && it.indexType == IndexType.NON_UNIQUE }
         indices.any { it.fields.fieldNames.containsAll(["title", "pages"]) && it.fields.fieldNames.size() == 2 }
-        indices.any { it.fields.fieldNames.contains("id") && it.fields.fieldNames.size() == 1 }
+        indices.any { it.fields.fieldNames.contains("description") && it.indexType == IndexType.FULL_TEXT }
+        indices.any { it.fields.fieldNames.contains("location") && it.indexType.toString() == "Spatial" }
+        // UUID field with @Index should be indexed
+        indices.any { it.fields.fieldNames.contains("indexedUuid") && it.indexType == IndexType.NON_UNIQUE }
+        // UUID field without @Index should NOT be indexed
+        !indices.any { it.fields.fieldNames.contains("uuid") }
 
         cleanup:
         ctx.close()

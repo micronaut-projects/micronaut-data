@@ -42,6 +42,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.nitrite.annotation.FullTextIndex;
+import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -264,7 +266,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         }
       }
     }
-    // Also check for @Index on properties
+    // Also check for @Index, @FullTextIndex, @SpatialIndex on properties
     for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
       if (property.getAnnotationMetadata().hasAnnotation(Index.class)) {
         AnnotationValue<Index> index = property.getAnnotationMetadata().getAnnotation(Index.class);
@@ -277,27 +279,29 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           }
         }
       }
-    }
-    // Also index the identity property field ("id") if it's not already indexed
-    RuntimePersistentProperty<?> idProperty = entity.getIdentity();
-    if (idProperty != null) {
-      String idField = "id";
-      boolean alreadyIndexed = false;
-      for (AnnotationValue<Index> index : indexes) {
-        String[] columns = index.getRequiredValue("columns", String[].class);
-        if (columns.length == 1 && idField.equals(columns[0])) {
-          alreadyIndexed = true;
-          break;
-        }
-      }
-      if (!alreadyIndexed) {
+      if (property.getAnnotationMetadata().hasAnnotation(FullTextIndex.class)) {
         try {
-          collection.createIndex(indexOptions(IndexType.UNIQUE), idField);
+          collection.createIndex(indexOptions(IndexType.FULL_TEXT), property.getPersistedName());
         } catch (Exception e) {
-          // Ignore if already exists or other error
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Could not create full-text index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
+          }
+        }
+      }
+      if (property.getAnnotationMetadata().hasAnnotation(SpatialIndex.class)) {
+        try {
+          collection.createIndex(indexOptions("Spatial"), property.getPersistedName());
+        } catch (Exception e) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Could not create spatial index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
+          }
         }
       }
     }
+    // Note: Do not create a unique index on the "id" field.
+    // Nitrite handles document uniqueness internally via its _id field.
+    // Creating a unique index on "id" causes constraint violations when
+    // multiple documents are inserted rapidly with timestamp-based IDs.
   }
 
   /** Generate and set ID on entity if @GeneratedValue is present. */
@@ -1344,7 +1348,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @deprecated Use {@link #findPage(PagedQuery)} instead
    */
   @Deprecated(forRemoval = true)
-  public <T, R> R findPage(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
+  public <T, R> R findPage(@NonNull final PagedQuery<T> q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
     throw new UnsupportedOperationException();
   }
 
