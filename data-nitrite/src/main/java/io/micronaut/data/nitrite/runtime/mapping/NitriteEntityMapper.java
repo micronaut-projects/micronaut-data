@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
@@ -235,7 +236,9 @@ public final class NitriteEntityMapper {
    */
   @SuppressWarnings("unchecked")
   public <T> Document toDocument(final T entity) {
-    Document doc = (Document) nitriteMapper.tryConvert(entity, Document.class);
+    // Check if entity has Geometry fields that need special handling
+    Document doc = convertToDocument(entity);
+    
     // Entities with @JsonProperty("_id") cause Jackson to serialize the id as "_id".
     // Nitrite reserves "_id" for NitriteId — rename user's id to "id" to avoid InvalidIdException.
     Object reservedId = doc.get("_id");
@@ -264,6 +267,54 @@ public final class NitriteEntityMapper {
       }
     }
     return doc;
+  }
+
+  /**
+   * Convert entity to Document, handling Geometry fields specially.
+   * Geometry objects must be preserved as-is for Nitrite's spatial module.
+   */
+  @SuppressWarnings("unchecked")
+  private <T> Document convertToDocument(T entity) {
+    // Check if JTS Geometry class is present
+    if (!ClassUtils.isPresent("org.locationtech.jts.geom.Geometry", null)) {
+      return (Document) nitriteMapper.tryConvert(entity, Document.class);
+    }
+    
+    try {
+      RuntimePersistentEntity<T> persistentEntity =
+          (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(entity.getClass());
+      
+      // First convert to document normally
+      Document doc = (Document) nitriteMapper.tryConvert(entity, Document.class);
+      
+      // Now check each property for Geometry types and preserve them as-is
+      for (RuntimePersistentProperty<? super T> prop : persistentEntity.getPersistentProperties()) {
+        if (prop.isReadOnly()) {
+          continue;
+        }
+        Object value = prop.getProperty().get(entity);
+        if (value != null && isGeometry(value)) {
+          // Put the Geometry object directly, bypassing Jackson serialization
+          doc.put(prop.getName(), value);
+        }
+      }
+      return doc;
+    } catch (Exception e) {
+      // Fall back to normal conversion
+      return (Document) nitriteMapper.tryConvert(entity, Document.class);
+    }
+  }
+
+  /**
+   * Check if an object is a JTS Geometry using reflection.
+   */
+  private boolean isGeometry(Object value) {
+    try {
+      Class<?> geometryClass = Class.forName("org.locationtech.jts.geom.Geometry");
+      return geometryClass.isInstance(value);
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 
   /**

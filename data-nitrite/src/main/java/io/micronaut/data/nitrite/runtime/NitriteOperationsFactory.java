@@ -50,6 +50,7 @@ public final class NitriteOperationsFactory {
 
   private static final String ROCKSDB_MODULE_CLASS = "org.dizitart.no2.rocksdb.RocksDBModule";
   private static final String SPATIAL_MODULE_CLASS = "org.dizitart.no2.spatial.SpatialModule";
+  private static final String JTS_MODULE_CLASS = "com.bedatadriven.jackson.datatype.jts.JtsModule";
 
   /**
    * Create a Nitrite database instance.
@@ -86,11 +87,11 @@ public final class NitriteOperationsFactory {
       builder.loadModule(storeModule);
     }
 
-    builder.loadModule(new JacksonMapperModule(new JavaTimeModule()));
-    
+    builder.loadModule(createJacksonMapperModule());
+
     // Load Spatial module if present on classpath
     loadSpatialModule().ifPresent(builder::loadModule);
-    
+
     builder.fieldSeparator(config.getFieldSeparator());
 
     String username = config.getUsername();
@@ -128,6 +129,24 @@ public final class NitriteOperationsFactory {
         }
     }
     return Optional.empty();
+  }
+
+  private NitriteModule createJacksonMapperModule() {
+    // Check if JTS module is available for Geometry serialization
+    if (ClassUtils.isPresent(JTS_MODULE_CLASS, null)) {
+        try {
+            Class<?> jtsModuleClass = Class.forName(JTS_MODULE_CLASS);
+            Object jtsModule = jtsModuleClass.getDeclaredConstructor().newInstance();
+            // Create JacksonMapperModule with both JavaTimeModule and JtsModule
+            return new JacksonMapperModule(new JavaTimeModule(), (com.fasterxml.jackson.databind.Module) jtsModule);
+        } catch (Exception e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("JTS module found but could not be registered: {}", e.getMessage());
+            }
+        }
+    }
+    // Fall back to just JavaTimeModule
+    return new JacksonMapperModule(new JavaTimeModule());
   }
 
   private File prepareDbFile(String dbPath) {

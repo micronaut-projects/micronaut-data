@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
+import org.locationtech.jts.geom.Geometry;
 import java.util.UUID;
 
 /**
@@ -31,7 +32,7 @@ public class IndexedBook {
     private String description;
 
     @SpatialIndex
-    private String location;
+    private Geometry location;
 
     // UUID field without index - should NOT be indexed
     private UUID uuid;
@@ -46,6 +47,15 @@ public class IndexedBook {
     public IndexedBook(String title, int pages) {
         this.title = title;
         this.pages = pages;
+        this.uuid = UUID.randomUUID();
+        this.indexedUuid = UUID.randomUUID();
+    }
+
+    public IndexedBook(String title, int pages, String description, Geometry location) {
+        this.title = title;
+        this.pages = pages;
+        this.description = description;
+        this.location = location;
         this.uuid = UUID.randomUUID();
         this.indexedUuid = UUID.randomUUID();
     }
@@ -118,7 +128,7 @@ public class IndexedBook {
      * Gets the location.
      * @return the location
      */
-    public String getLocation() {
+    public Geometry getLocation() {
         return location;
     }
 
@@ -126,7 +136,7 @@ public class IndexedBook {
      * Sets the location.
      * @param location the location to set
      */
-    public void setLocation(String location) {
+    public void setLocation(Geometry location) {
         this.location = location;
     }
 

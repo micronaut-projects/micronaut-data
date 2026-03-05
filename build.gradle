@@ -14,8 +14,3 @@ if (System.getenv("SONAR_TOKEN") != null) {
         }
     }
 }
-subprojects {
-    tasks.withType(JavaCompile).configureEach {
-        options.compilerArgs += "-Xlint:-removal"
-    }
-}

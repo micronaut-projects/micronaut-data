@@ -21,6 +21,7 @@ micronaut-logging = "1.7.1"
 micronaut-flyway = "7.9.1"
 micronaut-coherence = "5.0.6"
 nitrite = "4.3.2"
+jackson-datatype-jts = "2.21.0"
 
 groovy = "4.0.29"
 
@@ -84,6 +85,7 @@ micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-pr
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+jackson-datatype-jts = { module = "com.graphhopper.external:jackson-datatype-jts", version.ref = "jackson-datatype-jts" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }

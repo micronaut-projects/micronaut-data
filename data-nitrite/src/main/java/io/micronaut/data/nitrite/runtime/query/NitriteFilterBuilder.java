@@ -16,10 +16,14 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +38,11 @@ import java.util.UUID;
  */
 @Internal
 public final class NitriteFilterBuilder {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NitriteFilterBuilder.class);
+
+    private static final String SPATIAL_FLUENT_FILTER_CLASS = "org.dizitart.no2.spatial.SpatialFluentFilter";
+    private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
 
     private final NitriteEntityMapper entityMapper;
 
@@ -280,6 +289,22 @@ public final class NitriteFilterBuilder {
                     Boolean.TRUE.equals(finalValue) ? FluentFilter.where(field).notEq(null) : FluentFilter.where(field).eq(null);
                 case "$empty" ->
                     Boolean.TRUE.equals(finalValue) ? Filter.or(FluentFilter.where(field).eq(""), FluentFilter.where(field).eq(null)) : Filter.and(FluentFilter.where(field).notEq(""), FluentFilter.where(field).notEq(null));
+                case "$text" -> FluentFilter.where(field).text(finalValue != null ? finalValue.toString() : "");
+                case "$near" -> {
+                    if (value instanceof Map<?, ?> m) {
+                        Object center = entityMapper.toNitriteFilterValue(resolveValue(m.get("center"), params, namedParameters));
+                        Object distanceObj = resolveValue(m.get("distance"), params, namedParameters);
+                        double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
+                        LOG.debug("Building $near filter: field={}, center={} (class={}), distance={}", field, center, 
+                            center != null ? center.getClass().getName() : "null", distance);
+                        Filter spatialFilter = createSpatialFilter(field, "near", new Class<?>[]{Object.class, double.class}, center, distance);
+                        LOG.debug("Created $near filter: {}", spatialFilter);
+                        yield spatialFilter;
+                    }
+                    yield Filter.ALL;
+                }
+                case "$within" -> createSpatialFilter(field, finalValue, "within");
+                case "$intersects" -> createSpatialFilter(field, finalValue, "intersects");
                 default -> FluentFilter.where(field).eq(finalValue);
             };
             if (f != null && f != Filter.ALL) {
@@ -290,5 +315,70 @@ public final class NitriteFilterBuilder {
             return Filter.ALL;
         }
         return fieldFilters.size() == 1 ? fieldFilters.get(0) : Filter.and(fieldFilters.toArray(new Filter[0]));
+    }
+
+    private Filter createSpatialFilter(String field, String method, Class<?>[] argTypes, Object... args) {
+        if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
+            try {
+                Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
+                Method whereMethod = spatialClass.getMethod("where", String.class);
+                Object spatialFluentFilter = whereMethod.invoke(null, field);
+                
+                // For $near, we need to extract Coordinate from Geometry
+                if ("near".equals(method) && args.length == 2) {
+                    Object center = args[0];
+                    double distance = args[1] instanceof Number n ? n.doubleValue() : 0.0;
+                    // Extract Coordinate from Geometry using reflection
+                    Object coordinate = null;
+                    if (center != null && ClassUtils.isPresent(GEOMETRY_CLASS, null)) {
+                        Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
+                        if (geometryClass.isInstance(center)) {
+                            Method getCoordinateMethod = geometryClass.getMethod("getCoordinate");
+                            coordinate = getCoordinateMethod.invoke(center);
+                        }
+                    }
+                    if (coordinate != null) {
+                        // Use Double (boxed) as per the actual method signature
+                        Method filterMethod = spatialFluentFilter.getClass().getMethod("near", 
+                            Class.forName("org.locationtech.jts.geom.Coordinate"), Double.class);
+                        return (Filter) filterMethod.invoke(spatialFluentFilter, coordinate, Double.valueOf(distance));
+                    }
+                } else {
+                    // For $within and $intersects, pass Geometry directly
+                    Method filterMethod = spatialFluentFilter.getClass().getMethod(method, argTypes);
+                    return (Filter) filterMethod.invoke(spatialFluentFilter, args);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create spatial filter for method: " + method, e);
+            }
+        }
+        throw new IllegalStateException("Spatial filter '" + method + "' requested but 'nitrite-spatial' is not on the classpath.");
+    }
+
+    private Filter createSpatialFilter(String field, Object geometry, String method) {
+        if (geometry == null) {
+            return Filter.ALL;
+        }
+        // Check if the value is a Geometry type using reflection
+        if (!ClassUtils.isPresent(GEOMETRY_CLASS, null)) {
+            throw new IllegalStateException("Spatial filter '" + method + "' requires 'nitrite-spatial' on the classpath.");
+        }
+        try {
+            Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
+            if (geometryClass.isInstance(geometry)) {
+                LOG.debug("Building ${} filter: field={}, geometry={} (class={})", method, field, geometry, geometry.getClass().getName());
+                Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
+                Method whereMethod = spatialClass.getMethod("where", String.class);
+                Object spatialFluentFilter = whereMethod.invoke(null, field);
+                // Use Geometry.class as per the actual method signature
+                Method filterMethod = spatialFluentFilter.getClass().getMethod(method, geometryClass);
+                Filter result = (Filter) filterMethod.invoke(spatialFluentFilter, geometry);
+                LOG.debug("Created ${} filter: {}", method, result);
+                return result;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create spatial filter for method: " + method, e);
+        }
+        return Filter.ALL;
     }
 }

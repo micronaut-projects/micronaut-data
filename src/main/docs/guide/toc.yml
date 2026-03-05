@@ -158,6 +158,7 @@ nitrite:
     nitriteCriteriaExecuteQuery: Querying
     nitriteCriteriaExecuteUpdate: Updating
     nitriteCriteriaExecuteDelete: Deleting
+  nitriteSpatial: Spatial Queries
   nitriteLimitations: Scope and limitations
 howItWorks:
   title: How Micronaut Data Works

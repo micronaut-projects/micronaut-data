@@ -26,8 +26,10 @@ class IndexedBook {
     @FullTextIndex
     var description: String? = null
 
+    // tag::spatial-index[]
     @SpatialIndex
     var location: String? = null
+    // end::spatial-index[]
 
     constructor()
 
