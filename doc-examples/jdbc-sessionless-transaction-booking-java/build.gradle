@@ -1,0 +1,24 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        enabled = false
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+
+    implementation projects.micronautDataJdbc
+    implementation mnValidation.micronaut.validation
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.ojdbc11
+    runtimeOnly mnLogging.logback.classic
+}

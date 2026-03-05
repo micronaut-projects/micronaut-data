@@ -156,7 +156,9 @@ public interface TransactionDefinition {
          * when working on a JDBC 3.0 driver. Some JTA providers might support
          * nested transactions as well.
          */
-        NESTED
+        NESTED,
+        SUSPEND,
+        REQUIRES_SUSPENDED
     }
 
     /**

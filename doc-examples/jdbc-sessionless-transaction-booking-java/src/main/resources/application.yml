@@ -1,0 +1,11 @@
+micronaut:
+  application:
+    name: jdbc-sessionless-transaction-booking-java
+
+datasources:
+  default:
+    driverClassName: oracle.jdbc.OracleDriver
+    dialect: ORACLE
+    url: jdbc:oracle:thin:@localhost:1521/freepdb1
+    username: test
+    password: test
