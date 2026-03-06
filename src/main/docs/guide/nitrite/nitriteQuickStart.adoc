@@ -1,3 +1,4 @@
+[[nitriteQuickStart]]
 Micronaut Launch does not currently offer a dedicated `data-nitrite` feature. The quickest way to get started is to add the Nitrite implementation and the Micronaut Data annotation processors to an existing Micronaut application.
 
 == Dependency Setup

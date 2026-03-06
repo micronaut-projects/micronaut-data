@@ -1,4 +1,5 @@
-== Scope and Limitations
+[[nitriteLimitations]]
+== Scope and limitations
 
 Nitrite is intended as an embedded datastore for basic Micronaut Data usage.
 

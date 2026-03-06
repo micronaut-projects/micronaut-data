@@ -1,3 +1,4 @@
+[[nitriteIdGenerator]]
 == ID Generation
 
 Micronaut Data Nitrite supports simple identifier generation using ann:data.annotation.GeneratedValue[].

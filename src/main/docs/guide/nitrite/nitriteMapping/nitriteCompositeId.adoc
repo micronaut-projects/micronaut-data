@@ -1,3 +1,4 @@
+[[nitriteCompositeId]]
 == Composite Primary Keys
 
 Composite primary keys can be defined using ann:data.annotation.EmbeddedId[].

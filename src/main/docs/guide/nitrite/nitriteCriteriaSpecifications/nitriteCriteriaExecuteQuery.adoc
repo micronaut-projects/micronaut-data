@@ -1,3 +1,4 @@
+[[nitriteCriteriaExecuteQuery]]
 This section complements the shared Criteria API guide (see <<criteriaExecuteQuery, Querying>>).
 
 With Nitrite, criteria queries are encoded as JSON filters and executed against Nitrite collections.

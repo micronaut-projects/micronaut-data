@@ -1,3 +1,4 @@
+[[nitriteRepositories]]
 As seen in the <<nitriteQuickStart, Quick Start>> repositories are defined using the ann:data.nitrite.annotation.NitriteRepository[] stereotype annotation.
 
 snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="repository"]

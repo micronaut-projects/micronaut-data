@@ -1,3 +1,4 @@
+[[nitriteCriteriaExecuteUpdate]]
 This section complements the shared Criteria API guide (see <<criteriaExecuteUpdate, Updating>>).
 
 Nitrite updates are applied as partial updates (a document of fields to change).

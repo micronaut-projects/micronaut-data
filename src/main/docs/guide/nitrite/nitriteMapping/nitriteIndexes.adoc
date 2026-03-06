@@ -1,3 +1,4 @@
+[[nitriteIndexes]]
 == Automated Index Creation
 
 Micronaut Data Nitrite automatically creates indexes based on standard Micronaut Data annotations.
