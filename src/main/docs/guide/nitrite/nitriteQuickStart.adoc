@@ -13,10 +13,6 @@ dependency:io.micronaut.data:micronaut-data-nitrite[scope="implementation"]
 
 NOTE: For Kotlin, add `micronaut-data-document-processor` in kapt or ksp scope. For Groovy, add it in compileOnly scope.
 
-== Configure Nitrite
-
-By default, Nitrite will create an in-memory database if no configuration is provided.
-
 == Create an Entity
 
 To persist an entity, define a class annotated with ann:data.annotation.MappedEntity[]:
