@@ -17,7 +17,9 @@ dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
 
     implementation projects.micronautDataNitrite
+    implementation libs.nitrite.spatial
+    implementation libs.jackson.datatype.jts
+    implementation mnSql.jakarta.persistence.api
 
     runtimeOnly mnLogging.logback.classic
 }
-

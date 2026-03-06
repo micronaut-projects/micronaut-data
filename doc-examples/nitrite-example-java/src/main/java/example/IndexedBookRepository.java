@@ -3,6 +3,10 @@ package example;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.repository.CrudRepository;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Polygon;
+
 import java.util.List;
 
 /**
@@ -23,32 +27,32 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
 
     /**
      * Find books near a location using spatial $near filter.
-     * @param location the reference point (as GeoJSON or WKT)
+     * @param location the reference point
      * @param maxDistance maximum distance in meters
      * @return books near the location
      */
     // tag::near-query[]
     @Query("{\"location\": {\"$near\": {\"center\": :location, \"distance\": :maxDistance}}}")
-    List<IndexedBook> findByLocationNear(String location, double maxDistance);
+    List<IndexedBook> findByLocationNear(Geometry location, double maxDistance);
     // end::near-query[]
 
     /**
      * Find books within a geometry using spatial $within filter.
-     * @param area the search area (polygon or circle as GeoJSON or WKT)
+     * @param area the search area
      * @return books within the area
      */
     // tag::within-query[]
     @Query("{\"location\": {\"$within\": :area}}")
-    List<IndexedBook> findByLocationWithin(String area);
+    List<IndexedBook> findByLocationWithin(Polygon area);
     // end::within-query[]
 
     /**
      * Find books intersecting a geometry using spatial $intersects filter.
-     * @param geometry the geometry to check intersection with (as GeoJSON or WKT)
+     * @param geometry the geometry to check intersection with
      * @return books intersecting the geometry
      */
     // tag::intersects-query[]
     @Query("{\"location\": {\"$intersects\": :geometry}}")
-    List<IndexedBook> findByLocationIntersects(String geometry);
+    List<IndexedBook> findByLocationIntersects(LineString geometry);
     // end::intersects-query[]
 }

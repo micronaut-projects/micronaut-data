@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
+import org.locationtech.jts.geom.Geometry;
 
 // tag::compound-index[]
 @MappedEntity
@@ -28,7 +29,7 @@ public class IndexedBook {
 
     // tag::spatial-index[]
     @SpatialIndex
-    private String location;
+    private Geometry location;
     // end::spatial-index[]
 
     public IndexedBook() {
@@ -71,11 +72,11 @@ public class IndexedBook {
         this.description = description;
     }
 
-    public String getLocation() {
+    public Geometry getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public void setLocation(Geometry location) {
         this.location = location;
     }
 }
