@@ -22,12 +22,7 @@ nitrite:
   db-path: /data/myapp.db
 ----
 
-Example (In-Memory):
-
-[source,yaml]
-----
-nitrite: {}
-----
+If no `db-path` is provided, an in-memory database is created by default.
 
 == Optional Modules
 
