@@ -29,6 +29,15 @@ import java.util.*;
  */
 public final class JpaMetamodelProcessor {
 
+    public static final String JAKARTA_ANNOTATION_GENERATED = "jakarta.annotation.Generated";
+    public static final String JAKARTA_TRANSIENT = "jakarta.persistence.Transient";
+    public static final String JAKARTA_STATIC_METAMODEL = "jakarta.persistence.metamodel.StaticMetamodel";
+    public static final String JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE = "jakarta.persistence.metamodel.CollectionAttribute";
+    public static final String JAKARTA_METAMODEL_SET_ATTRIBUTE = "jakarta.persistence.metamodel.SetAttribute";
+    public static final String JAKARTA_METAMODEL_LIST_ATTRIBUTE = "jakarta.persistence.metamodel.ListAttribute";
+    public static final String JAKARTA_METAMODEL_MAP_ATTRIBUTE = "jakarta.persistence.metamodel.MapAttribute";
+    public static final String JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE = "jakarta.persistence.metamodel.SingularAttribute";
+
     /**
      * Supported Jakarta annotations for generating Static meta model classes.
      */
@@ -56,8 +65,8 @@ public final class JpaMetamodelProcessor {
 
         ClassDef.ClassDefBuilder classDefBuilder = ClassDef.builder(metaModelClassName)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of("jakarta.persistence.metamodel.StaticMetamodel")).addMember("value", elementType).build())
-            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of("jakarta.annotation.Generated")).addMember("value", JpaMetamodelProcessor.class.getName()).build());
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_STATIC_METAMODEL)).addMember("value", elementType).build())
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_ANNOTATION_GENERATED)).addMember("value", JpaMetamodelProcessor.class.getName()).build());
 
         ClassElement superElement = optionalSuperElement.orElse(null);
 
@@ -67,7 +76,7 @@ public final class JpaMetamodelProcessor {
             classDefBuilder.superclass(superClassModelTypeDef);
         }
 
-        properties = properties.stream().filter(o -> !o.getAnnotationNames().contains("jakarta.persistence.Transient"))
+        properties = properties.stream().filter(o -> !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
             .filter(o -> o.getDeclaringType().getName().equals(elementType.getName()))
             .toList();
 
@@ -86,6 +95,7 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
+     * Utility function to resolve the canonical name for the StaticMetamodel class_.
      *
      * @param packageName package name
      * @param elementType element type
@@ -140,21 +150,21 @@ public final class JpaMetamodelProcessor {
 
         TypeDef typeDef = switch (beanProperty.getType().getName()) {
             case "java.util.Collection" ->
-                TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.CollectionAttribute"), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
             case "java.util.Set" ->
-                TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.SetAttribute"), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
             case "java.util.List" ->
-                TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.ListAttribute"), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
             case "java.util.Map" ->
-                TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.MapAttribute"), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("K")), TypeDef.of(beanProperty.getType().getTypeArguments().get("V")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("K")), TypeDef.of(beanProperty.getType().getTypeArguments().get("V")));
             default ->
-                TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.SingularAttribute"), classTypeDef, getProperType(TypeDef.of(beanProperty.getType())));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanProperty.getType())));
         };
         return attributeDefBuilder.ofType(typeDef).build();
     }
 
     /**
-     *
+     * Returns the wrapper type if the provided type is a primitives.
      * @param type
      * @return
      */

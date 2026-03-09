@@ -20,14 +20,15 @@ package io.micronaut.data.processor.jpa.metamodel
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.naming.NameUtils
 
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*
 
 class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
-    final String SINGULAR_ATTRIBUTE = "jakarta.persistence.metamodel.SingularAttribute"
-    final String SET_ATTRIBUTE = "jakarta.persistence.metamodel.SetAttribute"
-    final String LIST_ATTRIBUTE = "jakarta.persistence.metamodel.ListAttribute"
-    final String COLLECTION_ATTRIBUTE = "jakarta.persistence.metamodel.CollectionAttribute"
-    final String MAP_ATTRIBUTE = "jakarta.persistence.metamodel.MapAttribute"
 
     void "test metaModel Generation"() {
         given:
@@ -66,31 +67,36 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 }
                 """)
         def trainMetaModelClass = classLoader.loadClass("test.Train_")
-        def constantProps = ["ID"                 : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Long", declaringType: "test.Train"],
-                             "NAME"               : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.String", declaringType: "test.Train"],
-                             "MODEL"              : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.String", declaringType: "test.Train"],
-                             "CAPACITY"           : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Integer", declaringType: "test.Train"],
-                             "SPEED"              : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Double", declaringType: "test.Train"],
-                             "ELECTRIC"           : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Boolean", declaringType: "test.Train"],
-                             "DEPARTURE_TIME"     : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.time.LocalDateTime", declaringType: "test.Train"],
-                             "CREATED_AT"         : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.time.Instant", declaringType: "test.Train"],
-                             "DEPARTURE_DATE"     : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.time.LocalDate", declaringType: "test.Train"],
-                             "DEPARTURE_TIME_ONLY": [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.time.LocalTime", declaringType: "test.Train"],
-                             "MICRONAUT_RECORD"   : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "test.Train.MicronautRecord", declaringType: "test.Train"],
-                             "SEATS"              : [attributeType: LIST_ATTRIBUTE, fieldtype: "java.lang.String", declaringType: "test.Train"],
-                             "SET"                : [attributeType: SET_ATTRIBUTE, fieldtype: "java.lang.Integer", declaringType: "test.Train"],
-                             "COLLECTION"         : [attributeType: COLLECTION_ATTRIBUTE, fieldtype: "java.lang.Double", declaringType: "test.Train"],
-                             "MAP"                : [attributeType: MAP_ATTRIBUTE, fieldtype: ["java.lang.String", "java.lang.String"], declaringType: "test.Train"]]
+        def constantProps = ["ID"                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Train"],
+                             "NAME"               : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
+                             "MODEL"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
+                             "CAPACITY"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Integer.class.getName(), declaringType: "test.Train"],
+                             "SPEED"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.Train"],
+                             "ELECTRIC"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.Train"],
+                             "DEPARTURE_TIME"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalDateTime.class.getName(), declaringType: "test.Train"],
+                             "CREATED_AT"         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Instant.class.getName(), declaringType: "test.Train"],
+                             "DEPARTURE_DATE"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalDate.class.getName(), declaringType: "test.Train"],
+                             "DEPARTURE_TIME_ONLY": [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalTime.class.getName(), declaringType: "test.Train"],
+                             "MICRONAUT_RECORD"   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: "test.Train.MicronautRecord", declaringType: "test.Train"],
+                             "SEATS"              : [attributeType: JAKARTA_METAMODEL_LIST_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
+                             "SET"                : [attributeType: JAKARTA_METAMODEL_SET_ATTRIBUTE, fieldtype: Integer.class.getName(), declaringType: "test.Train"],
+                             "COLLECTION"         : [attributeType: JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.Train"],
+                             "MAP"                : [attributeType: JAKARTA_METAMODEL_MAP_ATTRIBUTE, fieldtype: [String.class.getName(), String.class.getName()], declaringType: "test.Train"]]
 
         expect:
 
         constantProps.keySet().stream().anyMatch { o -> trainMetaModelClass.getField(o) != null && trainMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+        try {
+            trainMetaModelClass.getField("transientField")
+            throw new RuntimeException("@Transient fields found, should be ignored.")
+        } catch (NoSuchFieldException ignored) {
+        }
 
         for (var entrySet : constantProps.entrySet()) {
             def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
             assert trainMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
             assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == entrySet.getValue().declaringType
-            if (entrySet.getValue().attributeType == MAP_ATTRIBUTE) {
+            if (entrySet.getValue().attributeType == JAKARTA_METAMODEL_MAP_ATTRIBUTE) {
                 assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].getCanonicalName() == entrySet.getValue().fieldtype[0]
                 assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][2].getCanonicalName() == entrySet.getValue().fieldtype[1]
             } else {
@@ -171,9 +177,9 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         def parentMetaModelClass = classLoader.loadClass("test.Parent_")
         def childMetaModelClass = classLoader.loadClass("test.Child_")
 
-        def constantProps = [ID  : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Long", declaringType: "test.Parent"],
-                             NAME: [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.String", declaringType: "test.Parent"],
-                             AGE : [attributeType: SINGULAR_ATTRIBUTE, fieldtype: "java.lang.Long", declaringType: "test.Child"]]
+        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Parent"],
+                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Parent"],
+                             AGE : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Child"]]
         expect:
         constantProps.keySet().stream().anyMatch { o -> parentMetaModelClass.getField(o) != null && parentMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
         constantProps.keySet().stream().anyMatch { o -> childMetaModelClass.getField(o) != null && childMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -188,7 +194,6 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
             assert childMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
             assert childMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
             assert childMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
-
         }
     }
 
