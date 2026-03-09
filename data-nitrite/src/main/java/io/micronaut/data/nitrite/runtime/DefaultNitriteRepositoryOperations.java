@@ -69,6 +69,10 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Singleton;
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -733,22 +737,22 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     // ParameterExpressionImpl). That is not a runtime value and must not be used as a query/update
     // parameter, otherwise it gets persisted as a string like "ParameterExpressionImpl{...}".
     if (bindingValue != null && !(bindingValue instanceof BindingParameter)) {
-      return entityMapper.toFilterValue(bindingValue);
+      return toFilterValue(bindingValue);
     }
     int idx = binding.getParameterIndex();
     Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
     String[] path = binding.getParameterBindingPath() != null ? binding.getParameterBindingPath() : binding.getPropertyPath();
     if (path == null || path.length == 0) {
-      return entityMapper.toFilterValue(base);
+      return toFilterValue(base);
     }
     // Special handling for collection parameters (e.g., IN clause): if base is already a collection,
     // return it as-is instead of trying to extract a property from it.
     if (base instanceof Collection) {
-      return entityMapper.toFilterValue(base);
+      return toFilterValue(base);
     }
     // Also handle array parameters (e.g., String[] for IN clause)
     if (base != null && base.getClass().isArray()) {
-      return entityMapper.toFilterValue(base);
+      return toFilterValue(base);
     }
     Object current = base;
     for (String segment : path) {
@@ -763,11 +767,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         try {
           current = ((Document) database.getConfig().nitriteMapper().tryConvert(current, Document.class)).get(segment);
         } catch (Exception ignored) {
-          return entityMapper.toFilterValue(base);
+          return toFilterValue(base);
         }
       }
     }
-    return entityMapper.toFilterValue(current);
+    return toFilterValue(current);
   }
 
   /** Ensure JSON params array is large enough for all placeholders in filter. */
@@ -880,22 +884,22 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     try {
       Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(methodParams[0], Document.class);
       if (doc.containsKey(property)) {
-        return entityMapper.toFilterValue(doc.get(property));
+        return toFilterValue(doc.get(property));
       }
       // Handle dotted path for EmbeddedId
       if (property.contains(".")) {
         String[] parts = property.split("\\.");
         Object current = doc;
-        // If the first part matches nothing in the doc, but subsequent parts might, 
+        // If the first part matches nothing in the doc, but subsequent parts might,
         // it might be that the doc IS the first part (the EmbeddedId itself).
         if (!doc.containsKey(parts[0])) {
             // Try stripping the first part
             String subPath = property.substring(parts[0].length() + 1);
             if (doc.containsKey(subPath)) {
-                return entityMapper.toFilterValue(doc.get(subPath));
+                return toFilterValue(doc.get(subPath));
             }
         }
-        
+
         for (String part : parts) {
           if (current instanceof Document d) {
             current = d.get(part);
@@ -906,7 +910,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             break;
           }
         }
-        return entityMapper.toFilterValue(current);
+        return toFilterValue(current);
       }
       return null;
     } catch (Exception ignored) {
@@ -1101,7 +1105,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
               entityMapper.normalizeFieldName(m.group(1)),
               Collections.singletonMap(
                   filterOp,
-                  entityMapper.toFilterValue(resolveSqlParam(m.group(3), params, namedParameters))),
+                  toFilterValue(resolveSqlParam(m.group(3), params, namedParameters))),
               params,
               namedParameters));
     }
@@ -1259,13 +1263,46 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         }
       }
       if (isPlaceholder) {
-        return entityMapper.toFilterValue(resolved);
+        return toFilterValue(resolved);
       }
     }
     if (value instanceof Map vm && vm.get("$mn_qp") instanceof Integer idx && idx >= 0 && idx < jsonParams.length) {
-      return entityMapper.toFilterValue(jsonParams[idx]);
+      return toFilterValue(jsonParams[idx]);
     }
     return value;
+  }
+
+  /**
+   * Convert a value to the format expected by Nitrite filters.
+   * This ensures date/time values match the format stored by Jackson mapper
+   * with WRITE_DATES_AS_TIMESTAMPS disabled.
+   *
+   * @param value the value to convert
+   * @return the converted value
+   */
+  private Object toFilterValue(Object value) {
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof Instant instant) {
+      // Convert to ISO string format to match Jackson serialization
+      // when WRITE_DATES_AS_TIMESTAMPS is disabled
+      return instant.toString();
+    }
+    if (value instanceof LocalDate localDate) {
+      // Convert to ISO string format (e.g., "1986-06-05") to match Jackson serialization
+      return localDate.toString();
+    }
+    if (value instanceof LocalDateTime localDateTime) {
+      // Convert to ISO string format (e.g., "1986-06-05T12:30:45") to match Jackson serialization
+      return localDateTime.toString();
+    }
+    if (value instanceof LocalTime localTime) {
+      // Convert to ISO string format (e.g., "12:30:45") to match Jackson serialization
+      return localTime.toString();
+    }
+    // For other types, use Nitrite's entityMapper
+    return entityMapper.toFilterValue(value);
   }
 
   /**
@@ -1561,6 +1598,34 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (targetType.isInstance(value)) {
       return value;
     }
+    
+    // Handle LocalDate conversion from ISO string format (e.g., "1986-06-05")
+    if (targetType == LocalDate.class && value instanceof String) {
+      try {
+        return LocalDate.parse((String) value);
+      } catch (Exception e) {
+        // Fall through to conversion service
+      }
+    }
+    
+    // Handle LocalDateTime conversion from ISO string format
+    if (targetType == LocalDateTime.class && value instanceof String) {
+      try {
+        return LocalDateTime.parse((String) value);
+      } catch (Exception e) {
+        // Fall through to conversion service
+      }
+    }
+    
+    // Handle LocalTime conversion from ISO string format
+    if (targetType == LocalTime.class && value instanceof String) {
+      try {
+        return LocalTime.parse((String) value);
+      } catch (Exception e) {
+        // Fall through to conversion service
+      }
+    }
+    
     return conversionService.convert(value, targetType)
         .map(obj -> (Object) obj)
         .orElse(value);
@@ -1674,7 +1739,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           updateExecutor.parseSetClause(
               nq.getQuery(),
               sqlParams,
-              (pname, ps) -> entityMapper.toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
+              (pname, ps) -> toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
       filter = parseFilterFromUpdateStatement(nq.getQuery(), sqlParams, namedParameters);
     } else {
       throw new UnsupportedOperationException("executeUpdate() called with non-UPDATE statement: " + nq.getQuery());
@@ -1702,7 +1767,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (bindings != null) {
       for (QueryParameterBinding b : bindings) {
         if (b.getName() != null && b.getParameterIndex() >= 0 && b.getParameterIndex() < params.length) {
-          result.put(b.getName(), entityMapper.toFilterValue(params[b.getParameterIndex()]));
+          result.put(b.getName(), toFilterValue(params[b.getParameterIndex()]));
         }
       }
     }
@@ -1711,7 +1776,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       int len = Math.min(args.length, params.length);
       for (int i = 0; i < len; i++) {
         if (args[i].getName() != null && !args[i].getName().isEmpty()) {
-          result.putIfAbsent(args[i].getName(), entityMapper.toFilterValue(params[i]));
+          result.putIfAbsent(args[i].getName(), toFilterValue(params[i]));
         }
       }
     }

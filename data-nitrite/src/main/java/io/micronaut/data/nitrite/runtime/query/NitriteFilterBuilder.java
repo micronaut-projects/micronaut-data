@@ -25,6 +25,10 @@ import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -253,6 +257,38 @@ public final class NitriteFilterBuilder {
     }
 
     /**
+     * Pre-convert temporal types to match Jackson serialization format.
+     * This ensures query values match the format stored by JacksonMapper with JavaTimeModule
+     * and WRITE_DATES_AS_TIMESTAMPS disabled.
+     *
+     * @param value the value to pre-convert
+     * @return the pre-converted value
+     */
+    private Object preConvertForFilter(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Instant instant) {
+            // Convert to ISO string format to match Jackson serialization
+            // when WRITE_DATES_AS_TIMESTAMPS is disabled
+            return instant.toString();
+        }
+        if (value instanceof LocalDate localDate) {
+            // Convert to ISO string format to match Jackson serialization
+            return localDate.toString();
+        }
+        if (value instanceof LocalDateTime localDateTime) {
+            // Convert to ISO string format to match Jackson serialization
+            return localDateTime.toString();
+        }
+        if (value instanceof LocalTime localTime) {
+            // Convert to ISO string format to match Jackson serialization
+            return localTime.toString();
+        }
+        return value;
+    }
+
+    /**
      * Build a Nitrite Filter for a specific field.
      *
      * @param entity          the entity metadata
@@ -293,7 +329,8 @@ public final class NitriteFilterBuilder {
             String op = opEntry.getKey();
             Object value = resolveValue(opEntry.getValue(), params, namedParameters);
             Object coercedValue = maybeCoerceUuid(field, value);
-            Object finalValue = entityMapper.toNitriteFilterValue(coercedValue, rawField);
+            Object preConverted = preConvertForFilter(coercedValue);
+            Object finalValue = entityMapper.toNitriteFilterValue(preConverted, rawField);
             Filter f = switch (op) {
                 case "$eq" -> entityMapper.eqWithNumericCoercion(entity, field, finalValue, field);
                 case "$ne" -> FluentFilter.where(field).notEq(finalValue);
@@ -319,7 +356,7 @@ public final class NitriteFilterBuilder {
                         Object resolved = resolveValue(item, params, namedParameters);
                         if (resolved instanceof Collection<?> coll) {
                             for (Object collItem : coll) {
-                                Object itemResolved = entityMapper.toNitriteFilterValue(collItem);
+                                Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(collItem));
                                 if (itemResolved instanceof Comparable<?> c) {
                                     resolvedValues.add(c);
                                 }
@@ -328,7 +365,7 @@ public final class NitriteFilterBuilder {
                             // Handle array parameter
                             int len = java.lang.reflect.Array.getLength(resolved);
                             for (int i = 0; i < len; i++) {
-                                Object itemResolved = entityMapper.toNitriteFilterValue(java.lang.reflect.Array.get(resolved, i));
+                                Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(java.lang.reflect.Array.get(resolved, i)));
                                 if (itemResolved instanceof Comparable<?> c) {
                                     resolvedValues.add(c);
                                 }
@@ -341,7 +378,7 @@ public final class NitriteFilterBuilder {
                         }
                     } else if (finalValue instanceof Collection<?> coll) {
                         for (Object item : coll) {
-                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                             if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
@@ -349,7 +386,7 @@ public final class NitriteFilterBuilder {
                     } else if (finalValue instanceof Object[] array) {
                         // Handle array parameter
                         for (Object item : array) {
-                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                             if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
@@ -371,7 +408,7 @@ public final class NitriteFilterBuilder {
                         Object resolved = resolveValue(item, params, namedParameters);
                         if (resolved instanceof Collection<?> coll) {
                             for (Object collItem : coll) {
-                                Object itemResolved = entityMapper.toNitriteFilterValue(collItem);
+                                Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(collItem));
                                 if (itemResolved instanceof Comparable<?> c) {
                                     resolvedValues.add(c);
                                 }
@@ -381,7 +418,7 @@ public final class NitriteFilterBuilder {
                         }
                     } else if (finalValue instanceof Collection<?> coll) {
                         for (Object item : coll) {
-                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                             if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
@@ -389,7 +426,7 @@ public final class NitriteFilterBuilder {
                     } else if (finalValue instanceof Object[] array) {
                         // Handle array parameter
                         for (Object item : array) {
-                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                             if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
@@ -404,8 +441,8 @@ public final class NitriteFilterBuilder {
                     Boolean.TRUE.equals(finalValue) ? FluentFilter.where(field).notEq(null) : Filter.ALL;
                 case "$between" -> {
                     if (finalValue instanceof List<?> list && list.size() == 2) {
-                        Object v1 = entityMapper.toFilterValue(resolveValue(list.get(0), params, namedParameters));
-                        Object v2 = entityMapper.toFilterValue(resolveValue(list.get(1), params, namedParameters));
+                        Object v1 = entityMapper.toFilterValue(preConvertForFilter(resolveValue(list.get(0), params, namedParameters)));
+                        Object v2 = entityMapper.toFilterValue(preConvertForFilter(resolveValue(list.get(1), params, namedParameters)));
                         yield FluentFilter.where(field).between((Comparable<?>) v1, (Comparable<?>) v2);
                     }
                     yield Filter.ALL;
@@ -429,7 +466,7 @@ public final class NitriteFilterBuilder {
                 case "$text" -> FluentFilter.where(field).text(finalValue != null ? finalValue.toString() : "");
                 case "$near" -> {
                     if (value instanceof Map<?, ?> m) {
-                        Object center = entityMapper.toNitriteFilterValue(resolveValue(m.get("center"), params, namedParameters));
+                        Object center = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(m.get("center"), params, namedParameters)));
                         Object distanceObj = resolveValue(m.get("distance"), params, namedParameters);
                         double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
                         Filter spatialFilter = createSpatialFilter(field, "near", new Class<?>[]{Object.class, double.class}, center, distance);

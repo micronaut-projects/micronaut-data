@@ -625,12 +625,16 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
   private static Object convertValue(final Object value) {
     if (value instanceof Instant instant) {
-      return instant.getEpochSecond() + instant.getNano() / 1_000_000_000.0;
+      // Convert to ISO string format to match Jackson serialization
+      // when WRITE_DATES_AS_TIMESTAMPS is disabled
+      return instant.toString();
     }
     if (value instanceof LocalDate localDate) {
+      // Convert to ISO string format (e.g., "1986-06-05") to match Jackson serialization
       return localDate.toString();
     }
     if (value instanceof LocalDateTime localDateTime) {
+      // Convert to ISO string format (e.g., "1986-06-05T12:30:45") to match Jackson serialization
       return localDateTime.toString();
     }
     if (value instanceof ZonedDateTime zonedDateTime) {
