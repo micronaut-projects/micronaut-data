@@ -21,12 +21,16 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.sql.DATE;
+import oracle.sql.INTERVALDS;
+import oracle.sql.INTERVALYM;
 import oracle.sql.TIMESTAMP;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Optional;
 
 /**
@@ -87,4 +91,13 @@ final class OracleTypeConvertersFactory {
         };
     }
 
+    @Prototype
+    DataTypeConverter<INTERVALDS, Duration> fromOracleIntervalDsToDuration() {
+        return (interval, targetType, context) -> Optional.of(interval.getDuration());
+    }
+
+    @Prototype
+    DataTypeConverter<INTERVALYM, Period> fromOracleIntervalYmToPeriod() {
+        return (interval, targetType, context) -> Optional.of(interval.getPeriod());
+    }
 }

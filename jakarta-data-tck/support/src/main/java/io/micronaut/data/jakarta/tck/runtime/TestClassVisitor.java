@@ -16,7 +16,6 @@
 package io.micronaut.data.jakarta.tck.runtime;
 
 import ee.jakarta.tck.data.framework.junit.anno.Assertion;
-import io.micronaut.annotation.processing.visitor.JavaNativeElement;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -24,7 +23,6 @@ import io.micronaut.core.annotation.Introspected;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
-import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -33,19 +31,13 @@ import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.RecordComponentElement;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -54,13 +46,16 @@ import java.util.Set;
 public final class TestClassVisitor implements TypeElementVisitor<Object, Object> {
 
     private final boolean isJdbcImplementation;
-    private final boolean isMogngoDBImplementation;
+    private final boolean isMongoDBImplementation;
+
+    private boolean introspected;
 
     private static final Set<String> INTROSPECTED = Set.of(
         "ee.jakarta.tck.data.framework.read.only.CardinalNumber",
         "ee.jakarta.tck.data.framework.read.only.HexInfo",
         "ee.jakarta.tck.data.framework.read.only.NumberInfo",
-        "ee.jakarta.tck.data.framework.read.only.WholeNumber"
+        "ee.jakarta.tck.data.framework.read.only.WholeNumber",
+        "ee.jakarta.tck.data.standalone.entity.FruitSummary"
     );
 
     public TestClassVisitor() {
@@ -76,7 +71,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         }
         Object implementation = prop.getOrDefault("implementation", "");
         isJdbcImplementation = implementation.equals("jdbc");
-        isMogngoDBImplementation = implementation.equals("mongodb");
+        isMongoDBImplementation = implementation.equals("mongodb");
     }
 
     @Override
@@ -91,12 +86,16 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        if (!introspected) {
+           INTROSPECTED.forEach(bean -> context.getClassElement(bean).orElseThrow().annotate(Introspected.class));
+           introspected = true;
+        }
         if (element.hasStereotype(Repository.class) && isJdbcImplementation) {
             element.annotate(JdbcRepository.class, annotationValueBuilder -> {
                 annotationValueBuilder.member("dialect", Dialect.H2);
             });
         }
-        if (element.hasStereotype(Repository.class) && isMogngoDBImplementation) {
+        if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
             element.annotate(MongoRepository.class);
         }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
@@ -105,34 +104,9 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
                     builder.member("accessKind", new Introspected.AccessKind[]{Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD});
                     builder.member("visibility", Introspected.Visibility.ANY);
                 });
-            } else if (INTROSPECTED.contains(element.getName())) {
-                element.annotate(Introspected.class);
             }
             element.annotate(Executable.class);
             element.annotate(Prototype.class);
-
-            if (element.isRecord()) {
-                // Remove after https://github.com/micronaut-projects/micronaut-core/pull/12184
-                JavaNativeElement nativeType = (JavaNativeElement) element.getNativeType();
-                Element e = nativeType.element();
-                List<? extends Element> enclosedElements = e.getEnclosedElements();
-                for (Element el : enclosedElements) {
-                    if (el instanceof RecordComponentElement recordComponentElement) {
-                        for (AnnotationMirror annotationMirror : recordComponentElement.getAnnotationMirrors()) {
-                            if ("jakarta.data.repository.Select".equals(annotationMirror.getAnnotationType().toString())) {
-                                AnnotationValue value = annotationMirror.getElementValues().entrySet().iterator().next().getValue();
-                                String val = value.getValue().toString();
-                                for (PropertyElement beanProperty : element.getBeanProperties()) {
-                                    if (recordComponentElement.toString().equals(beanProperty.getName())) {
-                                        beanProperty.annotate(Projection.class, builder -> builder.value(val));
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
             element.getMethods().forEach(ce -> {
                 if (ce.isStatic() || !ce.isAccessible()) {
@@ -151,7 +125,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitField(FieldElement element, VisitorContext context) {
-        if (isJdbcImplementation || isMogngoDBImplementation) {
+        if (isJdbcImplementation || isMongoDBImplementation) {
             if (element.getOwningType().hasStereotype(Entity.class)) {
                 element.annotate(Nullable.class);
             }
@@ -159,9 +133,13 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
                 element.annotate(Transient.class);
             }
         }
-        if (isMogngoDBImplementation && element.getType().getName().equals("char")) {
+        if (isMongoDBImplementation && element.getType().getName().equals("char")) {
             MongoUtils.bson(element);
         }
     }
 
+    @Override
+    public void finish(VisitorContext visitorContext) {
+        introspected = false;
+    }
 }

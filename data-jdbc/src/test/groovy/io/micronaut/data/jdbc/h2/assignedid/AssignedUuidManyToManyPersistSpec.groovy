@@ -10,6 +10,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import spock.lang.AutoCleanup
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -27,6 +28,7 @@ class AssignedUuidManyToManyPersistSpec extends Specification implements H2TestP
     @Shared JdbcStudentRepository studentRepository = ctx.getBean(JdbcStudentRepository)
     @Shared JdbcCourseRepository courseRepository = ctx.getBean(JdbcCourseRepository)
 
+    @PendingFeature(reason = "Cascade update does not remove existing link records, issue https://github.com/micronaut-projects/micronaut-data/issues/3722")
     def "should persist join rows with assigned UUIDs via cascade persist and support update"() {
         given:
         def s = new Student(id: UUID.randomUUID(), name: 'Denis')

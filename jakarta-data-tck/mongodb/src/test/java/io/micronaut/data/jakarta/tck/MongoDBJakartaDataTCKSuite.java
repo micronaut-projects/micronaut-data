@@ -1,7 +1,6 @@
 package io.micronaut.data.jakarta.tck;
 
 import org.junit.platform.suite.api.IncludeClassNamePatterns;
-import org.junit.platform.suite.api.SelectMethod;
 import org.junit.platform.suite.api.SelectPackages;
 import org.junit.platform.suite.api.Suite;
 

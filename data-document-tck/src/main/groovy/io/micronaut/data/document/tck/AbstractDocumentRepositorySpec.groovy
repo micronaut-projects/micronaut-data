@@ -1295,8 +1295,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
         otherPeople.size() == 1
         otherPeople[0].name == "John"
         when:
-        people = personRepository.findByNameLike("Micha")
-        otherPeople = personRepository.findByNameLike("Jo.n")
+        people = personRepository.findByNameLike("%Micha%")
+        otherPeople = personRepository.findByNameLike("%Jo.n%")
         then:
         people.size() == 1
         people[0].name == 'Michael'

@@ -437,12 +437,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return property.getKey()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = property.getKey()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return
+                            typeDefAnnotationValue.annotationClassValue("converter")
+                                .flatMap(AnnotationClassValue::getType)
+                                .orElse(null);
+                    }
+                    return null;
                 }
 
                 @Override
@@ -478,12 +482,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return pp.getProperty()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = pp.getProperty()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return typeDefAnnotationValue
+                            .annotationClassValue("converter")
+                            .flatMap(AnnotationClassValue::getType)
+                            .orElse(null);
+                    } else {
+                        return null;
+                    }
                 }
             });
         }
@@ -766,6 +775,26 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
         if (preparedQuery.getResultType().equals(Tuple.class)) {
             return (SqlTypeMapper<RS, R>) createTupleMapper();
+        }
+        if (preparedQuery.getResultType().equals(Object[].class)) {
+            SqlTypeMapper<RS, Tuple> tupleMapper = createTupleMapper();
+            return new SqlTypeMapper<>() {
+                @Override
+                public boolean hasNext(RS resultSet) {
+                    return tupleMapper.hasNext(resultSet);
+                }
+
+                @Override
+                public @Nullable R map(RS object, Class<R> type) throws DataAccessException {
+                    Tuple tuple = tupleMapper.map(object, Tuple.class);
+                    return tuple == null ? null : (R) tuple.toArray();
+                }
+
+                @Override
+                public @Nullable Object read(RS object, String name) {
+                    return tupleMapper.read(object, name);
+                }
+            };
         }
         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();

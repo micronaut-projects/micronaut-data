@@ -378,6 +378,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 .flatMap(a -> a.stringValue().stream())
                 .toList();
             resultCollector.collectTuple(q, tuple -> {
+                if (preparedQuery.getResultType().equals(Object[].class)) {
+                    return (R) tuple.toArray();
+                }
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                 Iterator<String> iterator = projection.iterator();
                 return (new BeanIntrospectionMapper<Tuple, R>() {

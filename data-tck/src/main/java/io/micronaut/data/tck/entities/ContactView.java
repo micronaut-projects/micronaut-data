@@ -8,21 +8,21 @@ import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
-@JsonView(value = "CONTACT_VIEW", alias = "cv")
+@JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
 public class ContactView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    @JsonProperty("_id")
     private Long id;
     private String name;
     private int age;
     private LocalDateTime startDateTime;
     private boolean active;
 
-    @Relation(Relation.Kind.EMBEDDED)
-    private Address address;
     @JsonProperty("_metadata")
     private Metadata metadata;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private Address address;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
