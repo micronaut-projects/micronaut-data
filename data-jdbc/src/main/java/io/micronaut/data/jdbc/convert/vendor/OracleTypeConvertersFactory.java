@@ -105,6 +105,23 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     }
 
     @Prototype
+    DataTypeConverter<Vector, VECTOR> fromVectorToOracleVector() {
+        return (vector, targetType, context) -> {
+            try {
+                if (vector instanceof FloatVector floatVector) {
+                    return Optional.of(VECTOR.ofFloat32Values(floatVector.toFloatArray()));
+                }
+                if (vector instanceof ByteVector byteVector) {
+                    return Optional.of(VECTOR.ofInt8Values(byteVector.toByteArray()));
+                }
+                return Optional.of(VECTOR.ofFloat64Values(vector.toDoubleArray()));
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot convert Vector to oracle.sql.VECTOR: " + vector, e);
+            }
+        };
+    }
+
+    @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, DoubleVector> fromOracleVectorToDoubleVector() {
         return (oracleVector, targetType, context) -> {

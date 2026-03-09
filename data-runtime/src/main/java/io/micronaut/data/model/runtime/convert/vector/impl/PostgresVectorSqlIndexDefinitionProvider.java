@@ -31,7 +31,7 @@ import java.util.function.Function;
  * Vector index DDL provider for PostgreSQL (pgvector extension).
  *
  * It expects a neutral clause on the mapping in the form:
- *   ALGO <IVF|HNSW> DISTANCE <COSINE|DOT|EUCLIDEAN_SQUARED|EUCLIDEAN|MANHATTAN|HAMMING> ACCURACY <n>
+ *   ALGO &lt;IVF|HNSW&gt; DISTANCE &lt;COSINE|DOT|EUCLIDEAN_SQUARED|EUCLIDEAN|MANHATTAN&gt; ACCURACY &lt;n&gt;
  *
  * Example output:
  *   CREATE INDEX idx ON "table" USING ivfflat ("col" vector_cosine_ops);
@@ -66,16 +66,21 @@ public final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexD
             throw new IllegalArgumentException("Vector index metadata is required for PostgreSQL vector index definition");
         }
         boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
+        boolean sparse = meta.sparse();
+
+        if (sparse && !hnsw) {
+            throw new IllegalArgumentException("PostgreSQL sparse vectors support HNSW indexes only");
+        }
+
         String usingMethod = hnsw ? "hnsw" : "ivfflat";
 
         String operatorClass = switch (meta.distanceType()) {
-            case COSINE -> "vector_cosine_ops";
-            case DOT -> "vector_ip_ops";
-            case HAMMING -> "bit_hamming_ops";
-            case JACCARD -> "bit_jaccard_ops";
-            case L1_MANHATTAN -> "vector_l1_ops";
-            case L2_EUCLIDEAN_SQUARED -> "vector_l2_ops";
-            case L2_EUCLIDEAN -> "vector_l2_ops";
+            case COSINE -> sparse ? "sparsevec_cosine_ops" : "vector_cosine_ops";
+            case DOT -> sparse ? "sparsevec_ip_ops" : "vector_ip_ops";
+            case L1_MANHATTAN -> sparse ? "sparsevec_l1_ops" : "vector_l1_ops";
+            case L2_EUCLIDEAN_SQUARED -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
+            case L2_EUCLIDEAN -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
+            default -> throw new IllegalArgumentException("Distance type " + meta.distanceType() + " is not supported for PostgreSQL vector indexes");
         };
 
         return "CREATE INDEX " + indexName + " ON " + escapedTableName

@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.convert.vendor;
 
 import com.pgvector.PGvector;
+import com.pgvector.PGsparsevec;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
@@ -50,33 +51,32 @@ import java.util.Optional;
 @Internal
 final class PostgresTypeConvertersFactory {
 
+    private static final int MIN_SPARSE_DIMENSIONS = 16;
+    private static final int MIN_ZERO_RATIO_DENOMINATOR = 4;
+
     @Prototype
-    DataTypeConverter<FloatVector, PGvector> fromFloatVectorToPgObject() {
-        return (vector, targetType, context) -> Optional.of(new PGvector(vector.toFloatArray()));
+    DataTypeConverter<FloatVector, PGobject> fromFloatVectorToPgObject() {
+        return (vector, targetType, context) -> toPgObject(vector.toFloatArray());
     }
 
     @Prototype
-    DataTypeConverter<float[], PGvector> fromFloatArrayToPgObject() {
-        return (arr, targetType, context) -> Optional.of(new PGvector(arr));
+    DataTypeConverter<float[], PGobject> fromFloatArrayToPgObject() {
+        return (arr, targetType, context) -> toPgObject(arr);
     }
 
     @Prototype
-    DataTypeConverter<PGvector, FloatVector> fromPgObjectToFloatVector() {
+    DataTypeConverter<PGobject, FloatVector> fromPgObjectToFloatVector() {
         return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            return Optional.of((FloatVector) Vector.of(pg.toArray()));
+            Optional<float[]> dense = toDenseFloatArray(pg);
+            return dense.map(floats -> (FloatVector) Vector.of(floats));
         };
     }
 
     @Prototype
-    DataTypeConverter<PGvector, Vector> fromPgObjectToVector() {
+    DataTypeConverter<PGobject, Vector> fromPgObjectToVector() {
         return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            return Optional.of(Vector.of(pg.toArray()));
+            Optional<float[]> dense = toDenseFloatArray(pg);
+            return dense.map(Vector::of);
         };
     }
 
@@ -87,10 +87,61 @@ final class PostgresTypeConvertersFactory {
                 return Optional.empty();
             }
             try {
+                if ("sparsevec".equalsIgnoreCase(pg.getType())) {
+                    return Optional.of(new PGvector(new PGsparsevec(pg.getValue()).toArray()));
+                }
                 return Optional.of(new PGvector(pg.getValue()));
             } catch (SQLException e) {
                 return Optional.empty();
             }
         };
     }
+
+    private static Optional<PGobject> toPgObject(float[] arr) {
+        try {
+            if (shouldSerializeAsSparse(arr)) {
+                return Optional.of(new PGsparsevec(arr));
+            }
+            PGobject pg = new PGobject();
+            pg.setType("vector");
+            pg.setValue(new PGvector(arr).toString());
+            return Optional.of(pg);
+        } catch (SQLException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<float[]> toDenseFloatArray(PGobject pg) {
+        if (pg == null) {
+            return Optional.empty();
+        }
+        if (pg instanceof PGvector pgvector) {
+            return Optional.of(pgvector.toArray());
+        }
+        if (pg instanceof PGsparsevec pGsparsevec) {
+            return Optional.of(pGsparsevec.toArray());
+        }
+        try {
+            if ("sparsevec".equalsIgnoreCase(pg.getType())) {
+                return Optional.of(new PGsparsevec(pg.getValue()).toArray());
+            }
+            return Optional.of(new PGvector(pg.getValue()).toArray());
+        } catch (SQLException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static boolean shouldSerializeAsSparse(float[] arr) {
+        if (arr.length < MIN_SPARSE_DIMENSIONS) {
+            return false;
+        }
+        int nonZero = 0;
+        for (float v : arr) {
+            if (v != 0f) {
+                nonZero++;
+            }
+        }
+        return nonZero * MIN_ZERO_RATIO_DENOMINATOR <= arr.length;
+    }
+
 }

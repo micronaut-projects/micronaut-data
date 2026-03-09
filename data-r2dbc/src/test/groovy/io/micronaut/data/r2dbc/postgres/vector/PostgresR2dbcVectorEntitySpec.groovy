@@ -10,6 +10,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.r2dbc.postgres.PostgresTestPropertyProvider
@@ -113,6 +114,62 @@ class PostgresR2dbcVectorEntitySpec extends Specification implements PostgresTes
         after.embedding.toFloatArray().toList() == [13f, 14f, 15f]
     }
 
+    void "R2DBC FloatVector - derived near and within SearchResults"() {
+        given:
+        def repo = vectorFloatDocRepository
+        repo.deleteAll()
+        repo.save(new VectorFloatDoc(embedding: Vector.of([1f, 0f, 0f] as float[])))
+        repo.save(new VectorFloatDoc(embedding: Vector.of([0f, 1f, 0f] as float[])))
+
+        when:
+        SearchResults<VectorFloatDoc> nearResults = repo.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
+
+        then:
+        nearResults != null
+        nearResults.results() != null
+        nearResults.results().size() == 2
+        nearResults.results().every { it.score().value() <= 2d }
+
+        when:
+        SearchResults<VectorFloatDoc> withinResults = repo.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 2d)
+
+        then:
+        withinResults != null
+        withinResults.results() != null
+        withinResults.results().size() == 2
+
+        when:
+        SearchResults<VectorFloatDoc> betweenResults = repo.searchByEmbeddingBetween(Vector.of([1f, 0f, 0f] as float[]), 0d, 2d)
+
+        then:
+        betweenResults != null
+        betweenResults.results() != null
+        betweenResults.results().size() == 2
+        betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 2d }
+    }
+
+    void "R2DBC Postgres sparse-like vectors are explicitly unsupported"() {
+        given:
+        def repo = vectorFloatDocRepository
+        float[] sparseLike = new float[16]
+        sparseLike[0] = 1f
+        FloatVector sparse = Vector.of(sparseLike)
+
+        when:
+        repo.save(new VectorFloatDoc(embedding: sparse))
+
+        then:
+        def ex1 = thrown(IllegalArgumentException)
+        ex1.message.contains("Sparse vectors are not supported for Postgres R2DBC")
+
+        when:
+        repo.saveCustom(sparse)
+
+        then:
+        def ex2 = thrown(IllegalArgumentException)
+        ex2.message.contains("Sparse vectors are not supported for Postgres R2DBC")
+    }
+
 }
 @MappedEntity("vector_double_doc")
 class VectorDoubleDoc {
@@ -188,4 +245,10 @@ interface VectorFloatDocRepository extends CrudRepository<VectorFloatDoc, Long> 
 
     @Query("SELECT * FROM vector_float_doc")
     List<VectorFloatDoc> findAll()
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
 }

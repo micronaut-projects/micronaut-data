@@ -15,14 +15,21 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 
 import java.util.List;
+import java.util.Locale;
 
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
+import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
@@ -49,5 +56,56 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
     @Override
     String getOracleType() {
         return "FLOAT64";
+    }
+
+    @Override
+    public @Nullable Object convertToPersistedValue(@Nullable Vector entityValue, @NonNull ConversionContext context) {
+        if (entityValue == null) {
+            return null;
+        }
+        if (isSparse(context)) {
+            DatabaseType databaseType = extractDatabaseType(context);
+            if ((databaseType == DatabaseType.ORACLE || databaseType == DatabaseType.POSTGRES)
+                && !(entityValue instanceof FloatVector)) {
+                entityValue = (FloatVector) Vector.of(entityValue.toFloatArray());
+            }
+        }
+        return super.convertToPersistedValue(entityValue, context);
+    }
+
+    @Override
+    public String getColumnDefinition(Argument<?> argument, DatabaseType databaseType) {
+        if (databaseType == DatabaseType.ORACLE && isSparse(argument)) {
+            int dim = argument.getAnnotationMetadata()
+                .intValue(VectorStorage.class, "length")
+                .orElseGet(() -> argument.getAnnotationMetadata()
+                    .intValue("jakarta.persistence.Column", "length")
+                    .orElse(-1));
+            if (dim > 0) {
+                return "VECTOR(%d,FLOAT32,SPARSE)".formatted(dim);
+            }
+            return "VECTOR(*,FLOAT32,SPARSE)";
+        }
+        return super.getColumnDefinition(argument, databaseType);
+    }
+
+    private static boolean isSparse(ConversionContext context) {
+        if (context.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false)) {
+            return true;
+        }
+        return context.getAnnotationMetadata()
+            .stringValue("io.micronaut.data.annotation.MappedProperty", "definition")
+            .map(definition -> definition.toUpperCase(Locale.ROOT).contains("SPARSE"))
+            .orElse(false);
+    }
+
+    private static boolean isSparse(Argument<?> argument) {
+        if (argument.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false)) {
+            return true;
+        }
+        return argument.getAnnotationMetadata()
+            .stringValue("io.micronaut.data.annotation.MappedProperty", "definition")
+            .map(definition -> definition.toUpperCase(Locale.ROOT).contains("SPARSE"))
+            .orElse(false);
     }
 }

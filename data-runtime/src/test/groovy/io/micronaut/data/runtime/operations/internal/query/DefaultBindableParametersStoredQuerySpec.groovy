@@ -1,8 +1,12 @@
 package io.micronaut.data.runtime.operations.internal.query
 
+import io.micronaut.aop.MethodInvocationContext
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.runtime.RuntimePersistentProperty
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.Similarity
 import io.micronaut.data.model.runtime.QueryParameterBinding
 import io.micronaut.data.model.runtime.StoredQuery
 import spock.lang.Specification
@@ -119,6 +123,101 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         e.message.contains("Invocation context is required")
     }
 
+    def "similarity parameter is normalized to score when scoring function is present"() {
+        given:
+        def binding = new SimpleBinding(
+                name: "similarity",
+                parameterIndex: 0
+        )
+        def sq = new SimpleStoredQuery([binding])
+        def binder = new CapturingBinder()
+        def q = new DefaultBindableParametersStoredQuery<Object, Object>(sq, null, ConversionService.SHARED)
+
+        def invocationContext = Mock(MethodInvocationContext) {
+            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.COSINE] as Object[])
+            getArguments() >> ([Argument.of(Similarity), Argument.of(ScoringFunction)] as Argument[])
+        }
+
+        when:
+        q.bindParameters(binder, invocationContext, null, null)
+
+        then:
+        binder.oneCalls.size() == 1
+        binder.oneCalls[0].value == 1d
+    }
+
+    def "similarity parameter remains raw when no scoring function is present"() {
+        given:
+        def binding = new SimpleBinding(
+                name: "similarity",
+                parameterIndex: 0
+        )
+        def sq = new SimpleStoredQuery([binding])
+        def binder = new CapturingBinder()
+        def q = new DefaultBindableParametersStoredQuery<Object, Object>(sq, null, ConversionService.SHARED)
+
+        and:
+        def invocationContext = Mock(MethodInvocationContext) {
+            getParameterValues() >> ([new Similarity(0.5d)] as Object[])
+            getArguments() >> ([Argument.of(Similarity)] as Argument[])
+        }
+
+        when:
+        q.bindParameters(binder, invocationContext, null, null)
+
+        then:
+        binder.oneCalls.size() == 1
+        binder.oneCalls[0].value == 0.5d
+    }
+
+    def "unsupported normalizer function falls back to identity conversion"() {
+        given:
+        def binding = new SimpleBinding(
+                name: "similarity",
+                parameterIndex: 0
+        )
+        def sq = new SimpleStoredQuery([binding])
+        def binder = new CapturingBinder()
+        def q = new DefaultBindableParametersStoredQuery<Object, Object>(sq, null, ConversionService.SHARED)
+
+        and:
+        def invocationContext = Mock(MethodInvocationContext) {
+            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.TAXICAB] as Object[])
+            getArguments() >> ([Argument.of(Similarity), Argument.of(ScoringFunction)] as Argument[])
+        }
+
+        when:
+        q.bindParameters(binder, invocationContext, null, null)
+
+        then:
+        binder.oneCalls.size() == 1
+        binder.oneCalls[0].value == 0.5d
+    }
+
+    def "multiple scoring function parameters are rejected"() {
+        given:
+        def binding = new SimpleBinding(
+                name: "similarity",
+                parameterIndex: 0
+        )
+        def sq = new SimpleStoredQuery([binding])
+        def binder = new CapturingBinder()
+        def q = new DefaultBindableParametersStoredQuery<Object, Object>(sq, null, ConversionService.SHARED)
+
+        and:
+        def invocationContext = Mock(MethodInvocationContext) {
+            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.COSINE, ScoringFunction.EUCLIDEAN] as Object[])
+            getArguments() >> ([Argument.of(Similarity), Argument.of(ScoringFunction), Argument.of(ScoringFunction)] as Argument[])
+        }
+
+        when:
+        q.bindParameters(binder, invocationContext, null, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("Only one ScoringFunction parameter")
+    }
+
 
 
     // --- helpers ---
@@ -207,10 +306,10 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         final List<ManyCall> manyCalls = []
 
         @Override
-        Object autoPopulateRuntimeProperty(io.micronaut.data.model.runtime.RuntimePersistentProperty<?> persistentProperty, Object previousValue) { return null }
+        Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) { return null }
 
         @Override
-        Object convert(Object value, io.micronaut.data.model.runtime.RuntimePersistentProperty<?> property) { return value }
+        Object convert(Object value, RuntimePersistentProperty<?> property) { return value }
 
         @Override
         Object convert(Class<?> converterClass, Object value, Argument<?> argument) { return value }

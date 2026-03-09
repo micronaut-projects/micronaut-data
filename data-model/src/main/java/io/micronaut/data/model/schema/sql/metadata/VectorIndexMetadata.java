@@ -25,7 +25,11 @@ import org.jspecify.annotations.NonNull;
  * @param vectorIndexType The index type
  * @param distanceType The distance metric
  * @param accuracy Target accuracy
+ * @param sparse Whether sparse vector storage is requested
  */
 @Internal
-public record VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType, VectorIndexType.@NonNull DistanceType distanceType, int accuracy) {
+public record VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType,
+                                  VectorIndexType.@NonNull DistanceType distanceType,
+                                  int accuracy,
+                                  boolean sparse) {
 }

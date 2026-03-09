@@ -8,15 +8,26 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.FloatVector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.model.vector.search.Similarity
+import io.micronaut.data.model.vector.search.SimilarityNormalizer
 import io.micronaut.data.repository.PageableRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.Statement
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTestPropertyProvider {
 
@@ -43,7 +54,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
-        def list = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def list = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def e = list.find { it.embedding.toFloatArray().toList() == dv.toList() }
 
         then: "entity persisted and read conversion to Micronaut Vector works"
@@ -74,7 +85,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         when:
         vectorRepository.saveCustom(vA)
         vectorRepository.saveCustom(vB)
-        def rows = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def idA = rows.find { it.embedding.toFloatArray().toList() == [1f, 2f, 3f] }?.id
@@ -88,7 +99,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         FloatVector vB2 = Vector.of([0f, -1f, -2f] as float[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
-        def rows2 = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def updatedA = rows2.find { it.id == idA }?.embedding?.toFloatArray()?.toList()
@@ -102,28 +113,28 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         FloatVector vec = Vector.of([10f, 11f, 12f] as float[])
 
         when:
-        java.util.concurrent.Future<Integer> saveFut = vectorRepository.saveAsync(vec)
+        Future<Integer> saveFut = vectorRepository.saveAsync(vec)
 
         then:
-        saveFut.get(10, java.util.concurrent.TimeUnit.SECONDS) == 1
+        saveFut.get(10, TimeUnit.SECONDS) == 1
 
         when:
-        def all = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def all = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def last = all.last()
-        java.util.concurrent.Future<java.util.List<VectorFloatDoc>> findFut = vectorRepository.findAsync(last.id)
+        Future<List<VectorFloatDoc>> findFut = vectorRepository.findAsync(last.id)
 
         then:
-        def found = findFut.get(10, java.util.concurrent.TimeUnit.SECONDS)
+        def found = findFut.get(10, TimeUnit.SECONDS)
         found != null
         found.size() == 1
         found.get(0).embedding.toFloatArray().toList() == [10f, 11f, 12f]
 
         when:
         FloatVector vec2 = Vector.of([13f, 14f, 15f] as float[])
-        java.util.concurrent.Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
+        Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
-        updFut.get(10, java.util.concurrent.TimeUnit.SECONDS) != null
+        updFut.get(10, TimeUnit.SECONDS) != null
         with(vectorRepository.findById(last.id)) {
             it.isPresent()
             it.get().embedding.toFloatArray().toList() == [13f, 14f, 15f]
@@ -138,8 +149,8 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         vectorRepository.saveCustom(v2)
 
         when:
-        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
-        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+        def p0 = vectorRepository.findAll(Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(Pageable.from(1, 1))
 
         then:
         p0 != null
@@ -149,9 +160,147 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         p0.getTotalSize() >= 2
     }
 
+    void "test derived vector near and within search results"() {
+        given:
+        vectorRepository.deleteAll()
+        vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([1f, 0f, 0f] as float[])))
+        vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([0f, 1f, 0f] as float[])))
+
+        when:
+        SearchResults<VectorFloatDoc> nearResults = vectorRepository.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
+
+        then:
+        nearResults != null
+        nearResults.results().size() >= 1
+        nearResults.results().get(0).score().value() <= 2d
+
+        when:
+        SearchResults<VectorFloatDoc> withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        withinResults != null
+        withinResults.results() != null
+
+        when:
+        SearchResults<VectorFloatDoc> betweenResults = vectorRepository.searchByEmbeddingBetween(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        betweenResults != null
+        betweenResults.results() != null
+        betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 0.2d }
+    }
+
+    void "test derived vector search results are empty not null"() {
+        given:
+        vectorRepository.deleteAll()
+
+        when:
+        SearchResults<VectorFloatDoc> emptyResults = vectorRepository.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
+
+        then:
+        emptyResults != null
+        emptyResults.results().isEmpty()
+    }
+
+    void "test derived vector search with Score and Similarity wrappers over 10 vectors"() {
+        given:
+        vectorRepository.deleteAll()
+        def vectors = [
+            [1f, 0f, 0f],
+            [0.9f, 0.1f, 0f],
+            [0.8f, 0.2f, 0f],
+            [0.7f, 0.3f, 0f],
+            [0.6f, 0.4f, 0f],
+            [0.5f, 0.5f, 0f],
+            [0.4f, 0.6f, 0f],
+            [0.3f, 0.7f, 0f],
+            [0.2f, 0.8f, 0f],
+            [0f, 1f, 0f]
+        ]
+        vectors.each { v -> vectorRepository.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        Set<Long> allIds = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))*.id as Set<Long>
+        FloatVector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        def nearByDouble = vectorRepository.searchByEmbeddingNear(q, 2d)
+        def nearByScore = vectorRepository.searchByEmbeddingNear(q, new Score(2d))
+        def withinBySimilarity = vectorRepository.searchByEmbeddingWithin(q, new Similarity(0d), new Similarity(2d))
+        def betweenByScore = vectorRepository.searchByEmbeddingBetween(q, new Score(0d), new Score(2d))
+
+        then:
+        nearByDouble.results().size() >= 8
+        nearByScore.results().size() == nearByDouble.results().size()
+        withinBySimilarity.results().size() == nearByDouble.results().size()
+        betweenByScore.results().size() == nearByDouble.results().size()
+        nearByScore.results().collect { it.entity().id } == nearByDouble.results().collect { it.entity().id }
+
+        when:
+        def cosineOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
+        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
+        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
+        def innerProductAliasOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
+        def taxicabOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+
+        then:
+        cosineOk.results().size() == nearByDouble.results().size()
+        euclideanOk.results().size() >= 1
+        dotOk.results().size() >= 1
+        innerProductAliasOk.results().size() == dotOk.results().size()
+        taxicabOk.results().size() >= 1
+        assertScoringResults(cosineOk, ScoringFunction.COSINE)
+        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
+        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
+        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
+        assertScoringResults(taxicabOk, ScoringFunction.TAXICAB)
+    }
+
+    void "test derived top+order vector queries for near and within"() {
+        given:
+        vectorRepository.deleteAll()
+        def vectors = [
+            [1f, 0f, 0f],
+            [0.9f, 0.1f, 0f],
+            [0.8f, 0.2f, 0f],
+            [0.7f, 0.3f, 0f],
+            [0.6f, 0.4f, 0f]
+        ]
+        vectors.each { v -> vectorRepository.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        def allIds = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))*.id as Set
+        FloatVector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        List<VectorFloatDoc> nearTop2IdDesc = vectorRepository.findTop2ByEmbeddingNearOrderByIdDesc(q, 1_000_000d)
+        SearchResults<VectorFloatDoc> nearTop2IdDescResults = vectorRepository.searchTop2ByEmbeddingNearOrderByIdDesc(q, 1_000_000d)
+        List<VectorFloatDoc> withinTop2IdAsc = vectorRepository.findTop2ByEmbeddingWithinOrderByIdAsc(q, 0d, 1_000_000d)
+        SearchResults<VectorFloatDoc> withinTop2IdAscResults = vectorRepository.searchTop2ByEmbeddingWithinOrderByIdAsc(q, 0d, 1_000_000d)
+
+        then:
+        nearTop2IdDesc.size() == 2
+        nearTop2IdDesc[0].id > nearTop2IdDesc[1].id
+        allIds.containsAll(nearTop2IdDesc*.id as Set)
+        nearTop2IdDesc.every { it instanceof VectorFloatDoc }
+        nearTop2IdDesc[0].metaClass.respondsTo(nearTop2IdDesc[0], "getScore").isEmpty()
+
+        nearTop2IdDescResults.results().size() >= 1
+        allIds.containsAll(nearTop2IdDescResults.results()*.entity()*.id as Set)
+        nearTop2IdDescResults.results().every { it.score() != null }
+
+        withinTop2IdAsc.size() == 2
+        withinTop2IdAsc[0].id < withinTop2IdAsc[1].id
+        allIds.containsAll(withinTop2IdAsc*.id as Set)
+        withinTop2IdAsc.every { it instanceof VectorFloatDoc }
+        withinTop2IdAsc[0].metaClass.respondsTo(withinTop2IdAsc[0], "getScore").isEmpty()
+
+        withinTop2IdAscResults.results().size() >= 1
+        allIds.containsAll(withinTop2IdAscResults.results()*.entity()*.id as Set)
+        withinTop2IdAscResults.results().every { it.score() != null }
+    }
+
+
+
     private void executeSilently(String sql) {
-        java.sql.Connection c = null
-        java.sql.Statement st = null
+        Connection c = null
+        Statement st = null
         try {
             c = dataSource.getConnection()
             st = c.createStatement()
@@ -161,6 +310,19 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         } finally {
             try { st?.close() } catch (ignored) {}
             try { c?.close() } catch (ignored) {}
+        }
+    }
+
+    private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {
+        assert results != null
+        assert results.results() != null
+        assert results.results().size() >= 1
+        def normalizer = SimilarityNormalizer.forScoringFunction(function)
+        results.results().each { r ->
+            double score = r.score().value()
+            assert r.similarity() != null
+            double similarity = r.similarity().value()
+            assert Math.abs(similarity - normalizer.getSimilarity(score)) < 1.0e-9d
         }
     }
 }
@@ -198,18 +360,44 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
     void updateCustom(Long id, @Parameter("vec") FloatVector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector vec)
+    Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") FloatVector vec)
+    Future<Integer> saveAsync(@Parameter("vec") FloatVector vec)
 
     @Query("SELECT * FROM vector_float_doc WHERE id = :id")
-    java.util.concurrent.Future<java.util.List<VectorFloatDoc>> findAsync(Long id)
+    Future<List<VectorFloatDoc>> findAsync(Long id)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(FloatVector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Similarity minDistance, Similarity maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Score minDistance, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector,
+                                                          Score maxDistance,
+                                                          ScoringFunction function)
+
+    List<VectorFloatDoc> findTop2ByEmbeddingNearOrderByIdDesc(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchTop2ByEmbeddingNearOrderByIdDesc(Vector vector, Double maxDistance)
+
+    List<VectorFloatDoc> findTop2ByEmbeddingWithinOrderByIdAsc(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchTop2ByEmbeddingWithinOrderByIdAsc(Vector vector, Double minDistance, Double maxDistance)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") FloatVector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") FloatVector vec)
 
 }

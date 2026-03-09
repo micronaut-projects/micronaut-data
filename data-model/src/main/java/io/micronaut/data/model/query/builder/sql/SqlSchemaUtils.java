@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.VectorIndex;
+import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -443,8 +444,9 @@ public final class SqlSchemaUtils {
                 VectorIndexType indexType = vi.enumValue("vectorIndexType", VectorIndexType.class).orElse(VectorIndexType.IVF);
                 VectorIndexType.DistanceType distanceType = vi.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
                 int accuracy = vi.intValue("accuracy").orElse(90);
+                boolean sparse = prop.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), prop);
-                VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy);
+                VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy, sparse);
                 SqlIndexDefinitionProvider provider = null;
                 io.micronaut.core.type.Argument<?> arg;
                 if (prop instanceof io.micronaut.data.model.runtime.RuntimePersistentProperty<?> rpp) {

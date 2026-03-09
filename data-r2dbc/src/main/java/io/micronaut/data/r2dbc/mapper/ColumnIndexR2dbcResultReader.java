@@ -212,7 +212,18 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     @Override
     public <T> T getRequiredValue(Row resultSet, Integer name, Class<T> type) throws DataAccessException {
         try {
-            return resultSet.get(name, type);
+            T value = resultSet.get(name, type);
+            if (value != null) {
+                return value;
+            }
+            Object raw = resultSet.get(name);
+            if (raw == null) {
+                return null;
+            }
+            if (type.isInstance(raw)) {
+                return type.cast(raw);
+            }
+            return conversionService.convert(raw, type).orElse(null);
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {

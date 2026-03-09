@@ -15,7 +15,7 @@ public class DocumentEmbeddingService {
     public void saveOne(long id) {
         // tag::create_vector[]
         Vector vec = Vector.of(0.1d, 0.2d, 0.3d);
-        repository.insertEmbedding(id, vec);
+        repository.save(id, vec);
         // end::create_vector[]
     }
 }

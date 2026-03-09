@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.postgres.vector
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Parameter
@@ -7,12 +7,12 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.exceptions.DataAccessException
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
@@ -112,6 +112,32 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
         ex.message.contains("POSTGRES does not support")
     }
 
+    void "derived vector near/within/between with DoubleVector are not supported on Postgres"() {
+        given:
+        Vector queryVector = Vector.of([1d, 0d, 0d] as double[])
+
+        when:
+        vectorRepository.searchByEmbeddingNear(queryVector, 2d)
+
+        then:
+        def nearEx = thrown(IllegalArgumentException)
+        nearEx.message.contains("POSTGRES does not support")
+
+        when:
+        vectorRepository.searchByEmbeddingWithin(queryVector, 0d, 0.2d)
+
+        then:
+        def withinEx = thrown(IllegalArgumentException)
+        withinEx.message.contains("POSTGRES does not support")
+
+        when:
+        vectorRepository.searchByEmbeddingBetween(queryVector, 0d, 0.2d)
+
+        then:
+        def betweenEx = thrown(IllegalArgumentException)
+        betweenEx.message.contains("POSTGRES does not support")
+    }
+
     private void executeSilently(String sql) {
         java.sql.Connection c = null
         java.sql.Statement st = null
@@ -176,5 +202,11 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
     java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") DoubleVector vec)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
 
 }

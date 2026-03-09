@@ -108,6 +108,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
+import static io.micronaut.data.model.vector.search.VectorSearch.SCORE_FUNCTION;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -696,28 +697,32 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(order.getExpression()).getPropertyPath());
-            String currentAlias = propertyPath.getTableAlias();
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-            if (ignoreCase) {
-                buff.append("LOWER(");
-            }
-            if (currentAlias != null) {
-                buff.append(currentAlias).append(DOT);
-            }
-            if (jsonEntityColumn != null) {
-                buff.append(jsonEntityColumn).append(DOT);
-            }
-            if (computePropertyPaths() && jsonEntityColumn == null) {
-                buff.append(propertyPath.getColumnName());
-            } else {
-                buff.append(propertyPath.getPath());
-                if (jsonEntityColumn != null) {
-                    appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+            if (order.getExpression() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+                String currentAlias = propertyPath.getTableAlias();
+                boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+                if (ignoreCase) {
+                    buff.append("LOWER(");
                 }
-            }
-            if (ignoreCase) {
-                buff.append(")");
+                if (currentAlias != null) {
+                    buff.append(currentAlias).append(DOT);
+                }
+                if (jsonEntityColumn != null) {
+                    buff.append(jsonEntityColumn).append(DOT);
+                }
+                if (computePropertyPaths() && jsonEntityColumn == null) {
+                    buff.append(propertyPath.getColumnName());
+                } else {
+                    buff.append(propertyPath.getPath());
+                    if (jsonEntityColumn != null) {
+                        appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+                    }
+                }
+                if (ignoreCase) {
+                    buff.append(")");
+                }
+            } else {
+                new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
             }
             buff.append(SPACE);
             if (order.isAscending()) {
@@ -2464,6 +2469,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         protected final void appendFunction(String functionName, List<Expression<?>> expressions) {
+            if (SCORE_FUNCTION.equals(functionName) && expressions.size() == 2) {
+                VectorSimilarityDialect dialect = VectorSimilarityDialect.forDialect(getDialect());
+                if (dialect == null) {
+                    throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
+                }
+                dialect.appendVectorScore(query, expressions.get(0), expressions.get(1), this::appendExpression);
+                return;
+            }
             query.append(functionName)
                 .append(OPEN_BRACKET);
             for (Iterator<Expression<?>> iterator = expressions.iterator(); iterator.hasNext();) {
@@ -3028,8 +3041,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private void appendFunction(String functionName, List<Expression<?>> expressions) {
-            query.append(functionName)
-                .append(OPEN_BRACKET);
+            if (SCORE_FUNCTION.equals(functionName) && expressions.size() == 2) {
+                appendVectorScore(expressions.get(0), expressions.get(1));
+                if (columnAlias != null) {
+                    query.append(AS_CLAUSE).append(columnAlias);
+                }
+                return;
+            }
+            query.append(functionName).append(OPEN_BRACKET);
             for (Iterator<Expression<?>> iterator = expressions.iterator(); iterator.hasNext();) {
                 Expression<?> expression = iterator.next();
                 appendExpression(expression);
@@ -3041,6 +3060,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (columnAlias != null) {
                 query.append(AS_CLAUSE).append(columnAlias);
             }
+        }
+
+        private void appendVectorScore(Expression<?> left, Expression<?> right) {
+            VectorSimilarityDialect dialect = VectorSimilarityDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
+            }
+            dialect.appendVectorScore(query, left, right, this::appendExpression);
         }
 
         private void appendExpression(Expression<?> expression) {

@@ -33,8 +33,6 @@ public enum VectorIndexType {
     public enum DistanceType {
         COSINE,
         DOT,
-        HAMMING,
-        JACCARD,
         L1_MANHATTAN,
         L2_EUCLIDEAN_SQUARED,
         L2_EUCLIDEAN,

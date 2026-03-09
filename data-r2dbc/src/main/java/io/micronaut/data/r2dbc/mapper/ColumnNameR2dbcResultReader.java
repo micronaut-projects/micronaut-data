@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Implementation of {@link ResultReader} for R2DBC.
@@ -293,7 +294,18 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     @Override
     public <T> T getRequiredValue(Row resultSet, String name, Class<T> type) throws DataAccessException {
         try {
-            return resultSet.get(name, type);
+            T value = getTypedValue(resultSet, name, type);
+            if (value != null) {
+                return value;
+            }
+            Object raw = getRawValue(resultSet, name);
+            if (raw == null) {
+                return null;
+            }
+            if (type.isInstance(raw)) {
+                return type.cast(raw);
+            }
+            return conversionService.convert(raw, type).orElse(null);
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
@@ -302,6 +314,32 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
                 throw exceptionForColumn(name, e);
             }
         }
+    }
+
+    @Nullable
+    private static <T> T getTypedValue(Row resultSet, String name, Class<T> type) {
+        T value = resultSet.get(name, type);
+        if (value != null) {
+            return value;
+        }
+        String upperName = name.toUpperCase(Locale.ROOT);
+        if (upperName.equals(name)) {
+            return null;
+        }
+        return resultSet.get(upperName, type);
+    }
+
+    @Nullable
+    private static Object getRawValue(Row resultSet, String name) {
+        Object value = resultSet.get(name);
+        if (value != null) {
+            return value;
+        }
+        String upperName = name.toUpperCase(Locale.ROOT);
+        if (upperName.equals(name)) {
+            return null;
+        }
+        return resultSet.get(upperName);
     }
 
     @Override

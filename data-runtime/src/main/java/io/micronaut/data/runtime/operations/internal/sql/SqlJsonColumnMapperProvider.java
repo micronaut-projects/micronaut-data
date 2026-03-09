@@ -48,6 +48,7 @@ public final class SqlJsonColumnMapperProvider<S> {
     private final SqlJsonColumnReader<S> defaultSqlJsonColumnReader;
     @Nullable
     private final SqlJsonValueMapper defaultSqlJsonValueMapper;
+    private final VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver;
 
     /**
      * Default constructor.
@@ -58,9 +59,11 @@ public final class SqlJsonColumnMapperProvider<S> {
      */
     public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
                                        List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
-                                       List<SqlJsonValueMapper> sqlJsonValueMappers) {
+                                       List<SqlJsonValueMapper> sqlJsonValueMappers,
+                                       VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver) {
         this.sqlJsonColumnReaders = sqlJsonColumnReaders;
         this.sqlJsonValueMappers = sqlJsonValueMappers;
+        this.vectorScoringSupportResolver = vectorScoringSupportResolver;
         if (jsonMapper == null) {
             this.defaultSqlJsonColumnReader = null;
             this.defaultSqlJsonValueMapper = null;
@@ -83,7 +86,7 @@ public final class SqlJsonColumnMapperProvider<S> {
     @Nullable
     public SqlJsonColumnReader<S> getJsonColumnReader(SqlStoredQuery<?, ?> sqlStoredQuery, Class<S> resultSetType) {
         // Hack to avoid using the prepared query
-        DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery = new DefaultSqlPreparedQuery<>(sqlStoredQuery);
+        DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery = new DefaultSqlPreparedQuery<>(sqlStoredQuery, vectorScoringSupportResolver);
         SqlJsonColumnReader<S> supportedSqlJsonColumnReader = null;
         for (SqlJsonColumnReader<S> sqlJsonColumnReader : sqlJsonColumnReaders) {
             if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery)) {

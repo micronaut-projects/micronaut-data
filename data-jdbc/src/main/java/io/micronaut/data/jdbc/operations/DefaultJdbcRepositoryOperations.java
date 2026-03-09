@@ -71,6 +71,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -364,7 +365,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Nullable
     private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
-        boolean limitToSingleResult = !jdbcConfiguration.isUniqueResultOnFindOne();
+        boolean isSearchResults = preparedQuery.getResultType().equals(SearchResults.class);
+        boolean limitToSingleResult = !isSearchResults && !jdbcConfiguration.isUniqueResultOnFindOne();
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, limitToSingleResult)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             try (ResultSet rs = ps.executeQuery()) {
@@ -381,21 +383,25 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         while (rs.next()) {
                             oneMapper.processRow(rs);
                         }
-                    } else if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                    } else if (!isSearchResults && jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                     result = oneMapper.getResult();
                 } else if (rs.next()) {
                     result = mapper.map(rs, preparedQuery.getResultType());
-                    if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                    if (!isSearchResults && jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                 } else {
-                    result = null;
+                    result = isSearchResults ? (R) new SearchResults<>(List.of()) : null;
+                }
+                if (isSearchResults && result == null) {
+                    result = (R) new SearchResults<>(List.of());
                 }
                 if (result != null && preparedQuery.hasResultConsumer()) {
+                    R finalResult = result;
                     preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                        .ifPresent(consumer -> consumer.accept(finalResult, newMappingContext(rs)));
                 }
                 return result;
             }

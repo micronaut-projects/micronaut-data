@@ -12,8 +12,8 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.ByteVector
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.PageableRepository
-import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -155,6 +155,36 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
         p0.getTotalSize() >= 2
     }
 
+    void "test derived vector near and within search results"() {
+        given:
+        vectorRepository.deleteAll()
+        vectorRepository.save(new VectorByteDoc(embedding: Vector.of([1, 0, 0] as byte[])))
+        vectorRepository.save(new VectorByteDoc(embedding: Vector.of([0, 1, 0] as byte[])))
+
+        when:
+        SearchResults<VectorByteDoc> nearResults = vectorRepository.searchByEmbeddingNear(Vector.of([1, 0, 0] as byte[]), 2d)
+
+        then:
+        nearResults != null
+        nearResults.results().size() >= 1
+        nearResults.results().get(0).score().value() <= 2d
+
+        when:
+        SearchResults<VectorByteDoc> withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1, 0, 0] as byte[]), 0d, 0.2d)
+
+        then:
+        withinResults != null
+        withinResults.results() != null
+
+        when:
+        SearchResults<VectorByteDoc> betweenResults = vectorRepository.searchByEmbeddingBetween(Vector.of([1, 0, 0] as byte[]), 0d, 0.2d)
+
+        then:
+        betweenResults != null
+        betweenResults.results() != null
+        betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 0.2d }
+    }
+
     private void executeSilently(String sql) {
         Connection c = null
         Statement st = null
@@ -211,6 +241,12 @@ interface VectorByteDocRepository extends PageableRepository<VectorByteDoc, Long
 
     @Query("SELECT * FROM vector_byte_doc WHERE id = :id")
     Future<List<VectorByteDoc>> findAsync(Long id)
+
+    SearchResults<VectorByteDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorByteDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorByteDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
 
     @Query("UPDATE vector_byte_doc SET embedding = :vec WHERE id = :id")
     Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)

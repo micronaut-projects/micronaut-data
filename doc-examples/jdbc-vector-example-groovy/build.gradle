@@ -14,6 +14,8 @@ micronaut {
     testRuntime "spock"
     testResources {
         additionalModules.add("jdbc-oracle-free")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 

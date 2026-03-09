@@ -8,14 +8,23 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.Statement
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTestPropertyProvider {
 
@@ -27,7 +36,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
     VectorDoubleDocRepository vectorRepository = context.getBean(VectorDoubleDocRepository)
 
     @Shared
-    javax.sql.DataSource dataSource = context.getBean(javax.sql.DataSource)
+    DataSource dataSource = context.getBean(DataSource)
 
     @Override
     List<String> packages() {
@@ -42,7 +51,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
-        def list = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def list = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def e = list.find { it.embedding.toDoubleArray().toList() == dv.toList() }
 
         then: "entity persisted and read conversion to Micronaut Vector works"
@@ -104,7 +113,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         when:
         vectorRepository.saveCustom(vA)
         vectorRepository.saveCustom(vB)
-        def rows = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def idA = rows.find { it.embedding.toDoubleArray().toList() == [1d, 2d, 3d] }?.id
@@ -118,7 +127,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         DoubleVector vB2 = Vector.of([0d, -1d, -2d] as double[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
-        def rows2 = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def updatedA = rows2.find { it.id == idA }?.embedding?.toDoubleArray()?.toList()
@@ -132,28 +141,28 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         DoubleVector vec = Vector.of([10d, 11d, 12d] as double[])
 
         when:
-        java.util.concurrent.Future<Integer> saveFut = vectorRepository.saveAsync(vec)
+        Future<Integer> saveFut = vectorRepository.saveAsync(vec)
 
         then:
-        saveFut.get(10, java.util.concurrent.TimeUnit.SECONDS) == 1
+        saveFut.get(10, TimeUnit.SECONDS) == 1
 
         when:
-        def all = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def all = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def last = all.last()
-        java.util.concurrent.Future<java.util.List<VectorDoubleDoc>> findFut = vectorRepository.findAsync(last.id)
+        Future<List<VectorDoubleDoc>> findFut = vectorRepository.findAsync(last.id)
 
         then:
-        def found = findFut.get(10, java.util.concurrent.TimeUnit.SECONDS)
+        def found = findFut.get(10, TimeUnit.SECONDS)
         found != null
         found.size() == 1
         found.get(0).embedding.toDoubleArray().toList() == [10d, 11d, 12d]
 
         when:
         DoubleVector vec2 = Vector.of([13d, 14d, 15d] as double[])
-        java.util.concurrent.Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
+        Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
-        updFut.get(10, java.util.concurrent.TimeUnit.SECONDS) != null
+        updFut.get(10, TimeUnit.SECONDS) != null
         with(vectorRepository.findById(last.id)) {
             it.isPresent()
             it.get().embedding.toDoubleArray().toList() == [13d, 14d, 15d]
@@ -168,8 +177,8 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         vectorRepository.saveCustom(v2)
 
         when:
-        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
-        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+        def p0 = vectorRepository.findAll(Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(Pageable.from(1, 1))
 
         then:
         p0 != null
@@ -179,9 +188,39 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         p0.getTotalSize() >= 2
     }
 
+    void "test derived vector near and within search results"() {
+        given:
+        vectorRepository.deleteAll()
+        vectorRepository.save(new VectorDoubleDoc(embedding: Vector.of([1d, 0d, 0d] as double[])))
+        vectorRepository.save(new VectorDoubleDoc(embedding: Vector.of([0d, 1d, 0d] as double[])))
+
+        when:
+        SearchResults<VectorDoubleDoc> nearResults = vectorRepository.searchByEmbeddingNear(Vector.of([1d, 0d, 0d] as double[]), 2d)
+
+        then:
+        nearResults != null
+        nearResults.results().size() >= 1
+        nearResults.results().get(0).score().value() <= 2d
+
+        when:
+        SearchResults<VectorDoubleDoc> withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1d, 0d, 0d] as double[]), 0d, 0.2d)
+
+        then:
+        withinResults != null
+        withinResults.results() != null
+
+        when:
+        SearchResults<VectorDoubleDoc> betweenResults = vectorRepository.searchByEmbeddingBetween(Vector.of([1d, 0d, 0d] as double[]), 0d, 0.2d)
+
+        then:
+        betweenResults != null
+        betweenResults.results() != null
+        betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 0.2d }
+    }
+
     private void executeSilently(String sql) {
-        java.sql.Connection c = null
-        java.sql.Statement st = null
+        Connection c = null
+        Statement st = null
         try {
             c = dataSource.getConnection()
             st = c.createStatement()
@@ -229,18 +268,24 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
     void updateCustom(Long id, @Parameter("vec") DoubleVector vec)
 
     @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector vec)
+    Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") DoubleVector vec)
+    Future<Integer> saveAsync(@Parameter("vec") DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc WHERE id = :id")
-    java.util.concurrent.Future<java.util.List<VectorDoubleDoc>> findAsync(Long id)
+    Future<List<VectorDoubleDoc>> findAsync(Long id)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorDoubleDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") DoubleVector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") DoubleVector vec)
 
 }

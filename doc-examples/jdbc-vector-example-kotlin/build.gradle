@@ -16,6 +16,8 @@ micronaut {
     testRuntime "junit5"
     testResources {
         additionalModules.add("jdbc-oracle-free")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 

@@ -7,10 +7,16 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.model.vector.search.Similarity
+import io.micronaut.data.model.vector.search.SimilarityNormalizer
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
@@ -44,6 +50,9 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
     @Shared
     VectorDoubleDocRepository vectorDoubleDocRepository = context.getBean(VectorDoubleDocRepository)
+
+    @Shared
+    SparseVectorByteDocRepository sparseVectorByteDocRepository = context.getBean(SparseVectorByteDocRepository)
 
     // FLOAT64/default
     void "R2DBC DoubleVector - default CRUD and custom @Query"() {
@@ -198,6 +207,133 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         after.embedding.toByteArray().toList() == [13, 14, 15]
     }
 
+    void "R2DBC Oracle FloatVector - derived search with wrappers and scoring function"() {
+        given:
+        def repo = vectorFloatDocRepository
+        repo.deleteAll()
+        def vectors = [
+            [1f, 0f, 0f],
+            [0.9f, 0.1f, 0f],
+            [0.8f, 0.2f, 0f],
+            [0.7f, 0.3f, 0f],
+            [0.6f, 0.4f, 0f],
+            [0.5f, 0.5f, 0f],
+            [0.4f, 0.6f, 0f],
+            [0.3f, 0.7f, 0f],
+            [0.2f, 0.8f, 0f],
+            [0f, 1f, 0f]
+        ]
+        vectors.each { v -> repo.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        FloatVector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        SearchResults<VectorFloatDoc> nearByDouble = repo.searchByEmbeddingNear((Vector) q, 2d)
+        SearchResults<VectorFloatDoc> nearByFloatVector = repo.searchByEmbeddingNear(q, 2d)
+        SearchResults<VectorFloatDoc> nearByScore = repo.searchByEmbeddingNear(q, new Score(2d))
+        SearchResults<VectorFloatDoc> withinBySimilarity = repo.searchByEmbeddingWithin(q, new Similarity(0d), new Similarity(2d))
+        SearchResults<VectorFloatDoc> betweenByScore = repo.searchByEmbeddingBetween(q, new Score(0d), new Score(2d))
+
+        then:
+        nearByDouble != null
+        nearByDouble.results() != null
+        nearByDouble.results().size() == vectors.size()
+        nearByFloatVector.results().size() == nearByDouble.results().size()
+        nearByScore.results().size() == nearByDouble.results().size()
+        withinBySimilarity.results().size() == nearByDouble.results().size()
+        betweenByScore.results().size() == nearByDouble.results().size()
+
+        when:
+        def cosineOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
+        def euclideanOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
+        def dotOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
+        def innerProductAliasOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
+        def taxicabOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+
+        then:
+        cosineOk.results().size() == nearByDouble.results().size()
+        euclideanOk.results().size() > 0
+        dotOk.results().size() > 0
+        innerProductAliasOk.results().size() == dotOk.results().size()
+        taxicabOk.results().size() > 0
+        assertScoringResults(cosineOk, ScoringFunction.COSINE)
+        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
+        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
+        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
+        assertScoringResults(taxicabOk, ScoringFunction.TAXICAB)
+    }
+
+    private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {
+        assert results != null
+        assert results.results() != null
+        assert results.results().size() >= 1
+        def normalizer = SimilarityNormalizer.forScoringFunction(function)
+        results.results().each { r ->
+            double score = r.score().value()
+            assert r.similarity() != null
+            double similarity = r.similarity().value()
+            assert Math.abs(similarity - normalizer.getSimilarity(score)) < 1.0e-9d
+        }
+    }
+
+    void "R2DBC Oracle FloatVector - derived top+order vector queries"() {
+        given:
+        def repo = vectorFloatDocRepository
+        repo.deleteAll()
+        def vectors = [
+            [1f, 0f, 0f],
+            [0.9f, 0.1f, 0f],
+            [0.8f, 0.2f, 0f],
+            [0.7f, 0.3f, 0f],
+            [0.6f, 0.4f, 0f]
+        ]
+        vectors.each { v -> repo.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        FloatVector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        List<VectorFloatDoc> nearTop2IdDesc = repo.findTop2ByEmbeddingNearOrderByIdDesc(q, 1_000_000d)
+        SearchResults<VectorFloatDoc> nearTop2IdDescResults = repo.searchTop2ByEmbeddingNearOrderByIdDesc(q, 1_000_000d)
+        List<VectorFloatDoc> withinTop2IdAsc = repo.findTop2ByEmbeddingWithinOrderByIdAsc(q, 0d, 1_000_000d)
+        SearchResults<VectorFloatDoc> withinTop2IdAscResults = repo.searchTop2ByEmbeddingWithinOrderByIdAsc(q, 0d, 1_000_000d)
+
+        then:
+        nearTop2IdDesc.size() == 2
+        nearTop2IdDesc[0].id > nearTop2IdDesc[1].id
+        nearTop2IdDescResults.results().size() == 2
+        withinTop2IdAsc.size() == 2
+        withinTop2IdAsc[0].id < withinTop2IdAsc[1].id
+        withinTop2IdAscResults.results().size() == 2
+    }
+
+    void "R2DBC Oracle Sparse ByteVector - typed CRUD and derived near search"() {
+        given:
+        def repo = sparseVectorByteDocRepository
+        repo.deleteAll()
+        ByteVector v1 = Vector.of([0, 10, 0, 20, 0] as byte[])
+        ByteVector v2 = Vector.of([0, 8, 0, 18, 0] as byte[])
+
+        when:
+        def saved1 = repo.save(new SparseVectorByteDoc(embedding: v1))
+        def saved2 = repo.save(new SparseVectorByteDoc(embedding: v2))
+        def all = repo.findAll()
+
+        then:
+        saved1.id != null
+        saved2.id != null
+        all.size() >= 2
+        def expected = ([0, 10, 0, 20, 0] as byte[]).toList()
+        def embeddings = all.collect { it.embedding.toByteArray().toList() }
+        embeddings.contains(expected)
+
+        when:
+        def matched = repo.searchByEmbeddingNear((Vector) v1, 100d)
+        def matchedByByteVector = repo.searchByEmbeddingNear(v1, 100d)
+
+        then:
+        matched != null
+        matched.results().size() == 2
+        matchedByByteVector.results().size() == matched.results().size()
+    }
+
     private void executeSilently(String sql) {
         try {
             Mono.from(connectionFactory.create())
@@ -278,6 +414,32 @@ interface VectorFloatDocRepository extends CrudRepository<VectorFloatDoc, Long> 
 
     @Query("SELECT * FROM vector_float_doc")
     List<VectorFloatDoc> findAll()
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(FloatVector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Similarity minDistance, Similarity maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Score minDistance, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector,
+                                                        Score maxDistance,
+                                                        ScoringFunction function)
+
+    List<VectorFloatDoc> findTop2ByEmbeddingNearOrderByIdDesc(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchTop2ByEmbeddingNearOrderByIdDesc(Vector vector, Double maxDistance)
+
+    List<VectorFloatDoc> findTop2ByEmbeddingWithinOrderByIdAsc(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchTop2ByEmbeddingWithinOrderByIdAsc(Vector vector, Double minDistance, Double maxDistance)
 }
 
 @Requires(property = "spec.name", value = "OracleR2dbcVectorEntitySpec")
@@ -318,4 +480,31 @@ interface VectorDoubleDocRepository extends CrudRepository<VectorDoubleDoc, Long
 
     @Query("SELECT * FROM vector_double_doc")
     List<VectorDoubleDoc> findAll()
+}
+
+@MappedEntity("vector_sparse_byte_doc")
+class SparseVectorByteDoc {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    Long id
+
+    @VectorStorage(length = 5, sparse = true)
+    ByteVector embedding
+
+    Long getId() { return id }
+    void setId(Long id) { this.id = id }
+
+    ByteVector getEmbedding() { return embedding }
+    void setEmbedding(ByteVector embedding) { this.embedding = embedding }
+}
+
+@Requires(property = "spec.name", value = "OracleR2dbcVectorEntitySpec")
+@R2dbcRepository(dialect = Dialect.ORACLE)
+interface SparseVectorByteDocRepository extends CrudRepository<SparseVectorByteDoc, Long> {
+    @Query("SELECT * FROM vector_sparse_byte_doc")
+    List<SparseVectorByteDoc> findAll()
+
+    SearchResults<SparseVectorByteDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<SparseVectorByteDoc> searchByEmbeddingNear(ByteVector vector, Double maxDistance)
 }

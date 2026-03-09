@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.postgres.vector
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Parameter
@@ -7,10 +7,16 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.model.vector.search.Similarity
+import io.micronaut.data.model.vector.search.SimilarityNormalizer
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
@@ -175,6 +181,105 @@ class PostgresJdbcFloatVectorEntitySpec extends Specification implements Postgre
         p1.getContent().size() == 1
         p0.getTotalSize() >= 2
     }
+
+    void "test derived vector near and within search results"() {
+        given:
+        vectorRepository.deleteAll()
+        vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([1f, 0f, 0f] as float[])))
+        vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([0f, 1f, 0f] as float[])))
+
+        when:
+        SearchResults<VectorFloatDoc> nearResults = vectorRepository.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
+
+        then:
+        nearResults != null
+        nearResults.results().size() >= 1
+        nearResults.results().get(0).score().value() <= 2d
+
+        when:
+        SearchResults<VectorFloatDoc> withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        withinResults != null
+        withinResults.results() != null
+
+        when:
+        SearchResults<VectorFloatDoc> betweenResults = vectorRepository.searchByEmbeddingBetween(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        betweenResults != null
+        betweenResults.results() != null
+        betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 0.2d }
+    }
+
+    void "test derived vector search with Score and Similarity wrappers over 10 vectors"() {
+        given:
+        vectorRepository.deleteAll()
+        def vectors = [
+            [1f, 0f, 0f],
+            [0.9f, 0.1f, 0f],
+            [0.8f, 0.2f, 0f],
+            [0.7f, 0.3f, 0f],
+            [0.6f, 0.4f, 0f],
+            [0.5f, 0.5f, 0f],
+            [0.4f, 0.6f, 0f],
+            [0.3f, 0.7f, 0f],
+            [0.2f, 0.8f, 0f],
+            [0f, 1f, 0f]
+        ]
+        vectors.each { v -> vectorRepository.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        Vector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        def nearByDouble = vectorRepository.searchByEmbeddingNear(q, 2d)
+        def nearByScore = vectorRepository.searchByEmbeddingNear(q, new Score(2d))
+        def withinBySimilarity = vectorRepository.searchByEmbeddingWithin(q, new Similarity(0d), new Similarity(2d))
+        def betweenByScore = vectorRepository.searchByEmbeddingBetween(q, new Score(0d), new Score(2d))
+
+        then:
+        nearByDouble.results().size() >= 8
+        nearByScore.results().size() == nearByDouble.results().size()
+        withinBySimilarity.results().size() == nearByDouble.results().size()
+        betweenByScore.results().size() == nearByDouble.results().size()
+        nearByScore.results().collect { it.entity().id } == nearByDouble.results().collect { it.entity().id }
+
+        when:
+        def cosineOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
+        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
+        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
+        def innerProductAliasOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
+
+        then:
+        cosineOk.results().size() == nearByDouble.results().size()
+        euclideanOk.results().size() >= 1
+        dotOk.results().size() >= 1
+        innerProductAliasOk.results().size() == dotOk.results().size()
+        assertScoringResults(cosineOk, ScoringFunction.COSINE)
+        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
+        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
+        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
+
+        when:
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+
+        then:
+        def taxicabEx = thrown(IllegalArgumentException)
+        taxicabEx.message.contains("not supported")
+        taxicabEx.message.contains("POSTGRES")
+    }
+
+    private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {
+        assert results != null
+        assert results.results() != null
+        assert results.results().size() >= 1
+        def normalizer = SimilarityNormalizer.forScoringFunction(function)
+        results.results().each { r ->
+            double score = r.score().value()
+            assert r.similarity() != null
+            double similarity = r.similarity().value()
+            assert Math.abs(similarity - normalizer.getSimilarity(score)) < 1.0e-9d
+        }
+    }
 }
 
 @MappedEntity("vector_float_doc")
@@ -218,6 +323,22 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
 
     @Query("SELECT * FROM vector_float_doc WHERE id = :id")
     java.util.concurrent.Future<java.util.List<VectorFloatDoc>> findAsync(Long id)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingWithin(Vector vector, Similarity minDistance, Similarity maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Double minDistance, Double maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingBetween(Vector vector, Score minDistance, Score maxDistance)
+
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector,
+                                                        Score maxDistance,
+                                                        ScoringFunction function)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
     java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)

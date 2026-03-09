@@ -44,6 +44,9 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.search.SearchResult;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -79,6 +82,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SearchResultsMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
@@ -469,6 +473,54 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
     }
 
+    @Override
+    protected void setStatementParameter(Statement preparedStatement,
+                                         int index,
+                                         DataType dataType,
+                                         @Nullable JsonDataType jsonDataType,
+                                         @Nullable Object value,
+        SqlStoredQuery<?, ?> storedQuery) {
+        if (storedQuery.getDialect() == Dialect.ORACLE && isOracleVectorBindCandidate(dataType, value)) {
+            io.r2dbc.spi.Parameter vectorParameter = OracleR2dbcVectorBindSupport.toTypedVectorParameter(value, storedQuery.getQuery());
+            if (vectorParameter != null) {
+                preparedStatementWriter.setValue(preparedStatement, index, vectorParameter);
+                return;
+            }
+            if (OracleR2dbcVectorBindSupport.requiresSparseLiteral(storedQuery.getQuery())) {
+                String sparseLiteral = OracleR2dbcVectorBindSupport.toSparseVectorLiteral(value, storedQuery.getQuery());
+                if (sparseLiteral != null) {
+                    preparedStatementWriter.setDynamic(preparedStatement, index, DataType.STRING, sparseLiteral);
+                    return;
+                }
+            }
+        }
+        super.setStatementParameter(preparedStatement, index, dataType, jsonDataType, value, storedQuery);
+    }
+
+    static boolean isOracleVectorBindCandidate(DataType dataType, @Nullable Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Vector || value.getClass().getName().equals("oracle.sql.VECTOR")) {
+            return true;
+        }
+        if (dataType != DataType.OBJECT) {
+            return false;
+        }
+        if (value instanceof String stringValue) {
+            return isVectorLiteral(stringValue);
+        }
+        return value instanceof float[]
+            || value instanceof double[]
+            || value instanceof byte[]
+            || value instanceof boolean[];
+    }
+
+    private static boolean isVectorLiteral(String value) {
+        String trimmed = value.trim();
+        return trimmed.startsWith("[") && trimmed.endsWith("]");
+    }
+
     private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
         return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect));
     }
@@ -518,8 +570,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return executeReadMono(preparedQuery, connection -> {
-                Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
+                boolean isSearchResults = preparedQuery.getResultType().equals(SearchResults.class);
+                Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, !isSearchResults);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+
+                if (isSearchResults) {
+                    return executeAndMapSearchResults(statement, preparedQuery);
+                }
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
@@ -535,6 +592,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType()));
             });
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T, R> Mono<R> executeAndMapSearchResults(Statement statement, SqlPreparedQuery<T, R> preparedQuery) {
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            SearchResultsMapper<Row, T> searchResultsMapper = createSearchResultsResultMapper(preparedQuery, Row.class);
+            Class<T> entityType = persistentEntity.getIntrospection().getBeanType();
+
+            return executeAndMapEachRowNullable(statement, row -> {
+                SearchResult<T> searchResult = searchResultsMapper.mapOne(row, entityType);
+                if (searchResult == null) {
+                    return null;
+                }
+                return searchResult;
+            }).collectList().map(results -> (R) new SearchResults<>(results));
         }
 
         @NonNull

@@ -1,7 +1,7 @@
 test-resources:
   containers:
     oracle:
-      startup-timeout: 300s
+      startup-timeout: 600s
       db-name: test
 
 datasources:

@@ -30,8 +30,7 @@ import java.util.List;
 
 /**
  * VectorTypeConverter for Oracle R2DBC.
- * Persists Micronaut Vector instances as String values and converts to/from
- * Oracle textual vector representation for the ORACLE dialect.
+ * Persists Micronaut Vector instances as oracle.sql.VECTOR values.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
@@ -39,7 +38,7 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = VECTOR.class)
-final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<String> {
+final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<VECTOR> {
 
     OracleR2dbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
@@ -56,7 +55,7 @@ final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<Stri
     }
 
     @Override
-    public Class<String> getPersistedType() {
-        return String.class;
+    public Class<VECTOR> getPersistedType() {
+        return VECTOR.class;
     }
 }

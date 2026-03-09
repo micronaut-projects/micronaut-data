@@ -2,7 +2,9 @@ package io.micronaut.data.model.runtime.convert.vector.impl
 
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
+import io.micronaut.inject.annotation.DefaultAnnotationMetadata
 import io.micronaut.data.runtime.mapper.ResultReader
+import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
@@ -180,5 +182,35 @@ class VectorAttributeConverterTransformSpec extends Specification {
 
         then:
         persisted == "mysql:1.0,2.0"
+    }
+
+    def "generic Vector sparse values are coerced to FloatVector for ORACLE"() {
+        given:
+        def vectorConverter = Stub(VectorTypeConverter) {
+            getPersistedType() >> String
+            databaseType() >> DatabaseType.ORACLE
+            convert(_ as Vector) >> { Vector v ->
+                assert v instanceof FloatVector
+                "oracle:${v.class.simpleName}"
+            }
+        }
+        def converter = new DefaultVectorAttributeConverter([vectorConverter])
+        def metadata = new DefaultAnnotationMetadata(
+                ["io.micronaut.data.annotation.VectorStorage": ["sparse": true]],
+                Collections.emptyMap(),
+                Collections.emptyMap(),
+                ["io.micronaut.data.annotation.VectorStorage": ["sparse": true]],
+                Collections.emptyMap()
+        )
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getAnnotationMetadata() >> metadata
+        }
+
+        when:
+        def persisted = converter.convertToPersistedValue(Vector.of(1d, 0d, 0d), ctx)
+
+        then:
+        persisted == "oracle:FloatVector"
     }
 }

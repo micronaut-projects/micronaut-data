@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 @Internal
 public final class Restrictions {
 
+    private static final String VECTOR_SCORE_FUNCTION = "mn_vector_score";
+
     private static final List<PropertyRestriction> PROPERTY_RESTRICTIONS_LIST = Arrays.stream(Restrictions.class.getClasses())
             .filter(clazz -> PropertyRestriction.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers()))
             .map(clazz -> {
@@ -691,6 +693,59 @@ public final class Restrictions {
             return cb.between(expression, parameters.get(0), parameters.get(1));
         }
 
+    }
+
+    /**
+     * Restriction that matches vector score against a threshold.
+     */
+    public static final class PropertyNear implements PropertyRestriction<Object> {
+
+        @Override
+        public String getName() {
+            return "Near";
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<Object> expression,
+                              List<ParameterExpression<Object>> parameters) {
+            Expression<Double> score = cb.function(VECTOR_SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+            Expression<Double> threshold = (Expression<Double>) (Expression<?>) parameters.get(1);
+            return cb.lessThanOrEqualTo(score, threshold);
+        }
+    }
+
+    /**
+     * Restriction that matches vector score within an inclusive range.
+     */
+    public static final class PropertyWithin implements PropertyRestriction<Object> {
+
+        @Override
+        public String getName() {
+            return "Within";
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 3;
+        }
+
+        @Override
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<Object> expression,
+                              List<ParameterExpression<Object>> parameters) {
+            Expression<Double> score = cb.function(VECTOR_SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+            Expression<Double> min = (Expression<Double>) (Expression<?>) parameters.get(1);
+            Expression<Double> max = (Expression<Double>) (Expression<?>) parameters.get(2);
+            return cb.and(cb.greaterThanOrEqualTo(score, min), cb.lessThanOrEqualTo(score, max));
+        }
     }
 
     /**

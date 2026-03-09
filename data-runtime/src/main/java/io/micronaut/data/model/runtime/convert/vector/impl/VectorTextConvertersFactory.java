@@ -19,6 +19,9 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.VectorStorage;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
@@ -49,22 +52,22 @@ final class VectorTextConvertersFactory {
 
     @Prototype
     DataTypeConverter<Vector, String> fromVectorToString() {
-        return (vector, targetType, context) -> Optional.of(java.util.Arrays.toString(vector.toDoubleArray()));
+        return (vector, targetType, context) -> Optional.of(VectorTextFormatter.toText(vector, isSparse(context)));
     }
 
     @Prototype
     DataTypeConverter<DoubleVector, String> fromDoubleVectorToString() {
-        return (vector, targetType, context) -> Optional.of(java.util.Arrays.toString(vector.toDoubleArray()));
+        return (vector, targetType, context) -> Optional.of(VectorTextFormatter.toText(vector, isSparse(context)));
     }
 
     @Prototype
     DataTypeConverter<FloatVector, String> fromFloatVectorToString() {
-        return (vector, targetType, context) -> Optional.of(java.util.Arrays.toString(vector.toFloatArray()));
+        return (vector, targetType, context) -> Optional.of(VectorTextFormatter.toText(vector, isSparse(context)));
     }
 
     @Prototype
     DataTypeConverter<ByteVector, String> fromByteVectorToString() {
-        return (vector, targetType, context) -> Optional.of(java.util.Arrays.toString(vector.toByteArray()));
+        return (vector, targetType, context) -> Optional.of(VectorTextFormatter.toText(vector, isSparse(context)));
     }
 
     @Prototype
@@ -93,8 +96,9 @@ final class VectorTextConvertersFactory {
         if (txt == null) {
             return new double[0];
         }
+        String input = txt.trim();
         try {
-            return jsonMapper.readValue(txt, double[].class);
+            return jsonMapper.readValue(input, double[].class);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (double[]): " + txt, e);
         }
@@ -104,8 +108,9 @@ final class VectorTextConvertersFactory {
         if (txt == null) {
             return new float[0];
         }
+        String input = txt.trim();
         try {
-            return jsonMapper.readValue(txt, float[].class);
+            return jsonMapper.readValue(input, float[].class);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (float[]): " + txt, e);
         }
@@ -115,10 +120,24 @@ final class VectorTextConvertersFactory {
         if (txt == null) {
             return new byte[0];
         }
+        String input = txt.trim();
         try {
-            return jsonMapper.readValue(txt, byte[].class);
+            return jsonMapper.readValue(input, byte[].class);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (byte[]): " + txt, e);
         }
+    }
+
+    private static boolean isSparse(@Nullable ConversionContext context) {
+        if (context == null) {
+            return false;
+        }
+        if (context.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false)) {
+            return true;
+        }
+        return context.getAnnotationMetadata()
+            .stringValue(MappedProperty.class, "definition")
+            .map(def -> def.toUpperCase(java.util.Locale.ROOT).contains("SPARSE"))
+            .orElse(false);
     }
 }

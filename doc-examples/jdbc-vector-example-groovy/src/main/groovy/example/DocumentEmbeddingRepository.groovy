@@ -1,10 +1,12 @@
 package example
 
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.CrudRepository
 
 @JdbcRepository(dialect = Dialect.ORACLE)
@@ -12,6 +14,11 @@ import io.micronaut.data.repository.CrudRepository
 interface DocumentEmbeddingRepository extends CrudRepository<DocumentEmbedding, Long> {
 
     // Example showing vector as a parameter
-    @Query("INSERT INTO document_embedding(id, embedding) VALUES (:id, :vec)")
-    void insertEmbedding(Long id, Vector vec)
+    DocumentEmbedding save(Long id, Vector embedding)
+
+    List<DocumentEmbedding> findTop2ByEmbeddingNear(Vector vec, Double maxDistance)
+
+    SearchResults<DocumentEmbedding> searchByEmbeddingNear(Vector vector,
+                                                           Score maxDistance,
+                                                           ScoringFunction function)
 }

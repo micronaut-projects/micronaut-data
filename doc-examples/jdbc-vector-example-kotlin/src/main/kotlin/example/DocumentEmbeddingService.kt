@@ -10,7 +10,7 @@ class DocumentEmbeddingService(
     fun saveOne(id: Long) {
         // tag::create_vector[]
         val vec: Vector = Vector.of(0.1, 0.2, 0.3)
-        repository.insertEmbedding(id, vec)
+        repository.save(id, vec)
         // end::create_vector[]
     }
 }

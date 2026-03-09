@@ -143,6 +143,23 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
         }
     }
 
+    void "test top2 derived queries with explicit ORDER BY"() {
+        given:
+        vectorRepository.saveCustom(Vector.of([1d, 0d, 0d] as double[]))
+        vectorRepository.saveCustom(Vector.of([2d, 0d, 0d] as double[]))
+        vectorRepository.saveCustom(Vector.of([3d, 0d, 0d] as double[]))
+
+        when:
+        def top2Desc = vectorRepository.findTop2OrderByIdDesc()
+        def top2Asc = vectorRepository.findTop2OrderByIdAsc()
+
+        then:
+        top2Desc.size() == 2
+        top2Desc[0].id > top2Desc[1].id
+        top2Asc.size() == 2
+        top2Asc[0].id < top2Asc[1].id
+    }
+
     private void executeSilently(String sql) {
         Connection c = null
         Statement st = null
@@ -196,4 +213,9 @@ interface VectorDocRepository extends PageableRepository<VectorDoc, Long> {
 
     @Query("UPDATE vector_doc SET embedding = :vec WHERE id = :id")
     Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
+
+    List<VectorDoc> findTop2OrderByIdDesc()
+
+    List<VectorDoc> findTop2OrderByIdAsc()
+
 }

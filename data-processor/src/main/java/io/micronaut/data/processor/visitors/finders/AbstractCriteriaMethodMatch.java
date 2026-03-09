@@ -45,6 +45,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -89,6 +90,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String[] OPERATORS = {OPERATOR_AND, OPERATOR_OR};
     private static final String NOT = "Not";
     private static final String IGNORE_CASE = "IgnoreCase";
+    private static final String NEAR = "Near";
+    private static final String WITHIN = "Within";
+    private static final String BETWEEN = "Between";
+
 
     private static final Map<String, Pattern> OPERATOR_PATTERNS;
 
@@ -447,13 +452,32 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
         Expression<Object> prop = getProperty(root, propertyName);
 
+        Restrictions.PropertyRestriction<Object> effectiveRestriction = restriction;
+        if (BETWEEN.equals(restriction.getName())) {
+            PersistentEntity persistentEntity = root.getPersistentEntity();
+            String resolvedPropertyName = persistentEntity.getPath(propertyName).orElse(propertyName);
+            PersistentProperty property = persistentEntity.getPropertyByName(resolvedPropertyName);
+            if (property == null) {
+                property = persistentEntity.getPropertyByNameIgnoreCase(propertyName);
+            }
+            if (property != null && property.isAssignable(Vector.class)) {
+                Restrictions.PropertyRestriction<Object> vectorRangeRestriction = Restrictions.findPropertyRestriction(WITHIN);
+                if (vectorRangeRestriction == null) {
+                    throw new MatchFailedException("Cannot find vector range restriction for: Within");
+                }
+                effectiveRestriction = vectorRangeRestriction;
+            }
+        }
+
+        Expression<?> parameterBindingExpression = prop;
+
         List<ParameterExpression<Object>> parameterExpressions = provideParams(parameters,
-            restriction.getRequiredParameters(),
-            restriction.getName(),
+            effectiveRestriction.getRequiredParameters(),
+            effectiveRestriction.getName(),
             cb,
-            prop
+            parameterBindingExpression
         );
-        Predicate predicate = restriction.find(root,
+        Predicate predicate = effectiveRestriction.find(root,
             cb,
             prop,
             parameterExpressions);
@@ -503,6 +527,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             }
 
             if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
+                if ((NEAR.equals(restrictionName) || WITHIN.equals(restrictionName)) && i > 0) {
+                    params.add(scb.parameter(parameter, null));
+                    continue;
+                }
                 PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
                 if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();

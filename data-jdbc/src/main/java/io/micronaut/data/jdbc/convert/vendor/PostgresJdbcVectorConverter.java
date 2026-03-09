@@ -24,6 +24,7 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+import org.postgresql.util.PGobject;
 
 import java.util.List;
 
@@ -37,15 +38,15 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = PGvector.class)
-final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGvector> {
+final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGobject> {
 
     PostgresJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<PGvector> getPersistedType() {
-        return PGvector.class;
+    public Class<PGobject> getPersistedType() {
+        return PGobject.class;
     }
 
     @Override

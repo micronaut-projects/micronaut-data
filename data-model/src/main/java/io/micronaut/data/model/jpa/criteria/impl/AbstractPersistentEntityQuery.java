@@ -155,7 +155,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
         if (orders != null) {
             for (Order o : orders) {
-                joiner.joinIfNeeded(requireProperty(o.getExpression()));
+                if (o.getExpression() instanceof IExpression<?> expression) {
+                    expression.visitExpression(joiner);
+                } else {
+                    joiner.joinIfNeeded(requireProperty(o.getExpression()));
+                }
             }
         }
         Map<String, JoinPath> joinPaths = new LinkedHashMap<>();

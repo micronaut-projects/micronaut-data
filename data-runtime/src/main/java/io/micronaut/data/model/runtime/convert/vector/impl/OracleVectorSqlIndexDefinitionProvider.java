@@ -32,7 +32,7 @@ import java.util.function.Function;
  * Vector index DDL provider for Oracle.
  *
  * It expects a neutral clause on the mapping in the form:
- *   ALGO <IVF|HNSW> DISTANCE <COSINE|DOT|EUCLIDEAN_SQUARED|EUCLIDEAN|MANHATTAN|HAMMING> ACCURACY <n>
+ *   ALGO &lt;IVF|HNSW&gt; DISTANCE &lt;COSINE|DOT|EUCLIDEAN_SQUARED|EUCLIDEAN|MANHATTAN&gt; ACCURACY &lt;n&gt;
  *
  * Example output:
  *   CREATE VECTOR INDEX IDX ON "TABLE" ("COL") ORGANIZATION NEIGHBOR PARTITIONS DISTANCE COSINE WITH TARGET ACCURACY 90
@@ -70,12 +70,12 @@ public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDef
         boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
         String organization = hnsw ? "ORGANIZATION NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
         String distance = switch (meta.distanceType()) {
+            case COSINE -> "COSINE";
             case DOT -> "DOT";
             case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN SQUARED";
             case L2_EUCLIDEAN -> "EUCLIDEAN";
             case L1_MANHATTAN -> "MANHATTAN";
-            case HAMMING -> "HAMMING";
-            default -> "COSINE";
+            default -> throw new IllegalArgumentException("Distance type " + meta.distanceType() + " is not supported for Oracle vector indexes");
         };
         StringBuilder vec = new StringBuilder();
         vec.append("CREATE VECTOR INDEX ")

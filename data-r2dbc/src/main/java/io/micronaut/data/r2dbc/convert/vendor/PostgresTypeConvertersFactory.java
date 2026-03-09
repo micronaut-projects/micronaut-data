@@ -47,6 +47,9 @@ import java.util.Optional;
 @Internal
 final class PostgresTypeConvertersFactory {
 
+    private static final int MIN_SPARSE_DIMENSIONS = 16;
+    private static final int MIN_ZERO_RATIO_DENOMINATOR = 4;
+
     @Prototype
     DataTypeConverter<FloatVector, io.r2dbc.postgresql.codec.Vector> fromFloatVectorToPgObject() {
         return (vector, targetType, context) -> Optional.of(toPgVector(vector.toFloatArray()));
@@ -78,6 +81,22 @@ final class PostgresTypeConvertersFactory {
     }
 
     private static io.r2dbc.postgresql.codec.Vector toPgVector(float[] values) {
+        if (shouldSerializeAsSparse(values)) {
+            throw new IllegalArgumentException("Sparse vectors are not supported for Postgres R2DBC");
+        }
         return io.r2dbc.postgresql.codec.Vector.of(values);
+    }
+
+    private static boolean shouldSerializeAsSparse(float[] arr) {
+        if (arr.length < MIN_SPARSE_DIMENSIONS) {
+            return false;
+        }
+        int nonZero = 0;
+        for (float value : arr) {
+            if (value != 0f) {
+                nonZero++;
+            }
+        }
+        return nonZero * MIN_ZERO_RATIO_DENOMINATOR <= arr.length;
     }
 }

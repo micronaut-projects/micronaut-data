@@ -19,6 +19,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
@@ -114,25 +115,34 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
 
     @Override
     public boolean supports(Argument<?> argument) {
-        return type.isAssignableFrom(argument.getType());
+        return type.equals(argument.getType());
     }
 
     @Override
     public String getColumnDefinition(Argument<?> argument, DatabaseType databaseType) {
-        // Extract dimension from annotations if present: prefer jakarta.persistence.Column(length)
         int dim = argument.getAnnotationMetadata()
-            .intValue("jakarta.persistence.Column", "length")
-            .orElse(-1);
+            .intValue(VectorStorage.class, "length")
+            .orElseGet(() -> argument.getAnnotationMetadata()
+                .intValue("jakarta.persistence.Column", "length")
+                .orElse(-1));
         boolean hasLen = dim > 0;
+        boolean sparse = argument.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
 
         return switch (databaseType) {
             case ORACLE -> {
+                String sparsePart = sparse ? ",SPARSE" : "";
                 if (hasLen) {
-                    yield "VECTOR(%d,%s)".formatted(dim, getOracleType());
+                    yield "VECTOR(%d,%s%s)".formatted(dim, getOracleType(), sparsePart);
                 }
-                yield "VECTOR(*,%s)".formatted(getOracleType());
+                yield "VECTOR(*,%s%s)".formatted(getOracleType(), sparsePart);
             }
             case POSTGRES -> {
+                if (sparse) {
+                    if (hasLen) {
+                        yield "sparsevec(%d)".formatted(dim);
+                    }
+                    yield "sparsevec";
+                }
                 if (hasLen) {
                     yield "vector(%d)".formatted(dim);
                 }

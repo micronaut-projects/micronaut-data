@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
 import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -32,6 +33,32 @@ class PostgresVectorIndexDdlSpec extends Specification {
         Vector embedding
     }
 
+    @MappedEntity("document_embedding_sparse")
+    static class DocumentEmbeddingSparseEntity {
+        Long id
+
+        @VectorStorage(length = 3, sparse = true)
+        @VectorIndex(
+            vectorIndexType = VectorIndexType.HNSW,
+            distanceType = VectorIndexType.DistanceType.COSINE,
+            accuracy = 90
+        )
+        Vector embedding
+    }
+
+    @MappedEntity("document_embedding_sparse_ivf")
+    static class DocumentEmbeddingSparseIvfEntity {
+        Long id
+
+        @VectorStorage(length = 3, sparse = true)
+        @VectorIndex(
+            vectorIndexType = VectorIndexType.IVF,
+            distanceType = VectorIndexType.DistanceType.COSINE,
+            accuracy = 90
+        )
+        Vector embedding
+    }
+
     def "generates pgvector index with cosine ops"() {
         given:
         def builder = new SqlQueryBuilder(Dialect.POSTGRES)
@@ -51,4 +78,47 @@ class PostgresVectorIndexDdlSpec extends Specification {
             s.contains("vector_cosine_ops")
         }
     }
+
+    def "generates sparsevec column and sparsevec index ops when sparse storage is requested"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def entity = new RuntimePersistentEntity<>(DocumentEmbeddingSparseEntity.class)
+
+        when:
+        ApplicationContext ctx = ApplicationContext.run()
+        List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+        providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
+        String[] statements = builder.buildCreateTableStatements(entity, providers)
+        ctx.close()
+
+        then:
+        statements.any { s ->
+            s.toLowerCase().contains("sparsevec(3)")
+        }
+        statements.any { s ->
+            s.contains("CREATE INDEX") &&
+                s.toLowerCase().contains("using hnsw") &&
+                s.contains("sparsevec_cosine_ops")
+        }
+    }
+
+    def "fails for sparse vectors with ivfflat index"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def entity = new RuntimePersistentEntity<>(DocumentEmbeddingSparseIvfEntity.class)
+
+        when:
+        ApplicationContext ctx = ApplicationContext.run()
+        List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+        providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
+        builder.buildCreateTableStatements(entity, providers)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("HNSW indexes only")
+
+        cleanup:
+        ctx.close()
+    }
+
 }

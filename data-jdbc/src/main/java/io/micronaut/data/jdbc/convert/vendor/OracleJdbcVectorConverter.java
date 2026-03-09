@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.convert.vendor;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
@@ -24,27 +25,29 @@ import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 import java.util.List;
 
 /**
- * Oracle-specific {@link VectorTypeConverter} that maps {@link Vector} to the JDBC {@link String} representation
- * accepted by the Oracle driver and back.
+ * Oracle-specific {@link VectorTypeConverter} that maps {@link Vector} to JDBC {@link VECTOR}
+ * and back.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
 @Internal
 @Singleton
-final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<String> {
+@Requires(classes = VECTOR.class)
+final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<VECTOR> {
 
     OracleJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<String> getPersistedType() {
-        return String.class;
+    public Class<VECTOR> getPersistedType() {
+        return VECTOR.class;
     }
 
     @Override
