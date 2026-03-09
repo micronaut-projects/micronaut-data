@@ -86,6 +86,8 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         expect:
 
         constantProps.keySet().stream().anyMatch { o -> trainMetaModelClass.getField(o) != null && trainMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+        trainMetaModelClass.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
+        trainMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.Train'
         try {
             trainMetaModelClass.getField("transientField")
             throw new RuntimeException("@Transient fields found, should be ignored.")
@@ -195,6 +197,13 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
             assert childMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
             assert childMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
         }
+
+        parentMetaModelClass.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
+        parentMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.Parent'
+
+        childMetaModelClass.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
+        childMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.Child'
+
     }
 
 }
