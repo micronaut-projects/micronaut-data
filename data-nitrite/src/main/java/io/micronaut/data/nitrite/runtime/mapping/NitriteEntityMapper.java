@@ -16,7 +16,6 @@
 package io.micronaut.data.nitrite.runtime.mapping;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
@@ -39,7 +38,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +102,7 @@ public final class NitriteEntityMapper {
    * values.
    *
    * @param val the raw value
+   * @param fieldPath the field path
    * @return the normalized value
    */
   public Object toNitriteFilterValue(final Object val, final String fieldPath) {
@@ -111,7 +110,7 @@ public final class NitriteEntityMapper {
     if (normalized == null) {
       return null;
     }
-    
+
     // If we have a dotted path like "projectId.departmentId" and the value is the @Embeddable/@Introspected object,
     // we need to extract the leaf value.
     if (fieldPath != null && fieldPath.contains(".")) {
@@ -124,7 +123,7 @@ public final class NitriteEntityMapper {
                 return toFilterValue(extracted);
             }
         } catch (Exception ignored) {
-            // Introspection might fail if the object is just a Map or not introspected, 
+            // Introspection might fail if the object is just a Map or not introspected,
             // which is fine, we fall back to the normalized value.
         }
     }
@@ -180,7 +179,6 @@ public final class NitriteEntityMapper {
    *
    * @param type the entity class
    * @param id the ID value
-   * @return the Nitrite Filter
    * @param <T> the entity type
    * @return the Nitrite Filter
    */
@@ -204,19 +202,19 @@ public final class NitriteEntityMapper {
             idField = persistedName;
         }
     }
-    
+
     if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class) && id != null) {
       try {
         Document idDoc = Document.createDocument();
         BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(idProperty.getType());
-        
+
         for (BeanProperty<?, ?> prop : introspection.getBeanProperties()) {
             Object val = ((BeanProperty<Object, Object>) prop).get(id);
             if (val != null) {
                 idDoc.put(prop.getName(), val);
             }
         }
-        
+
         List<Filter> parts = new ArrayList<>();
         RuntimePersistentEntity<?> idEntity = runtimeEntityRegistry.getEntity(idProperty.getType());
         for (String field : idDoc.getFields()) {
@@ -238,8 +236,8 @@ public final class NitriteEntityMapper {
   }
 
   public boolean isSimpleType(Class<?> type) {
-    return ClassUtils.isJavaLangType(type) || 
-           type.isPrimitive() || 
+    return ClassUtils.isJavaLangType(type) ||
+           type.isPrimitive() ||
            Number.class.isAssignableFrom(type) ||
            type == UUID.class ||
            type == Instant.class;
@@ -254,7 +252,7 @@ public final class NitriteEntityMapper {
    */
   public String normalizeFieldName(final String field, final RuntimePersistentEntity<?> entity) {
     if (entity != null) {
-        // Handle common document store conventions (_id or id) 
+        // Handle common document store conventions (_id or id)
         // that might be passed by the Query Builder.
         if ("_id".equals(field) || "id".equals(field)) {
             RuntimePersistentProperty<?> idProperty = entity.getIdentity();
@@ -372,7 +370,7 @@ public final class NitriteEntityMapper {
     }
     // Check if entity has Geometry fields that need special handling
     Document doc = convertToDocument(entity);
-    
+
     // Break infinite recursion for bi-directional relationships
     sanitizeDocument(doc, Collections.newSetFromMap(new IdentityHashMap<>()));
 
@@ -441,10 +439,10 @@ public final class NitriteEntityMapper {
     if (entity == null) {
       return null;
     }
-    
+
     RuntimePersistentEntity<T> persistentEntity =
         (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(entity.getClass());
-    
+
     // Check if the entity has any complex associations that might cause recursion
     boolean hasAssociations = false;
     for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
@@ -483,7 +481,7 @@ public final class NitriteEntityMapper {
             continue;
         }
         String fieldName = prop.getPersistedName();
-        
+
         if (prop instanceof RuntimeAssociation association) {
             // For associations, we only store a "reference" (the ID) or a shallow copy
             // to prevent the StackOverflow seen in TCK (Author -> Books -> Author).
@@ -494,7 +492,7 @@ public final class NitriteEntityMapper {
             doc.put(fieldName, toFilterValue(value));
         }
     }
-    
+
     // Handle identity
     RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
     if (idProp != null) {
@@ -506,7 +504,7 @@ public final class NitriteEntityMapper {
             doc.put(idProp.getName(), toFilterValue(idValue));
         }
     }
-    
+
     return doc;
   }
 
@@ -530,7 +528,7 @@ public final class NitriteEntityMapper {
       }
       RuntimePersistentEntity<?> associatedEntity = (RuntimePersistentEntity<?>) association.getAssociatedEntity();
       RuntimePersistentProperty<?> idProp = associatedEntity.getIdentity();
-      
+
       if (idProp != null) {
           @SuppressWarnings("rawtypes")
           BeanProperty property = idProp.getProperty();
@@ -541,7 +539,7 @@ public final class NitriteEntityMapper {
               return toFilterValue(idValue);
           }
       }
-      
+
       // Fallback: if no ID, try shallow convert or toString
       try {
           return nitriteMapper.tryConvert(value, Document.class);

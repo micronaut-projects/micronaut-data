@@ -16,12 +16,11 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Parser for Nitrite JSON and SQL-like query strings.
@@ -387,21 +386,21 @@ public final class NitriteQueryParser {
     if (!upper.startsWith("SELECT ")) {
       return null;
     }
-    
+
     // Find FROM clause to isolate SELECT fields
     int fromIdx = upper.indexOf(" FROM ");
     if (fromIdx < 0) {
       return null;
     }
-    
+
     // Extract fields between SELECT and FROM
     String fieldsPart = sql.trim().substring(7, fromIdx).trim();
-    
+
     // Handle SELECT * - return null to indicate no projection
     if (fieldsPart.equals("*")) {
       return null;
     }
-    
+
     // Split by comma and extract field names
     List<String> fields = new ArrayList<>();
     for (String field : fieldsPart.split(",")) {
@@ -429,7 +428,7 @@ public final class NitriteQueryParser {
         fields.add(f);
       }
     }
-    
+
     return fields.isEmpty() ? null : fields;
   }
 

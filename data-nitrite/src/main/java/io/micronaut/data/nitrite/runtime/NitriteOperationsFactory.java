@@ -32,18 +32,22 @@ import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
-import java.io.File;
-import java.nio.file.Path;
-import java.util.Optional;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
-import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Factory for NitriteDB beans. */
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Optional;
+
+/**
+ * Factory for Nitrite repository operations.
+ *
+ * @since 1.0.0
+ */
 @Factory
 @Internal
 public final class NitriteOperationsFactory {
@@ -138,7 +142,7 @@ public final class NitriteOperationsFactory {
     // The CustomJacksonMapper will configure ObjectMapper for ISO date strings
     java.util.List<com.fasterxml.jackson.databind.Module> modules = new java.util.ArrayList<>();
     modules.add(new JavaTimeModule());
-    
+
     // Check if JTS module is available for Geometry serialization
     if (ClassUtils.isPresent(JTS_MODULE_CLASS, null)) {
         try {
@@ -151,14 +155,56 @@ public final class NitriteOperationsFactory {
             }
         }
     }
-    
+
     // Use our custom JacksonMapper that configures ObjectMapper properly
     CustomJacksonMapper customMapper = new CustomJacksonMapper();
     for (com.fasterxml.jackson.databind.Module module : modules) {
       customMapper.registerJacksonModule(module);
     }
-    
+
     return new CustomJacksonMapperModule(customMapper);
+  }
+
+  private File prepareDbFile(String dbPath) {
+    File file = Path.of(dbPath).toFile();
+    File parent = file.getParentFile();
+    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+      throw new RuntimeException("Could not create directory " + parent);
+    }
+    return file;
+  }
+
+  /**
+   * Create a Nitrite repository operations instance.
+   *
+   * @param database the database
+   * @param configuration the configuration
+   * @param dateTimeProvider the date time provider
+   * @param runtimeEntityRegistry the runtime entity registry
+   * @param conversionService the conversion service
+   * @param attributeConverterRegistry the attribute converter registry
+   * @param transactionHolder the transaction holder
+   * @return the repository operations
+   */
+  @Bean
+  @Primary
+  @Singleton
+  public NitriteRepositoryOperations nitriteRepositoryOperations(
+      Nitrite database,
+      NitriteConfiguration configuration,
+      DateTimeProvider<Object> dateTimeProvider,
+      RuntimeEntityRegistry runtimeEntityRegistry,
+      DataConversionService conversionService,
+      AttributeConverterRegistry attributeConverterRegistry,
+      NitriteTransactionHolder transactionHolder) {
+    return new DefaultNitriteRepositoryOperations(
+        database,
+        configuration,
+        dateTimeProvider,
+        runtimeEntityRegistry,
+        conversionService,
+        attributeConverterRegistry,
+        transactionHolder);
   }
 
   /**
@@ -189,47 +235,5 @@ public final class NitriteOperationsFactory {
     public java.util.Set<org.dizitart.no2.common.module.NitritePlugin> plugins() {
       return java.util.Collections.singleton(jacksonMapper);
     }
-  }
-
-  private File prepareDbFile(String dbPath) {
-    File file = Path.of(dbPath).toFile();
-    File parent = file.getParentFile();
-    if (parent != null && !parent.exists() && !parent.mkdirs()) {
-      throw new RuntimeException("Could not create directory " + parent);
-    }
-    return file;
-  }
-
-  /**
-   * Create a Nitrite repository operations instance.
-   *
-   * @param database the database
-   * @param configuration the configuration
-   * @param dateTimeProvider the date time provider
-   * @param runtimeEntityRegistry the runtime entity registry
-   * @param conversionService the conversion service
-   * @param attributeConverterRegistry the attribute converter registry
-   * @param transactionHolder the transaction holder
-   * @return the repository operations
-   */
-  @Bean
-  @Primary
-  @Singleton
-  public NitriteRepositoryOperations nitriteRepositoryOperations(
-      Nitrite database,
-      NitriteConfiguration configuration,
-      DateTimeProvider dateTimeProvider,
-      RuntimeEntityRegistry runtimeEntityRegistry,
-      DataConversionService conversionService,
-      AttributeConverterRegistry attributeConverterRegistry,
-      NitriteTransactionHolder transactionHolder) {
-    return new DefaultNitriteRepositoryOperations(
-        database,
-        configuration,
-        dateTimeProvider,
-        runtimeEntityRegistry,
-        conversionService,
-        attributeConverterRegistry,
-        transactionHolder);
   }
 }

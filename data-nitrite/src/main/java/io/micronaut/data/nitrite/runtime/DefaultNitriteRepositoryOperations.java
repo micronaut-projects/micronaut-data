@@ -19,15 +19,16 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.DataMethodQuery;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -38,15 +39,13 @@ import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
@@ -68,6 +67,20 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Singleton;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.collection.FindOptions;
+import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.common.RecordStream;
+import org.dizitart.no2.common.SortOrder;
+import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.index.IndexOptions;
+import org.dizitart.no2.index.IndexType;
+import org.dizitart.no2.repository.ObjectRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -77,7 +90,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,19 +103,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.dizitart.no2.Nitrite;
-import org.dizitart.no2.collection.Document;
-import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.collection.FindOptions;
-import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.common.SortOrder;
-import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.index.IndexOptions;
-import org.dizitart.no2.index.IndexType;
-import org.dizitart.no2.repository.ObjectRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.dizitart.no2.index.IndexOptions.indexOptions;
 
@@ -148,7 +147,7 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
  */
 @Singleton
 @Internal
-@SuppressWarnings({"removal", "unchecked", "rawtypes"})
+@SuppressWarnings({"removal", "unchecked"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
 
@@ -1135,12 +1134,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1));
       boolean notIn = inMatcher.group(2) != null;
       String paramName = inMatcher.group(3);
-      
+
       // Resolve the parameter value - namedParameters uses names without colon prefix
       Object paramValue = namedParameters != null && namedParameters.containsKey(paramName)
           ? namedParameters.get(paramName)
           : resolveParam(":" + paramName, params);
-      
+
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
@@ -1329,21 +1328,21 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       // Check if this is a count query or a numeric projection
       // Count queries typically have method names starting with "count" or operation type COUNT
       String methodName = q.getName();
-      boolean isCountQuery = methodName.startsWith("count") || 
+      boolean isCountQuery = methodName.startsWith("count") ||
           (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
       if (isCountQuery) {
         return (R) Long.valueOf(coll.find(nq.getNitriteFilter()).size());
       }
       // Otherwise, fall through to projection handling
     }
-    
+
     // Check if this is a projection query (result type differs from entity type)
     boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
     List<String> projectedFields = null;
     if (isProjection) {
       // Try to parse SELECT clause from SQL query
       projectedFields = queryParser.parseSelectClause(nq.getQuery());
-      
+
       // For JSON queries with $project syntax, extract the field explicitly
       if (projectedFields == null || projectedFields.isEmpty()) {
         String projectField = queryParser.extractProjectionField(nq.getQuery());
@@ -1351,7 +1350,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           projectedFields = Collections.singletonList(projectField);
         }
       }
-      
+
       // For method-name-derived projections (e.g., findAgeByName), infer field from method name
       if (projectedFields == null || projectedFields.isEmpty()) {
         String methodName = q.getName();
@@ -1416,7 +1415,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           }
         }
       }
-      
+
       // For single-field projection, extract the value directly
       if (projectedFields != null && projectedFields.size() == 1) {
         Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
@@ -1427,7 +1426,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         return (R) convertValue(value, nq.getResultType());
       }
     }
-    
+
     Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
     return doc == null ? null : (R) entityMapper.fromDocument(doc, nq.getRootEntity());
   }
@@ -1466,7 +1465,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (Number.class.isAssignableFrom(nq.getResultType())) {
       // Check if this is a count query or a numeric projection
       String methodName = q.getName();
-      boolean isCountQuery = methodName.startsWith("count") || 
+      boolean isCountQuery = methodName.startsWith("count") ||
           (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
       if (isCountQuery) {
         return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
@@ -1539,9 +1538,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         );
       }
     }
-    
+
     var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s, limit));
-    
+
     // Apply projection if we have fields to project
     if (projectedFields != null && !projectedFields.isEmpty()) {
       Document projection = Document.createDocument();
@@ -1551,7 +1550,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       RecordStream<Document> projectedCursor = cursor.project(projection);
       return extractProjectedResults(projectedCursor, projectedFields, nq.getResultType());
     }
-    
+
     List<R> results = new ArrayList<>();
     for (Document doc : cursor) {
       results.add((R) entityMapper.fromDocument(doc, nq.getRootEntity()));
@@ -1598,7 +1597,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (targetType.isInstance(value)) {
       return value;
     }
-    
+
     // Handle LocalDate conversion from ISO string format (e.g., "1986-06-05")
     if (targetType == LocalDate.class && value instanceof String) {
       try {
@@ -1607,7 +1606,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     // Handle LocalDateTime conversion from ISO string format
     if (targetType == LocalDateTime.class && value instanceof String) {
       try {
@@ -1616,7 +1615,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     // Handle LocalTime conversion from ISO string format
     if (targetType == LocalTime.class && value instanceof String) {
       try {
@@ -1625,7 +1624,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     return conversionService.convert(value, targetType)
         .map(obj -> (Object) obj)
         .orElse(value);

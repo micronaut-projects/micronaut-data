@@ -292,7 +292,7 @@ public final class NitriteFilterBuilder {
      * Build a Nitrite Filter for a specific field.
      *
      * @param entity          the entity metadata
-     * @param field           the field name
+     * @param rawField        the field name
      * @param operators       the operator map
      * @param params          positional parameters
      * @param namedParameters named parameters
