@@ -70,6 +70,11 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE = "jakarta.persistence.metamodel.SingularAttribute";
 
     /**
+     * Jakarta persistence metamodel EntityType annotation name.
+     */
+    public static final String JAKARTA_METAMODEL_ENTITY_TYPE = "jakarta.persistence.metamodel.EntityType";
+
+    /**
      * Supported Jakarta annotations for generating Static meta model classes.
      */
     public static final Set<String> SUPPORTED_JAKARTA_ANNOTATIONS = new HashSet<>(Arrays.asList("jakarta.persistence.Entity",
@@ -155,7 +160,7 @@ public final class JpaMetamodelProcessor {
      */
     private static FieldDef createEntityTypeField(ClassTypeDef elementType) {
         return FieldDef.builder("class_").addModifiers(Modifier.PUBLIC, Modifier.VOLATILE, Modifier.STATIC)
-            .ofType(TypeDef.parameterized(ClassTypeDef.of("jakarta.persistence.metamodel.EntityType"), elementType)).build();
+            .ofType(TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_ENTITY_TYPE), elementType)).build();
     }
 
     /**
