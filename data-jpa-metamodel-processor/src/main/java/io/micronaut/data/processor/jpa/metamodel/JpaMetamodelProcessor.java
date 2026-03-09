@@ -29,13 +29,44 @@ import java.util.*;
  */
 public final class JpaMetamodelProcessor {
 
+    /**
+     * Jakarta Generated annotation name.
+     */
     public static final String JAKARTA_ANNOTATION_GENERATED = "jakarta.annotation.Generated";
+
+    /**
+     * Jakarta persistent Transient annotation name.
+     */
     public static final String JAKARTA_TRANSIENT = "jakarta.persistence.Transient";
+
+    /**
+     * Jakarta persistence metamodel StaticMetamodel annotation name.
+     */
     public static final String JAKARTA_STATIC_METAMODEL = "jakarta.persistence.metamodel.StaticMetamodel";
+
+    /**
+     * Jakarta persistence metamodel CollectionAttribute annotation name.
+     */
     public static final String JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE = "jakarta.persistence.metamodel.CollectionAttribute";
+
+    /**
+     * Jakarta persistence metamodel SetAttribute annotation name.
+     */
     public static final String JAKARTA_METAMODEL_SET_ATTRIBUTE = "jakarta.persistence.metamodel.SetAttribute";
+
+    /**
+     * Jakarta persistence metamodel ListAttribute annotation name.
+     */
     public static final String JAKARTA_METAMODEL_LIST_ATTRIBUTE = "jakarta.persistence.metamodel.ListAttribute";
+
+    /**
+     * Jakarta persistence metamodel MapAttribute annotation name.
+     */
     public static final String JAKARTA_METAMODEL_MAP_ATTRIBUTE = "jakarta.persistence.metamodel.MapAttribute";
+
+    /**
+     * Jakarta persistence metamodel SingularAttribute annotation name.
+     */
     public static final String JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE = "jakarta.persistence.metamodel.SingularAttribute";
 
     /**
@@ -146,27 +177,36 @@ public final class JpaMetamodelProcessor {
      * @return FieldDef
      */
     private static FieldDef createAttributeField(PropertyElement beanProperty, ClassTypeDef classTypeDef) {
-        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(beanProperty.getName()).addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.VOLATILE);
+        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(beanProperty.getName())
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.VOLATILE);
 
-        TypeDef typeDef = switch (beanProperty.getType().getName()) {
+        ClassElement beanPropertyType = beanProperty.getType();
+        Map<String, ClassElement> typeArguments = beanPropertyType.getTypeArguments();
+
+        TypeDef typeDef = switch (beanPropertyType.getName()) {
             case "java.util.Collection" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef,
+                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
             case "java.util.Set" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef,
+                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
             case "java.util.List" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("E")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef,
+                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
             case "java.util.Map" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef, TypeDef.of(beanProperty.getType().getTypeArguments().get("K")), TypeDef.of(beanProperty.getType().getTypeArguments().get("V")));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef,
+                    TypeDef.of(Objects.requireNonNull(typeArguments.get("K"))),
+                    TypeDef.of(Objects.requireNonNull(typeArguments.get("V"))));
             default ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanProperty.getType())));
+                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanPropertyType)));
         };
         return attributeDefBuilder.ofType(typeDef).build();
     }
 
     /**
-     * Returns the wrapper type if the provided type is a primitives.
-     * @param type
-     * @return
+     * Utility function Returns the wrapper type if the provided type is a primitives.
+     * @param type provided type.
+     * @return wrapper type if the provided type is a primitives.
      */
     private static TypeDef getProperType(TypeDef type) {
         if (type.isPrimitive() && type instanceof TypeDef.Primitive primitive) {
