@@ -1,6 +1,8 @@
 package io.micronaut.data.jakarta.tck;
 
+import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
+import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
 import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
 import ee.jakarta.tck.data.web.validation.ValidationTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
@@ -24,8 +26,12 @@ public class FilterExtension implements ExecutionCondition {
                 case "testBasicRepositoryBuiltInMethods",  "testBasicRepositoryMethods" -> {
                     return DISABLED; // Support deciding between persist or update when save is called
                 }
-                case "testReturnStreamOfRecordThatSelectsAttributesFindEntity" -> {
-                    return DISABLED; // https://github.com/jakartaee/data/issues/1290
+            }
+        }
+        if (testClass == JakartaQueryTests.class) {
+            switch (testMethodName) {
+                case "shouldAnd" -> {
+                    return DISABLED; // Support deciding between persist or update when saveAll is called
                 }
             }
         }
@@ -33,6 +39,14 @@ public class FilterExtension implements ExecutionCondition {
             switch (testMethodName) {
                 case "testSaveWithValidConstraints",  "testUpdateAllWithValidConstraints", "testUpdateWithValidConstraints" -> {
                     return DISABLED; // Support deciding between persist or update when save is called
+                }
+
+            }
+        }
+        if (testClass == ConstraintTests.class) {
+            switch (testMethodName) {
+                case "testGreaterThanConstraint",  "testNotLikeConstraintCustomWildcardsAndEscape" -> {
+                    return DISABLED; // https://github.com/jakartaee/data/issues/1364
                 }
 
             }

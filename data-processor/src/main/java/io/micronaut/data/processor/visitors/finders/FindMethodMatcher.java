@@ -65,16 +65,18 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasStereotype(Find.class)) {
             AnnotationValue<Find> annotation = matchContext.getMethodElement().getAnnotation(Find.class);
-            Optional<String> rootEntity = annotation.stringValue();
-            if (rootEntity.isPresent()) {
-                ClassElement classElement = matchContext.getVisitorContext().getClassElement(rootEntity.get())
-                    .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "Unknown entity: " + rootEntity.get()));
-                matchContext.setRootEntity(matchContext.getEntity(classElement));
+            if (annotation != null) {
+                Optional<String> rootEntity = annotation.stringValue();
+                if (rootEntity.isPresent()) {
+                    ClassElement classElement = matchContext.getVisitorContext().getClassElement(rootEntity.get())
+                        .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "Unknown entity: " + rootEntity.get()));
+                    matchContext.setRootEntity(matchContext.getEntity(classElement));
+                }
+                if (!matchContext.hasRootEntity()) {
+                    throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+                }
+                return match(matchContext, List.of());
             }
-            if (!matchContext.hasRootEntity()) {
-                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
-            }
-            return match(matchContext, List.of());
         }
         return super.match(matchContext);
     }

@@ -40,6 +40,7 @@ public interface StudentViewRepository extends PageableRepository<StudentView, L
 
     List<StudentView> findAllOrderByActive();
 
+    @Query("SELECT ss.DATA.address.street.stringOnly() FROM STUDENT_VIEW ss WHERE ss.DATA.\"_id\".numberOnly() = :id")
     String findAddressStreetById(Long id);
 
     LocalDate findBirthDateById(Long id);

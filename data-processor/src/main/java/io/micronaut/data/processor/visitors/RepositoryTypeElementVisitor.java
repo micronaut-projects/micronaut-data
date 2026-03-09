@@ -278,8 +278,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
 
-                final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-                final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
+            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
+            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
 
                 @Override
                 public SourcePersistentEntity apply(ClassElement classElement) {
@@ -675,7 +675,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         annotationBuilder.member(DataMethodQuery.META_MEMBER_OPERATION_TYPE, operationType);
 
         if (resultType != null) {
-            annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
+            String stringType = resultType.getName();
+            if (resultType.isArray()) {
+                stringType += "[]";
+            }
+            annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
             ClassElement type = resultType.getType();
             if (!TypeUtils.isVoid(type)) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));

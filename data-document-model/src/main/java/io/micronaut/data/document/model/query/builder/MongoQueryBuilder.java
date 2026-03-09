@@ -156,14 +156,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!countObj.isEmpty()) {
             pipeline.add(countObj);
         }
-        if (!projectionObj.isEmpty()) {
-            pipeline.add(Map.of("$project", projectionObj));
-        } else {
-            String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
-            if (customProjection != null) {
-                pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
-            }
-        }
+        // Order should be before project as it can remove fields that are needed for ordering
         List<Order> orders = selectQueryDefinition.order();
         if (!orders.isEmpty()) {
             Map<String, Object> sortObj = new LinkedHashMap<>();
@@ -185,6 +178,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
                 pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
+            }
+        }
+        if (!projectionObj.isEmpty()) {
+            pipeline.add(Map.of("$project", projectionObj));
+        } else {
+            String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
+            if (customProjection != null) {
+                pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
             }
         }
         if (selectQueryDefinition.offset() > 0) {
@@ -1064,16 +1065,26 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), true);
                 return;
             }
-            Map<String, Object> preQuery = query;
-            query = new LinkedHashMap<>();
             visitPredicate(negate.getNegated());
-            if (query.size() != 1) {
-                throw new IllegalStateException("Expected size of 1: Got: " + query + " " + negate.getNegated());
+            negate(query);
+        }
+
+        private void negate(Map<String, Object> map) {
+            Set<Map.Entry<String, Object>> entries = map.entrySet();
+            if (entries.size() != 1) {
+                throw new IllegalStateException("Expected one entry got: " + map);
             }
-            Map.Entry<String, Object> propertyPredicate = query.entrySet().iterator().next();
-            Map<String, Object> negatedPropertyPredicate = Map.of("$not", propertyPredicate.getValue());
-            query = preQuery;
-            query.put(propertyPredicate.getKey(), negatedPropertyPredicate);
+            Map.Entry<String, Object> propertyPredicate = entries.iterator().next();
+            String key = propertyPredicate.getKey();
+            Object value = propertyPredicate.getValue();
+            if ("$or".equals(key)) {
+                map.remove("$or");
+                map.put("$nor", value);
+            } else if ("$and".equals(key)) {
+                map.put("$nor", List.of(Map.of("$and", map.remove("$and"))));
+            } else {
+                map.put(key, Map.of("$not", value));
+            }
         }
 
         @Override
@@ -1120,7 +1131,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 patternString = patternString
                     .replace("_", ".")
                     .replace("%", ".*");
-                pattern = new LiteralExpression<>(patternString);
+                pattern = new LiteralExpression<>("^" + patternString + "$");
             }
             handleRegexExpression(
                 likePredicate.getExpression(),

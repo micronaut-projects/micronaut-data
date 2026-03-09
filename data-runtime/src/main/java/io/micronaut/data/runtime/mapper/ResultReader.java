@@ -23,6 +23,8 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.Time;
+import java.time.Duration;
+import java.time.Period;
 import java.util.Date;
 import java.util.UUID;
 
@@ -123,6 +125,8 @@ public interface ResultReader<RS, IDX> {
             case TIMESTAMP -> readTimestamp(resultSet, index);
             case TIME -> readTime(resultSet, index);
             case DATE -> readDate(resultSet, index);
+            case DURATION -> readDuration(resultSet, index);
+            case PERIOD -> readPeriod(resultSet, index);
             case CHARACTER -> readChar(resultSet, index);
             case FLOAT -> readFloat(resultSet, index);
             case SHORT -> readShort(resultSet, index);
@@ -162,6 +166,28 @@ public interface ResultReader<RS, IDX> {
     @Nullable
     default Date readDate(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, Date.class);
+    }
+
+    /**
+     * Read a duration value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The duration value
+     * @since 5.0
+     */
+    default @Nullable Duration readDuration(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, Duration.class);
+    }
+
+    /**
+     * Read a period value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The period value
+     * @since 5.0
+     */
+    default @Nullable Period readPeriod(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, Period.class);
     }
 
     /**

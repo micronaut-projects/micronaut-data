@@ -22,6 +22,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
@@ -38,8 +39,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
+
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -92,8 +96,9 @@ public class R2dbcSchemaGenerator {
                 PersistentEntity[] entities = introspections.stream()
                         // filter out inner / internal / abstract(MappedSuperClass) classes
                         .filter(i -> !i.getBeanType().getName().contains("$"))
-                        .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
-                        .filter(i -> !i.hasAnnotation(JsonView.class))
+                        .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
+                        .filter(i -> !i.hasAnnotation(JsonSubView.class))
+                        .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());
@@ -128,10 +133,11 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
+                    LOG.warn("Create table :{}", sql);
                     return execute(connection, sql)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
-                                    LOG.warn("Unable to create table :{}", throwable.getMessage());
+                                    LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
                                 }
                                 return Mono.empty();
                             }));
