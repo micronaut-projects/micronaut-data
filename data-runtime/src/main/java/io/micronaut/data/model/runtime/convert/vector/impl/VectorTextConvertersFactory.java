@@ -30,6 +30,7 @@ import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import io.micronaut.json.JsonMapper;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -98,7 +99,10 @@ final class VectorTextConvertersFactory {
         }
         String input = txt.trim();
         try {
-            return jsonMapper.readValue(input, double[].class);
+            return Objects.requireNonNull(
+                jsonMapper.readValue(input, double[].class),
+                "Parsed double[] vector cannot be null"
+            );
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (double[]): " + txt, e);
         }
@@ -110,7 +114,10 @@ final class VectorTextConvertersFactory {
         }
         String input = txt.trim();
         try {
-            return jsonMapper.readValue(input, float[].class);
+            return Objects.requireNonNull(
+                jsonMapper.readValue(input, float[].class),
+                "Parsed float[] vector cannot be null"
+            );
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (float[]): " + txt, e);
         }
@@ -122,7 +129,10 @@ final class VectorTextConvertersFactory {
         }
         String input = txt.trim();
         try {
-            return jsonMapper.readValue(input, byte[].class);
+            return Objects.requireNonNull(
+                jsonMapper.readValue(input, byte[].class),
+                "Parsed byte[] vector cannot be null"
+            );
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vector JSON text (byte[]): " + txt, e);
         }
