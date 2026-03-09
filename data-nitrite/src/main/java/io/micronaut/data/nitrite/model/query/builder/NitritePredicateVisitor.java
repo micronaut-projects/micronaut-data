@@ -220,6 +220,9 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
    * When the values collection contains a single {@link BindingParameter}, it represents
    * a collection parameter (e.g., {@code WHERE id IN :ids}). The placeholder is stored
    * and resolved at runtime when the actual collection values are available.
+   * <p>
+   * If values is null or empty, a filter that matches nothing is added (since IN with no
+   * values should match no documents).
    *
    * @param expression the property expression
    * @param values the collection of values (or single BindingParameter for collection params)
@@ -230,7 +233,21 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final Expression<?> expression, final Collection<?> values, final boolean negated) {
     PersistentPropertyPath propertyPath =
         CriteriaUtils.requireProperty(expression).getPropertyPath();
-    
+    String fieldName = getFieldName(propertyPath);
+
+    // Handle null or empty collection
+    if (values == null || values.isEmpty()) {
+      // IN with no values matches nothing; NOT IN with no values matches everything
+      if (negated) {
+        // NOT IN with empty set matches all - don't add any filter
+        return;
+      } else {
+        // IN with empty set matches nothing - add impossible condition
+        query.put("_id", Map.of("$eq", null));
+        return;
+      }
+    }
+
     // Handle case where values is a single BindingParameter representing a collection
     List<Object> resolvedValues;
     if (values.size() == 1 && values.iterator().next() instanceof BindingParameter bp) {
@@ -242,9 +259,19 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
           .map(val -> valueRepresentation(queryState, propertyPath, val))
           .toList();
     }
-    
+
+    // After resolving, check if we ended up with no values (defensive check)
+    if (resolvedValues.isEmpty()) {
+      if (negated) {
+        return;  // NOT IN with empty set matches all
+      } else {
+        query.put("_id", Map.of("$eq", null));  // IN with empty set matches nothing
+        return;
+      }
+    }
+
     query.put(
-        getFieldName(propertyPath),
+        fieldName,
         Map.of(
             negated ? "$nin" : "$in",
             resolvedValues));

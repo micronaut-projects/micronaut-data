@@ -44,6 +44,9 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
@@ -368,7 +371,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T> T persist(@NonNull final InsertOperation<T> operation) {
     T entity = operation.getEntity();
     Class<T> type = operation.getRootEntity();
+    // Generate ID first so cascaded entities can reference it
     generateIdIfNecessary(entity, type);
+    // Handle cascade persist for ONE_TO_MANY and MANY_TO_MANY with cascade ALL
+    persistCascadedEntities(entity, type);
     NitriteCollection coll = getCollection(type);
     Document doc = entityMapper.toDocument(entity);
     if (LOG.isDebugEnabled()) {
@@ -378,16 +384,83 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return entity;
   }
 
+  /**
+   * Persists all entities in the batch operation with cascade support.
+   * <p>
+   * This method performs a two-pass operation:
+   * <ol>
+   *   <li>First pass: generates IDs for all parent entities so cascaded children can reference them</li>
+   *   <li>Second pass: persists cascaded child entities and then inserts the parent entities</li>
+   * </ol>
+   * </p>
+   *
+   * @param <T> the entity type
+   * @param operation the batch insert operation containing entities to persist
+   * @return the persisted entities
+   */
   @Override
   public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
     logInsert(collection.getName(), operation);
+    // First pass: generate IDs for all parents
     for (T entity : operation) {
       generateIdIfNecessary(entity, type);
+    }
+    // Second pass: cascade persist children and insert parents
+    for (T entity : operation) {
+      // Handle cascade persist for ONE_TO_MANY and MANY_TO_MANY with cascade ALL
+      persistCascadedEntities(entity, type);
       collection.insert(entityMapper.toDocument(entity));
     }
     return operation;
+  }
+
+  /**
+   * Persists cascaded entities for ONE_TO_MANY and MANY_TO_MANY relationships with cascade ALL or PERSIST.
+   * <p>
+   * This method recursively persists associated entities before the parent entity is inserted,
+   * ensuring that child entities with cascade relationships are stored in the database.
+   * </p>
+   *
+   * @param <T> the entity type
+   * @param entity the parent entity containing cascaded associations
+   * @param type the parent entity class
+   */
+  @SuppressWarnings("unchecked")
+  private <T> void persistCascadedEntities(T entity, Class<T> type) {
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+    for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
+      if (prop instanceof RuntimeAssociation<?> assoc && !prop.isReadOnly()) {
+        // Check if cascade ALL or PERSIST is enabled for this relationship
+        if (assoc.doesCascade(Relation.Cascade.ALL, Relation.Cascade.PERSIST)) {
+          // Check if it's a collection relationship (ONE_TO_MANY or MANY_TO_MANY)
+          Relation.Kind kind = assoc.getKind();
+          if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
+            BeanProperty<T, Object> beanProp = (BeanProperty<T, Object>) prop.getProperty();
+            Object value = beanProp.get(entity);
+            if (value instanceof Iterable<?> iterable) {
+              Class<?> associatedType = assoc.getAssociatedEntity().getIntrospection().getBeanType();
+              NitriteCollection associatedCollection = getCollection(associatedType);
+              for (Object associatedEntity : iterable) {
+                if (associatedEntity != null) {
+                  generateIdIfNecessary(associatedEntity, (Class<Object>) associatedType);
+                  Document associatedDoc = entityMapper.toDocument(associatedEntity);
+                  associatedCollection.insert(associatedDoc);
+                }
+              }
+            } else if (value != null) {
+              // Single entity (MANY_TO_ONE or ONE_TO_ONE)
+              Class<?> associatedType = assoc.getAssociatedEntity().getIntrospection().getBeanType();
+              NitriteCollection associatedCollection = getCollection(associatedType);
+              generateIdIfNecessary(value, (Class<Object>) associatedType);
+              Document associatedDoc = entityMapper.toDocument(value);
+              associatedCollection.insert(associatedDoc);
+            }
+          }
+        }
+      }
+    }
   }
 
   @Override
@@ -633,7 +706,26 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return values;
   }
 
-  /** Resolve a single JSON binding value. */
+  /**
+   * Resolves a single JSON binding value from a query parameter binding.
+   * <p>
+   * This method handles various parameter types including:
+   * </p>
+   * <ul>
+   *   <li>Direct values (non-BindingParameter objects)</li>
+   *   <li>Collection parameters (e.g., for IN clauses)</li>
+   *   <li>Array parameters (e.g., String[] for IN clauses)</li>
+   *   <li>Nested property paths within parameter objects</li>
+   * </ul>
+   * <p>
+   * For collection and array parameters, the value is returned as-is to preserve the collection
+   * structure for operations like IN queries.
+   * </p>
+   *
+   * @param binding the query parameter binding containing the parameter metadata
+   * @param methodParams the method parameters array
+   * @return the resolved parameter value, properly converted for Nitrite filters
+   */
   private Object resolveJsonBindingValue(@NonNull final QueryParameterBinding binding, final Object[] methodParams) {
     Object bindingValue = binding.getValue();
     // QueryParameterBinding#getValue may contain a criteria BindingParameter (for example
@@ -651,6 +743,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     // Special handling for collection parameters (e.g., IN clause): if base is already a collection,
     // return it as-is instead of trying to extract a property from it.
     if (base instanceof Collection) {
+      return entityMapper.toFilterValue(base);
+    }
+    // Also handle array parameters (e.g., String[] for IN clause)
+    if (base != null && base.getClass().isArray()) {
       return entityMapper.toFilterValue(base);
     }
     Object current = base;
@@ -1128,18 +1224,25 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /**
-   * Resolve parameter value from JSON placeholder or named parameter.
+   * Resolves parameter value from JSON placeholder or named parameter.
+   * <p>
+   * This method handles both positional placeholders (e.g., {@code $mn_qp:0}) and named parameters
+   * (e.g., {@code :name}). For placeholder parameters, it correctly returns {@code null} when the
+   * parameter value is null, allowing proper handling of null values in update operations.
+   * </p>
    *
-   * @param value the value
-   * @param jsonParams the JSON parameters
-   * @param namedParameters the named parameters
+   * @param value the raw parameter value which may contain placeholders
+   * @param jsonParams the JSON parameters array
+   * @param namedParameters the named parameters map
    * @param q the prepared query
-   * @return the resolved parameter value
+   * @return the resolved parameter value, or {@code null} if the parameter is null
    */
   private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters, PreparedQuery<?, ?> q) {
     if (value instanceof String s) {
       Object resolved = null;
+      boolean isPlaceholder = false;
       if (s.startsWith("$mn_qp:")) {
+        isPlaceholder = true;
         try {
           int idx = Integer.parseInt(s.substring(7));
           if (jsonParams != null && idx >= 0 && idx < jsonParams.length) {
@@ -1148,12 +1251,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         } catch (Exception ignored) {
         }
       } else if (s.startsWith(":")) {
+        isPlaceholder = true;
         String pname = s.substring(1);
         if (namedParameters.containsKey(pname)) {
           resolved = namedParameters.get(pname);
         }
       }
-      if (resolved != null) {
+      if (isPlaceholder) {
         return entityMapper.toFilterValue(resolved);
       }
     }

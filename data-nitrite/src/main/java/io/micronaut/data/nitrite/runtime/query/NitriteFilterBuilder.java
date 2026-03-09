@@ -43,6 +43,11 @@ public final class NitriteFilterBuilder {
     private static final String SPATIAL_FLUENT_FILTER_CLASS = "org.dizitart.no2.spatial.SpatialFluentFilter";
     private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
 
+    /**
+     * A filter that matches no documents (used for empty IN clauses).
+     */
+    private static final Filter NONE = element -> false;
+
     private final NitriteEntityMapper entityMapper;
 
     /**
@@ -173,6 +178,18 @@ public final class NitriteFilterBuilder {
      */
     private Object resolveValue(Object value, Object[] params, Map<String, Object> namedParameters) {
         if (value instanceof String s) {
+            // Check if the string is EXACTLY a placeholder (e.g., "$mn_qp:0")
+            // In this case, return the parameter value directly (even if null)
+            if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
+                try {
+                    int idx = Integer.parseInt(s.substring(7));
+                    if (params != null && idx >= 0 && idx < params.length) {
+                        return params[idx];  // May return null for null collection parameters
+                    }
+                } catch (Exception ignored) {
+                    // ignore parse exception
+                }
+            }
             // Check if the string contains embedded placeholders (e.g., regex patterns)
             if (s.contains("$mn_qp:")) {
                 // Replace all $mn_qp:N placeholders with their values
@@ -203,16 +220,7 @@ public final class NitriteFilterBuilder {
                 }
                 return result.toString();
             }
-            if (s.startsWith("$mn_qp:")) {
-                try {
-                    int idx = Integer.parseInt(s.substring(7));
-                    if (params != null && idx >= 0 && idx < params.length) {
-                        return params[idx];
-                    }
-                } catch (Exception ignored) {
-                    // ignore parse exception
-                }
-            } else if (s.startsWith(":")) {
+            if (s.startsWith(":")) {
                 String name = s.substring(1);
                 if (namedParameters.containsKey(name)) {
                     return namedParameters.get(name);
@@ -298,6 +306,10 @@ public final class NitriteFilterBuilder {
                 case "$lte" ->
                     finalValue instanceof Comparable<?> c ? FluentFilter.where(field).lte(c) : Filter.ALL;
                 case "$in" -> {
+                    // Handle null or empty collection - return filter that matches nothing
+                    if (finalValue == null) {
+                        yield NONE;
+                    }
                     // Handle collection parameter - value may be a List containing a placeholder
                     // that resolves to a Collection at runtime (e.g., WHERE id IN :ids)
                     List<Comparable<?>> resolvedValues = new ArrayList<>();
@@ -312,6 +324,18 @@ public final class NitriteFilterBuilder {
                                     resolvedValues.add(c);
                                 }
                             }
+                        } else if (resolved != null && resolved.getClass().isArray()) {
+                            // Handle array parameter
+                            int len = java.lang.reflect.Array.getLength(resolved);
+                            for (int i = 0; i < len; i++) {
+                                Object itemResolved = entityMapper.toNitriteFilterValue(java.lang.reflect.Array.get(resolved, i));
+                                if (itemResolved instanceof Comparable<?> c) {
+                                    resolvedValues.add(c);
+                                }
+                            }
+                        } else if (resolved == null) {
+                            // Null collection parameter - no matches
+                            yield NONE;
                         } else if (resolved instanceof Comparable<?> c) {
                             resolvedValues.add(c);
                         }
@@ -322,11 +346,23 @@ public final class NitriteFilterBuilder {
                                 resolvedValues.add(c);
                             }
                         }
+                    } else if (finalValue instanceof Object[] array) {
+                        // Handle array parameter
+                        for (Object item : array) {
+                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            if (itemResolved instanceof Comparable<?> c) {
+                                resolvedValues.add(c);
+                            }
+                        }
                     }
-                    // Return a filter that matches nothing if no values (e.g., null collection passed)
-                    yield resolvedValues.isEmpty() ? Filter.and(FluentFilter.where(field).eq(null), FluentFilter.where(field).notEq(null)) : FluentFilter.where(field).in(resolvedValues.toArray(new Comparable[0]));
+                    // Return NONE filter if no values (empty/null collection passed)
+                    yield resolvedValues.isEmpty() ? NONE : FluentFilter.where(field).in(resolvedValues.toArray(new Comparable[0]));
                 }
                 case "$nin" -> {
+                    // Handle null collection - return filter that matches everything
+                    if (finalValue == null) {
+                        yield Filter.ALL;
+                    }
                     // Handle collection parameter - value may be a List containing a placeholder
                     List<Comparable<?>> resolvedValues = new ArrayList<>();
                     if (finalValue instanceof List<?> list && list.size() == 1) {
@@ -350,8 +386,16 @@ public final class NitriteFilterBuilder {
                                 resolvedValues.add(c);
                             }
                         }
+                    } else if (finalValue instanceof Object[] array) {
+                        // Handle array parameter
+                        for (Object item : array) {
+                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            if (itemResolved instanceof Comparable<?> c) {
+                                resolvedValues.add(c);
+                            }
+                        }
                     }
-                    // Return a filter that matches everything if no values (e.g., null collection passed)
+                    // Return ALL filter if no values (empty/null collection passed - NOT IN empty set matches all)
                     yield resolvedValues.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(resolvedValues.toArray(new Comparable[0]));
                 }
                 case "$null" ->
