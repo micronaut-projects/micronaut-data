@@ -73,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1288,8 +1289,108 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return Number.class.isAssignableFrom(nq.getResultType()) ? (R) result.orElse(0L) : null;
     }
     if (Number.class.isAssignableFrom(nq.getResultType())) {
-      return (R) Long.valueOf(coll.find(nq.getNitriteFilter()).size());
+      // Check if this is a count query or a numeric projection
+      // Count queries typically have method names starting with "count" or operation type COUNT
+      String methodName = q.getName();
+      boolean isCountQuery = methodName.startsWith("count") || 
+          (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
+      if (isCountQuery) {
+        return (R) Long.valueOf(coll.find(nq.getNitriteFilter()).size());
+      }
+      // Otherwise, fall through to projection handling
     }
+    
+    // Check if this is a projection query (result type differs from entity type)
+    boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
+    List<String> projectedFields = null;
+    if (isProjection) {
+      // Try to parse SELECT clause from SQL query
+      projectedFields = queryParser.parseSelectClause(nq.getQuery());
+      
+      // For JSON queries with $project syntax, extract the field explicitly
+      if (projectedFields == null || projectedFields.isEmpty()) {
+        String projectField = queryParser.extractProjectionField(nq.getQuery());
+        if (projectField != null) {
+          projectedFields = Collections.singletonList(projectField);
+        }
+      }
+      
+      // For method-name-derived projections (e.g., findAgeByName), infer field from method name
+      if (projectedFields == null || projectedFields.isEmpty()) {
+        String methodName = q.getName();
+        // Check for aggregate functions (max, min, sum, avg)
+        // Pattern handles camelCase field names like DateOfBirth
+        java.util.regex.Pattern aggPattern = java.util.regex.Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)([A-Z][a-zA-Z0-9]*)By");
+        java.util.regex.Matcher aggMatcher = aggPattern.matcher(methodName);
+        if (aggMatcher.find()) {
+          String aggFunc = aggMatcher.group(1);
+          String fieldName = aggMatcher.group(2);
+          // Convert to camelCase (first letter lowercase)
+          fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+          // Execute aggregate query
+          List<Document> docs = coll.find(nq.getNitriteFilter()).toList();
+          if (docs.isEmpty()) {
+            return null;
+          }
+          List<Object> values = new ArrayList<>();
+          for (Document doc : docs) {
+            Object val = doc.get(fieldName);
+            if (val != null) {
+              values.add(val);
+            }
+          }
+          if (values.isEmpty()) {
+            return null;
+          }
+          Object result;
+          if (values.get(0) instanceof Number) {
+            List<Number> numValues = values.stream().map(v -> (Number) v).toList();
+            result = switch (aggFunc) {
+              case "Max" -> numValues.stream().mapToDouble(Number::doubleValue).max().orElse(0);
+              case "Min" -> numValues.stream().mapToDouble(Number::doubleValue).min().orElse(0);
+              case "Sum" -> numValues.stream().mapToDouble(Number::doubleValue).sum();
+              case "Avg" -> numValues.stream().mapToDouble(Number::doubleValue).average().orElse(0);
+              default -> 0;
+            };
+          } else if (values.get(0) instanceof Comparable) {
+            // For Comparable types like LocalDate, use natural ordering
+            if (aggFunc.equals("Max")) {
+              result = values.stream().max((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
+            } else if (aggFunc.equals("Min")) {
+              result = values.stream().min((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
+            } else {
+              result = null;
+            }
+          } else {
+            result = null;
+          }
+          return (R) convertValue(result, nq.getResultType());
+        }
+        // Skip count functions (handled earlier)
+        if (!methodName.matches("^(find|get|read)(Count).*")) {
+          // Pattern: find[Field]By... or get[Field]By... or read[Field]By...
+          java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
+          java.util.regex.Matcher matcher = pattern.matcher(methodName);
+          if (matcher.find()) {
+            String fieldName = matcher.group(1);
+            // Convert first letter to lowercase for camelCase field names
+            fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+            projectedFields = Collections.singletonList(fieldName);
+          }
+        }
+      }
+      
+      // For single-field projection, extract the value directly
+      if (projectedFields != null && projectedFields.size() == 1) {
+        Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
+        if (doc == null) {
+          return null;
+        }
+        Object value = doc.get(projectedFields.get(0));
+        return (R) convertValue(value, nq.getResultType());
+      }
+    }
+    
     Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
     return doc == null ? null : (R) entityMapper.fromDocument(doc, nq.getRootEntity());
   }
@@ -1326,7 +1427,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     NitriteCollection coll = getCollection(nq.getRootEntity());
     logFind(coll.getName(), nq.getNitriteFilter());
     if (Number.class.isAssignableFrom(nq.getResultType())) {
-      return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
+      // Check if this is a count query or a numeric projection
+      String methodName = q.getName();
+      boolean isCountQuery = methodName.startsWith("count") || 
+          (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
+      if (isCountQuery) {
+        return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
+      }
+      // Otherwise, fall through to projection handling
     }
     Sort s = nq.getSort();
     if (s == null || !s.isSorted()) {
@@ -1361,6 +1469,23 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         String projectField = queryParser.extractProjectionField(nq.getQuery());
         if (projectField != null) {
           projectedFields = Collections.singletonList(projectField);
+        }
+      }
+
+      // For method-name-derived projections (e.g., findAgesByName), infer field from method name
+      if (projectedFields == null || projectedFields.isEmpty()) {
+        String methodName = q.getName();
+        // Check for aggregate list functions (not supported yet, skip)
+        if (!methodName.matches("^(find|get|read)(Max|Min|Sum|Avg|Count).*")) {
+          // Pattern: find[Field]By... or get[Field]By... or read[Field]By...
+          java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
+          java.util.regex.Matcher matcher = pattern.matcher(methodName);
+          if (matcher.find()) {
+            String fieldName = matcher.group(1);
+            // Convert first letter to lowercase for camelCase field names
+            fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+            projectedFields = Collections.singletonList(fieldName);
+          }
         }
       }
 
