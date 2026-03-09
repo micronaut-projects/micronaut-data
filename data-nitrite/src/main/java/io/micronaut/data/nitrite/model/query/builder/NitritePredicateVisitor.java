@@ -95,7 +95,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final Expression<?> leftExpression,
       final Expression<?> rightExpression,
       final boolean ignoreCase) {
-    appendOperatorExpression(leftExpression, "$eq", rightExpression);
+    if (ignoreCase) {
+      handleRegexExpression(leftExpression, true, false, false, false, rightExpression, false);
+    } else {
+      appendOperatorExpression(leftExpression, "$eq", rightExpression);
+    }
   }
 
   @Override
@@ -103,7 +107,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final Expression<?> leftExpression,
       final Expression<?> rightExpression,
       final boolean ignoreCase) {
-    appendOperatorExpression(leftExpression, "$ne", rightExpression);
+    if (ignoreCase) {
+      handleRegexExpression(leftExpression, true, true, false, false, rightExpression, false);
+    } else {
+      appendOperatorExpression(leftExpression, "$ne", rightExpression);
+    }
   }
 
   @Override
@@ -206,18 +214,40 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     visitIn(expression, values, false);
   }
 
+  /**
+   * Visit IN predicate, handling both literal collections and collection parameters.
+   * <p>
+   * When the values collection contains a single {@link BindingParameter}, it represents
+   * a collection parameter (e.g., {@code WHERE id IN :ids}). The placeholder is stored
+   * and resolved at runtime when the actual collection values are available.
+   *
+   * @param expression the property expression
+   * @param values the collection of values (or single BindingParameter for collection params)
+   * @param negated whether this is a NOT IN operation
+   */
   @Override
   public void visitIn(
       final Expression<?> expression, final Collection<?> values, final boolean negated) {
     PersistentPropertyPath propertyPath =
         CriteriaUtils.requireProperty(expression).getPropertyPath();
+    
+    // Handle case where values is a single BindingParameter representing a collection
+    List<Object> resolvedValues;
+    if (values.size() == 1 && values.iterator().next() instanceof BindingParameter bp) {
+      // Bind the collection parameter and use its elements
+      int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
+      resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
+    } else {
+      resolvedValues = values.stream()
+          .map(val -> valueRepresentation(queryState, propertyPath, val))
+          .toList();
+    }
+    
     query.put(
         getFieldName(propertyPath),
         Map.of(
             negated ? "$nin" : "$in",
-            values.stream()
-                .map(val -> valueRepresentation(queryState, propertyPath, val))
-                .toList()));
+            resolvedValues));
   }
 
   public void visitInBetween(
@@ -437,6 +467,21 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         });
   }
 
+  /**
+   * Handle regex-based string operations (contains, startsWith, endsWith, like, ignoreCase).
+   * <p>
+   * Builds regex patterns with optional case-insensitive flag {@code (?i)} for ignoreCase operations.
+   * For parameterized patterns, the placeholder is embedded in the pattern structure and resolved
+   * at runtime (e.g., {@code "(?i).*:0.*"} becomes {@code "(?i).*michael.*"} at execution time).
+   *
+   * @param leftExpression the property expression
+   * @param ignoreCase whether to enable case-insensitive matching
+   * @param negated whether to negate the match
+   * @param startsWith whether this is a startsWith operation
+   * @param endsWith whether this is an endsWith operation
+   * @param rightExpression the value expression
+   * @param isLike whether this is a LIKE operation
+   */
   private void handleRegexExpression(
       final Expression<?> leftExpression,
       final boolean ignoreCase,
@@ -467,7 +512,17 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         }
         regexValue = new RegexPattern(pattern);
       } else {
-        regexValue = rightExpression;
+        // For parameter expressions, build a regex pattern with placeholder
+        // The pattern structure is built now, parameter value is substituted at runtime
+        String ciPrefix = ignoreCase ? "(?i)" : "";
+        String prefix = startsWith ? "^" : ".*";
+        String suffix = endsWith ? "$" : ".*";
+        // Get the parameter placeholder
+        Object paramPlaceholder = valueRepresentation(
+            queryState, propertyPath, propertyPath, (Expression<?>) rightExpression);
+        // Build pattern like "(?i)^<placeholder>.*" or "(?i).*<placeholder>.*"
+        String pattern = ciPrefix + prefix + paramPlaceholder + suffix;
+        regexValue = new RegexPattern(pattern);
       }
       Map<String, Object> fieldFilter = new LinkedHashMap<>();
       if (regexValue instanceof RegexPattern rp) {
@@ -477,9 +532,6 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             REGEX,
             valueRepresentation(
                 queryState, propertyPath, propertyPath, (Expression<?>) regexValue));
-      }
-      if (ignoreCase) {
-        fieldFilter.put("$options", "i");
       }
       query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
     }
@@ -571,11 +623,29 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentProperty property = propertyPath.getProperty();
     PersistentEntity owner = property.getOwner();
     PersistentProperty identity = owner.getIdentity();
-    if (identity != null && identity.equals(property)) {
+    if (identity != null && identity.equals(property) && propertyPath.getAssociations().isEmpty()) {
       return ID_FIELD;
     }
-    // Return simple name for top-level properties
-    return property.getName();
+
+    if (propertyPath.getAssociations().isEmpty()) {
+      return property.getName();
+    }
+
+    StringBuilder sb = new StringBuilder();
+    for (Association association : propertyPath.getAssociations()) {
+      if (!association.isEmbedded()) {
+        throw new UnsupportedOperationException(
+            "NitriteDB does not support joins or non-embedded associations. "
+                + "Association ["
+                + association.getName()
+                + "] of kind ["
+                + association.getKind()
+                + "] must be marked as @Relation(Relation.Kind.EMBEDDED) to be queried.");
+      }
+      sb.append(association.getName()).append(".");
+    }
+    sb.append(property.getName());
+    return sb.toString();
   }
 
   static BindingParameter.BindingContext newBindingContext(

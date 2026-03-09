@@ -23,9 +23,11 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -55,6 +57,7 @@ import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteUpdateExecutor;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
@@ -65,6 +68,7 @@ import jakarta.inject.Singleton;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -74,12 +78,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
@@ -140,10 +146,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
+  private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+  private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
 
   // Patterns for parsing SQL WHERE clauses from document processor
   private static final Pattern SQL_COMPARISON =
       Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>|>|<|>=|<=)\\s*:(\\w+)");
+  private static final Pattern SQL_IN_CLAUSE =
+      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+(NOT\\s+)?IN\\s*\\(\\s*:(\\w+)\\s*\\)", Pattern.CASE_INSENSITIVE);
   private static final Pattern SQL_IS_NOT_NULL =
       Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+NOT\\s+NULL");
   private static final Pattern SQL_IS_NULL =
@@ -197,6 +207,34 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public Nitrite getDatabase() {
     return database;
+  }
+
+  private void logFind(String collection, Filter filter) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
+          collection, filter != null ? filter : "Filter.ALL");
+    }
+  }
+
+  private void logInsert(String collection, Object entityOrDocs) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'insert' into collection [{}] with: {}",
+          collection, entityOrDocs);
+    }
+  }
+
+  private void logUpdate(String collection, Filter filter, Document update) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
+          collection, filter != null ? filter : "Filter.ALL", update);
+    }
+  }
+
+  private void logDelete(String collection, Filter filter) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
+          collection, filter != null ? filter : "Filter.ALL");
+    }
   }
 
   /**
@@ -312,8 +350,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       Class<?> idType = idProperty.getType();
       Object generatedId = (idType == String.class) ? UUID.randomUUID().toString() :
                            (idType == UUID.class) ? UUID.randomUUID() :
-                           (idType == Long.class || idType == long.class) ? System.currentTimeMillis() :
-                           (idType == Integer.class || idType == int.class) ? (int) (System.currentTimeMillis() % Integer.MAX_VALUE) :
+                           (idType == Long.class || idType == long.class) ? ID_GENERATOR.incrementAndGet() :
+                           (idType == Integer.class || idType == int.class) ? (int) (ID_GENERATOR.incrementAndGet() % Integer.MAX_VALUE) :
                            UUID.randomUUID().toString();
       idProperty.getProperty().set(entity, generatedId);
     }
@@ -321,7 +359,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T findOne(final Class<T> type, final Object id) {
-    Document doc = getCollection(type).find(entityMapper.idEqualsFilter(type, id)).firstOrNull();
+    Filter filter = entityMapper.idEqualsFilter(type, id);
+    Document doc = getCollection(type).find(filter).firstOrNull();
     return doc == null ? null : entityMapper.fromDocument(doc, type);
   }
 
@@ -330,7 +369,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     T entity = operation.getEntity();
     Class<T> type = operation.getRootEntity();
     generateIdIfNecessary(entity, type);
-    getCollection(type).insert(entityMapper.toDocument(entity));
+    NitriteCollection coll = getCollection(type);
+    Document doc = entityMapper.toDocument(entity);
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}", coll.getName(), doc);
+    }
+    coll.insert(doc);
     return entity;
   }
 
@@ -338,6 +382,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
+    logInsert(collection.getName(), operation);
     for (T entity : operation) {
       generateIdIfNecessary(entity, type);
       collection.insert(entityMapper.toDocument(entity));
@@ -351,7 +396,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Class<T> type = operation.getRootEntity();
     Object idValue = entityMapper.getEntityIdValue(entity, type);
     if (idValue != null) {
-      getCollection(type).update(entityMapper.idEqualsFilter(type, idValue), entityMapper.toDocument(entity));
+      NitriteCollection coll = getCollection(type);
+      Filter filter = entityMapper.idEqualsFilter(type, idValue);
+      Document doc = entityMapper.toDocument(entity);
+      logUpdate(coll.getName(), filter, doc);
+      coll.update(filter, doc);
     }
     return entity;
   }
@@ -363,7 +412,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     for (T entity : operation) {
       Object idValue = entityMapper.getEntityIdValue(entity, type);
       if (idValue != null) {
-        collection.update(entityMapper.idEqualsFilter(type, idValue), entityMapper.toDocument(entity));
+        Filter filter = entityMapper.idEqualsFilter(type, idValue);
+        Document doc = entityMapper.toDocument(entity);
+        logUpdate(collection.getName(), filter, doc);
+        collection.update(filter, doc);
       }
     }
     return operation;
@@ -376,7 +428,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (idValue == null) {
       return 0;
     }
-    return getCollection(type).remove(entityMapper.idEqualsFilter(type, idValue), false).getAffectedCount();
+    Filter filter = entityMapper.idEqualsFilter(type, idValue);
+    logDelete(getCollectionName(type), filter);
+    return getCollection(type).remove(filter, false).getAffectedCount();
   }
 
   @Override
@@ -384,14 +438,19 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
     if (operation.all()) {
+      logDelete(collection.getName(), Filter.ALL);
       collection.clear();
       return Optional.of(-1);
     }
     int count = 0;
     for (T entity : operation) {
       Object idValue = entityMapper.getEntityIdValue(entity, type);
-      if (idValue != null && collection.remove(entityMapper.idEqualsFilter(type, idValue), false).getAffectedCount() > 0) {
-        count++;
+      if (idValue != null) {
+        Filter filter = entityMapper.idEqualsFilter(type, idValue);
+        logDelete(collection.getName(), filter);
+        if (collection.remove(filter, false).getAffectedCount() > 0) {
+          count++;
+        }
       }
     }
     return Optional.of(count);
@@ -420,12 +479,24 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   /** Build FindOptions with pagination and sorting, merging additional sort from QueryModel. */
   private FindOptions buildFindOptions(final Pageable pageable, final Sort additionalSort) {
+    return buildFindOptions(pageable, additionalSort, null);
+  }
+
+  /** Build FindOptions with pagination, limit, and sorting. */
+  private FindOptions buildFindOptions(final Pageable pageable, final Sort additionalSort, final Limit limit) {
     FindOptions options = new FindOptions();
     if (pageable.getOffset() > 0) {
       options.skip(pageable.getOffset());
     }
+    // Apply limit from pageable first, then from explicit Limit (for methods like listTop10)
+    int effectiveLimit = -1;
     if (pageable.getSize() > 0) {
-      options.limit(pageable.getSize());
+      effectiveLimit = pageable.getSize();
+    } else if (limit != null && limit.maxResults() > 0) {
+      effectiveLimit = limit.maxResults();
+    }
+    if (effectiveLimit > 0) {
+      options.limit(effectiveLimit);
     }
     Map<String, Sort.Order> mergedOrders = new LinkedHashMap<>();
     if (additionalSort != null && additionalSort.isSorted()) {
@@ -515,7 +586,21 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public <T> Iterable<T> findAll(@NonNull final PagedQuery<T> query) {
     Class<T> type = (Class<T>) query.getRootEntity();
-    var cursor = getCollection(type).find(Filter.ALL, buildFindOptions(query.getPageable(), (String) null));
+    Filter filter = Filter.ALL;
+    Sort sort = null;
+    Limit limit = query.getQueryLimit();
+
+    // If PagedQuery is actually a PreparedQuery, extract the filter and sort
+    if (query instanceof PreparedQuery pq) {
+      NitritePreparedQuery nq = getNitritePreparedQuery(pq);
+      filter = nq.getNitriteFilter();
+      sort = nq.getSort();
+      if (sort == null || !sort.isSorted()) {
+        sort = parseSortFromHints(nq.getQueryHints());
+      }
+    }
+
+    var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit));
     List<T> results = new ArrayList<>();
     for (Document doc : cursor) {
       results.add(entityMapper.fromDocument(doc, type));
@@ -525,6 +610,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> long count(@NonNull final PagedQuery<T> query) {
+    // If PagedQuery is actually a PreparedQuery, use the filter for counting
+    if (query instanceof PreparedQuery pq) {
+      NitritePreparedQuery nq = getNitritePreparedQuery(pq);
+      Filter filter = nq.getNitriteFilter();
+      return getCollection(query.getRootEntity()).find(filter).size();
+    }
     return getCollection(query.getRootEntity()).size();
   }
 
@@ -555,6 +646,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
     String[] path = binding.getParameterBindingPath() != null ? binding.getParameterBindingPath() : binding.getPropertyPath();
     if (path == null || path.length == 0) {
+      return entityMapper.toFilterValue(base);
+    }
+    // Special handling for collection parameters (e.g., IN clause): if base is already a collection,
+    // return it as-is instead of trying to extract a property from it.
+    if (base instanceof Collection) {
       return entityMapper.toFilterValue(base);
     }
     Object current = base;
@@ -685,7 +781,37 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return null;
     }
     try {
-      return entityMapper.toFilterValue(((Document) database.getConfig().nitriteMapper().tryConvert(methodParams[0], Document.class)).get(property));
+      Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(methodParams[0], Document.class);
+      if (doc.containsKey(property)) {
+        return entityMapper.toFilterValue(doc.get(property));
+      }
+      // Handle dotted path for EmbeddedId
+      if (property.contains(".")) {
+        String[] parts = property.split("\\.");
+        Object current = doc;
+        // If the first part matches nothing in the doc, but subsequent parts might, 
+        // it might be that the doc IS the first part (the EmbeddedId itself).
+        if (!doc.containsKey(parts[0])) {
+            // Try stripping the first part
+            String subPath = property.substring(parts[0].length() + 1);
+            if (doc.containsKey(subPath)) {
+                return entityMapper.toFilterValue(doc.get(subPath));
+            }
+        }
+        
+        for (String part : parts) {
+          if (current instanceof Document d) {
+            current = d.get(part);
+          } else if (current instanceof Map m) {
+            current = m.get(part);
+          } else {
+            current = null;
+            break;
+          }
+        }
+        return entityMapper.toFilterValue(current);
+      }
+      return null;
     } catch (Exception ignored) {
       return null;
     }
@@ -722,8 +848,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       try {
         Object parsed = queryParser.parseJson(query);
         if (parsed instanceof Map m) {
-          filterMap = (Map<String, Object>) m;
-          updateMap = (Map<String, Object>) filterMap.get("$set");
+          // Separate $project from filter criteria
+          filterMap = new LinkedHashMap<>(m);
+          filterMap.remove("$project");  // Remove projection field from filter
+          updateMap = (Map<String, Object>) m.get("$set");
         }
       } catch (Exception ignored) {
       }
@@ -766,7 +894,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
     Map<String, Object> namedParameters = buildNamedParameterValues(q);
     if (stored.getFilterMap() != null) {
-      return filterBuilder.buildFilterFromJson(stored.getFilterMap(), ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
+      return filterBuilder.buildFilterFromJson(getEntity(stored.getRootEntity()), stored.getFilterMap(), ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
     }
     String queryString = q.getQuery().trim();
     if (queryString.isEmpty()) {
@@ -849,6 +977,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (mEmpty.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              null,
               entityMapper.normalizeFieldName(mEmpty.group(1)),
               Collections.singletonMap("$empty", true),
               params,
@@ -871,6 +1000,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           };
       filters.add(
           filterBuilder.buildFieldFilter(
+              null,
               entityMapper.normalizeFieldName(m.group(1)),
               Collections.singletonMap(
                   filterOp,
@@ -882,6 +1012,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              null,
               entityMapper.normalizeFieldName(m.group(1)),
               Collections.singletonMap("$notNull", true),
               params,
@@ -891,8 +1022,29 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              null,
               entityMapper.normalizeFieldName(m.group(1)),
               Collections.singletonMap("$null", true),
+              params,
+              namedParameters));
+    }
+    // Handle IN (:param) and NOT IN (:param) clauses
+    Matcher inMatcher = SQL_IN_CLAUSE.matcher(where);
+    while (inMatcher.find()) {
+      String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1));
+      boolean notIn = inMatcher.group(2) != null;
+      String paramName = inMatcher.group(3);
+      
+      // Resolve the parameter value - namedParameters uses names without colon prefix
+      Object paramValue = namedParameters != null && namedParameters.containsKey(paramName)
+          ? namedParameters.get(paramName)
+          : resolveParam(":" + paramName, params);
+      
+      filters.add(
+          filterBuilder.buildFieldFilter(
+              null,
+              fieldName,
+              Collections.singletonMap(notIn ? "$nin" : "$in", paramValue),
               params,
               namedParameters));
     }
@@ -1023,6 +1175,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T, R> R findOne(@NonNull final PreparedQuery<T, R> q) {
     NitritePreparedQuery<T, R> nq = getNitritePreparedQuery(q);
     NitriteCollection coll = getCollection(nq.getRootEntity());
+    logFind(coll.getName(), nq.getNitriteFilter());
     String query = nq.getQuery();
     boolean isUpdate = nq.getUpdateMap() != null
         || (query != null && query.trim().regionMatches(true, 0, "UPDATE", 0, 6));
@@ -1059,6 +1212,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public <T> boolean exists(@NonNull final PreparedQuery<T, Boolean> q) {
     NitritePreparedQuery nq = getNitritePreparedQuery(q);
+    logFind(getCollectionName(nq.getRootEntity()), nq.getNitriteFilter());
     return getCollection(nq.getRootEntity()).find(nq.getNitriteFilter()).firstOrNull() != null;
   }
 
@@ -1066,6 +1220,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T, R> Iterable<R> findAll(@NonNull final PreparedQuery<T, R> q) {
     NitritePreparedQuery<T, R> nq = getNitritePreparedQuery(q);
     NitriteCollection coll = getCollection(nq.getRootEntity());
+    logFind(coll.getName(), nq.getNitriteFilter());
     if (Number.class.isAssignableFrom(nq.getResultType())) {
       return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
     }
@@ -1079,12 +1234,118 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         s = parseSortFromHints(nq.getQueryHints());
       }
     }
-    var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s));
+    // Read limit from method name for methods like listTop10 (e.g., "listTop10" -> 10)
+    Limit limit = nq.getQueryLimit();
+    if (limit.maxResults() <= 0) {
+      String methodName = q.getName();
+      java.util.regex.Pattern topPattern = java.util.regex.Pattern.compile("(?:Top|First)(\\d+)");
+      java.util.regex.Matcher matcher = topPattern.matcher(methodName);
+      if (matcher.find()) {
+        limit = Limit.of(Integer.parseInt(matcher.group(1)), 0);
+      }
+    }
+
+    // Check if this is a projection query (result type differs from entity type)
+    List<String> projectedFields = null;
+    boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
+    if (isProjection) {
+      // Try to parse SELECT clause from SQL query
+      projectedFields = queryParser.parseSelectClause(nq.getQuery());
+
+      // For JSON queries with $project syntax, extract the field explicitly
+      if (projectedFields == null || projectedFields.isEmpty()) {
+        String projectField = queryParser.extractProjectionField(nq.getQuery());
+        if (projectField != null) {
+          projectedFields = Collections.singletonList(projectField);
+        }
+      }
+
+      // For JSON queries without $project, projection is not supported
+      // User must either use SQL SELECT syntax or add $project to JSON query
+      if (projectedFields == null || projectedFields.isEmpty()) {
+        throw new IllegalStateException(
+          "Projection query detected but no field specified. " +
+          "Use SQL syntax: @Query(\"SELECT fieldName FROM Entity WHERE ...\") or " +
+          "JSON syntax: @Query(\"{\\\"$project\\\": \\\"fieldName\\\", ...}\"). " +
+          "Examples: " +
+          "@Query(\"SELECT name FROM Person WHERE active = true\") List<String> findActivePersonNames(); or " +
+          "@Query(\"{\\\"$project\\\": \\\"name\\\", \\\"active\\\": {\\\"$eq\\\": true}}\") List<String> findActivePersonNames();"
+        );
+      }
+    }
+    
+    var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s, limit));
+    
+    // Apply projection if we have fields to project
+    if (projectedFields != null && !projectedFields.isEmpty()) {
+      Document projection = Document.createDocument();
+      for (String field : projectedFields) {
+        projection.put(field, null);
+      }
+      RecordStream<Document> projectedCursor = cursor.project(projection);
+      return extractProjectedResults(projectedCursor, projectedFields, nq.getResultType());
+    }
+    
     List<R> results = new ArrayList<>();
     for (Document doc : cursor) {
       results.add((R) entityMapper.fromDocument(doc, nq.getRootEntity()));
     }
     return results;
+  }
+
+  /**
+   * Extract projected field values from a projected cursor.
+   *
+   * @param cursor the projected cursor
+   * @param fields the projected field names
+   * @param resultType the expected result type
+   * @return list of projected values
+   */
+  @SuppressWarnings("unchecked")
+  private <R> List<R> extractProjectedResults(RecordStream<Document> cursor, List<String> fields, Class<R> resultType) {
+    List<R> results = new ArrayList<>();
+    for (Document doc : cursor) {
+      if (fields.size() == 1) {
+        // Single field projection - return just that field's value
+        Object value = doc.get(fields.get(0));
+        results.add((R) convertValue(value, resultType));
+      } else {
+        // Multi-field projection - for now, return as Document or Map
+        // This would need more sophisticated handling for DTO projections
+        results.add((R) doc);
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Convert a value to the target type.
+   *
+   * @param value the value to convert
+   * @param targetType the target type
+   * @return the converted value
+   */
+  private Object convertValue(Object value, Class<?> targetType) {
+    if (value == null) {
+      return null;
+    }
+    if (targetType.isInstance(value)) {
+      return value;
+    }
+    return conversionService.convert(value, targetType)
+        .map(obj -> (Object) obj)
+        .orElse(value);
+  }
+
+  /**
+   * Check if one type can be converted to another.
+   *
+   * @param fromType the source type
+   * @param toType the target type
+   * @return true if conversion is possible
+   */
+  private boolean canConvert(Class<?> fromType, Class<?> toType) {
+    return conversionService.canConvert(fromType, toType);
   }
 
   /**
@@ -1177,7 +1438,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters, nq));
         }
       }
-      filter = filterBuilder.buildFilterFromJson(nq.getFilterMap(), jsonParams, namedParameters);
+      filter = filterBuilder.buildFilterFromJson(getEntity(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
     } else if (nq.getQuery().trim().toUpperCase().startsWith("UPDATE")) {
       Object[] sqlParams = reorderParamsForSql(nq);
       setFields =
@@ -1196,7 +1457,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     for (Map.Entry<String, Object> entry : setFields.entrySet()) {
       updateDoc.put(entry.getKey(), entry.getValue());
     }
-    return Optional.of(getCollection(nq.getRootEntity()).update(filter != null ? filter : nq.getNitriteFilter(), updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount());
+    Filter finalFilter = filter != null ? filter : nq.getNitriteFilter();
+    logUpdate(getCollectionName(nq.getRootEntity()), finalFilter, updateDoc);
+    return Optional.of(getCollection(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount());
   }
 
   /** Build named parameter map from bindings and arguments. */
@@ -1246,6 +1509,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public Optional<Number> executeDelete(@NonNull final PreparedQuery<?, Number> q) {
     NitritePreparedQuery nq = getNitritePreparedQuery(q);
+    logDelete(getCollectionName(nq.getRootEntity()), nq.getNitriteFilter());
     return Optional.of(getCollection(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount());
   }
 

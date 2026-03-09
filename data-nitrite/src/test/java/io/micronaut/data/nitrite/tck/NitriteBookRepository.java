@@ -15,11 +15,16 @@
  */
 package io.micronaut.data.nitrite.tck;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.document.tck.entities.Author;
+import io.micronaut.data.document.tck.entities.Book;
 import io.micronaut.data.document.tck.repositories.AuthorRepository;
 import io.micronaut.data.document.tck.repositories.BookRepository;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
+import java.util.List;
+import java.util.stream.Stream;
 
 @NitriteRepository
 @RepositoryConfiguration(queryBuilder = NitriteQueryBuilder.class)
@@ -27,4 +32,32 @@ public abstract class NitriteBookRepository extends BookRepository {
     public NitriteBookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
+
+    @Override
+    @Query("{}")
+    public abstract int deleteByIdAndAuthorId(String id, String authorId);
+
+    @Override
+    @Query("{}")
+    public abstract List<Book> findByAuthorName(String name);
+
+    @Override
+    @Query("{}")
+    public abstract Stream<Book> findTop3ByAuthorNameOrderByTitle(String name);
+
+    @Override
+    @Query("{}")
+    public abstract List<Book> queryTop3ByAuthorNameOrderByTitle(String name);
+
+    @Override
+    @Query("{}")
+    public abstract List<Book> findByAuthorIsNull();
+
+    @Override
+    @Query("{}")
+    public abstract List<Book> findByAuthorIsNotNull();
+
+    @Override
+    @Query("{}")
+    public abstract long updateAuthor(String id, Author author);
 }

@@ -17,11 +17,12 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -38,8 +39,6 @@ import java.util.UUID;
  */
 @Internal
 public final class NitriteFilterBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(NitriteFilterBuilder.class);
 
     private static final String SPATIAL_FLUENT_FILTER_CLASS = "org.dizitart.no2.spatial.SpatialFluentFilter";
     private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
@@ -58,12 +57,14 @@ public final class NitriteFilterBuilder {
     /**
      * Build a Nitrite Filter from a Map structure.
      *
+     * @param entity          the entity metadata
      * @param filterObj       the filter object
      * @param params          positional parameters
      * @param namedParameters named parameters
      * @return the Nitrite Filter
      */
     public Filter buildFilterFromJson(
+        final RuntimePersistentEntity<?> entity,
         final Map<String, Object> filterObj,
         final Object[] params,
         final Map<String, Object> namedParameters) {
@@ -88,7 +89,7 @@ public final class NitriteFilterBuilder {
                     List<Filter> andFilters = new ArrayList<>();
                     for (Object item : list) {
                         if (item instanceof Map<?, ?> m) {
-                            Filter f = buildFilterFromJson(toStringObjectMap(m), params, namedParameters);
+                            Filter f = buildFilterFromJson(entity, toStringObjectMap(m), params, namedParameters);
                             if (f != null && f != Filter.ALL) {
                                 andFilters.add(f);
                             }
@@ -103,7 +104,7 @@ public final class NitriteFilterBuilder {
                     List<Filter> orFilters = new ArrayList<>();
                     for (Object item : list) {
                         if (item instanceof Map<?, ?> m) {
-                            Filter f = buildFilterFromJson(toStringObjectMap(m), params, namedParameters);
+                            Filter f = buildFilterFromJson(entity, toStringObjectMap(m), params, namedParameters);
                             if (f != null && f != Filter.ALL) {
                                 orFilters.add(f);
                             }
@@ -116,12 +117,12 @@ public final class NitriteFilterBuilder {
             } else {
                 Object resolvedValue = resolveValue(value, params, namedParameters);
                 if (resolvedValue instanceof Map<?, ?> m && !isPlaceholder(m)) {
-                    Filter f = buildFieldFilter(key, toStringObjectMap(m), params, namedParameters);
+                    Filter f = buildFieldFilter(entity, key, toStringObjectMap(m), params, namedParameters);
                     if (f != null && f != Filter.ALL) {
                         filters.add(f);
                     }
                 } else {
-                    Filter f = buildFieldFilter(key, Collections.singletonMap("$eq", resolvedValue), params, namedParameters);
+                    Filter f = buildFieldFilter(entity, key, Collections.singletonMap("$eq", resolvedValue), params, namedParameters);
                     if (f != null && f != Filter.ALL) {
                         filters.add(f);
                     }
@@ -159,15 +160,49 @@ public final class NitriteFilterBuilder {
     }
 
     /**
-     * Resolve a parameter placeholder to its actual value.
+     * Resolve a value that may contain embedded parameter placeholders.
+     * <p>
+     * Handles string values with {@code $mn_qp:N} placeholders (e.g., regex patterns like
+     * {@code "(?i).*:0.*"}), replacing them with actual parameter values at runtime.
+     * For collection parameters, resolves the placeholder to the actual collection.
      *
-     * @param value           the potential placeholder
-     * @param params          positional parameters
+     * @param value the value to resolve (may contain placeholders)
+     * @param params positional parameters
      * @param namedParameters named parameters
      * @return the resolved value
      */
     private Object resolveValue(Object value, Object[] params, Map<String, Object> namedParameters) {
         if (value instanceof String s) {
+            // Check if the string contains embedded placeholders (e.g., regex patterns)
+            if (s.contains("$mn_qp:")) {
+                // Replace all $mn_qp:N placeholders with their values
+                StringBuilder result = new StringBuilder();
+                int pos = 0;
+                while (pos < s.length()) {
+                    int idx = s.indexOf("$mn_qp:", pos);
+                    if (idx < 0) {
+                        result.append(s.substring(pos));
+                        break;
+                    }
+                    result.append(s.substring(pos, idx));
+                    // Find the end of the parameter index (digits only)
+                    int paramEnd = idx + 7;
+                    while (paramEnd < s.length() && Character.isDigit(s.charAt(paramEnd))) {
+                        paramEnd++;
+                    }
+                    try {
+                        int paramIdx = Integer.parseInt(s.substring(idx + 7, paramEnd));
+                        if (params != null && paramIdx >= 0 && paramIdx < params.length) {
+                            Object paramValue = params[paramIdx];
+                            result.append(paramValue != null ? paramValue.toString() : "");
+                        }
+                    } catch (Exception ignored) {
+                        result.append(s.substring(idx, paramEnd));
+                    }
+                    pos = paramEnd;
+                }
+                return result.toString();
+            }
             if (s.startsWith("$mn_qp:")) {
                 try {
                     int idx = Integer.parseInt(s.substring(7));
@@ -212,6 +247,7 @@ public final class NitriteFilterBuilder {
     /**
      * Build a Nitrite Filter for a specific field.
      *
+     * @param entity          the entity metadata
      * @param field           the field name
      * @param operators       the operator map
      * @param params          positional parameters
@@ -219,18 +255,39 @@ public final class NitriteFilterBuilder {
      * @return the Nitrite Filter
      */
     public Filter buildFieldFilter(
-        final String field,
+        final RuntimePersistentEntity<?> entity,
+        final String rawField,
         final Map<String, Object> operators,
         final Object[] params,
         final Map<String, Object> namedParameters) {
+        String field = entityMapper.normalizeFieldName(rawField, entity);
+        
+        // Handle EmbeddedId expansion
+        if (entity != null) {
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity != null && identity.isAnnotationPresent(EmbeddedId.class) && 
+                (identity.getName().equals(field) || "id".equals(field) || "_id".equals(field))) {
+                
+                // If it's the identity property being queried, we need to expand it 
+                // if the value is an object (the ID object itself).
+                Object val = operators.get("$eq");
+                if (val != null) {
+                    Object resolved = resolveValue(val, params, namedParameters);
+                    if (resolved != null && !entityMapper.isSimpleType(resolved.getClass())) {
+                        return entityMapper.idEqualsFilter(entity.getIntrospection().getBeanType(), resolved);
+                    }
+                }
+            }
+        }
+
         List<Filter> fieldFilters = new ArrayList<>();
         for (Map.Entry<String, Object> opEntry : operators.entrySet()) {
             String op = opEntry.getKey();
             Object value = resolveValue(opEntry.getValue(), params, namedParameters);
             Object coercedValue = maybeCoerceUuid(field, value);
-            Object finalValue = entityMapper.toNitriteFilterValue(coercedValue);
+            Object finalValue = entityMapper.toNitriteFilterValue(coercedValue, rawField);
             Filter f = switch (op) {
-                case "$eq" -> entityMapper.eqWithNumericCoercion(field, finalValue);
+                case "$eq" -> entityMapper.eqWithNumericCoercion(entity, field, finalValue, field);
                 case "$ne" -> FluentFilter.where(field).notEq(finalValue);
                 case "$gt" ->
                     finalValue instanceof Comparable<?> c ? FluentFilter.where(field).gt(c) : Filter.ALL;
@@ -241,30 +298,61 @@ public final class NitriteFilterBuilder {
                 case "$lte" ->
                     finalValue instanceof Comparable<?> c ? FluentFilter.where(field).lte(c) : Filter.ALL;
                 case "$in" -> {
-                    if (finalValue instanceof Collection<?> coll) {
-                        List<Comparable<?>> resolvedValues = new ArrayList<>();
+                    // Handle collection parameter - value may be a List containing a placeholder
+                    // that resolves to a Collection at runtime (e.g., WHERE id IN :ids)
+                    List<Comparable<?>> resolvedValues = new ArrayList<>();
+                    if (finalValue instanceof List<?> list && list.size() == 1) {
+                        Object item = list.get(0);
+                        // Check if it's a placeholder that resolves to a collection
+                        Object resolved = resolveValue(item, params, namedParameters);
+                        if (resolved instanceof Collection<?> coll) {
+                            for (Object collItem : coll) {
+                                Object itemResolved = entityMapper.toNitriteFilterValue(collItem);
+                                if (itemResolved instanceof Comparable<?> c) {
+                                    resolvedValues.add(c);
+                                }
+                            }
+                        } else if (resolved instanceof Comparable<?> c) {
+                            resolvedValues.add(c);
+                        }
+                    } else if (finalValue instanceof Collection<?> coll) {
                         for (Object item : coll) {
-                            Object resolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
-                            if (resolved instanceof Comparable<?> c) {
+                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
                         }
-                        yield FluentFilter.where(field).in(resolvedValues.toArray(new Comparable[0]));
                     }
-                    yield FluentFilter.where(field).eq(finalValue);
+                    // Return a filter that matches nothing if no values (e.g., null collection passed)
+                    yield resolvedValues.isEmpty() ? Filter.and(FluentFilter.where(field).eq(null), FluentFilter.where(field).notEq(null)) : FluentFilter.where(field).in(resolvedValues.toArray(new Comparable[0]));
                 }
                 case "$nin" -> {
-                    if (finalValue instanceof Collection<?> coll) {
-                        List<Comparable<?>> resolvedValues = new ArrayList<>();
+                    // Handle collection parameter - value may be a List containing a placeholder
+                    List<Comparable<?>> resolvedValues = new ArrayList<>();
+                    if (finalValue instanceof List<?> list && list.size() == 1) {
+                        Object item = list.get(0);
+                        // Check if it's a placeholder that resolves to a collection
+                        Object resolved = resolveValue(item, params, namedParameters);
+                        if (resolved instanceof Collection<?> coll) {
+                            for (Object collItem : coll) {
+                                Object itemResolved = entityMapper.toNitriteFilterValue(collItem);
+                                if (itemResolved instanceof Comparable<?> c) {
+                                    resolvedValues.add(c);
+                                }
+                            }
+                        } else if (resolved instanceof Comparable<?> c) {
+                            resolvedValues.add(c);
+                        }
+                    } else if (finalValue instanceof Collection<?> coll) {
                         for (Object item : coll) {
-                            Object resolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
-                            if (resolved instanceof Comparable<?> c) {
+                            Object itemResolved = entityMapper.toNitriteFilterValue(resolveValue(item, params, namedParameters));
+                            if (itemResolved instanceof Comparable<?> c) {
                                 resolvedValues.add(c);
                             }
                         }
-                        yield FluentFilter.where(field).notIn(resolvedValues.toArray(new Comparable[0]));
                     }
-                    yield FluentFilter.where(field).notEq(finalValue);
+                    // Return a filter that matches everything if no values (e.g., null collection passed)
+                    yield resolvedValues.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(resolvedValues.toArray(new Comparable[0]));
                 }
                 case "$null" ->
                     Boolean.TRUE.equals(finalValue) ? FluentFilter.where(field).eq(null) : Filter.ALL;
@@ -278,10 +366,15 @@ public final class NitriteFilterBuilder {
                     }
                     yield Filter.ALL;
                 }
-                case "$regex" -> FluentFilter.where(field).regex(finalValue != null ? finalValue.toString() : "");
+                case "$regex" -> {
+                    // Resolve the regex pattern (may contain parameter placeholders)
+                    Object resolved = resolveValue(finalValue, params, namedParameters);
+                    String regexPattern = resolved != null ? resolved.toString() : "";
+                    yield FluentFilter.where(field).regex(regexPattern);
+                }
                 case "$not" -> {
                     if (finalValue instanceof Map<?, ?> m) {
-                        yield buildFieldFilter(field, toStringObjectMap(m), params, namedParameters).not();
+                        yield buildFieldFilter(entity, field, toStringObjectMap(m), params, namedParameters).not();
                     }
                     yield Filter.ALL;
                 }
@@ -295,10 +388,7 @@ public final class NitriteFilterBuilder {
                         Object center = entityMapper.toNitriteFilterValue(resolveValue(m.get("center"), params, namedParameters));
                         Object distanceObj = resolveValue(m.get("distance"), params, namedParameters);
                         double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
-                        LOG.debug("Building $near filter: field={}, center={} (class={}), distance={}", field, center, 
-                            center != null ? center.getClass().getName() : "null", distance);
                         Filter spatialFilter = createSpatialFilter(field, "near", new Class<?>[]{Object.class, double.class}, center, distance);
-                        LOG.debug("Created $near filter: {}", spatialFilter);
                         yield spatialFilter;
                     }
                     yield Filter.ALL;
@@ -366,14 +456,12 @@ public final class NitriteFilterBuilder {
         try {
             Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
             if (geometryClass.isInstance(geometry)) {
-                LOG.debug("Building ${} filter: field={}, geometry={} (class={})", method, field, geometry, geometry.getClass().getName());
                 Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
                 Method whereMethod = spatialClass.getMethod("where", String.class);
                 Object spatialFluentFilter = whereMethod.invoke(null, field);
                 // Use Geometry.class as per the actual method signature
                 Method filterMethod = spatialFluentFilter.getClass().getMethod(method, geometryClass);
                 Filter result = (Filter) filterMethod.invoke(spatialFluentFilter, geometry);
-                LOG.debug("Created ${} filter: {}", method, result);
                 return result;
             }
         } catch (Exception e) {

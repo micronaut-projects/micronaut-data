@@ -88,10 +88,6 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
 
   @Override
   protected void doBegin(final DefaultTransactionStatus<Session> tx) {
-    LOG.trace(
-        "NitriteTransactionManager[{}] doBegin for {}",
-        System.identityHashCode(this),
-        System.identityHashCode(tx));
     Session session = tx.getConnection();
     Transaction transaction = session.beginTransaction();
     tx.setTransaction(transaction);
@@ -134,5 +130,33 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
   protected DefaultTransactionStatus<Session> createNoTxTransactionStatus(
       final ConnectionStatus<Session> connectionStatus, final TransactionDefinition definition) {
     return DefaultTransactionStatus.noTx(connectionStatus, definition);
+  }
+
+  @Override
+  protected void doSuspend(final DefaultTransactionStatus<Session> tx) {
+    holder.clear();
+  }
+
+  @Override
+  protected void doResume(final DefaultTransactionStatus<Session> tx) {
+    Session session = tx.getConnection();
+    Object txObj = tx.getTransaction();
+    if (txObj instanceof Transaction transaction) {
+      holder.bind(new NitriteTransactionContext(session, transaction));
+    }
+  }
+
+  @Override
+  protected <R> R suspend(final DefaultTransactionStatus<Session> tx, final java.util.function.Supplier<R> callback) {
+    holder.clear();
+    try {
+      return callback.get();
+    } finally {
+      // Resume the transaction after callback completes
+      Object txObj = tx.getTransaction();
+      if (txObj instanceof Transaction transaction) {
+        holder.bind(new NitriteTransactionContext(tx.getConnection(), transaction));
+      }
+    }
   }
 }

@@ -1110,4 +1110,39 @@ class PersonRepositorySpec extends Specification {
         personRepository.findByName("Frank").get().age == 33  // unaffected
         personRepository.count() == 2
     }
+
+    // TODO: Enable once projection support is implemented
+    // See: https://github.com/micronaut-projects/micronaut-data/issues/XXXX
+    // @spock.lang.Ignore("Nitrite does not yet support projection to simple types in @Query methods")
+    void "test projection to single property returns list of values"() {
+        given:
+        personRepository.save(new Person("Alice", 25))
+        personRepository.save(new Person("Bob", 30))
+        personRepository.save(new Person("Charlie", 35))
+
+        when:
+        def names = personRepository.findAllNames()
+
+        then:
+        names.size() == 3
+        "Alice" in names
+        "Bob" in names
+        "Charlie" in names
+    }
+
+    void "test JSON query projection with explicit \$project field"() {
+        given:
+        personRepository.save(new Person("Alice", 25, true))
+        personRepository.save(new Person("Bob", 30, false))
+        personRepository.save(new Person("Charlie", 35, true))
+
+        when:
+        def names = personRepository.findActivePersonNames()
+
+        then:
+        names.size() == 2
+        "Alice" in names
+        "Charlie" in names
+        !names.contains("Bob")
+    }
 }

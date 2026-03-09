@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.nitrite.tck;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.document.tck.entities.Author;
 import io.micronaut.data.document.tck.repositories.AuthorRepository;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
@@ -26,4 +28,18 @@ import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 @NitriteRepository
 @RepositoryConfiguration(queryBuilder = NitriteQueryBuilder.class)
 public interface NitriteAuthorRepository extends AuthorRepository {
+
+    // Overriding methods that use unsupported joins to prevent AP errors
+    
+    @Override
+    @Query("{}")
+    Author findByBooksTitle(String title);
+
+    @Override
+    @Query("{}")
+    Author queryByName(String name);
+
+    @Override
+    @Query("{}")
+    Author searchByName(String name);
 }

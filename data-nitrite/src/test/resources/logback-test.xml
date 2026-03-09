@@ -13,6 +13,7 @@
     </root>
 
     <logger name="io.micronaut.data.nitrite" level="DEBUG" />
+    <logger name="io.micronaut.data.query" level="INFO" />
 
     <logger name="io.micronaut.context" level="WARN" />
     <logger name="io.micronaut.context.lifecycle" level="WARN" />

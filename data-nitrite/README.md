@@ -54,6 +54,58 @@ Two placeholder styles exist:
 - `"$mn_qp:<index>"` – used by criteria encoding. The index maps to the `PreparedQuery` parameter array.
 - `":name"` – used by user-authored JSON `@Query` methods. Names are bound using query bindings when available, otherwise by falling back to `PreparedQuery.getArguments()` names.
 
+### Projection Queries
+
+Nitrite supports field projection for queries that return a single property (e.g., `List<String>` instead of `List<Entity>`).
+
+Two syntaxes are supported:
+
+**1. SQL SELECT syntax (recommended for readability):**
+
+```java
+@Query("SELECT name FROM Person WHERE active = true")
+List<String> findActivePersonNames();
+
+@Query("SELECT sessionId FROM Session WHERE level = 2")
+List<String> findSessionIdsForRootNodes();
+```
+
+**2. JSON with `$project` syntax:**
+
+```java
+@Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
+List<String> findActivePersonNames();
+
+@Query("{\"$project\": \"sessionId\", \"level\": {\"$eq\": 2}}")
+List<String> findSessionIdsForRootNodes();
+```
+
+The `$project` field is extracted from the JSON query and used to project only that field from matching documents.
+
+### Case-Insensitive String Search
+
+Nitrite supports case-insensitive string operations (`contains`, `startsWith`, `endsWith`, `like`) using regex patterns with the `(?i)` flag:
+
+```java
+// Derived finder method
+List<Person> findByNameIgnoreCase(String name);
+
+// With @Query
+@Query("{\"name\": {\"$regex\": \"(?i).*michael.*\"}}")
+List<Person> findByNameContainingIgnoreCase(String name);
+```
+
+### IN Query with Collection Parameters
+
+Collection parameters in IN queries are resolved at runtime:
+
+```java
+@Query("{\"id\": {\"$in\": \":ids\"}}")
+List<Person> findByIdIn(@Parameter("ids") Collection<Long> ids);
+```
+
+The `:ids` placeholder is replaced with the actual collection values when the query executes.
+
 ## Updates and `$set`
 
 Nitrite updates are **partial updates** represented as a document of fields to change.
@@ -92,6 +144,31 @@ It must not be used as a generic “metadata” channel (for example markers lik
 - **Runtime fails with** `Unsupported query format. Expected JSON filter or SELECT/DELETE ... got: {"id": :id, "$set": ...}`:
   - The runtime is trying to parse an **update wrapper document** as a filter.
   - Fix by unwrapping `$set` before calling the filter parser and treating it as an update document.
+
+## TCK Test Configuration
+
+Nitrite's TCK test suite (`NitriteDocumentRepositorySpec`) excludes tests for features that Nitrite fundamentally does not support:
+
+**Excluded Tests:**
+- **Joins/Associations** (10 tests) - Nitrite doesn't support cross-collection joins
+- **Optimistic locking** (2 tests) - Not implemented
+- **Criteria API** (1 test) - Not implemented
+- **Events** (1 test) - Not implemented
+- **Other failing tests** (6 tests) - Need future investigation
+
+**Passing Tests:** 16 TCK tests pass, 20 excluded as unsupported.
+
+Additional test classes:
+- `NitriteDocumentTransactionSpec` - Transaction management tests (23 tests pass)
+- `NitriteTCKSpec` - Simple custom tests for basic CRUD operations
+
+## Known Limitations
+
+- **No cross-collection joins** - Nitrite is a document store; use embedded documents or application-side joins
+- **No optimistic locking** - `@Version` annotation not supported
+- **No Criteria API** - Use `@Query` with JSON or SQL-like syntax instead
+- **No entity events** - `@PrePersist`, `@PostUpdate`, etc. not supported
+- **IN queries with associations** - Limited by Nitrite's document model (nested docs vs. separate collections)
 
 ## Versioning / Compatibility
 

@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.nitrite.model;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Embeddable;
 import java.util.Objects;
 
 @Embeddable
+@Introspected
 public class ProjectId {
   private final int departmentId;
   private final int projectNumber;
