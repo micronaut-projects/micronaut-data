@@ -28,13 +28,17 @@ import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
 import oracle.sql.DATE;
+import oracle.sql.INTERVALDS;
+import oracle.sql.INTERVALYM;
 import oracle.sql.TIMESTAMP;
 import oracle.sql.VECTOR;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Optional;
 
 /**
@@ -102,6 +106,16 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
             OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
             return Optional.of(toVector(adapter));
         };
+    }
+  
+    @Prototype
+    DataTypeConverter<INTERVALDS, Duration> fromOracleIntervalDsToDuration() {
+        return (interval, targetType, context) -> Optional.of(interval.getDuration());
+    }
+
+    @Prototype
+    DataTypeConverter<INTERVALYM, Period> fromOracleIntervalYmToPeriod() {
+        return (interval, targetType, context) -> Optional.of(interval.getPeriod());
     }
 
     @Prototype

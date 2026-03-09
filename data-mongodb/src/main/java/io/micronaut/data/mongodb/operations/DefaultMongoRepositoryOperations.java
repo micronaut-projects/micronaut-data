@@ -151,11 +151,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                      MongoCollectionNameProvider collectionNameProvider,
                                      @Named("io") @Nullable ExecutorService executorService) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
-            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName)));
+            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : serverName != null ? Qualifiers.byName(serverName) : null));
         this.mongoClient = mongoClient;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
-        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : Qualifiers.byName(serverName));
+        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
         this.executorService = executorService;
     }
 
