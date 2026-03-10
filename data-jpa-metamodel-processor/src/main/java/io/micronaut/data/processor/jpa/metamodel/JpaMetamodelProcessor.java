@@ -75,11 +75,46 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_METAMODEL_ENTITY_TYPE = "jakarta.persistence.metamodel.EntityType";
 
     /**
+     * Jakarta persistence Entity annotation name.
+     */
+    public static final String JAKARTA_ENTITY = "jakarta.persistence.Entity";
+
+    /**
+     * Jakarta persistence MappedSuperClass annotation name.
+     */
+    public static final String JAKARTA_MAPPED_SUPER_CLASS = "jakarta.persistence.MappedSuperclass";
+
+    /**
+     * Jakarta persistence Embeddable annotation name.
+     */
+    public static final String JAKARTA_EMBEDDABLE = "jakarta.persistence.Embeddable";
+
+    /**
+     * Java util Collection class name.
+     */
+    public static final String JAVA_UTIL_COLLECTION = Collection.class.getName();
+
+    /**
+     * Java util List class name.
+     */
+    public static final String JAVA_UTIL_LIST = List.class.getName();
+
+    /**
+     * Java util Set class name.
+     */
+    public static final String JAVA_UTIL_SET = Set.class.getName();
+
+    /**
+     * Java util Map class name.
+     */
+    public static final String JAVA_UTIL_MAP = Map.class.getPackageName();
+
+    /**
      * Supported Jakarta annotations for generating Static meta model classes.
      */
-    public static final Set<String> SUPPORTED_JAKARTA_ANNOTATIONS = new HashSet<>(Arrays.asList("jakarta.persistence.Entity",
-        "jakarta.persistence.MappedSuperclass",
-        "jakarta.persistence.Embeddable"));
+    public static final Set<String> SUPPORTED_JAKARTA_ANNOTATIONS = new HashSet<>(Arrays.asList(JAKARTA_ENTITY,
+        JAKARTA_MAPPED_SUPER_CLASS,
+        JAKARTA_EMBEDDABLE));
 
     /**
      * Default constructor.
@@ -188,23 +223,24 @@ public final class JpaMetamodelProcessor {
         ClassElement beanPropertyType = beanProperty.getType();
         Map<String, ClassElement> typeArguments = beanPropertyType.getTypeArguments();
 
-        TypeDef typeDef = switch (beanPropertyType.getName()) {
-            case "java.util.Collection" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef,
-                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-            case "java.util.Set" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef,
-                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-            case "java.util.List" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef,
-                    TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-            case "java.util.Map" ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef,
-                    TypeDef.of(Objects.requireNonNull(typeArguments.get("K"))),
-                    TypeDef.of(Objects.requireNonNull(typeArguments.get("V"))));
-            default ->
-                TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanPropertyType)));
-        };
+        TypeDef typeDef;
+        String name = beanPropertyType.getName();
+        if (name.equals(JAVA_UTIL_COLLECTION)) {
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef,
+                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
+        } else if (name.equals(JAVA_UTIL_SET)) {
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef,
+                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
+        } else if (name.equals(JAVA_UTIL_LIST)) {
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef,
+                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
+        } else if (name.equals(JAVA_UTIL_MAP)) {
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef,
+                TypeDef.of(Objects.requireNonNull(typeArguments.get("K"))),
+                TypeDef.of(Objects.requireNonNull(typeArguments.get("V"))));
+        } else {
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanPropertyType)));
+        }
         return attributeDefBuilder.ofType(typeDef).build();
     }
 

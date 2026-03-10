@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Jpa static meta model annotation processor visitor.
- *
+/**
+ * Jpa static meta model annotation processor visitor.
  */
 @Internal
 public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Object, Object> {
@@ -48,8 +48,8 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
     }
 
     /**
-     *
-     * @return Set of string of supported annotation names
+     * Supported Jakarta annotation names.
+     * @return Set of strings of supported Jakarta annotation names
      */
     @Override
     public Set<String> getSupportedAnnotationNames() {
@@ -81,7 +81,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
             throw e;
         } catch (Exception e) {
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            throw new ProcessingException(element, "Failed to generate a @" + "jakarta.persistence.metamodel.StaticMetamodel" + ": " + message, e);
+            throw new ProcessingException(element, "Failed to generate a @" + JpaMetamodelProcessor.JAKARTA_STATIC_METAMODEL + ": " + message, e);
         }
     }
 
