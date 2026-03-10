@@ -550,74 +550,28 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T update(@NonNull final UpdateOperation<T> operation) {
-    T entity = operation.getEntity();
-    Class<T> type = operation.getRootEntity();
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-
-    final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
-        new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
-    if (!runtimeEntityRegistry.getEntityEventListener().preUpdate((io.micronaut.data.event.EntityEventContext<Object>) event)) {
-      return entity;
-    }
-    entity = event.getEntity();
-
-    Object idValue = entityMapper.getEntityIdValue(entity, type);
-    if (idValue != null) {
-      NitriteCollection coll = getCollection(type);
-      Filter filter = entityMapper.idEqualsFilter(type, idValue);
-      Document doc = entityMapper.toDocument(entity);
-      logUpdate(coll.getName(), filter, doc);
-      coll.update(filter, doc);
-    }
-
-    runtimeEntityRegistry.getEntityEventListener().postUpdate((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-    return entity;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation.getEntity(), false);
+    op.update();
+    return op.getEntity();
   }
 
   @Override
   public <T> Iterable<T> updateAll(@NonNull final UpdateBatchOperation<T> operation) {
-    Class<T> type = operation.getRootEntity();
-    NitriteCollection collection = getCollection(type);
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-
-    // Collect all updates first
-    List<T> entities = new ArrayList<>();
-    List<Document> documents = new ArrayList<>();
-    List<Filter> filters = new ArrayList<>();
-
+    List<T> results = new ArrayList<>();
     for (T entity : operation) {
-      Object idValue = entityMapper.getEntityIdValue(entity, type);
-      if (idValue != null) {
-        Filter filter = entityMapper.idEqualsFilter(type, idValue);
-        Document doc = entityMapper.toDocument(entity);
-
-        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
-            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
-        if (runtimeEntityRegistry.getEntityEventListener().preUpdate((io.micronaut.data.event.EntityEventContext<Object>) event)) {
-          entities.add(event.getEntity());
-          documents.add(doc);
-          filters.add(filter);
-        }
-      }
+      NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+      NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+          ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+          getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+          entity, false);
+      op.update();
+      results.add(op.getEntity());
     }
-
-    if (entities.isEmpty()) {
-      return entities;
-    }
-
-    // Execute all updates
-    // If already in a @Transactional method, use that existing transaction (collection is transaction-aware)
-    // Otherwise, execute directly - each update auto-commits but this is actually faster for Nitrite
-    for (int i = 0; i < documents.size(); i++) {
-      collection.update(filters.get(i), documents.get(i));
-    }
-
-    // Post-update events
-    for (T entity : entities) {
-      runtimeEntityRegistry.getEntityEventListener().postUpdate((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-    }
-
-    return entities;
+    return results;
   }
 
   @Override
