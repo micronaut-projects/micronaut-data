@@ -469,20 +469,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return op.getEntity();
   }
 
-  /**
-   * Persists all entities in the batch operation with cascade support.
-   * <p>
-   * This method performs a two-pass operation:
-   * <ol>
-   *   <li>First pass: generates IDs for all parent entities so cascaded children can reference them</li>
-   *   <li>Second pass: persists cascaded child entities and then inserts the parent entities</li>
-   * </ol>
-   * </p>
-   *
-   * @param <T> the entity type
-   * @param operation the batch insert operation containing entities to persist
-   * @return the persisted entities
-   */
   @Override
   public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
@@ -561,17 +547,46 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> Iterable<T> updateAll(@NonNull final UpdateBatchOperation<T> operation) {
-    List<T> results = new ArrayList<>();
+    Class<T> type = operation.getRootEntity();
+    NitriteCollection collection = getCollection(type);
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+
+    // Collect all updates first
+    List<T> entities = new ArrayList<>();
+    List<Document> documents = new ArrayList<>();
+    List<Filter> filters = new ArrayList<>();
+
     for (T entity : operation) {
-      NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
-      NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
-          ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
-          getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
-          entity, NitriteEntityOperations.OperationType.UPDATE);
-      op.update();
-      results.add(op.getEntity());
+      Object idValue = entityMapper.getEntityIdValue(entity, type);
+      if (idValue != null) {
+        Filter filter = entityMapper.idEqualsFilter(type, idValue);
+        Document doc = entityMapper.toDocument(entity);
+
+        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
+            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
+        if (runtimeEntityRegistry.getEntityEventListener().preUpdate((io.micronaut.data.event.EntityEventContext<Object>) event)) {
+          entities.add(event.getEntity());
+          documents.add(doc);
+          filters.add(filter);
+        }
+      }
     }
-    return results;
+
+    if (entities.isEmpty()) {
+      return entities;
+    }
+
+    // Execute all updates
+    for (int i = 0; i < documents.size(); i++) {
+      collection.update(filters.get(i), documents.get(i));
+    }
+
+    // Post-update events
+    for (T entity : entities) {
+      runtimeEntityRegistry.getEntityEventListener().postUpdate((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
+    }
+
+    return entities;
   }
 
   @Override
@@ -587,22 +602,52 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> Optional<Number> deleteAll(@NonNull final DeleteBatchOperation<T> operation) {
+    Class<T> type = operation.getRootEntity();
+    NitriteCollection collection = getCollection(type);
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+
     if (operation.all()) {
-      logDelete(getCollectionName(operation.getRootEntity()), Filter.ALL);
-      getCollection(operation.getRootEntity()).clear();
+      logDelete(collection.getName(), Filter.ALL);
+      collection.clear();
       return Optional.of(-1);
     }
 
-    int count = 0;
+    // Collect all filters and entities first
+    List<T> entities = new ArrayList<>();
+    List<Filter> filters = new ArrayList<>();
+
     for (T entity : operation) {
-      NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
-      NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
-          ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
-          getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
-          entity, NitriteEntityOperations.OperationType.DELETE);
-      op.delete();
-      count++;
+      Object idValue = entityMapper.getEntityIdValue(entity, type);
+      if (idValue != null) {
+        Filter filter = entityMapper.idEqualsFilter(type, idValue);
+
+        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
+            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
+        if (runtimeEntityRegistry.getEntityEventListener().preRemove((io.micronaut.data.event.EntityEventContext<Object>) event)) {
+          entities.add(event.getEntity());
+          filters.add(filter);
+        }
+      }
     }
+
+    if (entities.isEmpty()) {
+      return Optional.of(0);
+    }
+
+    int count = 0;
+
+    // Execute all deletes
+    for (Filter filter : filters) {
+      if (collection.remove(filter, false).getAffectedCount() > 0) {
+        count++;
+      }
+    }
+
+    // Post-remove events
+    for (T entity : entities) {
+      runtimeEntityRegistry.getEntityEventListener().postRemove((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
+    }
+
     return Optional.of(count);
   }
 
