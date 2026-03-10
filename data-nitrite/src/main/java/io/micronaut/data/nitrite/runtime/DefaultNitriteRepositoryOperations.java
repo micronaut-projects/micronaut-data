@@ -151,7 +151,8 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
 @SuppressWarnings({"removal", "unchecked", "rawtypes"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
-               SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext> {
+               SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext>,
+               io.micronaut.data.operations.CriteriaRepositoryOperations {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -181,6 +182,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
   private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
+  private final io.micronaut.data.model.query.builder.QueryBuilder queryBuilder;
+  private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
+  private final NitriteCriteriaExecutor criteriaExecutor;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
 
   /**
@@ -213,6 +217,16 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.filterBuilder = new NitriteFilterBuilder(entityMapper);
     this.updateExecutor = new NitriteUpdateExecutor(entityMapper, filterBuilder);
     this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
+    this.queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
+    this.criteriaBuilder = new io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder(runtimeEntityRegistry);
+    this.criteriaExecutor = new NitriteCriteriaExecutor(
+        queryBuilder,
+        entityMapper,
+        queryParser,
+        filterBuilder,
+        this::getCollection,
+        this::getEntity
+    );
   }
 
   @Override
@@ -242,6 +256,47 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
           collection, filter != null ? filter : "Filter.ALL", update);
     }
+  }
+
+  // ========== CriteriaRepositoryOperations implementation ==========
+
+  @Override
+  public jakarta.persistence.criteria.CriteriaBuilder getCriteriaBuilder() {
+    return criteriaBuilder;
+  }
+
+  @Override
+  public boolean exists(@NonNull jakarta.persistence.criteria.CriteriaQuery<?> query) {
+    return criteriaExecutor.exists(query);
+  }
+
+  @Override
+  public <R> R findOne(@NonNull jakarta.persistence.criteria.CriteriaQuery<R> query) {
+    return criteriaExecutor.findOne(query);
+  }
+
+  @Override
+  @NonNull
+  public <T> List<T> findAll(@NonNull jakarta.persistence.criteria.CriteriaQuery<T> query) {
+    return criteriaExecutor.findAll(query);
+  }
+
+  @Override
+  @NonNull
+  public <T> List<T> findAll(@NonNull jakarta.persistence.criteria.CriteriaQuery<T> query, int offset, int limit) {
+    return criteriaExecutor.findAll(query, offset, limit);
+  }
+
+  @Override
+  @NonNull
+  public Optional<Number> updateAll(@NonNull jakarta.persistence.criteria.CriteriaUpdate<Number> query) {
+    return criteriaExecutor.updateAll(query);
+  }
+
+  @Override
+  @NonNull
+  public Optional<Number> deleteAll(@NonNull jakarta.persistence.criteria.CriteriaDelete<Number> query) {
+    return criteriaExecutor.deleteAll(query);
   }
 
   // ========== SyncCascadeOperationsHelper implementation ==========
