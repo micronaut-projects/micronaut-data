@@ -8,3 +8,12 @@ Micronaut Data JDBC / R2DBC supports most common Java data types. The following 
 * Collections of Entity. In the case of `@OneToMany` and if `mappedBy` is specified then it is expected that the inverse property exists defining the column, otherwise a join table mapping is created.
 
 If you wish to define a custom data type then you can do so by defining a class that is annotated with ann:data.annotation.TypeDef[].
+
+==== Oracle database custom data types
+
+Since 5.0.0, the following Java time types are mapped to Oracle Database INTERVAL types:
+
+* `java.time.Duration` is mapped to `INTERVAL DAY TO SECOND (INTERVALDS)`
+* `java.time.Period` is mapped to `INTERVAL YEAR TO MONTH (INTERVALYM)`
+
+Only year and month components are supported for `java.time.Period`, day component must be zero.

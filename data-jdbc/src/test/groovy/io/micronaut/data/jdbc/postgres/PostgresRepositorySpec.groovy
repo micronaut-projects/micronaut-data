@@ -182,6 +182,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
 
     @Memoized
     @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(PostgresIntervalRepository)
+    }
+
+    @Memoized
+    @Override
     boolean isSupportsArrays() {
         return true
     }
