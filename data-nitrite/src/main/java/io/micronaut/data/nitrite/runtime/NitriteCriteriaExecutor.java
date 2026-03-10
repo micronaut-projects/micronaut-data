@@ -126,13 +126,17 @@ public final class NitriteCriteriaExecutor {
     }
 
     public Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query) {
-        // For Nitrite, we need to fetch entities, update them, and save back
-        // This is a simplified implementation
+        // For Nitrite, we need to fetch entities, apply updates, and save back
         try {
-            QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
+            // Build the query result to get the filter
+            QueryResult queryResult = ((io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate<?>) query)
                     .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+            
             Class<?> entityType = getEntityType(query);
             Filter filter = buildFilterFromQueryResult(queryResult, entityType);
+            
+            // Get the update values from the CriteriaUpdate
+            Map<String, Object> updateValues = getUpdateValues(query);
             
             // Get all matching entities
             NitriteCollection collection = collectionFactory.apply(entityType);
@@ -145,26 +149,44 @@ public final class NitriteCriteriaExecutor {
                 return Optional.of(0);
             }
             
-            // For criteria update, extract update values from the CriteriaUpdate query
-            // The query has set clauses that need to be applied to each document
-            // This is a simplified implementation - a full implementation would parse
-            // the CriteriaUpdate properly
-            RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
+            // Apply update to each document
             for (Document doc : docs) {
-                // Apply update - for the test case, we're updating the "name" field
-                // The CriteriaUpdate query sets name to "Steven"
-                // We need to extract this from the query properly
-                // For now, this is a placeholder that just counts the update
-                collection.update(
-                    org.dizitart.no2.filters.FluentFilter.where("_id").eq(doc.get("_id")),
-                    doc
-                );
+                for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
+                    doc.put(entry.getKey(), entry.getValue());
+                }
+                // Update the document in the collection
+                Filter idFilter = org.dizitart.no2.filters.FluentFilter.where("_id").eq(doc.get("_id"));
+                collection.update(idFilter, doc);
             }
             
             return Optional.of(docs.size());
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getUpdateValues(jakarta.persistence.criteria.CriteriaUpdate<?> query) {
+        if (query instanceof io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate<?> update) {
+            Map<String, Object> rawValues = (Map<String, Object>) update.getUpdateValues();
+            Map<String, Object> resolvedValues = new java.util.LinkedHashMap<>();
+            for (Map.Entry<String, Object> entry : rawValues.entrySet()) {
+                Object value = entry.getValue();
+                // Resolve ParameterExpression to actual value
+                if (value instanceof io.micronaut.data.model.jpa.criteria.impl.IParameterExpression<?> paramExpr) {
+                    // Try to get the value via reflection
+                    try {
+                        java.lang.reflect.Field valueField = paramExpr.getClass().getDeclaredField("value");
+                        valueField.setAccessible(true);
+                        value = valueField.get(paramExpr);
+                    } catch (Exception ignored) {
+                    }
+                }
+                resolvedValues.put(entry.getKey(), value);
+            }
+            return resolvedValues;
+        }
+        return Collections.emptyMap();
     }
 
     public Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query) {
@@ -177,7 +199,13 @@ public final class NitriteCriteriaExecutor {
     }
 
     private Class<?> getEntityType(Object query) {
-        return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getPersistentEntity()).getIntrospection().getBeanType();
+        if (query instanceof jakarta.persistence.criteria.CriteriaUpdate<?> update) {
+            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
+        } else if (query instanceof jakarta.persistence.criteria.CriteriaDelete<?> delete) {
+            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
+        } else {
+            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getPersistentEntity()).getIntrospection().getBeanType();
+        }
     }
 
     private Filter buildFilterFromQueryResult(QueryResult queryResult, Class<?> entityType) {
@@ -190,27 +218,41 @@ public final class NitriteCriteriaExecutor {
             if (filterMap == null || filterMap.isEmpty()) {
                 return Filter.ALL;
             }
-            
-            // Recurse filterMap to convert any date/time values
-            convertFilterMapValues(filterMap);
+
+            // Build parameter array from parameter bindings
+            List<io.micronaut.data.model.query.builder.QueryParameterBinding> bindings = queryResult.getParameterBindings();
+            Object[] params = new Object[bindings.size()];
+            for (int i = 0; i < bindings.size(); i++) {
+                params[i] = bindings.get(i).getValue();
+            }
+
+            // Resolve placeholders in the filter map using params
+            resolveFilterMapPlaceholders(filterMap, params);
 
             return filterBuilder.buildFilterFromJson(
                     entityFactory.apply(entityType),
                     filterMap,
-                    new Object[0],
+                    params,
                     Collections.emptyMap());
         } catch (Exception e) {
             return Filter.ALL;
         }
     }
 
-    private void convertFilterMapValues(Map<String, Object> map) {
+    private void resolveFilterMapPlaceholders(Map<String, Object> map, Object[] params) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Map m) {
-                convertFilterMapValues(m);
-            } else {
-                entry.setValue(toFilterValue(value));
+                resolveFilterMapPlaceholders(m, params);
+            } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
+                // Resolve placeholder
+                try {
+                    int idx = Integer.parseInt(str.substring(7));
+                    if (params != null && idx >= 0 && idx < params.length) {
+                        entry.setValue(params[idx]);
+                    }
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -240,6 +282,26 @@ public final class NitriteCriteriaExecutor {
         }
         if (value instanceof Number || value instanceof Boolean || value instanceof Character) {
             return value;
+        }
+        // Handle numeric strings from JSON parsing
+        if (value instanceof String str) {
+            // Try to parse as integer first
+            try {
+                return Integer.parseInt(str);
+            } catch (NumberFormatException e1) {
+                // Try long
+                try {
+                    return Long.parseLong(str);
+                } catch (NumberFormatException e2) {
+                    // Try double
+                    try {
+                        return Double.parseDouble(str);
+                    } catch (NumberFormatException e3) {
+                        // Return as string if not a number
+                        return str;
+                    }
+                }
+            }
         }
         return value;
     }
