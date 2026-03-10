@@ -46,6 +46,11 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private final NitriteEntityMapper entityMapper;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
+    private final OperationType operationType;
+
+    enum OperationType {
+        INSERT, UPDATE, DELETE
+    }
 
     public NitriteEntityOperations(
             NitriteOperationContext ctx,
@@ -56,12 +61,13 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             NitriteEntityMapper entityMapper,
             NitriteOperationsHelper helper,
             T entity,
-            boolean insert) {
-        super(ctx, cascadeOperations, entityEventListener, persistentEntity, conversionService, entity, insert);
+            OperationType operationType) {
+        super(ctx, cascadeOperations, entityEventListener, persistentEntity, conversionService, entity, operationType == OperationType.INSERT);
         this.cascadeOperations = cascadeOperations;
         this.entityMapper = entityMapper;
         this.helper = helper;
         this.collection = helper.getCollection(persistentEntity.getIntrospection().getBeanType());
+        this.operationType = operationType;
     }
 
     @Override
@@ -90,14 +96,19 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     }
 
     @Override
+    public void delete() {
+        super.delete();
+    }
+
+    @Override
     protected void execute() throws RuntimeException {
         // Skip if already persisted in this context
-        if (insert && ctx.persisted.contains(entity)) {
+        if (operationType == OperationType.INSERT && ctx.persisted.contains(entity)) {
             return;
         }
         
         Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
-        if (insert) {
+        if (operationType == OperationType.INSERT) {
             helper.generateIdIfNecessary(entity, type);
             // Initialize version to 0 if not set (for optimistic locking)
             if (persistentEntity.getVersion() != null) {
@@ -110,9 +121,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             helper.logInsert(collection.getName(), doc);
             collection.insert(doc);
             ctx.persisted.add(entity);
-        } else {
+        } else if (operationType == OperationType.UPDATE) {
+            // Update with optimistic locking
             Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
-            // Add version filter for optimistic locking
             if (persistentEntity.getVersion() != null) {
                 BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
                 Object versionValue = versionProperty.get(entity);
@@ -125,6 +136,11 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             helper.logUpdate(collection.getName(), filter, update);
             long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
             checkOptimisticLocking(1, rows);
+        } else {
+            // Delete operation
+            Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
+            helper.logFind(collection.getName(), filter);
+            collection.remove(filter, false);
         }
     }
 
