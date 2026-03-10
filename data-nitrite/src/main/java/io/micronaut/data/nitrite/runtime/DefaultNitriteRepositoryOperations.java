@@ -23,7 +23,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -77,7 +76,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -515,16 +513,46 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T> Iterable<T> updateAll(@NonNull final UpdateBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+
+    // Collect all updates first
+    List<T> entities = new ArrayList<>();
+    List<Document> documents = new ArrayList<>();
+    List<Filter> filters = new ArrayList<>();
+
     for (T entity : operation) {
       Object idValue = entityMapper.getEntityIdValue(entity, type);
       if (idValue != null) {
         Filter filter = entityMapper.idEqualsFilter(type, idValue);
         Document doc = entityMapper.toDocument(entity);
-        logUpdate(collection.getName(), filter, doc);
-        collection.update(filter, doc);
+
+        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
+            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
+        if (runtimeEntityRegistry.getEntityEventListener().preUpdate((io.micronaut.data.event.EntityEventContext<Object>) event)) {
+          entities.add(event.getEntity());
+          documents.add(doc);
+          filters.add(filter);
+        }
       }
     }
-    return operation;
+
+    if (entities.isEmpty()) {
+      return entities;
+    }
+
+    // Execute all updates
+    // If already in a @Transactional method, use that existing transaction (collection is transaction-aware)
+    // Otherwise, execute directly - each update auto-commits but this is actually faster for Nitrite
+    for (int i = 0; i < documents.size(); i++) {
+      collection.update(filters.get(i), documents.get(i));
+    }
+
+    // Post-update events
+    for (T entity : entities) {
+      runtimeEntityRegistry.getEntityEventListener().postUpdate((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
+    }
+
+    return entities;
   }
 
   @Override
@@ -555,22 +583,52 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T> Optional<Number> deleteAll(@NonNull final DeleteBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
     NitriteCollection collection = getCollection(type);
+    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
+
     if (operation.all()) {
       logDelete(collection.getName(), Filter.ALL);
       collection.clear();
       return Optional.of(-1);
     }
-    int count = 0;
+
+    // Collect all filters and entities first
+    List<T> entities = new ArrayList<>();
+    List<Filter> filters = new ArrayList<>();
+
     for (T entity : operation) {
       Object idValue = entityMapper.getEntityIdValue(entity, type);
       if (idValue != null) {
         Filter filter = entityMapper.idEqualsFilter(type, idValue);
-        logDelete(collection.getName(), filter);
-        if (collection.remove(filter, false).getAffectedCount() > 0) {
-          count++;
+        
+        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
+            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
+        if (runtimeEntityRegistry.getEntityEventListener().preRemove((io.micronaut.data.event.EntityEventContext<Object>) event)) {
+          entities.add(event.getEntity());
+          filters.add(filter);
         }
       }
     }
+
+    if (entities.isEmpty()) {
+      return Optional.of(0);
+    }
+
+    int count = 0;
+
+    // Execute all deletes
+    // If already in a @Transactional method, use that existing transaction (collection is transaction-aware)
+    // Otherwise, execute directly - each delete auto-commits but this is actually faster for Nitrite
+    for (Filter filter : filters) {
+      if (collection.remove(filter, false).getAffectedCount() > 0) {
+        count++;
+      }
+    }
+
+    // Post-remove events
+    for (T entity : entities) {
+      runtimeEntityRegistry.getEntityEventListener().postRemove((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
+    }
+
     return Optional.of(count);
   }
 

@@ -16,7 +16,6 @@
 package io.micronaut.data.nitrite.runtime.mapping;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
@@ -115,6 +114,7 @@ public final class NitriteEntityMapper {
    * values.
    *
    * @param val the raw value
+   * @param fieldPath the property path (may be null)
    * @return the normalized value
    */
   public Object toNitriteFilterValue(final Object val, final String fieldPath) {
@@ -191,7 +191,6 @@ public final class NitriteEntityMapper {
    *
    * @param type the entity class
    * @param id the ID value
-   * @return the Nitrite Filter
    * @param <T> the entity type
    * @return the Nitrite Filter
    */
