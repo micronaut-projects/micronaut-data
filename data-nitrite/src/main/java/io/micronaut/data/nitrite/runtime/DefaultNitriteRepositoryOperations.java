@@ -616,6 +616,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       Object idValue = entityMapper.getEntityIdValue(entity, type);
       if (idValue != null) {
         Filter filter = entityMapper.idEqualsFilter(type, idValue);
+        
+        // Add version filter for optimistic locking
+        // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
+        if (persistentEntity.getVersion() != null) {
+          BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+          Object versionValue = versionProperty.get(entity);
+          filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(toFilterValue(versionValue)));
+        }
+        
         Document doc = entityMapper.toDocument(entity);
 
         final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
@@ -632,9 +641,16 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return entities;
     }
 
-    // Execute all updates
+    // Execute all updates and count affected rows
+    int affectedCount = 0;
     for (int i = 0; i < documents.size(); i++) {
-      collection.update(filters.get(i), documents.get(i));
+      long rows = collection.update(filters.get(i), documents.get(i)).getAffectedCount();
+      affectedCount += rows;
+    }
+
+    // Check optimistic locking
+    if (persistentEntity.getVersion() != null && affectedCount != entities.size()) {
+      throw new io.micronaut.data.exceptions.OptimisticLockException("Execute update returned unexpected row count. Expected: " + entities.size() + " got: " + affectedCount);
     }
 
     // Post-update events
@@ -676,6 +692,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       Object idValue = entityMapper.getEntityIdValue(entity, type);
       if (idValue != null) {
         Filter filter = entityMapper.idEqualsFilter(type, idValue);
+        
+        // Add version filter for optimistic locking
+        if (persistentEntity.getVersion() != null) {
+          BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+          Object versionValue = versionProperty.get(entity);
+          filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(toFilterValue(versionValue)));
+        }
 
         final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
             new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
@@ -697,6 +720,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       if (collection.remove(filter, false).getAffectedCount() > 0) {
         count++;
       }
+    }
+
+    // Check optimistic locking
+    if (persistentEntity.getVersion() != null && count != entities.size()) {
+      throw new io.micronaut.data.exceptions.OptimisticLockException("Execute update returned unexpected row count. Expected: " + entities.size() + " got: " + count);
     }
 
     // Post-remove events

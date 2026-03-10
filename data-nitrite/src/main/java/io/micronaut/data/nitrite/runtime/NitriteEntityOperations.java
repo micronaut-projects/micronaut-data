@@ -123,14 +123,12 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             ctx.persisted.add(entity);
         } else if (operationType == OperationType.UPDATE) {
             // Update with optimistic locking
+            // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
             Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
             if (persistentEntity.getVersion() != null) {
                 BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
                 Object versionValue = versionProperty.get(entity);
                 filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
-                // Increment version
-                long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
-                entity = helper.updateEntityId(versionProperty, entity, nextVersion);
             }
             Document update = entityMapper.toDocument(entity);
             helper.logUpdate(collection.getName(), filter, update);

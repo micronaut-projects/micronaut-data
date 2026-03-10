@@ -685,7 +685,22 @@ public final class NitriteEntityMapper {
     if (idProp != null && idProp.isAnnotationPresent(EmbeddedId.class) && idProp.getProperty().get(entity) == null) {
         reconstructEmbeddedId(doc, entity, idProp);
     }
-    
+
+    // Handle version property for optimistic locking
+    RuntimePersistentProperty<T> versionProp = persistentEntity.getVersion();
+    if (versionProp != null) {
+        Object storedVersion = doc.get(versionProp.getPersistedName());
+        if (storedVersion == null) {
+            storedVersion = doc.get(versionProp.getName());
+        }
+        if (storedVersion != null) {
+            Object convertedVersion = convertFromDocumentValue(storedVersion, versionProp.getProperty().asArgument());
+            if (convertedVersion != null) {
+                versionProp.getProperty().set(entity, convertedVersion);
+            }
+        }
+    }
+
     return entity;
   }
 
