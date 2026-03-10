@@ -42,6 +42,31 @@ interface VectorSimilarityDialect {
         };
     }
 
+    @Nullable
+    private static OracleVectorConfig resolveOracleVectorConfig(Expression<?> left) {
+        if (!(left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpression)) {
+            return null;
+        }
+        PersistentPropertyPath propertyPath = propertyPathExpression.getPropertyPath();
+        PersistentProperty property = propertyPath.getProperty();
+        int configuredLength = property.getAnnotationMetadata().intValue(VectorStorage.class, "length").orElse(-1);
+        String dimensions = configuredLength > 0 ? Integer.toString(configuredLength) : "*";
+        boolean sparse = property.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
+        if (property.isAssignable(FloatVector.class)) {
+            return new OracleVectorConfig(dimensions, "FLOAT32", sparse);
+        }
+        if (property.isAssignable(DoubleVector.class)) {
+            return new OracleVectorConfig(dimensions, "FLOAT64", sparse);
+        }
+        if (property.isAssignable(ByteVector.class)) {
+            return new OracleVectorConfig(dimensions, "INT8", sparse);
+        }
+        return null;
+    }
+
+    record OracleVectorConfig(String dimensions, String format, boolean sparse) {
+    }
+
     enum MySqlVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 
@@ -74,31 +99,6 @@ interface VectorSimilarityDialect {
 
     enum OracleVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
-
-        private record OracleVectorConfig(String dimensions, String format, boolean sparse) {
-        }
-
-        @Nullable
-        private static OracleVectorConfig resolveOracleVectorConfig(Expression<?> left) {
-            if (!(left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpression)) {
-                return null;
-            }
-            PersistentPropertyPath propertyPath = propertyPathExpression.getPropertyPath();
-            PersistentProperty property = propertyPath.getProperty();
-            int configuredLength = property.getAnnotationMetadata().intValue(VectorStorage.class, "length").orElse(-1);
-            String dimensions = configuredLength > 0 ? Integer.toString(configuredLength) : "*";
-            boolean sparse = property.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
-            if (property.isAssignable(FloatVector.class)) {
-                return new OracleVectorConfig(dimensions, "FLOAT32", sparse);
-            }
-            if (property.isAssignable(DoubleVector.class)) {
-                return new OracleVectorConfig(dimensions, "FLOAT64", sparse);
-            }
-            if (property.isAssignable(ByteVector.class)) {
-                return new OracleVectorConfig(dimensions, "INT8", sparse);
-            }
-            return null;
-        }
 
         @Override
         public void appendVectorScore(StringBuilder query,

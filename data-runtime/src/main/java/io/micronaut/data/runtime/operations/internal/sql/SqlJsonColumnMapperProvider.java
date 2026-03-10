@@ -56,6 +56,7 @@ public final class SqlJsonColumnMapperProvider<S> {
      * @param jsonMapper the default JSON mapper
      * @param sqlJsonColumnReaders list of custom SQL JSON column readers
      * @param sqlJsonValueMappers  list of custom SQL JSON value mappers
+     * @param vectorScoringSupportResolver the vector scoring support resolver
      */
     public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
                                        List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,

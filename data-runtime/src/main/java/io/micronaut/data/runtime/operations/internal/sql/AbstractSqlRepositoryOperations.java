@@ -923,6 +923,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         };
     }
 
+    /**
+     * Creates a {@link SearchResultsMapper} that maps each row to an entity + score pair.
+     *
+     * <p>The underlying query is expected to return all columns required to materialize the entity plus a numeric
+     * score column named {@code mn_score}. The {@code mn_score} value is then normalized (when applicable) using
+     * the resolved {@link ScoringFunction}.
+     *
+     * @param preparedQuery The SQL prepared query
+     * @param rsType The result set type (different for R2DBC and JDBC)
+     * @param <E> The entity type
+     * @return A mapper for row-by-row mapping of {@link SearchResults}
+     */
     protected <E> SearchResultsMapper<RS, E> createSearchResultsResultMapper(SqlStoredQuery<E, ?> preparedQuery, Class<RS> rsType) {
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
         SqlTypeMapper<RS, E> entityMapper = new SqlResultEntityTypeMapper<>(
@@ -941,6 +953,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         );
     }
 
+    /**
+     * Creates a {@link SqlTypeMapper} that maps the entire result set into a single {@link SearchResults} instance.
+     *
+     * <p>This mapper delegates row mapping to {@link #createSearchResultsResultMapper(SqlStoredQuery, Class)} and
+     * then collects all rows using {@link SearchResultsMapper#mapAll(Object, Class)}.
+     *
+     * @param preparedQuery The SQL prepared query
+     * @param rsType The result set type (different for R2DBC and JDBC)
+     * @param <E> The entity type
+     * @return A mapper that maps the whole result set into {@link SearchResults}
+     */
     protected <E> SqlTypeMapper<RS, SearchResults<E>> createSearchResultsMapper(SqlStoredQuery<E, ?> preparedQuery, Class<RS> rsType) {
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
         SearchResultsMapper<RS, E> mapper = createSearchResultsResultMapper(preparedQuery, rsType);

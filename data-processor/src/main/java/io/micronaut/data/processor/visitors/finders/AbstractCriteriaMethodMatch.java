@@ -94,7 +94,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String WITHIN = "Within";
     private static final String BETWEEN = "Between";
 
-
     private static final Map<String, Pattern> OPERATOR_PATTERNS;
 
     private static final List<String> PROPERTY_RESTRICTIONS;
