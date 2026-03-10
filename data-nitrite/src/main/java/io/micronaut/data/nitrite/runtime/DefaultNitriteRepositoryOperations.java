@@ -47,6 +47,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
+import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
@@ -85,6 +86,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -148,7 +150,8 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
 @Internal
 @SuppressWarnings({"removal", "unchecked", "rawtypes"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
-    implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
+    implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
+               SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext> {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -177,6 +180,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteQueryParser queryParser;
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
+  private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
 
   /**
@@ -208,6 +212,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.queryParser = new NitriteQueryParser();
     this.filterBuilder = new NitriteFilterBuilder(entityMapper);
     this.updateExecutor = new NitriteUpdateExecutor(entityMapper, filterBuilder);
+    this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
   }
 
   @Override
@@ -215,25 +220,85 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return database;
   }
 
-  private void logFind(String collection, Filter filter) {
+  @Override
+  public void logFind(String collection, Filter filter) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
           collection, filter != null ? filter : "Filter.ALL");
     }
   }
 
-  private void logInsert(String collection, Object entityOrDocs) {
+  @Override
+  public void logInsert(String collection, Object entityOrDocs) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing Nitrite 'insert' into collection [{}] with: {}",
+      LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}",
           collection, entityOrDocs);
     }
   }
 
-  private void logUpdate(String collection, Filter filter, Document update) {
+  @Override
+  public void logUpdate(String collection, Filter filter, Document update) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
           collection, filter != null ? filter : "Filter.ALL", update);
     }
+  }
+
+  // ========== SyncCascadeOperationsHelper implementation ==========
+
+  @Override
+  public <T> T persistOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        persistentEntity, conversionService, entityMapper, this, entityValue, true);
+    op.persist();
+    return op.getEntity();
+  }
+
+  @Override
+  public <T> List<T> persistBatch(NitriteOperationContext ctx, Iterable<T> entityValues,
+                                   RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+    List<T> results = new ArrayList<>();
+    for (T entity : entityValues) {
+      if (predicate.test(entity)) {
+        continue;
+      }
+      NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+          ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+          persistentEntity, conversionService, entityMapper, this, entity, true);
+      op.persist();
+      results.add(op.getEntity());
+    }
+    return results;
+  }
+
+  @Override
+  public <T> T updateOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        persistentEntity, conversionService, entityMapper, this, entityValue, false);
+    op.update();
+    return op.getEntity();
+  }
+
+  @Override
+  public void persistManyAssociation(NitriteOperationContext ctx,
+                                      RuntimeAssociation runtimeAssociation,
+                                      Object parentEntityValue,
+                                      RuntimePersistentEntity<Object> parentPersistentEntity,
+                                      Object childEntityValue,
+                                      RuntimePersistentEntity<Object> childPersistentEntity) {
+    // Not needed for Nitrite - relationships are not stored as separate collections
+  }
+
+  @Override
+  public void persistManyAssociationBatch(NitriteOperationContext ctx,
+                                           RuntimeAssociation runtimeAssociation,
+                                           Object parentEntityValue,
+                                           RuntimePersistentEntity<Object> parentPersistentEntity,
+                                           Iterable<Object> childEntityValues,
+                                           RuntimePersistentEntity<Object> childPersistentEntity) {
+    // Not needed for Nitrite - relationships are not stored as separate collections
   }
 
   private void logDelete(String collection, Filter filter) {
@@ -241,6 +306,21 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
           collection, filter != null ? filter : "Filter.ALL");
     }
+  }
+
+  @Override
+  public <T> T updateEntityId(BeanProperty<T, Object> property, T entity, Object id) {
+      if (id == null) {
+          return entity;
+      }
+      if (property.getType().isInstance(id)) {
+          property.set(entity, id);
+          return entity;
+      }
+      return conversionService.convert(id, property.getType()).map(converted -> {
+          property.set(entity, converted);
+          return entity;
+      }).orElse(entity);
   }
 
   /**
@@ -276,7 +356,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /** Get Nitrite collection for entity type. */
-  private NitriteCollection getCollection(final Class<?> type) {
+  @Override
+  public NitriteCollection getCollection(final Class<?> type) {
     String name = getCollectionName(type);
     NitriteCollection collection;
     if (transactionHolder.isActive()) {
@@ -349,7 +430,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /** Generate and set ID on entity if @GeneratedValue is present. */
-  private <T> void generateIdIfNecessary(final T entity, final Class<T> type) {
+  @Override
+  public <T> void generateIdIfNecessary(final T entity, final Class<T> type) {
     RuntimePersistentEntity<T> persistentEntity = getEntity(type);
     var idProperty = persistentEntity.getIdentity();
     if (idProperty != null && idProperty.isAnnotationPresent(GeneratedValue.class)) {
@@ -378,30 +460,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T persist(@NonNull final InsertOperation<T> operation) {
-    T entity = operation.getEntity();
-    Class<T> type = operation.getRootEntity();
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-
-    final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
-        new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
-    if (!runtimeEntityRegistry.getEntityEventListener().prePersist((io.micronaut.data.event.EntityEventContext<Object>) event)) {
-      return entity;
-    }
-    entity = event.getEntity();
-
-    // Generate ID first so cascaded entities can reference it
-    generateIdIfNecessary(entity, type);
-    // Handle cascade persist for ONE_TO_MANY and MANY_TO_MANY with cascade ALL
-    persistCascadedEntities(entity, type);
-    NitriteCollection coll = getCollection(type);
-    Document doc = entityMapper.toDocument(entity);
-    if (LOG.isDebugEnabled()) {
-        LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}", coll.getName(), doc);
-    }
-    coll.insert(doc);
-
-    runtimeEntityRegistry.getEntityEventListener().postPersist((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-    return entity;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation.getEntity(), true);
+    op.persist();
+    return op.getEntity();
   }
 
   /**
@@ -1378,7 +1443,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @param value the value to convert
    * @return the converted value
    */
-  private Object toFilterValue(Object value) {
+  @Override
+  public Object toFilterValue(Object value) {
     if (value == null) {
       return null;
     }

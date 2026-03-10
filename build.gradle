@@ -1,6 +1,7 @@
 plugins {
     id "io.micronaut.build.internal.parent"
     id "io.micronaut.build.internal.data-dependencies"
+    id "io.llmcompactor.gradle" version "0.1.0"
 }
 
 repositories {
