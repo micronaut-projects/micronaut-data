@@ -23,19 +23,22 @@ class DocumentEmbeddingRepositoryTest {
 
         val vec: Vector = Vector.of(0.1, 0.2, 0.3)
 
-        repository.save(1L, vec)
-        repository.save(2L, Vector.of(0.15, 0.2, 0.25))
-        repository.save(3L, Vector.of(0.9, 0.1, 0.1))
+        val saved = repository.save(vec)
+        repository.save(Vector.of(0.15, 0.2, 0.25))
+        repository.save(Vector.of(0.9, 0.1, 0.1))
 
-        val reloaded = repository.findById(1L).orElse(null)
+        assertNotNull(saved)
+        assertNotNull(saved.id)
+
+        val reloaded = repository.findById(saved.id).orElse(null)
         assertNotNull(reloaded)
-        assertEquals(1L, reloaded!!.id)
+        assertEquals(saved.id, reloaded!!.id)
         assertEquals(Double::class.javaPrimitiveType, reloaded.embedding.type)
         assertArrayEquals(doubleArrayOf(0.1, 0.2, 0.3), reloaded.embedding.toDoubleArray())
 
         val near = repository.findTop2ByEmbeddingNear(vec, 2.0)
         assertEquals(2, near.size)
-        assertTrue(near.any { it.id == 1L })
+        assertTrue(near.any { it.id == saved.id })
 
         val scored = repository.searchByEmbeddingNear(vec, Score(2.0), ScoringFunction.COSINE)
         assertTrue(scored.results().isNotEmpty())

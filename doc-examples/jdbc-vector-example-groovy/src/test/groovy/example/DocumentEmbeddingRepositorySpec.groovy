@@ -17,20 +17,22 @@ class DocumentEmbeddingRepositorySpec extends Specification {
         when:
         repository.deleteAll()
         Vector vec = Vector.of(0.1d, 0.2d, 0.3d)
-        repository.save(1L, vec)
-        repository.save(2L, Vector.of(0.15d, 0.2d, 0.25d))
-        repository.save(3L, Vector.of(0.9d, 0.1d, 0.1d))
-        def reloaded = repository.findById(1L).orElse(null)
+        def saved = repository.save(vec)
+        repository.save(Vector.of(0.15d, 0.2d, 0.25d))
+        repository.save(Vector.of(0.9d, 0.1d, 0.1d))
+        def reloaded = repository.findById(saved.id).orElse(null)
         def near = repository.findTop2ByEmbeddingNear(vec, 2d)
         def scored = repository.searchByEmbeddingNear(vec, new Score(2d), ScoringFunction.COSINE)
 
         then:
+        saved != null
+        saved.id != null
         reloaded != null
-        reloaded.id == 1L
+        reloaded.id == saved.id
         reloaded.embedding.type == Double.TYPE
         reloaded.embedding.toDoubleArray() == [0.1d, 0.2d, 0.3d] as double[]
         near.size() == 2
-        near*.id.contains(1L)
+        near*.id.contains(saved.id)
         !scored.results().isEmpty()
     }
 }

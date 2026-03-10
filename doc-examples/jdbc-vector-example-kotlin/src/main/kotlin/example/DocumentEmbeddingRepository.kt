@@ -14,7 +14,7 @@ import io.micronaut.data.repository.CrudRepository
 interface DocumentEmbeddingRepository : CrudRepository<DocumentEmbedding, Long> {
 
     // Example showing vector as a parameter
-    fun save(id: Long, embedding: Vector): DocumentEmbedding
+    fun save(embedding: Vector): DocumentEmbedding
 
     fun findTop2ByEmbeddingNear(vec: Vector, maxDistance: Double): List<DocumentEmbedding>
 

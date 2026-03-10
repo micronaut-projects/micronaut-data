@@ -7,10 +7,10 @@ import jakarta.inject.Singleton
 class DocumentEmbeddingService(
     private val repository: DocumentEmbeddingRepository
 ) {
-    fun saveOne(id: Long) {
+    fun saveOne() {
         // tag::create_vector[]
         val vec: Vector = Vector.of(0.1, 0.2, 0.3)
-        repository.save(id, vec)
+        repository.save(vec)
         // end::create_vector[]
     }
 }

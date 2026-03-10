@@ -17,7 +17,7 @@ import java.util.List;
 interface DocumentEmbeddingRepository extends CrudRepository<DocumentEmbedding, Long> {
 
     // Example showing vector as a parameter
-    DocumentEmbedding save(Long id, Vector embedding);
+    DocumentEmbedding save(Vector embedding);
 
     List<DocumentEmbedding> findTop2ByEmbeddingNear(Vector vec, Double maxDistance);
 

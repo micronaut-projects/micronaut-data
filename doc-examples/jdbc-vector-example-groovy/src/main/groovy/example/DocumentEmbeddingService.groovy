@@ -12,10 +12,10 @@ class DocumentEmbeddingService {
         this.repository = repository
     }
 
-    void saveOne(long id) {
+    void saveOne() {
         // tag::create_vector[]
         Vector vec = Vector.of(0.1d, 0.2d, 0.3d)
-        repository.save(id, vec)
+        repository.save(vec)
         // end::create_vector[]
     }
 }
