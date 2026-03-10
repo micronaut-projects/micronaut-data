@@ -19,16 +19,17 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.query.BindingParameter;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -37,17 +38,14 @@ import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
-import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
@@ -64,10 +62,25 @@ import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Singleton;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.collection.FindOptions;
+import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.common.RecordStream;
+import org.dizitart.no2.common.SortOrder;
+import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.index.IndexOptions;
+import org.dizitart.no2.index.IndexType;
+import org.dizitart.no2.repository.ObjectRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -91,19 +104,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.dizitart.no2.Nitrite;
-import org.dizitart.no2.collection.Document;
-import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.collection.FindOptions;
-import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.common.SortOrder;
-import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.index.IndexOptions;
-import org.dizitart.no2.index.IndexType;
-import org.dizitart.no2.repository.ObjectRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.dizitart.no2.index.IndexOptions.indexOptions;
 
@@ -152,7 +152,8 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
                SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext>,
-               io.micronaut.data.operations.CriteriaRepositoryOperations {
+               io.micronaut.data.operations.CriteriaRepositoryOperations,
+               DeprecatedQueryModelOperations {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -1307,12 +1308,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1));
       boolean notIn = inMatcher.group(2) != null;
       String paramName = inMatcher.group(3);
-      
+
       // Resolve the parameter value - namedParameters uses names without colon prefix
       Object paramValue = namedParameters != null && namedParameters.containsKey(paramName)
           ? namedParameters.get(paramName)
           : resolveParam(":" + paramName, params);
-      
+
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
@@ -1502,21 +1503,21 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       // Check if this is a count query or a numeric projection
       // Count queries typically have method names starting with "count" or operation type COUNT
       String methodName = q.getName();
-      boolean isCountQuery = methodName.startsWith("count") || 
+      boolean isCountQuery = methodName.startsWith("count") ||
           (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
       if (isCountQuery) {
         return (R) Long.valueOf(coll.find(nq.getNitriteFilter()).size());
       }
       // Otherwise, fall through to projection handling
     }
-    
+
     // Check if this is a projection query (result type differs from entity type)
     boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
     List<String> projectedFields = null;
     if (isProjection) {
       // Try to parse SELECT clause from SQL query
       projectedFields = queryParser.parseSelectClause(nq.getQuery());
-      
+
       // For JSON queries with $project syntax, extract the field explicitly
       if (projectedFields == null || projectedFields.isEmpty()) {
         String projectField = queryParser.extractProjectionField(nq.getQuery());
@@ -1524,7 +1525,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           projectedFields = Collections.singletonList(projectField);
         }
       }
-      
+
       // For method-name-derived projections (e.g., findAgeByName), infer field from method name
       if (projectedFields == null || projectedFields.isEmpty()) {
         String methodName = q.getName();
@@ -1589,7 +1590,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           }
         }
       }
-      
+
       // For single-field projection, extract the value directly
       if (projectedFields != null && projectedFields.size() == 1) {
         Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
@@ -1600,7 +1601,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         return (R) convertValue(value, nq.getResultType());
       }
     }
-    
+
     Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
     if (doc == null) {
       return null;
@@ -1647,7 +1648,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (Number.class.isAssignableFrom(nq.getResultType())) {
       // Check if this is a count query or a numeric projection
       String methodName = q.getName();
-      boolean isCountQuery = methodName.startsWith("count") || 
+      boolean isCountQuery = methodName.startsWith("count") ||
           (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
       if (isCountQuery) {
         return Collections.singletonList((R) Long.valueOf(coll.find(nq.getNitriteFilter()).size()));
@@ -1720,9 +1721,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         );
       }
     }
-    
+
     var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s, limit));
-    
+
     // Apply projection if we have fields to project
     if (projectedFields != null && !projectedFields.isEmpty()) {
       Document projection = Document.createDocument();
@@ -1732,7 +1733,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       RecordStream<Document> projectedCursor = cursor.project(projection);
       return extractProjectedResults(projectedCursor, projectedFields, nq.getResultType());
     }
-    
+
     List<R> results = new ArrayList<>();
     RuntimePersistentEntity<T> persistentEntity = getEntity(nq.getRootEntity());
     for (Document doc : cursor) {
@@ -1784,7 +1785,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (targetType.isInstance(value)) {
       return value;
     }
-    
+
     // Handle LocalDate conversion from ISO string format (e.g., "1986-06-05")
     if (targetType == LocalDate.class && value instanceof String) {
       try {
@@ -1793,7 +1794,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     // Handle LocalDateTime conversion from ISO string format
     if (targetType == LocalDateTime.class && value instanceof String) {
       try {
@@ -1802,7 +1803,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     // Handle LocalTime conversion from ISO string format
     if (targetType == LocalTime.class && value instanceof String) {
       try {
@@ -1811,7 +1812,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Fall through to conversion service
       }
     }
-    
+
     return conversionService.convert(value, targetType)
         .map(obj -> (Object) obj)
         .orElse(value);
@@ -2005,218 +2006,5 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     List<R> list = new ArrayList<>();
     findAll(q).forEach(list::add);
     return list;
-  }
-
-  // ========== Unsupported QueryModel-based methods (deprecated API) ==========
-
-  /**
-   * Legacy {@link QueryModel}-based optional lookup.
-   *
-   * <p>Nitrite runtime only supports {@link PreparedQuery}-based execution.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The projection type
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #findOptional(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R findOptional(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based single-result lookup.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The projection type
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #findOne(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R findOne(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based list query.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The projection type
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #findAll(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> Iterable<R> findAll(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based slice query.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The projection type
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #findSlice(PreparedQuery)} or {@link #findAll(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R findSlice(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based page query.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The projection type
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #findPage(PagedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R findPage(@NonNull final PagedQuery<T> q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based count.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #count(PagedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> long count(@NonNull final QueryModel q, @NonNull final Class<T> e) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based existence check.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #exists(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> boolean exists(@NonNull final QueryModel q, @NonNull final Class<T> e) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based update.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param p The update payload
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #executeUpdate(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R update(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Map<String, Object> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based batch update.
-   *
-   * @param q The query models
-   * @param e The entity type
-   * @param p The update payloads
-   * @param <T> The entity type
-   * @param <R> The result type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #executeUpdate(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T, R> R updateAll(@NonNull final List<QueryModel> q, @NonNull final Class<T> e, @NonNull final List<Map<String, Object>> p) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based delete.
-   *
-   * @param q The query model
-   * @param e The entity type
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #executeDelete(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> int delete(@NonNull final QueryModel q, @NonNull final Class<T> e) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based batch delete.
-   *
-   * @param q The query models
-   * @param e The entity type
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #executeDelete(PreparedQuery)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> int deleteAll(@NonNull final Iterable<QueryModel> q, @NonNull final Class<T> e) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy {@link QueryModel}-based delete by ids.
-   *
-   * @param e The entity type
-   * @param ids The ids to delete
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #deleteAll(DeleteBatchOperation)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> int deleteAll(@NonNull final Class<T> e, @NonNull final Serializable... ids) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Legacy internal overload used by older repository operation APIs.
-   *
-   * @param op The delete operation
-   * @param entities The entities
-   * @param <T> The entity type
-   * @return Never returns normally
-   * @throws UnsupportedOperationException Always thrown
-   * @deprecated Use {@link #deleteAll(DeleteBatchOperation)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public <T> int deleteAll(@NonNull final DeleteBatchOperation<T> op, @NonNull final Iterable<T> entities) {
-    throw new UnsupportedOperationException();
   }
 }
