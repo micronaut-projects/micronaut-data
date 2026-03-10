@@ -42,6 +42,9 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -83,6 +86,8 @@ public final class NitriteEntityMapper {
 
   /**
    * Normalize a value for use in a Nitrite Filter.
+   * Converts date/time types to ISO string format to match Jackson serialization
+   * with WRITE_DATES_AS_TIMESTAMPS disabled.
    *
    * @param value the raw value
    * @return the normalized value
@@ -96,6 +101,15 @@ public final class NitriteEntityMapper {
     }
     if (value instanceof java.util.Date date) {
       return date.toInstant().toString();
+    }
+    if (value instanceof LocalDate localDate) {
+      return localDate.toString();
+    }
+    if (value instanceof LocalDateTime localDateTime) {
+      return localDateTime.toString();
+    }
+    if (value instanceof LocalTime localTime) {
+      return localTime.toString();
     }
     if (value instanceof UUID uuid) {
       return uuid.toString();

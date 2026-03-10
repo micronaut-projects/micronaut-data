@@ -1445,37 +1445,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return value;
   }
 
-  /**
-   * Convert a value to the format expected by Nitrite filters.
-   * This ensures date/time values match the format stored by Jackson mapper
-   * with WRITE_DATES_AS_TIMESTAMPS disabled.
-   *
-   * @param value the value to convert
-   * @return the converted value
-   */
   @Override
   public Object toFilterValue(Object value) {
-    if (value == null) {
-      return null;
-    }
-    if (value instanceof Instant instant) {
-      // Convert to ISO string format to match Jackson serialization
-      // when WRITE_DATES_AS_TIMESTAMPS is disabled
-      return instant.toString();
-    }
-    if (value instanceof LocalDate localDate) {
-      // Convert to ISO string format (e.g., "1986-06-05") to match Jackson serialization
-      return localDate.toString();
-    }
-    if (value instanceof LocalDateTime localDateTime) {
-      // Convert to ISO string format (e.g., "1986-06-05T12:30:45") to match Jackson serialization
-      return localDateTime.toString();
-    }
-    if (value instanceof LocalTime localTime) {
-      // Convert to ISO string format (e.g., "12:30:45") to match Jackson serialization
-      return localTime.toString();
-    }
-    // For other types, use Nitrite's entityMapper
     return entityMapper.toFilterValue(value);
   }
 
