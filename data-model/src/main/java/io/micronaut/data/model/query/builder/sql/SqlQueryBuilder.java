@@ -204,6 +204,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return super.asLiteral(value);
     }
 
+    /**
+     * Builds a batch create tables statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param entities the entities
+     * @return The table
+     */
     @Experimental
     public String buildBatchCreateTableStatement(PersistentEntity... entities) {
         return buildBatchCreateTableStatement(List.of(), entities);

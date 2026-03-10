@@ -157,6 +157,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         this.query = vectorScoringSupport.adaptQueryForScoringFunction(this.query, selected);
     }
 
+    /**
+     * @return vector scoring function
+     */
     @Nullable
     public ScoringFunction getVectorScoringFunction() {
         return vectorScoringFunction;

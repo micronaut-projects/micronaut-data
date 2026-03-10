@@ -30,7 +30,7 @@ class DocumentEmbeddingRepositoryTest {
         assertNotNull(saved)
         assertNotNull(saved.id)
 
-        val reloaded = repository.findById(saved.id).orElse(null)
+        val reloaded = repository.findById(saved.id!!).orElse(null)
         assertNotNull(reloaded)
         assertEquals(saved.id, reloaded!!.id)
         assertEquals(Double::class.javaPrimitiveType, reloaded.embedding.type)
