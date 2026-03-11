@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.annotation.OptimisticLockConflict
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 
 import static io.micronaut.data.processor.visitors.TestUtils.*
@@ -32,7 +33,8 @@ class OptimisticLockingSpec extends AbstractDataSpec {
   @JdbcRepository(dialect= Dialect.MYSQL)
   @io.micronaut.context.annotation.Executable
   interface StudentRepository extends CrudRepository<Student, Long> {
-    void updateByIdAndVersion(Long id, Long version, String name);
+    @OptimisticLockConflict(value = OptimisticLockConflict.Policy.RELOAD_AND_RETRY, maxRetries = 2)
+    void updateByIdAndVersion(@Id Long id, @Version Long version, String name);
     
     void updateStudent1(@Id Long id, @Version Long zzz, String name);
     void updateStudent2(@Id Long id, @Version Long version, String name);
@@ -57,6 +59,8 @@ class OptimisticLockingSpec extends AbstractDataSpec {
             getParameterAutoPopulatedProperties(updateByIdAndVersionMethod) == ["", "lastUpdatedTime", "version", "", "version"]
             getParameterRequiresPreviousPopulatedValueProperties(updateByIdAndVersionMethod) == ["", "", "", "", ""]
             updateByIdAndVersionMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).get()
+            updateByIdAndVersionMethod.enumValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_POLICY, OptimisticLockConflict.Policy).get() == OptimisticLockConflict.Policy.RELOAD_AND_RETRY
+            updateByIdAndVersionMethod.intValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_MAX_RETRIES).get() == 2
 
             def updateOneMethod = repository.findPossibleMethods("update").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
 
@@ -146,5 +150,71 @@ class OptimisticLockingSpec extends AbstractDataSpec {
             getParameterBindingPaths(deleteByIdAndVersionAndNameMethod) == ['', "", ""]
             getParameterPropertyPaths(deleteByIdAndVersionAndNameMethod) == [ "id", "version", "name"]
             deleteByIdAndVersionAndNameMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
+    }
+
+    void "test optimistic lock conflict policy validation"() {
+        when:
+            buildRepository('test.StudentRepository', """
+  import io.micronaut.data.annotation.*;
+  import io.micronaut.data.jdbc.annotation.JdbcRepository;
+  import io.micronaut.data.model.query.builder.sql.Dialect;
+  import io.micronaut.data.repository.CrudRepository;
+  import io.micronaut.data.tck.entities.Student;
+
+  @JdbcRepository(dialect= Dialect.MYSQL)
+  @io.micronaut.context.annotation.Executable
+  interface StudentRepository extends CrudRepository<Student, Long> {
+    @OptimisticLockConflict(OptimisticLockConflict.Policy.DELEGATE)
+    void updateStudent3(@Id Long id, String name);
+  }
+  """)
+
+        then:
+            def ex = thrown(RuntimeException)
+            ex.message.contains("@OptimisticLockConflict can only be used on optimistic-locking repository methods.")
+    }
+
+    void "test optimistic lock conflict max retries validation"() {
+        when:
+            buildRepository('test.StudentRepository', """
+  import io.micronaut.data.annotation.*;
+  import io.micronaut.data.jdbc.annotation.JdbcRepository;
+  import io.micronaut.data.model.query.builder.sql.Dialect;
+  import io.micronaut.data.repository.CrudRepository;
+  import io.micronaut.data.tck.entities.Student;
+
+  @JdbcRepository(dialect= Dialect.MYSQL)
+  @io.micronaut.context.annotation.Executable
+  interface StudentRepository extends CrudRepository<Student, Long> {
+    @OptimisticLockConflict(value = OptimisticLockConflict.Policy.RELOAD_AND_RETRY, maxRetries = 0)
+    void updateStudent(@Id Long id, @Version Long version, String name);
+  }
+  """)
+
+        then:
+            def ex = thrown(RuntimeException)
+            ex.message.contains("@OptimisticLockConflict maxRetries must be greater than 0.")
+    }
+
+    void "test reload and retry signature validation"() {
+        when:
+            buildRepository('test.StudentRepository', """
+  import io.micronaut.data.annotation.*;
+  import io.micronaut.data.jdbc.annotation.JdbcRepository;
+  import io.micronaut.data.model.query.builder.sql.Dialect;
+  import io.micronaut.data.repository.CrudRepository;
+  import io.micronaut.data.tck.entities.Student;
+
+  @JdbcRepository(dialect= Dialect.MYSQL)
+  @io.micronaut.context.annotation.Executable
+  interface StudentRepository extends CrudRepository<Student, Long> {
+    @OptimisticLockConflict(OptimisticLockConflict.Policy.RELOAD_AND_RETRY)
+    void updateStudent(@Version Long version, String name);
+  }
+  """)
+
+        then:
+            def ex = thrown(RuntimeException)
+            ex.message.contains("@OptimisticLockConflict RELOAD_AND_RETRY requires either an entity parameter or both @Id and @Version parameters.")
     }
 }

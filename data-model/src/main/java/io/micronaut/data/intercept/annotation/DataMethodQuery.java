@@ -102,6 +102,11 @@ public @interface DataMethodQuery {
     String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";
 
     /**
+     * Optimistic lock conflict handling policy.
+     */
+    String META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_POLICY = "optimisticLockConflictPolicy";
+
+    /**
      * Meta member for storing the parameters.
      */
     String META_MEMBER_PARAMETERS = "parameters";

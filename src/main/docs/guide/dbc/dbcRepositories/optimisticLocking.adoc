@@ -16,3 +16,52 @@ snippet::example.Student[project-base="doc-examples/hibernate-example", source="
 It's possible to use ann:data.annotation.Version[] in a partial update or a delete method, in this case the version needs to match the version of the stored record.
 
 snippet::example.StudentRepository[project-base="doc-examples/hibernate-example", source="main", tags="studentRepository", indent="0"]
+
+You can control conflict handling per repository method with ann:data.annotation.OptimisticLockConflict[].
+The default policy is `FAIL_FAST`, which preserves the existing behavior and rethrows api:data.exceptions.OptimisticLockException[].
+
+If you set `DELEGATE`, Micronaut Data calls a bean of type api:data.exceptions.OptimisticLockExceptionHandler[]:
+
+[source,java]
+----
+@Repository
+interface StudentRepository extends CrudRepository<Student, Long> {
+
+    @OptimisticLockConflict(OptimisticLockConflict.Policy.DELEGATE)
+    void update(@Id Long id, @Version Long version, String name);
+}
+
+@Singleton
+class MyOptimisticLockHandler implements OptimisticLockExceptionHandler {
+    @Override
+    public Object handle(OptimisticLockException exception, MethodInvocationContext<?, ?> context) {
+        // custom merge / retry / fallback behavior
+        return null;
+    }
+}
+----
+
+For built-in reload+merge retry, use `RELOAD_AND_RETRY` with `maxRetries`:
+
+[source,java]
+----
+@Repository
+interface StudentRepository extends CrudRepository<Student, Long> {
+
+    @OptimisticLockConflict(value = OptimisticLockConflict.Policy.RELOAD_AND_RETRY, maxRetries = 2)
+    void update(@Id Long id, @Version Long version, String name);
+}
+----
+
+`RELOAD_AND_RETRY` reloads the latest entity by `findById(id)`, updates the method `@Version` argument to the current value, and retries the update.
+This is useful for partial updates (`id + version + changed fields`) where the method arguments already represent the desired merged state.
+It also works for entity updates (for example `update(entity)`): Micronaut Data refreshes the entity argument's `@Version` before retrying.
+
+Constraints and guidance for `RELOAD_AND_RETRY`:
+
+* Use it for update methods that either take an entity argument or include both `@Id` and `@Version` parameters.
+* The repository must support loading the latest entity state via `findById(id)`.
+* This is a retry of the same requested change with a refreshed version, not a deep domain conflict merge.
+* For delete methods, prefer `FAIL_FAST` or `DELEGATE` unless retry semantics are explicitly desired.
+
+NOTE: `@OptimisticLockConflict` is only valid on optimistic-locking methods (for example, methods that include ann:data.annotation.Version[] in the update/delete signature).

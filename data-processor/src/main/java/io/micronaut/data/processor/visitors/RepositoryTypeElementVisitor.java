@@ -34,15 +34,18 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Delete;
 import io.micronaut.data.annotation.EntityRepresentation;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Insert;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.OptimisticLockConflict;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Update;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQuery;
@@ -571,6 +574,31 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         annotateQueryResultIfApplicable(method, methodInfo, methodMatchContext.getRootEntity());
 
+        if (method.hasStereotype(OptimisticLockConflict.class) && !methodInfo.isOptimisticLock()) {
+            throw new ProcessingException(method,
+                "@OptimisticLockConflict can only be used on optimistic-locking repository methods.");
+        }
+        method.enumValue(OptimisticLockConflict.class,
+                AnnotationMetadata.VALUE_MEMBER,
+                OptimisticLockConflict.Policy.class)
+            .ifPresent(policy -> {
+                if (policy == OptimisticLockConflict.Policy.RELOAD_AND_RETRY) {
+                    boolean hasEntity = methodInfo.getParameterRoles().containsValue(TypeRole.ENTITY);
+                    boolean hasId = Arrays.stream(method.getParameters()).anyMatch(p -> p.hasAnnotation(Id.class));
+                    boolean hasVersion = Arrays.stream(method.getParameters()).anyMatch(p -> p.hasAnnotation(Version.class));
+                    if (!(hasEntity || (hasId && hasVersion))) {
+                        throw new ProcessingException(method,
+                            "@OptimisticLockConflict RELOAD_AND_RETRY requires either an entity parameter or both @Id and @Version parameters.");
+                    }
+                }
+            });
+        method.intValue(OptimisticLockConflict.class, "maxRetries").ifPresent(maxRetries -> {
+            if (maxRetries < 1) {
+                throw new ProcessingException(method,
+                    "@OptimisticLockConflict maxRetries must be greater than 0.");
+            }
+        });
+
         method.annotate(DataMethod.class.getName(), annotationBuilder -> {
 
             ClassElement runtimeInterceptor = methodInfo.getRuntimeInterceptor();
@@ -588,6 +616,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (methodInfo.isOptimisticLock()) {
                 annotationBuilder.member(DataMethod.META_MEMBER_OPTIMISTIC_LOCK, true);
             }
+            method.enumValue(OptimisticLockConflict.class,
+                    AnnotationMetadata.VALUE_MEMBER,
+                    OptimisticLockConflict.Policy.class)
+                .ifPresent(policy -> annotationBuilder.member(
+                    DataMethod.META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_POLICY,
+                    policy
+                ));
+            method.intValue(OptimisticLockConflict.class, "maxRetries")
+                .ifPresent(maxRetries -> annotationBuilder.member(
+                    DataMethod.META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_MAX_RETRIES,
+                    maxRetries
+                ));
 
             if (!methodInfo.getParameterRoles().isEmpty()) {
                 // include the roles

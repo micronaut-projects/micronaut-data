@@ -21,18 +21,33 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.type.MutableArgumentValue;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.data.annotation.OptimisticLockConflict;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.exceptions.OptimisticLockException;
+import io.micronaut.data.exceptions.OptimisticLockExceptionHandler;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.support.NullValue;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Inject;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -54,6 +69,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     private final InjectionPoint<?> injectionPoint;
 
     private final DataConversionService conversionService;
+    private final OptimisticLockConflictPolicyResolver optimisticLockConflictPolicyResolver;
 
     /**
      * Default constructor.
@@ -61,14 +77,17 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
      * @param dataInterceptorResolver The data interceptor resolver
      * @param injectionPoint          The injection point
      * @param conversionService       The conversion service
+     * @param optimisticLockExceptionHandler The optimistic lock exception handler
      */
     @Inject
     public DataIntroductionAdvice(@NonNull DataInterceptorResolver dataInterceptorResolver,
                                   @Nullable InjectionPoint<?> injectionPoint,
-                                  DataConversionService conversionService) {
+                                  DataConversionService conversionService,
+                                  @Nullable OptimisticLockExceptionHandler optimisticLockExceptionHandler) {
         this.dataInterceptorResolver = dataInterceptorResolver;
         this.injectionPoint = injectionPoint;
         this.conversionService = conversionService;
+        this.optimisticLockConflictPolicyResolver = new OptimisticLockConflictPolicyResolver(optimisticLockExceptionHandler);
     }
 
     @Nullable
@@ -85,6 +104,12 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                     interceptedMethod.handleResult(interceptCompletionStage(context, dataInterceptor, key));
                 case SYNCHRONOUS -> dataInterceptor.intercept(key, context);
             };
+        } catch (OptimisticLockException e) {
+            try {
+                return interceptedMethod.handleResult(handleOptimisticLockConflict(context, dataInterceptor, key, e));
+            } catch (Exception ex) {
+                return interceptedMethod.handleException(ex);
+            }
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
         }
@@ -99,25 +124,204 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         Objects.requireNonNull(completionStage).whenComplete((value, throwable) -> {
             propagatedContext.propagate(() -> {
                 if (throwable == null) {
-                    Class<Object> target = context.getReturnType().asArgument().getType();
-                    Object v = value;
-                    if (v == null && target.getName().equals("kotlinx.coroutines.flow.Flow")) {
-                        v = conversionService.convert(new NullValue(), target).orElse(v);
-                    } else {
-                        v = conversionService.convert(v, target).orElse(v);
-                    }
-                    completableFuture.complete(v);
+                    completeResult(context, completableFuture, value);
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
                         finalThrowable = finalThrowable.getCause();
                     }
-                    completableFuture.completeExceptionally(finalThrowable);
+                    if (finalThrowable instanceof OptimisticLockException optimisticLockException) {
+                        try {
+                            completeResult(context, completableFuture,
+                                handleOptimisticLockConflict(context, dataInterceptor, key, optimisticLockException));
+                        } catch (Exception e) {
+                            completableFuture.completeExceptionally(e);
+                        }
+                    } else {
+                        completableFuture.completeExceptionally(finalThrowable);
+                    }
                 }
                 return null;
             });
         });
         return completableFuture;
+    }
+
+    private void completeResult(MethodInvocationContext<Object, Object> context,
+                                CompletableFuture<Object> completableFuture,
+                                @Nullable Object value) {
+        Class<Object> target = context.getReturnType().asArgument().getType();
+        Object v = value;
+        if (v == null && target.getName().equals("kotlinx.coroutines.flow.Flow")) {
+            v = conversionService.convert(new NullValue(), target).orElse(v);
+        } else {
+            v = conversionService.convert(v, target).orElse(v);
+        }
+        completableFuture.complete(v);
+    }
+
+    @Nullable
+    private Object handleOptimisticLockConflict(MethodInvocationContext<Object, Object> context,
+                                                DataInterceptor<Object, Object> dataInterceptor,
+                                                RepositoryMethodKey key,
+                                                OptimisticLockException exception) {
+        OptimisticLockConflict.Policy policy = optimisticLockConflictPolicyResolver.resolvePolicy(context);
+        return switch (policy) {
+            case FAIL_FAST -> throw exception;
+            case DELEGATE -> optimisticLockConflictPolicyResolver.resolveDelegate(context, exception);
+            case RELOAD_AND_RETRY -> reloadAndRetry(context, dataInterceptor, key, exception);
+        };
+    }
+
+    @Nullable
+    private Object reloadAndRetry(MethodInvocationContext<Object, Object> context,
+                                  DataInterceptor<Object, Object> dataInterceptor,
+                                  RepositoryMethodKey key,
+                                  OptimisticLockException initialException) {
+        int maxRetries = context.intValue(DataMethod.class, DataMethod.META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_MAX_RETRIES).orElse(1);
+        if (maxRetries < 1) {
+            throw new IllegalStateException("@OptimisticLockConflict maxRetries must be greater than 0.", initialException);
+        }
+        OptimisticLockException lastException = initialException;
+        for (int i = 0; i < maxRetries; i++) {
+            refreshRetryArguments(context, lastException);
+            try {
+                return dataInterceptor.intercept(key, context);
+            } catch (OptimisticLockException e) {
+                lastException = e;
+            }
+        }
+        throw lastException;
+    }
+
+    private void refreshRetryArguments(MethodInvocationContext<Object, Object> context,
+                                       OptimisticLockException exception) {
+        Optional<String> entityParameterName = context.stringValue(DataMethod.NAME, TypeRole.ENTITY);
+        if (entityParameterName.isPresent()) {
+            refreshEntityArgumentVersion(context, entityParameterName.get(), exception);
+            return;
+        }
+        refreshVersionArgument(context, exception);
+    }
+
+    private void refreshEntityArgumentVersion(MethodInvocationContext<Object, Object> context,
+                                              String entityParameterName,
+                                              OptimisticLockException exception) {
+        MutableArgumentValue<?> mutableArgumentValue = context.getParameters().get(entityParameterName);
+        if (mutableArgumentValue == null) {
+            throw new IllegalStateException("Cannot locate entity parameter in method context.", exception);
+        }
+        Object entityArgument = mutableArgumentValue.getValue();
+        if (entityArgument == null) {
+            throw new IllegalStateException("Entity parameter cannot be null for RELOAD_AND_RETRY policy.", exception);
+        }
+        Object idValue = resolveIdValue(entityArgument, exception);
+        Object currentEntity = findCurrentEntity(context, idValue, exception);
+        Object latestVersion = resolveVersionValue(currentEntity, exception);
+        setVersionValue(entityArgument, latestVersion, exception);
+    }
+
+    private void refreshVersionArgument(MethodInvocationContext<Object, Object> context,
+                                        OptimisticLockException exception) {
+        int idParameterIndex = getParameterIndex(context, "id");
+        int versionParameterIndex = getParameterIndex(context, "version");
+        Object idValue = context.getParameterValues()[idParameterIndex];
+        Object currentEntity = findCurrentEntity(context, idValue, exception);
+        Object latestVersion = resolveVersionValue(currentEntity, exception);
+        Object[] parameterValues = context.getParameterValues();
+        parameterValues[versionParameterIndex] = latestVersion;
+        String versionParameterName = context.getArguments()[versionParameterIndex].getName();
+        MutableArgumentValue<?> mutableArgumentValue = context.getParameters().get(versionParameterName);
+        if (mutableArgumentValue != null) {
+            MutableArgumentValue<Object> mutableObjectArgument = (MutableArgumentValue<Object>) mutableArgumentValue;
+            mutableObjectArgument.setValue(latestVersion);
+        }
+    }
+
+    private int getParameterIndex(MethodInvocationContext<Object, Object> context, String propertyName) {
+        AnnotationValue<Annotation> dataMethod = context.getAnnotation(DataMethod.NAME);
+        if (dataMethod == null) {
+            throw new IllegalStateException("No @DataMethod metadata present.");
+        }
+        List<AnnotationValue<Annotation>> parameters = dataMethod.getAnnotations(DataMethod.META_MEMBER_PARAMETERS);
+        for (AnnotationValue<Annotation> parameter : parameters) {
+            int parameterIndex = parameter.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1);
+            if (parameterIndex < 0) {
+                continue;
+            }
+            Optional<String> property = parameter.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY);
+            if (propertyName.equals(property.orElse(null))) {
+                return parameterIndex;
+            }
+        }
+        throw new IllegalStateException("Cannot locate parameter for property: " + propertyName);
+    }
+
+    private Object findCurrentEntity(MethodInvocationContext<Object, Object> context,
+                                     Object idValue,
+                                     OptimisticLockException exception) {
+        Method findByIdMethod = findByIdMethod(context.getTarget().getClass())
+            .orElseThrow(() -> new IllegalStateException("RELOAD_AND_RETRY policy requires findById(ID) method on repository.", exception));
+        try {
+            findByIdMethod.setAccessible(true);
+            Object result = findByIdMethod.invoke(context.getTarget(), idValue);
+            if (result instanceof Optional<?> optionalEntity) {
+                return optionalEntity.orElseThrow(() -> exception);
+            }
+            throw new IllegalStateException("findById(ID) must return Optional for RELOAD_AND_RETRY policy.", exception);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to execute findById(ID) for RELOAD_AND_RETRY policy.", e);
+        }
+    }
+
+    private Optional<Method> findByIdMethod(Class<?> targetType) {
+        for (Method method : targetType.getMethods()) {
+            if (method.getName().equals("findById") && method.getParameterCount() == 1) {
+                return Optional.of(method);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Object resolveVersionValue(Object entity, OptimisticLockException exception) {
+        BeanIntrospection<Object> introspection = (BeanIntrospection<Object>) BeanIntrospection.getIntrospection(entity.getClass());
+        for (BeanProperty<Object, Object> beanProperty : introspection.getBeanProperties()) {
+            if (beanProperty.hasAnnotation(Version.class)) {
+                Object value = beanProperty.get(entity);
+                if (value == null) {
+                    throw new IllegalStateException("Version value cannot be null for RELOAD_AND_RETRY policy.", exception);
+                }
+                return value;
+            }
+        }
+        throw new IllegalStateException("No @Version property found on entity for RELOAD_AND_RETRY policy.", exception);
+    }
+
+    private Object resolveIdValue(Object entity, OptimisticLockException exception) {
+        BeanIntrospection<Object> introspection = (BeanIntrospection<Object>) BeanIntrospection.getIntrospection(entity.getClass());
+        for (BeanProperty<Object, Object> beanProperty : introspection.getBeanProperties()) {
+            if (beanProperty.hasAnnotation(io.micronaut.data.annotation.Id.class)) {
+                Object value = beanProperty.get(entity);
+                if (value == null) {
+                    throw new IllegalStateException("Entity id cannot be null for RELOAD_AND_RETRY policy.", exception);
+                }
+                return value;
+            }
+        }
+        throw new IllegalStateException("No @Id property found on entity for RELOAD_AND_RETRY policy.", exception);
+    }
+
+    private void setVersionValue(Object entity,
+                                 Object latestVersion,
+                                 OptimisticLockException exception) {
+        BeanIntrospection<Object> introspection = (BeanIntrospection<Object>) BeanIntrospection.getIntrospection(entity.getClass());
+        for (BeanProperty<Object, Object> beanProperty : introspection.getBeanProperties()) {
+            if (beanProperty.hasAnnotation(Version.class)) {
+                beanProperty.set(entity, latestVersion);
+                return;
+            }
+        }
+        throw new IllegalStateException("No @Version property found on entity for RELOAD_AND_RETRY policy.", exception);
     }
 
 }

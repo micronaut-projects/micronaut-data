@@ -146,6 +146,16 @@ public @interface DataMethod {
     String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";
 
     /**
+     * Optimistic lock conflict handling policy.
+     */
+    String META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_POLICY = "optimisticLockConflictPolicy";
+
+    /**
+     * Number of retries for optimistic lock conflict policy.
+     */
+    String META_MEMBER_OPTIMISTIC_LOCK_CONFLICT_MAX_RETRIES = "optimisticLockConflictMaxRetries";
+
+    /**
      * The query builder to use.
      */
     String META_MEMBER_QUERY_BUILDER = "queryBuilder";
