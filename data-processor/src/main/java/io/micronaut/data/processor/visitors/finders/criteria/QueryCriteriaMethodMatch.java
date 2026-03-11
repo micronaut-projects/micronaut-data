@@ -69,6 +69,7 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -436,78 +437,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             false
         );
 
-        ClassElement declaredReturnType = matchContext.getReturnType();
-        if (TypeUtils.isReactiveOrFuture(declaredReturnType)) {
-            declaredReturnType = declaredReturnType.getFirstTypeArgument().orElse(declaredReturnType);
-        }
-        if (declaredReturnType.getName().equals(SearchResults.class.getName())) {
-            Root<?> root = query.getRoots().iterator().next();
-
-            ParameterElement vectorElement = Arrays.stream(matchContext.getParameters())
-                .filter(p -> p.getType().isAssignable(Vector.class))
-                .findFirst()
-                .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "SearchResults return type requires a Vector parameter"));
-
-            String vectorPropertyName = null;
-            List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
-            if (!predicateMatches.isEmpty()) {
-                String predicate = predicateMatches.getFirst().part();
-                String[] parts = predicate.split("And|Or");
-                for (String part : parts) {
-                    if (part.endsWith("Near")) {
-                        vectorPropertyName = NameUtils.decapitalize(part.substring(0, part.length() - 4));
-                        break;
-                    }
-                    if (part.endsWith("Within")) {
-                        vectorPropertyName = NameUtils.decapitalize(part.substring(0, part.length() - 6));
-                        break;
-                    }
-                    if (part.endsWith("Between")) {
-                        vectorPropertyName = NameUtils.decapitalize(part.substring(0, part.length() - 7));
-                        break;
-                    }
-                }
-            }
-            if (vectorPropertyName == null) {
-                throw new MatchFailedException("Unable to resolve vector property for SearchResults query");
-            }
-
-            SourcePersistentEntityCriteriaBuilder sourceCriteriaBuilder = cb;
-            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty((PersistentEntityRoot<Object>) root, vectorPropertyName);
-            if (vectorPropertyExpression == null) {
-                throw new MatchFailedException("Unable to resolve vector property path for SearchResults query: " + vectorPropertyName);
-            }
-            io.micronaut.data.model.PersistentPropertyPath propertyPath = io.micronaut.data.model.PersistentPropertyPath.of(
-                vectorPropertyExpression.getAssociations(),
-                vectorPropertyExpression.getProperty()
-            );
-            ParameterExpression<Vector> vectorParameter = sourceCriteriaBuilder.parameter(vectorElement, propertyPath);
-            Expression<Double> scoreExpr = cb.function(VectorSearch.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
-            query.multiselect(root, scoreExpr.alias("mn_score"));
-
-            if (predicateMatches.isEmpty()) {
-                throw new MatchFailedException("SearchResults query must include a Near, Within, or Between predicate");
-            }
-        }
-
-        if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);
-            if (!dtoProjectionProperties.isEmpty()) {
-                Root<?> root = query.getRoots().iterator().next();
-                List<Selection<?>> selectionList = dtoProjectionProperties.stream()
-                    .map(p -> {
-                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
-                            return root.get(p.getName());
-                        } else {
-                            return root.get(p.getName()).alias(p.getName());
-                        }
-                    })
-                    .collect(Collectors.toList());
-                query.multiselect(
-                    selectionList
-                );
-            }
-        }
+        ClassElement declaredReturnType = unwrapReactiveReturnType(matchContext.getReturnType());
+        applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
+        applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType);
 
         final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
         QueryResult queryResult = criteriaQuery.build(annotationMetadata, matchContext.getQueryBuilder());
@@ -516,12 +448,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
             genericReturnType = genericReturnType.getFirstTypeArgument().orElse(persistentEntity.getType());
         }
-        boolean isReturnsPage = matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE);
-        QueryResult countQueryResult = null;
-        if (isReturnsPage) {
-            PersistentEntityCriteriaQuery<Object> countQuery = createDefaultCountQuery(matchContext, cb, joinSpecs);
-            countQueryResult = countQuery.build(annotationMetadata, matchContext.getQueryBuilder());
-        }
+        QueryResult countQueryResult = buildCountQueryResultIfRequired(matchContext, cb, joinSpecs, annotationMetadata, genericReturnType);
 
         return new MethodMatchInfo(
             getOperationType(),
@@ -532,6 +459,106 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             .optimisticLock(optimisticLock)
             .queryResult(queryResult)
             .countQueryResult(countQueryResult);
+    }
+
+    private static ClassElement unwrapReactiveReturnType(ClassElement returnType) {
+        if (!TypeUtils.isReactiveOrFuture(returnType)) {
+            return returnType;
+        }
+        return returnType.getFirstTypeArgument().orElse(returnType);
+    }
+
+    private void applySearchResultsProjectionIfNeeded(MethodMatchContext matchContext,
+                                                      SourcePersistentEntityCriteriaBuilder cb,
+                                                      SourcePersistentEntityCriteriaQuery<?> query,
+                                                      ClassElement declaredReturnType) {
+        if (!declaredReturnType.getName().equals(SearchResults.class.getName())) {
+            return;
+        }
+        List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
+        if (predicateMatches.isEmpty()) {
+            throw new MatchFailedException("SearchResults query must include a Near, Within, or Between predicate");
+        }
+        String vectorPropertyName = resolveVectorPropertyName(predicateMatches);
+        if (vectorPropertyName == null) {
+            throw new MatchFailedException("Unable to resolve vector property for SearchResults query");
+        }
+
+        Root<?> root = query.getRoots().iterator().next();
+        ParameterElement vectorElement = resolveSearchResultsVectorParameter(matchContext);
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty((PersistentEntityRoot<Object>) root, vectorPropertyName);
+        if (vectorPropertyExpression == null) {
+            throw new MatchFailedException("Unable to resolve vector property path for SearchResults query: " + vectorPropertyName);
+        }
+        io.micronaut.data.model.PersistentPropertyPath propertyPath = io.micronaut.data.model.PersistentPropertyPath.of(
+            vectorPropertyExpression.getAssociations(),
+            vectorPropertyExpression.getProperty()
+        );
+        ParameterExpression<Vector> vectorParameter = cb.parameter(vectorElement, propertyPath);
+        Expression<Double> scoreExpr = cb.function(VectorSearch.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
+        query.multiselect(root, scoreExpr.alias("mn_score"));
+    }
+
+    private ParameterElement resolveSearchResultsVectorParameter(MethodMatchContext matchContext) {
+        return Arrays.stream(matchContext.getParameters())
+            .filter(p -> p.getType().isAssignable(Vector.class))
+            .findFirst()
+            .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "SearchResults return type requires a Vector parameter"));
+    }
+
+    private @Nullable String resolveVectorPropertyName(List<MethodNameParser.Match> predicateMatches) {
+        String predicate = predicateMatches.getFirst().part();
+        String[] parts = predicate.split("And|Or");
+        for (String part : parts) {
+            if (part.endsWith("Near")) {
+                return NameUtils.decapitalize(part.substring(0, part.length() - 4));
+            }
+            if (part.endsWith("Within")) {
+                return NameUtils.decapitalize(part.substring(0, part.length() - 6));
+            }
+            if (part.endsWith("Between")) {
+                return NameUtils.decapitalize(part.substring(0, part.length() - 7));
+            }
+        }
+        return null;
+    }
+
+    private void applyDtoProjectionIfNeeded(MethodMatchContext matchContext,
+                                            SourcePersistentEntityCriteriaQuery<?> query,
+                                            MethodResult result,
+                                            SourcePersistentEntity persistentEntity,
+                                            ClassElement resultType) {
+        if (!result.isDto() || result.isRuntimeDtoConversion()) {
+            return;
+        }
+        List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);
+        if (dtoProjectionProperties.isEmpty()) {
+            return;
+        }
+        Root<?> root = query.getRoots().iterator().next();
+        List<Selection<?>> selectionList = dtoProjectionProperties.stream()
+            .map(p -> {
+                if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
+                    return root.get(p.getName());
+                }
+                return root.get(p.getName()).alias(p.getName());
+            })
+            .collect(Collectors.toList());
+        query.multiselect(selectionList);
+    }
+
+    private @Nullable QueryResult buildCountQueryResultIfRequired(MethodMatchContext matchContext,
+                                                                  PersistentEntityCriteriaBuilder cb,
+                                                                  List<AnnotationValue<Join>> joinSpecs,
+                                                                  AnnotationMetadata annotationMetadata,
+                                                                  ClassElement genericReturnType) {
+        boolean isReturnsPage = matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
+            || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE);
+        if (!isReturnsPage) {
+            return null;
+        }
+        PersistentEntityCriteriaQuery<Object> countQuery = createDefaultCountQuery(matchContext, cb, joinSpecs);
+        return countQuery.build(annotationMetadata, matchContext.getQueryBuilder());
     }
 
     private void applyOrderBy(String orderBy,

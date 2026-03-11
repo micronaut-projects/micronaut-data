@@ -530,22 +530,36 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 genericType = genericType.getFirstTypeArgument().orElse(genericType);
             }
 
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
-                if ((NEAR.equals(restrictionName) || WITHIN.equals(restrictionName)) && i > 0) {
-                    params.add(scb.parameter(parameter, null));
-                    continue;
-                }
-                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
-                if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
-                    SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
-                    throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
-                }
-                params.add(scb.parameter(parameter, propertyPath));
-            } else {
+            PersistentPropertyPath propertyPath = toPersistentPropertyPath(expression);
+            if (propertyPath == null || isNearOrWithinDistanceParameter(restrictionName, i)) {
                 params.add(scb.parameter(parameter, null));
+                continue;
             }
+            validateParameterCompatibility(genericType, parameter, propertyPath);
+            params.add(scb.parameter(parameter, propertyPath));
         }
         return params;
+    }
+
+    private static boolean isNearOrWithinDistanceParameter(String restrictionName, int parameterIndex) {
+        return (NEAR.equals(restrictionName) || WITHIN.equals(restrictionName)) && parameterIndex > 0;
+    }
+
+    private static @Nullable PersistentPropertyPath toPersistentPropertyPath(@Nullable Expression<?> expression) {
+        if (!(expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp)) {
+            return null;
+        }
+        return PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
+    }
+
+    private void validateParameterCompatibility(ClassElement genericType,
+                                                ParameterElement parameter,
+                                                PersistentPropertyPath propertyPath) {
+        if (isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+            return;
+        }
+        SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
+        throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
     }
 
     private boolean isValidType(ClassElement genericType, SourcePersistentProperty property) {

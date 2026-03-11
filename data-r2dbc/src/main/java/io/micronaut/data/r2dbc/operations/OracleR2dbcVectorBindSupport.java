@@ -179,19 +179,19 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
         if (sparseVector instanceof SparseByteVector sparseByteVector) {
             return sparseByteVector.toByteArray();
         }
-        if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
-            byte[] values = toByteArray(sparseFloatVector.values());
+        if (sparseVector instanceof SparseFloatVector(int length, int[] indices, float[] values1)) {
+            byte[] values = toByteArray(values1);
             if (values == null) {
                 throw new IllegalArgumentException("Cannot convert non-integral sparse float values to INT8 VECTOR payload");
             }
-            return new SparseByteVector(sparseFloatVector.length(), sparseFloatVector.indices(), values).toByteArray();
+            return new SparseByteVector(length, indices, values).toByteArray();
         }
-        if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
-            byte[] values = toByteArray(sparseDoubleVector.values());
+        if (sparseVector instanceof SparseDoubleVector(int length, int[] indices, double[] values1)) {
+            byte[] values = toByteArray(values1);
             if (values == null) {
                 throw new IllegalArgumentException("Cannot convert non-integral sparse double values to INT8 VECTOR payload");
             }
-            return new SparseByteVector(sparseDoubleVector.length(), sparseDoubleVector.indices(), values).toByteArray();
+            return new SparseByteVector(length, indices, values).toByteArray();
         }
         throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
     }
@@ -200,11 +200,11 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
         if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
             return sparseFloatVector.toFloatArray();
         }
-        if (sparseVector instanceof SparseByteVector sparseByteVector) {
-            return new SparseFloatVector(sparseByteVector.length(), sparseByteVector.indices(), toFloatArray(sparseByteVector.values())).toFloatArray();
+        if (sparseVector instanceof SparseByteVector(int length, int[] indices, byte[] values)) {
+            return new SparseFloatVector(length, indices, toFloatArray(values)).toFloatArray();
         }
-        if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
-            return new SparseFloatVector(sparseDoubleVector.length(), sparseDoubleVector.indices(), toFloatArray(sparseDoubleVector.values())).toFloatArray();
+        if (sparseVector instanceof SparseDoubleVector(int length, int[] indices, double[] values)) {
+            return new SparseFloatVector(length, indices, toFloatArray(values)).toFloatArray();
         }
         throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
     }
@@ -213,11 +213,11 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
         if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
             return sparseDoubleVector.toDoubleArray();
         }
-        if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
-            return new SparseDoubleVector(sparseFloatVector.length(), sparseFloatVector.indices(), toDoubleArray(sparseFloatVector.values())).toDoubleArray();
+        if (sparseVector instanceof SparseFloatVector(int length, int[] indices, float[] values)) {
+            return new SparseDoubleVector(length, indices, toDoubleArray(values)).toDoubleArray();
         }
-        if (sparseVector instanceof SparseByteVector sparseByteVector) {
-            return new SparseDoubleVector(sparseByteVector.length(), sparseByteVector.indices(), toDoubleArray(sparseByteVector.values())).toDoubleArray();
+        if (sparseVector instanceof SparseByteVector(int length, int[] indices, byte[] values)) {
+            return new SparseDoubleVector(length, indices, toDoubleArray(values)).toDoubleArray();
         }
         throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
     }

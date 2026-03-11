@@ -44,6 +44,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -487,7 +488,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                          @Nullable Object value,
         SqlStoredQuery<?, ?> storedQuery) {
         VectorBindSupport vectorBindSupport = vectorBindSupportByDialect.get(storedQuery.getDialect());
-        if (vectorBindSupport != null) {
+        if (vectorBindSupport != null && isVectorBindingCandidate(value)) {
             io.r2dbc.spi.Parameter vectorParameter = vectorBindSupport.toTypedVectorParameter(value, storedQuery.getQuery());
             if (vectorParameter != null) {
                 preparedStatementWriter.setValue(preparedStatement, index, vectorParameter);
@@ -495,6 +496,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         super.setStatementParameter(preparedStatement, index, dataType, jsonDataType, value, storedQuery);
+    }
+
+    private static boolean isVectorBindingCandidate(@Nullable Object value) {
+        return value instanceof Vector;
     }
 
     private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {

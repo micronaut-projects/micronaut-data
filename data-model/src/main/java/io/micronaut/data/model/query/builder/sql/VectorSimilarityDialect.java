@@ -100,6 +100,8 @@ interface VectorSimilarityDialect {
     enum OracleVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 
+        private static final String TO_VECTOR = "TO_VECTOR(";
+
         @Override
         public void appendVectorScore(StringBuilder query,
                                       Expression<?> left,
@@ -108,11 +110,11 @@ interface VectorSimilarityDialect {
             OracleVectorConfig config = resolveOracleVectorConfig(left);
             query.append("VECTOR_DISTANCE(");
             if (config == null) {
-                query.append("TO_VECTOR(");
+                query.append(TO_VECTOR);
                 appendExpression.accept(left);
                 query.append(')');
             } else {
-                query.append("TO_VECTOR(");
+                query.append(TO_VECTOR);
                 appendExpression.accept(left);
                 query.append(',').append(config.dimensions()).append(',').append(config.format());
                 if (config.sparse()) {
@@ -122,11 +124,11 @@ interface VectorSimilarityDialect {
             }
             query.append(',');
             if (config == null) {
-                query.append("TO_VECTOR(");
+                query.append(TO_VECTOR);
                 appendExpression.accept(right);
                 query.append(')');
             } else {
-                query.append("TO_VECTOR(");
+                query.append(TO_VECTOR);
                 appendExpression.accept(right);
                 query.append(',').append(config.dimensions()).append(',').append(config.format());
                 if (config.sparse()) {

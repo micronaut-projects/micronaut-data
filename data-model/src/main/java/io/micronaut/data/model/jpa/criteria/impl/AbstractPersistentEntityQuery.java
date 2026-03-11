@@ -142,46 +142,56 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity) {
-        Objects.requireNonNull(entityRoot);
+        PersistentEntityRoot<?> root = Objects.requireNonNull(entityRoot);
         Joiner joiner = new Joiner();
         if (predicate instanceof IPredicate predicateVisitable) {
             predicateVisitable.visitPredicate(joiner);
         }
-        if (selection instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(joiner);
-            entityRoot.visitSelection(joiner);
-        } else {
-            entityRoot.visitSelection(joiner);
-        }
-        if (orders != null) {
-            for (Order o : orders) {
-                if (o.getExpression() instanceof IExpression<?> expression) {
-                    expression.visitExpression(joiner);
-                } else {
-                    joiner.joinIfNeeded(requireProperty(o.getExpression()));
-                }
-            }
-        }
+        collectSelectionJoins(joiner, root);
+        collectOrderJoins(joiner);
         Map<String, JoinPath> joinPaths = new LinkedHashMap<>();
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            Joiner.Joined joined = e.getValue();
-            Join.Type joinType = calculateJoinType(joined);
-            String path = e.getKey();
-            io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
-            if (propertyPath == null) {
-                throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + persistentEntity + "]");
-            }
-            Association[] associationPath;
-            if (propertyPath.getProperty() instanceof Association) {
-                associationPath = Stream.concat(propertyPath.getAssociations().stream(),
-                    Stream.of(propertyPath.getProperty())).toArray(Association[]::new);
-            } else {
-                associationPath = propertyPath.getAssociations().toArray(new Association[0]);
-            }
-            JoinPath jp = new JoinPath(path, associationPath, joinType, joined.getAlias());
-            joinPaths.put(e.getKey(), jp);
+            joinPaths.put(e.getKey(), toJoinPath(persistentEntity, e.getKey(), e.getValue()));
         }
         return joinPaths;
+    }
+
+    private void collectSelectionJoins(Joiner joiner, PersistentEntityRoot<?> root) {
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(joiner);
+        }
+        root.visitSelection(joiner);
+    }
+
+    private void collectOrderJoins(Joiner joiner) {
+        if (orders == null) {
+            return;
+        }
+        for (Order order : orders) {
+            if (order.getExpression() instanceof IExpression<?> expression) {
+                expression.visitExpression(joiner);
+            } else {
+                joiner.joinIfNeeded(requireProperty(order.getExpression()));
+            }
+        }
+    }
+
+    private JoinPath toJoinPath(PersistentEntity persistentEntity, String path, Joiner.Joined joined) {
+        Join.Type joinType = calculateJoinType(joined);
+        Association[] associationPath = resolveAssociationPath(persistentEntity, path);
+        return new JoinPath(path, associationPath, joinType, joined.getAlias());
+    }
+
+    private Association[] resolveAssociationPath(PersistentEntity persistentEntity, String path) {
+        io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+        if (propertyPath == null) {
+            throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + persistentEntity + "]");
+        }
+        if (propertyPath.getProperty() instanceof Association) {
+            return Stream.concat(propertyPath.getAssociations().stream(),
+                Stream.of(propertyPath.getProperty())).toArray(Association[]::new);
+        }
+        return propertyPath.getAssociations().toArray(new Association[0]);
     }
 
     private Join.Type calculateJoinType(Joiner.Joined joined) {
