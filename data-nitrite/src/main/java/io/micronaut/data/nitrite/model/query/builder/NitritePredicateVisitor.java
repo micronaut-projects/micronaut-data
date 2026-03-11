@@ -48,6 +48,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Translates JPA Criteria predicates into a NitriteDB JSON filter map. */
 final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
@@ -55,6 +57,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   static final String ID_FIELD = "id";
   private static final String REGEX = "$regex";
   private static final String NOT = "$not";
+  private static final Logger LOG = LoggerFactory.getLogger(NitritePredicateVisitor.class);
 
   private final PersistentEntity persistentEntity;
   private final NitriteQueryState queryState;
@@ -145,7 +148,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {
-          String path = asPath(associations, property);
+          String path = getFieldNameForNullCheck(associations, property);
           query.put(path, null); // Nitrite: FluentFilter.where(field).eq(null)
         });
   }
@@ -157,9 +160,39 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {
-          String path = asPath(associations, property);
+          String path = getFieldNameForNullCheck(associations, property);
           query.put(path, Collections.singletonMap("$ne", null)); // notEq(null)
         });
+  }
+
+  /**
+   * Get the field name for null checks on associations.
+   * For non-embedded associations, returns just the association's persisted name (e.g., "author_id").
+   * For embedded associations or regular properties, returns the full path.
+   */
+  private static String getFieldNameForNullCheck(
+      final Collection<Association> associations, final PersistentProperty property) {
+    if (associations.isEmpty()) {
+      return property.getPersistedName();
+    }
+    // For non-embedded associations, just use the last association's persisted name
+    // because Nitrite stores the reference as a single field (e.g., "author_id")
+    Association lastAssoc = null;
+    for (Association assoc : associations) {
+      if (!assoc.isEmbedded()) {
+        lastAssoc = assoc;
+      }
+    }
+    if (lastAssoc != null) {
+      return lastAssoc.getPersistedName();
+    }
+    // For embedded associations, build the full path
+    StringBuilder sb = new StringBuilder();
+    for (Association association : associations) {
+      sb.append(association.getPersistedName()).append(".");
+    }
+    sb.append(property.getPersistedName());
+    return sb.toString();
   }
 
   @Override
@@ -651,6 +684,14 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   // -------------------------------------------------------------------------
 
   static String getFieldName(final PersistentPropertyPath propertyPath) {
+    String result = getFieldNameInternal(propertyPath);
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
+    }
+    return result;
+  }
+
+  private static String getFieldNameInternal(final PersistentPropertyPath propertyPath) {
     PersistentProperty property = propertyPath.getProperty();
     PersistentEntity owner = property.getOwner();
     PersistentProperty identity = owner.getIdentity();
@@ -659,23 +700,20 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     if (propertyPath.getAssociations().isEmpty()) {
-      return property.getName();
+      return property.getPersistedName();
     }
 
     StringBuilder sb = new StringBuilder();
     for (Association association : propertyPath.getAssociations()) {
-      if (!association.isEmbedded()) {
-        throw new UnsupportedOperationException(
-            "NitriteDB does not support joins or non-embedded associations. "
-                + "Association ["
-                + association.getName()
-                + "] of kind ["
-                + association.getKind()
-                + "] must be marked as @Relation(Relation.Kind.EMBEDDED) to be queried.");
+      if (association.isEmbedded()) {
+        sb.append(association.getPersistedName()).append(".");
+      } else {
+        // If it's a non-embedded association, we stop here and use its name
+        // because we only store the ID.
+        return association.getPersistedName();
       }
-      sb.append(association.getName()).append(".");
     }
-    sb.append(property.getName());
+    sb.append(property.getPersistedName());
     return sb.toString();
   }
 
@@ -762,13 +800,13 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   static String asPath(
       final Collection<Association> associations, final PersistentProperty property) {
     if (associations.isEmpty()) {
-      return property.getName();
+      return property.getPersistedName();
     }
     StringBuilder sb = new StringBuilder();
     for (Association association : associations) {
-      sb.append(association.getName()).append(".");
+      sb.append(association.getPersistedName()).append(".");
     }
-    sb.append(property.getName());
+    sb.append(property.getPersistedName());
     return sb.toString();
   }
 

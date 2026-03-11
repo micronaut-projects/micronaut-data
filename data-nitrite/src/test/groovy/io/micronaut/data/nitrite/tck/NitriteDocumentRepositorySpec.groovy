@@ -15,35 +15,33 @@
  */
 package io.micronaut.data.nitrite.tck
 
+import io.micronaut.context.BeanContext
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
 import io.micronaut.data.document.tck.repositories.*
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import org.slf4j.LoggerFactory
 
-@MicronautTest(transactional = false)
+@MicronautTest
 class NitriteDocumentRepositorySpec extends AbstractDocumentRepositorySpec {
 
-    def setupSpec() {
-        Logger queryLogger = (Logger) LoggerFactory.getLogger("io.micronaut.data.query")
-        queryLogger.setLevel(Level.INFO)
-    }
-
-    @Inject NitriteBasicTypesRepository basicTypesRepository
-    @Inject NitritePersonRepository personRepository
-    @Inject NitriteBookRepository bookRepository
-    @Inject NitriteAuthorRepository authorRepository
-    @Inject NitriteStudentRepository studentRepository
-    @Inject NitriteSaleRepository saleRepository
-    @Inject NitriteDomainEventsRepository eventsRepository
-    @Inject NitriteDocumentRepository documentRepository
-
-    @Override
-    BasicTypesRepository getBasicTypeRepository() {
-        return basicTypesRepository
-    }
+    @Inject
+    NitriteBasicTypesRepository basicTypeRepository
+    @Inject
+    NitriteDomainEventsRepository eventsRepository
+    @Inject
+    NitriteSaleRepository saleRepository
+    @Inject
+    NitriteStudentRepository studentRepository
+    @Inject
+    NitriteDocumentRepository documentRepository
+    @Inject
+    NitriteBookRepository bookRepository
+    @Inject
+    NitriteAuthorRepository authorRepository
+    @Inject
+    NitritePersonRepository personRepository
+    @Inject
+    BeanContext beanContext
 
     @Override
     PersonRepository getPersonRepository() {
@@ -51,23 +49,8 @@ class NitriteDocumentRepositorySpec extends AbstractDocumentRepositorySpec {
     }
 
     @Override
-    BookRepository getBookRepository() {
-        return bookRepository
-    }
-
-    @Override
-    AuthorRepository getAuthorRepository() {
-        return authorRepository
-    }
-
-    @Override
-    StudentRepository getStudentRepository() {
-        return studentRepository
-    }
-
-    @Override
-    SaleRepository getSaleRepository() {
-        return saleRepository
+    BasicTypesRepository getBasicTypeRepository() {
+        return basicTypeRepository
     }
 
     @Override
@@ -76,11 +59,23 @@ class NitriteDocumentRepositorySpec extends AbstractDocumentRepositorySpec {
     }
 
     @Override
+    SaleRepository getSaleRepository() {
+        return saleRepository
+    }
+
+    @Override
+    StudentRepository getStudentRepository() {
+        return studentRepository
+    }
+
+    @Override
     DocumentRepository getDocumentRepository() {
         return documentRepository
     }
 
     def setup() {
+        authorRepository.deleteAll()
+        bookRepository.deleteAll()
         basicTypeRepository.deleteAll()
         eventsRepository.deleteAll()
         saleRepository.deleteAll()

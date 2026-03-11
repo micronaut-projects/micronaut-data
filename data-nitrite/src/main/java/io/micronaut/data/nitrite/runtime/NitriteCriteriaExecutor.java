@@ -85,9 +85,10 @@ public final class NitriteCriteriaExecutor {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
         Class<?> entityType = getEntityType(query);
+        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Class<R> resultType = (Class<R>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, -1, -1);
+        FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
 
         // Handle count queries specially
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
@@ -103,8 +104,9 @@ public final class NitriteCriteriaExecutor {
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
         Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
+        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, -1, -1);
+        FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
         List<T> results = new ArrayList<>();
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             results.add(entityMapper.fromDocument(doc, type));
@@ -117,8 +119,9 @@ public final class NitriteCriteriaExecutor {
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
         Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
+        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, offset, limit);
+        FindOptions options = buildFindOptions(queryResult, persistentEntity, offset, limit);
         List<T> results = new ArrayList<>();
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             results.add(entityMapper.fromDocument(doc, type));
@@ -259,7 +262,7 @@ public final class NitriteCriteriaExecutor {
         }
     }
 
-    private FindOptions buildFindOptions(QueryResult queryResult, int offset, int limit) {
+    private FindOptions buildFindOptions(QueryResult queryResult, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
         FindOptions options = new FindOptions();
 
         // Handle explicit offset/limit parameters
@@ -283,7 +286,7 @@ public final class NitriteCriteriaExecutor {
                     Map<String, Object> sortMap = (Map<String, Object>) queryMap.get("$sort");
                     for (Map.Entry<String, Object> entry : sortMap.entrySet()) {
                         SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
-                        options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey()), order);
+                        options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey(), persistentEntity), order);
                     }
                 }
                 // Extract skip/limit if not already provided as parameters

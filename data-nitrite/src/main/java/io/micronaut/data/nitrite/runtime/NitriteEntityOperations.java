@@ -27,10 +27,15 @@ import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations.SyncCascadeOperationsHelper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.filters.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -43,7 +48,9 @@ import java.util.function.Function;
 @Internal
 public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperations<NitriteOperationContext, T, RuntimeException> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(NitriteEntityOperations.class);
     private final NitriteCollection collection;
+
     private final NitriteEntityMapper entityMapper;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
@@ -104,8 +111,14 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @Override
     protected void execute() throws RuntimeException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("execute: operationType={}, entity={}", operationType, entity);
+        }
         // Skip if already persisted in this context
         if (operationType == OperationType.INSERT && ctx.persisted.contains(entity)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("execute: skipping INSERT because already persisted");
+            }
             return;
         }
         
@@ -122,6 +135,10 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Document doc = entityMapper.toDocument(entity);
             helper.logInsert(collection.getName(), doc);
             collection.insert(doc);
+            Object generatedId = doc.get("_id");
+            if (generatedId != null && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().getProperty().get(entity) == null) {
+                entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty(), entity, generatedId);
+            }
             ctx.persisted.add(entity);
         } else if (operationType == OperationType.UPDATE) {
             // Update with optimistic locking
@@ -158,6 +175,48 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         if (persistentEntity.getVersion() != null && received != expected) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
         }
+    }
+
+    @Override
+    protected boolean triggerPrePersist() {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("triggerPrePersist: entity={}", entity);
+        }
+        
+        // Generate ID early so children can reference it
+        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        helper.generateIdIfNecessary(entity, type);
+        
+        // Manual cascade to ensure events fire for children BEFORE parent
+        for (io.micronaut.data.model.runtime.RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
+            if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc && assoc.doesCascade(io.micronaut.data.annotation.Relation.Cascade.ALL, io.micronaut.data.annotation.Relation.Cascade.PERSIST)) {
+                Object value = prop.getProperty().get(entity);
+                if (value instanceof Iterable<?> iterable) {
+                    java.util.List<Object> list = new java.util.ArrayList<>();
+                    for (Object o : iterable) list.add(o);
+                    if (!list.isEmpty()) {
+                        Class<Object> associatedType = (Class<Object>) assoc.getAssociatedEntity().getIntrospection().getBeanType();
+                        ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, list, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), null);
+                    }
+                } else if (value != null) {
+                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity());
+                }
+            }
+        }
+
+        boolean result = super.triggerPrePersist();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("triggerPrePersist: result={}", result);
+        }
+        return result;
+    }
+
+    @Override
+    protected void triggerPostPersist() {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("triggerPostPersist: entity={}", entity);
+        }
+        super.triggerPostPersist();
     }
 
     @Override

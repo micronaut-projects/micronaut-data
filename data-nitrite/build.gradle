@@ -70,6 +70,7 @@ dependencies {
     testImplementation mnTest.micronaut.test.spock
     testImplementation libs.spock.core
     testImplementation mnLogging.logback.classic
+    testRuntimeOnly "ch.qos.logback:logback-classic:1.4.14"
 
     // Optional dependency tests - ROCKSDB adapter (only for rocksDbPresentTest source set)
     rocksDbPresentTestRuntimeOnly libs.nitrite.rocksdb.adapter
@@ -82,20 +83,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    // Exclude tests for features not supported by Nitrite
-    filter {
-        // Joins/Associations not supported
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test save and fetch author with no books"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test delete by id and author id"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test is null or empty"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test order by association"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test project on single ended association"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test join on single ended association"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test join on many ended association"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test one-to-many mappedBy"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test update relation"
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test total size of find with left join"
-    }
 }
 
 tasks.register('rocksDbPresentTest', Test) {

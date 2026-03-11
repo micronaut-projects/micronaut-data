@@ -214,6 +214,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.entityMapper =
         new NitriteEntityMapper(
             conversionService, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
+    this.entityMapper.setHelper(this);
     this.transactionHolder = transactionHolder;
     this.queryParser = new NitriteQueryParser();
     this.filterBuilder = new NitriteFilterBuilder(entityMapper);
@@ -227,9 +228,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         queryParser,
         filterBuilder,
         this::getCollection,
-        this::getEntity
-    );
-  }
+        this::getEntity);
+    }
 
   @Override
   public Nitrite getDatabase() {
@@ -305,6 +305,43 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T persistOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
+    }
+
+    // Set back-references for bi-directional associations
+    for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
+        if (prop instanceof RuntimeAssociation<?> assoc) {
+            String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+            if (mappedBy != null) {
+                Object value = prop.getProperty().get(entityValue);
+                if (value instanceof Iterable<?> iterable) {
+                    RuntimePersistentEntity<?> childEntity = assoc.getAssociatedEntity();
+                    RuntimePersistentProperty<?> backProp = childEntity.getPropertyByName(mappedBy);
+                    if (backProp != null) {
+                        for (Object child : iterable) {
+                            if (child != null) {
+                                // Ensure back-reference is set
+                                if (((BeanProperty<Object, Object>) backProp.getProperty()).get(child) == null) {
+                                    ((BeanProperty<Object, Object>) backProp.getProperty()).set(child, entityValue);
+                                }
+                                
+                                // ALSO: ensure child is in parent collection if it's bi-directional
+                                // This is often handled by the user code, but TCK might rely on it.
+                            }
+                        }
+                    }
+                } else if (value != null) {
+                    RuntimePersistentEntity<?> childEntity = assoc.getAssociatedEntity();
+                    RuntimePersistentProperty<?> backProp = childEntity.getPropertyByName(mappedBy);
+                    if (backProp != null && ((BeanProperty<Object, Object>) backProp.getProperty()).get(value) == null) {
+                        ((BeanProperty<Object, Object>) backProp.getProperty()).set(value, entityValue);
+                    }
+                }
+            }
+        }
+    }
+    
     NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
         ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
         persistentEntity, conversionService, entityMapper, this, entityValue, NitriteEntityOperations.OperationType.INSERT);
@@ -317,14 +354,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                                    RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
     List<T> results = new ArrayList<>();
     for (T entity : entityValues) {
-      if (predicate.test(entity)) {
+      if (predicate != null && predicate.test(entity)) {
         continue;
       }
-      NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
-          ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
-          persistentEntity, conversionService, entityMapper, this, entity, NitriteEntityOperations.OperationType.INSERT);
-      op.persist();
-      results.add(op.getEntity());
+      results.add(persistOne(ctx, entity, persistentEntity));
     }
     return results;
   }
@@ -367,17 +400,31 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T updateEntityId(BeanProperty<T, Object> property, T entity, Object id) {
+      if (LOG.isDebugEnabled()) {
+          LOG.debug("updateEntityId: property={}, entity={}, id={}", property.getName(), entity, id);
+      }
       if (id == null) {
           return entity;
       }
       if (property.getType().isInstance(id)) {
           property.set(entity, id);
+          if (LOG.isDebugEnabled()) {
+              LOG.debug("updateEntityId: property set directly. entity after={}", entity);
+          }
           return entity;
       }
       return conversionService.convert(id, property.getType()).map(converted -> {
           property.set(entity, converted);
+          if (LOG.isDebugEnabled()) {
+              LOG.debug("updateEntityId: property set after conversion. entity after={}", entity);
+          }
           return entity;
-      }).orElse(entity);
+      }).orElseGet(() -> {
+          if (LOG.isDebugEnabled()) {
+              LOG.debug("updateEntityId: conversion failed for id={}", id);
+          }
+          return entity;
+      });
   }
 
   /**
@@ -486,12 +533,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     // multiple documents are inserted rapidly with timestamp-based IDs.
   }
 
-  /** Generate and set ID on entity if @GeneratedValue is present. */
+  /** Generate and set ID on entity if @GeneratedValue is present and ID is null. */
   @Override
   public <T> void generateIdIfNecessary(final T entity, final Class<T> type) {
     RuntimePersistentEntity<T> persistentEntity = getEntity(type);
     var idProperty = persistentEntity.getIdentity();
     if (idProperty != null && idProperty.isAnnotationPresent(GeneratedValue.class)) {
+      if (idProperty.getProperty().get(entity) != null) {
+          return;
+      }
       Class<?> idType = idProperty.getType();
       Object generatedId = (idType == String.class) ? UUID.randomUUID().toString() :
                            (idType == UUID.class) ? UUID.randomUUID() :
@@ -510,73 +560,26 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return null;
     }
     T entity = entityMapper.fromDocument(doc, type);
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-    runtimeEntityRegistry.getEntityEventListener().postLoad((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
     return entity;
   }
 
   @Override
   public <T> T persist(@NonNull final InsertOperation<T> operation) {
     NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
-    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
-        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
-        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
-        operation.getEntity(), NitriteEntityOperations.OperationType.INSERT);
-    op.persist();
-    return op.getEntity();
+    return persistOne(ctx, operation.getEntity(), getEntity(operation.getRootEntity()));
   }
 
   @Override
   public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
     Class<T> type = operation.getRootEntity();
     RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-    NitriteCollection collection = getCollection(type);
-    logInsert(collection.getName(), operation);
-
-    List<T> entities = new ArrayList<>();
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    
+    List<T> results = new ArrayList<>();
     for (T entity : operation) {
-        final io.micronaut.data.runtime.event.DefaultEntityEventContext<T> event =
-            new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity);
-        if (runtimeEntityRegistry.getEntityEventListener().prePersist((io.micronaut.data.event.EntityEventContext<Object>) event)) {
-            T prePersistedEntity = event.getEntity();
-            // Initialize version to 0 if not set
-            if (persistentEntity.getVersion() != null) {
-                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                if (versionProperty.get(prePersistedEntity) == null) {
-                    prePersistedEntity = updateEntityId(versionProperty, prePersistedEntity, 0L);
-                }
-            }
-            entities.add(prePersistedEntity);
-        }
+        results.add(persistOne(ctx, entity, persistentEntity));
     }
-
-    if (entities.isEmpty()) {
-        return entities;
-    }
-
-    // First pass: generate IDs for all parents
-    for (T entity : entities) {
-      generateIdIfNecessary(entity, type);
-    }
-
-    // Second pass: cascade persist children and insert parents
-    List<Document> documents = new ArrayList<>();
-    for (T entity : entities) {
-      // Handle cascade persist for ONE_TO_MANY and MANY_TO_MANY with cascade ALL
-      persistCascadedEntities(entity, type);
-      documents.add(entityMapper.toDocument(entity));
-    }
-
-    if (!documents.isEmpty()) {
-        collection.insert(documents.toArray(new Document[0]));
-    }
-
-    // Third pass: postPersist events
-    for (T entity : entities) {
-        runtimeEntityRegistry.getEntityEventListener().postPersist((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-    }
-
-    return entities;
+    return results;
   }
 
   /**
@@ -586,44 +589,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * ensuring that child entities with cascade relationships are stored in the database.
    * </p>
    *
+   * @param ctx the operation context
    * @param <T> the entity type
    * @param entity the parent entity containing cascaded associations
    * @param type the parent entity class
    */
   @SuppressWarnings("unchecked")
-  private <T> void persistCascadedEntities(T entity, Class<T> type) {
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-    for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
-      if (prop instanceof RuntimeAssociation<?> assoc && !prop.isReadOnly()) {
-        // Check if cascade ALL or PERSIST is enabled for this relationship
-        if (assoc.doesCascade(Relation.Cascade.ALL, Relation.Cascade.PERSIST)) {
-          // Check if it's a collection relationship (ONE_TO_MANY or MANY_TO_MANY)
-          Relation.Kind kind = assoc.getKind();
-          if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
-            BeanProperty<T, Object> beanProp = (BeanProperty<T, Object>) prop.getProperty();
-            Object value = beanProp.get(entity);
-            if (value instanceof Iterable<?> iterable) {
-              Class<?> associatedType = assoc.getAssociatedEntity().getIntrospection().getBeanType();
-              NitriteCollection associatedCollection = getCollection(associatedType);
-              for (Object associatedEntity : iterable) {
-                if (associatedEntity != null) {
-                  generateIdIfNecessary(associatedEntity, (Class<Object>) associatedType);
-                  Document associatedDoc = entityMapper.toDocument(associatedEntity);
-                  associatedCollection.insert(associatedDoc);
-                }
-              }
-            } else if (value != null) {
-              // Single entity (MANY_TO_ONE or ONE_TO_ONE)
-              Class<?> associatedType = assoc.getAssociatedEntity().getIntrospection().getBeanType();
-              NitriteCollection associatedCollection = getCollection(associatedType);
-              generateIdIfNecessary(value, (Class<Object>) associatedType);
-              Document associatedDoc = entityMapper.toDocument(value);
-              associatedCollection.insert(associatedDoc);
-            }
-          }
-        }
-      }
-    }
+  private <T> void persistCascadedEntities(NitriteOperationContext ctx, T entity, Class<T> type) {
+    cascadeOperations.cascadeEntity(ctx, entity, getEntity(type), false, Relation.Cascade.PERSIST);
   }
 
   @Override
@@ -781,10 +754,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return Optional.of(count);
   }
 
-  /** Build FindOptions with pagination and sorting. */
   private FindOptions buildFindOptions(final Pageable pageable, final String jsonQuery) {
-    FindOptions options = buildFindOptions(pageable, (Sort) null);
-    if (jsonQuery != null && jsonQuery.contains("\"$skip\"")) {
+    return buildFindOptions(pageable, (Sort) null, null, jsonQuery);
+  }
+
+  /** Build FindOptions with pagination and sorting. */
+  private FindOptions buildFindOptions(final Pageable pageable, final Sort additionalSort, final Limit limit, final String jsonQuery) {
+    FindOptions options = buildFindOptions(pageable, additionalSort, limit);
+    if (jsonQuery != null && jsonQuery.trim().startsWith("{")) {
       try {
         Object parsed = queryParser.parseJson(jsonQuery);
         if (parsed instanceof Map m) {
@@ -793,6 +770,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           }
           if (m.get("$limit") instanceof Number n) {
             options.limit(n.intValue());
+          }
+          if (m.get("$sort") instanceof Map sortMap) {
+              for (Object entryObj : sortMap.entrySet()) {
+                  Map.Entry entry = (Map.Entry) entryObj;
+                  String field = entry.getKey().toString();
+                  int order = entry.getValue() instanceof Number n ? n.intValue() : 1;
+                  options.thenOrderBy(field, order == 1 ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending);
+              }
           }
         }
       } catch (Exception ignored) {
@@ -843,7 +828,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (property != null && property.contains(".")) {
           property = property.substring(property.lastIndexOf('.') + 1);
         }
-        options.thenOrderBy(entityMapper.normalizeFieldName(property), sortOrder);
+        options.thenOrderBy(entityMapper.normalizeFieldName(property, null), sortOrder);
       }
     }
     return options;
@@ -1192,9 +1177,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Map<String, Object> updateMap = null;
     boolean sql = false;
     String query = storedQuery.getQuery();
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("createNitriteStoredQuery: query={}", query);
+    }
     if (query.trim().startsWith("{")) {
       try {
         Object parsed = queryParser.parseJson(query);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("createNitriteStoredQuery: parsed={}", parsed);
+        }
         if (parsed instanceof Map m) {
           // Separate $project from filter criteria
           filterMap = new LinkedHashMap<>(m);
@@ -1326,7 +1317,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
-              entityMapper.normalizeFieldName(mEmpty.group(1)),
+              entityMapper.normalizeFieldName(mEmpty.group(1), null),
               Collections.singletonMap("$empty", true),
               params,
               namedParameters));
@@ -1349,7 +1340,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
-              entityMapper.normalizeFieldName(m.group(1)),
+              entityMapper.normalizeFieldName(m.group(1), null),
               Collections.singletonMap(
                   filterOp,
                   toFilterValue(resolveSqlParam(m.group(3), params, namedParameters))),
@@ -1361,7 +1352,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
-              entityMapper.normalizeFieldName(m.group(1)),
+              entityMapper.normalizeFieldName(m.group(1), null),
               Collections.singletonMap("$notNull", true),
               params,
               namedParameters));
@@ -1371,7 +1362,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       filters.add(
           filterBuilder.buildFieldFilter(
               null,
-              entityMapper.normalizeFieldName(m.group(1)),
+              entityMapper.normalizeFieldName(m.group(1), null),
               Collections.singletonMap("$null", true),
               params,
               namedParameters));
@@ -1379,7 +1370,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     // Handle IN (:param) and NOT IN (:param) clauses
     Matcher inMatcher = SQL_IN_CLAUSE.matcher(where);
     while (inMatcher.find()) {
-      String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1));
+      String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1), null);
       boolean notIn = inMatcher.group(2) != null;
       String paramName = inMatcher.group(3);
 
@@ -1540,9 +1531,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     String query = nq.getQuery();
     boolean isUpdate = nq.getUpdateMap() != null
         || (query != null && query.trim().regionMatches(true, 0, "UPDATE", 0, 6));
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("findOne: isUpdate={}, updateMap={}, query={}", isUpdate, nq.getUpdateMap(), query);
+    }
     if (isUpdate) {
       Optional<Number> result = executeUpdate((PreparedQuery<?, Number>) nq);
-      return Number.class.isAssignableFrom(nq.getResultType()) ? (R) result.orElse(0L) : null;
+      return (R) convertValue(result.orElse(0L), nq.getResultType());
     }
     if (Number.class.isAssignableFrom(nq.getResultType())) {
       // Check if this is a count query or a numeric projection
@@ -1638,7 +1632,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
       // For single-field projection, extract the value directly
       if (projectedFields != null && projectedFields.size() == 1) {
-        Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
+        Document doc = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), nq.getQuery())).firstOrNull();
         if (doc == null) {
           return null;
         }
@@ -1647,15 +1641,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       }
     }
 
-    Document doc = coll.find(nq.getNitriteFilter()).firstOrNull();
+    Document doc = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), nq.getQuery())).firstOrNull();
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("findOne: doc found={}", doc);
+    }
     if (doc == null) {
       return null;
     }
     T entity = entityMapper.fromDocument(doc, nq.getRootEntity());
-    if (entity != null) {
-        RuntimePersistentEntity<T> persistentEntity = getEntity(nq.getRootEntity());
-        runtimeEntityRegistry.getEntityEventListener().postLoad((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-    }
     return (R) entity;
   }
 
@@ -1767,7 +1760,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       }
     }
 
-    var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s, limit));
+    var cursor = coll.find(nq.getNitriteFilter(), buildFindOptions(nq.getPageable(), s, limit, nq.getQuery()));
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("findAll: cursor size={}, filter={}", cursor.size(), nq.getNitriteFilter());
+    }
 
     // Apply projection if we have fields to project
     if (projectedFields != null && !projectedFields.isEmpty()) {
@@ -1782,13 +1778,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     List<R> results = new ArrayList<>();
     RuntimePersistentEntity<T> persistentEntity = getEntity(nq.getRootEntity());
     for (Document doc : cursor) {
-      T entity = entityMapper.fromDocument(doc, nq.getRootEntity());
-      if (entity != null) {
-          runtimeEntityRegistry.getEntityEventListener().postLoad((io.micronaut.data.event.EntityEventContext<Object>) new io.micronaut.data.runtime.event.DefaultEntityEventContext<>(persistentEntity, entity));
-      }
-      results.add((R) entity);
-    }
-    return results;
+       T entity = entityMapper.fromDocument(doc, nq.getRootEntity());
+       results.add((R) entity);
+    }    return results;
   }
 
   /**

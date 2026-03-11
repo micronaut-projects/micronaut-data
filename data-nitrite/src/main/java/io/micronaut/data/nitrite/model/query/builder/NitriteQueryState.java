@@ -29,19 +29,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Internal
 final class NitriteQueryState {
 
-  private final QueryBuilder2.BaseQueryDefinition baseQueryDefinition;
+  private final PersistentEntity persistentEntity;
   private final boolean allowJoins;
   private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
   private final AtomicInteger position = new AtomicInteger(0);
 
   NitriteQueryState(
-      final QueryBuilder2.BaseQueryDefinition baseQueryDefinition, final boolean allowJoins) {
-    this.baseQueryDefinition = baseQueryDefinition;
+      final PersistentEntity persistentEntity, final boolean allowJoins) {
+    this.persistentEntity = persistentEntity;
     this.allowJoins = allowJoins;
   }
 
   public PersistentEntity getEntity() {
-    return baseQueryDefinition.persistentEntity();
+    return persistentEntity;
   }
 
   public boolean isAllowJoins() {
