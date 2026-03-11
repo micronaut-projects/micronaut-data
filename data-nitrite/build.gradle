@@ -95,7 +95,6 @@ test {
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test one-to-many mappedBy"
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test update relation"
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test total size of find with left join"
-        // excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test criteria"
     }
 }
 

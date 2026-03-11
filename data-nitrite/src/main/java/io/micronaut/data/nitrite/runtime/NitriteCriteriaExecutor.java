@@ -241,70 +241,74 @@ public final class NitriteCriteriaExecutor {
     }
 
     private void resolveFilterMapPlaceholders(Map<String, Object> map, Object[] params) {
-    for (Map.Entry<String, Object> entry : map.entrySet()) {
-        Object value = entry.getValue();
-        if (value instanceof Map m) {
-            resolveFilterMapPlaceholders(m, params);
-        } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
-            // Resolve placeholder
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                resolveFilterMapPlaceholders(m, params);
+            } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
+                // Resolve placeholder
+                try {
+                    int idx = Integer.parseInt(str.substring(7));
+                    if (params != null && idx >= 0 && idx < params.length) {
+                        entry.setValue(params[idx]);
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore
+                }
+            }
+        }
+    }
+
+    private FindOptions buildFindOptions(QueryResult queryResult, int offset, int limit) {
+        FindOptions options = new FindOptions();
+
+        // Handle explicit offset/limit parameters
+        if (offset > 0) {
+            options.skip((long) offset);
+        }
+        if (limit > 0) {
+            options.limit((long) limit);
+        }
+
+        String queryString = queryResult.getQuery();
+        if (queryString != null && !queryString.isEmpty()) {
             try {
-                int idx = Integer.parseInt(str.substring(7));
-                if (params != null && idx >= 0 && idx < params.length) {
-                    entry.setValue(params[idx]);
+                Map<String, Object> queryMap = (Map<String, Object>) queryParser.parseJson(queryString);
+                if (queryMap == null) {
+                    return options;
                 }
-            } catch (NumberFormatException e) {
-                // Ignore
+
+                // Extract sort if present
+                if (queryMap.containsKey("$sort")) {
+                    Map<String, Object> sortMap = (Map<String, Object>) queryMap.get("$sort");
+                    for (Map.Entry<String, Object> entry : sortMap.entrySet()) {
+                        SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
+                        options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey()), order);
+                    }
+                }
+                // Extract skip/limit if not already provided as parameters
+                if (offset <= 0 && queryMap.containsKey("$skip")) {
+                    options.skip(((Number) queryMap.get("$skip")).longValue());
+                }
+                if (limit <= 0 && queryMap.containsKey("$limit")) {
+                    options.limit(((Number) queryMap.get("$limit")).longValue());
+                }
+
+            } catch (Exception e) {
+                // Ignore parse errors for options
             }
         }
-    }
-}
-
-private FindOptions buildFindOptions(QueryResult queryResult, int offset, int limit) {
-    FindOptions options = new FindOptions();
-
-    // Handle explicit offset/limit parameters
-    if (offset > 0) {
-        options.skip((long) offset);
-    }
-    if (limit > 0) {
-        options.limit((long) limit);
+        return options;
     }
 
-    String queryString = queryResult.getQuery();
-    if (queryString != null && !queryString.isEmpty()) {
-        try {
-            Map<String, Object> queryMap = (Map<String, Object>) queryParser.parseJson(queryString);
-
-            // Extract sort if present
-            if (queryMap.containsKey("$sort")) {
-                Map<String, Object> sortMap = (Map<String, Object>) queryMap.get("$sort");
-                for (Map.Entry<String, Object> entry : sortMap.entrySet()) {
-                    SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
-                    options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey()), order);
-                }
-            }            // Extract skip/limit if not already provided as parameters
-            if (offset <= 0 && queryMap.containsKey("$skip")) {
-                options.skip(((Number) queryMap.get("$skip")).longValue());
-            }
-            if (limit <= 0 && queryMap.containsKey("$limit")) {
-                options.limit(((Number) queryMap.get("$limit")).longValue());
-            }
-
-        } catch (Exception e) {
-            // Ignore parse errors for options
-        }
-    }
-    return options;
-}
-
-private Object valueRepresentation(Object value) {
+    private Object toFilterValue(Object value) {
         if (value == null) {
             return null;
         }
         if (value instanceof Iterable<?> iterable && !(value instanceof Document)) {
             List<Object> list = new ArrayList<>();
             for (Object o : iterable) {
-                list.add(valueRepresentation(o));
+                list.add(toFilterValue(o));
             }
             return list;
         }
