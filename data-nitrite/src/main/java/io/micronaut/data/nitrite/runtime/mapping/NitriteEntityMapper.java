@@ -631,7 +631,7 @@ public final class NitriteEntityMapper {
         if (idProp != null && idProp.equals(prop)) {
             storedName = ID_FIELD;
         }
-        
+
         BeanProperty<T, Object> property = (BeanProperty<T, Object>) prop.getProperty();
         Object value = doc.get(storedName);
         if (value == null && !storedName.equals(prop.getName())) {
@@ -640,7 +640,7 @@ public final class NitriteEntityMapper {
         if (value == null && storedName.equals(ID_FIELD)) {
             value = doc.get("_id");
         }
-        
+
         if (value != null) {
             if (prop instanceof RuntimeAssociation association && !association.isEmbedded()) {
                 if (helper != null) {
@@ -711,6 +711,24 @@ public final class NitriteEntityMapper {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // Handle version property explicitly (might not be in persistent properties or value could be 0)
+    RuntimePersistentProperty<T> versionProp = persistentEntity.getVersion();
+    if (versionProp != null && !versionProp.isReadOnly()) {
+        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) versionProp.getProperty();
+        String versionStoredName = versionProp.getPersistedName();
+        Object versionValue = doc.get(versionStoredName);
+        if (versionValue == null && !versionStoredName.equals(versionProp.getName())) {
+            versionValue = doc.get(versionProp.getName());
+        }
+        // Version can be 0, so check for null explicitly
+        if (versionValue != null) {
+            Object convertedVersion = convertFromDocumentValue(versionValue, versionProperty.asArgument());
+            if (convertedVersion != null) {
+                versionProperty.set(entity, convertedVersion);
             }
         }
     }

@@ -128,8 +128,15 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Initialize version to 0 if not set (for optimistic locking)
             if (persistentEntity.getVersion() != null) {
                 BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                if (versionProperty.get(entity) == null) {
+                Object currentVersion = versionProperty.get(entity);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("execute: version property={}, currentVersion={}", versionProperty.getName(), currentVersion);
+                }
+                if (currentVersion == null) {
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("execute: version set to 0, new entity version={}", versionProperty.get(entity));
+                    }
                 }
             }
             Document doc = entityMapper.toDocument(entity);
