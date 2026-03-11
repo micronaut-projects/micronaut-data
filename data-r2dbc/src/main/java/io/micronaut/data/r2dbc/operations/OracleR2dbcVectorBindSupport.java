@@ -15,229 +15,241 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.runtime.convert.vector.impl.VectorTextFormatter;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseByteVector;
+import io.micronaut.data.model.vector.SparseDoubleVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
+import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
 import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.Type;
+import jakarta.inject.Singleton;
+import oracle.jdbc.OracleType;
+import oracle.r2dbc.OracleR2dbcTypes;
+import oracle.sql.VECTOR;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.SQLException;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import oracle.sql.VECTOR;
-
 @Internal
-final class OracleR2dbcVectorBindSupport {
+@Singleton
+@Requires(classes = {VECTOR.class, OracleR2dbcTypes.class})
+final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
 
     private enum OracleVectorKind {
         DENSE,
+        SPARSE_UNSPECIFIED,
         FLOAT64_SPARSE,
         FLOAT32_SPARSE,
         INT8_SPARSE,
         BINARY_SPARSE
     }
 
-    private static final @Nullable Type ORACLE_VECTOR_TYPE = resolveOracleVectorType();
-    private static final Pattern SPARSE_KIND_PATTERN = Pattern.compile(",\\s*(INT8|FLOAT32|BINARY)\\s*,\\s*SPARSE\\b",
-        Pattern.CASE_INSENSITIVE);
+    private static final Type ORACLE_VECTOR_TYPE = OracleR2dbcTypes.VECTOR;
+    private static final Pattern SPARSE_KIND_PATTERN = Pattern.compile("TO_VECTOR\\s*\\([^)]*?,\\s*\\d+\\s*,\\s*(INT8|FLOAT32|FLOAT64|BINARY)\\s*,\\s*SPARSE\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SPARSE_TO_VECTOR_PATTERN = Pattern.compile("TO_VECTOR\\s*\\([^)]*?\\bSPARSE\\b", Pattern.CASE_INSENSITIVE);
 
-    private OracleR2dbcVectorBindSupport() {
+    @Override
+    public Dialect getDialect() {
+        return Dialect.ORACLE;
     }
 
-    static @Nullable Parameter toTypedVectorParameter(@Nullable Object value) {
-        return toTypedVectorParameter(value, null);
-    }
-
-    static boolean requiresSparseLiteral(@Nullable String query) {
-        return resolveVectorKind(query) != OracleVectorKind.DENSE;
-    }
-
-    static @Nullable String toSparseVectorLiteral(@Nullable Object value) {
-        return toSparseVectorLiteral(value, null);
-    }
-
-    static @Nullable String toSparseVectorLiteral(@Nullable Object value, @Nullable String query) {
+    @Override
+    public @Nullable Parameter toTypedVectorParameter(@Nullable Object value, @Nullable String query) {
         if (value == null) {
             return null;
         }
-        OracleVectorKind vectorKind = resolveVectorKind(query);
-        if (value instanceof String stringValue) {
-            String trimmed = stringValue.trim();
-            if (isSparseLiteral(trimmed)) {
-                return trimmed;
-            }
-            double[] denseValues = parseDenseVectorLiteral(trimmed);
-            if (denseValues == null) {
-                return null;
-            }
-            if (vectorKind == OracleVectorKind.INT8_SPARSE) {
-                byte[] bytes = toByteArray(denseValues);
-                if (bytes == null) {
-                    return null;
-                }
-                return VectorTextFormatter.toText(Vector.of(bytes), true);
-            }
-            if (vectorKind == OracleVectorKind.FLOAT32_SPARSE) {
-                return VectorTextFormatter.toText(Vector.of(toFloatArray(denseValues)), true);
-            }
-            return VectorTextFormatter.toText(Vector.of(denseValues), true);
-        }
-        if (value instanceof VECTOR vectorValue) {
-            String fromOracleVector = sparseTextFromOracleVector(vectorValue);
-            if (fromOracleVector != null) {
-                return fromOracleVector;
-            }
-        }
-        if (value instanceof Vector vector) {
-            if (vectorKind == OracleVectorKind.INT8_SPARSE) {
-                return VectorTextFormatter.toText(Vector.of(vector.toByteArray()), true);
-            }
-            if (vectorKind == OracleVectorKind.FLOAT32_SPARSE) {
-                return VectorTextFormatter.toText(Vector.of(vector.toFloatArray()), true);
-            }
-            return VectorTextFormatter.toText(vector, true);
-        }
-        if (value instanceof double[] doubles) {
-            return VectorTextFormatter.toText(Vector.of(doubles), true);
-        }
-        if (value instanceof float[] floats) {
-            return VectorTextFormatter.toText(Vector.of(floats), true);
-        }
-        if (value instanceof byte[] bytes) {
-            return VectorTextFormatter.toText(Vector.of(bytes), true);
-        }
-        return null;
-    }
-
-    private static boolean isSparseLiteral(String value) {
-        if (!value.startsWith("[") || !value.endsWith("]")) {
-            return false;
-        }
-        String inner = value.substring(1, value.length() - 1);
-        return inner.indexOf('[') >= 0 || inner.indexOf(']') >= 0;
-    }
-
-    private static @Nullable String sparseTextFromOracleVector(VECTOR value) {
-        byte[] bytes = tryExtractByteArray(value);
-        if (bytes != null) {
-            return VectorTextFormatter.toText(Vector.of(bytes), true);
-        }
-        float[] floats = tryExtractFloatArray(value);
-        if (floats != null) {
-            return VectorTextFormatter.toText(Vector.of(floats), true);
-        }
-        double[] doubles = tryExtractDoubleArray(value);
-        if (doubles != null) {
-            return VectorTextFormatter.toText(Vector.of(doubles), true);
-        }
-        return null;
-    }
-
-    private static byte @Nullable [] tryExtractByteArray(VECTOR value) {
-        try {
-            return value.toByteArray();
-        } catch (Throwable e) {
-            return null;
-        }
-    }
-
-    private static float @Nullable [] tryExtractFloatArray(VECTOR value) {
-        try {
-            return value.toFloatArray();
-        } catch (Throwable e) {
-            return null;
-        }
-    }
-
-    private static double @Nullable [] tryExtractDoubleArray(VECTOR value) {
-        try {
-            return value.toDoubleArray();
-        } catch (Throwable e) {
-            return null;
-        }
-    }
-
-    static @Nullable Parameter toTypedVectorParameter(@Nullable Object value, @Nullable String query) {
-        if (value == null || ORACLE_VECTOR_TYPE == null) {
-            return null;
+        if (value instanceof CharSequence) {
+            throw new IllegalArgumentException("String VECTOR literals are not supported for Oracle binding");
         }
         OracleVectorKind vectorKind = resolveVectorKind(query);
-        if (vectorKind != OracleVectorKind.DENSE) {
-            return null;
-        }
-        Object payload = toTypedPayload(value);
+        OracleVectorKind effectiveKind = vectorKind == OracleVectorKind.SPARSE_UNSPECIFIED ? inferSparseKind(value) : vectorKind;
+        Object payload = toTypedPayload(value, effectiveKind);
         if (payload == null) {
             return null;
         }
         return Parameters.in(ORACLE_VECTOR_TYPE, payload);
     }
 
-    private static @Nullable Object toTypedPayload(Object value) {
-        if (value instanceof float[] || value instanceof double[] || value instanceof byte[] || value instanceof boolean[]) {
-            return value;
-        }
-        if (value instanceof Vector vector) {
-            return vector.toDoubleArray();
-        }
-        if (value instanceof String stringValue) {
-            return parseDenseVectorLiteral(stringValue);
-        }
-        if (value.getClass().getName().equals("oracle.sql.VECTOR")) {
-            return value;
-        }
-        return null;
+    @Nullable Parameter toTypedVectorParameter(@Nullable Object value) {
+        return toTypedVectorParameter(value, null);
     }
 
-    private static @Nullable Type resolveOracleVectorType() {
+    private static @Nullable Object toTypedPayload(Object value, OracleVectorKind vectorKind) {
+        if (value instanceof CharSequence) {
+            throw new IllegalArgumentException("String VECTOR literals are not supported for Oracle binding");
+        }
         try {
-            Class<?> oracleR2dbcTypesClass = Class.forName("oracle.r2dbc.OracleR2dbcTypes");
-            Object vectorType = oracleR2dbcTypesClass.getField("VECTOR").get(null);
-            if (vectorType instanceof Type type) {
-                return type;
+            if (value instanceof VECTOR oracleVector) {
+                return switch (vectorKind) {
+                    case INT8_SPARSE, BINARY_SPARSE -> createSparseInt8Vector(oracleVector.toByteArray());
+                    case FLOAT32_SPARSE -> createSparseFloat32Vector(oracleVector.toFloatArray());
+                    case FLOAT64_SPARSE -> createSparseFloat64Vector(oracleVector.toDoubleArray());
+                    case DENSE, SPARSE_UNSPECIFIED -> oracleVector;
+                };
             }
-        } catch (ReflectiveOperationException | LinkageError e) {
+            if (value instanceof SparseVector sparseVector) {
+                return sparseVectorPayload(sparseVector, vectorKind);
+            }
+            if (value instanceof Vector vector) {
+                return vectorPayload(vector, vectorKind);
+            }
             return null;
+        } catch (SQLException e) {
+            throw new IllegalArgumentException("Cannot create oracle.sql.VECTOR payload", e);
         }
-        return null;
     }
 
-    private static double @Nullable [] parseDenseVectorLiteral(String value) {
-        String trimmed = value.trim();
-        if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
-            return null;
-        }
-        String inner = trimmed.substring(1, trimmed.length() - 1).trim();
-        if (inner.isEmpty()) {
-            return new double[0];
-        }
-        if (inner.indexOf('[') >= 0 || inner.indexOf(']') >= 0) {
-            return null;
-        }
-        List<String> parts = splitByComma(inner);
-        double[] values = new double[parts.size()];
-        for (int i = 0; i < parts.size(); i++) {
-            String part = parts.get(i).trim();
-            if (part.isEmpty()) {
-                return null;
-            }
+    private static OracleVectorKind inferSparseKind(Object value) {
+        if (value instanceof VECTOR oracleVector) {
             try {
-                values[i] = Double.parseDouble(part);
-            } catch (NumberFormatException e) {
-                return null;
+                OracleType oracleType = oracleVector.getType();
+                if (oracleType == OracleType.VECTOR_INT8) {
+                    return OracleVectorKind.INT8_SPARSE;
+                }
+                if (oracleType == OracleType.VECTOR_BINARY) {
+                    return OracleVectorKind.BINARY_SPARSE;
+                }
+                if (oracleType == OracleType.VECTOR_FLOAT32) {
+                    return OracleVectorKind.FLOAT32_SPARSE;
+                }
+                return OracleVectorKind.FLOAT64_SPARSE;
+            } catch (SQLException ignored) {
+                return OracleVectorKind.FLOAT64_SPARSE;
             }
         }
-        return values;
+        if (value instanceof SparseByteVector || value instanceof ByteVector) {
+            return OracleVectorKind.INT8_SPARSE;
+        }
+        if (value instanceof SparseFloatVector || value instanceof FloatVector) {
+            return OracleVectorKind.FLOAT32_SPARSE;
+        }
+        return OracleVectorKind.FLOAT64_SPARSE;
+    }
+
+    private static VECTOR sparseVectorPayload(SparseVector sparseVector, OracleVectorKind vectorKind) throws SQLException {
+        return switch (vectorKind) {
+            case INT8_SPARSE, BINARY_SPARSE -> createSparseInt8Vector(toSparseByteArray(sparseVector));
+            case FLOAT32_SPARSE -> createSparseFloat32Vector(toSparseFloatArray(sparseVector));
+            case FLOAT64_SPARSE -> createSparseFloat64Vector(toSparseDoubleArray(sparseVector));
+            case DENSE, SPARSE_UNSPECIFIED -> vectorPayload(sparseVector, OracleVectorKind.DENSE);
+        };
+    }
+
+    private static VECTOR vectorPayload(Vector vector, OracleVectorKind vectorKind) throws SQLException {
+        return switch (vectorKind) {
+            case INT8_SPARSE, BINARY_SPARSE -> createSparseInt8Vector(vector.toByteArray());
+            case FLOAT32_SPARSE -> createSparseFloat32Vector(vector.toFloatArray());
+            case FLOAT64_SPARSE -> createSparseFloat64Vector(vector.toDoubleArray());
+            case DENSE, SPARSE_UNSPECIFIED -> denseVectorPayload(vector);
+        };
+    }
+
+    private static VECTOR denseVectorPayload(Vector vector) throws SQLException {
+        if (vector instanceof ByteVector byteVector) {
+            return VECTOR.ofInt8Values(byteVector.toByteArray());
+        }
+        if (vector instanceof FloatVector floatVector) {
+            return VECTOR.ofFloat32Values(floatVector.toFloatArray());
+        }
+        return VECTOR.ofFloat64Values(vector.toDoubleArray());
+    }
+
+    private static VECTOR createSparseInt8Vector(byte[] denseValues) throws SQLException {
+        return VECTOR.ofInt8Values(VECTOR.SparseByteArray.fromDenseArray(denseValues));
+    }
+
+    private static VECTOR createSparseFloat32Vector(float[] denseValues) throws SQLException {
+        return VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.fromDenseArray(denseValues));
+    }
+
+    private static VECTOR createSparseFloat64Vector(double[] denseValues) throws SQLException {
+        return VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.fromDenseArray(denseValues));
+    }
+
+    private static byte[] toSparseByteArray(SparseVector sparseVector) {
+        if (sparseVector instanceof SparseByteVector sparseByteVector) {
+            return sparseByteVector.toByteArray();
+        }
+        if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
+            byte[] values = toByteArray(sparseFloatVector.values());
+            if (values == null) {
+                throw new IllegalArgumentException("Cannot convert non-integral sparse float values to INT8 VECTOR payload");
+            }
+            return new SparseByteVector(sparseFloatVector.length(), sparseFloatVector.indices(), values).toByteArray();
+        }
+        if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
+            byte[] values = toByteArray(sparseDoubleVector.values());
+            if (values == null) {
+                throw new IllegalArgumentException("Cannot convert non-integral sparse double values to INT8 VECTOR payload");
+            }
+            return new SparseByteVector(sparseDoubleVector.length(), sparseDoubleVector.indices(), values).toByteArray();
+        }
+        throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
+    }
+
+    private static float[] toSparseFloatArray(SparseVector sparseVector) {
+        if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
+            return sparseFloatVector.toFloatArray();
+        }
+        if (sparseVector instanceof SparseByteVector sparseByteVector) {
+            return new SparseFloatVector(sparseByteVector.length(), sparseByteVector.indices(), toFloatArray(sparseByteVector.values())).toFloatArray();
+        }
+        if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
+            return new SparseFloatVector(sparseDoubleVector.length(), sparseDoubleVector.indices(), toFloatArray(sparseDoubleVector.values())).toFloatArray();
+        }
+        throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
+    }
+
+    private static double[] toSparseDoubleArray(SparseVector sparseVector) {
+        if (sparseVector instanceof SparseDoubleVector sparseDoubleVector) {
+            return sparseDoubleVector.toDoubleArray();
+        }
+        if (sparseVector instanceof SparseFloatVector sparseFloatVector) {
+            return new SparseDoubleVector(sparseFloatVector.length(), sparseFloatVector.indices(), toDoubleArray(sparseFloatVector.values())).toDoubleArray();
+        }
+        if (sparseVector instanceof SparseByteVector sparseByteVector) {
+            return new SparseDoubleVector(sparseByteVector.length(), sparseByteVector.indices(), toDoubleArray(sparseByteVector.values())).toDoubleArray();
+        }
+        throw new IllegalArgumentException("Unsupported sparse vector type: " + sparseVector.getClass().getName());
     }
 
     private static float[] toFloatArray(double[] values) {
         float[] converted = new float[values.length];
         for (int i = 0; i < values.length; i++) {
             converted[i] = (float) values[i];
+        }
+        return converted;
+    }
+
+    private static float[] toFloatArray(byte[] values) {
+        float[] converted = new float[values.length];
+        for (int i = 0; i < values.length; i++) {
+            converted[i] = values[i];
+        }
+        return converted;
+    }
+
+    private static double[] toDoubleArray(float[] values) {
+        double[] converted = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            converted[i] = values[i];
+        }
+        return converted;
+    }
+
+    private static double[] toDoubleArray(byte[] values) {
+        double[] converted = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            converted[i] = values[i];
         }
         return converted;
     }
@@ -253,40 +265,40 @@ final class OracleR2dbcVectorBindSupport {
         return converted;
     }
 
-    private static List<String> splitByComma(String value) {
-        List<String> parts = new ArrayList<>();
-        int start = 0;
-        for (int i = 0; i < value.length(); i++) {
-            if (value.charAt(i) == ',') {
-                parts.add(value.substring(start, i));
-                start = i + 1;
+    private static byte @Nullable [] toByteArray(float[] values) {
+        byte[] converted = new byte[values.length];
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] % 1f != 0f || values[i] < Byte.MIN_VALUE || values[i] > Byte.MAX_VALUE) {
+                return null;
             }
+            converted[i] = (byte) values[i];
         }
-        parts.add(value.substring(start));
-        return parts;
+        return converted;
     }
 
     private static OracleVectorKind resolveVectorKind(@Nullable String query) {
         if (query == null) {
             return OracleVectorKind.DENSE;
         }
-        String q = query.toUpperCase(Locale.ROOT);
-        if (!q.contains("SPARSE")) {
+        if (!SPARSE_TO_VECTOR_PATTERN.matcher(query).find()) {
             return OracleVectorKind.DENSE;
         }
-        Matcher matcher = SPARSE_KIND_PATTERN.matcher(q);
+        Matcher matcher = SPARSE_KIND_PATTERN.matcher(query);
         if (matcher.find()) {
-            String sparseKind = matcher.group(1);
+            String sparseKind = matcher.group(1).toUpperCase(Locale.ROOT);
             if ("INT8".equals(sparseKind)) {
                 return OracleVectorKind.INT8_SPARSE;
             }
             if ("FLOAT32".equals(sparseKind)) {
                 return OracleVectorKind.FLOAT32_SPARSE;
             }
+            if ("FLOAT64".equals(sparseKind)) {
+                return OracleVectorKind.FLOAT64_SPARSE;
+            }
             if ("BINARY".equals(sparseKind)) {
                 return OracleVectorKind.BINARY_SPARSE;
             }
         }
-        return OracleVectorKind.FLOAT64_SPARSE;
+        return OracleVectorKind.SPARSE_UNSPECIFIED;
     }
 }

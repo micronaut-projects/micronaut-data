@@ -33,9 +33,8 @@ import java.util.Optional;
  * Postgres converters for pgvector integration.
  *
  * These converters are registered only when the Postgres JDBC driver is on the classpath
- * and the configured dialect is POSTGRES. They convert Micronaut's Vector types (and primitive
- * arrays when used as parameters) into PGobject with type "vector", which the PostgreSQL driver
- * understands for the pgvector extension.
+ * and the configured dialect is POSTGRES. They convert Micronaut's Vector types into PGobject with
+ * type "vector", which the PostgreSQL driver understands for the pgvector extension.
  *
  * NOTE:
  * - We keep generic (dialect-agnostic) converters in data-model intact.
@@ -56,12 +55,7 @@ final class PostgresTypeConvertersFactory {
 
     @Prototype
     DataTypeConverter<FloatVector, PGobject> fromFloatVectorToPgObject() {
-        return (vector, targetType, context) -> toPgObject(vector.toFloatArray());
-    }
-
-    @Prototype
-    DataTypeConverter<float[], PGobject> fromFloatArrayToPgObject() {
-        return (arr, targetType, context) -> toPgObject(arr);
+        return (vector, targetType, context) -> toPgObject(vector);
     }
 
     @Prototype
@@ -97,8 +91,9 @@ final class PostgresTypeConvertersFactory {
         };
     }
 
-    private static Optional<PGobject> toPgObject(float[] arr) {
+    private static Optional<PGobject> toPgObject(FloatVector vector) {
         try {
+            float[] arr = vector.toFloatArray();
             if (shouldSerializeAsSparse(arr)) {
                 return Optional.of(new PGsparsevec(arr));
             }

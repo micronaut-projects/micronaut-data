@@ -46,7 +46,6 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
-import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -165,6 +164,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
+    private final Map<Dialect, VectorBindSupport> vectorBindSupportByDialect = new EnumMap<>(Dialect.class);
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
     private final Integer defaultFetchSize;
 
@@ -205,6 +205,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
+        List<VectorBindSupport> vectorBindSupports,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
@@ -229,6 +230,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
+        if (CollectionUtils.isNotEmpty(vectorBindSupports)) {
+            for (VectorBindSupport vectorBindSupport : vectorBindSupports) {
+                vectorBindSupportByDialect.put(vectorBindSupport.getDialect(), vectorBindSupport);
+            }
+        }
         if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
             for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
                 Dialect dialect = r2dbcExceptionMapper.getDialect();
@@ -480,45 +486,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                          @Nullable JsonDataType jsonDataType,
                                          @Nullable Object value,
         SqlStoredQuery<?, ?> storedQuery) {
-        if (storedQuery.getDialect() == Dialect.ORACLE && isOracleVectorBindCandidate(dataType, value)) {
-            io.r2dbc.spi.Parameter vectorParameter = OracleR2dbcVectorBindSupport.toTypedVectorParameter(value, storedQuery.getQuery());
+        VectorBindSupport vectorBindSupport = vectorBindSupportByDialect.get(storedQuery.getDialect());
+        if (vectorBindSupport != null) {
+            io.r2dbc.spi.Parameter vectorParameter = vectorBindSupport.toTypedVectorParameter(value, storedQuery.getQuery());
             if (vectorParameter != null) {
                 preparedStatementWriter.setValue(preparedStatement, index, vectorParameter);
                 return;
             }
-            if (OracleR2dbcVectorBindSupport.requiresSparseLiteral(storedQuery.getQuery())) {
-                String sparseLiteral = OracleR2dbcVectorBindSupport.toSparseVectorLiteral(value, storedQuery.getQuery());
-                if (sparseLiteral != null) {
-                    preparedStatementWriter.setDynamic(preparedStatement, index, DataType.STRING, sparseLiteral);
-                    return;
-                }
-            }
         }
         super.setStatementParameter(preparedStatement, index, dataType, jsonDataType, value, storedQuery);
-    }
-
-    static boolean isOracleVectorBindCandidate(DataType dataType, @Nullable Object value) {
-        if (value == null) {
-            return false;
-        }
-        if (value instanceof Vector || value.getClass().getName().equals("oracle.sql.VECTOR")) {
-            return true;
-        }
-        if (dataType != DataType.OBJECT) {
-            return false;
-        }
-        if (value instanceof String stringValue) {
-            return isVectorLiteral(stringValue);
-        }
-        return value instanceof float[]
-            || value instanceof double[]
-            || value instanceof byte[]
-            || value instanceof boolean[];
-    }
-
-    private static boolean isVectorLiteral(String value) {
-        String trimmed = value.trim();
-        return trimmed.startsWith("[") && trimmed.endsWith("]");
     }
 
     private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {

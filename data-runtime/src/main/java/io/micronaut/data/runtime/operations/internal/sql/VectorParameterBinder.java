@@ -17,50 +17,46 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.runtime.convert.vector.impl.VectorTextFormatter;
 import io.micronaut.data.model.vector.Vector;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.Map;
 
 @Internal
 interface VectorParameterBinder {
 
-    PreparedParameter bind(DataType dataType, @Nullable Object value);
+    PreparedParameter bind(Dialect dialect, DataType dataType, @Nullable Object value);
 
-    static @Nullable VectorParameterBinder forDialect(Dialect dialect) {
-        return switch (dialect) {
-            case ORACLE -> OracleVectorParameterBinder.INSTANCE;
-            default -> null;
-        };
+    static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters) {
+        return new DefaultVectorParameterBinder(vectorTypeConverters);
     }
 
     record PreparedParameter(DataType dataType, @Nullable Object value) {
     }
 
-    enum OracleVectorParameterBinder implements VectorParameterBinder {
-        INSTANCE;
+    final class DefaultVectorParameterBinder implements VectorParameterBinder {
+
+        private final Map<DatabaseType, VectorTypeConverter<?>> converterByDatabaseType = new EnumMap<>(DatabaseType.class);
+
+        DefaultVectorParameterBinder(Collection<VectorTypeConverter<?>> vectorTypeConverters) {
+            for (VectorTypeConverter<?> vectorTypeConverter : vectorTypeConverters) {
+                converterByDatabaseType.put(vectorTypeConverter.databaseType(), vectorTypeConverter);
+            }
+        }
 
         @Override
-        public PreparedParameter bind(DataType dataType, @Nullable Object value) {
-            if (dataType != DataType.OBJECT) {
+        public PreparedParameter bind(Dialect dialect, DataType dataType, @Nullable Object value) {
+            if (dataType != DataType.OBJECT || !(value instanceof Vector vector)) {
                 return new PreparedParameter(dataType, value);
             }
-            if (value instanceof Vector vector) {
-                return new PreparedParameter(DataType.STRING, VectorTextFormatter.toText(vector));
-            }
-            if (value instanceof float[] floats) {
-                return new PreparedParameter(DataType.STRING, Arrays.toString(floats));
-            }
-            if (value instanceof double[] doubles) {
-                return new PreparedParameter(DataType.STRING, Arrays.toString(doubles));
-            }
-            if (value instanceof byte[] bytes) {
-                return new PreparedParameter(DataType.STRING, Arrays.toString(bytes));
-            }
-            if (value != null && value.getClass().getName().equals("oracle.sql.VECTOR")) {
-                return new PreparedParameter(dataType, value);
+            VectorTypeConverter<?> vectorTypeConverter = converterByDatabaseType.get(DatabaseType.from(dialect));
+            if (vectorTypeConverter != null && vectorTypeConverter.supportedVectorTypes().stream().anyMatch(type -> type.isAssignableFrom(vector.getClass()))) {
+                return new PreparedParameter(dataType, vectorTypeConverter.convert(vector));
             }
             return new PreparedParameter(dataType, value);
         }

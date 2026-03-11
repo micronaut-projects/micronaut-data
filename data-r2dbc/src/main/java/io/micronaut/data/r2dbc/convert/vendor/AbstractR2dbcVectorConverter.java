@@ -31,7 +31,7 @@ abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T>
 
     @Override
     public T convert(Vector vector) {
-        if (supportedVectorTypes().stream().anyMatch(x -> vector.getClass().isAssignableFrom(x))) {
+        if (supportedVectorTypes().stream().anyMatch(x -> x.isAssignableFrom(vector.getClass()))) {
             return conversionService.convert(vector, getPersistedType())
                 .orElseThrow(() -> new IllegalArgumentException("Conversion service cannot convert " + vector.getClass().getName() + " to " + getPersistedType().getName()));
 

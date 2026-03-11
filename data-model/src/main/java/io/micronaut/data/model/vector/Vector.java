@@ -52,7 +52,8 @@ import java.util.Objects;
 public sealed interface Vector
     permits DoubleVector,
             FloatVector,
-            ByteVector {
+            ByteVector,
+            SparseVector {
     String VALUES = "values";
 
     /**
@@ -83,6 +84,18 @@ public sealed interface Vector
      * @return a new byte[] with the vector content
      */
     byte[] toByteArray();
+
+    default SparseFloatVector toSparseFloatVector() {
+        return SparseFloatVector.fromDense(toFloatArray());
+    }
+
+    default SparseDoubleVector toSparseDoubleVector() {
+        return SparseDoubleVector.fromDense(toDoubleArray());
+    }
+
+    default SparseByteVector toSparseByteVector() {
+        return SparseByteVector.fromDense(toByteArray());
+    }
 
     /**
      * Create a vector from float values (defensive copy).

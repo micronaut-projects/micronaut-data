@@ -4,9 +4,12 @@ import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.inject.annotation.DefaultAnnotationMetadata
 import io.micronaut.data.runtime.mapper.ResultReader
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.SparseDoubleVector
 import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
@@ -19,6 +22,14 @@ import spock.lang.Specification
  * - Column definition rendering per database type
  */
 class VectorAttributeConverterTransformSpec extends Specification {
+
+    @MappedEntity("vector_contract_doc")
+    static class VectorContractEntity {
+        @VectorStorage(length = 5, sparse = true)
+        Vector sparseEmbedding
+
+        Vector denseEmbedding
+    }
 
     /**
      * Minimal concrete converter for testing that extends the package-private
@@ -212,5 +223,62 @@ class VectorAttributeConverterTransformSpec extends Specification {
 
         then:
         persisted == "oracle:FloatVector"
+    }
+
+    def "dense vector written through sparse=true field is preserved through shared conversion path"() {
+        given:
+        def vectorConverter = Stub(VectorTypeConverter) {
+            getPersistedType() >> String
+            databaseType() >> DatabaseType.ORACLE
+            convert(_ as Vector) >> { Vector v ->
+                assert v.toFloatArray().toList() == [0f, 10f, 0f, 20f, 0f]
+                "oracle:${v.toFloatArray().toList()}"
+            }
+        }
+        def converter = new DefaultVectorAttributeConverter([vectorConverter])
+        def sparseArg = io.micronaut.core.beans.BeanIntrospection
+            .getIntrospection(VectorContractEntity)
+            .getRequiredProperty("sparseEmbedding", Vector)
+            .asArgument()
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getArgument() >> sparseArg
+            getAnnotationMetadata() >> sparseArg.getAnnotationMetadata()
+        }
+
+        when:
+        def persisted = converter.convertToPersistedValue(Vector.of([0d, 10d, 0d, 20d, 0d] as double[]), ctx)
+
+        then:
+        persisted == "oracle:[0.0, 10.0, 0.0, 20.0, 0.0]"
+    }
+
+    def "sparse vector written through dense field is materialized to dense with zero fill"() {
+        given:
+        def vectorConverter = Stub(VectorTypeConverter) {
+            getPersistedType() >> String
+            databaseType() >> DatabaseType.ORACLE
+            convert(_ as Vector) >> { Vector v ->
+                assert v.toDoubleArray().toList() == [0d, 10d, 0d, 20d, 0d]
+                "oracle:${v.toDoubleArray().toList()}"
+            }
+        }
+        def converter = new DefaultVectorAttributeConverter([vectorConverter])
+        def denseArg = io.micronaut.core.beans.BeanIntrospection
+            .getIntrospection(VectorContractEntity)
+            .getRequiredProperty("denseEmbedding", Vector)
+            .asArgument()
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getArgument() >> denseArg
+            getAnnotationMetadata() >> denseArg.getAnnotationMetadata()
+        }
+
+        when:
+        def sparse = new SparseDoubleVector(5, [1, 3] as int[], [10d, 20d] as double[])
+        def persisted = converter.convertToPersistedValue(sparse, ctx)
+
+        then:
+        persisted == "oracle:[0.0, 10.0, 0.0, 20.0, 0.0]"
     }
 }

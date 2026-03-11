@@ -6,8 +6,26 @@ Micronaut Data ships lightweight value types under `io.micronaut.data.model.vect
 - `DoubleVector` — double[]-backed (best precision; bigger payloads)
 - `ByteVector` — byte[]-backed (smallest size; lossy/narrowed)
 
+For sparse payloads, Micronaut Data now also provides:
+
+- `SparseFloatVector` — `length + indices + float[] values`
+- `SparseDoubleVector` — `length + indices + double[] values`
+- `SparseByteVector` — `length + indices + byte[] values`
+
+For cross-dialect sparse usage, prefer `SparseFloatVector` as the default choice.
+
 You can also use the sealed interface `Vector` if you need a type-agnostic parameter. For derived vector search methods, Micronaut Data also accepts concrete subtypes (`FloatVector`, `DoubleVector`, `ByteVector`) as parameters.
 When you use `Vector`, Micronaut Data chooses the optimal database-specific representation for the configured dialect/driver.
+
+=== Binding policy (recommended path)
+
+Use Micronaut vector types (`Vector` / concrete vector subtypes / sparse vector subtypes) as the only application-level input/output model for vector columns and vector query parameters.
+
+Micronaut Data intentionally does not rely on String vector literals as a primary path for vector operations. In particular:
+
+- Oracle R2DBC binds vectors using Oracle native typed VECTOR values (not sparse-text literals)
+- JDBC vector binding is driven by Micronaut vector types across supported dialects
+- If your code currently passes raw primitive arrays or String literals for vector queries, migrate to `Vector`/`SparseVector` values
 
 === Example entity
 
@@ -97,7 +115,7 @@ snippet::example.SparseDocumentEmbedding[project-base="doc-examples/jdbc-vector-
 
 This generates Oracle DDL like `VECTOR(5, FLOAT32, SPARSE)` when the field type is generic `Vector`.
 
-Oracle R2DBC supports sparse derived search/query binding using textual sparse vector literals for sparse paths.
+Oracle R2DBC supports sparse derived search/query binding using native typed Oracle VECTOR binding for sparse paths.
 Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses only the dense pgvector codec API.
 
 === Example usage
@@ -150,6 +168,7 @@ CREATE TABLE document_embedding (
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to set the dimension; when omitted, `*` is used.
 - JDBC and R2DBC derived `SearchResults` mappings both return empty `SearchResults` when no rows match.
 - Oracle JDBC and Oracle R2DBC both support sparse vector columns (`VECTOR(..., SPARSE)`) for derived search scenarios.
+- Oracle R2DBC sparse and dense query parameters are bound using Oracle native typed VECTOR values.
 
 DDL example:
 [source,sql]
@@ -185,3 +204,4 @@ CREATE TABLE document_embedding (
   embedding VECTOR(1536)
 );
 ----
+All vectors expose dense/sparse conversion helpers through the `Vector` API (`toSparseFloatVector()`, `toSparseDoubleVector()`, `toSparseByteVector()`).

@@ -55,6 +55,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.ConversionContextFactory;
@@ -130,6 +131,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final PropertyPlaceholderResolver propertyPlaceholderResolver;
     protected final VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver;
+    protected final VectorParameterBinder vectorParameterBinder;
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
@@ -176,6 +178,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.conversionContextFactory = conversionContextFactory;
         this.vectorScoringSupportResolver = beanContext.findBean(VectorScoringFunctionDialectSupportResolver.class)
             .orElseThrow(() -> new IllegalStateException("Missing VectorScoringFunctionDialectSupportResolver bean"));
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Collection<VectorTypeConverter<?>> vectorTypeConverters = (Collection) beanContext.getBeansOfType(VectorTypeConverter.class);
+        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters);
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -293,12 +298,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         dataType = dialect.getDataType(dataType);
 
-        VectorParameterBinder vectorParameterBinder = VectorParameterBinder.forDialect(dialect);
-        if (vectorParameterBinder != null) {
-            VectorParameterBinder.PreparedParameter preparedParameter = vectorParameterBinder.bind(dataType, value);
-            dataType = preparedParameter.dataType();
-            value = preparedParameter.value();
-        }
+        VectorParameterBinder.PreparedParameter preparedParameter = vectorParameterBinder.bind(dialect, dataType, value);
+        dataType = preparedParameter.dataType();
+        value = preparedParameter.value();
 
         if (QUERY_LOG.isTraceEnabled()) {
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);

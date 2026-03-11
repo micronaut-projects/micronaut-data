@@ -23,6 +23,7 @@ dependencies {
     implementation mnReactor.micronaut.reactor
 
     compileOnly mnR2dbc.r2dbc.oracle
+    compileOnly mnSql.ojdbc11
     compileOnly mnSql.jakarta.persistence.api
     compileOnly mnR2dbc.r2dbc.postgresql
 
@@ -49,6 +50,7 @@ dependencies {
 
     // oracle
     testImplementation mnR2dbc.r2dbc.oracle
+    testImplementation mnSql.ojdbc11
 
     // mariadb
     testImplementation mnR2dbc.r2dbc.mariadb

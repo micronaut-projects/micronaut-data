@@ -18,7 +18,7 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         }
     }
 
-    def "Vector and primitive arrays are converted to PGvector"() {
+    def "FloatVector is converted to PGvector"() {
         given:
         def f = new PostgresTypeConvertersFactory()
 
@@ -30,23 +30,15 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         fvPg.getClass().name == 'org.postgresql.util.PGobject'
         fvPg.type == 'vector'
         fvPg.value == '[1.0,2.0]'
-
-        when: "float[] -> PGobject (dense vector)"
-        def faPg = f.fromFloatArrayToPgObject().convert([1f, 2f] as float[], Object, null).get()
-
-        then:
-        faPg.getClass().name == 'org.postgresql.util.PGobject'
-        faPg.type == 'vector'
-        faPg.value == '[1.0,2.0]'
     }
 
-    def "sparse float vectors are converted to sparsevec PGobject"() {
+    def "sparse-like FloatVector is converted to sparsevec PGobject"() {
         given:
         def f = new PostgresTypeConvertersFactory()
-        def sparse = ([0f, 0f, 2.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 3f] as float[])
+        def sparse = (FloatVector) Vector.of([0f, 0f, 2.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 3f] as float[])
 
         when:
-        def pg = f.fromFloatArrayToPgObject().convert(sparse, Object, null).get()
+        def pg = f.fromFloatVectorToPgObject().convert(sparse, Object, null).get()
 
         then:
         pg.type == 'sparsevec'

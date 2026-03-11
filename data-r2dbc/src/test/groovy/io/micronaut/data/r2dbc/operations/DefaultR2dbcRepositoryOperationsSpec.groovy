@@ -1,18 +1,40 @@
 package io.micronaut.data.r2dbc.operations
 
-import io.micronaut.data.model.DataType
-import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.r2dbc.spi.Parameter
 import spock.lang.Specification
 
 class DefaultR2dbcRepositoryOperationsSpec extends Specification {
 
-    void "oracle vector binding candidate is restricted to vector-like values"() {
+    void "dialect map selects correct vector bind support"() {
+        given:
+        def postgresSupport = new StubVectorBindSupport(Dialect.POSTGRES)
+        def oracleSupport = new StubVectorBindSupport(Dialect.ORACLE)
+        def supports = [postgresSupport, oracleSupport]
+        def supportByDialect = supports.collectEntries { [(it.getDialect()): it] }
+
         expect:
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.STRING, '[1,2,3]') == false
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.BYTE_ARRAY, [1, 2, 3] as byte[]) == false
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.BYTE_ARRAY, Vector.of([1f, 2f] as float[]))
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.OBJECT, Vector.of([1f, 2f] as float[]))
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.OBJECT, '[1,2,3]')
-        DefaultR2dbcRepositoryOperations.isOracleVectorBindCandidate(DataType.OBJECT, 'hello') == false
+        supportByDialect.get(Dialect.ORACLE).is(oracleSupport)
+        supportByDialect.get(Dialect.POSTGRES).is(postgresSupport)
+        supportByDialect.get(Dialect.MYSQL) == null
+    }
+
+    private static final class StubVectorBindSupport implements VectorBindSupport {
+
+        private final Dialect dialect
+
+        private StubVectorBindSupport(Dialect dialect) {
+            this.dialect = dialect
+        }
+
+        @Override
+        Dialect getDialect() {
+            return dialect
+        }
+
+        @Override
+        Parameter toTypedVectorParameter(Object value, String query) {
+            return null
+        }
     }
 }

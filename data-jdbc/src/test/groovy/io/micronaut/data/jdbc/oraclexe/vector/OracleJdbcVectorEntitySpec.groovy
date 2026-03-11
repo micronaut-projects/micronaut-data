@@ -6,10 +6,12 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.SparseDoubleVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
@@ -34,6 +36,9 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
     VectorDocRepository vectorRepository = context.getBean(VectorDocRepository)
 
     @Shared
+    SparseVectorDocRepository sparseVectorRepository = context.getBean(SparseVectorDocRepository)
+
+    @Shared
     DataSource dataSource = context.getBean(DataSource)
 
     @Override
@@ -45,8 +50,35 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
     def cleanup() {
         // Clean table between tests
         executeSilently "DELETE FROM vector_doc"
+        executeSilently "DELETE FROM vector_sparse_doc"
         // no-op transaction boundary to flush
         context.getBean(SynchronousTransactionManager).executeWrite { status -> null }
+    }
+
+    void "dense vector value is persisted through sparse entity mapping"() {
+        given:
+        Vector dense = Vector.of([0d, 10d, 0d, 20d, 0d] as double[])
+
+        when:
+        def saved = sparseVectorRepository.save(new SparseVectorDoc(embedding: dense))
+        def fetched = sparseVectorRepository.findById(saved.id).orElse(null)
+
+        then:
+        fetched != null
+        fetched.embedding.toDoubleArray().toList() == [0d, 10d, 0d, 20d, 0d]
+    }
+
+    void "sparse vector value written through dense entity mapping is materialized with zeros"() {
+        given:
+        def sparse = new SparseDoubleVector(5, [1, 3] as int[], [10d, 20d] as double[])
+
+        when:
+        vectorRepository.saveCustom(sparse)
+        def all = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
+        def matched = all.find { it.embedding.toDoubleArray().toList() == [0d, 10d, 0d, 20d, 0d] }
+
+        then:
+        matched != null
     }
 
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
@@ -218,4 +250,18 @@ interface VectorDocRepository extends PageableRepository<VectorDoc, Long> {
 
     List<VectorDoc> findTop2OrderByIdAsc()
 
+}
+
+@MappedEntity("vector_sparse_doc")
+class SparseVectorDoc {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    Long id
+
+    @VectorStorage(length = 5, sparse = true)
+    Vector embedding
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface SparseVectorDocRepository extends PageableRepository<SparseVectorDoc, Long> {
 }
