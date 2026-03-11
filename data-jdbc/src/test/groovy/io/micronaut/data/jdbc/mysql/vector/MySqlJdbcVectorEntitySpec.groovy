@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.Vector
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit
  * MySQL HeatWave VECTOR JDBC integration spec mirroring OracleJdbcVectorEntitySpec,
  * adapted to MySQL specifics (no sequences, VECTOR(N) without element type).
  */
-class MySqlJdbcVectorEntitySpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlJdbcVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

@@ -13,7 +13,6 @@ import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.r2dbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
@@ -24,7 +23,7 @@ import spock.lang.Specification
  * R2DBC specs for Postgres pgvector support.
  * Only FloatVector is supported; DoubleVector must throw an exception.
  */
-class PostgresR2dbcVectorEntitySpec extends Specification implements PostgresTestPropertyProvider {
+class PostgresR2dbcVectorEntitySpec extends Specification implements PostgresVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

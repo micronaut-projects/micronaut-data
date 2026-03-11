@@ -12,7 +12,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.r2dbc.mysql.MySqlTestPropertyProvider
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
@@ -23,7 +22,7 @@ import spock.lang.Specification
  * MySQL HeatWave R2DBC DoubleVector negative spec (float-only support).
  * Assert that DoubleVector usage results in IllegalArgumentException.
  */
-class MySqlR2dbcDoubleVectorEntitySpec extends Specification implements MySqlTestPropertyProvider {
+class MySqlR2dbcDoubleVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

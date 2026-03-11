@@ -76,12 +76,6 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
             // but that's the only thing which works
             options += ['test-resources.containers.mssql.accept-license': true]
         }
-        else if (dialect == Dialect.MYSQL) {
-            options += ['test-resources.containers.mysql.image-name': "container-registry.oracle.com/mysql/community-server:latest"]
-        }
-        else if (dialect == Dialect.POSTGRES) {
-            options += ['test-resources.containers.postgres.image-name': "pgvector/pgvector:pg16"]
-        }
 // TODO
 //        if (usePool()) {
 //            String poolProtocol

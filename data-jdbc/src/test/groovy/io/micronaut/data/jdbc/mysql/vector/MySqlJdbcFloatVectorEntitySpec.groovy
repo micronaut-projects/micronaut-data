@@ -8,7 +8,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.FloatVector
@@ -27,7 +26,7 @@ import spock.lang.Specification
 /**
  * MySQL HeatWave JDBC FloatVector integration spec, adapted from Oracle vector specs.
  */
-class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

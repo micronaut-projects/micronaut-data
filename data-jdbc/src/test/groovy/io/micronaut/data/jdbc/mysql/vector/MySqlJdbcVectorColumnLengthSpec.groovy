@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.repository.PageableRepository
@@ -25,7 +24,7 @@ import java.sql.Statement
  * Documents that annotating a VECTOR embedding with @Column(length = 3) drives schema generation to emit VECTOR(3) on MySQL HeatWave.
  * We validate by inspecting SHOW CREATE TABLE and INFORMATION_SCHEMA.COLUMNS.
  */
-class MySqlJdbcVectorColumnLengthSpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlJdbcVectorColumnLengthSpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

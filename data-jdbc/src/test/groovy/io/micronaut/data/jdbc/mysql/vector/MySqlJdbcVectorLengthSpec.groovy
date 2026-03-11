@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
@@ -30,7 +29,7 @@ import java.sql.Statement
  *
  * NOTE: This spec relies on MySQL Test Resources via MySQLTestPropertyProvider.
  */
-class MySqlJdbcVectorLengthSpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlJdbcVectorLengthSpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

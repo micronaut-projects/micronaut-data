@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.DoubleVector
@@ -22,7 +21,7 @@ import spock.lang.Specification
 /**
  * MySQL HeatWave JDBC DoubleVector integration spec, adapted from OracleJdbcDoubleVectorEntitySpec.
  */
-class MySqlJdbcDoubleVectorEntitySpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlJdbcDoubleVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

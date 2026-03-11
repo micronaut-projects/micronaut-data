@@ -7,12 +7,10 @@ test-resources:
       startup-timeout: 300s
     mysql:
       startup-timeout: 300s
-      image-name: container-registry.oracle.com/mysql/community-server:latest
     oracle:
       startup-timeout: 300s
     postgres:
       startup-timeout: 300s
-      image-name: pgvector/pgvector:pg16
 
 micronaut:
   http:

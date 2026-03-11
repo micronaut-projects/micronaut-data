@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.exceptions.DataAccessException
@@ -19,7 +18,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-class PostgresJdbcDoubleVectorEntitySpec extends Specification implements PostgresTestPropertyProvider {
+class PostgresJdbcDoubleVectorEntitySpec extends Specification implements PostgresVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

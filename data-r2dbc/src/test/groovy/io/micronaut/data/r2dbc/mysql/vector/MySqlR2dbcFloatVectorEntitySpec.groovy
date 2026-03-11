@@ -11,7 +11,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
-import io.micronaut.data.r2dbc.mysql.MySqlTestPropertyProvider
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
@@ -22,7 +21,7 @@ import spock.lang.Specification
  * MySQL HeatWave R2DBC FloatVector negative spec (float-only support).
  * Assert that FloatVector usage results in IllegalArgumentException.
  */
-class MySqlR2dbcFloatVectorEntitySpec extends Specification implements MySqlTestPropertyProvider {
+class MySqlR2dbcFloatVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared

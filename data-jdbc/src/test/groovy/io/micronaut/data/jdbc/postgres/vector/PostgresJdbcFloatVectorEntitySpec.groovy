@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.FloatVector
@@ -24,7 +23,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-class PostgresJdbcFloatVectorEntitySpec extends Specification implements PostgresTestPropertyProvider {
+class PostgresJdbcFloatVectorEntitySpec extends Specification implements PostgresVectorTestPropertyProvider {
 
     @AutoCleanup
     @Shared
