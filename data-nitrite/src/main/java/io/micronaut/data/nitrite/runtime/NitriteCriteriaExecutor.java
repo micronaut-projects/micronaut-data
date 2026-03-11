@@ -30,6 +30,7 @@ import jakarta.persistence.criteria.CriteriaUpdate;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 
 import java.time.Instant;
@@ -86,13 +87,14 @@ public final class NitriteCriteriaExecutor {
         Class<?> entityType = getEntityType(query);
         Class<R> resultType = (Class<R>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
+        FindOptions options = buildFindOptions(queryResult, -1, -1);
 
         // Handle count queries specially
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
-            return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter).size());
+            return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter, options).size());
         }
 
-        Document doc = collectionFactory.apply(entityType).find(filter).firstOrNull();
+        Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
         return doc == null ? null : (R) entityMapper.fromDocument(doc, resultType);
     }
 
@@ -102,8 +104,9 @@ public final class NitriteCriteriaExecutor {
         Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
+        FindOptions options = buildFindOptions(queryResult, -1, -1);
         List<T> results = new ArrayList<>();
-        for (Document doc : collectionFactory.apply(entityType).find(filter)) {
+        for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             results.add(entityMapper.fromDocument(doc, type));
         }
         return results;
@@ -115,9 +118,7 @@ public final class NitriteCriteriaExecutor {
         Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = new FindOptions();
-        options.skip((long) offset);
-        options.limit((long) limit);
+        FindOptions options = buildFindOptions(queryResult, offset, limit);
         List<T> results = new ArrayList<>();
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             results.add(entityMapper.fromDocument(doc, type));
@@ -228,7 +229,7 @@ public final class NitriteCriteriaExecutor {
 
             // Resolve placeholders in the filter map using params
             resolveFilterMapPlaceholders(filterMap, params);
-
+            
             return filterBuilder.buildFilterFromJson(
                     entityFactory.apply(entityType),
                     filterMap,
@@ -240,31 +241,70 @@ public final class NitriteCriteriaExecutor {
     }
 
     private void resolveFilterMapPlaceholders(Map<String, Object> map, Object[] params) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof Map m) {
-                resolveFilterMapPlaceholders(m, params);
-            } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
-                // Resolve placeholder
-                try {
-                    int idx = Integer.parseInt(str.substring(7));
-                    if (params != null && idx >= 0 && idx < params.length) {
-                        entry.setValue(params[idx]);
-                    }
-                } catch (Exception ignored) {
+    for (Map.Entry<String, Object> entry : map.entrySet()) {
+        Object value = entry.getValue();
+        if (value instanceof Map m) {
+            resolveFilterMapPlaceholders(m, params);
+        } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
+            // Resolve placeholder
+            try {
+                int idx = Integer.parseInt(str.substring(7));
+                if (params != null && idx >= 0 && idx < params.length) {
+                    entry.setValue(params[idx]);
                 }
+            } catch (NumberFormatException e) {
+                // Ignore
             }
         }
     }
+}
 
-    private Object toFilterValue(Object value) {
+private FindOptions buildFindOptions(QueryResult queryResult, int offset, int limit) {
+    FindOptions options = new FindOptions();
+
+    // Handle explicit offset/limit parameters
+    if (offset > 0) {
+        options.skip((long) offset);
+    }
+    if (limit > 0) {
+        options.limit((long) limit);
+    }
+
+    String queryString = queryResult.getQuery();
+    if (queryString != null && !queryString.isEmpty()) {
+        try {
+            Map<String, Object> queryMap = (Map<String, Object>) queryParser.parseJson(queryString);
+
+            // Extract sort if present
+            if (queryMap.containsKey("$sort")) {
+                Map<String, Object> sortMap = (Map<String, Object>) queryMap.get("$sort");
+                for (Map.Entry<String, Object> entry : sortMap.entrySet()) {
+                    SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
+                    options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey()), order);
+                }
+            }            // Extract skip/limit if not already provided as parameters
+            if (offset <= 0 && queryMap.containsKey("$skip")) {
+                options.skip(((Number) queryMap.get("$skip")).longValue());
+            }
+            if (limit <= 0 && queryMap.containsKey("$limit")) {
+                options.limit(((Number) queryMap.get("$limit")).longValue());
+            }
+
+        } catch (Exception e) {
+            // Ignore parse errors for options
+        }
+    }
+    return options;
+}
+
+private Object valueRepresentation(Object value) {
         if (value == null) {
             return null;
         }
         if (value instanceof Iterable<?> iterable && !(value instanceof Document)) {
             List<Object> list = new ArrayList<>();
             for (Object o : iterable) {
-                list.add(toFilterValue(o));
+                list.add(valueRepresentation(o));
             }
             return list;
         }
