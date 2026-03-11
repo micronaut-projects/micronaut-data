@@ -1,0 +1,21 @@
+plugins {
+    id "io.micronaut.build.internal.data-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+}
+
+
+dependencies {
+    implementation libs.managed.jakarta.data.api
+    implementation libs.managed.jakarta.persistence.api
+
+    implementation mn.micronaut.runtime
+    annotationProcessor projects.micronautDataJpaMetamodelProcessor
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

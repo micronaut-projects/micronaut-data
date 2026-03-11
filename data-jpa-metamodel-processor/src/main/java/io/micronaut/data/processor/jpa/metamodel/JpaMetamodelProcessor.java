@@ -107,7 +107,7 @@ public final class JpaMetamodelProcessor {
     /**
      * Java util Map class name.
      */
-    public static final String JAVA_UTIL_MAP = Map.class.getPackageName();
+    public static final String JAVA_UTIL_MAP = Map.class.getName();
 
     /**
      * Supported Jakarta annotations for generating Static meta model classes.
