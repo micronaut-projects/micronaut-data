@@ -21,6 +21,11 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.DoubleUnaryOperator;
 
+/**
+ * Converts dialect-specific vector scores into normalized similarities and back.
+ *
+ * @since 4.13
+ */
 @Experimental
 public final class SimilarityNormalizer {
 

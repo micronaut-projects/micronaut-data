@@ -23,6 +23,14 @@ import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Sparse {@link DoubleVector} representation.
+ *
+ * @param length The dense vector length.
+ * @param indices Sorted non-zero positions.
+ * @param values Non-zero values aligned with {@code indices}.
+ * @since 4.13
+ */
 @TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public record SparseDoubleVector(int length, int[] indices, double[] values) implements SparseVector {
 

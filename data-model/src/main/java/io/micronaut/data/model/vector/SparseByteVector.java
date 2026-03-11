@@ -23,6 +23,14 @@ import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Sparse {@link ByteVector} representation.
+ *
+ * @param length The dense vector length.
+ * @param indices Sorted non-zero positions.
+ * @param values Non-zero values aligned with {@code indices}.
+ * @since 4.13
+ */
 @TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public record SparseByteVector(int length, int[] indices, byte[] values) implements SparseVector {
 

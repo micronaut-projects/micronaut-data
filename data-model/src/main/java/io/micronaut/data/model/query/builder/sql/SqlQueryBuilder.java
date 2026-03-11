@@ -1252,7 +1252,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
 
             if (definition.returning()) {
-                // TODO: proper selection of columns
                 builder += RETURNING + String.join(",", resultColumns);
             }
         }

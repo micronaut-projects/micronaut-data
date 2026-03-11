@@ -23,11 +23,23 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares vector column storage metadata.
+ *
+ * @since 4.13
+ */
 @Documented
 @Experimental
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 public @interface VectorStorage {
+    /**
+     * @return Declared vector length, or {@code -1} if unspecified.
+     */
     int length() default -1;
+
+    /**
+     * @return Whether sparse vector storage should be used.
+     */
     boolean sparse() default false;
 }

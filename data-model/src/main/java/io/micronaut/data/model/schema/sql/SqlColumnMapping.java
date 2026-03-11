@@ -208,7 +208,6 @@ public final class SqlColumnMapping {
                 if (dialect == Dialect.ORACLE) {
                     yield "NUMBER(1)";
                 } else if (dialect == Dialect.SQL_SERVER) {
-                    // TODO: was "BIT NOT NULL";
                     yield "BIT";
                 } else {
                     yield "BOOLEAN";
@@ -330,7 +329,6 @@ public final class SqlColumnMapping {
                 }
             }
             case JSON -> getJsonSqlType(dialect);
-            // TODO: Array types are not supported for all dialects so might throw an error?
             // Think only H2 and Postgres support these type defs
             case STRING_ARRAY, CHARACTER_ARRAY -> "VARCHAR(255) ARRAY";
             case SHORT_ARRAY -> {
