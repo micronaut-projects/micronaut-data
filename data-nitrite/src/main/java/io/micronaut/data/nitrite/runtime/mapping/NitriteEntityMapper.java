@@ -543,6 +543,18 @@ public final class NitriteEntityMapper {
         }
     }
     
+    // Handle version
+    RuntimePersistentProperty<T> versionProp = persistentEntity.getVersion();
+    if (versionProp != null) {
+        @SuppressWarnings("rawtypes")
+        BeanProperty beanProperty = versionProp.getProperty();
+        @SuppressWarnings("unchecked")
+        Object versionValue = beanProperty.get(entity);
+        if (versionValue != null) {
+            doc.put(versionProp.getPersistedName(), toFilterValue(versionValue));
+        }
+    }
+    
     return doc;
   }
 
@@ -689,7 +701,8 @@ public final class NitriteEntityMapper {
     // Handle version property for optimistic locking
     RuntimePersistentProperty<T> versionProp = persistentEntity.getVersion();
     if (versionProp != null) {
-        Object storedVersion = doc.get(versionProp.getPersistedName());
+        String vName = versionProp.getPersistedName();
+        Object storedVersion = doc.get(vName);
         if (storedVersion == null) {
             storedVersion = doc.get(versionProp.getName());
         }
@@ -697,6 +710,23 @@ public final class NitriteEntityMapper {
             Object convertedVersion = convertFromDocumentValue(storedVersion, versionProp.getProperty().asArgument());
             if (convertedVersion != null) {
                 versionProp.getProperty().set(entity, convertedVersion);
+            }
+        }
+    } else {
+        // Search for property with @Version annotation if getVersion() is null (TCK entities sometimes have this)
+        for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
+            if (prop.getAnnotationMetadata().hasAnnotation(io.micronaut.data.annotation.Version.class)) {
+                Object storedVersion = doc.get(prop.getPersistedName());
+                if (storedVersion == null) {
+                    storedVersion = doc.get(prop.getName());
+                }
+                if (storedVersion != null) {
+                    Object convertedVersion = convertFromDocumentValue(storedVersion, prop.getProperty().asArgument());
+                    if (convertedVersion != null) {
+                        prop.getProperty().set(entity, convertedVersion);
+                    }
+                }
+                break;
             }
         }
     }

@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
@@ -47,6 +48,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
     private final OperationType operationType;
+    private Object preVersionValue;
 
     enum OperationType {
         INSERT, UPDATE, DELETE
@@ -126,8 +128,10 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
             Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
             if (persistentEntity.getVersion() != null) {
-                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                Object versionValue = versionProperty.get(entity);
+                Object versionValue = preVersionValue;
+                if (versionValue == null) {
+                    versionValue = persistentEntity.getVersion().getProperty().get(entity);
+                }
                 filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
             Document update = entityMapper.toDocument(entity);
@@ -137,19 +141,30 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         } else {
             // Delete operation
             Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
+            if (persistentEntity.getVersion() != null) {
+                Object versionValue = preVersionValue;
+                if (versionValue == null) {
+                    versionValue = persistentEntity.getVersion().getProperty().get(entity);
+                }
+                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+            }
             helper.logFind(collection.getName(), filter);
-            collection.remove(filter, false);
+            long rows = collection.remove(filter, false).getAffectedCount();
+            checkOptimisticLocking(1, rows);
         }
     }
 
     private void checkOptimisticLocking(int expected, long received) {
         if (persistentEntity.getVersion() != null && received != expected) {
-            throw new io.micronaut.data.exceptions.OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
         }
     }
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
+        if ((operationType == OperationType.UPDATE || operationType == OperationType.DELETE) && persistentEntity.getVersion() != null) {
+            preVersionValue = persistentEntity.getVersion().getProperty().get(entity);
+        }
         final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
         boolean vetoed = !fn.apply((EntityEventContext<Object>) event);
         if (vetoed) {
