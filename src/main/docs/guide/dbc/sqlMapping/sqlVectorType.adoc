@@ -169,6 +169,7 @@ CREATE TABLE document_embedding (
 - JDBC and R2DBC derived `SearchResults` mappings both return empty `SearchResults` when no rows match.
 - Oracle JDBC and Oracle R2DBC both support sparse vector columns (`VECTOR(..., SPARSE)`) for derived search scenarios.
 - Oracle R2DBC sparse and dense query parameters are bound using Oracle native typed VECTOR values.
+- For Oracle R2DBC sparse vectors, include a recent `ojdbc11` dependency in your application so sparse VECTOR JDBC APIs are available to the Oracle driver stack.
 
 DDL example:
 [source,sql]

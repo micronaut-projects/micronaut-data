@@ -45,6 +45,9 @@ final class MySqlTypeConvertersFactory {
     @Prototype
     DataTypeConverter<Vector, byte[]> vectorToBinary() {
         return (vector, targetType, context) -> {
+            if (!(vector instanceof FloatVector)) {
+                throw new IllegalArgumentException("MYSQL does not support " + vector.getClass().getName());
+            }
             float[] floats = vector.toFloatArray();
             ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES).order(ByteOrder.LITTLE_ENDIAN);
             for (float f : floats) {

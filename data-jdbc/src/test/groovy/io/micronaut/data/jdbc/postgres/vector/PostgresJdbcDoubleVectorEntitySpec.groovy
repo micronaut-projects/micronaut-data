@@ -47,14 +47,14 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         then:
         def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("POSTGRES does not support")
+        ex1.message.contains("cannot convert")
 
         when: "update via custom @Query with DoubleVector"
         vectorRepository.updateCustom(1L, v1)
 
         then:
         def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("POSTGRES does not support")
+        ex2.message.contains("cannot convert")
     }
 
     void "default repository methods with DoubleVector are not supported on Postgres"() {
@@ -68,7 +68,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
         then:
         def ex1 = thrown(DataAccessException)
         assert ex1.cause instanceof IllegalArgumentException
-        ex1.cause.message.contains("POSTGRES does not support")
+        ex1.cause.message.contains("cannot convert")
 
         when: "update entity using default repository update"
         vectorRepository.update(new VectorDoubleDoc(id: 1L, embedding: v1))
@@ -76,7 +76,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
         then:
         def ex2 = thrown(DataAccessException)
         assert ex2.cause instanceof IllegalArgumentException
-        ex2.cause.message.contains("POSTGRES does not support")
+        ex2.cause.message.contains("cannot convert")
     }
 
 
@@ -90,14 +90,14 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         then:
         def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("POSTGRES does not support")
+        ex1.message.contains("cannot convert")
 
         when:
         vectorRepository.saveCustom(vB)
 
         then:
         def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("POSTGRES does not support")
+        ex2.message.contains("cannot convert")
     }
 
     void "paging cannot be exercised with DoubleVector on Postgres due to unsupported type"() {
@@ -109,7 +109,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message.contains("POSTGRES does not support")
+        ex.message.contains("cannot convert")
     }
 
     void "derived vector near/within/between with DoubleVector are not supported on Postgres"() {
@@ -121,21 +121,21 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         then:
         def nearEx = thrown(IllegalArgumentException)
-        nearEx.message.contains("POSTGRES does not support")
+        nearEx.message.contains("cannot convert")
 
         when:
         vectorRepository.searchByEmbeddingWithin(queryVector, 0d, 0.2d)
 
         then:
         def withinEx = thrown(IllegalArgumentException)
-        withinEx.message.contains("POSTGRES does not support")
+        withinEx.message.contains("cannot convert")
 
         when:
         vectorRepository.searchByEmbeddingBetween(queryVector, 0d, 0.2d)
 
         then:
         def betweenEx = thrown(IllegalArgumentException)
-        betweenEx.message.contains("POSTGRES does not support")
+        betweenEx.message.contains("cannot convert")
     }
 
     private void executeSilently(String sql) {

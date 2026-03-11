@@ -58,6 +58,14 @@ final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]>
     }
 
     @Override
+    public byte[] convert(Vector vector) {
+        if (!(vector instanceof FloatVector)) {
+            throw new IllegalArgumentException(databaseType() + " does not support " + vector.getClass().getName());
+        }
+        return super.convert(vector);
+    }
+
+    @Override
     public DatabaseType databaseType() {
         return DatabaseType.MYSQL;
     }
