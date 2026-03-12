@@ -24,6 +24,8 @@ import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeCon
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseByteVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
@@ -60,6 +62,20 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
                 }
                 if (vector instanceof ByteVector byteVector) {
                     return Optional.of(VECTOR.ofInt8Values(byteVector.toByteArray()));
+                }
+                if (vector instanceof SparseFloatVector sparseFloatVector) {
+                    return Optional.of(VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(
+                        sparseFloatVector.length(),
+                        sparseFloatVector.indices(),
+                        sparseFloatVector.values()
+                    )));
+                }
+                if (vector instanceof SparseByteVector sparseByteVector) {
+                    return Optional.of(VECTOR.ofInt8Values(VECTOR.SparseByteArray.of(
+                        sparseByteVector.length(),
+                        sparseByteVector.indices(),
+                        sparseByteVector.values()
+                    )));
                 }
                 return Optional.of(VECTOR.ofFloat64Values(vector.toDoubleArray()));
             } catch (SQLException e) {
