@@ -117,6 +117,13 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
     }
 
     @Override
+    public String toString() {
+        return "SparseFloatVector[length=" + length
+            + ", indices=" + Arrays.toString(indices)
+            + ", values=" + Arrays.toString(values) + ']';
+    }
+
+    @Override
     public int hashCode() {
         int result = Integer.hashCode(length);
         result = 31 * result + Arrays.hashCode(indices);

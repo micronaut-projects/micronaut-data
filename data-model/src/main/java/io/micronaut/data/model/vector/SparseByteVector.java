@@ -117,6 +117,13 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
     }
 
     @Override
+    public String toString() {
+        return "SparseByteVector[length=" + length
+            + ", indices=" + Arrays.toString(indices)
+            + ", values=" + Arrays.toString(values) + ']';
+    }
+
+    @Override
     public int hashCode() {
         int result = Integer.hashCode(length);
         result = 31 * result + Arrays.hashCode(indices);

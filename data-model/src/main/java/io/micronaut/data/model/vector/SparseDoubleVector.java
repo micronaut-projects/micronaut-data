@@ -117,6 +117,13 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
     }
 
     @Override
+    public String toString() {
+        return "SparseDoubleVector[length=" + length
+            + ", indices=" + Arrays.toString(indices)
+            + ", values=" + Arrays.toString(values) + ']';
+    }
+
+    @Override
     public int hashCode() {
         int result = Integer.hashCode(length);
         result = 31 * result + Arrays.hashCode(indices);
