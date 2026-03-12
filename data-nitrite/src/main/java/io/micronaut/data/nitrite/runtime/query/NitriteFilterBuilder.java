@@ -257,18 +257,18 @@ public final class NitriteFilterBuilder {
         final Map<String, Object> operators,
         final Object[] params,
         final Map<String, Object> namedParameters) {
-        
+
         if (rawField.contains(".")) {
             return buildNestedFilter(entity, rawField, operators, params, namedParameters);
         }
-        
+
         String field = entityMapper.normalizeFieldName(rawField, entity);
-        
+
         if (entity != null) {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity != null && identity.isAnnotationPresent(EmbeddedId.class) && 
+            if (identity != null && identity.isAnnotationPresent(EmbeddedId.class) &&
                 (identity.getName().equals(field) || "id".equals(field) || "_id".equals(field))) {
-                
+
                 Object val = operators.get("$eq");
                 if (val != null) {
                     Object resolved = resolveValue(val, params, namedParameters);
@@ -301,11 +301,11 @@ public final class NitriteFilterBuilder {
         final Map<String, Object> operators,
         final Object[] params,
         final Map<String, Object> namedParameters) {
-        
+
         int dotIdx = fieldPath.indexOf('.');
         String firstPart = fieldPath.substring(0, dotIdx);
         String remaining = fieldPath.substring(dotIdx + 1);
-        
+
         RuntimePersistentProperty<?> prop = null;
         if (entity != null) {
             prop = entity.getPropertyByName(firstPart);
@@ -325,14 +325,14 @@ public final class NitriteFilterBuilder {
                 }
             }
         }
-        
+
         String fieldName = prop != null ? prop.getPersistedName() : firstPart;
-        
+
         if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
             io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
-            boolean isCollection = kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY || 
+            boolean isCollection = kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY ||
                                  kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY;
-            
+
             RuntimePersistentEntity<?> associatedEntity = assoc.getAssociatedEntity();
             if (isCollection) {
                 Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
@@ -341,7 +341,7 @@ public final class NitriteFilterBuilder {
                 return buildOperatorFiltersForPath(entity, fieldName + "." + remaining, operators, params, namedParameters);
             }
         }
-        
+
         // Fallback to dot notation
         return buildOperatorFiltersForPath(entity, fieldPath, operators, params, namedParameters);
     }
@@ -352,7 +352,7 @@ public final class NitriteFilterBuilder {
         final Map<String, Object> operators,
         final Object[] params,
         final Map<String, Object> namedParameters) {
-        
+
         List<Filter> fieldFilters = new ArrayList<>();
         for (Map.Entry<String, Object> opEntry : operators.entrySet()) {
             String op = opEntry.getKey();
@@ -408,13 +408,17 @@ public final class NitriteFilterBuilder {
     }
 
     private Filter buildInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
-        if (finalValue == null) return NONE;
+        if (finalValue == null) {
+            return NONE;
+        }
         List<Comparable<?>> resolvedValues = resolveCollection(finalValue, params, namedParameters);
         return resolvedValues.isEmpty() ? NONE : FluentFilter.where(field).in(resolvedValues.toArray(new Comparable[0]));
     }
 
     private Filter buildNotInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
-        if (finalValue == null) return Filter.ALL;
+        if (finalValue == null) {
+            return Filter.ALL;
+        }
         List<Comparable<?>> resolvedValues = resolveCollection(finalValue, params, namedParameters);
         return resolvedValues.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(resolvedValues.toArray(new Comparable[0]));
     }
@@ -426,13 +430,17 @@ public final class NitriteFilterBuilder {
             if (resolved instanceof Collection<?> coll) {
                 for (Object collItem : coll) {
                     Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(collItem), null);
-                    if (itemResolved instanceof Comparable<?> c) resolvedValues.add(c);
+                    if (itemResolved instanceof Comparable<?> c) {
+                        resolvedValues.add(c);
+                    }
                 }
             } else if (resolved != null && resolved.getClass().isArray()) {
                 int len = java.lang.reflect.Array.getLength(resolved);
                 for (int i = 0; i < len; i++) {
                     Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(java.lang.reflect.Array.get(resolved, i)), null);
-                    if (itemResolved instanceof Comparable<?> c) resolvedValues.add(c);
+                    if (itemResolved instanceof Comparable<?> c) {
+                        resolvedValues.add(c);
+                    }
                 }
             } else if (resolved instanceof Comparable<?> c) {
                 resolvedValues.add(c);
@@ -440,12 +448,16 @@ public final class NitriteFilterBuilder {
         } else if (finalValue instanceof Collection<?> coll) {
             for (Object item : coll) {
                 Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)), null);
-                if (itemResolved instanceof Comparable<?> c) resolvedValues.add(c);
+                if (itemResolved instanceof Comparable<?> c) {
+                    resolvedValues.add(c);
+                }
             }
         } else if (finalValue instanceof Object[] array) {
             for (Object item : array) {
                 Object itemResolved = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)), null);
-                if (itemResolved instanceof Comparable<?> c) resolvedValues.add(c);
+                if (itemResolved instanceof Comparable<?> c) {
+                    resolvedValues.add(c);
+                }
             }
         }
         return resolvedValues;
@@ -494,7 +506,9 @@ public final class NitriteFilterBuilder {
     }
 
     private Filter createSpatialFilter(String field, Object geometry, String method) {
-        if (geometry == null || !ClassUtils.isPresent(GEOMETRY_CLASS, null)) return Filter.ALL;
+        if (geometry == null || !ClassUtils.isPresent(GEOMETRY_CLASS, null)) {
+            return Filter.ALL;
+        }
         try {
             Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
             if (geometryClass.isInstance(geometry)) {

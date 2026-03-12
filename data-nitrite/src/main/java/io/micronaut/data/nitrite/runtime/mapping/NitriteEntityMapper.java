@@ -18,15 +18,13 @@ package io.micronaut.data.nitrite.runtime.mapping;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -52,7 +50,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -499,7 +496,9 @@ public final class NitriteEntityMapper {
    * Check if an object is a JTS Geometry using reflection.
    */
   private boolean isGeometry(Object value) {
-    if (value == null) return false;
+    if (value == null) {
+      return false;
+    }
     return ClassUtils.isPresent(GEOMETRY_CLASS, value.getClass().getClassLoader()) &&
            ClassUtils.forName(GEOMETRY_CLASS, value.getClass().getClassLoader())
                .map(c -> c.isInstance(value)).orElse(false);
@@ -507,6 +506,9 @@ public final class NitriteEntityMapper {
 
   /**
    * Check if a type is a simple type that should not be converted to a Document.
+   *
+   * @param type the type to check
+   * @return true if the type is a simple type
    */
   public boolean isSimpleType(Class<?> type) {
     return type.isPrimitive() || 
@@ -524,6 +526,10 @@ public final class NitriteEntityMapper {
 
   /**
    * Convert a value from a Document to the target argument type.
+   *
+   * @param value the value to convert
+   * @param target the target argument type
+   * @return the converted value
    */
   public Object convertFromDocumentValue(Object value, Argument<?> target) {
     if (value == null) {
@@ -537,6 +543,11 @@ public final class NitriteEntityMapper {
 
   /**
    * Hydrate an entity from a Nitrite Document.
+   *
+   * @param doc the Nitrite document
+   * @param type the entity type
+   * @param <T> the entity type
+   * @return the hydrated entity
    */
   public <T> T fromDocument(final Document doc, final Class<T> type) {
     return fromDocumentInternal(doc, type, new HashMap<>());

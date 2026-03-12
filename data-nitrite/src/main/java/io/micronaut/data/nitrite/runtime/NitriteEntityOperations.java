@@ -34,8 +34,6 @@ import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -200,7 +198,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 Object value = prop.getProperty().get(entity);
                 if (value instanceof Iterable<?> iterable) {
                     java.util.List<Object> list = new java.util.ArrayList<>();
-                    for (Object o : iterable) list.add(o);
+                    for (Object o : iterable) {
+                        list.add(o);
+                    }
                     if (!list.isEmpty()) {
                         Class<Object> associatedType = (Class<Object>) assoc.getAssociatedEntity().getIntrospection().getBeanType();
                         ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, list, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), null);
