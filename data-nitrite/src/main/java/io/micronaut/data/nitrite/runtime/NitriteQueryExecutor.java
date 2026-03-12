@@ -216,18 +216,8 @@ public final class NitriteQueryExecutor {
         if (doc == null) {
             return null;
         }
-        R entity = (R) entityMapper.fromDocument(doc, nq.getRootEntity());
-        return triggerPostLoad(nq.getRootEntity(), entity);
-    }
-
-    private <R> R triggerPostLoad(Class<?> type, R entity) {
-        if (entity != null) {
-            RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) entityFactory.apply(type);
-            DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(persistentEntity, entity);
-            entityEventListener.postLoad(event);
-            return (R) event.getEntity();
-        }
-        return entity;
+        // postLoad event is triggered by entityMapper.fromDocument() for all entities
+        return (R) entityMapper.fromDocument(doc, nq.getRootEntity());
     }
 
     private Object executeAggregate(String aggFunc, List<Object> values) {
@@ -264,6 +254,20 @@ public final class NitriteQueryExecutor {
             }
         }
         Sort s = nq.getSort();
+        // Parse sort from SQL/JSON if not already set
+        if (s == null || !s.isSorted()) {
+            String query = nq.getQuery();
+            if (query != null) {
+                if (nq.isSql()) {
+                    s = helper.parseSortFromSqlQuery(query);
+                } else {
+                    s = helper.parseSortFromJsonQuery(query);
+                }
+            }
+            if ((s == null || !s.isSorted()) && nq.getQueryHints() != null) {
+                s = helper.parseSortFromHints(nq.getQueryHints());
+            }
+        }
         Limit limit = nq.getQueryLimit();
         if (limit.maxResults() <= 0) {
             String methodName = q.getName();
@@ -317,8 +321,9 @@ public final class NitriteQueryExecutor {
 
         List<R> results = new ArrayList<>();
         for (Document doc : cursor) {
+            // postLoad event is triggered by entityMapper.fromDocument() for all entities
             R entity = (R) entityMapper.fromDocument(doc, nq.getRootEntity());
-            results.add(triggerPostLoad(nq.getRootEntity(), entity));
+            results.add(entity);
         }
         return results;
     }

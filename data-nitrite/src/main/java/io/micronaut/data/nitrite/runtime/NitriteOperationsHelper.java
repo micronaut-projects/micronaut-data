@@ -17,9 +17,12 @@ package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.model.Sort;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.filters.Filter;
+
+import java.util.Map;
 
 /**
  * Interface for callbacks to DefaultNitriteRepositoryOperations.
@@ -42,4 +45,10 @@ public interface NitriteOperationsHelper {
     void logUpdate(String collection, Filter filter, Document update);
 
     void logFind(String collection, Filter filter);
+
+    Sort parseSortFromSqlQuery(String sql);
+
+    Sort parseSortFromJsonQuery(String queryString);
+
+    Sort parseSortFromHints(Map<String, Object> hints);
 }

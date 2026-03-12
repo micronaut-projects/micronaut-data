@@ -113,6 +113,70 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
     }
 
+    /**
+     * Delete all entities with optimistic locking support.
+     */
+    public void delete() {
+        if (entities.isEmpty()) {
+            return;
+        }
+
+        // First pass: capture pre-version values and trigger pre-remove events
+        List<Filter> filters = new ArrayList<>();
+        List<T> entitiesToDelete = new ArrayList<>();
+        preVersionValues = new ArrayList<>();
+
+        for (T entity : entities) {
+            Object idValue = entityMapper.getEntityIdValue(entity, (Class<T>) persistentEntity.getIntrospection().getBeanType());
+            if (idValue == null) {
+                continue;
+            }
+
+            Filter filter = entityMapper.idEqualsFilter((Class<T>) persistentEntity.getIntrospection().getBeanType(), idValue);
+
+            // Add version filter for optimistic locking
+            if (persistentEntity.getVersion() != null) {
+                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                Object versionValue = versionProperty.get(entity);
+                preVersionValues.add(versionValue);
+                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+            } else {
+                preVersionValues.add(null);
+            }
+
+            DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
+            if (entityEventListener.preRemove((EntityEventContext<Object>) event)) {
+                entitiesToDelete.add(event.getEntity());
+                filters.add(filter);
+            }
+        }
+
+        if (entitiesToDelete.isEmpty()) {
+            entities.clear();
+            return;
+        }
+
+        // Execute all deletes
+        int count = 0;
+        for (Filter filter : filters) {
+            if (collection.remove(filter, false).getAffectedCount() > 0) {
+                count++;
+            }
+        }
+
+        // Check optimistic locking - process all before throwing
+        if (persistentEntity.getVersion() != null && count != entitiesToDelete.size()) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + entitiesToDelete.size() + " got: " + count);
+        }
+
+        // Post-remove events
+        for (T entity : entitiesToDelete) {
+            entityEventListener.postRemove((EntityEventContext<Object>) new DefaultEntityEventContext<>(persistentEntity, entity));
+        }
+
+        entities = entitiesToDelete;
+    }
+
     @Override
     protected void execute() throws RuntimeException {
         if (LOG.isDebugEnabled()) {

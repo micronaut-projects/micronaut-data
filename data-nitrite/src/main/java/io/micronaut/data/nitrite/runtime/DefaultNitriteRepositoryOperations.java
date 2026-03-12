@@ -740,7 +740,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /** Parses sort from SQL ORDER BY clause. */
-  private Sort parseSortFromSqlQuery(final String sql) {
+  @Override
+  public Sort parseSortFromSqlQuery(final String sql) {
     if (sql == null) {
       return null;
     }
@@ -763,7 +764,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /** Parses sort from a JSON query string's $sort key. */
-  private Sort parseSortFromJsonQuery(final String queryString) {
+  @Override
+  public Sort parseSortFromJsonQuery(final String queryString) {
     if (queryString == null || !queryString.contains("\"$sort\"")) {
       return null;
     }
@@ -784,7 +786,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   /** Parse sort string from query hints. */
-  private Sort parseSortFromHints(final Map<String, Object> hints) {
+  @Override
+  public Sort parseSortFromHints(final Map<String, Object> hints) {
     if (hints == null || hints.isEmpty() || !(hints.get("sort") instanceof String sortStr) || sortStr.isEmpty()) {
       return null;
     }

@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.nitrite.model;
 
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import java.io.Serializable;
 
 /**
  * Entity with nested embedded object for testing nested field queries. Tests Gap 2: No embedded
@@ -72,7 +74,8 @@ public class PersonWithAddress {
   }
 
   /** Embedded address value object. */
-  public static class Address {
+  @Embeddable
+  public static class Address implements Serializable {
     private String street;
     private String city;
     private String state;

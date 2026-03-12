@@ -39,7 +39,6 @@ import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -122,9 +121,11 @@ public final class NitriteEntityMapper {
     if (value instanceof LocalTime localTime) {
       return localTime.toString();
     }
-    if (value instanceof BigDecimal bigDecimal) {
-      return bigDecimal.toString();
-    }
+    // BigDecimal should NOT be converted to String to preserve numeric comparison.
+    // Nitrite can handle BigDecimal directly for numeric filters.
+    // if (value instanceof BigDecimal bigDecimal) {
+    //   return bigDecimal.toString();
+    // }
     if (value instanceof URL url) {
       return url.toString();
     }
