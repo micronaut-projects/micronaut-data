@@ -971,12 +971,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         SearchResultsMapper<RS, E> mapper = createSearchResultsResultMapper(preparedQuery, rsType);
         return new SqlTypeMapper<>() {
             @Override
-            public SearchResults<E> map(RS object, Class<SearchResults<E>> type) {
+            public @Nullable SearchResults<E> map(RS object, Class<SearchResults<E>> type) {
                 return mapper.mapAll(object, persistentEntity.getIntrospection().getBeanType());
             }
 
             @Override
-            public Object read(RS object, String name) {
+            public @Nullable Object read(RS object, String name) {
                 throw new IllegalStateException("Not supported!");
             }
 
