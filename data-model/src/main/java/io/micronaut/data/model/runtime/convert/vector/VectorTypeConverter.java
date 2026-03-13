@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.data.model.runtime.convert.DatabaseType;
+import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
 
 import java.util.List;
@@ -90,4 +91,16 @@ public interface VectorTypeConverter<T> {
      * @return the persisted driver type class
      */
     Class<T> getPersistedType();
+
+    /**
+     * Whether this converter is designed for sparse vectors.
+     *
+     * Used as a tiebreaker when multiple converters exist for the same database type.
+     * Implementations that handle {@link SparseVector} persisted paths should return {@code true}.
+     *
+     * @return {@code true} if sparse vectors are supported/preferred by this converter
+     */
+    default boolean isSparseSupported() {
+        return false;
+    }
 }

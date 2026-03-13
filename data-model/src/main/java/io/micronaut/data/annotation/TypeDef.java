@@ -50,6 +50,7 @@ public @interface TypeDef {
      * @return The classes for this data type.
      */
     Class[] classes() default {};
+
     /**
      * @return The class or parameter names for this data type.
      */

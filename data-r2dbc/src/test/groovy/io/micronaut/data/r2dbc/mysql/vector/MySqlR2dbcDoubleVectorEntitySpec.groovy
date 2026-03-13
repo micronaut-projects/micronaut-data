@@ -7,15 +7,12 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -24,51 +21,23 @@ import spock.lang.Specification
  */
 class MySqlR2dbcDoubleVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcDoubleVectorEntitySpec"])
-
-    @Shared
-    VectorDoubleDocRepository vectorRepository = context.getBean(VectorDoubleDocRepository)
-
-    void "custom queries with DoubleVector are not supported on MySQL (R2DBC)"() {
-        given:
-        double[] dv = [1d, 2.5d, -3.75d] as double[]
-        DoubleVector v1 = Vector.of(dv)
-
-        when: "save via custom @Query using Vector parameter"
-        vectorRepository.saveCustom(v1)
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update via custom @Query with DoubleVector"
-        vectorRepository.updateCustom(1L, v1)
+    void "mysql r2dbc vector repository fails fast at startup"() {
+        when:
+        Throwable failure = null
+        ApplicationContext context = null
+        try {
+            context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcDoubleVectorEntitySpec"])
+            VectorDoubleDocRepository repository = context.getBean(VectorDoubleDocRepository)
+            repository.save(new VectorDoubleDoc(embedding: Vector.of([1d, 2.5d, -3.75d] as double[])))
+        } catch (Throwable t) {
+            failure = t
+        } finally {
+            context?.close()
+        }
 
         then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
-    }
-
-    void "default repository methods with DoubleVector are not supported on MySQL (R2DBC)"() {
-        given:
-        double[] dv = [2d, -1.5d, 0.25d] as double[]
-        DoubleVector v1 = Vector.of(dv)
-
-        when: "persist entity using default repository save"
-        vectorRepository.save(new VectorDoubleDoc(embedding: v1))
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update entity using default repository update"
-        vectorRepository.update(new VectorDoubleDoc(id: 1L, embedding: v1))
-
-        then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
+        failure != null
+        failure.message.contains("Vectors aren't supported for the database MYSQL")
     }
 }
 

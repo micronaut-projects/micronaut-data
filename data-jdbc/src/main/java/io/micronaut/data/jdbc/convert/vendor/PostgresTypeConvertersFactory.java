@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import org.postgresql.util.PGobject;
@@ -32,16 +33,6 @@ import java.util.Optional;
 /**
  * Postgres converters for pgvector integration.
  *
- * These converters are registered only when the Postgres JDBC driver is on the classpath
- * and the configured dialect is POSTGRES. They convert Micronaut's Vector types into PGobject with
- * type "vector", which the PostgreSQL driver understands for the pgvector extension.
- *
- * NOTE:
- * - We keep generic (dialect-agnostic) converters in data-model intact.
- * - This factory avoids adding a hard dependency to the driver in data-model.
- * - Binding still goes through JdbcQueryStatement#setValue(..) which calls setObject(..) and
- *   will pass the PGobject to the driver as-is.
- *
  * @author Nemanja Mikic
  * @since 5.0.0
  */
@@ -50,60 +41,39 @@ import java.util.Optional;
 @Internal
 final class PostgresTypeConvertersFactory {
 
-    private static final int MIN_SPARSE_DIMENSIONS = 16;
-    private static final int MIN_ZERO_RATIO_DENOMINATOR = 4;
+    @Prototype
+    DataTypeConverter<FloatVector, PGvector> fromFloatVectorToPgVector() {
+        return (vector, targetType, context) -> Optional.of(new PGvector(vector.toFloatArray()));
+    }
 
     @Prototype
-    DataTypeConverter<FloatVector, PGobject> fromFloatVectorToPgObject() {
-        return (vector, targetType, context) -> toPgObject(vector);
+    DataTypeConverter<Vector, PGvector> fromVectorToPgVector() {
+        return (vector, targetType, context) -> Optional.of(new PGvector(vector.toFloatArray()));
+    }
+
+    @Prototype
+    DataTypeConverter<SparseFloatVector, PGsparsevec> fromSparseFloatVectorToPgSparsevec() {
+        return (vector, targetType, context) -> Optional.of(new PGsparsevec(vector.toFloatArray()));
     }
 
     @Prototype
     DataTypeConverter<PGobject, FloatVector> fromPgObjectToFloatVector() {
-        return (pg, targetType, context) -> {
-            Optional<float[]> dense = toDenseFloatArray(pg);
-            return dense.map(floats -> (FloatVector) Vector.of(floats));
-        };
+        return (pg, targetType, context) -> toDenseFloatArray(pg).map(floats -> (FloatVector) Vector.of(floats));
     }
 
     @Prototype
     DataTypeConverter<PGobject, Vector> fromPgObjectToVector() {
-        return (pg, targetType, context) -> {
-            Optional<float[]> dense = toDenseFloatArray(pg);
-            return dense.map(Vector::of);
-        };
+        return (pg, targetType, context) -> toDenseFloatArray(pg).map(Vector::of);
+    }
+
+    @Prototype
+    DataTypeConverter<PGobject, SparseFloatVector> fromPgObjectToSparseFloatVector() {
+        return (pg, targetType, context) -> toDenseFloatArray(pg).map(SparseFloatVector::fromDense);
     }
 
     @Prototype
     DataTypeConverter<PGobject, PGvector> fromPgObjectToPgVector() {
-        return (pg, targetType, context) -> {
-            if (pg == null) {
-                return Optional.empty();
-            }
-            try {
-                if ("sparsevec".equalsIgnoreCase(pg.getType())) {
-                    return Optional.of(new PGvector(new PGsparsevec(pg.getValue()).toArray()));
-                }
-                return Optional.of(new PGvector(pg.getValue()));
-            } catch (SQLException e) {
-                return Optional.empty();
-            }
-        };
-    }
-
-    private static Optional<PGobject> toPgObject(FloatVector vector) {
-        try {
-            float[] arr = vector.toFloatArray();
-            if (shouldSerializeAsSparse(arr)) {
-                return Optional.of(new PGsparsevec(arr));
-            }
-            PGobject pg = new PGobject();
-            pg.setType("vector");
-            pg.setValue(new PGvector(arr).toString());
-            return Optional.of(pg);
-        } catch (SQLException e) {
-            return Optional.empty();
-        }
+        return (pg, targetType, context) -> toDenseFloatArray(pg).map(PGvector::new);
     }
 
     private static Optional<float[]> toDenseFloatArray(PGobject pg) {
@@ -113,8 +83,8 @@ final class PostgresTypeConvertersFactory {
         if (pg instanceof PGvector pgvector) {
             return Optional.of(pgvector.toArray());
         }
-        if (pg instanceof PGsparsevec pGsparsevec) {
-            return Optional.of(pGsparsevec.toArray());
+        if (pg instanceof PGsparsevec sparseVec) {
+            return Optional.of(sparseVec.toArray());
         }
         try {
             if ("sparsevec".equalsIgnoreCase(pg.getType())) {
@@ -125,18 +95,4 @@ final class PostgresTypeConvertersFactory {
             return Optional.empty();
         }
     }
-
-    private static boolean shouldSerializeAsSparse(float[] arr) {
-        if (arr.length < MIN_SPARSE_DIMENSIONS) {
-            return false;
-        }
-        int nonZero = 0;
-        for (float v : arr) {
-            if (v != 0f) {
-                nonZero++;
-            }
-        }
-        return nonZero * MIN_ZERO_RATIO_DENOMINATOR <= arr.length;
-    }
-
 }

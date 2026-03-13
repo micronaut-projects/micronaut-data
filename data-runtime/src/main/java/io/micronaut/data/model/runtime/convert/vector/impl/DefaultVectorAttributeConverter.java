@@ -29,7 +29,7 @@ import java.util.Locale;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
-import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
@@ -66,8 +66,8 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
         if (isSparse(context)) {
             DatabaseType databaseType = extractDatabaseType(context);
             if ((databaseType == DatabaseType.ORACLE || databaseType == DatabaseType.POSTGRES)
-                && !(entityValue instanceof FloatVector)) {
-                entityValue = (FloatVector) Vector.of(entityValue.toFloatArray());
+                && !(entityValue instanceof SparseFloatVector)) {
+                entityValue = entityValue.toSparseFloatVector();
             }
         }
         return super.convertToPersistedValue(entityValue, context);

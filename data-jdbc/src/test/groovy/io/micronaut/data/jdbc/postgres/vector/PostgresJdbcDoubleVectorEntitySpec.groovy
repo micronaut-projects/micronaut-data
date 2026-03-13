@@ -6,11 +6,11 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.Vector
-import io.micronaut.data.exceptions.DataAccessException
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
@@ -27,130 +27,99 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
     @Shared
     VectorDoubleDocRepository vectorRepository = context.getBean(VectorDoubleDocRepository)
 
-    @Shared
-    javax.sql.DataSource dataSource = context.getBean(javax.sql.DataSource)
-
     @Override
     List<String> packages() {
         // Ensure entity/repository in this package are scanned
         return [getClass().package.name]
     }
 
-    void "custom queries with DoubleVector are not supported on Postgres"() {
+    void "custom write queries accept DoubleVector on Postgres"() {
         given:
         double[] dv = [1d, 2.5d, -3.75d] as double[]
         DoubleVector v1 = Vector.of(dv)
 
-        when: "save via custom @Query using Vector parameter"
+        when:
         vectorRepository.saveCustom(v1)
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("cannot convert")
-
-        when: "update via custom @Query with DoubleVector"
         vectorRepository.updateCustom(1L, v1)
 
         then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("cannot convert")
+        noExceptionThrown()
     }
 
-    void "default repository methods with DoubleVector are not supported on Postgres"() {
+    void "default repository write operations accept DoubleVector on Postgres"() {
         given:
-        double[] dv = [2d, -1.5d, 0.25d] as double[]
-        DoubleVector v1 = Vector.of(dv)
-
-        when: "persist entity using default repository save"
-        vectorRepository.save(new VectorDoubleDoc(embedding: v1))
-
-        then:
-        def ex1 = thrown(DataAccessException)
-        assert ex1.cause instanceof IllegalArgumentException
-        ex1.cause.message.contains("cannot convert")
-
-        when: "update entity using default repository update"
-        vectorRepository.update(new VectorDoubleDoc(id: 1L, embedding: v1))
-
-        then:
-        def ex2 = thrown(DataAccessException)
-        assert ex2.cause instanceof IllegalArgumentException
-        ex2.cause.message.contains("cannot convert")
-    }
-
-
-    void "multiple DoubleVector operations are not supported on Postgres"() {
-        given:
-        DoubleVector vA = Vector.of([1d, 2d, 3d] as double[])
-        DoubleVector vB = Vector.of([4d, 5d, 6d] as double[])
+        DoubleVector v1 = Vector.of([2d, -1.5d, 0.25d] as double[])
 
         when:
-        vectorRepository.saveCustom(vA)
+        def saved = vectorRepository.save(new VectorDoubleDoc(embedding: v1))
+        vectorRepository.update(new VectorDoubleDoc(id: saved.id, embedding: v1))
 
         then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("cannot convert")
-
-        when:
-        vectorRepository.saveCustom(vB)
-
-        then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("cannot convert")
+        noExceptionThrown()
     }
 
-    void "paging cannot be exercised with DoubleVector on Postgres due to unsupported type"() {
+    void "reading DoubleVector entities fails on Postgres"() {
         given:
-        DoubleVector v1 = Vector.of([1d, 2d, 3d] as double[])
+        vectorRepository.saveCustom(Vector.of([1d, 2d, 3d] as double[]))
 
         when:
-        vectorRepository.saveCustom(v1)
+        vectorRepository.findAll()
 
         then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message.contains("cannot convert")
+        def findAllEx = thrown(DataAccessException)
+        assertPostgresDoubleVectorUnsupported(findAllEx)
+
+        when:
+        vectorRepository.findById(1L)
+
+        then:
+        def findByIdEx = thrown(IllegalArgumentException)
+        assertPostgresDoubleVectorUnsupported(findByIdEx)
     }
 
-    void "derived vector near/within/between with DoubleVector are not supported on Postgres"() {
+    void "paging DoubleVector entities fails on Postgres"() {
         given:
+        vectorRepository.saveCustom(Vector.of([1d, 2d, 3d] as double[]))
+
+        when:
+        vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
+
+        then:
+        def pagingEx = thrown(DataAccessException)
+        assertPostgresDoubleVectorUnsupported(pagingEx)
+    }
+
+    void "derived vector near/within/between with DoubleVector execute on empty dataset"() {
+        given:
+        vectorRepository.deleteAll()
         Vector queryVector = Vector.of([1d, 0d, 0d] as double[])
 
         when:
-        vectorRepository.searchByEmbeddingNear(queryVector, 2d)
+        def nearResults = vectorRepository.searchByEmbeddingNear(queryVector, 100d)
 
         then:
-        def nearEx = thrown(IllegalArgumentException)
-        nearEx.message.contains("cannot convert")
+        nearResults != null
+        nearResults.results().isEmpty()
 
         when:
-        vectorRepository.searchByEmbeddingWithin(queryVector, 0d, 0.2d)
+        def withinResults = vectorRepository.searchByEmbeddingWithin(queryVector, 0d, 100d)
 
         then:
-        def withinEx = thrown(IllegalArgumentException)
-        withinEx.message.contains("cannot convert")
+        withinResults != null
+        withinResults.results().isEmpty()
 
         when:
-        vectorRepository.searchByEmbeddingBetween(queryVector, 0d, 0.2d)
+        def betweenResults = vectorRepository.searchByEmbeddingBetween(queryVector, 0d, 100d)
 
         then:
-        def betweenEx = thrown(IllegalArgumentException)
-        betweenEx.message.contains("cannot convert")
+        betweenResults != null
+        betweenResults.results().isEmpty()
     }
 
-    private void executeSilently(String sql) {
-        java.sql.Connection c = null
-        java.sql.Statement st = null
-        try {
-            c = dataSource.getConnection()
-            st = c.createStatement()
-            st.execute(sql)
-        } catch (Throwable e) {
-            println e
-            // ignore if already exists or unsupported in current XE version
-        } finally {
-            try { st?.close() } catch (ignored) {}
-            try { c?.close() } catch (ignored) {}
-        }
+    private static void assertPostgresDoubleVectorUnsupported(Throwable throwable) {
+        assert throwable.message != null
+        assert throwable.message.contains("POSTGRES does not support")
+        assert throwable.message.contains("DoubleVector")
     }
 }
 

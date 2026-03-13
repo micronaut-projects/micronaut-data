@@ -23,6 +23,9 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseByteVector;
+import io.micronaut.data.model.vector.SparseDoubleVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 import oracle.sql.VECTOR;
@@ -52,7 +55,15 @@ final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<VECTOR
 
     @Override
     public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(Vector.class, DoubleVector.class, FloatVector.class, ByteVector.class);
+        return List.of(
+            Vector.class,
+            DoubleVector.class,
+            FloatVector.class,
+            ByteVector.class,
+            SparseDoubleVector.class,
+            SparseFloatVector.class,
+            SparseByteVector.class
+        );
     }
 
     @Override

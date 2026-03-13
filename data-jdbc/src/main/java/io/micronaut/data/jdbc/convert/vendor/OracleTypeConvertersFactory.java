@@ -26,6 +26,7 @@ import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.SparseByteVector;
+import io.micronaut.data.model.vector.SparseDoubleVector;
 import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
@@ -109,7 +110,7 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
             return Optional.of(toVector(adapter));
         };
     }
-  
+
     @Prototype
     DataTypeConverter<INTERVALDS, Duration> fromOracleIntervalDsToDuration() {
         return (interval, targetType, context) -> Optional.of(interval.getDuration());
@@ -130,18 +131,29 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
                 if (vector instanceof ByteVector byteVector) {
                     return Optional.of(VECTOR.ofInt8Values(byteVector.toByteArray()));
                 }
-                if (vector instanceof SparseFloatVector sparseFloatVector) {
+                if (vector instanceof SparseFloatVector(
+                    int length2, int[] indices2, float[] values2
+                )) {
                     return Optional.of(VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(
-                        sparseFloatVector.length(),
-                        sparseFloatVector.indices(),
-                        sparseFloatVector.values()
+                        length2,
+                        indices2,
+                        values2
                     )));
                 }
-                if (vector instanceof SparseByteVector sparseByteVector) {
+                if (vector instanceof SparseByteVector(int length1, int[] indices1, byte[] values1)) {
                     return Optional.of(VECTOR.ofInt8Values(VECTOR.SparseByteArray.of(
-                        sparseByteVector.length(),
-                        sparseByteVector.indices(),
-                        sparseByteVector.values()
+                        length1,
+                        indices1,
+                        values1
+                    )));
+                }
+                if (vector instanceof SparseDoubleVector(
+                    int length, int[] indices, double[] values
+                )) {
+                    return Optional.of(VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.of(
+                        length,
+                        indices,
+                        values
                     )));
                 }
                 return Optional.of(VECTOR.ofFloat64Values(vector.toDoubleArray()));
@@ -175,6 +187,33 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
         return (oracleVector, targetType, context) -> {
             OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
             return vectorToByteArray(adapter).map(a -> (ByteVector) Vector.of(a));
+        };
+    }
+
+    @Prototype
+    @Requires(classes = VECTOR.class)
+    DataTypeConverter<VECTOR, SparseDoubleVector> fromOracleVectorToSparseDoubleVector() {
+        return (oracleVector, targetType, context) -> {
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToDoubleArray(adapter).map(SparseDoubleVector::fromDense);
+        };
+    }
+
+    @Prototype
+    @Requires(classes = VECTOR.class)
+    DataTypeConverter<VECTOR, SparseFloatVector> fromOracleVectorToSparseFloatVector() {
+        return (oracleVector, targetType, context) -> {
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToFloatArray(adapter).map(SparseFloatVector::fromDense);
+        };
+    }
+
+    @Prototype
+    @Requires(classes = VECTOR.class)
+    DataTypeConverter<VECTOR, SparseByteVector> fromOracleVectorToSparseByteVector() {
+        return (oracleVector, targetType, context) -> {
+            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
+            return vectorToByteArray(adapter).map(SparseByteVector::fromDense);
         };
     }
 

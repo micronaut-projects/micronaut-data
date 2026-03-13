@@ -13,8 +13,6 @@ import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -23,51 +21,23 @@ import spock.lang.Specification
  */
 class MySqlR2dbcFloatVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcFloatVectorEntitySpec"])
-
-    @Shared
-    VectorFloatDocRepository vectorRepository = context.getBean(VectorFloatDocRepository)
-
-    void "custom queries with FloatVector are not supported on MySQL (R2DBC)"() {
-        given:
-        float[] fv = [1f, 2.5f, -3.75f] as float[]
-        FloatVector v1 = Vector.of(fv)
-
-        when: "save via custom @Query using Vector parameter"
-        vectorRepository.saveCustom(v1)
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update via custom @Query with FloatVector"
-        vectorRepository.updateCustom(1L, v1)
+    void "mysql r2dbc vector repository fails fast at startup"() {
+        when:
+        Throwable failure = null
+        ApplicationContext context = null
+        try {
+            context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcFloatVectorEntitySpec"])
+            VectorFloatDocRepository repository = context.getBean(VectorFloatDocRepository)
+            repository.save(new VectorFloatDoc(embedding: Vector.of([1f, 2.5f, -3.75f] as float[])))
+        } catch (Throwable t) {
+            failure = t
+        } finally {
+            context?.close()
+        }
 
         then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
-    }
-
-    void "default repository methods with FloatVector are not supported on MySQL (R2DBC)"() {
-        given:
-        float[] fv = [2f, -1.5f, 0.25f] as float[]
-        FloatVector v1 = Vector.of(fv)
-
-        when: "persist entity using default repository save"
-        vectorRepository.save(new VectorFloatDoc(embedding: v1))
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update entity using default repository update"
-        vectorRepository.update(new VectorFloatDoc(id: 1L, embedding: v1))
-
-        then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
+        failure != null
+        failure.message.contains("Vectors aren't supported for the database MYSQL")
     }
 }
 

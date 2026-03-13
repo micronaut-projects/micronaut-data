@@ -13,8 +13,6 @@ import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import jakarta.persistence.Column
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -23,51 +21,23 @@ import spock.lang.Specification
  */
 class MySqlR2dbcByteVectorEntitySpec extends Specification implements MySqlVectorTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcByteVectorEntitySpec"])
-
-    @Shared
-    VectorByteDocRepository vectorRepository = context.getBean(VectorByteDocRepository)
-
-    void "custom queries with ByteVector are not supported on MySQL (R2DBC)"() {
-        given:
-        byte[] bv = [1 as byte, 2 as byte, -3 as byte] as byte[]
-        ByteVector v1 = Vector.of(bv)
-
-        when: "save via custom @Query using Vector parameter"
-        vectorRepository.saveCustom(v1)
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update via custom @Query with ByteVector"
-        vectorRepository.updateCustom(1L, v1)
+    void "mysql r2dbc vector repository fails fast at startup"() {
+        when:
+        Throwable failure = null
+        ApplicationContext context = null
+        try {
+            context = ApplicationContext.run(properties + ["spec.name": "MySqlR2dbcByteVectorEntitySpec"])
+            VectorByteDocRepository repository = context.getBean(VectorByteDocRepository)
+            repository.save(new VectorByteDoc(embedding: Vector.of([1 as byte, 2 as byte, -3 as byte] as byte[])))
+        } catch (Throwable t) {
+            failure = t
+        } finally {
+            context?.close()
+        }
 
         then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
-    }
-
-    void "default repository methods with ByteVector are not supported on MySQL (R2DBC)"() {
-        given:
-        byte[] bv = [2 as byte, -1 as byte, 0 as byte] as byte[]
-        ByteVector v1 = Vector.of(bv)
-
-        when: "persist entity using default repository save"
-        vectorRepository.save(new VectorByteDoc(embedding: v1))
-
-        then:
-        def ex1 = thrown(IllegalArgumentException)
-        ex1.message.contains("Vectors aren't supported for the database MYSQL")
-
-        when: "update entity using default repository update"
-        vectorRepository.update(new VectorByteDoc(id: 1L, embedding: v1))
-
-        then:
-        def ex2 = thrown(IllegalArgumentException)
-        ex2.message.contains("Vectors aren't supported for the database MYSQL")
+        failure != null
+        failure.message.contains("Vectors aren't supported for the database MYSQL")
     }
 }
 

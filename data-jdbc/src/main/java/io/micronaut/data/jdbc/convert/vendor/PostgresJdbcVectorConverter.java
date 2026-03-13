@@ -24,12 +24,11 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
-import org.postgresql.util.PGobject;
 
 import java.util.List;
 
 /**
- * PostgreSQL-specific {@link VectorTypeConverter} that maps {@link Vector} to {@link PGvector} of type {@code vector}
+ * PostgreSQL-specific dense {@link VectorTypeConverter} that maps {@link Vector} to {@link PGvector}
  * and back.
  *
  * @author Nemanja Mikic
@@ -38,15 +37,15 @@ import java.util.List;
 @Internal
 @Singleton
 @Requires(classes = PGvector.class)
-final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGobject> {
+final class PostgresJdbcVectorConverter extends AbstractJdbcVectorConverter<PGvector> {
 
     PostgresJdbcVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<PGobject> getPersistedType() {
-        return PGobject.class;
+    public Class<PGvector> getPersistedType() {
+        return PGvector.class;
     }
 
     @Override

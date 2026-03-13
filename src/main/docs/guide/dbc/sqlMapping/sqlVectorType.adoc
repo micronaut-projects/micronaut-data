@@ -149,6 +149,10 @@ If the dialect does not support vectors, Micronaut falls back to `VARCHAR(255)` 
 - PostgreSQL JDBC supports dense and sparse conversion paths.
 - Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses only the dense pgvector codec API.
 
+NOTE: PostgreSQL vector support is backed by the pgvector Java library. Include it at runtime so the Postgres driver types (`PGvector` for dense `vector` and `PGsparsevec` for `sparsevec`) are available for both JDBC and R2DBC binding paths.
+
+dependency:com.pgvector:pgvector[scope="runtimeOnly"]
+
 DDL example:
 [source,sql]
 ----

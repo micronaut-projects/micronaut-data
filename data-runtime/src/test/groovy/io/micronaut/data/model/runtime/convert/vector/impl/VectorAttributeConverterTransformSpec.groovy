@@ -6,10 +6,10 @@ import io.micronaut.inject.annotation.DefaultAnnotationMetadata
 import io.micronaut.data.runtime.mapper.ResultReader
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorStorage
-import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.DoubleVector
 import io.micronaut.data.model.vector.SparseDoubleVector
+import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
@@ -52,6 +52,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.POSTGRES
+            supportedVectorTypes() >> [DoubleVector]
             // entity -> persisted
             convert(_ as Vector) >> { Vector v ->
                 "pg:${v.toDoubleArray().join(',')}"
@@ -95,6 +96,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.POSTGRES
+            supportedVectorTypes() >> [DoubleVector]
             convert(_ as Vector) >> { Vector v -> "pg:${v.toDoubleArray().join(',')}" }
             convert(_ as String, _ as Class) >> { Object obj, Class target -> Vector.of(1d, 2d) }
         }
@@ -121,6 +123,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String
             databaseType() >> DatabaseType.POSTGRES
+            supportedVectorTypes() >> [DoubleVector]
             // entity -> persisted (not used here)
             convert(_ as Vector) >> { Vector v -> "pg:${v.toDoubleArray().join(',')}" }
             // persisted -> entity path
@@ -173,6 +176,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def delegatingConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> persistedType
             databaseType() >> DatabaseType.MYSQL
+            supportedVectorTypes() >> [DoubleVector]
             // entity -> persisted
             convert(_ as Vector) >> { Vector v ->
                 "mysql:${v.toDoubleArray().join(',')}"
@@ -195,13 +199,14 @@ class VectorAttributeConverterTransformSpec extends Specification {
         persisted == "mysql:1.0,2.0"
     }
 
-    def "generic Vector sparse values are coerced to FloatVector for ORACLE"() {
+    def "generic Vector sparse values are coerced to SparseFloatVector for ORACLE"() {
         given:
         def vectorConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String
             databaseType() >> DatabaseType.ORACLE
+            supportedVectorTypes() >> [Vector]
             convert(_ as Vector) >> { Vector v ->
-                assert v instanceof FloatVector
+                assert v instanceof SparseFloatVector
                 "oracle:${v.class.simpleName}"
             }
         }
@@ -222,7 +227,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def persisted = converter.convertToPersistedValue(Vector.of(1d, 0d, 0d), ctx)
 
         then:
-        persisted == "oracle:FloatVector"
+        persisted == "oracle:SparseFloatVector"
     }
 
     def "dense vector written through sparse=true field is preserved through shared conversion path"() {
@@ -230,6 +235,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def vectorConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String
             databaseType() >> DatabaseType.ORACLE
+            supportedVectorTypes() >> [Vector]
             convert(_ as Vector) >> { Vector v ->
                 assert v.toFloatArray().toList() == [0f, 10f, 0f, 20f, 0f]
                 "oracle:${v.toFloatArray().toList()}"
@@ -258,6 +264,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         def vectorConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String
             databaseType() >> DatabaseType.ORACLE
+            supportedVectorTypes() >> [Vector]
             convert(_ as Vector) >> { Vector v ->
                 assert v.toDoubleArray().toList() == [0d, 10d, 0d, 20d, 0d]
                 "oracle:${v.toDoubleArray().toList()}"

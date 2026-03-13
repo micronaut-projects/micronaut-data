@@ -498,7 +498,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         super.setStatementParameter(preparedStatement, index, dataType, jsonDataType, value, storedQuery);
     }
 
-    private static boolean isVectorBindingCandidate(@Nullable Object value) {
+    static boolean isVectorBindingCandidate(@Nullable Object value) {
         return value instanceof Vector;
     }
 

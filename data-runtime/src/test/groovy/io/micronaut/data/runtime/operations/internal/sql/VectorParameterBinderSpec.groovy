@@ -3,6 +3,7 @@ package io.micronaut.data.runtime.operations.internal.sql
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
+import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
@@ -60,7 +61,40 @@ class VectorParameterBinderSpec extends Specification {
         prepared.value() == "value"
     }
 
-    private static final class OracleTestVectorTypeConverter implements VectorTypeConverter<String> {
+    void "fails fast when multiple converters target same database"() {
+        when:
+        VectorParameterBinder.create([new OracleTestVectorTypeConverter(), new OracleDuplicateVectorTypeConverter()])
+
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message.contains("Multiple VectorTypeConverter beans registered for database ORACLE")
+    }
+
+    void "binder prefers sparse converter for sparse vectors"() {
+        given:
+        def binder = VectorParameterBinder.create([new PostgresDenseVectorTypeConverter(), new PostgresSparseVectorTypeConverter()])
+
+        when:
+        def prepared = binder.bind(Dialect.POSTGRES, DataType.OBJECT, SparseFloatVector.fromDense([0f, 1f, 0f, 2f] as float[]))
+
+        then:
+        prepared.dataType() == DataType.OBJECT
+        prepared.value() == "pg-sparse:[0.0, 1.0, 0.0, 2.0]"
+    }
+
+    void "binder prefers dense converter for dense vectors"() {
+        given:
+        def binder = VectorParameterBinder.create([new PostgresDenseVectorTypeConverter(), new PostgresSparseVectorTypeConverter()])
+
+        when:
+        def prepared = binder.bind(Dialect.POSTGRES, DataType.OBJECT, Vector.of([1f, 2f] as float[]))
+
+        then:
+        prepared.dataType() == DataType.OBJECT
+        prepared.value() == "pg-dense:[1.0, 2.0]"
+    }
+
+    private static class OracleTestVectorTypeConverter implements VectorTypeConverter<String> {
 
         @Override
         String convert(Vector vector) {
@@ -85,6 +119,50 @@ class VectorParameterBinderSpec extends Specification {
         @Override
         Class<String> getPersistedType() {
             return String
+        }
+    }
+
+    private static final class OracleDuplicateVectorTypeConverter extends OracleTestVectorTypeConverter {
+    }
+
+    private static class PostgresDenseVectorTypeConverter implements VectorTypeConverter<String> {
+
+        @Override
+        String convert(Vector vector) {
+            return "pg-dense:${Arrays.toString(vector.toFloatArray())}"
+        }
+
+        @Override
+        Vector convert(String object, Class<Vector> targetType) {
+            throw new UnsupportedOperationException("not needed")
+        }
+
+        @Override
+        List<Class<? extends Vector>> supportedVectorTypes() {
+            return [Vector]
+        }
+
+        @Override
+        DatabaseType databaseType() {
+            return DatabaseType.POSTGRES
+        }
+
+        @Override
+        Class<String> getPersistedType() {
+            return String
+        }
+    }
+
+    private static final class PostgresSparseVectorTypeConverter extends PostgresDenseVectorTypeConverter {
+
+        @Override
+        String convert(Vector vector) {
+            return "pg-sparse:${Arrays.toString(vector.toFloatArray())}"
+        }
+
+        @Override
+        boolean isSparseSupported() {
+            return true
         }
     }
 }

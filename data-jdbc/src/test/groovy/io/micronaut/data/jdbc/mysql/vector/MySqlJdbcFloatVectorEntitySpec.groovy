@@ -16,7 +16,6 @@ import io.micronaut.data.model.vector.search.Score
 import io.micronaut.data.model.vector.search.ScoringFunction
 import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.model.vector.search.Similarity
-import io.micronaut.data.model.vector.search.SimilarityNormalizer
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
 import spock.lang.AutoCleanup
@@ -101,41 +100,35 @@ class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySqlVecto
         updated.embedding.toFloatArray().toList() == fv2.toList()
     }
 
-    void "test derived vector near and within search results (HeatWave DISTANCE)"() {
+    void "test derived vector near and within search fails when DISTANCE function is unavailable"() {
         given:
         vectorRepository.deleteAll()
         vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([1f, 0f, 0f] as float[])))
         vectorRepository.save(new VectorFloatDoc(embedding: Vector.of([0f, 1f, 0f] as float[])))
 
         when:
-        SearchResults<VectorFloatDoc> nearResults = null
-        SearchResults<VectorFloatDoc> withinResults = null
-        SearchResults<VectorFloatDoc> betweenResults = null
-        DataAccessException unsupportedEx = null
-        try {
-            nearResults = vectorRepository.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
-            withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
-            betweenResults = vectorRepository.searchByEmbeddingBetween(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
-        } catch (DataAccessException e) {
-            unsupportedEx = e
-        }
+        vectorRepository.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), 2d)
 
         then:
-        if (unsupportedEx == null) {
-            assert nearResults != null
-            assert nearResults.results() != null
-            assert withinResults != null
-            assert withinResults.results() != null
-            assert betweenResults != null
-            assert betweenResults.results() != null
-            assert betweenResults.results().every { it.score().value() >= 0d && it.score().value() <= 0.2d }
-        } else {
-            assert unsupportedEx.message.contains("DISTANCE")
-            assert unsupportedEx.message.contains("does not exist")
-        }
+        def nearUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(nearUnsupported)
+
+        when:
+        vectorRepository.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        def withinUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(withinUnsupported)
+
+        when:
+        vectorRepository.searchByEmbeddingBetween(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)
+
+        then:
+        def betweenUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(betweenUnsupported)
     }
 
-    void "test derived vector Score/Similarity wrappers and scoring function behavior with 10 vectors"() {
+    void "test derived vector Score/Similarity wrappers fail when DISTANCE function is unavailable"() {
         given:
         vectorRepository.deleteAll()
         def vectors = [
@@ -154,92 +147,39 @@ class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySqlVecto
         Vector q = Vector.of([1f, 0f, 0f] as float[])
 
         when:
-        SearchResults<VectorFloatDoc> nearByDouble = null
-        SearchResults<VectorFloatDoc> nearByScore = null
-        SearchResults<VectorFloatDoc> withinBySimilarity = null
-        SearchResults<VectorFloatDoc> betweenByScore = null
-        SearchResults<VectorFloatDoc> euclideanOk = null
-        DataAccessException unsupportedDistance = null
-        try {
-            nearByDouble = vectorRepository.searchByEmbeddingNear(q, 2d)
-            nearByScore = vectorRepository.searchByEmbeddingNear(q, new Score(2d))
-            withinBySimilarity = vectorRepository.searchByEmbeddingWithin(q, new Similarity(0d), new Similarity(2d))
-            betweenByScore = vectorRepository.searchByEmbeddingBetween(q, new Score(0d), new Score(2d))
-            euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
-        } catch (DataAccessException e) {
-            unsupportedDistance = e
-        }
+        vectorRepository.searchByEmbeddingNear(q, 2d)
 
         then:
-        if (unsupportedDistance == null) {
-            assert nearByDouble.results().size() >= 8
-            assert nearByScore.results().size() == nearByDouble.results().size()
-            assert withinBySimilarity.results().size() == nearByDouble.results().size()
-            assert betweenByScore.results().size() == nearByDouble.results().size()
-            assert nearByScore.results().collect { it.entity().id } == nearByDouble.results().collect { it.entity().id }
-            assert euclideanOk.results().size() == nearByDouble.results().size()
-            assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
-        } else {
-            assert unsupportedDistance.message.contains("DISTANCE")
-            assert unsupportedDistance.message.contains("does not exist")
-        }
+        def nearUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(nearUnsupported)
 
         when:
-        SearchResults<VectorFloatDoc> cosineOk = null
-        DataAccessException cosineDistanceUnsupported = null
-        try {
-            cosineOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
-        } catch (DataAccessException e) {
-            cosineDistanceUnsupported = e
-        }
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
 
         then:
-        if (cosineDistanceUnsupported == null) {
-            assert cosineOk != null
-            assert cosineOk.results() != null
-            assertScoringResults(cosineOk, ScoringFunction.COSINE)
-        } else {
-            assert cosineDistanceUnsupported.message.contains("DISTANCE")
-            assert cosineDistanceUnsupported.message.contains("does not exist")
-        }
+        def cosineUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(cosineUnsupported)
 
         when:
-        SearchResults<VectorFloatDoc> dotOk = null
-        DataAccessException dotDistanceUnsupported = null
-        try {
-            dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
-        } catch (DataAccessException e) {
-            dotDistanceUnsupported = e
-        }
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
 
         then:
-        if (dotDistanceUnsupported == null) {
-            assert dotOk != null
-            assert dotOk.results() != null
-            assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
-        } else {
-            assert dotDistanceUnsupported.message.contains("DISTANCE")
-            assert dotDistanceUnsupported.message.contains("does not exist")
-        }
+        def dotUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(dotUnsupported)
 
         when:
-        SearchResults<VectorFloatDoc> innerAliasOk = null
-        DataAccessException innerDistanceUnsupported = null
-        try {
-            innerAliasOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
-        } catch (DataAccessException e) {
-            innerDistanceUnsupported = e
-        }
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
 
         then:
-        if (innerDistanceUnsupported == null) {
-            assert innerAliasOk != null
-            assert innerAliasOk.results() != null
-            assertScoringResults(innerAliasOk, ScoringFunction.INNER_PRODUCT)
-        } else {
-            assert innerDistanceUnsupported.message.contains("DISTANCE")
-            assert innerDistanceUnsupported.message.contains("does not exist")
-        }
+        def innerUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(innerUnsupported)
+
+        when:
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
+
+        then:
+        def euclideanUnsupported = thrown(DataAccessException)
+        assertDistanceFunctionMissing(euclideanUnsupported)
 
         when:
         vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
@@ -250,17 +190,10 @@ class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySqlVecto
         taxicabEx.message.contains("MYSQL")
     }
 
-    private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {
-        assert results != null
-        assert results.results() != null
-        assert results.results().size() >= 1
-        def normalizer = SimilarityNormalizer.forScoringFunction(function)
-        results.results().each { r ->
-            double score = r.score().value()
-            assert r.similarity() != null
-            double similarity = r.similarity().value()
-            assert Math.abs(similarity - normalizer.getSimilarity(score)) < 1.0e-9d
-        }
+    private static void assertDistanceFunctionMissing(DataAccessException exception) {
+        assert exception.message != null
+        assert exception.message.contains("DISTANCE")
+        assert exception.message.contains("does not exist")
     }
 }
 

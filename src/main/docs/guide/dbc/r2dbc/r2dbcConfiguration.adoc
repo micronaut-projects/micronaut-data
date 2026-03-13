@@ -32,6 +32,10 @@ NOTE: For Oracle sparse `VECTOR(..., SPARSE)` usage with R2DBC, include a recent
 
 dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
 
+NOTE: For PostgreSQL `vector`/`sparsevec` support, include the pgvector Java library at runtime so the Postgres driver types (`PGvector` for dense vectors and `PGsparsevec` for sparse vectors) are available for both JDBC and R2DBC binding paths.
+
+dependency:com.pgvector:pgvector[scope="runtimeOnly"]
+
 === SQL Logging
 
 You can enable SQL logging by enabling trace logging for the `io.micronaut.data.query` logger. For example in `logback.xml`:

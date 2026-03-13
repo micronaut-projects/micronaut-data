@@ -1,6 +1,9 @@
 package io.micronaut.data.jdbc.convert.vendor
 
+import com.pgvector.PGsparsevec
+import com.pgvector.PGvector
 import io.micronaut.data.model.vector.FloatVector
+import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.vector.Vector
 import org.postgresql.util.PGobject
 import spock.lang.IgnoreIf
@@ -22,63 +25,70 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         given:
         def f = new PostgresTypeConvertersFactory()
 
-        when: "float vector -> PGobject (dense vector)"
+        when:
         def fv = (FloatVector) Vector.of([1f, 2f] as float[])
-        def fvPg = f.fromFloatVectorToPgObject().convert(fv, Object, null).get()
+        def fvPg = f.fromFloatVectorToPgVector().convert(fv, Object, null).get()
 
         then:
-        fvPg.getClass().name == 'org.postgresql.util.PGobject'
-        fvPg.type == 'vector'
-        fvPg.value == '[1.0,2.0]'
+        fvPg.getClass().name == 'com.pgvector.PGvector'
+        fvPg.toArray().toList() == [1f, 2f]
     }
 
-    def "sparse-like FloatVector is converted to sparsevec PGobject"() {
+    def "SparseFloatVector is converted to PGsparsevec"() {
         given:
         def f = new PostgresTypeConvertersFactory()
-        def sparse = (FloatVector) Vector.of([0f, 0f, 2.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 3f] as float[])
+        def sparse = SparseFloatVector.fromDense([0f, 0f, 2.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 3f] as float[])
 
         when:
-        def pg = f.fromFloatVectorToPgObject().convert(sparse, Object, null).get()
+        def pg = f.fromSparseFloatVectorToPgSparsevec().convert(sparse, Object, null).get()
 
         then:
-        pg.type == 'sparsevec'
-        pg.value == '{3:2.5,16:3.0}/16'
+        pg.getClass().name == 'com.pgvector.PGsparsevec'
+        pg.toArray().toList() == [0f, 0f, 2.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 3f]
     }
 
-    def "PGvector read path converts back to Vector subtypes"() {
+    def "PGvector read path converts back to vector subtypes"() {
         given:
         def f = new PostgresTypeConvertersFactory()
 
         and: "PGvector instance"
-        def pgClass = Class.forName('com.pgvector.PGvector')
-        def ctor = pgClass.getDeclaredConstructor(float[].class)
-        def pg = ctor.newInstance([([1f, 2.6f] as float[])] as Object[])
+        def pg = new PGvector([1f, 2.6f] as float[])
 
-        expect: "float"
+        expect:
         f.fromPgObjectToFloatVector().convert(pg, FloatVector, null).get().toFloatArray().toList() == [1f, 2.6f]
 
-        and: "vector"
+        and:
         f.fromPgObjectToVector().convert(pg, Vector, null).get().toFloatArray().toList() == [1f, 2.6f]
 
-        and: "PGobject dense vector"
-        def pgObject = new PGobject()
-        pgObject.setType('vector')
-        pgObject.setValue('[1.0,2.6]')
-        f.fromPgObjectToFloatVector().convert(pgObject, FloatVector, null).get().toFloatArray().toList() == [1f, 2.6f]
+        and:
+        f.fromPgObjectToSparseFloatVector().convert(pg, SparseFloatVector, null).get().toFloatArray().toList() == [1f, 2.6f]
     }
 
-    def "PGobject sparsevec read path converts to dense PGvector"() {
+    def "PGobject read path converts back to vector subtypes"() {
         given:
         def f = new PostgresTypeConvertersFactory()
-        def sparse = new PGobject()
-        sparse.setType("sparsevec")
-        sparse.setValue("{1:1,3:2}/4")
+        def pg = new PGobject(type: 'vector', value: '[1.0,2.6]')
+
+        expect:
+        f.fromPgObjectToFloatVector().convert(pg, FloatVector, null).get().toFloatArray().toList() == [1f, 2.6f]
+        f.fromPgObjectToVector().convert(pg, Vector, null).get().toFloatArray().toList() == [1f, 2.6f]
+        f.fromPgObjectToSparseFloatVector().convert(pg, SparseFloatVector, null).get().toFloatArray().toList() == [1f, 2.6f]
+        f.fromPgObjectToPgVector().convert(pg, PGvector, null).get().toArray().toList() == [1f, 2.6f]
+    }
+
+    def "PGsparsevec read path converts to dense and sparse targets"() {
+        given:
+        def f = new PostgresTypeConvertersFactory()
+        def sparse = new PGsparsevec([1f, 0f, 2f, 0f] as float[])
 
         when:
-        def pg = f.fromPgObjectToPgVector().convert(sparse, Object, null).get()
+        def asFloat = f.fromPgObjectToFloatVector().convert(sparse, FloatVector, null).get()
+        def asVector = f.fromPgObjectToVector().convert(sparse, Vector, null).get()
+        def asSparse = f.fromPgObjectToSparseFloatVector().convert(sparse, SparseFloatVector, null).get()
 
         then:
-        pg.getClass().name == 'com.pgvector.PGvector'
-        pg.toArray().toList() == [1f, 0f, 2f, 0f]
+        asFloat.toFloatArray().toList() == [1f, 0f, 2f, 0f]
+        asVector.toFloatArray().toList() == [1f, 0f, 2f, 0f]
+        asSparse.toFloatArray().toList() == [1f, 0f, 2f, 0f]
     }
 }
