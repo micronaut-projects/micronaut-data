@@ -90,7 +90,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         trainMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.Train'
         try {
             trainMetaModelClass.getField("transientField")
-            throw new RuntimeException("@Transient fields found, should be ignored.")
+            throw new RuntimeException("Transient fields found, should be ignored.")
         } catch (NoSuchFieldException ignored) {
         }
 
@@ -121,11 +121,13 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 import java.time.LocalDateTime;
                 import java.time.LocalTime;
                 import java.util.*;
-                 @MappedSuperclass
+                @MappedSuperclass
                 public class Parent {
                     @Id
                     Long id;
                     String name;
+                    transient String transientField;
+                    static final String TEST = "test";
                     public Parent () {}
                     public Parent(Long id, String name) {
                         this.id = id;
@@ -187,7 +189,17 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         constantProps.keySet().stream().anyMatch { o -> childMetaModelClass.getField(o) != null && childMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
         try {
             parentMetaModelClass.getField("AGE")
-            throw new RuntimeException("Parent class shouldn't contain child fields")
+            throw new RuntimeException("Parent class shouldn't contain child fields.")
+        } catch (NoSuchFieldException ignored) {
+        }
+        try {
+            parentMetaModelClass.getField("transientField")
+            throw new RuntimeException("Transient fields found, should be ignored.")
+        } catch (NoSuchFieldException ignored) {
+        }
+        try {
+            parentMetaModelClass.getField("TEST")
+            throw new RuntimeException("Static fields found, should be ignored ")
         } catch (NoSuchFieldException ignored) {
         }
 
@@ -332,6 +344,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                     Long id;
                     @Access(AccessType.FIELD)
                     String fieldWithoutAccessors;
+                    boolean active;
                     String name;
 
                     public Long getId(){
@@ -346,13 +359,20 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                     public void setName(String name) {
                         this.name = name;
                     }
+                    public boolean isActive() {
+                        return this.active;
+                    }
+                    public void setActive(boolean active) {
+                        this.active = active;
+                    }
                 }
                 """)
         def propertyAccessClassMetaModelClass = classLoader.loadClass("test.PropertyAccessClass_")
 
         def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.PropertyAccessClass"],
                              NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"],
-                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"]]
+                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"],
+                             ACTIVE                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.PropertyAccessClass"]]
         expect:
 
         constantProps.keySet().stream().anyMatch { o -> propertyAccessClassMetaModelClass.getField(o) != null && propertyAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }

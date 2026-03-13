@@ -17,10 +17,7 @@ package io.micronaut.data.processor.jpa.metamodel;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.Element;
-import io.micronaut.inject.ast.MemberElement;
-import io.micronaut.inject.ast.TypedElement;
+import io.micronaut.inject.ast.*;
 import io.micronaut.sourcegen.model.*;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -200,7 +197,8 @@ public final class JpaMetamodelProcessor {
             }
         };
         elements = elements.stream()
-            .filter(o -> !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
+            .filter(o -> !o.getModifiers().contains(ElementModifier.STATIC))
+            .filter(o -> !o.getModifiers().contains(ElementModifier.TRANSIENT) && !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
             .filter((o) -> {
                 if (o instanceof MemberElement memberElement) {
                     return memberElement.getDeclaringType().getName().equals(elementType);
