@@ -19,6 +19,7 @@ dependencies {
     compileOnly mn.jackson.annotations
     compileOnly mn.jackson.databind
     compileOnly mnSerde.micronaut.serde.api
+    compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
 
     testCompileOnly mnSerde.micronaut.serde.processor
     testImplementation mn.micronaut.inject.java.test

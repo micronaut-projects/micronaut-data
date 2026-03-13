@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.geo.Geometry;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -3011,16 +3012,25 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
                 column = escapeColumnIfNeeded(column, escape);
-                if (tableAlias == null) {
-                    sb.append(column);
+                String columnWithTableAlias = tableAlias == null ? column : tableAlias + DOT + column;
+                if (property.isAssignable(Geometry.class)) {
+                    sb.append(addGeoJsonFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column));
+                } else if (useAlias) {
+                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
                 } else {
-                    sb.append(tableAlias).append(DOT).append(column);
-                }
-                if (useAlias) {
-                    sb.append(AS_CLAUSE).append(columnAlias);
+                    sb.append(columnWithTableAlias);
                 }
             }
             sb.append(COMMA);
+        }
+
+        @SuppressWarnings("NullAway")
+        private String addGeoJsonFunction(String column, String columnAlias) {
+            return switch (getDialect()) {
+                case ORACLE -> "SDO_UTIL.TO_GEOJSON(" + column + ")" + AS_CLAUSE + columnAlias;
+                case MYSQL, POSTGRES, H2 -> "ST_AsGeoJSON(" + column + ")" + AS_CLAUSE + columnAlias;
+                default -> column + AS_CLAUSE + columnAlias;
+            };
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {

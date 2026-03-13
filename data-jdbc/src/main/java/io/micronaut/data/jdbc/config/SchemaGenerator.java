@@ -276,7 +276,7 @@ public class SchemaGenerator {
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
                 continue;
             }
-            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();

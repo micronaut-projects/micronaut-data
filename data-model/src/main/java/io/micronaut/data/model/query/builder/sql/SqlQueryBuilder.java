@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
+import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.JoinType;
 import org.jspecify.annotations.Nullable;
@@ -344,7 +345,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -385,7 +386,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
@@ -590,7 +591,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'_id': {");
         }
         Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
-        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity).getFirst().primaryKeyColumns();
+        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity, getDialect()).getFirst().primaryKeyColumns();
         if (fields.length != columnMappings.size()) {
             throw new IllegalStateException("Declared fields array length (" + fields.length + ") != table mapping primary key array length (" + columnMappings.size() + ").");
         }
@@ -1293,18 +1294,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (transformer != null) {
             return values.add(transformer);
         }
+        String param = formatParameter(values.size() + 1).name();
         if (dt == DataType.JSON) {
             switch (dialect) {
-                case POSTGRES ->
-                    values.add("to_json(" + formatParameter(values.size() + 1).name() + "::json)");
-                case H2 -> values.add(formatParameter(values.size() + 1).name() + " FORMAT JSON");
-                case MYSQL ->
-                    values.add("CONVERT(" + formatParameter(values.size() + 1).name() + " USING UTF8MB4)");
-                default -> values.add(formatParameter(values.size() + 1).name());
+                case POSTGRES -> values.add("to_json(" + param + "::json)");
+                case H2 -> values.add(param + " FORMAT JSON");
+                case MYSQL -> values.add("CONVERT(" + param + " USING UTF8MB4)");
+                default -> values.add(param);
             }
             return true;
         }
-        return values.add(formatParameter(values.size() + 1).name());
+        if (property.isAssignable(Geometry.class)) {
+            switch (dialect) {
+                case ORACLE -> values.add("SDO_UTIL.FROM_GEOJSON(" + param + ")");
+                case MYSQL, POSTGRES, H2 -> values.add("ST_GeomFromGeoJSON(" + param + ")");
+                default -> values.add(param);
+            }
+            return true;
+        }
+        return values.add(param);
     }
 
     @Override
@@ -1329,6 +1337,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     sb.append("to_json(");
                     appendParameter.run();
                     sb.append("::json)");
+                    break;
+                default:
+                    super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
+            }
+        } else if (prop.isAssignable(Geometry.class)) {
+            switch (dialect) {
+                case ORACLE:
+                    sb.append("SDO_UTIL.FROM_GEOJSON(");
+                    appendParameter.run();
+                    sb.append(")");
+                    break;
+                case MYSQL, POSTGRES, H2:
+                    sb.append("ST_GeomFromGeoJSON(");
+                    appendParameter.run();
+                    sb.append(")");
                     break;
                 default:
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);

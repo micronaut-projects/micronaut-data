@@ -1,0 +1,98 @@
+package io.micronaut.data.tck.jdbc.entities;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.model.geo.GeometryCollection;
+import io.micronaut.data.model.geo.LineString;
+import io.micronaut.data.model.geo.MultiLineString;
+import io.micronaut.data.model.geo.MultiPoint;
+import io.micronaut.data.model.geo.MultiPolygon;
+import io.micronaut.data.model.geo.Point;
+import io.micronaut.data.model.geo.Polygon;
+
+@MappedEntity
+public class GeoEntity {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private Point point;
+
+    /*private MultiPoint multiPoint;
+
+    private LineString lineString;
+
+    private MultiLineString multiLineString;
+
+    private Polygon polygon;
+
+    private MultiPolygon multiPolygon;
+
+    private GeometryCollection geometryCollection;*/
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Point getPoint() {
+        return point;
+    }
+
+    public void setPoint(Point point) {
+        this.point = point;
+    }
+
+    /*public MultiPoint getMultiPoint() {
+        return multiPoint;
+    }
+
+    public void setMultiPoint(MultiPoint multiPoint) {
+        this.multiPoint = multiPoint;
+    }
+
+    public LineString getLineString() {
+        return lineString;
+    }
+
+    public void setLineString(LineString lineString) {
+        this.lineString = lineString;
+    }
+
+    public MultiLineString getMultiLineString() {
+        return multiLineString;
+    }
+
+    public void setMultiLineString(MultiLineString multiLineString) {
+        this.multiLineString = multiLineString;
+    }
+
+    public Polygon getPolygon() {
+        return polygon;
+    }
+
+    public void setPolygon(Polygon polygon) {
+        this.polygon = polygon;
+    }
+
+    public MultiPolygon getMultiPolygon() {
+        return multiPolygon;
+    }
+
+    public void setMultiPolygon(MultiPolygon multiPolygon) {
+        this.multiPolygon = multiPolygon;
+    }
+
+    public GeometryCollection getGeometryCollection() {
+        return geometryCollection;
+    }
+
+    public void setGeometryCollection(GeometryCollection geometryCollection) {
+        this.geometryCollection = geometryCollection;
+    }*/
+}
