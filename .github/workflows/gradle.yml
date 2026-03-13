@@ -87,7 +87,7 @@ jobs:
       - name: "🔎 Run static analysis"
         if: env.SONAR_TOKEN != '' && matrix.java == '25' && matrix.shard == 'core'
         run: |
-          ./gradlew sonar --no-parallel --no-daemon
+          ./gradlew classes testClasses sonar --no-parallel --no-daemon
 
       - name: "📊 Publish Test Report"
         if: always()
