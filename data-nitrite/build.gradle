@@ -85,9 +85,11 @@ test {
     useJUnitPlatform()
     // Exclude tests for features not fully supported by Nitrite
     filter {
-        // Projection/join tests requiring more complex implementation
+        // Date projection/aggregation not implemented (findMaxDateOfBirthByNameRegex, etc.)
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test date project on single property"
+        // Stream projection with association not implemented
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test project on single ended association"
+        // Many-to-many join not implemented
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test join on many ended association"
     }
 }
