@@ -19,8 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     strategy:
+      fail-fast: false
       matrix:
         java: ['25']
+        shard: ['core', 'doc-examples']
     env:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -74,33 +76,66 @@ jobs:
       - name: "🛠 Build with Gradle"
         id: gradle
         run: |
-          ./gradlew check jacocoReport --no-daemon --continue
+          if [ "${{ matrix.shard }}" = "core" ]; then
+            DOC_EXCLUDES=$(./gradlew -q projects | grep "Project ':micronaut-doc-examples:" | sed -E "s/.*Project '([^']+)'.*/-x \1:test -x \1:check/" | tr '\n' ' ')
+            ./gradlew check jacocoReport --no-daemon $DOC_EXCLUDES
+          else
+            DOC_CHECK_TASKS=$(./gradlew -q projects | grep "Project ':micronaut-doc-examples:" | sed -E "s/.*Project '([^']+)'.*/\1:check/" | tr '\n' ' ')
+            ./gradlew --no-daemon $DOC_CHECK_TASKS
+          fi
 
       - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN != '' && matrix.java == '25'
+        if: env.SONAR_TOKEN != '' && matrix.java == '25' && matrix.shard == 'core'
         run: |
-          ./gradlew sonar --no-parallel --continue
+          ./gradlew sonar --no-parallel --no-daemon
 
       - name: "📊 Publish Test Report"
         if: always()
         uses: mikepenz/action-junit-report@v6
         with:
-          check_name: Java CI / Test Report (${{ matrix.java }})
+          check_name: Java CI / Test Report (${{ matrix.java }} / ${{ matrix.shard }})
           report_paths: '**/build/test-results/test/TEST-*.xml'
           check_retries: 'true'
 
       - name: "📜 Upload binary compatibility check results"
-        if: matrix.java == '25'
+        if: matrix.java == '25' && matrix.shard == 'core'
         uses: actions/upload-artifact@v7
         with:
           name: binary-compatibility-reports
           path: "**/build/reports/binary-compatibility-*.html"
 
+      - name: "❓ Optional cleanup step"
+        run: |
+          [ -f ./cleanup.sh ] && ./cleanup.sh || [ ! -f ./cleanup.sh ]
+
+  publish:
+    if: github.repository != 'micronaut-projects/micronaut-project-template' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
+      GH_USERNAME: ${{ secrets.GH_USERNAME }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: "🔧 Setup GraalVM CE"
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: 'graalvm'
+          java-version: '25'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🔧 Setup Gradle"
+        uses: gradle/actions/setup-gradle@v5
+
       - name: "📦 Publish to Sonatype Snapshots"
-        if: success() && github.event_name == 'push' && matrix.java == '25'
-        env:
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
         run: ./gradlew publishToSonatype docs --no-daemon
 
       - name: "❓ Determine docs target repository"
@@ -112,14 +147,9 @@ jobs:
           if_false: ${{ github.repository }}
 
       - name: "📑 Publish to Github Pages"
-        if: success() && github.event_name == 'push' && matrix.java == '25'
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           TARGET_REPOSITORY: ${{ steps.docs_target.outputs.value }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           BRANCH: gh-pages
           FOLDER: build/docs
-
-      - name: "❓ Optional cleanup step"
-        run: |
-          [ -f ./cleanup.sh ] && ./cleanup.sh || [ ! -f ./cleanup.sh ]

@@ -270,7 +270,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     private static <T> Object getObject(ResultSet resultSet, String name, Class<T> type) throws SQLException {
         try {
             return resultSet.getObject(name, type);
-        } catch (SQLException e) {
+        } catch (SQLException | ClassCastException e) {
             return resultSet.getObject(name);
         }
     }

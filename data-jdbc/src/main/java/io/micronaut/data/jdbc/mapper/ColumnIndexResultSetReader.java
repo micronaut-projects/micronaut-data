@@ -245,7 +245,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
     private static <T> Object getObject(ResultSet resultSet, Integer index, Class<T> type) throws SQLException {
         try {
             return resultSet.getObject(index, type);
-        } catch (SQLException e) {
+        } catch (SQLException | ClassCastException e) {
             return resultSet.getObject(index);
         }
     }
