@@ -206,4 +206,164 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
     }
 
+    void "test metaModel class Generation with access type annotation FIELD"() {
+        given:
+
+        def classLoader = buildClassLoader('test.FieldAccessClass', """
+                package test;
+                import io.micronaut.core.annotation.Nullable;
+                import jakarta.persistence.*;
+                import java.time.Instant;
+                import java.time.LocalDate;
+                import java.time.LocalDateTime;
+                import java.time.LocalTime;
+                import java.util.*;
+                @Access(AccessType.FIELD)
+                @Entity
+                public class FieldAccessClass {
+                    @Id
+                    Long id;
+                    String name;
+                    private String fieldWithoutAccessors;
+                    public Long getId(){
+                        return this.id;
+                    }
+                    public String getName(){
+                        return this.name;
+                    }
+                    public void setId(Long id) {
+                        this.id = id;
+                    }
+                    public void setName(String name) {
+                        this.name = name;
+                    }
+                 }
+                 """)
+
+        def fieldAccessClassMetaModelClass = classLoader.loadClass("test.FieldAccessClass_")
+
+        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.FieldAccessClass"],
+                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.FieldAccessClass"],
+                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.FieldAccessClass"]]
+        expect:
+
+        constantProps.keySet().stream().anyMatch { o -> fieldAccessClassMetaModelClass.getField(o) != null && fieldAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+
+        for (var entrySet : constantProps.entrySet()) {
+            def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
+            assert fieldAccessClassMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
+            assert fieldAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
+            assert fieldAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
+        }
+    }
+
+    void "test metaModel Generation with access type annotations"() {
+        given:
+
+        def classLoader = buildClassLoader("test.PropertyAccessClass", """
+                   package test;
+                import io.micronaut.core.annotation.Nullable;
+                import jakarta.persistence.*;
+                import java.time.Instant;
+                import java.time.LocalDate;
+                import java.time.LocalDateTime;
+                import java.time.LocalTime;
+                import java.util.*;
+                @Entity
+                @Access(AccessType.PROPERTY)
+                public class PropertyAccessClass {
+                    @Id
+                    Long id;
+                    String fieldWithoutAccessors;
+                    String name;
+
+                    public Long getId(){
+                        return this.id;
+                    }
+                    public void setId(Long id) {
+                        this.id = id;
+                    }
+                    public String getName(){
+                        return this.name;
+                    }
+                    public void setName(String name) {
+                        this.name = name;
+                    }
+                }
+                """)
+        def propertyAccessClassMetaModelClass = classLoader.loadClass("test.PropertyAccessClass_")
+
+        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.PropertyAccessClass"],
+                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"]]
+        expect:
+
+        constantProps.keySet().stream().anyMatch { o -> propertyAccessClassMetaModelClass.getField(o) != null && propertyAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+
+        for (var entrySet : constantProps.entrySet()) {
+            def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
+            assert propertyAccessClassMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
+            assert propertyAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
+            assert propertyAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
+        }
+        try {
+            propertyAccessClassMetaModelClass.getField("FIELD_WITHOUT_ACCESSORS") == null
+        } catch (NoSuchFieldException e) {
+            e.getMessage()
+        }
+
+    }
+
+    void "test metaModel Generation with property type annotations and field annotated"() {
+        given:
+
+        def classLoader = buildClassLoader("test.PropertyAccessClass", """
+                   package test;
+                import io.micronaut.core.annotation.Nullable;
+                import jakarta.persistence.*;
+                import java.time.Instant;
+                import java.time.LocalDate;
+                import java.time.LocalDateTime;
+                import java.time.LocalTime;
+                import java.util.*;
+                @Entity
+                @Access(AccessType.PROPERTY)
+                public class PropertyAccessClass {
+                    @Id
+                    Long id;
+                    @Access(AccessType.FIELD)
+                    String fieldWithoutAccessors;
+                    String name;
+
+                    public Long getId(){
+                        return this.id;
+                    }
+                    public void setId(Long id) {
+                        this.id = id;
+                    }
+                    public String getName(){
+                        return this.name;
+                    }
+                    public void setName(String name) {
+                        this.name = name;
+                    }
+                }
+                """)
+        def propertyAccessClassMetaModelClass = classLoader.loadClass("test.PropertyAccessClass_")
+
+        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.PropertyAccessClass"],
+                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"],
+                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"]]
+        expect:
+
+        constantProps.keySet().stream().anyMatch { o -> propertyAccessClassMetaModelClass.getField(o) != null && propertyAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+
+        for (var entrySet : constantProps.entrySet()) {
+            def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
+            assert propertyAccessClassMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
+            assert propertyAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
+            assert propertyAccessClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
+        }
+    }
+
+
 }

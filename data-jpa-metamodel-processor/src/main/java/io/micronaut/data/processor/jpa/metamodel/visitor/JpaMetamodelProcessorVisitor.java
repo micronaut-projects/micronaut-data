@@ -20,17 +20,14 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
-import io.micronaut.sourcegen.model.ClassTypeDef;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -67,9 +64,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
             return;
         }
         try {
-            List<PropertyElement> properties = element.getBeanProperties();
-            ClassTypeDef elementType = ClassTypeDef.of(element);
-            ClassDef.ClassDefBuilder builder = JpaMetamodelProcessor.createJpaMetaModelClassDefBuilder(element.getPackageName(), elementType, element.getSuperType(), properties);
+            ClassDef.ClassDefBuilder builder = JpaMetamodelProcessor.createJpaMetaModelClassDefBuilder(element.getPackageName(), element);
             ClassDef builderDef = builder.build();
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {

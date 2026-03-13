@@ -24,7 +24,7 @@ dependencies {
     implementation mn.micronaut.sourcegen.generator
     implementation mn.micronaut.sourcegen.generator.java
 
-    testImplementation libs.managed.jakarta.persistence.api
+    testImplementation mnSql.jakarta.persistence.api
     testImplementation mn.micronaut.sourcegen.annotations
     testImplementation mn.micronaut.inject.java.test
 }

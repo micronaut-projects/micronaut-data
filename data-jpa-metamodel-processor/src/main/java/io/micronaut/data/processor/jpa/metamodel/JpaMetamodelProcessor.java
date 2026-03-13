@@ -15,13 +15,18 @@
  */
 package io.micronaut.data.processor.jpa.metamodel;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.ast.Element;
+import io.micronaut.inject.ast.MemberElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.sourcegen.model.*;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import javax.lang.model.element.Modifier;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -90,6 +95,23 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_EMBEDDABLE = "jakarta.persistence.Embeddable";
 
     /**
+     * Jakarta persistence Access annotation name.
+     */
+    public static final String JAKARTA_ACCESS = "jakarta.persistence.Access";
+
+    /**
+     * Jakarta persistence Access annotation name.
+     */
+    public static final String JAKARTA_ID = "jakarta.persistence.Id";
+
+    /**
+     * Jakarta persistence AccessType enum.
+     */
+    public enum JakartaAccessType {
+        FIELD, PROPERTY
+    }
+
+    /**
      * Java util Collection class name.
      */
     public static final String JAVA_UTIL_COLLECTION = Collection.class.getName();
@@ -126,20 +148,21 @@ public final class JpaMetamodelProcessor {
      * JPA meta model class def generator .
      *
      * @param packageName          Element package name
-     * @param elementType          Element type
-     * @param optionalSuperElement Element super type
-     * @param properties           element properties/fields
+     * @param element              Class Element
      * @return Jpa metamodel class definition builder .
      */
-    public static ClassDef.ClassDefBuilder createJpaMetaModelClassDefBuilder(@NonNull String packageName, @NonNull ClassTypeDef elementType, Optional<ClassElement> optionalSuperElement, List<PropertyElement> properties) {
+    public static ClassDef.ClassDefBuilder createJpaMetaModelClassDefBuilder(@NonNull String packageName, @NonNull ClassElement element) {
+        ClassTypeDef elementType = ClassTypeDef.of(element);
         String metaModelClassName = resolveModelClassName(packageName, elementType);
+
+        List<? extends Element> fieldElements = resolveFieldElements(element, elementType.getName(), element.getAnnotation(JAKARTA_ACCESS));
 
         ClassDef.ClassDefBuilder classDefBuilder = ClassDef.builder(metaModelClassName)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_STATIC_METAMODEL)).addMember("value", elementType).build())
             .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_ANNOTATION_GENERATED)).addMember("value", JpaMetamodelProcessor.class.getName()).build());
 
-        ClassElement superElement = optionalSuperElement.orElse(null);
+        ClassElement superElement = element.getSuperType().orElse(null);
 
         if (superElement != null && supportedClass(superElement)) {
             String superElementModelClassName = resolveModelClassName(superElement.getPackageName(), ClassTypeDef.of(superElement));
@@ -147,22 +170,56 @@ public final class JpaMetamodelProcessor {
             classDefBuilder.superclass(superClassModelTypeDef);
         }
 
-        properties = properties.stream().filter(o -> !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
-            .filter(o -> o.getDeclaringType().getName().equals(elementType.getName()))
-            .toList();
-
         List<FieldDef> constantPropertyName = new ArrayList<>();
         List<FieldDef> attributeFields = new ArrayList<>();
 
-        for (PropertyElement beanProperty : properties) {
-            constantPropertyName.add(createConstantPropertyName(beanProperty));
-            attributeFields.add(createAttributeField(beanProperty, elementType));
+        for (Element fieldElement : fieldElements) {
+            if (fieldElement instanceof TypedElement typedElement) {
+                constantPropertyName.add(createConstantPropertyName(typedElement.getName()));
+                attributeFields.add(createAttributeField(fieldElement.getName(), typedElement.getType(), elementType));
+            }
         }
 
         classDefBuilder.addFields(constantPropertyName);
         classDefBuilder.addFields(attributeFields);
         classDefBuilder.addField(createEntityTypeField(elementType));
         return classDefBuilder;
+    }
+
+    private static List<? extends Element> resolveFieldElements(@NonNull ClassElement element, String elementType, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
+        JakartaAccessType jakartaAccessType = resolveAccessType(element, jakartaAccessAnnotation);
+
+        List<Element> elements = switch (jakartaAccessType) {
+            case FIELD -> new ArrayList<>(element.getFields());
+            case PROPERTY -> {
+                List<Element> properties = new ArrayList<>(element.getBeanProperties());
+                element.getFields().stream().filter(o -> o.getAnnotation(JAKARTA_ACCESS) != null && o.getAnnotation(JAKARTA_ACCESS).getRequiredValue(JakartaAccessType.class)
+                        .equals(JakartaAccessType.FIELD))
+                    .forEach(properties::add);
+                yield properties;
+            }
+        };
+        elements = elements.stream()
+            .filter(o -> !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
+            .filter((o) -> {
+                if (o instanceof MemberElement memberElement) {
+                    return memberElement.getDeclaringType().getName().equals(elementType);
+                }
+                return false;
+            }).toList();
+
+        return elements;
+    }
+
+    private static JakartaAccessType resolveAccessType(@NonNull ClassElement element, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
+        if (jakartaAccessAnnotation == null && element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID))) {
+            return JakartaAccessType.PROPERTY;
+        }
+        if (jakartaAccessAnnotation == null) {
+            return JakartaAccessType.FIELD;
+        }
+        return jakartaAccessAnnotation.getRequiredValue(JakartaAccessType.class);
+
     }
 
     /**
@@ -199,47 +256,47 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
-     * @param beanProperty field
-     * @return FieldDef
+     * To create a constant field in the metamodel class_ with the field name as value .
+     * @param fieldName field Name.
+     * @return Field Definition.
      */
-    private static FieldDef createConstantPropertyName(PropertyElement beanProperty) {
-        return FieldDef.builder(NameUtils.underscoreSeparate(beanProperty.getName()).toUpperCase(Locale.ROOT))
+    private static FieldDef createConstantPropertyName(String fieldName) {
+        return FieldDef.builder(NameUtils.underscoreSeparate(fieldName).toUpperCase(Locale.ROOT))
             .ofType(TypeDef.STRING)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
-            .initializer(ExpressionDef.constant(beanProperty.getSimpleName())).build();
+            .initializer(ExpressionDef.constant(fieldName)).build();
     }
 
     /**
      * Create attribute fields SingularAttribute,ListAttribute... based on the element type .
-     *
-     * @param beanProperty Field
-     * @param classTypeDef Field type
-     * @return FieldDef
+     * @param fieldName Field name
+     * @param fieldType Field type
+     * @param classTypeDef Class type def
+     * @return Attribute field definition.
      */
-    private static FieldDef createAttributeField(PropertyElement beanProperty, ClassTypeDef classTypeDef) {
-        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(beanProperty.getName())
+    private static FieldDef createAttributeField(String fieldName, ClassElement fieldType, ClassTypeDef classTypeDef) {
+        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(fieldName)
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.VOLATILE);
 
-        ClassElement beanPropertyType = beanProperty.getType();
-        Map<String, ClassElement> typeArguments = beanPropertyType.getTypeArguments();
+        Map<String, ClassElement> typeArguments = fieldType.getTypeArguments();
 
         TypeDef typeDef;
-        String name = beanPropertyType.getName();
-        if (name.equals(JAVA_UTIL_COLLECTION)) {
+        String fieldTypeName = fieldType.getName();
+        if (fieldTypeName.equals(JAVA_UTIL_COLLECTION)) {
             typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef,
                 TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (name.equals(JAVA_UTIL_SET)) {
+        } else if (fieldTypeName.equals(JAVA_UTIL_SET)) {
             typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef,
                 TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (name.equals(JAVA_UTIL_LIST)) {
+        } else if (fieldTypeName.equals(JAVA_UTIL_LIST)) {
             typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef,
                 TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (name.equals(JAVA_UTIL_MAP)) {
+        } else if (fieldTypeName.equals(JAVA_UTIL_MAP)) {
             typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef,
                 TypeDef.of(Objects.requireNonNull(typeArguments.get("K"))),
                 TypeDef.of(Objects.requireNonNull(typeArguments.get("V"))));
         } else {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(beanPropertyType)));
+            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(fieldType)));
         }
         return attributeDefBuilder.ofType(typeDef).build();
     }
