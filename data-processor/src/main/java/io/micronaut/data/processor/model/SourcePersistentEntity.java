@@ -83,8 +83,8 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 allPersistentProperties.put(id.getName(), id);
             } else if (propertyElement.hasStereotype(Version.class)) {
                 version = new SourcePersistentProperty(this, propertyElement);
-                if (hasAnnotation(JsonView.class)) {
-                    throw new MappingException("@JsonView mapped entities do not support @Version fields.");
+                if (hasAnnotation(JsonView.class) || hasAnnotation(JsonSubView.class)) {
+                    throw new MappingException("@Version cannot be used in class annotated with @JsonView/@JsonSubView. Instead use @JsonProperty(\"_metadata\") on a property to enable optimistic locking.");
                 }
                 allPersistentProperties.put(version.getName(), version);
             } else {
