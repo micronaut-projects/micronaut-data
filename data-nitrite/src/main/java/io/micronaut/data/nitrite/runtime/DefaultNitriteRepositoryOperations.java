@@ -74,7 +74,6 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.index.IndexOptions;
@@ -1465,31 +1464,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public <T, R> Iterable<R> findAll(@NonNull final PreparedQuery<T, R> q) {
     return queryExecutor.findAll(q, getNitritePreparedQuery(q));
-  }
-
-  /**
-   * Extract projected field values from a projected cursor.
-   *
-   * @param cursor the projected cursor
-   * @param fields the projected field names
-   * @param resultType the expected result type
-   * @return list of projected values
-   */
-  @SuppressWarnings("unchecked")
-  private <R> List<R> extractProjectedResults(RecordStream<Document> cursor, List<String> fields, Class<R> resultType) {
-    List<R> results = new ArrayList<>();
-    for (Document doc : cursor) {
-      if (fields.size() == 1) {
-        // Single field projection - return just that field's value
-        Object value = doc.get(fields.get(0));
-        results.add((R) convertValue(value, resultType));
-      } else {
-        // Multi-field projection - for now, return as Document or Map
-        // This would need more sophisticated handling for DTO projections
-        results.add((R) doc);
-      }
-    }
-    return results;
   }
 
   /**

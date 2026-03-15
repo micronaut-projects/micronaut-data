@@ -33,7 +33,6 @@ import io.micronaut.data.nitrite.runtime.query.NitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteUpdateExecutor;
-import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.collection.FindOptions;
@@ -85,6 +84,13 @@ public final class NitriteQueryExecutor {
     private final NitriteOperationsHelper helper;
     private final EntityEventListener<Object> entityEventListener;
 
+    // Centralized strategy classes for result handling
+    private final NitriteEntityMapperHandler entityMapperHandler;
+    private final NitriteValueConverter valueConverter;
+    private final NitriteProjectionMapper projectionMapper;
+    private final NitriteNativeProjectionHandler nativeProjectionHandler;
+    private final NitriteAggregationHandler aggregationHandler;
+
     public NitriteQueryExecutor(NitriteEntityMapper entityMapper,
                                 NitriteQueryParser queryParser,
                                 NitriteFilterBuilder filterBuilder,
@@ -105,6 +111,13 @@ public final class NitriteQueryExecutor {
         this.findOptionsFactory = findOptionsFactory;
         this.helper = helper;
         this.entityEventListener = entityEventListener;
+
+        // Initialize centralized strategy classes
+        this.valueConverter = new NitriteValueConverter(conversionService);
+        this.entityMapperHandler = new NitriteEntityMapperHandler(entityMapper);
+        this.projectionMapper = new NitriteProjectionMapper(valueConverter, entityMapper);
+        this.nativeProjectionHandler = new NitriteNativeProjectionHandler(queryParser, valueConverter);
+        this.aggregationHandler = new NitriteAggregationHandler();
     }
 
     public Object toFilterValue(Object value) {
@@ -146,6 +159,7 @@ public final class NitriteQueryExecutor {
         Filter filter = nq.getNitriteFilter();
         helper.logFind(coll.getName(), filter);
 
+        // Handle count queries
         if (Number.class.isAssignableFrom(nq.getResultType())) {
             String methodName = q.getName();
             boolean isCountQuery = methodName.startsWith("count") ||
@@ -155,89 +169,35 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
-        if (isProjection) {
-            List<String> projectedFields = queryParser.parseSelectClause(nq.getQuery());
-            if (projectedFields == null || projectedFields.isEmpty()) {
-                String projectField = queryParser.extractProjectionField(nq.getQuery());
-                if (projectField != null) {
-                    projectedFields = Collections.singletonList(projectField);
-                }
-            }
+        String methodName = q.getName();
 
-            if (projectedFields == null || projectedFields.isEmpty()) {
-                String methodName = q.getName();
-                java.util.regex.Pattern aggPattern = java.util.regex.Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)([A-Z][a-zA-Z0-9]*)By");
-                java.util.regex.Matcher aggMatcher = aggPattern.matcher(methodName);
-                if (aggMatcher.find()) {
-                    String aggFunc = aggMatcher.group(1);
-                    String fieldName = aggMatcher.group(2);
-                    fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
-                    List<Document> docs = coll.find(filter).toList();
-                    if (docs.isEmpty()) {
-                        return null;
-                    }
-                    List<Object> values = new ArrayList<>();
-                    for (Document doc : docs) {
-                        Object val = doc.get(fieldName);
-                        if (val != null) {
-                            values.add(val);
-                        }
-                    }
-                    if (values.isEmpty()) {
-                        return null;
-                    }
-                    Object result = executeAggregate(aggFunc, values);
-                    return (R) convertValue(result, nq.getResultType());
-                }
+        // Handle aggregation methods (findMax/Min/Sum/Avg...By)
+        if (aggregationHandler.isAggregationMethod(methodName)) {
+            String aggFunc = aggregationHandler.extractAggFunc(methodName);
+            String fieldName = aggregationHandler.extractFieldName(methodName);
+            List<Document> docs = coll.find(filter).toList();
+            Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+            return (R) valueConverter.convertWithTemporalHandling(result, nq.getResultType());
+        }
 
-                if (!methodName.matches("^(find|get|read)(Count).*")) {
-                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
-                    java.util.regex.Matcher matcher = pattern.matcher(methodName);
-                    if (matcher.find()) {
-                        String fieldName = matcher.group(1);
-                        fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
-                        projectedFields = Collections.singletonList(fieldName);
-                    }
-                }
-            }
+        // Handle DTO projection
+        if (nq.isDtoProjection()) {
+            Document doc = coll.find(filter).firstOrNull();
+            return entityMapperHandler.projectDto(doc, nq.getResultType());
+        }
 
-            if (projectedFields != null && projectedFields.size() == 1) {
-                Document doc = coll.find(filter).firstOrNull();
-                if (doc == null) {
-                    return null;
-                }
-                Object value = doc.get(projectedFields.get(0));
-                return (R) convertValue(value, nq.getResultType());
+        // Handle native single-field projection (result type differs from root entity)
+        if (!nq.getResultType().equals(nq.getRootEntity())) {
+            Document doc = coll.find(filter).firstOrNull();
+            R result = nativeProjectionHandler.project(doc, query, methodName, nq.getResultType());
+            if (result != null) {
+                return result;
             }
         }
 
+        // Handle full entity load
         Document doc = coll.find(filter).firstOrNull();
-        if (doc == null) {
-            return null;
-        }
-        // postLoad event is triggered by entityMapper.fromDocument() for all entities
-        return (R) entityMapper.fromDocument(doc, nq.getRootEntity());
-    }
-
-    private Object executeAggregate(String aggFunc, List<Object> values) {
-        if (values.get(0) instanceof Number) {
-            List<Number> numValues = values.stream().map(v -> (Number) v).toList();
-            return switch (aggFunc) {
-                case "Max" -> numValues.stream().mapToDouble(Number::doubleValue).max().orElse(0);
-                case "Min" -> numValues.stream().mapToDouble(Number::doubleValue).min().orElse(0);
-                case "Sum" -> numValues.stream().mapToDouble(Number::doubleValue).sum();
-                case "Avg" -> numValues.stream().mapToDouble(Number::doubleValue).average().orElse(0);
-                default -> 0;
-            };
-        } else if (values.get(0) instanceof Comparable) {
-            if (aggFunc.equals("Max")) {
-                return values.stream().max((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
-            } else if (aggFunc.equals("Min")) {
-                return values.stream().min((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
-            }
-        }
-        return null;
+        return (R) entityMapperHandler.loadEntity(doc, nq.getRootEntity());
     }
 
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
@@ -245,6 +205,7 @@ public final class NitriteQueryExecutor {
         Filter filter = nq.getNitriteFilter();
         helper.logFind(coll.getName(), filter);
 
+        // Handle count queries
         if (Number.class.isAssignableFrom(nq.getResultType())) {
             String methodName = q.getName();
             boolean isCountQuery = methodName.startsWith("count") ||
@@ -253,8 +214,9 @@ public final class NitriteQueryExecutor {
                 return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
             }
         }
+
+        // Setup sort and limit
         Sort s = nq.getSort();
-        // Parse sort from SQL/JSON if not already set
         if (s == null || !s.isSorted()) {
             String query = nq.getQuery();
             if (query != null) {
@@ -278,18 +240,46 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        List<String> projectedFields = null;
-        boolean isProjection = !nq.getResultType().equals(nq.getRootEntity());
-        if (isProjection) {
-            projectedFields = queryParser.parseSelectClause(nq.getQuery());
+        FindOptions findOptions = findOptionsFactory.apply(nq.getPageable(), s);
+        if (limit.maxResults() > 0) {
+            findOptions.limit((long) limit.maxResults());
+            findOptions.skip((long) limit.offset());
+        }
+
+        String methodName = q.getName();
+        String query = nq.getQuery();
+
+        // Handle aggregation methods - not typically used with findAll, but handle for completeness
+        if (aggregationHandler.isAggregationMethod(methodName)) {
+            // Aggregation with findAll returns single aggregated value
+            var cursor = coll.find(filter, findOptions);
+            List<Document> docs = cursor.toList();
+            String aggFunc = aggregationHandler.extractAggFunc(methodName);
+            String fieldName = aggregationHandler.extractFieldName(methodName);
+            Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+            return Collections.singletonList((R) valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+        }
+
+        // Handle DTO projection
+        if (nq.isDtoProjection()) {
+            var cursor = coll.find(filter, findOptions);
+            List<R> results = new ArrayList<>();
+            for (Document doc : cursor) {
+                results.add(entityMapperHandler.projectDto(doc, nq.getResultType()));
+            }
+            return results;
+        }
+
+        // Handle native single-field projection
+        if (!nq.getResultType().equals(nq.getRootEntity())) {
+            List<String> projectedFields = queryParser.parseSelectClause(query);
             if (projectedFields == null || projectedFields.isEmpty()) {
-                String projectField = queryParser.extractProjectionField(nq.getQuery());
+                String projectField = queryParser.extractProjectionField(query);
                 if (projectField != null) {
                     projectedFields = Collections.singletonList(projectField);
                 }
             }
             if (projectedFields == null || projectedFields.isEmpty()) {
-                String methodName = q.getName();
                 if (!methodName.matches("^(find|get|read)(Max|Min|Sum|Avg|Count).*")) {
                     java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
                     java.util.regex.Matcher matcher = pattern.matcher(methodName);
@@ -300,73 +290,37 @@ public final class NitriteQueryExecutor {
                     }
                 }
             }
+
+            if (projectedFields != null && !projectedFields.isEmpty()) {
+                var cursor = coll.find(filter, findOptions);
+                if (projectedFields.size() == 1) {
+                    List<R> results = new ArrayList<>();
+                    for (Document doc : cursor) {
+                        R result = nativeProjectionHandler.project(doc, projectedFields.get(0), nq.getResultType());
+                        if (result != null) {
+                            results.add(result);
+                        }
+                    }
+                    return results;
+                } else {
+                    // Multi-field projection - use centralized projection mapper
+                    Document projection = Document.createDocument();
+                    for (String field : projectedFields) {
+                        projection.put(field, null);
+                    }
+                    RecordStream<Document> projectedCursor = cursor.project(projection);
+                    return projectionMapper.mapResults(projectedCursor, projectedFields, nq.getResultType(), nq.isDtoProjection());
+                }
+            }
         }
 
-        FindOptions findOptions = findOptionsFactory.apply(nq.getPageable(), s);
-        if (limit.maxResults() > 0) {
-            findOptions.limit((long) limit.maxResults());
-            findOptions.skip((long) limit.offset());
-        }
-
+        // Handle full entity load
         var cursor = coll.find(filter, findOptions);
-
-        if (projectedFields != null && !projectedFields.isEmpty()) {
-            Document projection = Document.createDocument();
-            for (String field : projectedFields) {
-                projection.put(field, null);
-            }
-            RecordStream<Document> projectedCursor = cursor.project(projection);
-            return extractProjectedResults(projectedCursor, projectedFields, nq.getResultType());
-        }
-
         List<R> results = new ArrayList<>();
         for (Document doc : cursor) {
-            // postLoad event is triggered by entityMapper.fromDocument() for all entities
-            R entity = (R) entityMapper.fromDocument(doc, nq.getRootEntity());
-            results.add(entity);
+            results.add((R) entityMapperHandler.loadEntity(doc, nq.getRootEntity()));
         }
         return results;
-    }
-
-    private <R> List<R> extractProjectedResults(RecordStream<Document> cursor, List<String> fields, Class<R> resultType) {
-        List<R> results = new ArrayList<>();
-        for (Document doc : cursor) {
-            if (fields.size() == 1) {
-                Object value = doc.get(fields.get(0));
-                results.add((R) convertValue(value, resultType));
-            } else {
-                results.add((R) doc);
-            }
-        }
-        return results;
-    }
-
-    public Object convertValue(Object value, Class<?> targetType) {
-        if (value == null) {
-            return null;
-        }
-        if (targetType.isInstance(value)) {
-            return value;
-        }
-        if (targetType == LocalDate.class && value instanceof String) {
-            try {
-                return LocalDate.parse((String) value);
-            } catch (Exception ignored) {
-            }
-        }
-        if (targetType == LocalDateTime.class && value instanceof String) {
-            try {
-                return LocalDateTime.parse((String) value);
-            } catch (Exception ignored) {
-            }
-        }
-        if (targetType == LocalTime.class && value instanceof String) {
-            try {
-                return LocalTime.parse((String) value);
-            } catch (Exception ignored) {
-            }
-        }
-        return ((Optional<Object>) conversionService.convert(value, targetType)).orElse(value);
     }
 
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
