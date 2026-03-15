@@ -44,8 +44,19 @@ public final class CollectionAggregator {
             return null;
         }
 
+        // Try to get values - field might be stored as camelCase or snake_case
         List<Object> values = docs.stream()
-            .map(d -> d.get(fieldName))
+            .map(d -> {
+                Object val = d.get(fieldName);
+                if (val == null) {
+                    // Try snake_case conversion
+                    String snakeCase = toSnakeCase(fieldName);
+                    if (!snakeCase.equals(fieldName)) {
+                        val = d.get(snakeCase);
+                    }
+                }
+                return val;
+            })
             .filter(v -> v != null)
             .toList();
 
@@ -54,6 +65,16 @@ public final class CollectionAggregator {
         }
 
         return executeAggregate(aggFunc, values);
+    }
+
+    /**
+     * Convert camelCase to snake_case.
+     */
+    private String toSnakeCase(String camelCase) {
+        if (camelCase == null) {
+            return null;
+        }
+        return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
     }
 
     /**

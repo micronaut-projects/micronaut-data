@@ -85,8 +85,6 @@ test {
     useJUnitPlatform()
     // Exclude tests for features not fully supported by Nitrite
     filter {
-        // Date aggregation not working - processor doesn't generate proper aggregation query
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test date project on single property"
         // Stream projection with association not implemented (requires @Join support)
         excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test project on single ended association"
         // Many-to-many join not implemented
