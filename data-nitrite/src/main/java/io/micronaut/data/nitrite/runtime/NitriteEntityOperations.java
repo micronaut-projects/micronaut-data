@@ -39,6 +39,7 @@ import java.util.function.Function;
 
 /**
  * Internal entity operations for Nitrite with automatic event firing and version handling.
+ * Uses ObjectRepositoryWriter for entity-to-Document conversion.
  *
  * @param <T> The entity type
  * @since 4.14.0
@@ -49,6 +50,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private static final Logger LOG = LoggerFactory.getLogger(NitriteEntityOperations.class);
     private final NitriteCollection collection;
 
+    private final ObjectRepositoryWriter<T> repositoryWriter;
     private final NitriteEntityMapper entityMapper;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
@@ -72,6 +74,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         super(ctx, cascadeOperations, entityEventListener, persistentEntity, conversionService, entity, operationType == OperationType.INSERT);
         this.cascadeOperations = cascadeOperations;
         this.entityMapper = entityMapper;
+        this.repositoryWriter = new ObjectRepositoryWriter<>(entityMapper, persistentEntity);
         this.helper = helper;
         this.collection = helper.getCollection(persistentEntity.getIntrospection().getBeanType());
         this.operationType = operationType;
@@ -137,7 +140,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                     }
                 }
             }
-            Document doc = entityMapper.toDocument(entity);
+            Document doc = repositoryWriter.toDocument(entity);
             helper.logInsert(collection.getName(), doc);
             collection.insert(doc);
             Object generatedId = doc.get("_id");
@@ -156,7 +159,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 }
                 filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
-            Document update = entityMapper.toDocument(entity);
+            Document update = repositoryWriter.toDocument(entity);
             helper.logUpdate(collection.getName(), filter, update);
             long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
             checkOptimisticLocking(1, rows);

@@ -42,6 +42,7 @@ import java.util.function.Predicate;
 
 /**
  * Internal entities operations for Nitrite with automatic event firing and version handling.
+ * Uses CollectionWriter for batch entity-to-Document conversion.
  *
  * @param <T> The entity type
  * @since 4.14.0
@@ -56,6 +57,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private List<T> entities;
     private final boolean insert;
     private final NitriteEntityMapper entityMapper;
+    private final ObjectRepositoryWriter<T> repositoryWriter;
+    private final CollectionWriter<T> collectionWriter;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
     private final EntityEventListener<Object> entityEventListener;
@@ -78,6 +81,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         this.entityMapper = entityMapper;
         this.helper = helper;
         this.collection = helper.getCollection(persistentEntity.getIntrospection().getBeanType());
+        this.repositoryWriter = new ObjectRepositoryWriter<>(entityMapper, persistentEntity);
+        this.collectionWriter = new CollectionWriter<>(repositoryWriter);
         if (entities instanceof List) {
             this.entities = (List<T>) entities;
         } else {
@@ -212,7 +217,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                         entities.set(i, entity);
                     }
                 }
-                docs.add(entityMapper.toDocument(entity));
+                docs.add(repositoryWriter.toDocument(entity));
             }
             if (!docs.isEmpty()) {
                 helper.logInsert(collection.getName(), "batch of " + docs.size());
@@ -241,7 +246,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getVersion().getProperty(), entity, nextVersion);
                     entities.set(i, entity);
                 }
-                Document update = entityMapper.toDocument(entity);
+                Document update = repositoryWriter.toDocument(entity);
                 helper.logUpdate(collection.getName(), filter, update);
                 long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
                 affectedCount += rows;
