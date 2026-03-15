@@ -27,11 +27,11 @@ import org.dizitart.no2.collection.Document;
  * @since 5.0.0
  */
 @Internal
-public final class NitriteEntityMapperHandler {
+public final class ObjectRepositoryMapper {
 
     private final NitriteEntityMapper entityMapper;
 
-    public NitriteEntityMapperHandler(NitriteEntityMapper entityMapper) {
+    public ObjectRepositoryMapper(NitriteEntityMapper entityMapper) {
         this.entityMapper = entityMapper;
     }
 

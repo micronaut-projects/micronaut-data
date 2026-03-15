@@ -21,7 +21,6 @@ import io.micronaut.core.convert.ConversionService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Optional;
 
 /**
  * Centralized value conversion for Nitrite operations.
@@ -31,11 +30,11 @@ import java.util.Optional;
  * @since 5.0.0
  */
 @Internal
-public final class NitriteValueConverter {
+public final class ValueConverter {
 
     private final ConversionService conversionService;
 
-    public NitriteValueConverter(ConversionService conversionService) {
+    public ValueConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 

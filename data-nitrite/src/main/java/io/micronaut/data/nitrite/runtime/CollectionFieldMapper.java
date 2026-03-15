@@ -28,12 +28,12 @@ import java.util.List;
  * @since 5.0.0
  */
 @Internal
-public final class NitriteNativeProjectionHandler {
+public final class CollectionFieldMapper {
 
     private final NitriteQueryParser queryParser;
-    private final NitriteValueConverter valueConverter;
+    private final ValueConverter valueConverter;
 
-    public NitriteNativeProjectionHandler(NitriteQueryParser queryParser, NitriteValueConverter valueConverter) {
+    public CollectionFieldMapper(NitriteQueryParser queryParser, ValueConverter valueConverter) {
         this.queryParser = queryParser;
         this.valueConverter = valueConverter;
     }

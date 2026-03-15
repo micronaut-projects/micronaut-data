@@ -85,11 +85,11 @@ public final class NitriteQueryExecutor {
     private final EntityEventListener<Object> entityEventListener;
 
     // Centralized strategy classes for result handling
-    private final NitriteEntityMapperHandler entityMapperHandler;
-    private final NitriteValueConverter valueConverter;
-    private final NitriteProjectionMapper projectionMapper;
-    private final NitriteNativeProjectionHandler nativeProjectionHandler;
-    private final NitriteAggregationHandler aggregationHandler;
+    private final ObjectRepositoryMapper entityMapperHandler;
+    private final ValueConverter valueConverter;
+    private final CollectionProjectionMapper projectionMapper;
+    private final CollectionFieldMapper nativeProjectionHandler;
+    private final CollectionAggregator aggregationHandler;
 
     public NitriteQueryExecutor(NitriteEntityMapper entityMapper,
                                 NitriteQueryParser queryParser,
@@ -113,11 +113,11 @@ public final class NitriteQueryExecutor {
         this.entityEventListener = entityEventListener;
 
         // Initialize centralized strategy classes
-        this.valueConverter = new NitriteValueConverter(conversionService);
-        this.entityMapperHandler = new NitriteEntityMapperHandler(entityMapper);
-        this.projectionMapper = new NitriteProjectionMapper(valueConverter, entityMapper);
-        this.nativeProjectionHandler = new NitriteNativeProjectionHandler(queryParser, valueConverter);
-        this.aggregationHandler = new NitriteAggregationHandler();
+        this.valueConverter = new ValueConverter(conversionService);
+        this.entityMapperHandler = new ObjectRepositoryMapper(entityMapper);
+        this.projectionMapper = new CollectionProjectionMapper(valueConverter, entityMapper);
+        this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter);
+        this.aggregationHandler = new CollectionAggregator();
     }
 
     public Object toFilterValue(Object value) {

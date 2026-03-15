@@ -30,12 +30,12 @@ import java.util.List;
  * @since 5.0.0
  */
 @Internal
-public final class NitriteProjectionMapper {
+public final class CollectionProjectionMapper {
 
-    private final NitriteValueConverter valueConverter;
+    private final ValueConverter valueConverter;
     private final NitriteEntityMapper entityMapper;
 
-    public NitriteProjectionMapper(NitriteValueConverter valueConverter, NitriteEntityMapper entityMapper) {
+    public CollectionProjectionMapper(ValueConverter valueConverter, NitriteEntityMapper entityMapper) {
         this.valueConverter = valueConverter;
         this.entityMapper = entityMapper;
     }

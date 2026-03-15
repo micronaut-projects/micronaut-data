@@ -29,7 +29,7 @@ import java.util.List;
  * @since 5.0.0
  */
 @Internal
-public final class NitriteAggregationHandler {
+public final class CollectionAggregator {
 
     /**
      * Execute aggregation on a list of documents.
