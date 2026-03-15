@@ -210,12 +210,11 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
 
                 helper.generateIdIfNecessary(entity, type);
-                if (persistentEntity.getVersion() != null) {
+                // Initialize version to 0 if not set (for optimistic locking)
+                if (repositoryWriter.needsVersionInit(entity)) {
                     BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                    if (versionProperty.get(entity) == null) {
-                        entity = helper.updateEntityId(versionProperty, entity, 0L);
-                        entities.set(i, entity);
-                    }
+                    entity = helper.updateEntityId(versionProperty, entity, 0L);
+                    entities.set(i, entity);
                 }
                 docs.add(repositoryWriter.toDocument(entity));
             }
@@ -241,7 +240,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                         versionValue = persistentEntity.getVersion().getProperty().get(entity);
                     }
                     filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
-                    // Increment version
+                    // Increment version (preVersionValue has the OLD version, add 1)
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
                     entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getVersion().getProperty(), entity, nextVersion);
                     entities.set(i, entity);

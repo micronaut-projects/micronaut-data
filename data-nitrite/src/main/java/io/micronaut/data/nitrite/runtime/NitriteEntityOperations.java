@@ -127,18 +127,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         if (operationType == OperationType.INSERT) {
             helper.generateIdIfNecessary(entity, type);
             // Initialize version to 0 if not set (for optimistic locking)
-            if (persistentEntity.getVersion() != null) {
+            if (repositoryWriter.needsVersionInit(entity)) {
                 BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                Object currentVersion = versionProperty.get(entity);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("execute: version property={}, currentVersion={}", versionProperty.getName(), currentVersion);
-                }
-                if (currentVersion == null) {
-                    entity = helper.updateEntityId(versionProperty, entity, 0L);
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("execute: version set to 0, new entity version={}", versionProperty.get(entity));
-                    }
-                }
+                entity = helper.updateEntityId(versionProperty, entity, 0L);
             }
             Document doc = repositoryWriter.toDocument(entity);
             helper.logInsert(collection.getName(), doc);

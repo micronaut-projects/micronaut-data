@@ -58,30 +58,37 @@ public final class CollectionWriter<T> {
     }
 
     /**
-     * Prepare multiple entities for batch insert.
+     * Check if any entity needs version initialization for batch insert.
      *
      * @param entities the entities
+     * @return true if any entity needs version initialization
      */
-    public void prepareForInsert(Iterable<T> entities) {
+    public boolean needsVersionInit(Iterable<T> entities) {
         if (entities == null) {
-            return;
+            return false;
         }
         for (T entity : entities) {
-            repositoryWriter.prepareForInsert(entity);
+            if (repositoryWriter.needsVersionInit(entity)) {
+                return true;
+            }
         }
+        return false;
     }
 
     /**
-     * Prepare multiple entities for batch update.
+     * Get the next version values for batch update.
      *
      * @param entities the entities
+     * @return list of next version values (null entries for entities without version)
      */
-    public void prepareForUpdate(Iterable<T> entities) {
+    public List<Object> getNextVersionValues(Iterable<T> entities) {
         if (entities == null) {
-            return;
+            return null;
         }
+        List<Object> versions = new ArrayList<>();
         for (T entity : entities) {
-            repositoryWriter.prepareForUpdate(entity);
+            versions.add(repositoryWriter.getNextVersionValue(entity));
         }
+        return versions;
     }
 }

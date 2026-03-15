@@ -60,24 +60,37 @@ public final class ObjectRepositoryWriter<T> {
     }
 
     /**
-     * Prepare an entity for insert (set creation timestamp if applicable).
+     * Check if entity needs version initialization for insert.
+     * Returns true if version should be initialized to 0.
      *
      * @param entity the entity
+     * @return true if version needs initialization
      */
-    public void prepareForInsert(T entity) {
-        // Version and timestamp handling would go here
-        // Currently handled by NitriteEntitiesOperations
+    public boolean needsVersionInit(T entity) {
+        if (entity == null || versionProperty == null) {
+            return false;
+        }
+        Object currentVersion = versionProperty.getProperty().get(entity);
+        return currentVersion == null;
     }
 
     /**
-     * Prepare an entity for update (increment version if applicable).
+     * Get the next version value for an update.
      *
      * @param entity the entity
+     * @return the next version value, or null if no version property
      */
-    public void prepareForUpdate(T entity) {
-        if (versionProperty != null) {
-            incrementVersion(entity);
+    public Object getNextVersionValue(T entity) {
+        if (entity == null || versionProperty == null) {
+            return null;
         }
+        Object currentVersion = versionProperty.getProperty().get(entity);
+        if (currentVersion instanceof Number number) {
+            return number.longValue() + 1;
+        } else if (currentVersion instanceof Instant instant) {
+            return Instant.now();
+        }
+        return currentVersion;
     }
 
     /**
