@@ -696,35 +696,9 @@ public final class NitriteEntityMapper {
             if (converted != null) {
                 property.set(entity, converted);
             }
-        } else {
-            // Hydrate mappedBy associations
-            if (prop instanceof RuntimeAssociation association && !association.isEmbedded() && helper != null) {
-                String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-                if (mappedBy != null && (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY)) {
-                    Object idValue = getEntityIdValue(entity, (Class<Object>) type);
-                    if (idValue != null) {
-                        Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
-                        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
-                        RuntimePersistentProperty<?> backProp = associatedEntity.getPropertyByName(mappedBy);
-                        if (backProp != null) {
-                            String backFieldName = backProp.getPersistedName();
-                            // If the back-prop is the identity, use "id"
-                            if (associatedEntity.getIdentity() != null && associatedEntity.getIdentity().equals(backProp)) {
-                                backFieldName = ID_FIELD;
-                            }
-                            
-                            Filter filter = FluentFilter.where(backFieldName).eq(toFilterValue(idValue));
-                            List<Document> childDocs = helper.getCollection(associatedType).find(filter).toList();
-                            List<Object> children = new ArrayList<>();
-                            for (Document childDoc : childDocs) {
-                                children.add(fromDocumentInternal(childDoc, (Class<Object>) associatedType, visited));
-                            }
-                            property.set(entity, conversionService.convert(children, property.asArgument()).orElse(null));
-                        }
-                    }
-                }
-            }
         }
+        // Note: mappedBy associations (ONE_TO_MANY, MANY_TO_MANY) are NOT auto-hydrated.
+        // They remain lazy by default. @Join support would require explicit fetch logic.
     }
 
     // Handle version property explicitly (might not be in persistent properties or value could be 0)

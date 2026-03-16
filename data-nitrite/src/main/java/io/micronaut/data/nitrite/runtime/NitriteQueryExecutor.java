@@ -23,9 +23,11 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
@@ -39,6 +41,7 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,6 +54,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -197,7 +201,18 @@ public final class NitriteQueryExecutor {
 
         // Handle full entity load
         Document doc = coll.find(filter).firstOrNull();
-        return (R) entityMapperHandler.loadEntity(doc, nq.getRootEntity());
+        if (doc == null) {
+            return null;
+        }
+        R entity = (R) entityMapperHandler.loadEntity(doc, nq.getRootEntity());
+        
+        // Fetch joined associations if specified
+        Set<JoinPath> joinPaths = nq.getJoinPaths();
+        if (joinPaths != null && !joinPaths.isEmpty()) {
+            fetchJoins(Collections.singletonList(entity), joinPaths, nq.getRootEntity());
+        }
+        
+        return entity;
     }
 
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
@@ -320,6 +335,13 @@ public final class NitriteQueryExecutor {
         for (Document doc : cursor) {
             results.add((R) entityMapperHandler.loadEntity(doc, nq.getRootEntity()));
         }
+        
+        // Fetch joined associations if specified
+        Set<JoinPath> joinPaths = nq.getJoinPaths();
+        if (joinPaths != null && !joinPaths.isEmpty()) {
+            fetchJoins(results, joinPaths, nq.getRootEntity());
+        }
+        
         return results;
     }
 
@@ -636,6 +658,130 @@ public final class NitriteQueryExecutor {
                 .getProperty(property).map(p -> ((io.micronaut.core.beans.BeanProperty) p).get(arg)).orElse(null);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * Fetch and populate joined associations for loaded entities.
+     * For ONE_TO_MANY and MANY_TO_MANY associations, queries the associated collection
+     * and populates the results on the parent entities.
+     *
+     * @param entities the loaded entities
+     * @param joinPaths the join paths to fetch
+     * @param entityType the entity type
+     */
+    private <R> void fetchJoins(List<R> entities, Set<JoinPath> joinPaths, Class<?> entityType) {
+        if (entities == null || entities.isEmpty() || joinPaths == null || joinPaths.isEmpty()) {
+            return;
+        }
+
+        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
+
+        for (JoinPath joinPath : joinPaths) {
+            String path = joinPath.getPath();
+            // For now, only handle single-level joins (e.g., "books")
+            if (!path.contains(".")) {
+                fetchSingleLevelJoin(entities, persistentEntity, path);
+            }
+            // Nested joins (e.g., "books.pages") would require recursive handling
+        }
+    }
+
+    /**
+     * Fetch a single-level join association.
+     *
+     * @param entities the parent entities
+     * @param persistentEntity the parent entity metadata
+     * @param associationName the association name to fetch
+     */
+    private void fetchSingleLevelJoin(List<?> entities, RuntimePersistentEntity<?> persistentEntity, String associationName) {
+        // Find the association property
+        var assocProp = persistentEntity.getPropertyByName(associationName);
+        if (!(assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association)) {
+            return;
+        }
+
+        // Only handle ONE_TO_MANY and MANY_TO_MANY (mappedBy associations)
+        var kind = association.getKind();
+        if (kind != io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY &&
+            kind != io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+            return;
+        }
+
+        String mappedBy = association.getAnnotationMetadata()
+            .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+        if (mappedBy == null) {
+            return;
+        }
+
+        // Get parent IDs
+        RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
+        if (idProp == null) {
+            return;
+        }
+
+        List<Object> parentIds = new ArrayList<>();
+        for (Object entity : entities) {
+            Object idValue = ((io.micronaut.core.beans.BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
+            if (idValue != null) {
+                parentIds.add(entityMapper.toFilterValue(idValue));
+            }
+        }
+
+        if (parentIds.isEmpty()) {
+            return;
+        }
+
+        // Query associated entities
+        Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+        NitriteCollection assocCollection = collectionFactory.apply(associatedType);
+        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+        RuntimePersistentProperty<?> backProp = associatedEntity.getPropertyByName(mappedBy);
+
+        if (backProp == null) {
+            return;
+        }
+
+        String backFieldName = backProp.getPersistedName();
+        if (associatedEntity.getIdentity() != null && associatedEntity.getIdentity().equals(backProp)) {
+            backFieldName = "id";
+        }
+        final String finalBackFieldName = backFieldName;
+
+        // Build filter: backFieldName IN (parentIds)
+        Filter filter;
+        if (parentIds.size() == 1) {
+            filter = FluentFilter.where(finalBackFieldName).eq(parentIds.get(0));
+        } else {
+            filter = Filter.or(parentIds.stream()
+                .map(id -> FluentFilter.where(finalBackFieldName).eq(id))
+                .toArray(Filter[]::new));
+        }
+
+        // Group results by parent ID
+        Map<Object, List<Object>> resultsByParentId = new HashMap<>();
+        for (Document doc : assocCollection.find(filter)) {
+            Object backRefValue = doc.get(finalBackFieldName);
+            if (backRefValue != null) {
+                Object assocEntity = entityMapper.fromDocument(doc, associatedType);
+                if (!resultsByParentId.containsKey(backRefValue)) {
+                    resultsByParentId.put(backRefValue, new ArrayList<>());
+                }
+                resultsByParentId.get(backRefValue).add(assocEntity);
+            }
+        }
+
+        // Set associations on parent entities
+        var beanProperty = (io.micronaut.core.beans.BeanProperty<Object, Object>) association.getProperty();
+        for (Object entity : entities) {
+            Object parentId = ((io.micronaut.core.beans.BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
+            if (parentId != null) {
+                Object filterParentId = entityMapper.toFilterValue(parentId);
+                List<Object> children = resultsByParentId.get(filterParentId);
+                if (children != null) {
+                    beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
+                }
+            }
         }
     }
 }

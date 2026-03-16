@@ -81,15 +81,6 @@ dependencies {
     spatialPresentTestAnnotationProcessor projects.micronautDataNitrite
 }
 
-test {
-    useJUnitPlatform()
-    // Exclude tests for features not fully supported by Nitrite
-    filter {
-        // Many-to-many join not implemented
-        excludeTestsMatching "io.micronaut.data.nitrite.tck.NitriteDocumentRepositorySpec.test join on many ended association"
-    }
-}
-
 tasks.register('rocksDbPresentTest', Test) {
     group = "verification"
     useJUnitPlatform()
