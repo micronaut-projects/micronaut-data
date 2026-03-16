@@ -1344,7 +1344,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
             }
         } else if (prop.isAssignable(Geometry.class)) {
-            sb.append(" ");
             switch (dialect) {
                 case ORACLE:
                     appendOracleGeoJsonExpression(sb, prop, appendParameter);
@@ -1373,9 +1372,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         sb.append("SDO_UTIL.FROM_GEOJSON(");
         appendParameter.run();
         property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
-            .append(", NULL, '")
-            .append(srid)
-            .append("'"));
+            .append(", NULL, ")
+            .append(srid));
         sb.append(")");
     }
 
