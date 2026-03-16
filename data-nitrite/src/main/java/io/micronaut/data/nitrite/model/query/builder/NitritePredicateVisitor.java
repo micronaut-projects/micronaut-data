@@ -21,6 +21,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
@@ -708,9 +709,17 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       if (association.isEmbedded()) {
         sb.append(association.getPersistedName()).append(".");
       } else {
-        // If it's a non-embedded association, we stop here and use its name
-        // because we only store the ID.
-        return association.getPersistedName();
+        // For non-embedded associations (MANY_TO_ONE, ONE_TO_MANY, MANY_TO_MANY):
+        // - MANY_TO_ONE: Use FK field name (e.g., "author_id") - runtime handles auto-join
+        // - ONE_TO_MANY/MANY_TO_MANY: Include property path for reverse lookup
+        //   (e.g., "book_author.title") so runtime can extract target property
+        if (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY) {
+          // Continue building path for reverse lookups
+          sb.append(association.getPersistedName()).append(".");
+        } else {
+          // MANY_TO_ONE: stop at FK field
+          return association.getPersistedName();
+        }
       }
     }
     sb.append(property.getPersistedName());

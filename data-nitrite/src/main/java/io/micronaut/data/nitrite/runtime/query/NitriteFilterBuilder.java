@@ -17,7 +17,6 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -56,6 +55,7 @@ public final class NitriteFilterBuilder {
     private static final Filter NONE = element -> false;
 
     private final NitriteEntityMapper entityMapper;
+    private final SubQueryExecutor subQueryExecutor;
 
     /**
      * Create a new filter builder.
@@ -63,7 +63,18 @@ public final class NitriteFilterBuilder {
      * @param entityMapper the entity mapper
      */
     public NitriteFilterBuilder(NitriteEntityMapper entityMapper) {
+        this(entityMapper, null);
+    }
+
+    /**
+     * Create a new filter builder with sub-query support.
+     *
+     * @param entityMapper the entity mapper
+     * @param subQueryExecutor the sub-query executor for auto-join on associations
+     */
+    public NitriteFilterBuilder(NitriteEntityMapper entityMapper, SubQueryExecutor subQueryExecutor) {
         this.entityMapper = entityMapper;
+        this.subQueryExecutor = subQueryExecutor;
     }
 
     /**
@@ -106,7 +117,7 @@ public final class NitriteFilterBuilder {
                         }
                     }
                     if (!andFilters.isEmpty()) {
-                        filters.add(Filter.and(andFilters.toArray(new Filter[0])));
+                        filters.add(andFilters.size() == 1 ? andFilters.get(0) : Filter.and(andFilters.toArray(new Filter[0])));
                     }
                 }
             } else if (key.equals("$or")) {
@@ -121,7 +132,7 @@ public final class NitriteFilterBuilder {
                         }
                     }
                     if (!orFilters.isEmpty()) {
-                        filters.add(Filter.or(orFilters.toArray(new Filter[0])));
+                        filters.add(orFilters.size() == 1 ? orFilters.get(0) : Filter.or(orFilters.toArray(new Filter[0])));
                     }
                 }
             } else {
@@ -258,24 +269,24 @@ public final class NitriteFilterBuilder {
         final Object[] params,
         final Map<String, Object> namedParameters) {
 
-        if (rawField.contains(".")) {
-            return buildNestedFilter(entity, rawField, operators, params, namedParameters);
-        }
-
-        String field = entityMapper.normalizeFieldName(rawField, entity);
-
+        String field = rawField;
         if (entity != null) {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity != null && identity.isAnnotationPresent(EmbeddedId.class) &&
-                (identity.getName().equals(field) || "id".equals(field) || "_id".equals(field))) {
+            if (identity != null && (identity.getName().equals(rawField) || "id".equals(rawField) || "_id".equals(rawField))) {
+                field = entityMapper.normalizeFieldName(rawField, entity);
+            }
 
-                Object val = operators.get("$eq");
-                if (val != null) {
-                    Object resolved = resolveValue(val, params, namedParameters);
-                    if (resolved != null && !entityMapper.isSimpleType(resolved.getClass())) {
-                        return entityMapper.idEqualsFilter(entity.getIntrospection().getBeanType(), resolved);
-                    }
-                }
+            // Check if this is an association FK field being compared to a non-FK value
+            // e.g., author_id compared to "Stephen King" (name) instead of UUID
+            // Also handles ONE_TO_MANY reverse lookups (e.g., book_author.title)
+            Filter associationFilter = buildAssociationFilter(entity, rawField, operators, params, namedParameters);
+            if (associationFilter != null) {
+                return associationFilter;
+            }
+
+            // For non-association fields with dots, use nested filter
+            if (rawField.contains(".")) {
+                return buildNestedFilter(entity, rawField, operators, params, namedParameters);
             }
         }
 
@@ -293,6 +304,291 @@ public final class NitriteFilterBuilder {
             return Filter.ALL;
         }
         return fieldFilters.size() == 1 ? fieldFilters.get(0) : Filter.and(fieldFilters.toArray(new Filter[0]));
+    }
+
+    /**
+     * Detect and handle association FK fields being compared to non-FK values.
+     * For example, when author_id is compared to "Stephen King" (a name) instead of a UUID.
+     * Also handles ONE_TO_MANY reverse lookups (e.g., book_author compared to "The Stand").
+     *
+     * @param entity the entity metadata
+     * @param field the field name (e.g., "author_id")
+     * @param operators the filter operators
+     * @param params query parameters
+     * @param namedParameters named parameters
+     * @return a Filter if this is an association FK mismatch, null otherwise
+     */
+    private Filter buildAssociationFilter(
+        final RuntimePersistentEntity<?> entity,
+        final String field,
+        final Map<String, Object> operators,
+        final Object[] params,
+        final Map<String, Object> namedParameters) {
+
+        // Only handle $eq operator for now
+        if (!operators.containsKey("$eq")) {
+            return null;
+        }
+
+        // Get the value being compared
+        Object value = resolveValue(operators.get("$eq"), params, namedParameters);
+        if (value == null) {
+            return null;
+        }
+
+        // Find the association that this field belongs to
+        io.micronaut.data.model.runtime.RuntimeAssociation<?> association = null;
+        boolean isReverseLookup = false;
+
+        // First, check for direct MANY_TO_ONE associations (field matches FK)
+        for (RuntimePersistentProperty<?> prop : entity.getPersistentProperties()) {
+            if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
+                io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
+                // Only handle MANY_TO_ONE here - ONE_TO_MANY is handled as reverse lookup
+                if (kind != io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE) {
+                    continue;
+                }
+                // The persisted name is already the FK field name (e.g., "author_id")
+                String assocFkField = assoc.getPersistedName();
+                if (assocFkField.equals(field)) {
+                    association = assoc;
+                    break;
+                }
+            }
+        }
+
+        // If not found, check for ONE_TO_MANY reverse lookups
+        // Field name patterns:
+        // - New format: "<persisted_association_name>.<property>" (e.g., "book_author.title")
+        // - Old format: "<persisted_association_name>_<property>" (e.g., "books_title")
+        // - Lost property: field equals persisted name exactly (e.g., "book_author")
+        if (association == null && (field.contains("_") || field.contains("."))) {
+            for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+                if (p instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
+                    io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
+                    if (kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY ||
+                        kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+
+                        String persistedName = assoc.getPersistedName();
+                        String singularName = persistedName.endsWith("s") ? persistedName.substring(0, persistedName.length() - 1) : persistedName;
+
+                        // New format: "book_author.title"
+                        if (field.contains(".")) {
+                            String assocPart = field.substring(0, field.indexOf('.'));
+                            if (assocPart.equals(persistedName) || assocPart.equals(singularName)) {
+                                association = assoc;
+                                isReverseLookup = true;
+                                break;
+                            }
+                        }
+
+                        // Old format: "books_title" or "book_title"
+                        if (field.startsWith(persistedName + "_") || field.startsWith(singularName + "_")) {
+                            association = assoc;
+                            isReverseLookup = true;
+                            break;
+                        }
+
+                        // Lost property: field equals persistedName exactly
+                        if (field.equals(persistedName)) {
+                            association = assoc;
+                            isReverseLookup = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (association == null) {
+            return null;
+        }
+
+        // Check if the value looks like it should trigger association resolution
+        RuntimePersistentProperty<?> assocIdentity = association.getAssociatedEntity().getIdentity();
+        if (assocIdentity == null) {
+            return null;
+        }
+
+        // Determine if we should use sub-query for association resolution
+        boolean useSubQuery = false;
+
+        if (value instanceof String strValue) {
+            if (assocIdentity.getType() == java.util.UUID.class) {
+                // For UUID IDs, check if value looks like a UUID
+                useSubQuery = !looksLikeId(strValue, assocIdentity.getType());
+            } else if (assocIdentity.getType() == String.class) {
+                // For String IDs, use heuristic: values with spaces are likely not IDs
+                useSubQuery = strValue.contains(" ");
+            }
+        }
+
+        if (!useSubQuery) {
+            return null;
+        }
+
+        // Use sub-query to resolve the association
+        if (subQueryExecutor == null) {
+            return null;
+        }
+
+        if (isReverseLookup) {
+            // Handle ONE_TO_MANY reverse lookup
+            // e.g., Author.books.title = "The Stand"
+            // 1. Query Books where property = "The Stand"
+            // 2. Extract author_ids (the back-reference FK)
+            // 3. Filter Authors where id IN (author_ids)
+
+            RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+            String targetPropertyName = null;
+
+            // The property that points back to the main entity (needed early for disambiguation)
+            String mappedBy = association.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+            if (mappedBy == null) {
+                return null;
+            }
+
+            // Try to extract property name from field suffix
+            // New format: "book_author.title" (dot separator from query builder)
+            // Old format: "book_author_title" or "book_author" (underscore separator)
+            String persistedName = association.getPersistedName();
+            String singularName = persistedName.endsWith("s") ? persistedName.substring(0, persistedName.length() - 1) : persistedName;
+
+            if (field.contains(".")) {
+                // New format: "book_author.title" - extract property after last dot
+                int lastDot = field.lastIndexOf('.');
+                String assocPart = field.substring(0, lastDot);
+                targetPropertyName = field.substring(lastDot + 1);
+                // Verify the association part matches
+                if (!assocPart.equals(persistedName) && !assocPart.equals(singularName)) {
+                    targetPropertyName = null;  // Doesn't match, will fall through to other checks
+                }
+            } else if (field.startsWith(persistedName + "_")) {
+                targetPropertyName = field.substring(persistedName.length() + 1);
+            } else if (field.startsWith(singularName + "_")) {
+                targetPropertyName = field.substring(singularName.length() + 1);
+            } else if (field.equals(persistedName)) {
+                // Old format without property suffix - property name was lost
+                // Will use $or fallback below
+            }
+
+            RuntimePersistentProperty<?> targetProperty = null;
+
+            // Don't use the mappedBy as the target property - it's the back-reference, not what we're filtering by
+            if (targetPropertyName != null && !targetPropertyName.equals(mappedBy)) {
+                targetProperty = associatedEntity.getPropertyByName(targetPropertyName);
+                if (targetProperty == null) {
+                    for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
+                        if (p.getPersistedName().equals(targetPropertyName)) {
+                            targetProperty = p;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Query builder should have preserved the property path for Criteria queries
+            if (targetProperty == null) {
+                return null;
+            }
+
+            RuntimePersistentProperty<?> backRefProp = associatedEntity.getPropertyByName(mappedBy);
+            if (backRefProp == null) {
+                return null;
+            }
+            String backRefPersistedName = backRefProp.getPersistedName();
+
+            // Build sub-query filter for the associated entity
+            Map<String, Object> subFilterMap = Collections.singletonMap(
+                targetProperty.getPersistedName(),
+                Collections.singletonMap("$eq", value)
+            );
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
+                    associatedEntity.getName(), subFilterMap, backRefPersistedName);
+            }
+
+            // Execute sub-query to get matching values for the back-reference field
+            List<Object> matchingValues = subQueryExecutor.executeSubQuery(
+                associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
+
+            if (matchingValues.isEmpty()) {
+                return NONE;
+            }
+
+            // Filter main entity by ID IN (matchingValues)
+            String idField = entity.getIdentity().getPersistedName();
+            Comparable<?>[] comparableIds = matchingValues.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
+                .toArray(Comparable<?>[]::new);
+            return comparableIds.length == 0 ? NONE : FluentFilter.where(idField).in(comparableIds);
+        } else {
+            // Handle MANY_TO_ONE forward lookup
+            // e.g., Book.author.name = "Stephen King"
+            // For Criteria queries, query builder generates: author_id.name = "Stephen King"
+            // This path is for legacy format where only FK field is present
+            // Build $or filter across all compatible properties on the associated entity
+            RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+            List<Map<String, Object>> orClauses = new ArrayList<>();
+            for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
+                if (p.getType().isInstance(value)) {
+                    orClauses.add(Collections.singletonMap(
+                        p.getPersistedName(),
+                        Collections.singletonMap("$eq", value)
+                    ));
+                }
+            }
+            if (orClauses.isEmpty()) {
+                return null;
+            }
+
+            // Build sub-query filter for the associated entity
+            Map<String, Object> subFilterMap = Collections.singletonMap("$or", orClauses);
+
+            // Execute sub-query to get matching IDs
+            List<Object> matchingIds = subQueryExecutor.executeSubQuery(
+                associatedEntity, subFilterMap, null, params, namedParameters);
+
+            if (matchingIds.isEmpty()) {
+                return NONE;
+            }
+
+            // Filter main entity by association ID IN (matchingIds)
+            Comparable<?>[] comparableIds = matchingIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
+                .toArray(Comparable<?>[]::new);
+            return comparableIds.length == 0 ? NONE : FluentFilter.where(field).in(comparableIds);
+        }
+    }
+
+    /**
+     * Check if a string value looks like a valid ID of the given type.
+     * For UUIDs, checks the standard UUID format.
+     */
+    private boolean looksLikeId(String value, Class<?> idType) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+
+        if (idType == java.util.UUID.class) {
+            // Check for standard UUID format: 8-4-4-4-12 hex digits
+            if (value.length() == 36 && value.charAt(8) == '-' && value.charAt(13) == '-' &&
+                value.charAt(18) == '-' && value.charAt(23) == '-') {
+                try {
+                    java.util.UUID.fromString(value);
+                    return true;
+                } catch (IllegalArgumentException e) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // For String IDs, assume any non-empty string is valid
+        return true;
     }
 
     private Filter buildNestedFilter(
@@ -332,11 +628,31 @@ public final class NitriteFilterBuilder {
             io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
             boolean isCollection = kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY ||
                                  kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY;
+            boolean isManyToOne = kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 
             RuntimePersistentEntity<?> associatedEntity = assoc.getAssociatedEntity();
             if (isCollection) {
                 Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
                 return FluentFilter.where(fieldName).elemMatch(subFilter);
+            } else if (isManyToOne && subQueryExecutor != null) {
+                // For MANY_TO_ONE, execute sub-query on associated entity and join by ID
+                // Build filter for associated entity (e.g., Author.name = "Stephen King")
+                Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
+                // Convert filter to filterMap format for sub-query (use operators directly)
+                Map<String, Object> subFilterMap = filterToMap(operators);
+                // Execute sub-query to get matching IDs
+                List<Object> matchingIds = subQueryExecutor.executeSubQuery(
+                    associatedEntity, subFilterMap, null, params, namedParameters);
+                if (matchingIds.isEmpty()) {
+                    return NONE; // No matches, return filter that matches nothing
+                }
+                // Filter main entity by association ID IN (matchingIds)
+                // Convert to Comparable array for FluentFilter.where().in()
+                Comparable<?>[] comparableIds = matchingIds.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
+                    .toArray(Comparable<?>[]::new);
+                return comparableIds.length == 0 ? NONE : FluentFilter.where(fieldName).in(comparableIds);
             } else {
                 return buildOperatorFiltersForPath(entity, fieldName + "." + remaining, operators, params, namedParameters);
             }
@@ -344,6 +660,18 @@ public final class NitriteFilterBuilder {
 
         // Fallback to dot notation
         return buildOperatorFiltersForPath(entity, fieldPath, operators, params, namedParameters);
+    }
+
+    /**
+     * Convert operators Map to a filterMap for sub-query execution.
+     * This is a simplified conversion for basic equality filters.
+     */
+    private Map<String, Object> filterToMap(Map<String, Object> operators) {
+        Map<String, Object> filterMap = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : operators.entrySet()) {
+            filterMap.put(entry.getKey(), entry.getValue());
+        }
+        return filterMap;
     }
 
     private Filter buildOperatorFiltersForPath(
@@ -522,5 +850,28 @@ public final class NitriteFilterBuilder {
             throw new RuntimeException("Failed to create spatial filter for method: " + method, e);
         }
         return Filter.ALL;
+    }
+
+    /**
+     * Functional interface for executing sub-queries on associated entities.
+     * Used for auto-join on MANY_TO_ONE associations.
+     */
+    @FunctionalInterface
+    public interface SubQueryExecutor {
+        /**
+         * Execute a sub-query on an associated entity and return matching values for a specific field.
+         *
+         * @param associatedEntity the associated entity metadata
+         * @param filterMap the filter criteria
+         * @param targetField the field to extract from matching documents (optional, defaults to identity if null)
+         * @param params positional parameters
+         * @param namedParameters named parameters
+         * @return list of matching field values
+         */
+        List<Object> executeSubQuery(RuntimePersistentEntity<?> associatedEntity,
+                                     Map<String, Object> filterMap,
+                                     String targetField,
+                                     Object[] params,
+                                     Map<String, Object> namedParameters);
     }
 }
