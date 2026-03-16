@@ -971,7 +971,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         SearchResultsMapper<RS, E> mapper = createSearchResultsResultMapper(preparedQuery, rsType);
         return new SqlTypeMapper<>() {
             @Override
-            public @NonNull SearchResults<E> map(RS object, @NonNull Class<SearchResults<E>> type) {
+            public @NonNull SearchResults<@NonNull E> map(RS object, @NonNull Class<SearchResults<@NonNull E>> type) {
                 return mapper.mapAll(object, persistentEntity.getIntrospection().getBeanType());
             }
 
