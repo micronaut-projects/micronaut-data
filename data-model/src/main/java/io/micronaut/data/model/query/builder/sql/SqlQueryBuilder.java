@@ -39,6 +39,7 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -1306,8 +1307,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         if (property.isAssignable(Geometry.class)) {
             switch (dialect) {
-                case ORACLE -> values.add("SDO_UTIL.FROM_GEOJSON(" + param + ")");
-                case MYSQL, POSTGRES, H2 -> values.add("ST_GeomFromGeoJSON(" + param + ")");
+                case ORACLE -> values.add(getOracleGeoJsonExpression(param, property));
+                case MYSQL -> values.add(getMysqlGeoJsonExpression(param, property));
+                case POSTGRES, H2 -> values.add(getSridWrappedGeoJsonExpression(param, property));
                 default -> values.add(param);
             }
             return true;
@@ -1342,16 +1344,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
             }
         } else if (prop.isAssignable(Geometry.class)) {
+            sb.append(" ");
             switch (dialect) {
                 case ORACLE:
-                    sb.append("SDO_UTIL.FROM_GEOJSON(");
-                    appendParameter.run();
-                    sb.append(")");
+                    appendOracleGeoJsonExpression(sb, prop, appendParameter);
                     break;
-                case MYSQL, POSTGRES, H2:
-                    sb.append("ST_GeomFromGeoJSON(");
-                    appendParameter.run();
-                    sb.append(")");
+                case MYSQL:
+                    appendMysqlGeoJsonExpression(sb, prop, appendParameter);
+                    break;
+                case POSTGRES, H2:
+                    appendSridWrappedGeoJsonExpression(sb, prop, appendParameter);
                     break;
                 default:
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
@@ -1359,6 +1361,57 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         } else {
             super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
         }
+    }
+
+    private String getOracleGeoJsonExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendOracleGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendOracleGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        sb.append("SDO_UTIL.FROM_GEOJSON(");
+        appendParameter.run();
+        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
+            .append(", NULL, '")
+            .append(srid)
+            .append("'"));
+        sb.append(")");
+    }
+
+    private String getMysqlGeoJsonExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendMysqlGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendMysqlGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        sb.append("ST_GeomFromGeoJSON(");
+        appendParameter.run();
+        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
+            .append(", 1, ")
+            .append(srid));
+        sb.append(")");
+    }
+
+    private String getSridWrappedGeoJsonExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendSridWrappedGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendSridWrappedGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        boolean hasSrid = property.getAnnotationMetadata().hasAnnotation(Srid.class);
+        if (hasSrid) {
+            sb.append("ST_SetSRID(");
+        }
+        sb.append("ST_GeomFromGeoJSON(");
+        appendParameter.run();
+        sb.append(')');
+        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
+            .append(", ")
+            .append(srid)
+            .append(')'));
     }
 
     @Override
