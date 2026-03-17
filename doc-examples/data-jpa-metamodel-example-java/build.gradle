@@ -15,7 +15,7 @@ dependencies {
     annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
 
     implementation libs.managed.jakarta.data.api
-    implementation libs.managed.jakarta.persistence.api
+    implementation mnSql.jakarta.persistence.api
     implementation mnSql.hibernate.core
     implementation mnSql.micronaut.hibernate.jpa
     implementation projects.micronautDataHibernateJpa
