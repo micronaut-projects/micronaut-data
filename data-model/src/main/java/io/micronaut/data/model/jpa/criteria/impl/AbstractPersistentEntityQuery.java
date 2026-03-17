@@ -321,6 +321,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     @Override
+    public Self where(List<Predicate> restrictions) {
+        throw notSupportedOperation();
+    }
+
+    @Override
     public Self groupBy(Expression<?>... grouping) {
         throw notSupportedOperation();
     }
@@ -337,6 +342,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
 
     @Override
     public Self having(Predicate... restrictions) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Self having(List<Predicate> restrictions) {
         throw notSupportedOperation();
     }
 

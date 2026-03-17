@@ -17,6 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 
 /**
@@ -56,5 +57,10 @@ public final class DefaultOrder<T> implements Order {
     @Override
     public Expression<?> getExpression() {
         return expression;
+    }
+
+    @Override
+    public Nulls getNullPrecedence() {
+        return Nulls.NONE;
     }
 }
