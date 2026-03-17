@@ -48,6 +48,8 @@ import java.util.function.Predicate;
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
 
+    private static final String MEMBER_SKIP_IF_PRESENT = "skipIfPresent";
+
     private final DateTimeProvider<?> dateTimeProvider;
     private final DataConversionService conversionService;
 
@@ -70,7 +72,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     @NonNull
     @Override
     protected Predicate<RuntimePersistentProperty<Object>> getPropertyPredicate() {
-        return (prop) -> {
+        return prop -> {
             final AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
             return annotationMetadata.hasAnnotation(DateCreated.class) || annotationMetadata.hasAnnotation(DateUpdated.class);
         };
@@ -104,9 +106,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 now = offsetDateTime.truncatedTo(truncateToValue);
             } else {
                 Instant instant = conversionService.convertRequired(now, Instant.class);
-                if (instant != null) {
-                    now = instant.truncatedTo(truncateToValue);
-                }
+                now = instant.truncatedTo(truncateToValue);
             }
         }
         return now;
@@ -148,14 +148,14 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             final AnnotationMetadata am = prop.getAnnotationMetadata();
             boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
             boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-            if (hasDateCreated && am.booleanValue(DateCreated.class, "skipIfPresent").orElse(false)) {
+            if (hasDateCreated && am.booleanValue(DateCreated.class, MEMBER_SKIP_IF_PRESENT).orElse(false)) {
                 Object current = prop.getProperty().get(context.getEntity());
                 if (current != null) {
                     return null; // skip
                 }
             }
             // DateUpdated.skipIfPresent applies only on insert (prePersist), not on updates
-            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, "skipIfPresent").orElse(false)) {
+            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, MEMBER_SKIP_IF_PRESENT).orElse(false)) {
                 Object current = prop.getProperty().get(context.getEntity());
                 if (current != null) {
                     return null; // skip
@@ -179,11 +179,11 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
-            if (hasDateCreated && am.booleanValue(DateCreated.class, "skipIfPresent").orElse(false) && prop.get(current) != null) {
+            if (hasDateCreated && am.booleanValue(DateCreated.class, MEMBER_SKIP_IF_PRESENT).orElse(false) && prop.get(current) != null) {
                 return current;
             }
             // DateUpdated.skipIfPresent applies only on insert
-            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, "skipIfPresent").orElse(false) && prop.get(current) != null) {
+            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, MEMBER_SKIP_IF_PRESENT).orElse(false) && prop.get(current) != null) {
                 return current;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);

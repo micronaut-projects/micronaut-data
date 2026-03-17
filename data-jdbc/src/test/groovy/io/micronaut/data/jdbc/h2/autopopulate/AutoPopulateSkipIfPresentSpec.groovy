@@ -39,13 +39,13 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
     void 'preset id is not overwritten and id initialized'() {
         when:"Save entity with auto populate value set"
         def preset = UUID.randomUUID()
-        def c = new Customer(id: preset, name: "name1", age: 40, address: Address.of("st1","NY","100"), version: null);
+        def c = new Customer(id: preset, name: "name1", age: 40, address: Address.of("st1","NY","100"), version: null)
         def saved = customerRepository.save(c)
         then:"The value is not overwritten"
         saved.id == preset
         saved.version != null
         when:"Save entity with auto populate value not set"
-        c = new Customer(id: null, name: "name2", age: 30, address: Address.of("st2","NJ","100"), version: null);
+        c = new Customer(id: null, name: "name2", age: 30, address: Address.of("st2","NJ","100"), version: null)
         saved = customerRepository.save(c)
         then:"The value is generated in the auto populate listener"
         saved.id != null
