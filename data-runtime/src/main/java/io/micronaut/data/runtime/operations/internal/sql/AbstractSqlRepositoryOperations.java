@@ -884,6 +884,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 Object v = columnIndexResultSetReader.readDynamic(rs, getFirstResultSetIndex(), preparedQuery.getResultDataType());
                 if (v == null) {
                     return null;
+                } else if (type == Byte.class && preparedQuery.getResultType() == byte[].class && v instanceof byte[] bytes && bytes.length == 1) {
+                    return (R) Byte.valueOf(bytes[0]);
                 } else if (type.isInstance(v)) {
                     return (R) v;
                 } else {

@@ -384,7 +384,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                     result = oneMapper.getResult();
                 } else if (rs.next()) {
-                    result = mapper.map(rs, preparedQuery.getResultType());
+                    Class<R> resultType = preparedQuery.getResultType();
+                    if (resultType == Byte.class && preparedQuery.getResultDataType() == DataType.BYTE_ARRAY) {
+                        resultType = (Class<R>) byte[].class;
+                    }
+                    result = mapper.map(rs, resultType);
                     if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }

@@ -382,7 +382,13 @@ public interface FindersUtils {
         } else if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindAllInterceptor.class);
         } else if (returnType.isArray()) {
-            return typeAndInterceptorEntry(matchContext, returnType.fromArray(), FindAllInterceptor.class);
+            ClassElement componentType = returnType.fromArray();
+            if (componentType.isPrimitive() && componentType.isAssignable(byte.class)) {
+                return typeAndInterceptorEntry(matchContext, returnType, FindOneInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, componentType, FindAllInterceptor.class);
+        } else if (isContainer(returnType, Publisher.class)) {
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindAllReactiveInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType, FindOneInterceptor.class);
         }

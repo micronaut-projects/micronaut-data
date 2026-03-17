@@ -204,11 +204,12 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 this.rawQuery = rawQueryString.isPresent();
                 this.query = rawQueryString.orElse(query);
             }
-            this.resultDataType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, DataType.class).orElse(DataType.OBJECT);
+            this.resultDataType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
+                .orElseGet(() -> DataType.forType(dataMethodQuery.classValue(DataMethodQuery.META_MEMBER_RESULT_TYPE).orElse(rootEntity)));
             this.queryParts = getQueryParts(dataMethodQuery, DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
             //noinspection unchecked
             this.resultType = dataMethodQuery.classValue(DataMethodQuery.META_MEMBER_RESULT_TYPE)
-                .map(type -> (Class<RT>) ReflectionUtils.getWrapperType(type))
+                .map(type -> (Class<RT>) (type.isArray() ? type : ReflectionUtils.getWrapperType(type)))
                 .orElse((Class<RT>) rootEntity);
         }
         this.method = method;
