@@ -59,6 +59,16 @@ public final class NitriteCriteriaExecutor {
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
 
+    /**
+     * Creates a new NitriteCriteriaExecutor.
+     *
+     * @param queryBuilder the query builder
+     * @param entityMapper the entity mapper
+     * @param queryParser the query parser
+     * @param filterBuilder the filter builder
+     * @param collectionFactory the collection factory function
+     * @param entityFactory the entity factory function
+     */
     public NitriteCriteriaExecutor(io.micronaut.data.model.query.builder.QueryBuilder queryBuilder,
                                    NitriteEntityMapper entityMapper,
                                    NitriteQueryParser queryParser,
@@ -73,6 +83,12 @@ public final class NitriteCriteriaExecutor {
         this.entityFactory = entityFactory;
     }
 
+    /**
+     * Checks if any entities match the given criteria query.
+     *
+     * @param query the criteria query
+     * @return true if at least one entity matches
+     */
     public boolean exists(@NonNull CriteriaQuery<?> query) {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
@@ -81,6 +97,13 @@ public final class NitriteCriteriaExecutor {
         return collectionFactory.apply(type).find(filter).iterator().hasNext();
     }
 
+    /**
+     * Finds a single entity matching the criteria query.
+     *
+     * @param query the criteria query
+     * @param <R> the result type
+     * @return the first matching entity, or null if none found
+     */
     public <R> R findOne(@NonNull CriteriaQuery<R> query) {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
@@ -99,6 +122,13 @@ public final class NitriteCriteriaExecutor {
         return doc == null ? null : (R) entityMapper.fromDocument(doc, resultType);
     }
 
+    /**
+     * Finds all entities matching the criteria query.
+     *
+     * @param query the criteria query
+     * @param <T> the entity type
+     * @return list of matching entities
+     */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
@@ -114,6 +144,15 @@ public final class NitriteCriteriaExecutor {
         return results;
     }
 
+    /**
+     * Finds all entities matching the criteria query with offset and limit.
+     *
+     * @param query the criteria query
+     * @param offset the offset
+     * @param limit the limit
+     * @param <T> the entity type
+     * @return list of matching entities
+     */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
@@ -129,6 +168,12 @@ public final class NitriteCriteriaExecutor {
         return results;
     }
 
+    /**
+     * Updates all entities matching the criteria query.
+     *
+     * @param query the criteria update query
+     * @return optional containing the number of updated entities
+     */
     public Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query) {
         // For Nitrite, we need to fetch entities, apply updates, and save back
         try {
@@ -193,6 +238,12 @@ public final class NitriteCriteriaExecutor {
         return Collections.emptyMap();
     }
 
+    /**
+     * Deletes all entities matching the criteria delete query.
+     *
+     * @param query the criteria delete query
+     * @return optional containing the number of deleted entities
+     */
     public Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query) {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
                 .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder);

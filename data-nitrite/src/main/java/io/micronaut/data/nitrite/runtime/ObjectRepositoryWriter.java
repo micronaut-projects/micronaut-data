@@ -40,6 +40,12 @@ public final class ObjectRepositoryWriter<T> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentProperty<T> versionProperty;
 
+    /**
+     * Creates a new ObjectRepositoryWriter.
+     *
+     * @param entityMapper the entity mapper
+     * @param persistentEntity the persistent entity
+     */
     public ObjectRepositoryWriter(NitriteEntityMapper entityMapper, RuntimePersistentEntity<T> persistentEntity) {
         this.entityMapper = entityMapper;
         this.persistentEntity = persistentEntity;

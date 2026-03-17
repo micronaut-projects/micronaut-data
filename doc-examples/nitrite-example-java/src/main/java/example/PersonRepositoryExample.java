@@ -1,5 +1,8 @@
 package example;
 
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import jakarta.inject.Inject;
 
@@ -32,6 +35,13 @@ final class PersonRepositoryExample {
         List<Person> people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))));
         // end::find[]
     }
+
+    // tag::sorting-pagination-usage[]
+    void sortingAndPagination() {
+        Pageable pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("name")));
+        Page<Person> page = personRepository.findAll(ageIsLessThan(30), pageable);
+    }
+    // end::sorting-pagination-usage[]
 
     void update() {
         // tag::update[]

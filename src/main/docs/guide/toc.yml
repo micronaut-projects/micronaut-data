@@ -149,17 +149,21 @@ nitrite:
   nitriteMapping:
     title: Mapping Entities
     nitriteAnnotations: Mapping Annotations
+    nitriteNaming: Naming Strategies
     nitriteIndexes: Automated Index Creation
     nitriteIdGenerator: ID Generation
     nitriteCompositeId: Composite Primary Keys
+    nitriteAssociationMapping: Association Mapping
   nitriteTransactions: Transactions
+  nitriteOptimisticLocking: Optimistic Locking
   nitriteCriteriaSpecifications:
     title: Repositories with Criteria API
     nitriteCriteriaExecuteQuery: Querying
     nitriteCriteriaExecuteUpdate: Updating
     nitriteCriteriaExecuteDelete: Deleting
+  nitriteAssociationFetching: Association Fetching
   nitriteSpatial: Spatial Queries
-  nitriteLimitations: Scope and limitations
+  nitriteLimitations: Scope and Limitations
 howItWorks:
   title: How Micronaut Data Works
 graal:

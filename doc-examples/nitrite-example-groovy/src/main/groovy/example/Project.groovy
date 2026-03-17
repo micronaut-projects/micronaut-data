@@ -10,6 +10,12 @@ class Project {
     ProjectId projectId
 
     String name
+
+    Project() {}
+
+    Project(ProjectId projectId, String name) {
+        this.projectId = projectId
+        this.name = name
+    }
 }
 // end::project[]
-

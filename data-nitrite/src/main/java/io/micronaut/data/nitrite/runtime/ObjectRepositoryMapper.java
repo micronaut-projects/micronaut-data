@@ -31,6 +31,11 @@ public final class ObjectRepositoryMapper {
 
     private final NitriteEntityMapper entityMapper;
 
+    /**
+     * Creates a new ObjectRepositoryMapper.
+     *
+     * @param entityMapper the entity mapper
+     */
     public ObjectRepositoryMapper(NitriteEntityMapper entityMapper) {
         this.entityMapper = entityMapper;
     }

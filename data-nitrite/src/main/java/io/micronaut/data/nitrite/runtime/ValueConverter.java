@@ -34,6 +34,11 @@ public final class ValueConverter {
 
     private final ConversionService conversionService;
 
+    /**
+     * Creates a new ValueConverter.
+     *
+     * @param conversionService the conversion service
+     */
     public ValueConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }

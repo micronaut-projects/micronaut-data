@@ -262,6 +262,16 @@ public final class NitriteFilterBuilder {
         return value;
     }
 
+    /**
+     * Builds a filter for a field with operators.
+     *
+     * @param entity the persistent entity
+     * @param rawField the raw field name
+     * @param operators the operators map
+     * @param params the query parameters
+     * @param namedParameters the named parameters
+     * @return the built filter
+     */
     public Filter buildFieldFilter(
         final RuntimePersistentEntity<?> entity,
         final String rawField,

@@ -48,7 +48,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#findOptional(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R findOptional(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -65,7 +65,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#findOne(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R findOne(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -82,7 +82,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#findAll(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> Iterable<R> findAll(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -99,7 +99,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#findSlice(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R findSlice(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -116,7 +116,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#findPage(PagedQuery)} instead
+     * @deprecated Use PagedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R findPage(@NonNull final PagedQuery<T> q, @NonNull final Class<T> e, @NonNull final Class<R> p) {
@@ -131,7 +131,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#count(io.micronaut.data.model.runtime.PagedQuery)} instead
+     * @deprecated Use PagedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> long count(@NonNull final QueryModel q, @NonNull final Class<T> e) {
@@ -146,7 +146,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#exists(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> boolean exists(@NonNull final QueryModel q, @NonNull final Class<T> e) {
@@ -163,7 +163,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R update(@NonNull final QueryModel q, @NonNull final Class<T> e, @NonNull final Map<String, Object> p) {
@@ -180,7 +180,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <R> The result type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T, R> R updateAll(@NonNull final List<QueryModel> q, @NonNull final Class<T> e, @NonNull final List<Map<String, Object>> p) {
@@ -195,7 +195,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> int delete(@NonNull final QueryModel q, @NonNull final Class<T> e) {
@@ -210,7 +210,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)} instead
+     * @deprecated Use PreparedQuery-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> int deleteAll(@NonNull final Iterable<QueryModel> q, @NonNull final Class<T> e) {
@@ -225,7 +225,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#deleteAll(DeleteBatchOperation)} instead
+     * @deprecated Use DeleteBatchOperation-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> int deleteAll(@NonNull final Class<T> e, @NonNull final Serializable... ids) {
@@ -240,7 +240,7 @@ public interface DeprecatedQueryModelOperations {
      * @param <T> The entity type
      * @return Never returns normally
      * @throws UnsupportedOperationException Always thrown
-     * @deprecated Use {@link io.micronaut.data.repository.GenericRepository#deleteAll(DeleteBatchOperation)} instead
+     * @deprecated Use DeleteBatchOperation-based methods in io.micronaut.data.repository.GenericRepository instead
      */
     @Deprecated(forRemoval = true)
     default <T> int deleteAll(@NonNull final DeleteBatchOperation<T> op, @NonNull final Iterable<T> entities) {

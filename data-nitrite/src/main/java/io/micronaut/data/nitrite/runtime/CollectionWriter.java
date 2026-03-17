@@ -33,6 +33,11 @@ public final class CollectionWriter<T> {
 
     private final ObjectRepositoryWriter<T> repositoryWriter;
 
+    /**
+     * Creates a new CollectionWriter.
+     *
+     * @param repositoryWriter the repository writer
+     */
     public CollectionWriter(ObjectRepositoryWriter<T> repositoryWriter) {
         this.repositoryWriter = repositoryWriter;
     }

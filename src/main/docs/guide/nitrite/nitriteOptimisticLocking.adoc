@@ -1,0 +1,80 @@
+[[nitriteOptimisticLocking]]
+Optimistic locking is a strategy where you note the actual record state's version and modify the record only when the version is the same.
+
+To enable optimistic locking for your entity, add a field annotated with ann:data.annotation.Version[] with one of the following types:
+
+- `java.lang.Integer`
+- `java.lang.Long`
+- `java.lang.Short`
+- Date-time types extending `java.time.Temporal` (e.g., `Instant`, `LocalDateTime`)
+
+The version field is automatically initialized to `0` for numeric types or to the current timestamp for temporal types. It is incremented (for numeric types) or replaced (for temporal types) on each update operation.
+
+Micronaut Data Nitrite includes the current version in update and delete filter queries. If no matching document is found (because the version has changed), an api:data.exceptions.OptimisticLockException[] is thrown.
+
+== Example Entity
+
+snippet::example.VersionedBook[project-base="doc-examples/nitrite-example", source="main", tags="versioned-book"]
+
+<1> The `version` field is annotated with `@Version` and will be automatically managed
+
+In this example:
+
+- The `version` field is annotated with `@Version`
+- The field type is `Long` (numeric version)
+- Each update increments the version automatically
+- Concurrent updates will throw `OptimisticLockException` if versions don't match
+
+== Using Optimistic Locking in Repositories
+
+Optimistic locking works automatically with standard repository methods:
+
+snippet::example.VersionedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-repository"]
+
+When you update an entity, Micronaut Data Nitrite automatically checks the version:
+
+[source,java]
+----
+VersionedBook book = bookRepository.findById(id).orElse(null);
+book.setTitle("Updated Title");
+bookRepository.update(book); // Throws OptimisticLockException if version mismatch
+----
+
+== Partial Updates with Optimistic Locking
+
+You can use the `@Version` field in partial update or delete methods. In this case, the version must match the version of the stored record:
+
+[source,java]
+----
+// Partial update with version check
+void updateTitle(@Id String id, String title, Long version);
+
+// Partial delete with version check
+void delete(@Id String id, Long version);
+----
+
+[source,java]
+----
+// The version parameter must match the current version in the database
+bookRepository.updateTitle(id, "New Title", currentVersion);
+----
+
+== Temporal Version Types
+
+When using temporal types (`Instant`, `LocalDateTime`, etc.) for the version field, the version is replaced with the current timestamp on each update rather than incremented:
+
+snippet::example.VersionedBookTemporal[project-base="doc-examples/nitrite-example", source="main", tags="versioned-book-temporal"]
+
+<1> The `Instant` version field will be replaced with the current timestamp on each update
+
+For temporal versions, the repository methods accept `Instant` (or other temporal type) instead of `Long`:
+
+snippet::example.VersionedBookTemporalRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-temporal-repository"]
+
+[source,java]
+----
+// The version parameter must match the current version in the database
+bookRepository.updateTitle(id, "New Title", currentVersion);
+----
+
+TIP: For most use cases, numeric version types (`Long` or `Integer`) are recommended as they provide clearer version semantics and avoid potential issues with clock precision.

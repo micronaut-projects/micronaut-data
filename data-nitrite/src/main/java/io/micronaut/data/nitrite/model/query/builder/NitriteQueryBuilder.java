@@ -51,12 +51,23 @@ import org.slf4j.LoggerFactory;
 @TypeHint(NitriteQueryBuilder.class)
 public final class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
 
+  /**
+   * Query parameter placeholder prefix.
+   */
   public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
   private static final Logger LOG = LoggerFactory.getLogger(NitriteQueryBuilder.class);
 
+  /**
+   * Creates a new NitriteQueryBuilder.
+   */
   public NitriteQueryBuilder() {
   }
 
+  /**
+   * Creates a new NitriteQueryBuilder with annotation metadata.
+   *
+   * @param annotationMetadata the annotation metadata
+   */
   public NitriteQueryBuilder(AnnotationMetadata annotationMetadata) {
   }
 
@@ -397,6 +408,11 @@ public final class NitriteQueryBuilder implements QueryBuilder, QueryBuilder2 {
     return obj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(obj);
   }
 
+  /**
+   * Checks if this query builder supports regex queries.
+   *
+   * @return true if regex is supported
+   */
   public boolean supportsRegex() {
     return true;
   }

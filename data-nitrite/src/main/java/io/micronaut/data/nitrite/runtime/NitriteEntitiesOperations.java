@@ -64,6 +64,19 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final EntityEventListener<Object> entityEventListener;
     private List<Object> preVersionValues;
 
+    /**
+     * Creates a new NitriteEntitiesOperations.
+     *
+     * @param ctx the operation context
+     * @param cascadeOperations the cascade operations
+     * @param entityEventListener the entity event listener
+     * @param persistentEntity the persistent entity
+     * @param conversionService the conversion service
+     * @param entityMapper the entity mapper
+     * @param helper the operations helper
+     * @param entities the entities to operate on
+     * @param insert true if this is an insert operation
+     */
     public NitriteEntitiesOperations(
             NitriteOperationContext ctx,
             SyncCascadeOperations<NitriteOperationContext> cascadeOperations,

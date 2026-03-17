@@ -23,9 +23,7 @@ class SpatialExample {
 
                 // Find books within 100km of Maine
                 val nearResults = repository.findByLocationNear(maine, 100000.0)
-                // end::near-usage[]
                 println("Near results: ${nearResults.size}")
-                // tag::near-usage[]
             }
         }
     }
@@ -55,9 +53,7 @@ class WithinExample {
 
                 // Find books within the bounding box
                 val withinResults = repository.findByLocationWithin(maineBox)
-                // end::within-usage[]
                 println("Within results: ${withinResults.size}")
-                // tag::within-usage[]
             }
         }
     }
@@ -84,9 +80,7 @@ class IntersectsExample {
 
                 // Find books whose location intersects the line
                 val intersectsResults = repository.findByLocationIntersects(line)
-                // end::intersects-usage[]
                 println("Intersects results: ${intersectsResults.size}")
-                // tag::intersects-usage[]
             }
         }
     }

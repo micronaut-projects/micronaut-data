@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.MappedEntity;
 
 import java.util.List;
 
+// tag::person[]
 @MappedEntity
 public class Person {
     @Id
@@ -55,4 +56,5 @@ public class Person {
         this.interests = interests;
     }
 }
+// end::person[]
 

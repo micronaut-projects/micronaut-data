@@ -1,0 +1,43 @@
+[[nitriteNaming]]
+== Naming Strategies
+
+The default naming strategy when converting camel case class and property names to collection and attribute names is to use underscore separated lower case (snake_case). In other words `FooBar` becomes `foo_bar`.
+
+This naming strategy applies to:
+
+- Entity class names (converted to collection names)
+- Entity property names (converted to document field names)
+- Aggregation query field references
+
+== Date/Time Serialization
+
+Date and time types such as `Instant`, `LocalDate`, and `LocalDateTime` are stored as ISO-8601 string representations in Nitrite documents. For example:
+
+- `LocalDate.of(1990, 5, 15)` is stored as `"1990-05-15"`
+- `Instant.parse("2024-01-15T10:30:00Z")` is stored as `"2024-01-15T10:30:00Z"`
+
+This ensures consistent querying and sorting of date/time values.
+
+== Example Entity
+
+snippet::example.PersonWithDateOfBirth[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirth"]
+
+In this example:
+
+- The entity class `PersonWithDateOfBirth` maps to the collection `person_with_date_of_birth`
+- The property `dateOfBirth` maps to the document field `date_of_birth`
+- The `LocalDate` value is stored as an ISO-8601 string (e.g., `"1990-05-15"`)
+
+== Repository Example
+
+snippet::example.PersonWithDateOfBirthRepository[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirthRepository"]
+
+== Aggregation Queries
+
+When using aggregation queries (such as `countBy*`, `findBy*`, etc.), the field names in the generated JSON queries use snake_case format:
+
+snippet::example.PersonWithDateOfBirthRepository[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirthRepository-countByName"]
+
+The above method generates a query that references the `name` field (not `Name` or `name` in camel case).
+
+TIP: The snake_case naming strategy is applied automatically. If you need different naming behavior, you can use the `@MappedEntity` annotation's `namingStrategy` attribute (though this is rarely needed for Nitrite).

@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.nitrite.annotation.FullTextIndex
 import io.micronaut.data.nitrite.annotation.SpatialIndex
+import org.locationtech.jts.geom.Geometry
 
 // tag::compound-index[]
 @MappedEntity
@@ -17,7 +18,7 @@ class IndexedBook {
     var id: String? = null
 
     // tag::property-index[]
-    @Index(columns = "title")
+    @Index(columns = ["title"])
     var title: String? = null
     // end::property-index[]
 
@@ -28,7 +29,7 @@ class IndexedBook {
 
     // tag::spatial-index[]
     @SpatialIndex
-    var location: String? = null
+    var location: Geometry? = null
     // end::spatial-index[]
 
     constructor()

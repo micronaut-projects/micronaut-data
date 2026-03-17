@@ -33,6 +33,12 @@ public final class CollectionFieldMapper {
     private final NitriteQueryParser queryParser;
     private final ValueConverter valueConverter;
 
+    /**
+     * Creates a new CollectionFieldMapper.
+     *
+     * @param queryParser the query parser
+     * @param valueConverter the value converter
+     */
     public CollectionFieldMapper(NitriteQueryParser queryParser, ValueConverter valueConverter) {
         this.queryParser = queryParser;
         this.valueConverter = valueConverter;

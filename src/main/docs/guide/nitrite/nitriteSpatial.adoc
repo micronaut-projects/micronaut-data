@@ -32,12 +32,7 @@ Micronaut Data Nitrite uses the https://locationtech.github.io/jts/[JTS (Java To
 
 IMPORTANT: JTS Coordinate order is **(longitude, latitude)** or **(x, y)**, NOT (latitude, longitude). This is a common source of errors. For example, to create a point for New York City (40.7128° N, 74.0060° W), use:
 
-[source,java]
-----
-GeometryFactory factory = new GeometryFactory();
-// Correct: (longitude, latitude) = (-74.0060, 40.7128)
-Geometry nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128));
-----
+snippet::example.GeometryTypesExample[project-base="doc-examples/nitrite-example", source="main", tags="geometry-types"]
 
 === Spatial Filters
 

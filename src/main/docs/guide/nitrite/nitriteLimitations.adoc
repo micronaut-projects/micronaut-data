@@ -1,5 +1,5 @@
 [[nitriteLimitations]]
-== Scope and limitations
+== Scope and Limitations
 
 Nitrite is intended as an embedded datastore for basic Micronaut Data usage.
 
@@ -7,5 +7,30 @@ In particular:
 
 - Nitrite is not a BSON/driver-native query-document store like MongoDB.
 - MongoDB-specific features such as aggregation pipelines, BSON filters, and Mongo-only annotations are out of scope for this module.
-- Persistent storage engines other than the default MVStore (for example RocksDB) require additional Nitrite adapter dependencies in your build configuration.
+- Persistent storage engines other than the default MVStore (for example, RocksDB) require additional Nitrite adapter dependencies in your build configuration.
 - If you need full MongoDB feature parity, use Micronaut Data MongoDB instead (see <<mongo>>).
+
+== Feature Overview
+
+Micronaut Data Nitrite supports a comprehensive set of features for embedded document storage:
+
+* <<nitriteRepositories, Repository patterns>> with derived query methods
+* <<nitriteCriteriaSpecifications, Criteria API>> with sorting and pagination
+* <<nitriteAssociationMapping, Association mapping>> with cascade operations
+* <<nitriteAssociationFetching, Association fetching>> with `@Join` annotation
+* <<nitriteOptimisticLocking, Optimistic locking>> with `@Version` annotation
+* <<nitriteTransactions, Transaction management>> with programmatic transactions
+* <<nitriteSpatial, Spatial queries>> with Geometry types (requires spatial module)
+* Entity lifecycle events (see <<entityEvents, Shared Entity Events>>)
+
+For a detailed list of supported features and known limitations, see the respective sections above.
+
+== Known Limitations
+
+The following features are not yet implemented or have limitations:
+
+* Nested `@Join` paths (e.g., `@Join("books.pages")`) require multiple `@Join` annotations
+* Some complex projection queries with associations
+* `@Join` with custom join types (only default join type is supported; no `LEFT_FETCH`, `INNER_FETCH`, etc.)
+* Advanced aggregation pipelines (use the Criteria API for aggregations)
+* Sub-queries in Criteria API

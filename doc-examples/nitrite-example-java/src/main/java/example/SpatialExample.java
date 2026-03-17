@@ -23,9 +23,7 @@ public class SpatialExample {
 
             // Find books within 100km of Maine
             List<IndexedBook> nearResults = repository.findByLocationNear(maine, 100000);
-            // end::near-usage[]
             System.out.println("Near results: " + nearResults.size());
-            // tag::near-usage[]
         }
     }
 }
@@ -51,9 +49,7 @@ class WithinExample {
 
             // Find books within the bounding box
             List<IndexedBook> withinResults = repository.findByLocationWithin(maineBox);
-            // end::within-usage[]
             System.out.println("Within results: " + withinResults.size());
-            // tag::within-usage[]
         }
     }
 }
@@ -76,9 +72,7 @@ class IntersectsExample {
 
             // Find books whose location intersects the line
             List<IndexedBook> intersectsResults = repository.findByLocationIntersects(line);
-            // end::intersects-usage[]
             System.out.println("Intersects results: " + intersectsResults.size());
-            // tag::intersects-usage[]
         }
     }
 }

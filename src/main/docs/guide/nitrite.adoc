@@ -4,6 +4,10 @@ It supports common Micronaut Data repository patterns, including:
 
 - <<nitriteRepositories, Repositories>>
 - <<nitriteConfiguration, Configuration>>
-- <<transactions, Transactions>> (via Micronaut Data TX infrastructure)
+- <<nitriteMapping, Entity Mapping>>
+- <<nitriteAssociationFetching, Association Fetching>>
+- <<nitriteCriteriaSpecifications, Criteria API>>
+- <<nitriteTransactions, Transactions>> (via Micronaut Data TX infrastructure)
+- <<nitriteSpatial, Spatial Queries>>
 
 Nitrite is intended for practical embedded use-cases and basic Micronaut Data CRUD. It is not a feature-equivalent MongoDB replacement; see <<nitriteLimitations>>.

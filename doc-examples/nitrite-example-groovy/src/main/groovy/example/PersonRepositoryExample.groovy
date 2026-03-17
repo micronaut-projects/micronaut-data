@@ -6,6 +6,8 @@ import static example.PersonRepository.Specifications.setNewName
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import jakarta.inject.Inject
 
 /**
@@ -24,6 +26,13 @@ class PersonRepositoryExample {
         def people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))))
         // end::find[]
     }
+
+    // tag::sorting-pagination-usage[]
+    void sortingAndPagination() {
+        def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc('name')))
+        def page = personRepository.findAll(ageIsLessThan(30), pageable)
+    }
+    // end::sorting-pagination-usage[]
 
     void update() {
         // tag::update[]

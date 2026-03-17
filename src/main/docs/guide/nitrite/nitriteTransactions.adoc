@@ -5,10 +5,20 @@ Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.
 
 === Examples
 
+Transactional method using `@Transactional` annotation:
+
 snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+
+Manual rollback using `TransactionOperations`:
 
 snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
 
 === Rollback control
 
 If you need to mark the current transaction rollback-only after some condition, use the `TransactionOperations` helper (`executeWrite`/`executeRead`) to set the status without throwing an exception.
+
+=== Entity Events
+
+Nitrite supports entity lifecycle events (see <<entityEvents, Entity Events>>). Event callbacks such as `@PrePersist`, `@PostPersist`, `@PreUpdate`, `@PostUpdate`, `@PreRemove`, and `@PostRemove` are triggered during transactional operations.
+
+NOTE: When cascade operations are used, child entity events are triggered before parent entity events (children before parent for cascade operations).

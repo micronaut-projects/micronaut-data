@@ -9,11 +9,13 @@ class ProjectRepositoryExample {
 
     @Inject lateinit var repository: ProjectRepository
 
+    // tag::useEmbeddedId[]
     fun useEmbeddedId() {
         val id = ProjectId(10, 20)
         repository.save(Project(id, "Alpha"))
         repository.findById(id)
         repository.deleteById(id)
     }
+    // end::useEmbeddedId[]
 }
 

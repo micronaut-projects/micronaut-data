@@ -52,6 +52,14 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
     override fun deleteAll(spec: DeleteSpecification<Person>): Long
     // end::delete[]
 
+    // tag::sorting-pagination[]
+    // Sorting with Sort
+    fun findAll(sort: Sort): List<Person>
+
+    // Pagination with Pageable
+    fun findAll(pageable: Pageable): Page<Person>
+    // end::sorting-pagination[]
+
     // tag::specifications[]
     // tag::allSpecifications[]
     class Specifications {
@@ -73,7 +81,7 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
             fun interestsContains(interest: String): PredicateSpecification<Person> =
                 PredicateSpecification { root, criteriaBuilder ->
                     (criteriaBuilder as PersistentEntityCriteriaBuilder)
-                        .arrayContains(root.get("interests"), criteriaBuilder.literal(interest))
+                        .arrayContains(root.get<Any>("interests"), criteriaBuilder.literal(interest))
                 }
         }
     }
@@ -83,4 +91,3 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
 // tag::repository[]
 }
 // end::repository[]
-

@@ -61,6 +61,19 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         INSERT, UPDATE, DELETE
     }
 
+    /**
+     * Creates a new NitriteEntityOperations.
+     *
+     * @param ctx the operation context
+     * @param cascadeOperations the cascade operations
+     * @param entityEventListener the entity event listener
+     * @param persistentEntity the persistent entity
+     * @param conversionService the conversion service
+     * @param entityMapper the entity mapper
+     * @param helper the operations helper
+     * @param entity the entity to operate on
+     * @param operationType the operation type
+     */
     public NitriteEntityOperations(
             NitriteOperationContext ctx,
             SyncCascadeOperations<NitriteOperationContext> cascadeOperations,

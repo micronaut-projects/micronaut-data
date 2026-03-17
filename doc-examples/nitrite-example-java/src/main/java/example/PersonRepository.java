@@ -67,6 +67,14 @@ public interface PersonRepository extends CrudRepository<Person, String>, JpaSpe
     long deleteAll(DeleteSpecification<Person> spec);
     // end::delete[]
 
+    // tag::sorting-pagination[]
+    // Sorting with Sort
+    List<Person> findAll(Sort sort);
+
+    // Pagination with Pageable
+    Page<Person> findAll(Pageable pageable);
+    // end::sorting-pagination[]
+
     // tag::specifications[]
     // tag::allSpecifications[]
     class Specifications {

@@ -67,3 +67,13 @@ See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/
 The Jackson mapper is included by default and provides JSON serialization support. No additional configuration is required.
 
 See the https://nitrite.dizitart.com/java-sdk/modules/jackson/index.html#jackson-mapper[Nitrite Jackson Mapper documentation] for more details.
+
+== Batch Operations
+
+For bulk operations, use the `saveAll`, `updateAll`, and `deleteAll` repository methods to batch operations efficiently:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="batch-operations"]
+
+Batch operations are more efficient than individual operations when working with multiple entities, as they reduce the number of database round-trips and take advantage of Nitrite's internal batching mechanisms.
+
+NOTE: For large batch operations, consider breaking them into smaller chunks to avoid memory pressure and improve transaction management.

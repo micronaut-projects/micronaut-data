@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.data.nitrite.repository.BookRepository
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.annotation.Transactional

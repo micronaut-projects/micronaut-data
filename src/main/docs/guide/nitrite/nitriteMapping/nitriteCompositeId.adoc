@@ -11,5 +11,13 @@ The entity then references the composite key using ann:data.annotation.EmbeddedI
 
 snippet::example.Project[project-base="doc-examples/nitrite-example", source="main", tags="project"]
 
+The repository uses the composite ID type as its ID parameter:
+
+snippet::example.ProjectRepository[project-base="doc-examples/nitrite-example", source="main", tags="projectRepository"]
+
+Usage example:
+
+snippet::example.ProjectRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="useEmbeddedId"]
+
 TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
 TIP: When using Java, define getters for the fields making up your composite key.

@@ -32,23 +32,88 @@ import java.util.Map;
 @Internal
 public interface NitriteOperationsHelper {
 
+    /**
+     * Gets the Nitrite collection for the specified type.
+     *
+     * @param type the entity type
+     * @return the Nitrite collection
+     */
     NitriteCollection getCollection(Class<?> type);
 
+    /**
+     * Generates an ID for the entity if necessary.
+     *
+     * @param entity the entity
+     * @param type the entity type
+     * @param <T> the entity type
+     */
     <T> void generateIdIfNecessary(T entity, Class<T> type);
 
+    /**
+     * Updates the entity ID property.
+     *
+     * @param property the ID property
+     * @param entity the entity
+     * @param id the ID value
+     * @param <T> the entity type
+     * @return the updated entity
+     */
     <T> T updateEntityId(BeanProperty<T, Object> property, T entity, Object id);
 
+    /**
+     * Converts a value for use in a filter.
+     *
+     * @param value the value to convert
+     * @return the converted value
+     */
     Object toFilterValue(Object value);
 
+    /**
+     * Logs an insert operation.
+     *
+     * @param collection the collection name
+     * @param doc the document being inserted
+     */
     void logInsert(String collection, Object doc);
 
+    /**
+     * Logs an update operation.
+     *
+     * @param collection the collection name
+     * @param filter the update filter
+     * @param update the update document
+     */
     void logUpdate(String collection, Filter filter, Document update);
 
+    /**
+     * Logs a find operation.
+     *
+     * @param collection the collection name
+     * @param filter the find filter
+     */
     void logFind(String collection, Filter filter);
 
+    /**
+     * Parses a sort from a SQL query.
+     *
+     * @param sql the SQL query
+     * @return the parsed sort
+     */
     Sort parseSortFromSqlQuery(String sql);
 
+    /**
+     * Parses a sort from a JSON query.
+     *
+     * @param queryString the JSON query string
+     * @return the parsed sort
+     */
     Sort parseSortFromJsonQuery(String queryString);
 
+    /**
+     * Parses a sort from query hints.
+     *
+     * @param hints the query hints
+     * @return the parsed sort
+     */
     Sort parseSortFromHints(Map<String, Object> hints);
 }

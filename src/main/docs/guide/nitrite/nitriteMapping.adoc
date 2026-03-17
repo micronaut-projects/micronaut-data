@@ -1,7 +1,7 @@
 [[nitriteMapping]]
 Nitrite entities are standard Micronaut Data entities (see <<shared, Shared Concepts>>), with a few Nitrite-specific considerations:
 
-- Nitrite stores documents internally with reserved fields (for example `_id`, `_revision`, `_modified`). The Micronaut Data Nitrite implementation avoids mapping your entity identifier to Nitrite’s internal `_id`.
+- Nitrite stores documents internally with reserved fields (for example `_id`, `_revision`, `_modified`). The Micronaut Data Nitrite implementation avoids mapping your entity identifier to Nitrite's internal `_id`.
 - The default identifier field used by Micronaut Data Nitrite is `id`.
 
 See the following sections for Nitrite-specific mapping notes:
@@ -10,3 +10,6 @@ See the following sections for Nitrite-specific mapping notes:
 - <<nitriteIndexes, Automated Index Creation>>
 - <<nitriteIdGenerator, ID generation>>
 - <<nitriteCompositeId, Composite primary keys>>
+- <<nitriteAssociationMapping, Association Mapping>>
+- <<nitriteAssociationFetching, Association Fetching>>
+- <<nitriteOptimisticLocking, Optimistic Locking>>

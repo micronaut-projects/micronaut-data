@@ -35,6 +35,12 @@ public final class CollectionProjectionMapper {
     private final ValueConverter valueConverter;
     private final NitriteEntityMapper entityMapper;
 
+    /**
+     * Creates a new CollectionProjectionMapper.
+     *
+     * @param valueConverter the value converter
+     * @param entityMapper the entity mapper
+     */
     public CollectionProjectionMapper(ValueConverter valueConverter, NitriteEntityMapper entityMapper) {
         this.valueConverter = valueConverter;
         this.entityMapper = entityMapper;

@@ -27,6 +27,12 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 @Internal
 public final class NitriteOperationContext extends OperationContext {
 
+    /**
+     * Creates a new NitriteOperationContext.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param repositoryType the repository type
+     */
     public NitriteOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType) {
         super(annotationMetadata, repositoryType);
     }

@@ -95,6 +95,20 @@ public final class NitriteQueryExecutor {
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
 
+    /**
+     * Creates a new NitriteQueryExecutor.
+     *
+     * @param entityMapper the entity mapper
+     * @param queryParser the query parser
+     * @param filterBuilder the filter builder
+     * @param updateExecutor the update executor
+     * @param conversionService the conversion service
+     * @param collectionFactory the collection factory function
+     * @param entityFactory the entity factory function
+     * @param findOptionsFactory the find options factory function
+     * @param helper the operations helper
+     * @param entityEventListener the entity event listener
+     */
     public NitriteQueryExecutor(NitriteEntityMapper entityMapper,
                                 NitriteQueryParser queryParser,
                                 NitriteFilterBuilder filterBuilder,
@@ -124,6 +138,12 @@ public final class NitriteQueryExecutor {
         this.aggregationHandler = new CollectionAggregator();
     }
 
+    /**
+     * Converts a value for use in a filter.
+     *
+     * @param value the value to convert
+     * @return the converted value
+     */
     public Object toFilterValue(Object value) {
         if (value == null) {
             return null;
@@ -150,6 +170,15 @@ public final class NitriteQueryExecutor {
         return entityMapper.toFilterValue(value);
     }
 
+    /**
+     * Finds a single result matching the prepared query.
+     *
+     * @param q the prepared query
+     * @param nq the nitrite prepared query
+     * @param <T> the entity type
+     * @param <R> the result type
+     * @return the first matching result, or null if none found
+     */
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
         NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
         String query = nq.getQuery();
@@ -215,6 +244,15 @@ public final class NitriteQueryExecutor {
         return entity;
     }
 
+    /**
+     * Finds all results matching the prepared query.
+     *
+     * @param q the prepared query
+     * @param nq the nitrite prepared query
+     * @param <T> the entity type
+     * @param <R> the result type
+     * @return iterable of matching results
+     */
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
         NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
         Filter filter = nq.getNitriteFilter();
@@ -345,6 +383,13 @@ public final class NitriteQueryExecutor {
         return results;
     }
 
+    /**
+     * Executes an update query.
+     *
+     * @param q the prepared query
+     * @param nq the nitrite prepared query
+     * @return optional containing the number of updated entities
+     */
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
         Map<String, Object> setFields = null;
         Filter filter = null;
@@ -376,11 +421,24 @@ public final class NitriteQueryExecutor {
         return Optional.of(collectionFactory.apply(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount());
     }
 
+    /**
+     * Executes a delete query.
+     *
+     * @param q the prepared query
+     * @param nq the nitrite prepared query
+     * @return optional containing the number of deleted entities
+     */
     public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
         NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
         return Optional.of(coll.remove(nq.getNitriteFilter()).getAffectedCount());
     }
 
+    /**
+     * Builds a map of named parameter values from a prepared query.
+     *
+     * @param q the prepared query
+     * @return the map of named parameter values
+     */
     public Map<String, Object> buildNamedParameterValues(@NonNull final PreparedQuery<?, ?> q) {
         Object[] params = q.getParameterArray();
         if (params == null || params.length == 0) {
@@ -407,6 +465,12 @@ public final class NitriteQueryExecutor {
         return result;
     }
 
+    /**
+     * Builds an array of JSON parameter values from a prepared query.
+     *
+     * @param q the prepared query
+     * @return the array of JSON parameter values
+     */
     public Object[] buildJsonParameterValues(@NonNull final PreparedQuery<?, ?> q) {
         Object[] params = q.getParameterArray();
         if (params == null || params.length == 0) {
@@ -426,6 +490,13 @@ public final class NitriteQueryExecutor {
         return values;
     }
 
+    /**
+     * Builds a filter from a prepared query.
+     *
+     * @param q the prepared query
+     * @param stored the stored query
+     * @return the built filter
+     */
     public Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
         Map<String, Object> namedParameters = buildNamedParameterValues(q);
         if (stored.getFilterMap() != null) {
@@ -448,6 +519,14 @@ public final class NitriteQueryExecutor {
         throw new IllegalStateException("Unsupported query format: " + queryString);
     }
 
+    /**
+     * Parses a filter from a DELETE statement.
+     *
+     * @param sql the SQL statement
+     * @param params the query parameters
+     * @param namedParameters the named parameters
+     * @return the parsed filter
+     */
     public Filter parseFilterFromDeleteStatement(final String sql, final Object[] params, final Map<String, Object> namedParameters) {
         int whereIdx = sql.toUpperCase().indexOf(" WHERE ");
         if (whereIdx < 0) {
@@ -458,6 +537,14 @@ public final class NitriteQueryExecutor {
         return parseWhereClause(orderByIdx >= 0 ? where.substring(0, orderByIdx) : where, params, namedParameters);
     }
 
+    /**
+     * Parses a filter from a SELECT statement.
+     *
+     * @param sql the SQL statement
+     * @param params the query parameters
+     * @param namedParameters the named parameters
+     * @return the parsed filter
+     */
     public Filter parseFilterFromSelectStatement(final String sql, final Object[] params, final Map<String, Object> namedParameters) {
         int whereIdx = sql.toUpperCase().indexOf(" WHERE ");
         if (whereIdx < 0) {
@@ -520,6 +607,14 @@ public final class NitriteQueryExecutor {
         return reordered;
     }
 
+    /**
+     * Parses a filter from an UPDATE statement.
+     *
+     * @param sql the SQL statement
+     * @param params the query parameters
+     * @param namedParameters the named parameters
+     * @return the parsed filter
+     */
     public Filter parseFilterFromUpdateStatement(final String sql, final Object[] params, final Map<String, Object> namedParameters) {
         int whereIdx = sql.toUpperCase().indexOf(" WHERE ");
         if (whereIdx < 0) {
@@ -530,6 +625,14 @@ public final class NitriteQueryExecutor {
         return parseWhereClause(clause, params, namedParameters);
     }
 
+    /**
+     * Parses a WHERE clause into a filter.
+     *
+     * @param where the WHERE clause
+     * @param params the query parameters
+     * @param namedParameters the named parameters
+     * @return the parsed filter
+     */
     public Filter parseWhereClause(String where, final Object[] params, final Map<String, Object> namedParameters) {
         List<Filter> filters = new ArrayList<>();
         String emptyPat = "(?:\\w+\\.)?(\\w+)\\s+IS\\s+NULL\\s+OR\\s+(?:\\w+\\.)?\\1\\s*=\\s*''";

@@ -10,7 +10,7 @@ application {
 micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
-    testRuntime "spock"
+    testRuntime "junit5"
 }
 
 dependencies {
@@ -19,6 +19,11 @@ dependencies {
     compileOnly projects.micronautDataDocumentProcessor
 
     implementation projects.micronautDataNitrite
+    implementation libs.nitrite.spatial
+    implementation libs.jackson.datatype.jts
+    implementation mnSql.jakarta.persistence.api
+
+    testRuntimeOnly "org.apache.groovy:groovy:${libs.versions.groovy.get()}"
 
     runtimeOnly mnLogging.logback.classic
 }
