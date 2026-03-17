@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @MicronautTest(transactional = false)
-class ItemRepositorySpec {
+abstract class ItemRepositorySpec {
 
     @Inject
     private ItemRepository itemRepository;

@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@MicronautTest
-class CustomEntityRepositorySpec {
+abstract class CustomEntityRepositorySpec {
 
     @Inject
     CustomEntityRepository repository;

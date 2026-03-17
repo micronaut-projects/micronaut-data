@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Page;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface CustomEntityRepository extends CrudRepository<CustomEntity, Long> {
     Page<CustomEntity> findAll(Pageable pageable);
 

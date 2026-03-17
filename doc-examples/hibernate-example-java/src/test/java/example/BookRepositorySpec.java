@@ -6,7 +6,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
-class BookRepositorySpec {
+abstract class BookRepositorySpec {
 
     // tag::inject[]
     @Inject

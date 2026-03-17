@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -16,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 // tag::join[]
 // tag::async[]
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface ProductRepository extends CrudRepository<Product, Long> {
 // end::join[]
 // end::async[]

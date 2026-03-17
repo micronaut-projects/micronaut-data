@@ -3,6 +3,7 @@ package example;
 import example.metamodel.Category_;
 import example.metamodel.Client;
 import example.metamodel.Client_;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -14,9 +15,12 @@ import jakarta.persistence.criteria.JoinType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 @MicronautTest
-class StaticMetamodelTest {
+@Requires(env="h2")
+@DisabledIfEnvironmentVariable(named = "MICRONAUT_ENVIRONMENTS", matches = "oracle")
+class H2StaticMetamodelTest {
     @Inject
     RuntimeCriteriaBuilder runtimeCriteriaBuilder;
 

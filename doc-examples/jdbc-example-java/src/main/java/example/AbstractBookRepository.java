@@ -1,6 +1,7 @@
 
 package example;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -12,9 +13,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public abstract class AbstractBookRepository implements CrudRepository<Book, Long> {
 
-    private final JdbcOperations jdbcOperations;
+    protected final JdbcOperations jdbcOperations;
 
     public AbstractBookRepository(JdbcOperations jdbcOperations) {
         this.jdbcOperations = jdbcOperations;

@@ -9,9 +9,7 @@ import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@MicronautTest(transactional = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductManagerSpec {
+abstract class ProductManagerSpec {
 
     @Inject
     ProductManager productManager;

@@ -15,7 +15,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
 import jakarta.inject.Inject;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-@MicronautTest
-class BookRepositorySpec {
+abstract class BookRepositorySpec {
 
     // tag::inject[]
 	@Inject BookRepository bookRepository;

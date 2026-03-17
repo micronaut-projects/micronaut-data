@@ -5,8 +5,10 @@ import io.micronaut.data.annotation.Where;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-@Entity
+@Entity(name = "Users")
+@Table(name = "USERS")
 @Where("@.enabled = true")
 public class User {
     @GeneratedValue

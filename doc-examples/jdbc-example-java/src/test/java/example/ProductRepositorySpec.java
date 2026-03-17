@@ -1,6 +1,5 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -11,9 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@MicronautTest(transactional = false, rollback = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductRepositorySpec {
+abstract class ProductRepositorySpec {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;

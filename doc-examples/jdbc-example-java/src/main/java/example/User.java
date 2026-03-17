@@ -4,7 +4,7 @@ package example;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
+@MappedEntity(value = "users", namingStrategy = NamingStrategies.Raw.class)
 @Where("@.userEnabled = true") // <1>
 public class User {
     @GeneratedValue
