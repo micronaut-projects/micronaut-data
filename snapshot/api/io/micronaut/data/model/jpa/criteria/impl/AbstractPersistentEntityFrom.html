@@ -86,6 +86,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#join(jakarta.persistence.metamodel.SetAttribute,jakarta.persistence.criteria.JoinType)" tabindex="0">join(SetAttribute, JoinType)</a></li>
 <li><a href="#join(jakarta.persistence.metamodel.ListAttribute,jakarta.persistence.criteria.JoinType)" tabindex="0">join(ListAttribute, JoinType)</a></li>
 <li><a href="#join(jakarta.persistence.metamodel.MapAttribute,jakarta.persistence.criteria.JoinType)" tabindex="0">join(MapAttribute, JoinType)</a></li>
+<li><a href="#join(jakarta.persistence.metamodel.EntityType)" tabindex="0">join(EntityType)</a></li>
+<li><a href="#join(jakarta.persistence.metamodel.EntityType,jakarta.persistence.criteria.JoinType)" tabindex="0">join(EntityType, JoinType)</a></li>
+<li><a href="#join(java.lang.Class)" tabindex="0">join(Class)</a></li>
+<li><a href="#join(java.lang.Class,jakarta.persistence.criteria.JoinType)" tabindex="0">join(Class, JoinType)</a></li>
 <li><a href="#joinCollection(java.lang.String)" tabindex="0">joinCollection(String)</a></li>
 <li><a href="#joinSet(java.lang.String)" tabindex="0">joinSet(String)</a></li>
 <li><a href="#joinList(java.lang.String)" tabindex="0">joinList(String)</a></li>
@@ -235,6 +239,13 @@ implements <a href="../PersistentEntityFrom.html" title="interface in io.microna
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(jakarta.persistence.metamodel.CollectionAttribute,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(jakarta.persistence.metamodel.CollectionAttribute&lt;? super <a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>, Y&gt;&nbsp;collection,
  jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Join<wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(jakarta.persistence.metamodel.EntityType)" class="member-name-link">join</a><wbr>(jakarta.persistence.metamodel.EntityType&lt;Y&gt;&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Join<wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(jakarta.persistence.metamodel.EntityType,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(jakarta.persistence.metamodel.EntityType&lt;Y&gt;&nbsp;entity,
+ jakarta.persistence.criteria.JoinType&nbsp;joinType)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;<a href="../PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a><wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(jakarta.persistence.metamodel.ListAttribute)" class="member-name-link">join</a><wbr>(jakarta.persistence.metamodel.ListAttribute&lt;? super <a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>, Y&gt;&nbsp;list)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -268,6 +279,13 @@ implements <a href="../PersistentEntityFrom.html" title="interface in io.microna
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;<a href="../PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a><wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>, Y&gt;&nbsp;attribute,
  jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Join<wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(java.lang.Class)" class="member-name-link">join</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;Y&gt;&nbsp;entityClass)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Join<wbr>&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(java.lang.Class,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;Y&gt;&nbsp;entityClass,
+ jakarta.persistence.criteria.JoinType&nbsp;joinType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X,<wbr>Y&gt;&nbsp;<a href="../PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#join(java.lang.String)" class="member-name-link">join</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
@@ -327,20 +345,14 @@ implements <a href="../PersistentEntityFrom.html" title="interface in io.microna
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Expression">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Expression</h3>
-<code>cast, equalTo, equalTo, notEqualTo, notEqualTo</code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-jakarta.persistence.criteria.From">Methods inherited from interface&nbsp;jakarta.persistence.criteria.From</h3>
-<code>join, join, join, join</code></div>
-<div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IExpression">Methods inherited from interface&nbsp;<a href="../IExpression.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></h3>
-<code><a href="../IExpression.html#as(java.lang.Class)" title="as(Class)">as</a>, <a href="../IExpression.html#getExpressionType()" title="getExpressionType()">getExpressionType</a>, <a href="../IExpression.html#getJavaType()" title="getJavaType()">getJavaType</a>, <a href="../IExpression.html#in(jakarta.persistence.criteria.Expression...)" title="in(Expression...)">in</a>, <a href="../IExpression.html#in(jakarta.persistence.criteria.Expression)" title="in(Expression)">in</a>, <a href="../IExpression.html#in(java.lang.Object...)" title="in(Object...)">in</a>, <a href="../IExpression.html#in(java.util.Collection)" title="in(Collection)">in</a>, <a href="../IExpression.html#isNotNull()" title="isNotNull()">isNotNull</a>, <a href="../IExpression.html#isNull()" title="isNull()">isNull</a>, <a href="../IExpression.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)" title="visitExpression(ExpressionVisitor)">visitExpression</a>, <a href="../IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)" title="visitSelection(SelectionVisitor)">visitSelection</a></code></div>
+<code><a href="../IExpression.html#as(java.lang.Class)" title="as(Class)">as</a>, <a href="../IExpression.html#cast(java.lang.Class)" title="cast(Class)">cast</a>, <a href="../IExpression.html#equalTo(jakarta.persistence.criteria.Expression)" title="equalTo(Expression)">equalTo</a>, <a href="../IExpression.html#equalTo(java.lang.Object)" title="equalTo(Object)">equalTo</a>, <a href="../IExpression.html#getExpressionType()" title="getExpressionType()">getExpressionType</a>, <a href="../IExpression.html#getJavaType()" title="getJavaType()">getJavaType</a>, <a href="../IExpression.html#in(jakarta.persistence.criteria.Expression...)" title="in(Expression...)">in</a>, <a href="../IExpression.html#in(jakarta.persistence.criteria.Expression)" title="in(Expression)">in</a>, <a href="../IExpression.html#in(java.lang.Object...)" title="in(Object...)">in</a>, <a href="../IExpression.html#in(java.util.Collection)" title="in(Collection)">in</a>, <a href="../IExpression.html#isNotNull()" title="isNotNull()">isNotNull</a>, <a href="../IExpression.html#isNull()" title="isNull()">isNull</a>, <a href="../IExpression.html#notEqualTo(jakarta.persistence.criteria.Expression)" title="notEqualTo(Expression)">notEqualTo</a>, <a href="../IExpression.html#notEqualTo(java.lang.Object)" title="notEqualTo(Object)">notEqualTo</a>, <a href="../IExpression.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)" title="visitExpression(ExpressionVisitor)">visitExpression</a>, <a href="../IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)" title="visitSelection(SelectionVisitor)">visitSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.ISelection">Methods inherited from interface&nbsp;<a href="../ISelection.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a></h3>
 <code><a href="../ISelection.html#alias(java.lang.String)" title="alias(String)">alias</a>, <a href="../ISelection.html#getAlias()" title="getAlias()">getAlias</a>, <a href="../ISelection.html#getCompoundSelectionItems()" title="getCompoundSelectionItems()">getCompoundSelectionItems</a>, <a href="../ISelection.html#isCompoundSelection()" title="isCompoundSelection()">isCompoundSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Path">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Path</h3>
-<code>get, get, getModel, getParentPath</code></div>
+<code>getModel, getParentPath</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityPath">Methods inherited from interface&nbsp;<a href="../PersistentEntityPath.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityPath</a></h3>
 <code><a href="../PersistentEntityPath.html#get(jakarta.persistence.metamodel.MapAttribute)" title="get(MapAttribute)">get</a>, <a href="../PersistentEntityPath.html#get(jakarta.persistence.metamodel.PluralAttribute)" title="get(PluralAttribute)">get</a>, <a href="../PersistentEntityPath.html#get(jakarta.persistence.metamodel.SingularAttribute)" title="get(SingularAttribute)">get</a>, <a href="../PersistentEntityPath.html#get(java.lang.String)" title="get(String)">get</a></code></div>
@@ -647,6 +659,56 @@ implements <a href="../PersistentEntityFrom.html" title="interface in io.microna
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;K,<wbr>V&gt;</span>
 <span class="return-type">jakarta.persistence.criteria.MapJoin&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>K,<wbr>V&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(jakarta.persistence.metamodel.MapAttribute&lt;? super <a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>, K, V&gt;&nbsp;map,
  jakarta.persistence.criteria.JoinType&nbsp;jt)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="#type-param-J" title="type parameter in AbstractPersistentEntityFrom">J</a>,<wbr><a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="join(jakarta.persistence.metamodel.EntityType)">
+<h3>join</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Join&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(jakarta.persistence.metamodel.EntityType&lt;Y&gt;&nbsp;entity)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="#type-param-J" title="type parameter in AbstractPersistentEntityFrom">J</a>,<wbr><a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="join(jakarta.persistence.metamodel.EntityType,jakarta.persistence.criteria.JoinType)">
+<h3>join</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Join&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(jakarta.persistence.metamodel.EntityType&lt;Y&gt;&nbsp;entity,
+ jakarta.persistence.criteria.JoinType&nbsp;joinType)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="#type-param-J" title="type parameter in AbstractPersistentEntityFrom">J</a>,<wbr><a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="join(java.lang.Class)">
+<h3>join</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Join&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;Y&gt;&nbsp;entityClass)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="#type-param-J" title="type parameter in AbstractPersistentEntityFrom">J</a>,<wbr><a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="join(java.lang.Class,jakarta.persistence.criteria.JoinType)">
+<h3>join</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Join&lt;<a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>,<wbr>Y&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;Y&gt;&nbsp;entityClass,
+ jakarta.persistence.criteria.JoinType&nbsp;joinType)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="#type-param-J" title="type parameter in AbstractPersistentEntityFrom">J</a>,<wbr><a href="#type-param-E" title="type parameter in AbstractPersistentEntityFrom">E</a>&gt;</code></dd>

@@ -67,8 +67,18 @@ loadScripts(document, 'script');</script>
 <li><a href="#construct(java.lang.Class,jakarta.persistence.criteria.Selection...)" tabindex="0">construct(Class, Selection...)</a></li>
 <li><a href="#tuple(jakarta.persistence.criteria.Selection...)" tabindex="0">tuple(Selection...)</a></li>
 <li><a href="#array(jakarta.persistence.criteria.Selection...)" tabindex="0">array(Selection...)</a></li>
+<li><a href="#tuple(java.util.List)" tabindex="0">tuple(List)</a></li>
+<li><a href="#array(java.util.List)" tabindex="0">array(List)</a></li>
+<li><a href="#union(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">union(CriteriaSelect, CriteriaSelect)</a></li>
+<li><a href="#unionAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">unionAll(CriteriaSelect, CriteriaSelect)</a></li>
+<li><a href="#intersect(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">intersect(CriteriaSelect, CriteriaSelect)</a></li>
+<li><a href="#intersectAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">intersectAll(CriteriaSelect, CriteriaSelect)</a></li>
+<li><a href="#except(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">except(CriteriaSelect, CriteriaSelect)</a></li>
+<li><a href="#exceptAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" tabindex="0">exceptAll(CriteriaSelect, CriteriaSelect)</a></li>
 <li><a href="#asc(jakarta.persistence.criteria.Expression)" tabindex="0">asc(Expression)</a></li>
+<li><a href="#asc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)" tabindex="0">asc(Expression, Nulls)</a></li>
 <li><a href="#desc(jakarta.persistence.criteria.Expression)" tabindex="0">desc(Expression)</a></li>
+<li><a href="#desc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)" tabindex="0">desc(Expression, Nulls)</a></li>
 <li><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" tabindex="0">sort(Expression, boolean, boolean)</a></li>
 <li><a href="#avg(jakarta.persistence.criteria.Expression)" tabindex="0">avg(Expression)</a></li>
 <li><a href="#sum(jakarta.persistence.criteria.Expression)" tabindex="0">sum(Expression)</a></li>
@@ -84,9 +94,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#all(jakarta.persistence.criteria.Subquery)" tabindex="0">all(Subquery)</a></li>
 <li><a href="#some(jakarta.persistence.criteria.Subquery)" tabindex="0">some(Subquery)</a></li>
 <li><a href="#any(jakarta.persistence.criteria.Subquery)" tabindex="0">any(Subquery)</a></li>
+<li><a href="#extract(jakarta.persistence.criteria.TemporalField,jakarta.persistence.criteria.Expression)" tabindex="0">extract(TemporalField, Expression)</a></li>
 <li><a href="#and(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">and(Expression, Expression)</a></li>
 <li><a href="#and(jakarta.persistence.criteria.Predicate...)" tabindex="0">and(Predicate...)</a></li>
 <li><a href="#and(java.lang.Iterable)" tabindex="0">and(Iterable)</a></li>
+<li><a href="#and(java.util.List)" tabindex="0">and(List)</a></li>
 <li><a href="#isEmptyString(jakarta.persistence.criteria.Expression)" tabindex="0">isEmptyString(Expression)</a></li>
 <li><a href="#isNotEmptyString(jakarta.persistence.criteria.Expression)" tabindex="0">isNotEmptyString(Expression)</a></li>
 <li><a href="#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">ilike(Expression, Expression)</a></li>
@@ -103,6 +115,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#or(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">or(Expression, Expression)</a></li>
 <li><a href="#or(jakarta.persistence.criteria.Predicate...)" tabindex="0">or(Predicate...)</a></li>
 <li><a href="#or(java.lang.Iterable)" tabindex="0">or(Iterable)</a></li>
+<li><a href="#or(java.util.List)" tabindex="0">or(List)</a></li>
 <li><a href="#not(jakarta.persistence.criteria.Expression)" tabindex="0">not(Expression)</a></li>
 <li><a href="#conjunction()" tabindex="0">conjunction()</a></li>
 <li><a href="#disjunction()" tabindex="0">disjunction()</a></li>
@@ -188,10 +201,19 @@ loadScripts(document, 'script');</script>
 <li><a href="#concat(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">concat(Expression, Expression)</a></li>
 <li><a href="#concat(jakarta.persistence.criteria.Expression,java.lang.String)" tabindex="0">concat(Expression, String)</a></li>
 <li><a href="#concat(java.lang.String,jakarta.persistence.criteria.Expression)" tabindex="0">concat(String, Expression)</a></li>
+<li><a href="#concat(java.util.List)" tabindex="0">concat(List)</a></li>
+<li><a href="#replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">replace(Expression, Expression, Expression)</a></li>
+<li><a href="#replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,java.lang.String)" tabindex="0">replace(Expression, Expression, String)</a></li>
+<li><a href="#replace(jakarta.persistence.criteria.Expression,java.lang.String,jakarta.persistence.criteria.Expression)" tabindex="0">replace(Expression, String, Expression)</a></li>
+<li><a href="#replace(jakarta.persistence.criteria.Expression,java.lang.String,java.lang.String)" tabindex="0">replace(Expression, String, String)</a></li>
 <li><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">substring(Expression, Expression)</a></li>
 <li><a href="#substring(jakarta.persistence.criteria.Expression,int)" tabindex="0">substring(Expression, int)</a></li>
 <li><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">substring(Expression, Expression, Expression)</a></li>
 <li><a href="#substring(jakarta.persistence.criteria.Expression,int,int)" tabindex="0">substring(Expression, int, int)</a></li>
+<li><a href="#left(jakarta.persistence.criteria.Expression,int)" tabindex="0">left(Expression, int)</a></li>
+<li><a href="#left(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">left(Expression, Expression)</a></li>
+<li><a href="#right(jakarta.persistence.criteria.Expression,int)" tabindex="0">right(Expression, int)</a></li>
+<li><a href="#right(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">right(Expression, Expression)</a></li>
 <li><a href="#trim(jakarta.persistence.criteria.Expression)" tabindex="0">trim(Expression)</a></li>
 <li><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,jakarta.persistence.criteria.Expression)" tabindex="0">trim(CriteriaBuilder.Trimspec, Expression)</a></li>
 <li><a href="#trim(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">trim(Expression, Expression)</a></li>
@@ -327,14 +349,20 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">AND restriction predicate.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#any(jakarta.persistence.criteria.Subquery)" class="member-name-link">any</a><wbr>(jakarta.persistence.criteria.Subquery&lt;Y&gt;&nbsp;subquery)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#and(java.util.List)" class="member-name-link">and</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CompoundSelection<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>[]&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#array(jakarta.persistence.criteria.Selection...)" class="member-name-link">array</a><wbr>(jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#any(jakarta.persistence.criteria.Subquery)" class="member-name-link">any</a><wbr>(jakarta.persistence.criteria.Subquery&lt;Y&gt;&nbsp;subquery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CompoundSelection<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>[]&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#array(jakarta.persistence.criteria.Selection...)" class="member-name-link">array</a><wbr>(jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CompoundSelection<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>[]&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#array(java.util.List)" class="member-name-link">array</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selections)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">arrayContains</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
@@ -344,50 +372,57 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#asc(jakarta.persistence.criteria.Expression)" class="member-name-link">asc</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#avg(jakarta.persistence.criteria.Expression)" class="member-name-link">avg</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#asc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)" class="member-name-link">asc</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;? super Y&gt;&gt;<br>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#between(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">between</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;v,
- jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;y)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#avg(jakarta.persistence.criteria.Expression)" class="member-name-link">avg</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;? super Y&gt;&gt;<br>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#between(jakarta.persistence.criteria.Expression,Y,Y)" class="member-name-link">between</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;v,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#between(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">between</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;v,
+ jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;? super Y&gt;&gt;<br>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#between(jakarta.persistence.criteria.Expression,Y,Y)" class="member-name-link">between</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;v,
  Y&nbsp;x,
  Y&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ceiling(jakarta.persistence.criteria.Expression)" class="member-name-link">ceiling</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.Coalesce<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce()" class="member-name-link">coalesce</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">coalesce</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;y)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ceiling(jakarta.persistence.criteria.Expression)" class="member-name-link">ceiling</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.Coalesce<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce()" class="member-name-link">coalesce</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce(jakarta.persistence.criteria.Expression,Y)" class="member-name-link">coalesce</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
- Y&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">coalesce</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">concat</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#coalesce(jakarta.persistence.criteria.Expression,Y)" class="member-name-link">coalesce</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends Y&gt;&nbsp;x,
+ Y&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">concat</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">concat</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(java.lang.String,jakarta.persistence.criteria.Expression)" class="member-name-link">concat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">concat</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(java.lang.String,jakarta.persistence.criteria.Expression)" class="member-name-link">concat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#concat(java.util.List)" class="member-name-link">concat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&gt;&nbsp;expressions)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#conjunction()" class="member-name-link">conjunction</a>()</code></div>
@@ -434,58 +469,74 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#desc(jakarta.persistence.criteria.Expression)" class="member-name-link">desc</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">diff</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#desc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)" class="member-name-link">desc</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(jakarta.persistence.criteria.Expression,N)" class="member-name-link">diff</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- N&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">diff</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(N,jakarta.persistence.criteria.Expression)" class="member-name-link">diff</a><wbr>(N&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(jakarta.persistence.criteria.Expression,N)" class="member-name-link">diff</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ N&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#disjunction()" class="member-name-link">disjunction</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#diff(N,jakarta.persistence.criteria.Expression)" class="member-name-link">diff</a><wbr>(N&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#endingWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">endingWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#disjunction()" class="member-name-link">disjunction</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#endingWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">endingWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Checks if the expression x ending with the expression y.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">endingWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Checks if the expression x ending with the expression y ignoring case.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equal(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">equal</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equal(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">equal</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">equalStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">endingWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Checks if the expression x equals the expression y ignoring case.</div>
+<div class="block">Checks if the expression x ending with the expression y ignoring case.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">equalStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equal(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">equal</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equal(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">equal</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">equalStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Checks if the expression x equals a string y ignoring case.</div>
+<div class="block">Checks if the expression x equals the expression y ignoring case.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exists(jakarta.persistence.criteria.Subquery)" class="member-name-link">exists</a><wbr>(jakarta.persistence.criteria.Subquery&lt;?&gt;&nbsp;subquery)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">equalStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Checks if the expression x equals a string y ignoring case.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#except(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">except</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;?&gt;&nbsp;right)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exceptAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">exceptAll</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;?&gt;&nbsp;right)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exp(jakarta.persistence.criteria.Expression)" class="member-name-link">exp</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exists(jakarta.persistence.criteria.Subquery)" class="member-name-link">exists</a><wbr>(jakarta.persistence.criteria.Subquery&lt;?&gt;&nbsp;subquery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exp(jakarta.persistence.criteria.Expression)" class="member-name-link">exp</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N, T extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/temporal/Temporal.html" title="class or interface in java.time.temporal" class="external-link">Temporal</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#extract(jakarta.persistence.criteria.TemporalField,jakarta.persistence.criteria.Expression)" class="member-name-link">extract</a><wbr>(jakarta.persistence.criteria.TemporalField&lt;N,<wbr>T&gt;&nbsp;field,
+ jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;temporal)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#floor(jakarta.persistence.criteria.Expression)" class="member-name-link">floor</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
@@ -538,6 +589,14 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.In<wbr>&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#in(jakarta.persistence.criteria.Expression)" class="member-name-link">in</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends T&gt;&nbsp;expression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#intersect(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">intersect</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;right)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#intersectAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">intersectAll</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;right)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;?&gt;&gt;<br>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEmpty(jakarta.persistence.criteria.Expression)" class="member-name-link">isEmpty</a><wbr>(jakarta.persistence.criteria.Expression&lt;C&gt;&nbsp;collection)</code></div>
@@ -610,6 +669,14 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;? super X&gt;&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;X&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#least(jakarta.persistence.criteria.Expression)" class="member-name-link">least</a><wbr>(jakarta.persistence.criteria.Expression&lt;X&gt;&nbsp;x)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#left(jakarta.persistence.criteria.Expression,int)" class="member-name-link">left</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ int&nbsp;len)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#left(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">left</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;len)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#length(jakarta.persistence.criteria.Expression)" class="member-name-link">length</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
@@ -817,278 +884,320 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">OR restriction predicate.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#or(java.util.List)" class="member-name-link">or</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class,java.lang.String,java.lang.Object)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class,java.lang.String,java.lang.Object)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create a new parameter with possible constant value.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class,java.lang.String)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(java.lang.Class,java.lang.String)" class="member-name-link">parameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,N)" class="member-name-link">prod</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- N&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(N,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(N&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,N)" class="member-name-link">prod</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ N&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(N,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(N&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">quot</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(java.lang.Number,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">quot</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(java.lang.Number,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create a predicate for testing whether the expression satisfies the given pattern.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#round(jakarta.persistence.criteria.Expression,java.lang.Integer)" class="member-name-link">round</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;n)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.Case<wbr>&lt;R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectCase()" class="member-name-link">selectCase</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C,<wbr>R&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.SimpleCase<wbr>&lt;C,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectCase(jakarta.persistence.criteria.Expression)" class="member-name-link">selectCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends C&gt;&nbsp;expression)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sign(jakarta.persistence.criteria.Expression)" class="member-name-link">sign</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">replace</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;substring,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;replacement)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;?&gt;&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#size(C)" class="member-name-link">size</a><wbr>(C&nbsp;collection)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">replace</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;substring,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;replacement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#replace(jakarta.persistence.criteria.Expression,java.lang.String,jakarta.persistence.criteria.Expression)" class="member-name-link">replace</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;substring,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;replacement)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#replace(jakarta.persistence.criteria.Expression,java.lang.String,java.lang.String)" class="member-name-link">replace</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;substring,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;replacement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#right(jakarta.persistence.criteria.Expression,int)" class="member-name-link">right</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ int&nbsp;len)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#right(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">right</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;len)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#round(jakarta.persistence.criteria.Expression,java.lang.Integer)" class="member-name-link">round</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;n)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.Case<wbr>&lt;R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectCase()" class="member-name-link">selectCase</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;?&gt;&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#size(jakarta.persistence.criteria.Expression)" class="member-name-link">size</a><wbr>(jakarta.persistence.criteria.Expression&lt;C&gt;&nbsp;collection)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C,<wbr>R&gt;&nbsp;jakarta.persistence.criteria.CriteriaBuilder.SimpleCase<wbr>&lt;C,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectCase(jakarta.persistence.criteria.Expression)" class="member-name-link">selectCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends C&gt;&nbsp;expression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#some(jakarta.persistence.criteria.Subquery)" class="member-name-link">some</a><wbr>(jakarta.persistence.criteria.Subquery&lt;Y&gt;&nbsp;subquery)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sign(jakarta.persistence.criteria.Expression)" class="member-name-link">sign</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" class="member-name-link">sort</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;?&gt;&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#size(C)" class="member-name-link">size</a><wbr>(C&nbsp;collection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;?&gt;&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#size(jakarta.persistence.criteria.Expression)" class="member-name-link">size</a><wbr>(jakarta.persistence.criteria.Expression&lt;C&gt;&nbsp;collection)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;jakarta.persistence.criteria.Expression<wbr>&lt;Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#some(jakarta.persistence.criteria.Subquery)" class="member-name-link">some</a><wbr>(jakarta.persistence.criteria.Subquery&lt;Y&gt;&nbsp;subquery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" class="member-name-link">sort</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
  boolean&nbsp;ascending,
  boolean&nbsp;ignoreCase)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create an ordering.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sqrt(jakarta.persistence.criteria.Expression)" class="member-name-link">sqrt</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sqrt(jakarta.persistence.criteria.Expression)" class="member-name-link">sqrt</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Checks if the expression x starts with the expression y.</div>
+<div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Checks if the expression x starts with the expression y.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Checks if the expression x starts with the expression y ignoring case.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,int)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,int)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  int&nbsp;from)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,int,int)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,int,int)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  int&nbsp;from,
  int&nbsp;len)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;from)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;from)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">substring</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;from,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;len)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression,N)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression,N)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
  N&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(N,jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(N&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(jakarta.persistence.criteria.Expression&lt;N&gt;&nbsp;x)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression<wbr>&lt;N&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sum(N,jakarta.persistence.criteria.Expression)" class="member-name-link">sum</a><wbr>(N&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sumAsDouble(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsDouble</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sumAsLong(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsLong</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;x)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sumAsDouble(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsDouble</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toBigDecimal(jakarta.persistence.criteria.Expression)" class="member-name-link">toBigDecimal</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html" title="class or interface in java.math" class="external-link">BigInteger</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toBigInteger(jakarta.persistence.criteria.Expression)" class="member-name-link">toBigInteger</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sumAsLong(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsLong</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;x)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toBigDecimal(jakarta.persistence.criteria.Expression)" class="member-name-link">toBigDecimal</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toDouble(jakarta.persistence.criteria.Expression)" class="member-name-link">toDouble</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html" title="class or interface in java.math" class="external-link">BigInteger</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toBigInteger(jakarta.persistence.criteria.Expression)" class="member-name-link">toBigInteger</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toFloat(jakarta.persistence.criteria.Expression)" class="member-name-link">toFloat</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toDouble(jakarta.persistence.criteria.Expression)" class="member-name-link">toDouble</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toInteger(jakarta.persistence.criteria.Expression)" class="member-name-link">toInteger</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link">Float</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toFloat(jakarta.persistence.criteria.Expression)" class="member-name-link">toFloat</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toLong(jakarta.persistence.criteria.Expression)" class="member-name-link">toLong</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toInteger(jakarta.persistence.criteria.Expression)" class="member-name-link">toInteger</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString(jakarta.persistence.criteria.Expression)" class="member-name-link">toString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;x)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.CollectionJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.CollectionJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.CollectionJoin&lt;X,<wbr>T&gt;&nbsp;join,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, V extends T&gt;<br>jakarta.persistence.criteria.Join<wbr>&lt;X,<wbr>V&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Join,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Join&lt;X,<wbr>T&gt;&nbsp;join,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;V&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.ListJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.ListJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.ListJoin&lt;X,<wbr>T&gt;&nbsp;join,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, K, T, V extends T&gt;<br>jakarta.persistence.criteria.MapJoin<wbr>&lt;X,<wbr>K,<wbr>V&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.MapJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.MapJoin&lt;X,<wbr>K,<wbr>T&gt;&nbsp;join,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;V&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T extends X&gt;<br>jakarta.persistence.criteria.Path<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Path,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Path&lt;X&gt;&nbsp;path,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T extends X&gt;<br>jakarta.persistence.criteria.Root<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Root,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Root&lt;X&gt;&nbsp;root,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.SetJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.SetJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.SetJoin&lt;X,<wbr>T&gt;&nbsp;join,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(char,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(char&nbsp;t,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toLong(jakarta.persistence.criteria.Expression)" class="member-name-link">toLong</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,char,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString(jakarta.persistence.criteria.Expression)" class="member-name-link">toString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;x)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.CollectionJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.CollectionJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.CollectionJoin&lt;X,<wbr>T&gt;&nbsp;join,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, V extends T&gt;<br>jakarta.persistence.criteria.Join<wbr>&lt;X,<wbr>V&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Join,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Join&lt;X,<wbr>T&gt;&nbsp;join,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;V&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.ListJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.ListJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.ListJoin&lt;X,<wbr>T&gt;&nbsp;join,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, K, T, V extends T&gt;<br>jakarta.persistence.criteria.MapJoin<wbr>&lt;X,<wbr>K,<wbr>V&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.MapJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.MapJoin&lt;X,<wbr>K,<wbr>T&gt;&nbsp;join,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;V&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T extends X&gt;<br>jakarta.persistence.criteria.Path<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Path,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Path&lt;X&gt;&nbsp;path,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T extends X&gt;<br>jakarta.persistence.criteria.Root<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.Root,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.Root&lt;X&gt;&nbsp;root,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;X, T, E extends T&gt;<br>jakarta.persistence.criteria.SetJoin<wbr>&lt;X,<wbr>E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#treat(jakarta.persistence.criteria.SetJoin,java.lang.Class)" class="member-name-link">treat</a><wbr>(jakarta.persistence.criteria.SetJoin&lt;X,<wbr>T&gt;&nbsp;join,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(char,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(char&nbsp;t,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,char,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
  char&nbsp;t,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;t,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.CriteriaBuilder.Trimspec,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder.Trimspec&nbsp;ts,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;t,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;t,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#trim(jakarta.persistence.criteria.Expression)" class="member-name-link">trim</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CompoundSelection<wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tuple(jakarta.persistence.criteria.Selection...)" class="member-name-link">tuple</a><wbr>(jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CompoundSelection<wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tuple(jakarta.persistence.criteria.Selection...)" class="member-name-link">tuple</a><wbr>(jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tuple(java.util.List)" class="member-name-link">tuple</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selections)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#union(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">union</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;right)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;jakarta.persistence.criteria.CriteriaSelect<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#unionAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)" class="member-name-link">unionAll</a><wbr>(jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;right)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upper(jakarta.persistence.criteria.Expression)" class="member-name-link">upper</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -1103,9 +1212,6 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-jakarta.persistence.criteria.CriteriaBuilder">Methods inherited from interface&nbsp;jakarta.persistence.criteria.CriteriaBuilder</h3>
-<code>and, array, asc, concat, desc, except, exceptAll, extract, intersect, intersectAll, left, left, or, replace, replace, replace, replace, right, right, tuple, union, unionAll</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder">Methods inherited from interface&nbsp;<a href="../PersistentEntityCriteriaBuilder.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></h3>
 <code><a href="../PersistentEntityCriteriaBuilder.html#createCriteriaDelete(java.lang.Class)" title="createCriteriaDelete(Class)">createCriteriaDelete</a>, <a href="../PersistentEntityCriteriaBuilder.html#createCriteriaInsert(java.lang.Class)" title="createCriteriaInsert(Class)">createCriteriaInsert</a>, <a href="../PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)" title="createCriteriaUpdate(Class)">createCriteriaUpdate</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery()" title="createQuery()">createQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery(java.lang.Class)" title="createQuery(Class)">createQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#createTupleQuery()" title="createTupleQuery()">createTupleQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,java.lang.String)" title="ilike(Expression, String)">ilike</a></code></div>
@@ -1184,6 +1290,114 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 </section>
 </li>
 <li>
+<section class="detail" id="tuple(java.util.List)">
+<h3>tuple</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.CompoundSelection&lt;jakarta.persistence.Tuple&gt;</span>&nbsp;<span class="element-name">tuple</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selections)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>tuple</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="array(java.util.List)">
+<h3>array</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.CompoundSelection&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>[]&gt;</span>&nbsp;<span class="element-name">array</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selections)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>array</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="union(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>union</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">union</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>union</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="unionAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>unionAll</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">unionAll</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? extends T&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>unionAll</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="intersect(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>intersect</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">intersect</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>intersect</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="intersectAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>intersectAll</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">intersectAll</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;? super T&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>intersectAll</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="except(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>except</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">except</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;?&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>except</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="exceptAll(jakarta.persistence.criteria.CriteriaSelect,jakarta.persistence.criteria.CriteriaSelect)">
+<h3>exceptAll</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;</span>&nbsp;<span class="element-name">exceptAll</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaSelect&lt;T&gt;&nbsp;left,
+ jakarta.persistence.criteria.CriteriaSelect&lt;?&gt;&nbsp;right)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>exceptAll</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="asc(jakarta.persistence.criteria.Expression)">
 <h3>asc</h3>
 <div class="horizontal-scroll">
@@ -1196,10 +1410,36 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 </section>
 </li>
 <li>
+<section class="detail" id="asc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)">
+<h3>asc</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Order</span>&nbsp;<span class="element-name">asc</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>asc</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="desc(jakarta.persistence.criteria.Expression)">
 <h3>desc</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Order</span>&nbsp;<span class="element-name">desc</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>desc</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="desc(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Nulls)">
+<h3>desc</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Order</span>&nbsp;<span class="element-name">desc</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>desc</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -1407,6 +1647,20 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 </section>
 </li>
 <li>
+<section class="detail" id="extract(jakarta.persistence.criteria.TemporalField,jakarta.persistence.criteria.Expression)">
+<h3>extract</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;N, T extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/temporal/Temporal.html" title="class or interface in java.time.temporal" class="external-link">Temporal</a>&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.Expression&lt;N&gt;</span>&nbsp;<span class="element-name">extract</span><wbr><span class="parameters">(jakarta.persistence.criteria.TemporalField&lt;N,<wbr>T&gt;&nbsp;field,
+ jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;temporal)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>extract</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="and(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
 <h3>and</h3>
 <div class="horizontal-scroll">
@@ -1445,6 +1699,18 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <dd><code>restrictions</code> - The restriction</dd>
 <dt>Returns:</dt>
 <dd>a new predicate</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="and(java.util.List)">
+<h3>and</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">and</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>and</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
 </dl>
 </div>
 </section>
@@ -1744,6 +2010,18 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <dd><code>restrictions</code> - The restriction</dd>
 <dt>Returns:</dt>
 <dd>a new predicate</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="or(java.util.List)">
+<h3>or</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">or</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>or</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
 </dl>
 </div>
 </section>
@@ -2959,6 +3237,74 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 </section>
 </li>
 <li>
+<section class="detail" id="concat(java.util.List)">
+<h3>concat</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">concat</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&gt;&nbsp;expressions)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>concat</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>replace</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">replace</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;substring,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;replacement)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>replace</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="replace(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,java.lang.String)">
+<h3>replace</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">replace</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;substring,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;replacement)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>replace</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="replace(jakarta.persistence.criteria.Expression,java.lang.String,jakarta.persistence.criteria.Expression)">
+<h3>replace</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">replace</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;substring,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;replacement)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>replace</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="replace(jakarta.persistence.criteria.Expression,java.lang.String,java.lang.String)">
+<h3>replace</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">replace</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;substring,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;replacement)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>replace</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="substring(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
 <h3>substring</h3>
 <div class="horizontal-scroll">
@@ -3020,6 +3366,58 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>substring</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="left(jakarta.persistence.criteria.Expression,int)">
+<h3>left</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">left</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ int&nbsp;len)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>left</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="left(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>left</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">left</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;len)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>left</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="right(jakarta.persistence.criteria.Expression,int)">
+<h3>right</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">right</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ int&nbsp;len)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>right</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="right(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>right</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">right</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;len)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>right</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
 </dl>
 </div>
 </section>
