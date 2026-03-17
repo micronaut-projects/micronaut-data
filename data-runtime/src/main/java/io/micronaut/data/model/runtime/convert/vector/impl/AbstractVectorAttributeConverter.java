@@ -29,6 +29,8 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.type.Argument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -46,6 +48,8 @@ import java.util.Map;
  */
 @Internal
 abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractVectorAttributeConverter.class);
 
     protected final Map<DatabaseType, List<VectorTypeConverter<?>>> converterMap;
     private final Class<X> type;
@@ -256,7 +260,10 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                 }
                 yield "VECTOR";
             }
-            default -> "VARCHAR(255)"; // Fallback for non-SQL or unsupported types to avoid schema generation failure
+            default -> {
+                LOG.warn("Vectors aren't supported for the database {}. Falling back to VARCHAR(255) column definition.", databaseType);
+                yield "VARCHAR(255)";
+            }
         };
     }
 }

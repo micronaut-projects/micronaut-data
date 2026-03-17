@@ -4,11 +4,15 @@ import io.micronaut.aop.MethodInvocationContext
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.QueryResultInfo
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.model.vector.search.ScoringFunction
 import io.micronaut.data.model.vector.search.Similarity
 import io.micronaut.data.model.runtime.QueryParameterBinding
 import io.micronaut.data.model.runtime.StoredQuery
+import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery
 import spock.lang.Specification
 
 class DefaultBindableParametersStoredQuerySpec extends Specification {
@@ -170,6 +174,30 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         binder.oneCalls[0].value == 0.5d
     }
 
+    def "similarity parameter uses dialect default scoring function for sql stored query"() {
+        given:
+        def binding = new SimpleBinding(
+                name: "similarity",
+                parameterIndex: 0
+        )
+        def sq = new SimpleSqlStoredQuery([binding], Dialect.POSTGRES)
+        def binder = new CapturingBinder()
+        def q = new DefaultBindableParametersStoredQuery<Object, Object>(sq, null, ConversionService.SHARED)
+
+        and:
+        def invocationContext = Mock(MethodInvocationContext) {
+            getParameterValues() >> ([new Similarity(0.5d)] as Object[])
+            getArguments() >> ([Argument.of(Similarity)] as Argument[])
+        }
+
+        when:
+        q.bindParameters(binder, invocationContext, null, null)
+
+        then:
+        binder.oneCalls.size() == 1
+        binder.oneCalls[0].value == 1d
+    }
+
     def "unsupported normalizer function falls back to identity conversion"() {
         given:
         def binding = new SimpleBinding(
@@ -296,6 +324,41 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
 
         @Override
         boolean isRawQuery() { false }
+    }
+
+    static final class SimpleSqlStoredQuery extends SimpleStoredQuery implements SqlStoredQuery<Object, Object> {
+        private final Dialect dialect
+
+        SimpleSqlStoredQuery(List<QueryParameterBinding> bindings, Dialect dialect) {
+            super(bindings)
+            this.dialect = dialect
+        }
+
+        @Override
+        boolean isExpandableQuery() { false }
+
+        @Override
+        Dialect getDialect() { dialect }
+
+        @Override
+        SqlQueryBuilder getQueryBuilder() { null }
+
+        @Override
+        Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(Object entity) { null }
+
+        @Override
+        QueryResultInfo getQueryResultInfo() { null }
+
+        @Override
+        io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> getPersistentEntity() { null }
+
+        @Override
+        void bindParameters(BindableParametersStoredQuery.Binder binder,
+                            io.micronaut.aop.InvocationContext<?, ?> invocationContext,
+                            Object entity,
+                            Map<QueryParameterBinding, Object> previousValues) {
+            throw new UnsupportedOperationException("Not used in this test")
+        }
     }
 
     static class CapturingBinder implements BindableParametersStoredQuery.Binder {

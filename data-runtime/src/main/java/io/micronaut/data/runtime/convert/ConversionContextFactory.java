@@ -20,13 +20,11 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 
 /**
- * Factory to create ConversionContext instances used during SQL mapping.
- * that include datastore-specific details (e.g. dialect, connection).
+ * Factory that creates {@link DatabaseTypeConversionContext} instances used during SQL mapping.
  *
- * Default implementation in data-runtime provides lightweight contexts
- * delegating to {@code ConversionContext.of(...)} without datastore state.
- *
- * Datastore modules (e.g. JDBC) may provide richer contexts and still satisfy
+ * <p>The default implementation in {@code data-runtime} provides lightweight contexts for argument-based
+ * conversion. Datastore modules (for example JDBC or R2DBC) may provide richer implementations that carry
+ * additional runtime state while preserving the same {@link DatabaseTypeConversionContext} contract.</p>
  *
  * @author Nemanja Mikic
  * @since 5.0.0

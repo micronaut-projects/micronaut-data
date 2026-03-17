@@ -36,6 +36,16 @@ class SqlIndexMappingSpec extends Specification {
             new SqlIndexMapping('idx', true, ['a', 'b'] as String[], null, metadata).hashCode()
     }
 
+    void "equals includes sqlIndexDefinitionProvider"() {
+        given:
+        def provider1 = Stub(SqlIndexDefinitionProvider)
+        def provider2 = Stub(SqlIndexDefinitionProvider)
+
+        expect:
+        new SqlIndexMapping('idx', false, ['c1'] as String[], provider1, null) !=
+            new SqlIndexMapping('idx', false, ['c1'] as String[], provider2, null)
+    }
+
     void "toString contains key fields"() {
         expect:
         new SqlIndexMapping('idx_name', true, ['c1', 'c2'] as String[]).toString().contains("name='idx_name'")

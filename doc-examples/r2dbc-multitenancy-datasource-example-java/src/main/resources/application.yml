@@ -21,4 +21,4 @@ r2dbc:
 test-resources:
   containers:
     mysql:
-      image-name: container-registry.oracle.com/mysql/community-server:latest
+      image-name: container-registry.oracle.com/mysql/community-server:9.6.0

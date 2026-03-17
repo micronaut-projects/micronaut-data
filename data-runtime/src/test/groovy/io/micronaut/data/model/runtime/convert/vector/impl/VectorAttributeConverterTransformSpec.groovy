@@ -153,6 +153,8 @@ class VectorAttributeConverterTransformSpec extends Specification {
         converter.getColumnDefinition(arg, DatabaseType.POSTGRES) == "vector"
         converter.getColumnDefinition(arg, DatabaseType.ORACLE) == "VECTOR(*,FLOAT64)"
         converter.getColumnDefinition(arg, DatabaseType.MYSQL) == "VECTOR"
+
+        and:
         converter.getColumnDefinition(arg, DatabaseType.H2) == "VARCHAR(255)"
     }
 

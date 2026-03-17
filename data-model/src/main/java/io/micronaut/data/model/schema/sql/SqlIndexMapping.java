@@ -64,13 +64,14 @@ public record SqlIndexMapping(String name,
         SqlIndexMapping that = (SqlIndexMapping) object;
         return unique == that.unique &&
                Objects.equals(name, that.name) &&
+               Objects.equals(sqlIndexDefinitionProvider, that.sqlIndexDefinitionProvider) &&
                Objects.equals(vectorIndexMetadata, that.vectorIndexMetadata) &&
                Arrays.equals(columns, that.columns);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name, unique, vectorIndexMetadata);
+        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata);
         result = 31 * result + Arrays.hashCode(columns);
         return result;
     }

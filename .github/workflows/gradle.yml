@@ -136,7 +136,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: "📦 Publish to Sonatype Snapshots"
-        run: ./gradlew publishToSonatype docs --continue
+        run: ./gradlew publishToSonatype docs --no-daemon
 
       - name: "❓ Determine docs target repository"
         uses: haya14busa/action-cond@v1

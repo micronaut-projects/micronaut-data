@@ -32,7 +32,7 @@ NOTE: For Oracle sparse `VECTOR(..., SPARSE)` usage with R2DBC, include a recent
 
 dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
 
-NOTE: For PostgreSQL `vector`/`sparsevec` support, include the pgvector Java library at runtime so the Postgres driver types (`PGvector` for dense vectors and `PGsparsevec` for sparse vectors) are available for both JDBC and R2DBC binding paths.
+NOTE: For PostgreSQL vector support, include the pgvector Java library at runtime so Postgres driver vector types are available. In Micronaut Data, dense `vector` is supported for JDBC and R2DBC; sparse `PGsparsevec` mapping is currently JDBC-only.
 
 dependency:com.pgvector:pgvector[scope="runtimeOnly"]
 

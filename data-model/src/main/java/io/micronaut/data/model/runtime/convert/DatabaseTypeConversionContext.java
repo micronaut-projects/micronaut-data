@@ -17,13 +17,12 @@ package io.micronaut.data.model.runtime.convert;
 
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
- * SQL dialect-aware {@link ConversionContext} used by SQL mappers and converters.
+ * Database-type-aware {@link ConversionContext} used by SQL mappers and converters.
  *
  * <p>Implementations provided by datastore modules (e.g. JDBC, R2DBC) expose the current
- * {@link io.micronaut.data.model.query.builder.sql.Dialect} so that converters can render
+ * {@link DatabaseType} so that converters can render
  * vendor-specific behavior (types, column definitions, reading strategies).</p>
  *
  * @author Nemanja Mikic
@@ -32,11 +31,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 public interface DatabaseTypeConversionContext extends ConversionContext {
 
     /**
-     * Returns the SQL {@link Dialect} for the current operation.
+     * Returns the {@link DatabaseType} for the current operation.
      *
-     * <p>Datastore modules (JDBC/R2DBC) provide non-null dialect values.</p>
+     * <p>Datastore modules (JDBC/R2DBC) provide non-null database type values.</p>
      *
-     * @return the SQL dialect (never null)
+     * @return the database type (never null)
      */
     @NonNull
     DatabaseType getDatabaseType();

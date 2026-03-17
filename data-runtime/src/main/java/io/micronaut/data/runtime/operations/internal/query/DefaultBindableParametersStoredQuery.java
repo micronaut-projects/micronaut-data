@@ -41,6 +41,7 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import io.micronaut.inject.annotation.EvaluatedAnnotationValue;
 
@@ -285,7 +286,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     @Nullable
     private ScoringFunction resolveScoringFunction(@Nullable InvocationContext<?, ?> invocationContext) {
         if (!(invocationContext instanceof MethodInvocationContext<?, ?> methodInvocationContext)) {
-            return null;
+            return defaultScoringFunction();
         }
         List<ScoringFunction> scoringFunctions = getParametersOfType(
             Argument.of(ScoringFunction.class),
@@ -293,12 +294,24 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             conversionService
         );
         if (scoringFunctions.isEmpty()) {
-            return null;
+            return defaultScoringFunction();
         }
         if (scoringFunctions.size() > 1) {
             throw new IllegalArgumentException("Only one ScoringFunction parameter is allowed for vector derived search queries");
         }
         return normalizeScoringFunction(scoringFunctions.getFirst());
+    }
+
+    @Nullable
+    private ScoringFunction defaultScoringFunction() {
+        if (!(storedQuery instanceof SqlStoredQuery<?, ?> sqlStoredQuery)) {
+            return null;
+        }
+        return switch (sqlStoredQuery.getDialect()) {
+            case POSTGRES, ORACLE -> ScoringFunction.COSINE;
+            case MYSQL -> ScoringFunction.EUCLIDEAN;
+            default -> null;
+        };
     }
 
     private static ScoringFunction normalizeScoringFunction(ScoringFunction scoringFunction) {
