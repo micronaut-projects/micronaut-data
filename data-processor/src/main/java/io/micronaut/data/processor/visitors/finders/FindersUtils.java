@@ -98,7 +98,6 @@ import org.reactivestreams.Publisher;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -387,8 +386,6 @@ public interface FindersUtils {
                 return typeAndInterceptorEntry(matchContext, returnType, FindOneInterceptor.class);
             }
             return typeAndInterceptorEntry(matchContext, componentType, FindAllInterceptor.class);
-        } else if (isContainer(returnType, Publisher.class)) {
-            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindAllReactiveInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType, FindOneInterceptor.class);
         }
