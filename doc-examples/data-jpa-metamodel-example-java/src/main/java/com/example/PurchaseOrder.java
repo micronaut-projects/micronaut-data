@@ -14,36 +14,51 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example;
 
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 
 @Entity
-public class Category {
+public class PurchaseOrder {
 
-    @Id
-    private Long id;
+    @EmbeddedId
+    private OrderPk id;
 
-    private String name;
+    private String description;
+
+    @Embedded
+    private EmbeddableClass details;
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getId() {
+    public OrderPk getId() {
         return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setId(Long id) {
+    public void setId(OrderPk id) {
         this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getName() {
-        return name;
+    public String getDescription() {
+        return description;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setName(String name) {
-        this.name = name;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public EmbeddableClass getDetails() {
+        return details;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setDetails(EmbeddableClass details) {
+        this.details = details;
     }
 }
+

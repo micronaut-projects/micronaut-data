@@ -14,65 +14,65 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example;
 
-import jakarta.persistence.Embeddable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
-@Embeddable
-public class EmbeddableClass {
+import java.util.ArrayList;
+import java.util.List;
 
-    String embeddedName;
-    Long number;
-    long n;
-    double d;
+@Entity
+public class Category {
 
-    public EmbeddableClass() {
-    }
+    @Id
+    private Long id;
 
-    public EmbeddableClass(String embeddedName, Long number, long n, double d) {
-        this.embeddedName = embeddedName;
-        this.number = number;
-        this.n = n;
-        this.d = d;
-    }
+    private String name;
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Book> books = new ArrayList<>();
+    private byte[] bytes = {};
 
-    @SuppressWarnings({"checkstyle:DesignForExtension"})
-    public String getEmbeddedName() {
-        return embeddedName;
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public Long getId() {
+        return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbeddedName(String embeddedName) {
-        this.embeddedName = embeddedName;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getNumber() {
-        return number;
+    public String getName() {
+        return name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setNumber(Long number) {
-        this.number = number;
+    public void setName(String name) {
+        this.name = name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public long getN() {
-        return n;
+    public List<Book> getBooks() {
+        return books;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setN(long n) {
-        this.n = n;
+    public void setBooks(List<Book> books) {
+        this.books = books;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public double getD() {
-        return d;
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setD(double d) {
-        this.d = d;
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
     }
+
 }

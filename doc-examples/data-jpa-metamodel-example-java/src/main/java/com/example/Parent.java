@@ -14,33 +14,42 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example;
 
-import io.micronaut.core.annotation.Introspected;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 
-@Introspected
-public class BookDTO {
+@MappedSuperclass
+public class Parent {
+    @Id
+    Long id;
+    String name;
 
-    private String title;
-    private int pages;
+    public Parent() {
+    }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getTitle() {
-        return title;
+    public Parent(Long id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setTitle(String title) {
-        this.title = title;
+    public Long getId() {
+        return this.id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public int getPages() {
-        return pages;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setPages(int pages) {
-        this.pages = pages;
+    public String getName() {
+        return this.name;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -14,30 +14,12 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example.repository;
 
-import jakarta.persistence.Entity;
+import com.example.EmployeeFieldAccess;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jpa.repository.JpaRepository;
 
-@SuppressWarnings("checkstyle:FinalClass")
-@Entity
-public class Child extends Parent {
-    Long age;
-
-    public Child() {
-    }
-
-    private Child(Long id, String name, Long age) {
-        super(id, name);
-        this.age = age;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getAge() {
-        return this.age;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setAge(Long age) {
-        this.age = age;
-    }
+@Repository
+public interface EmployeeFieldAccessRepository extends JpaRepository<EmployeeFieldAccess, Long> {
 }

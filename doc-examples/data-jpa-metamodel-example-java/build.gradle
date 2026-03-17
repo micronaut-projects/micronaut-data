@@ -4,18 +4,37 @@ plugins {
 
 micronaut {
     version libs.versions.micronaut.platform.get()
-    runtime "netty"
+    runtime 'netty'
+    testRuntime "junit5"
 }
-
 
 dependencies {
+    annotationProcessor mn.micronaut.http.validation
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor projects.micronautDataJpaMetamodelProcessor
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+
     implementation libs.managed.jakarta.data.api
     implementation libs.managed.jakarta.persistence.api
+    implementation mnSql.hibernate.core
+    implementation mnSql.micronaut.hibernate.jpa
+    implementation projects.micronautDataHibernateJpa
 
-    implementation mn.micronaut.runtime
-    annotationProcessor projects.micronautDataJpaMetamodelProcessor
+    implementation("io.micronaut.sql:micronaut-hibernate-jpa")
+    implementation("io.micronaut.data:micronaut-data-tx-hibernate")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly("com.h2database:h2")
+    compileOnly("io.micronaut:micronaut-http-client")
+
+    testImplementation mnTest.micronaut.test.junit5
+    testImplementation("io.micronaut:micronaut-http-client")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test {
-    useJUnitPlatform()
+application {
+    mainClass = "com.example.Application"
 }
+

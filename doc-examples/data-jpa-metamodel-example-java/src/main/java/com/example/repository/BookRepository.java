@@ -14,32 +14,12 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example.repository;
 
-import jakarta.persistence.*;
+import com.example.Book;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jpa.repository.JpaRepository;
 
-import java.awt.print.Book;
-
-/**
- * A book review.
- *
- * @param id The id
- * @param reviewer The reviewer name
- * @param content The book review content
- * @param book The reviewed book
- */
-@Entity
-public record Review(
-
-    @GeneratedValue
-    @Id
-    Long id,
-    String reviewer,
-    String content,
-    @ManyToOne(fetch = FetchType.LAZY)
-    Book book) {
-
-    public Review(String reviewer, String content) {
-        this(null, reviewer, content, null);
-    }
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long> {
 }

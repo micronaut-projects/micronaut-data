@@ -14,28 +14,27 @@
  *   limitations under the License.
  */
 
-package exemple;
+package com.example;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 
-@MappedSuperclass
-public class Parent {
+@Access(AccessType.FIELD)
+@Entity
+public class EmployeeFieldAccess {
+
     @Id
-    Long id;
-    String name;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public Parent() {
-    }
+    @Column(name = "name")
+    private String name;
 
-    public Parent(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+    @Column(name = "salary")
+    private double salary;
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
-        return this.id;
+        return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
@@ -45,11 +44,21 @@ public class Parent {
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public String getName() {
-        return this.name;
+        return name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public double getSalary() {
+        return salary;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setSalary(double salary) {
+        this.salary = salary;
     }
 }
