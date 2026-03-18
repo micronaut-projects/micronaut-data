@@ -319,7 +319,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 .orElse(Dialect.ANSI);
             if (dialect == Dialect.ORACLE) {
                 SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
-                int returningIdx = cleanLower.lastIndexOf("returning");
+                String finalQueryLower = finalQueryString.toLowerCase(Locale.ENGLISH);
+                int returningIdx = finalQueryLower.lastIndexOf("returning");
                 String afterReturning = finalQueryString.substring(returningIdx + "returning".length()).trim();
                 int intoPos = indexOfIntoIgnoreCase(afterReturning);
                 String selection = intoPos > -1 ? afterReturning.substring(0, intoPos).trim() : afterReturning;
@@ -486,7 +487,18 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     queryParts = new ArrayList<>();
                     queryParts.add(finalSql);
                 }
-                return QueryResult.of("", queryParts, parameterBindings, outBindings, Map.of());
+                // Build the assembled SQL from queryParts (parts joined with '?' separators)
+                String assembledSql;
+                if (queryParts.size() == 1) {
+                    assembledSql = queryParts.get(0);
+                } else {
+                    var sqlBuilder = new StringBuilder(queryParts.get(0));
+                    for (int i = 1; i < queryParts.size(); i++) {
+                        sqlBuilder.append('?').append(queryParts.get(i));
+                    }
+                    assembledSql = sqlBuilder.toString();
+                }
+                return QueryResult.of(assembledSql, queryParts, parameterBindings, outBindings, Map.of());
             }
         }
 

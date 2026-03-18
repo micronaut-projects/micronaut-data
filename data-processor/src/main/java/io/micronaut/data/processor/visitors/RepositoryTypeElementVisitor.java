@@ -696,12 +696,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 List<AnnotationValue<?>> outAnnotations = new ArrayList<>(outBindings.size());
                 for (QueryOutParameterBinding b : outBindings) {
                     AnnotationValueBuilder<?> outBuilder = AnnotationValue.builder(DataMethodQueryOutParameter.class);
-                    if (StringUtils.isNotEmpty(b.getName())) {
-                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
-                    }
-                    if (b.getDataType() != null) {
-                        outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
-                    }
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
                     outAnnotations.add(outBuilder.build());
                 }
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new AnnotationValue[0]));

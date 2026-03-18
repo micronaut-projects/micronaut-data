@@ -1015,6 +1015,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             .orElse(identity.getName()));
                     resultColumns.add(identityName);
                     resultColumnTypes.add(identity.getDataType());
+                    unescapedColumns.add(identityName);
                     builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
                 }
                 parameterBindings.add(new QueryParameterBinding() {
