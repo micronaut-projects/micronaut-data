@@ -190,7 +190,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public Order asc(Expression<?> expression, Nulls nullPrecedence) {
-        throw notSupportedOperation();
+        return new DefaultOrder<>(expression, true, false, nullPrecedence);
     }
 
     @Override
@@ -201,7 +201,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public Order desc(Expression<?> expression, Nulls nullPrecedence) {
-        throw notSupportedOperation();
+        return new DefaultOrder<>(expression, false, false, nullPrecedence);
     }
 
     @Override

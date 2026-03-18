@@ -17,7 +17,7 @@ dependencies {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
         exclude group: 'org.hibernate.orm', module: 'hibernate-core'
     }
-    api('org.hibernate.orm:hibernate-core:7.2.7.Final') {
+    api(libs.hibernate.core.reactive.compat) {
         because("Hibernate Reactive 4.2.x not compatible with Hibernate Core 7.3.x")
     }
 
