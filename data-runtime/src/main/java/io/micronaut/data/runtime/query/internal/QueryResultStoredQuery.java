@@ -204,16 +204,16 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         io.micronaut.data.model.query.builder.QueryOutParameterBinding delegate) implements QueryOutParameterBinding {
 
         @Override
-            public String name() {
-                return delegate.getName();
-            }
-
-            @Override
-            public DataType dataType() {
-                return delegate.getDataType();
-            }
-
+        public String name() {
+            return delegate.getName();
         }
+
+        @Override
+        public DataType dataType() {
+            return delegate.getDataType();
+        }
+
+    }
 
     private static final class QueryResultParameterBinding implements QueryParameterBinding {
         private final io.micronaut.data.model.query.builder.QueryParameterBinding p;

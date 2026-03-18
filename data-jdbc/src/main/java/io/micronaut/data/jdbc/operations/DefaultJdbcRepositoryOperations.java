@@ -420,7 +420,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
                 if (isEntityResult) {
                     SqlResultEntityTypeMapper mapper = getSqlResultEntityTypeMapper(preparedQuery.getPersistentEntity(), columnNames, inCount);
-                    return List.of((R) mapper.readEntity(cs));
+                    T entity = (T) mapper.readEntity(cs);
+                    entity = triggerPostLoad(entity, (RuntimePersistentEntity<T>) preparedQuery.getPersistentEntity(), preparedQuery.getAnnotationMetadata());
+                    return List.of((R) entity);
                 }
                 // Otherwise single field
                 List<R> result = new ArrayList<>();
