@@ -144,7 +144,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get conversion service.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(io.r2dbc.spi.Row,java.lang.Integer,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
@@ -174,7 +174,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a byte value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable byte[]</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBytes(io.r2dbc.spi.Row,java.lang.Integer)" class="member-name-link">readBytes</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -265,7 +265,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.convert.DataConversionService)">
 <h3>ColumnIndexR2dbcResultReader</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ColumnIndexR2dbcResultReader</span><wbr><span class="parameters">(@Nullable <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ColumnIndexR2dbcResultReader</span><wbr><span class="parameters">(@Nullable
+ @Nullable <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService)</span></div>
 <div class="block">Constructs a new instance.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -304,8 +305,12 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readDynamic(io.r2dbc.spi.Row,java.lang.Integer,io.micronaut.data.model.DataType)">
 <h3>readDynamic</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull
+ @NonNull io.r2dbc.spi.Row&nbsp;resultSet,
+ @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index,
+ @NonNull
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)">ResultReader</a></code></span></div>
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
@@ -366,7 +371,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readDate(io.r2dbc.spi.Row,java.lang.Integer)">
 <h3>readDate</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readDate</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readDate</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readDate(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a date value for the given name.</div>
@@ -386,7 +392,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readTimestamp(io.r2dbc.spi.Row,java.lang.Integer)">
 <h3>readTimestamp</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readTimestamp</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readTimestamp</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;index)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readTimestamp(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a timestamp value for the given index.</div>
@@ -406,7 +413,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readString(io.r2dbc.spi.Row,java.lang.Integer)">
 <h3>readString</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readString</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readString</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readString(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a string value for the given name.</div>
@@ -546,7 +554,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readBigDecimal(io.r2dbc.spi.Row,java.lang.Integer)">
 <h3>readBigDecimal</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readBigDecimal(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a BigDecimal value for the given name.</div>
@@ -566,7 +575,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="readBytes(io.r2dbc.spi.Row,java.lang.Integer)">
 <h3>readBytes</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable byte[]</span>&nbsp;<span class="element-name">readBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">byte[]</span>&nbsp;<span class="element-name">readBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readBytes(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a byte[] value for the given name.</div>
@@ -586,10 +595,11 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <section class="detail" id="getRequiredValue(io.r2dbc.spi.Row,java.lang.Integer,java.lang.Class)">
 <h3>getRequiredValue</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getRequiredValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">getRequiredValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span>
-                                 throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
+                       throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">ResultReader</a></code></span></div>
 <div class="block">Get a value from the given result set for the given name and type.</div>
 <dl class="notes">
