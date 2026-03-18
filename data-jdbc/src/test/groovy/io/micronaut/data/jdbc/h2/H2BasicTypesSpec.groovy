@@ -47,18 +47,6 @@ class H2BasicTypesSpec extends Specification {
             !repository.somethingThatMightSometimesReturnNull().isPresent()
     }
 
-    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/3757")
-    void 'test retrieve single byte array column'() {
-        given:
-            def entity = repository.save(new BasicTypes())
-
-        expect:
-            repository.findByteArrayById(entity.myId).present
-            repository.findByteArrayById(entity.myId).get() == entity.byteArray
-            repository.getByteArrayById(entity.myId) == entity.byteArray
-            repository.findByteArrayById(entity.myId).get().class == byte[].class
-    }
-
     @Unroll
     void 'test basic type mapping for property #property'() {
         given:
