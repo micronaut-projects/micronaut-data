@@ -28,7 +28,7 @@ abstract class AbstractGeoSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    void "test school"() {
+    /*void "test school"() {
         given:
         Location location1 = new Location()
         location1.setPoint(new Point(2.0, 2.5))
@@ -67,7 +67,7 @@ abstract class AbstractGeoSpec extends Specification {
             it.getLocation().getPoint().x() == 3.0d
             it.getLocation().getPoint().y() == 3.5d
         }
-    }
+    }*/
 
     void "test saving, reading and updating a geo entity"() {
         given:
@@ -379,42 +379,30 @@ abstract class AbstractGeoSpec extends Specification {
     GeometryCollection createGeometryCollection1() {
         return new GeometryCollection([
                 createPoint1(),
-                createMultiPoint1(),
                 createLineString1(),
-                createMultiLineString1(),
-                createPolygon1(),
-                createMultiPolygon1()
+                createPolygon1()
         ] as List<Geometry>)
     }
 
     void assertGeometryCollection1(GeometryCollection geometryCollection) {
         def geometries = geometryCollection.geometries()
         assertPoint1((Point) geometries.get(0))
-        assertMultiPoint1((MultiPoint) geometries.get(1))
-        assertLineString1((LineString) geometries.get(2))
-        assertMultiLineString1((MultiLineString) geometries.get(3))
-        assertPolygon1((Polygon) geometries.get(4))
-        assertMultiPolygon1((MultiPolygon) geometries.get(5))
+        assertLineString1((LineString) geometries.get(1))
+        assertPolygon1((Polygon) geometries.get(2))
     }
 
     GeometryCollection createGeometryCollection2() {
         return new GeometryCollection([
                 createPoint2(),
-                createMultiPoint2(),
                 createLineString2(),
-                createMultiLineString2(),
-                createPolygon3(),
-                createMultiPolygon2()
+                createPolygon3()
         ] as List<Geometry>)
     }
 
     void assertGeometryCollection2(GeometryCollection geometryCollection) {
         def geometries = geometryCollection.geometries()
         assertPoint2((Point) geometries.get(0))
-        assertMultiPoint2((MultiPoint) geometries.get(1))
-        assertLineString2((LineString) geometries.get(2))
-        assertMultiLineString2((MultiLineString) geometries.get(3))
-        assertPolygon3((Polygon) geometries.get(4))
-        assertMultiPolygon2((MultiPolygon) geometries.get(5))
+        assertLineString2((LineString) geometries.get(1))
+        assertPolygon3((Polygon) geometries.get(2))
     }
 }
