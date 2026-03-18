@@ -72,13 +72,13 @@ abstract class AbstractGeoSpec extends Specification {
     void "test saving, reading and updating a geo entity"() {
         given:
         GeoEntity entity = new GeoEntity()
-        entity.setPoint(createPoint1())
-        entity.setMultiPoint(createMultiPoint1())
-        entity.setLineString(createLineString1())
-        entity.setMultiLineString(createMultiLineString1())
-        entity.setPolygon(createPolygon1())
-        entity.setMultiPolygon(createMultiPolygon1())
-        entity.setGeometryCollection(createGeometryCollection1())
+        entity.setPoint(createPoint(1))
+        entity.setMultiPoint(createMultiPoint(1))
+        entity.setLineString(createLineString(1))
+        entity.setMultiLineString(createMultiLineString(1))
+        entity.setPolygon(createPolygon(1))
+        entity.setMultiPolygon(createMultiPolygon(1))
+        entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
         GeoEntity savedEntity = getGeoEntityRepository().save(entity)
@@ -92,317 +92,140 @@ abstract class AbstractGeoSpec extends Specification {
         then:
         foundEntity.isPresent()
         with (foundEntity.get()) {
-            assertPoint1(it.getPoint())
-            assertMultiPoint1(it.getMultiPoint())
-            assertLineString1(it.getLineString())
-            assertMultiLineString1(it.getMultiLineString())
-            assertPolygon1(it.getPolygon())
-            assertMultiPolygon1(it.getMultiPolygon())
-            assertGeometryCollection1(it.getGeometryCollection())
+            assertPoint(it.getPoint(), 1)
+            assertMultiPoint(it.getMultiPoint(), 1)
+            assertLineString(it.getLineString(), 1)
+            assertMultiLineString(it.getMultiLineString(), 1)
+            assertPolygon(it.getPolygon(), 1)
+            assertMultiPolygon(it.getMultiPolygon(), 1)
+            assertGeometryCollection(it.getGeometryCollection(), 3)
         }
 
         when:
-        entity.setPoint(createPoint2())
-        entity.setMultiPoint(createMultiPoint2())
-        entity.setLineString(createLineString2())
-        entity.setMultiLineString(createMultiLineString2())
-        entity.setPolygon(createPolygon3())
-        entity.setMultiPolygon(createMultiPolygon2())
-        entity.setGeometryCollection(createGeometryCollection2())
+        entity.setPoint(createPoint(2))
+        entity.setMultiPoint(createMultiPoint(2))
+        entity.setLineString(createLineString(2))
+        entity.setMultiLineString(createMultiLineString(2))
+        entity.setPolygon(createPolygon(2))
+        entity.setMultiPolygon(createMultiPolygon(2))
+        entity.setGeometryCollection(createGeometryCollection(4))
         getGeoEntityRepository().update(entity)
         foundEntity = getGeoEntityRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
-            assertPoint2(it.getPoint())
-            assertMultiPoint2(it.getMultiPoint())
-            assertLineString2(it.getLineString())
-            assertMultiLineString2(it.getMultiLineString())
-            assertPolygon3(it.getPolygon())
-            assertMultiPolygon2(it.getMultiPolygon())
-            assertGeometryCollection2(it.getGeometryCollection())
+            assertPoint(it.getPoint(), 2)
+            assertMultiPoint(it.getMultiPoint(), 2)
+            assertLineString(it.getLineString(), 2)
+            assertMultiLineString(it.getMultiLineString(), 2)
+            assertPolygon(it.getPolygon(), 2)
+            assertMultiPolygon(it.getMultiPolygon(), 2)
+            assertGeometryCollection(it.getGeometryCollection(), 4)
         }
     }
 
-    Point createPoint1() {
-        return new Point(2.0, 2.5)
+    Point createPoint(double x) {
+        return new Point(x, x + 0.5)
     }
 
-    void assertPoint1(Point point) {
+    void assertPoint(Point point, double x) {
         assert point != null
-        assert point.x() == 2.0d
-        assert point.y() == 2.5d
+        assert point.x() == x
+        assert point.y() == x + 0.5
     }
 
-    Point createPoint2() {
-        return new Point(3.0, 3.5)
+    MultiPoint createMultiPoint(int n) {
+        return new MultiPoint([createPoint(n), createPoint(n + 1)])
     }
 
-    void assertPoint2(Point point) {
-        assert point != null
-        assert point.x() == 3.0d
-        assert point.y() == 3.5d
-    }
-
-    MultiPoint createMultiPoint1() {
-        return new MultiPoint([
-                new Point(1.1, 2.1),
-                new Point(3.1, 4.1)
-        ])
-    }
-
-    void assertMultiPoint1(MultiPoint multiPoint) {
+    void assertMultiPoint(MultiPoint multiPoint, int n) {
         assert multiPoint != null
         def points = multiPoint.points()
-        assert points != null
-        assert points*.x() == [1.1d, 3.1d]
-        assert points*.y() == [2.1d, 4.1d]
+        assertPoint(points.get(0), n)
+        assertPoint(points.get(1), n + 1)
     }
 
-    MultiPoint createMultiPoint2() {
-        return new MultiPoint([
-                new Point(5.1, 6.1),
-                new Point(7.1, 8.1)
-        ])
+    LineString createLineString(int n) {
+        return new LineString([createPoint(n), createPoint(n + 1)])
     }
 
-    void assertMultiPoint2(MultiPoint multiPoint) {
-        assert multiPoint != null
-        def points = multiPoint.points()
-        assert points != null
-        assert points*.x() == [5.1d, 7.1d]
-        assert points*.y() == [6.1d, 8.1d]
-    }
-
-    LineString createLineString1() {
-        return new LineString([
-                new Point(1.1, 2.1),
-                new Point(3.1, 4.1)
-        ])
-    }
-
-    void assertLineString1(LineString lineString) {
+    void assertLineString(LineString lineString, int n) {
         assert lineString != null
         def points = lineString.points()
-        assert points*.x() == [1.1d, 3.1d]
-        assert points*.y() == [2.1d, 4.1d]
+        assertPoint(points.get(0), n)
+        assertPoint(points.get(1), n + 1)
     }
 
-    LineString createLineString2() {
-        return new LineString([
-                new Point(5.1, 6.1),
-                new Point(7.1, 8.1)
-        ])
+    MultiLineString createMultiLineString(int n) {
+        return new MultiLineString([createLineString(n + 10), createLineString(n + 20)])
     }
 
-    void assertLineString2(LineString lineString) {
-        assert lineString != null
-        def points = lineString.points()
-        assert points*.x() == [5.1d, 7.1d]
-        assert points*.y() == [6.1d, 8.1d]
-    }
-
-    MultiLineString createMultiLineString1() {
-        return new MultiLineString([
-                new LineString([
-                        new Point(1.1, 1.2),
-                        new Point(1.3, 1.4)
-                ]),
-                new LineString([
-                        new Point(2.1, 2.2),
-                        new Point(2.3, 2.4)
-                ])
-        ])
-    }
-
-    void assertMultiLineString1(MultiLineString multiLineString) {
+    void assertMultiLineString(MultiLineString multiLineString, int n) {
         assert multiLineString != null
         def lineStrings = multiLineString.lineStrings()
-        assert lineStrings.size() == 2
-        def points1 = lineStrings.get(0).points()
-        assert points1*.x() == [1.1d, 1.3d]
-        assert points1*.y() == [1.2d, 1.4d]
-        def points2 = lineStrings.get(1).points()
-        assert points2*.x() == [2.1d, 2.3d]
-        assert points2*.y() == [2.2d, 2.4d]
+        assertLineString(lineStrings.get(0), n + 10)
+        assertLineString(lineStrings.get(1), n + 20)
     }
 
-    MultiLineString createMultiLineString2() {
-        return new MultiLineString([
+    Polygon createPolygon(int n) {
+        return new Polygon([
                 new LineString([
-                        new Point(3.1, 3.2),
-                        new Point(3.3, 3.4)
+                        new Point(n + 0.0, n + 0.0),
+                        new Point(n + 4.0, n + 0.0),
+                        new Point(n + 4.0, n + 3.0),
+                        new Point(n + 0.0, n + 3.0),
+                        new Point(n + 0.0, n + 0.0)
                 ]),
                 new LineString([
-                        new Point(4.1, 4.2),
-                        new Point(4.3, 4.4)
+                        new Point(n + 0.5, n + 0.5),
+                        new Point(n + 2.5, n + 0.5),
+                        new Point(n + 2.5, n + 2.5),
+                        new Point(n + 0.5, n + 0.5)
                 ])
         ])
     }
 
-    void assertMultiLineString2(MultiLineString multiLineString) {
-        assert multiLineString != null
-        def lineStrings = multiLineString.lineStrings()
-        assert lineStrings.size() == 2
-        def points1 = lineStrings.get(0).points()
-        assert points1*.x() == [3.1d, 3.3d]
-        assert points1*.y() == [3.2d, 3.4d]
-        def points2 = lineStrings.get(1).points()
-        assert points2*.x() == [4.1d, 4.3d]
-        assert points2*.y() == [4.2d, 4.4d]
-    }
-
-    Polygon createPolygon1() {
-        return new Polygon([
-                new LineString([
-                        new Point(1.0, 1.0),
-                        new Point(5.0, 1.0),
-                        new Point(5.0, 2.5),
-                        new Point(1.0, 2.5),
-                        new Point(1.0, 1.0)
-                ]),
-                new LineString([
-                        new Point(1.5, 1.5),
-                        new Point(2.5, 1.5),
-                        new Point(2.5, 2.0),
-                        new Point(1.5, 1.5)
-                ])
-        ])
-    }
-
-    void assertPolygon1(Polygon polygon) {
+    void assertPolygon(Polygon polygon, int n) {
         def lineStrings = polygon.lineStrings()
         assert lineStrings.size() == 2
 
         def points1 = lineStrings.get(0).points()
-        assert points1*.x() == [1.0d, 5.0d, 5.0d, 1.0d, 1.0d]
-        assert points1*.y() == [1.0d, 1.0d, 2.5d, 2.5d, 1.0d]
+        assert points1*.x() == [n + 0.0d, n + 4.0d, n + 4.0d, n + 0.0d, n + 0.0d]
+        assert points1*.y() == [n + 0.0d, n + 0.0d, n + 3.0d, n + 3.0d, n + 0.0d]
 
         def points2 = lineStrings.get(1).points()
-        assert points2*.x() == [1.5d, 2.5d, 2.5d, 1.5d]
-        assert points2*.y() == [1.5d, 1.5d, 2.0d, 1.5d]
+        assert points2*.x() == [n + 0.5d, n + 2.5d, n + 2.5d, n + 0.5d]
+        assert points2*.y() == [n + 0.5d, n + 0.5d, n + 2.5d, n + 0.5d]
     }
 
-    Polygon createPolygon2() {
-        return new Polygon([
-                new LineString([
-                        new Point(11.0, 11.0),
-                        new Point(15.0, 11.0),
-                        new Point(15.0, 12.5),
-                        new Point(11.0, 12.5),
-                        new Point(11.0, 11.0)
-                ]),
-                new LineString([
-                        new Point(11.5, 11.5),
-                        new Point(12.5, 11.5),
-                        new Point(12.5, 12.0),
-                        new Point(11.5, 11.5)
-                ])
-        ])
+    MultiPolygon createMultiPolygon(int n) {
+        return new MultiPolygon([createPolygon(n + 10), createPolygon(n + 20)])
     }
 
-    void assertPolygon2(Polygon polygon) {
-        def lineStrings = polygon.lineStrings()
-        assert lineStrings.size() == 2
-
-        def points1 = lineStrings.get(0).points()
-        assert points1*.x() == [11.0d, 15.0d, 15.0d, 11.0d, 11.0d]
-        assert points1*.y() == [11.0d, 11.0d, 12.5d, 12.5d, 11.0d]
-
-        def points2 = lineStrings.get(1).points()
-        assert points2*.x() == [11.5d, 12.5d, 12.5d, 11.5d]
-        assert points2*.y() == [11.5d, 11.5d, 12.0d, 11.5d]
-    }
-
-    Polygon createPolygon3() {
-        return new Polygon([
-                new LineString([
-                        new Point(1.0, 1.0),
-                        new Point(5.0, 1.0),
-                        new Point(5.0, 2.5),
-                        new Point(1.0, 2.5),
-                        new Point(1.0, 1.0)
-                ])
-        ])
-    }
-
-    void assertPolygon3(Polygon polygon) {
-        def lineStrings = polygon.lineStrings()
-        assert lineStrings.size() == 1
-
-        def points = lineStrings.get(0).points()
-        assert points*.x() == [1.0d, 5.0d, 5.0d, 1.0d, 1.0d]
-        assert points*.y() == [1.0d, 1.0d, 2.5d, 2.5d, 1.0d]
-    }
-
-    Polygon createPolygon4() {
-        return new Polygon([
-                new LineString([
-                        new Point(11.0, 11.0),
-                        new Point(15.0, 11.0),
-                        new Point(15.0, 12.5),
-                        new Point(11.0, 12.5),
-                        new Point(11.0, 11.0)
-                ])
-        ])
-    }
-
-    void assertPolygon4(Polygon polygon) {
-        def lineStrings = polygon.lineStrings()
-        assert lineStrings.size() == 1
-
-        def points = lineStrings.get(0).points()
-        assert points*.x() == [11.0d, 15.0d, 15.0d, 11.0d, 11.0d]
-        assert points*.y() == [11.0d, 11.0d, 12.5d, 12.5d, 11.0d]
-    }
-
-    MultiPolygon createMultiPolygon1() {
-        return new MultiPolygon([createPolygon1(), createPolygon2()])
-    }
-
-    void assertMultiPolygon1(MultiPolygon multiPolygon) {
+    void assertMultiPolygon(MultiPolygon multiPolygon, int n) {
         def polygons = multiPolygon.polygons()
-        assertPolygon1(polygons.get(0))
-        assertPolygon2(polygons.get(1))
+        assertPolygon(polygons.get(0), n + 10)
+        assertPolygon(polygons.get(1), n + 20)
     }
 
-    MultiPolygon createMultiPolygon2() {
-        return new MultiPolygon([createPolygon3(), createPolygon4()])
-    }
-
-    void assertMultiPolygon2(MultiPolygon multiPolygon) {
-        def polygons = multiPolygon.polygons()
-        assertPolygon3(polygons.get(0))
-        assertPolygon4(polygons.get(1))
-    }
-
-    GeometryCollection createGeometryCollection1() {
+    GeometryCollection createGeometryCollection(int n) {
         return new GeometryCollection([
-                createPoint1(),
-                createLineString1(),
-                createPolygon1()
+                createPoint(n),
+                createMultiPoint(n),
+                createLineString(n),
+                createMultiLineString(n),
+                createPolygon(n),
+                createMultiPolygon(n)
         ] as List<Geometry>)
     }
 
-    void assertGeometryCollection1(GeometryCollection geometryCollection) {
+    protected void assertGeometryCollection(GeometryCollection geometryCollection, int n) {
         def geometries = geometryCollection.geometries()
-        assertPoint1((Point) geometries.get(0))
-        assertLineString1((LineString) geometries.get(1))
-        assertPolygon1((Polygon) geometries.get(2))
-    }
-
-    GeometryCollection createGeometryCollection2() {
-        return new GeometryCollection([
-                createPoint2(),
-                createLineString2(),
-                createPolygon3()
-        ] as List<Geometry>)
-    }
-
-    void assertGeometryCollection2(GeometryCollection geometryCollection) {
-        def geometries = geometryCollection.geometries()
-        assertPoint2((Point) geometries.get(0))
-        assertLineString2((LineString) geometries.get(1))
-        assertPolygon3((Polygon) geometries.get(2))
+        assertPoint((Point) geometries.get(0), n)
+        assertMultiPoint((MultiPoint) geometries.get(1), n)
+        assertLineString((LineString) geometries.get(2), n)
+        assertMultiLineString((MultiLineString) geometries.get(3), n)
+        assertPolygon((Polygon) geometries.get(4), n)
+        assertMultiPolygon((MultiPolygon) geometries.get(5), n)
     }
 }
