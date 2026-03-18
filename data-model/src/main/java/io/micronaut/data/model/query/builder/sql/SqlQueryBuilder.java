@@ -1092,7 +1092,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         return;
                     }
 
-                    addWriteExpression(values, prop);
+                    addWriteExpression(values, property);
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);

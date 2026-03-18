@@ -28,7 +28,7 @@ abstract class AbstractGeoSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    /*void "test school"() {
+    void "test school"() {
         given:
         Location location1 = new Location()
         location1.setPoint(new Point(2.0, 2.5))
@@ -67,7 +67,7 @@ abstract class AbstractGeoSpec extends Specification {
             it.getLocation().getPoint().x() == 3.0d
             it.getLocation().getPoint().y() == 3.5d
         }
-    }*/
+    }
 
     void "test saving, reading and updating a geo entity"() {
         given:
