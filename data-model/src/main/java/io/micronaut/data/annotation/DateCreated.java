@@ -35,6 +35,11 @@ public @interface DateCreated {
     String NAME = DateCreated.class.getName();
 
     /**
+     * The metadata key for {@link #skipIfPresent()}.
+     */
+    String SKIP_IF_PRESENT = "skipIfPresent";
+
+    /**
      * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
      * Default false preserves existing behavior of always setting the value on insert.
      *

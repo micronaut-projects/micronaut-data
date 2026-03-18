@@ -34,6 +34,18 @@ class AutoTimestampSkipIfPresentSpec extends Specification implements H2TestProp
         repo.deleteAll()
     }
 
+    void 'date updated skip if present preserves preset value on insert'() {
+        when:
+        def preset = Instant.parse("2021-01-01T00:00:00Z")
+        def e = new TSEntity(null, null, preset)
+        def saved = repo.save(e)
+        then:
+        saved.id
+        saved.dateUpdated == preset
+        cleanup:
+        repo.deleteAll()
+    }
+
     void 'date updated skipIfPresent applies only on insert, updates always refresh'() {
         when:
         def e = new TSEntity(null, null, null)

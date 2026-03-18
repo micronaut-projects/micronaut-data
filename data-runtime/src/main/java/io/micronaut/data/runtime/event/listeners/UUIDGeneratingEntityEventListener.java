@@ -25,6 +25,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.inject.Singleton;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -55,19 +56,20 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties
+        // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
+        // Pre-filter out skipIfPresent properties that already have a value to avoid returning
+        // null from the supplier (which would create ambiguity with the skip signal).
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
-        AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> {
-            // Honor skipIfPresent if declared
-            boolean skipIfPresent = p.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
-            if (skipIfPresent) {
-                Object current = p.getProperty().get(context.getEntity());
-                if (current != null) {
-                    return null; // skip
+        @SuppressWarnings("unchecked")
+        final RuntimePersistentProperty<Object>[] propsToPopulate = Arrays.stream(persistentProperties)
+            .filter(p -> {
+                if (p.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)) {
+                    return p.getProperty().get(context.getEntity()) == null;
                 }
-            }
-            return UUID.randomUUID();
-        });
+                return true;
+            })
+            .toArray(RuntimePersistentProperty[]::new);
+        AutoPopulateUtil.applyTopLevel(context, propsToPopulate, p -> UUID.randomUUID());
 
         // 2) Embedded properties (recursive via util)
         AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {

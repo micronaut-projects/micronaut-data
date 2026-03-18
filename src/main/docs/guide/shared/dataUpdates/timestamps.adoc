@@ -16,8 +16,9 @@ Instant updated;
 ----
 
 Behavior:
-- DateCreated: `skipIfPresent = true` preserves a non-null value on insert; otherwise Micronaut Data assigns the timestamp.
-- DateUpdated: `skipIfPresent = true` is considered only on insert. On updates, `@DateUpdated` is always refreshed by Micronaut Data (it is not skipped), regardless of the current value.
+
+* `@DateCreated`: `skipIfPresent = true` preserves a non-null value on insert; otherwise Micronaut Data assigns the timestamp.
+* `@DateUpdated`: `skipIfPresent = true` is considered only on insert. On updates, `@DateUpdated` is always refreshed by Micronaut Data (it is not skipped), regardless of the current value.
 
 NOTE: If you update the entity with an external SQL statement or custom logic you will need to update the underlying `DateUpdated` column manually.
 

@@ -35,6 +35,11 @@ public @interface DateUpdated {
     String NAME = DateUpdated.class.getName();
 
     /**
+     * The metadata key for {@link #skipIfPresent()}.
+     */
+    String SKIP_IF_PRESENT = "skipIfPresent";
+
+    /**
      * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
      * Note: On updates, {@code @DateUpdated} is always refreshed by Micronaut Data regardless of this flag.
      * Default is {@code false} to preserve existing behavior.

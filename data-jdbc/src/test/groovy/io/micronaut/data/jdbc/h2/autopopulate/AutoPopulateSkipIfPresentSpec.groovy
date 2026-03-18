@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.h2.autopopulate
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.AutoPopulated
+import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
@@ -36,6 +37,10 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
     @Inject
     CustomerRepository customerRepository = applicationContext.getBean(CustomerRepository)
 
+    @Shared
+    @Inject
+    EmbedUUIDRepository embedUUIDRepository = applicationContext.getBean(EmbedUUIDRepository)
+
     void 'preset id is not overwritten and id initialized'() {
         when:"Save entity with auto populate value set"
         def preset = UUID.randomUUID()
@@ -51,6 +56,25 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
         saved.id != null
         cleanup:
         customerRepository.deleteAll()
+    }
+
+    void 'preset embedded uuid is preserved when skipIfPresent is true'() {
+        when: "Save entity with preset embedded UUID"
+        def preset = UUID.randomUUID()
+        def embed = new EmbedWithUUID(embId: preset)
+        def e = new EntityWithEmbedUUID(id: null, name: "test", embed: embed)
+        def saved = embedUUIDRepository.save(e)
+        then: "The embedded UUID is preserved"
+        saved.embed.embId == preset
+
+        when: "Save entity without preset embedded UUID"
+        def e2 = new EntityWithEmbedUUID(id: null, name: "test2", embed: new EmbedWithUUID(embId: null))
+        def saved2 = embedUUIDRepository.save(e2)
+        then: "The embedded UUID is auto-generated"
+        saved2.embed.embId != null
+
+        cleanup:
+        embedUUIDRepository.deleteAll()
     }
 }
 
@@ -74,6 +98,31 @@ interface CustomerRepository extends GenericRepository<Customer, UUID> {
     Customer save(Customer entity)
 
     Optional<Customer> findById(UUID id)
+
+    void deleteAll()
+}
+
+@Embeddable
+class EmbedWithUUID {
+    @AutoPopulated(skipIfPresent = true)
+    UUID embId
+}
+
+@MappedEntity("entity_embed_uuid")
+class EntityWithEmbedUUID {
+    @Id
+    @AutoPopulated
+    UUID id
+
+    String name
+
+    @Relation(EMBEDDED)
+    EmbedWithUUID embed
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface EmbedUUIDRepository extends GenericRepository<EntityWithEmbedUUID, UUID> {
+    EntityWithEmbedUUID save(EntityWithEmbedUUID entity)
 
     void deleteAll()
 }
