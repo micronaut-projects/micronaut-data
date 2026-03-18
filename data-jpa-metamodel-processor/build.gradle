@@ -29,7 +29,8 @@ dependencies {
     testImplementation mn.micronaut.inject.java.test
 }
 
-//If removed the build fails, is there any other way to fix this failing task
-tasks.named("findBaseline") {
-    enabled = false
+micronautBuild {
+    binaryCompatibility {
+        enabledAfter("5.0.0")
+    }
 }
