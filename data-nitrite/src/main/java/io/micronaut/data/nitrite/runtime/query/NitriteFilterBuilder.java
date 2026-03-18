@@ -659,8 +659,57 @@ public final class NitriteFilterBuilder {
 
             RuntimePersistentEntity<?> associatedEntity = assoc.getAssociatedEntity();
             if (isCollection) {
-                Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
-                return FluentFilter.where(fieldName).elemMatch(subFilter);
+                // For ONE_TO_MANY and MANY_TO_MANY, use sub-query approach
+                // Nitrite stores these as foreign keys in child documents, not embedded arrays
+                if (subQueryExecutor == null) {
+                    // Fallback to elemMatch if no sub-query executor (will fail for Nitrite but maintains API)
+                    Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
+                    return FluentFilter.where(fieldName).elemMatch(subFilter);
+                }
+
+                // Get the mappedBy property (the FK in the child entity pointing back to parent)
+                String mappedBy = assoc.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+                if (mappedBy == null) {
+                    return NONE;
+                }
+
+                RuntimePersistentProperty<?> backRefProp = associatedEntity.getPropertyByName(mappedBy);
+                if (backRefProp == null) {
+                    return NONE;
+                }
+                String backRefPersistedName = backRefProp.getPersistedName();
+
+                // Build sub-query filter for the associated entity
+                // The 'remaining' path contains the property name (e.g., "name")
+                // We need to build a filter like {name: {$eq: "Austin"}}
+                Map<String, Object> subFilterMap = new java.util.LinkedHashMap<>();
+                Map<String, Object> resolvedOperators = new java.util.LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : operators.entrySet()) {
+                    Object resolvedValue = resolveValue(entry.getValue(), params, namedParameters);
+                    resolvedOperators.put(entry.getKey(), resolvedValue);
+                }
+                subFilterMap.put(remaining, resolvedOperators);
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("ONE_TO_MANY reverse lookup: entity={}, filter={}, backRef={}",
+                        associatedEntity.getName(), subFilterMap, backRefPersistedName);
+                }
+
+                // Execute sub-query to get matching values for the back-reference field
+                List<Object> matchingValues = subQueryExecutor.executeSubQuery(
+                    associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
+
+                if (matchingValues.isEmpty()) {
+                    return NONE;
+                }
+
+                // Filter main entity by ID IN (matchingValues)
+                String idField = entity.getIdentity().getPersistedName();
+                Comparable<?>[] comparableIds = matchingValues.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
+                    .toArray(Comparable<?>[]::new);
+                return comparableIds.length == 0 ? NONE : FluentFilter.where(idField).in(comparableIds);
             } else if (isManyToOne && subQueryExecutor != null) {
                 // For MANY_TO_ONE, execute sub-query on associated entity and join by ID
                 // Build filter for associated entity (e.g., Author.name = "Stephen King")

@@ -74,6 +74,24 @@ class PluralAssociationSpec extends Specification {
             results[0].name == "California"
     }
 
+    void "test multiple cities with same state"() {
+        given:
+            def texas = new State(name: "Texas")
+            stateRepository.save(texas)
+
+            def houston = new City(name: "Houston", state: texas)
+            def dallas = new City(name: "Dallas", state: texas)
+            def austin = new City(name: "Austin", state: texas)
+            cityRepository.saveAll([houston, dallas, austin])
+
+        when:
+            def foundState = stateRepository.findByCitiesName("Austin")
+
+        then:
+            foundState != null
+            foundState.name == "Texas"
+    }
+
     void "test non-matching city name returns empty list"() {
         given:
             def nevada = new State(name: "Nevada")
