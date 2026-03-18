@@ -60,6 +60,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -487,14 +488,15 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     queryParts = new ArrayList<>();
                     queryParts.add(finalSql);
                 }
-                // Build the assembled SQL from queryParts (parts joined with '?' separators)
+                // Build the assembled SQL from queryParts: parts represent SQL fragments between
+                // positional IN-parameter placeholders (SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).
                 String assembledSql;
                 if (queryParts.size() == 1) {
                     assembledSql = queryParts.get(0);
                 } else {
                     var sqlBuilder = new StringBuilder(queryParts.get(0));
                     for (int i = 1; i < queryParts.size(); i++) {
-                        sqlBuilder.append('?').append(queryParts.get(i));
+                        sqlBuilder.append(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).append(queryParts.get(i));
                     }
                     assembledSql = sqlBuilder.toString();
                 }
