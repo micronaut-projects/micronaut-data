@@ -33,16 +33,22 @@ public final class DefaultOrder<T> implements Order {
     private final Expression<T> expression;
     private final boolean ascending;
     private final boolean ignoreCase;
+    private final Nulls nullPrecedence;
 
     public DefaultOrder(Expression<T> expression, boolean ascending, boolean ignoreCase) {
+        this(expression, ascending, ignoreCase, Nulls.NONE);
+    }
+
+    public DefaultOrder(Expression<T> expression, boolean ascending, boolean ignoreCase, Nulls nullPrecedence) {
         this.expression = expression;
         this.ascending = ascending;
         this.ignoreCase = ignoreCase;
+        this.nullPrecedence = nullPrecedence;
     }
 
     @Override
     public Order reverse() {
-        return new DefaultOrder<>(expression, !ascending, ignoreCase);
+        return new DefaultOrder<>(expression, !ascending, ignoreCase, nullPrecedence);
     }
 
     public boolean isIgnoreCase() {
@@ -61,6 +67,6 @@ public final class DefaultOrder<T> implements Order {
 
     @Override
     public Nulls getNullPrecedence() {
-        return Nulls.NONE;
+        return nullPrecedence;
     }
 }
