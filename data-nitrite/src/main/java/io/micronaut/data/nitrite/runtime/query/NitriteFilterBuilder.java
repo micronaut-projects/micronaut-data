@@ -39,6 +39,10 @@ import java.util.UUID;
 
 /**
  * Builder for Nitrite Filters from JSON-like structures.
+ * <p>
+ * Supports association path resolution for {@code ONE_TO_MANY} and {@code MANY_TO_MANY} relationships.
+ * Association names are matched using the associated entity's class name, which correctly handles
+ * both regular and irregular plural forms (for example, {@code books} → {@code book}, {@code cities} → {@code city}).
  *
  * @since 1.0.0
  */
@@ -298,6 +302,13 @@ public final class NitriteFilterBuilder {
             if (rawField.contains(".")) {
                 return buildNestedFilter(entity, rawField, operators, params, namedParameters);
             }
+
+            // Convert camelCase field name to snake_case for regular properties
+            // This matches the field naming strategy used when storing documents
+            RuntimePersistentProperty<?> prop = entity.getPropertyByName(rawField);
+            if (prop != null) {
+                field = prop.getPersistedName();
+            }
         }
 
         List<Filter> fieldFilters = new ArrayList<>();
@@ -380,12 +391,14 @@ public final class NitriteFilterBuilder {
                         kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
 
                         String persistedName = assoc.getPersistedName();
-                        String singularName = persistedName.endsWith("s") ? persistedName.substring(0, persistedName.length() - 1) : persistedName;
+                        // Use the associated entity's singular name for matching (handles irregular plurals like "cities" -> "city")
+                        String singularName = assoc.getAssociatedEntity().getSimpleName();
+                        String decapitalizedName = assoc.getAssociatedEntity().getDecapitalizedName();
 
                         // New format: "book_author.title"
                         if (field.contains(".")) {
                             String assocPart = field.substring(0, field.indexOf('.'));
-                            if (assocPart.equals(persistedName) || assocPart.equals(singularName)) {
+                            if (assocPart.equals(persistedName) || assocPart.equals(singularName) || assocPart.equals(decapitalizedName)) {
                                 association = assoc;
                                 isReverseLookup = true;
                                 break;
@@ -393,7 +406,7 @@ public final class NitriteFilterBuilder {
                         }
 
                         // Old format: "books_title" or "book_title"
-                        if (field.startsWith(persistedName + "_") || field.startsWith(singularName + "_")) {
+                        if (field.startsWith(persistedName + "_") || field.startsWith(singularName + "_") || field.startsWith(decapitalizedName + "_")) {
                             association = assoc;
                             isReverseLookup = true;
                             break;
@@ -462,7 +475,9 @@ public final class NitriteFilterBuilder {
             // New format: "book_author.title" (dot separator from query builder)
             // Old format: "book_author_title" or "book_author" (underscore separator)
             String persistedName = association.getPersistedName();
-            String singularName = persistedName.endsWith("s") ? persistedName.substring(0, persistedName.length() - 1) : persistedName;
+            // Use the associated entity's singular name for matching (handles irregular plurals like "cities" -> "city")
+            String singularName = association.getAssociatedEntity().getSimpleName();
+            String decapitalizedName = association.getAssociatedEntity().getDecapitalizedName();
 
             if (field.contains(".")) {
                 // New format: "book_author.title" - extract property after last dot
@@ -470,13 +485,15 @@ public final class NitriteFilterBuilder {
                 String assocPart = field.substring(0, lastDot);
                 targetPropertyName = field.substring(lastDot + 1);
                 // Verify the association part matches
-                if (!assocPart.equals(persistedName) && !assocPart.equals(singularName)) {
+                if (!assocPart.equals(persistedName) && !assocPart.equals(singularName) && !assocPart.equals(decapitalizedName)) {
                     targetPropertyName = null;  // Doesn't match, will fall through to other checks
                 }
             } else if (field.startsWith(persistedName + "_")) {
                 targetPropertyName = field.substring(persistedName.length() + 1);
             } else if (field.startsWith(singularName + "_")) {
                 targetPropertyName = field.substring(singularName.length() + 1);
+            } else if (field.startsWith(decapitalizedName + "_")) {
+                targetPropertyName = field.substring(decapitalizedName.length() + 1);
             } else if (field.equals(persistedName)) {
                 // Old format without property suffix - property name was lost
                 // Will use $or fallback below

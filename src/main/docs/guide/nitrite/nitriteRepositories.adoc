@@ -13,6 +13,15 @@ You can use standard repository method patterns:
 - Case-insensitive queries (for example `findByTitleIgnoreCase`)
 - IN queries with collections and arrays (for example `findByTitleIn`)
 
+== Save Method Upsert Semantics
+
+The `save()` and `saveAll()` methods from `CrudRepository` use **upsert semantics**:
+
+- If the entity's ID is `null`, a new document is inserted and the ID is generated
+- If the entity has an existing ID, the document is updated (replaced) if found, or inserted if not found
+
+This allows `save()` to be used for both creating new entities and updating existing ones. For explicit update operations, use the `update()` method or derived update methods (see <<nitriteQuickStart>>).
+
 == Case-Insensitive Queries
 
 Nitrite supports case-insensitive queries using the `IgnoreCase` suffix in method names:

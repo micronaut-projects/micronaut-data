@@ -40,6 +40,16 @@ import java.util.function.Function;
 /**
  * Internal entity operations for Nitrite with automatic event firing and version handling.
  * Uses ObjectRepositoryWriter for entity-to-Document conversion.
+ * <p>
+ * <b>Save (INSERT) Operation:</b> Uses upsert semantics:
+ * <ul>
+ *   <li>If the entity has no ID: generates an ID and inserts as a new document</li>
+ *   <li>If the entity has an existing ID: updates (replaces) the document if found, or inserts if not found</li>
+ * </ul>
+ * This allows {@code save()} to work for both creating new entities and updating existing ones.
+ * <p>
+ * <b>Update (UPDATE) Operation:</b> Replaces an existing document by ID.
+ * Requires the entity to have an ID; throws {@link OptimisticLockException} if version mismatch occurs.
  *
  * @param <T> The entity type
  * @since 4.14.0
@@ -135,25 +145,51 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             }
             return;
         }
-        
+
         Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
         if (operationType == OperationType.INSERT) {
-            helper.generateIdIfNecessary(entity, type);
-            // Initialize version to 0 if not set (for optimistic locking)
-            if (repositoryWriter.needsVersionInit(entity)) {
-                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                entity = helper.updateEntityId(versionProperty, entity, 0L);
-            }
-            Document doc = repositoryWriter.toDocument(entity);
-            helper.logInsert(collection.getName(), doc);
-            collection.insert(doc);
-            Object generatedId = doc.get("_id");
-            if (generatedId != null && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty(), entity, generatedId);
+            // Save operation uses upsert semantics:
+            // - If entity has no ID: generate ID and insert as new document
+            // - If entity has ID: update (replace) existing document, or insert if not found
+            // This allows save() to work for both create and update scenarios
+            Object entityId = persistentEntity.getIdentity() != null
+                ? persistentEntity.getIdentity().getProperty().get(entity)
+                : null;
+
+            if (entityId != null) {
+                // Entity has ID - use upsert (update with insert-if-absent)
+                // Initialize version to 0 if not set (for optimistic locking)
+                if (repositoryWriter.needsVersionInit(entity)) {
+                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                    entity = helper.updateEntityId(versionProperty, entity, 0L);
+                }
+                Document doc = repositoryWriter.toDocument(entity);
+                Filter filter = entityMapper.idEqualsFilter(type, entityId);
+                helper.logUpdate(collection.getName(), filter, doc);
+                long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
+                if (persistentEntity.getVersion() != null) {
+                    checkOptimisticLocking(1, rows);
+                }
+            } else {
+                // No ID - generate and insert as new
+                helper.generateIdIfNecessary(entity, type);
+                // Initialize version to 0 if not set (for optimistic locking)
+                if (repositoryWriter.needsVersionInit(entity)) {
+                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                    entity = helper.updateEntityId(versionProperty, entity, 0L);
+                }
+                Document doc = repositoryWriter.toDocument(entity);
+                helper.logInsert(collection.getName(), doc);
+                collection.insert(doc);
+                Object generatedId = doc.get("_id");
+                if (generatedId != null && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().getProperty().get(entity) == null) {
+                    entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty(), entity, generatedId);
+                }
             }
             ctx.persisted.add(entity);
         } else if (operationType == OperationType.UPDATE) {
-            // Update with optimistic locking
+            // Update operation: replace existing document by ID
+            // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
             Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
             if (persistentEntity.getVersion() != null) {

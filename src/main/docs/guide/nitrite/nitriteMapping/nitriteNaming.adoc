@@ -41,3 +41,16 @@ snippet::example.PersonWithDateOfBirthRepository[project-base="doc-examples/nitr
 The above method generates a query that references the `name` field (not `Name` or `name` in camel case).
 
 TIP: The snake_case naming strategy is applied automatically. If you need different naming behavior, you can use the `@MappedEntity` annotation's `namingStrategy` attribute (though this is rarely needed for Nitrite).
+
+== @Query JSON Filters
+
+When using the `@Query` annotation with explicit JSON filter documents, field names use snake_case format to match the stored document structure. For example, a property `firstName` is stored as `first_name` in the document.
+
+The framework automatically converts camelCase property names to their snake_case persisted names when processing `@Query` JSON filters:
+
+[source,json]
+----
+{"firstName": "John"}  // Converted to {"first_name": "John"} internally
+----
+
+This means developers can use either camelCase or snake_case in `@Query` JSON filters - both will work correctly.

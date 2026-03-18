@@ -78,4 +78,13 @@ Current limitations of `@Join` support in Nitrite:
 * Complex nested paths may require explicit handling in future versions
 * Only default join type is supported (no `LEFT_FETCH`, `INNER_FETCH`, etc.)
 
+== Association Name Matching
+
+Nitrite uses the associated entity's class name for matching association paths in queries. This handles both regular and irregular plural forms correctly:
+
+* Regular plurals: `books` → `book` (e.g., `findByBooksTitle`)
+* Irregular plurals: `cities` → `city` (e.g., `findByCitiesName`)
+
+This ensures that queries on `@OneToMany` associations work correctly regardless of the naming convention used.
+
 For more complex association fetching patterns, consider using the Criteria API (see <<nitriteCriteriaSpecifications>>).

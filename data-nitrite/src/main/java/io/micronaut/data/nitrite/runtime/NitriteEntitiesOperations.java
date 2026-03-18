@@ -43,6 +43,16 @@ import java.util.function.Predicate;
 /**
  * Internal entities operations for Nitrite with automatic event firing and version handling.
  * Uses CollectionWriter for batch entity-to-Document conversion.
+ * <p>
+ * <b>Save All (INSERT) Operation:</b> Uses upsert semantics for each entity:
+ * <ul>
+ *   <li>If an entity has no ID: generates an ID and inserts as a new document</li>
+ *   <li>If an entity has an existing ID: updates (replaces) the document if found, or inserts if not found</li>
+ * </ul>
+ * This allows {@code saveAll()} to work for mixed batches of new and existing entities.
+ * <p>
+ * <b>Update All (UPDATE) Operation:</b> Replaces existing documents by ID.
+ * Requires all entities to have IDs; throws {@link OptimisticLockException} if version mismatch occurs.
  *
  * @param <T> The entity type
  * @since 4.14.0
@@ -202,8 +212,13 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
 
         if (insert) {
+            // saveAll() operation uses upsert semantics for each entity:
+            // - If entity has no ID: generate ID and insert as new document
+            // - If entity has ID: update (replace) existing document, or insert if not found
+            // This allows saveAll() to work for mixed batches of new and existing entities
             Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
-            List<Document> docs = new ArrayList<>();
+            List<Document> docsToInsert = new ArrayList<>();
+
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
 
@@ -212,38 +227,56 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     continue;
                 }
 
-                // If the entity already has an ID, check if it's already in the collection
+                // If the entity already has an ID, use upsert
                 Object id = entityMapper.getEntityIdValue(entity, type);
                 if (id != null) {
-                    Filter idFilter = entityMapper.idEqualsFilter(type, id);
-                    if (collection.find(idFilter).firstOrNull() != null) {
-                        ctx.persisted.add(entity);
-                        continue;
+                    // Entity has ID - use upsert (update with insert-if-absent)
+                    // Initialize version to 0 if not set (for optimistic locking)
+                    if (repositoryWriter.needsVersionInit(entity)) {
+                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                        entity = helper.updateEntityId(versionProperty, entity, 0L);
+                        entities.set(i, entity);
                     }
-                }
-
-                helper.generateIdIfNecessary(entity, type);
-                // Initialize version to 0 if not set (for optimistic locking)
-                if (repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
-                    entity = helper.updateEntityId(versionProperty, entity, 0L);
-                    entities.set(i, entity);
-                }
-                docs.add(repositoryWriter.toDocument(entity));
-            }
-            if (!docs.isEmpty()) {
-                helper.logInsert(collection.getName(), "batch of " + docs.size());
-                collection.insert(docs.toArray(new Document[0]));
-                for (T entity : entities) {
+                    Document doc = repositoryWriter.toDocument(entity);
+                    Filter filter = entityMapper.idEqualsFilter(type, id);
+                    helper.logUpdate(collection.getName(), filter, doc);
+                    long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
+                    if (persistentEntity.getVersion() != null) {
+                        if (rows != 1) {
+                            throw new OptimisticLockException("Upsert expected 1 row but got " + rows);
+                        }
+                    }
                     ctx.persisted.add(entity);
+                } else {
+                    // No ID - generate and collect for batch insert
+                    helper.generateIdIfNecessary(entity, type);
+                    // Initialize version to 0 if not set (for optimistic locking)
+                    if (repositoryWriter.needsVersionInit(entity)) {
+                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                        entity = helper.updateEntityId(versionProperty, entity, 0L);
+                        entities.set(i, entity);
+                    }
+                    docsToInsert.add(repositoryWriter.toDocument(entity));
+                }
+            }
+
+            // Insert all new entities without IDs in batch
+            if (!docsToInsert.isEmpty()) {
+                helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
+                collection.insert(docsToInsert.toArray(new Document[0]));
+                for (T entity : entities) {
+                    if (!ctx.persisted.contains(entity)) {
+                        ctx.persisted.add(entity);
+                    }
                 }
             }
         } else {
-            // Update batch logic - process all entities and report total failures
+            // updateAll() operation: replace existing documents by ID
+            // Requires all entities to have IDs; throws OptimisticLockException if version mismatch
             Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
             int expectedCount = entities.size();
             int affectedCount = 0;
-            
+
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
                 Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
@@ -263,7 +296,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
                 affectedCount += rows;
             }
-            
+
             // Check optimistic locking after processing all entities
             if (persistentEntity.getVersion() != null && affectedCount != expectedCount) {
                 throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expectedCount + " got: " + affectedCount);

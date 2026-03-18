@@ -54,7 +54,8 @@ class NitriteLoggingSpec extends Specification {
 
         then:
         def logs = appender.list.collect { it.formattedMessage }
-        logs.any { it.contains("Executing Nitrite 'insert' into collection [persons] with document:") }
+        // save() with generated ID uses upsert (update with insert-if-absent)
+        logs.any { it.contains("Executing Nitrite 'update' on collection [persons] with filter:") }
         logs.any { it.contains("Executing Nitrite 'find' on collection [persons] with filter: (name == Joe)") }
     }
 
