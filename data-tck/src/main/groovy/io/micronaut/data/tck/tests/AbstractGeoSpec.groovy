@@ -208,7 +208,7 @@ abstract class AbstractGeoSpec extends Specification {
         assertPolygon(polygons.get(1), n + 20)
     }
 
-    GeometryCollection createGeometryCollection(int n) {
+    protected GeometryCollection createGeometryCollection(int n) {
         return new GeometryCollection([
                 createPoint(n),
                 createMultiPoint(n),
