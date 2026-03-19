@@ -563,9 +563,6 @@ public class TypeUtils {
             }
 
             if (type.isArray()) {
-                if (type.isAssignable(byte.class) || type.isAssignable(Byte.class)) {
-                    return DataType.BYTE_ARRAY;
-                }
                 if (type.isAssignable(String.class)) {
                     return DataType.STRING_ARRAY;
                 }

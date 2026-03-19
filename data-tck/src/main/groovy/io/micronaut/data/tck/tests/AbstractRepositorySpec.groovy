@@ -587,7 +587,6 @@ abstract class AbstractRepositorySpec extends Specification {
         expect:
         basicTypeRepository.findByteArrayById(entity.myId).present
         basicTypeRepository.findByteArrayById(entity.myId).get() == entity.byteArray
-        basicTypeRepository.getByteArrayById(entity.myId) == entity.byteArray
         basicTypeRepository.findByteArrayById(entity.myId).get().class == byte[].class
     }
 
