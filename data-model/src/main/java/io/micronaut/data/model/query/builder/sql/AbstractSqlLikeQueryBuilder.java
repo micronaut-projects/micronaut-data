@@ -58,6 +58,7 @@ import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -2693,6 +2694,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visit(CoalesceExpression<?> coalesceExpression) {
+            appendNamedFunction("COALESCE", (List<Expression<?>>) (List<?>) coalesceExpression.getValues());
+        }
+
+        @Override
         public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
             appendSearchedCaseExpression(searchedCaseExpression);
         }
@@ -2935,6 +2941,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             appendNamedFunction(functionExpression.getName(), functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(CoalesceExpression<?> coalesceExpression) {
+            appendNamedFunction("COALESCE", (List<Expression<?>>) (List<?>) coalesceExpression.getValues());
         }
 
         @Override

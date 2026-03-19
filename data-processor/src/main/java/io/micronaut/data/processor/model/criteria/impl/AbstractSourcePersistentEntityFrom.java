@@ -19,17 +19,22 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationAttributePath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityMapJoin;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultEmbeddedPersistentPropertyPath;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.metamodel.MapAttribute;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The internal source implementation of {@link AbstractPersistentEntityFrom}.
@@ -66,7 +71,7 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
                                                                       SourcePersistentProperty property,
                                                                       CriteriaBuilder criteriaBuilder) {
         List<Association> associations;
-        if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {
+        if (parentPath instanceof PersistentAssociationAttributePath<?, ?> associationPath) {
             List<Association> pathAssociations = associationPath.getAssociations();
             associations = new ArrayList<>(pathAssociations.size() + 1);
             associations.addAll(pathAssociations);
@@ -89,8 +94,8 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
 
     @Override
     protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
-                                                                        io.micronaut.data.annotation.Join. @Nullable Type associationJoinType,
-                                                                        @Nullable String alias) {
+                                                                         io.micronaut.data.annotation.Join. @Nullable Type associationJoinType,
+                                                                         @Nullable String alias) {
         return new SourcePersistentAssociationPath<>(this,
             (SourceAssociation) association,
             getCurrentPath(),
@@ -98,6 +103,27 @@ abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersiste
             alias,
             criteriaBuilder
         );
+    }
+
+    @Override
+    public <X, K, V> PersistentEntityMapJoin<X, K, V> joinMap(String attributeName, io.micronaut.data.annotation.Join.Type jt) {
+        return (PersistentEntityMapJoin<X, K, V>) super.joinMap(attributeName, jt);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName());
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map, JoinType jt) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName(), jt);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map,
+                                                                                  io.micronaut.data.annotation.Join.Type jt) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName(), jt);
     }
 
 }

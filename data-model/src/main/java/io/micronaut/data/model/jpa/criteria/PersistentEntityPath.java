@@ -17,14 +17,6 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.PersistentEntity;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.metamodel.MapAttribute;
-import jakarta.persistence.metamodel.PluralAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * The persistent entity {@link Path}.
@@ -34,7 +26,7 @@ import java.util.Map;
  * @since 3.2
  */
 @Experimental
-public interface PersistentEntityPath<T> extends Path<T>, IExpression<T> {
+public interface PersistentEntityPath<T> extends PersistentPathAccessors<T>, IExpression<T> {
 
     /**
      * @return The persistent entity
@@ -50,21 +42,5 @@ public interface PersistentEntityPath<T> extends Path<T>, IExpression<T> {
      * @return The property path
      */
     @Override
-    
     <Y> PersistentPropertyPath<Y> get(String attributeName);
-
-    @Override
-    default <Y> PersistentPropertyPath<Y> get(SingularAttribute<? super T, Y> attribute) {
-        return get(attribute.getName());
-    }
-
-    @Override
-    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super T, C, E> collection) {
-        return get(collection.getName());
-    }
-
-    @Override
-    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super T, K, V> map) {
-        return get(map.getName());
-    }
 }

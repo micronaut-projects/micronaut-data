@@ -16,8 +16,9 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import jakarta.persistence.criteria.MapJoin;
 
 @Experimental
-public interface PersistentMapAttributePath<OwnerType, AssociatedEntityType>
-    extends PersistentAssociationAttributePath<OwnerType, AssociatedEntityType> {
+public interface PersistentEntityMapJoin<OwnerType, KeyType, AssociatedEntityType>
+    extends MapJoin<OwnerType, KeyType, AssociatedEntityType>, PersistentMapAttributePath<OwnerType, AssociatedEntityType> {
 }

@@ -21,6 +21,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -147,6 +148,11 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         queryResultTypeName = functionExpression.getJavaType().getName();
+    }
+
+    @Override
+    public void visit(CoalesceExpression<?> coalesceExpression) {
+        queryResultTypeName = coalesceExpression.getJavaType().getName();
     }
 
     @Override

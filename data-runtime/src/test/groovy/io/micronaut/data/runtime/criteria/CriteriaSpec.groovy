@@ -323,6 +323,66 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             getSqlQuery(criteriaQuery) == 'SELECT map_owner_entity_."id",map_owner_entity_attributes_."id" AS attributes_id,map_owner_entity_attributes_."name" AS attributes_name FROM "map_owner_entity" map_owner_entity_ LEFT JOIN "map_owner_entity_map_value_entity" map_owner_entity_attributes_map_owner_entity_map_value_entity_ ON map_owner_entity_."id"=map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_owner_entity_id"  LEFT JOIN "map_value_entity" map_owner_entity_attributes_ ON map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_value_entity_id"=map_owner_entity_attributes_."id" WHERE (map_owner_entity_attributes_."id" IS NOT NULL)'
     }
 
+    void "test strict joinMap on runtime map association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(MapOwnerEntity)
+            def root = criteriaQuery.from(MapOwnerEntity)
+
+        when:
+            def mapJoin = root.joinMap('attributes')
+            criteriaQuery.where(criteriaBuilder.isNotNull(mapJoin.get('id')))
+
+        then:
+            mapJoin != null
+            getSqlQuery(criteriaQuery) == 'SELECT map_owner_entity_."id" FROM "map_owner_entity" map_owner_entity_ INNER JOIN "map_owner_entity_map_value_entity" map_owner_entity_attributes_map_owner_entity_map_value_entity_ ON map_owner_entity_."id"=map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_owner_entity_id"  INNER JOIN "map_value_entity" map_owner_entity_attributes_ ON map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_value_entity_id"=map_owner_entity_attributes_."id" WHERE (map_owner_entity_attributes_."id" IS NOT NULL)'
+    }
+
+    void "test strict joinMap metamodel overload on runtime map association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(MapOwnerEntity)
+            def root = criteriaQuery.from(MapOwnerEntity)
+            def mapAttribute = root.getModel().getDeclaredMap('attributes')
+
+        when:
+            def mapJoin = root.joinMap(mapAttribute, JoinType.LEFT)
+            criteriaQuery.where(criteriaBuilder.isNotNull(mapJoin.get('id')))
+
+        then:
+            mapJoin != null
+            getSqlQuery(criteriaQuery) == 'SELECT map_owner_entity_."id",map_owner_entity_attributes_."id" AS attributes_id,map_owner_entity_attributes_."name" AS attributes_name FROM "map_owner_entity" map_owner_entity_ LEFT JOIN "map_owner_entity_map_value_entity" map_owner_entity_attributes_map_owner_entity_map_value_entity_ ON map_owner_entity_."id"=map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_owner_entity_id"  LEFT JOIN "map_value_entity" map_owner_entity_attributes_ ON map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_value_entity_id"=map_owner_entity_attributes_."id" WHERE (map_owner_entity_attributes_."id" IS NOT NULL)'
+    }
+
+    void "test strict joinMap micronaut join type overload on runtime map association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(MapOwnerEntity)
+            def root = criteriaQuery.from(MapOwnerEntity)
+
+        when:
+            def mapJoin = root.joinMap('attributes', io.micronaut.data.annotation.Join.Type.LEFT_FETCH)
+            criteriaQuery.where(criteriaBuilder.isNotNull(mapJoin.get('id')))
+
+        then:
+            mapJoin != null
+            getSqlQuery(criteriaQuery) == 'SELECT map_owner_entity_."id",map_owner_entity_attributes_."id" AS attributes_id,map_owner_entity_attributes_."name" AS attributes_name FROM "map_owner_entity" map_owner_entity_ LEFT JOIN "map_owner_entity_map_value_entity" map_owner_entity_attributes_map_owner_entity_map_value_entity_ ON map_owner_entity_."id"=map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_owner_entity_id"  LEFT JOIN "map_value_entity" map_owner_entity_attributes_ ON map_owner_entity_attributes_map_owner_entity_map_value_entity_."map_value_entity_id"=map_owner_entity_attributes_."id" WHERE (map_owner_entity_attributes_."id" IS NOT NULL)'
+    }
+
+    void "test strict correlate MapJoin metadata"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(MapOwnerEntity)
+            def root = criteriaQuery.from(MapOwnerEntity)
+            def mapJoin = root.joinMap('attributes')
+            def subquery = criteriaQuery.subquery(Long)
+
+        when:
+            def correlatedMapJoin = subquery.correlate(mapJoin)
+
+        then:
+            correlatedMapJoin.is(mapJoin)
+            correlatedMapJoin.isCorrelated()
+            correlatedMapJoin.getCorrelationParent().is(root)
+            subquery.getCorrelatedJoins() == [mapJoin] as Set
+    }
+
     void "test collection emptiness predicates on list association"() {
         given:
             def criteriaQuery = criteriaBuilder.createQuery(Test)
@@ -488,6 +548,21 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             getSqlQuery(criteriaQuery) == 'SELECT COALESCE(book_."title",?),COALESCE(book_."title",?),NULLIF(book_."title",?),NULLIF(book_."title",?) FROM "book" book_'
     }
 
+    void "test coalesce builder object form"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Object)
+            def root = criteriaQuery.from(Book)
+            def coalesce = criteriaBuilder.<String>coalesce()
+                    .value(root.get('title'))
+                    .value('fallback')
+
+        when:
+            criteriaQuery.select(coalesce)
+
+        then:
+            getSqlQuery(criteriaQuery) == "SELECT COALESCE(book_.\"title\",'fallback') FROM \"book\" book_"
+    }
+
     void "test searched and simple case expressions"() {
         given:
             def criteriaQuery = criteriaBuilder.createQuery(Object[])
@@ -504,6 +579,20 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
         then:
             getSqlQuery(criteriaQuery) == "SELECT CASE WHEN test_.\"enabled2\" = TRUE THEN 'yes' ELSE 'no' END,CASE test_.\"name\" WHEN 'foo' THEN 'FOO' ELSE 'OTHER' END FROM \"test\" test_"
+    }
+
+    void "test construct tuple and array projection helpers"() {
+        given:
+            def root = criteriaBuilder.createQuery(Test).from(Test)
+            def name = root.get('name')
+            def age = root.get('age')
+
+        expect:
+            criteriaBuilder.construct(TestProjection, name, age).compoundSelectionItems == [name, age]
+            criteriaBuilder.tuple(name, age).compoundSelectionItems == [name, age]
+            criteriaBuilder.array(name, age).compoundSelectionItems == [name, age]
+            criteriaBuilder.tuple([name, age]).compoundSelectionItems == [name, age]
+            criteriaBuilder.array([name, age]).compoundSelectionItems == [name, age]
     }
 
     void "test unary numeric expressions"() {
@@ -1116,5 +1205,15 @@ class SimplePluralAttribute<X, C, E> implements PluralAttribute<X, C, E> {
     @Override
     Class<E> getBindableJavaType() {
         throw new UnsupportedOperationException()
+    }
+}
+
+class TestProjection {
+    final String name
+    final Integer age
+
+    TestProjection(String name, Integer age) {
+        this.name = name
+        this.age = age
     }
 }

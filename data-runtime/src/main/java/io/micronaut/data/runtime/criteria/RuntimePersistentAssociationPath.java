@@ -22,12 +22,15 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Attribute;
 
 import java.util.ArrayList;
@@ -131,13 +134,18 @@ sealed class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimeP
 
     @Override
     public Attribute<? super Owner, ?> getAttribute() {
-        return PersistentAssociationPath.super.getAttribute();
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public jakarta.persistence.metamodel.Bindable<E> getModel() {
+        throw CriteriaUtils.notSupportedOperation();
     }
 
     @Override
     @Nullable
     public JoinType getJoinType() {
-        return PersistentAssociationPath.super.getJoinType();
+        return null;
     }
 
     @Override

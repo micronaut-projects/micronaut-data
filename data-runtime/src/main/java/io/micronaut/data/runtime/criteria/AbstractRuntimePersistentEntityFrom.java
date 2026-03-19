@@ -19,7 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationAttributePath;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityMapJoin;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -27,11 +29,14 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.metamodel.MapAttribute;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Internal
@@ -77,7 +82,7 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        for (PersistentAssociationPath<E, ?> persistentJoin : getPersistentJoins()) {
+        for (PersistentAssociationAttributePath<E, ?> persistentJoin : getPersistentJoins()) {
             if (persistentJoin.getProperty().getName().equalsIgnoreCase(attributeName)) {
                 return (PersistentPropertyPath<Y>) persistentJoin;
             }
@@ -87,6 +92,26 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
             throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
         }
         return asPropertyPath(this, property, criteriaBuilder);
+    }
+
+    @Override
+    public <X, K, V> PersistentEntityMapJoin<X, K, V> joinMap(String attributeName, Join.Type jt) {
+        return (PersistentEntityMapJoin<X, K, V>) super.joinMap(attributeName, jt);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName());
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map, JoinType jt) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName(), jt);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentEntityMapJoin<E, K, V> joinMap(MapAttribute<? super E, K, V> map, Join.Type jt) {
+        return (PersistentEntityMapJoin<E, K, V>) super.joinMap(map.getName(), jt);
     }
 
     private static <Y> PersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,

@@ -27,6 +27,7 @@ import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
@@ -319,6 +320,13 @@ public final class CriteriaUtils {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             collectAll(functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(CoalesceExpression<?> coalesceExpression) {
+            for (Expression<?> value : coalesceExpression.getValues()) {
+                collect(value);
+            }
         }
 
         @Override

@@ -20,8 +20,12 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentSetAssociationPath;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.metamodel.SetAttribute;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -46,6 +50,21 @@ final class RuntimePersistentSetAssociationPath<Owner, E> extends RuntimePersist
                                         String alias,
                                         CriteriaBuilder criteriaBuilder) {
         super(parent, association, associations, associationJoinType, alias, criteriaBuilder);
+    }
+
+    @Override
+    public SetAttribute<? super Owner, E> getModel() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public PersistentSetAssociationPath<Owner, E> on(Expression<Boolean> restriction) {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public PersistentSetAssociationPath<Owner, E> on(Predicate... restrictions) {
+        throw CriteriaUtils.notSupportedOperation();
     }
 
 }

@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
@@ -119,7 +120,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <Y> CompoundSelection<Y> construct(Class<Y> resultClass,  Selection<?>... selections) {
-        throw notSupportedOperation();
+        Objects.requireNonNull(resultClass);
+        return new io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection<Y>(List.of(selections));
     }
 
     /**
@@ -130,7 +132,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public CompoundSelection<Tuple> tuple(Selection<?>... selections) {
-        throw notSupportedOperation();
+        return new io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection<Tuple>(List.of(selections));
     }
 
     /**
@@ -141,17 +143,17 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public CompoundSelection<Object[]> array(Selection<?>... selections) {
-        throw notSupportedOperation();
+        return new io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection<Object[]>(List.of(selections));
     }
 
     @Override
     public CompoundSelection<Tuple> tuple(List<Selection<?>> selections) {
-        throw notSupportedOperation();
+        return new io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection<Tuple>(Objects.requireNonNull(selections));
     }
 
     @Override
     public CompoundSelection<Object[]> array(List<Selection<?>> selections) {
-        throw notSupportedOperation();
+        return new io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection<Object[]>(Objects.requireNonNull(selections));
     }
 
     @Override
@@ -1361,7 +1363,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <T> Coalesce<T> coalesce() {
-        throw notSupportedOperation();
+        return (Coalesce<T>) new CoalesceExpression<>(Object.class);
     }
 
     /**

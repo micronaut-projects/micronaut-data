@@ -182,7 +182,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
 
     private Join.Type calculateJoinType(Joiner.Joined joined) {
         Join.Type joinType = Optional.ofNullable(joined.getType()).orElse(Join.Type.DEFAULT);
-        if (!isProjected(joined.getAssociation())) {
+        if (joined.getStrictJoin().map(join -> !isProjected(join)).orElse(false)) {
             // Fetch joins don't make sense if the entity is not projected
             joinType = switch (joinType) {
                 case INNER, FETCH -> Join.Type.DEFAULT;

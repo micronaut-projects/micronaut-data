@@ -22,6 +22,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -165,12 +166,32 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
 
     @Override
     public Attribute<? super Owner, ?> getAttribute() {
-        return PersistentAssociationPath.super.getAttribute();
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public jakarta.persistence.metamodel.Bindable<E> getModel() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public jakarta.persistence.criteria.Join<Owner, E> on(Expression<Boolean> restriction) {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public jakarta.persistence.criteria.Join<Owner, E> on(Predicate... restrictions) {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public Predicate getOn() {
+        throw CriteriaUtils.notSupportedOperation();
     }
 
     @Override
     @Nullable
     public JoinType getJoinType() {
-        return PersistentAssociationPath.super.getJoinType();
+        return null;
     }
 }

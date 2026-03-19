@@ -31,7 +31,7 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-public final class CompoundSelection<T> implements ISelection<T> {
+public final class CompoundSelection<T> implements ISelection<T>, jakarta.persistence.criteria.CompoundSelection<T> {
 
     private final List<Selection<?>> selections;
 

@@ -20,6 +20,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -88,6 +89,8 @@ public interface ExpressionVisitor {
      * @param binaryExpression The aggregateExpression
      */
     void visit(BinaryExpression<?> binaryExpression);
+
+    void visit(CoalesceExpression<?> coalesceExpression);
 
     void visit(SearchedCaseExpression<?> searchedCaseExpression);
 

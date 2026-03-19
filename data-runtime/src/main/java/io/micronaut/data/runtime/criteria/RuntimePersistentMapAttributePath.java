@@ -20,15 +20,21 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
-import io.micronaut.data.model.jpa.criteria.PersistentMapAttributePath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityMapJoin;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.metamodel.MapAttribute;
 
 import java.util.List;
+import java.util.Map;
 
 @Internal
-final class RuntimePersistentMapAttributePath<Owner, E> extends RuntimePersistentAssociationPath<Owner, E>
-    implements PersistentMapAttributePath<Owner, E> {
+final class RuntimePersistentMapAttributePath<Owner, K, E> extends RuntimePersistentAssociationPath<Owner, E>
+    implements PersistentEntityMapJoin<Owner, K, E> {
 
     RuntimePersistentMapAttributePath(PersistentEntityFrom<?, Owner> parent,
                                       RuntimeAssociation<Owner> association,
@@ -37,5 +43,35 @@ final class RuntimePersistentMapAttributePath<Owner, E> extends RuntimePersisten
                                       @Nullable String alias,
                                       CriteriaBuilder criteriaBuilder) {
         super(parent, association, associations, associationJoinType, alias, criteriaBuilder);
+    }
+
+    @Override
+    public MapAttribute<? super Owner, K, E> getModel() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public Path<K> key() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public Path<E> value() {
+        return this;
+    }
+
+    @Override
+    public Expression<Map.Entry<K, E>> entry() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public RuntimePersistentMapAttributePath<Owner, K, E> on(Expression<Boolean> restriction) {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public RuntimePersistentMapAttributePath<Owner, K, E> on(Predicate... restrictions) {
+        throw CriteriaUtils.notSupportedOperation();
     }
 }

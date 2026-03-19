@@ -21,16 +21,9 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.metamodel.MapAttribute;
-import jakarta.persistence.metamodel.PluralAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 
 /**
@@ -41,7 +34,7 @@ import java.util.StringJoiner;
  * @since 3.2
  */
 @Experimental
-public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
+public interface PersistentPropertyPath<T> extends PersistentPathAccessors<T>, IExpression<T> {
 
     PersistentProperty getProperty();
 
@@ -62,21 +55,6 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
 
     @Override
     <Y> PersistentPropertyPath<Y> get(String attributeName);
-
-    @Override
-    default <Y> PersistentPropertyPath<Y> get(SingularAttribute<? super T, Y> attribute) {
-        return get(attribute.getName());
-    }
-
-    @Override
-    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super T, C, E> collection) {
-        return get(collection.getName());
-    }
-
-    @Override
-    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super T, K, V> map) {
-        return get(map.getName());
-    }
 
     @Override
     default ExpressionType<T> getExpressionType() {

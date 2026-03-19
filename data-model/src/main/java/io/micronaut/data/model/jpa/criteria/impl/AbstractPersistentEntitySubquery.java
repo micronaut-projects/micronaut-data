@@ -127,7 +127,7 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
 
     @Override
     public <X, K, V> MapJoin<X, K, V> correlate(MapJoin<X, K, V> parentMap) {
-        throw CriteriaUtils.notSupportedOperation();
+        return (MapJoin<X, K, V>) correlate((Join<X, V>) parentMap);
     }
 
     @Override

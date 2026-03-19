@@ -25,12 +25,14 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationAttributePath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CoalesceExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -57,6 +59,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -99,7 +102,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     private void joinAssociation(Path<?> path) {
-        if (path instanceof PersistentAssociationPath<?, ?> associationPath) {
+        if (path instanceof PersistentAssociationAttributePath<?, ?> associationPath) {
             if (associationPath.getAssociation().getKind() == Relation.Kind.EMBEDDED) {
                 // Cannot join embedded
                 joinAssociation(path.getParentPath());
@@ -108,7 +111,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             }
         } else if (path instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             Path<?> parentPath = persistentPropertyPath.getParentPath();
-            if (parentPath instanceof PersistentAssociationPath<?, ?> parent) {
+            if (parentPath instanceof PersistentAssociationAttributePath<?, ?> parent) {
                 if (PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
                     // We don't need a join this association to access the ID
                     // Previous association should be joined
@@ -126,7 +129,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
         }
     }
 
-    private void join(PersistentAssociationPath<?, ?> associationPath) {
+    private void join(PersistentAssociationAttributePath<?, ?> associationPath) {
         Joined joined = joins.computeIfAbsent(associationPath.getPathAsString(),
             s -> new Joined(associationPath, associationPath.getAssociationJoinType(), associationPath.getAlias()));
 
@@ -153,8 +156,8 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     public void visit(PersistentEntitySubquery<?> subquery) {
     }
 
-    private void visitJoins(Collection<? extends PersistentAssociationPath<?, ?>> persistentAssociationPaths) {
-        for (PersistentAssociationPath<?, ?> persistentAssociationPath : persistentAssociationPaths) {
+    private void visitJoins(Collection<? extends PersistentAssociationAttributePath<?, ?>> persistentAssociationPaths) {
+        for (PersistentAssociationAttributePath<?, ?> persistentAssociationPath : persistentAssociationPaths) {
             if (persistentAssociationPath.getAssociationJoinType() == null) {
                 continue;
             }
@@ -225,6 +228,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         functionExpression.getExpressions().forEach(this::visitExpression);
+    }
+
+    @Override
+    public void visit(CoalesceExpression<?> coalesceExpression) {
+        coalesceExpression.getValues().forEach(this::visitExpression);
     }
 
     @Override
@@ -308,19 +316,26 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
      */
     @Internal
     public static final class Joined {
-        private final PersistentAssociationPath<?, ?> association;
+        private final PersistentAssociationAttributePath<?, ?> association;
         private io.micronaut.data.annotation.Join. @Nullable Type type;
         @Nullable
         private String alias;
 
-        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join. @Nullable Type type, @Nullable String alias) {
+        public Joined(PersistentAssociationAttributePath<?, ?> association, io.micronaut.data.annotation.Join. @Nullable Type type, @Nullable String alias) {
             this.association = association;
             this.type = type;
             this.alias = alias;
         }
 
-        public PersistentAssociationPath<?, ?> getAssociation() {
+        public PersistentAssociationAttributePath<?, ?> getAssociation() {
             return association;
+        }
+
+        public Optional<jakarta.persistence.criteria.Join<?, ?>> getStrictJoin() {
+            if (association instanceof jakarta.persistence.criteria.Join<?, ?> strictJoin) {
+                return Optional.of(strictJoin);
+            }
+            return Optional.empty();
         }
 
         public io.micronaut.data.annotation.Join. @Nullable Type getType() {

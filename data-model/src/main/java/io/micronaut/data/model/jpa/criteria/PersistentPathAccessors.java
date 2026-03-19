@@ -1,0 +1,48 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.model.jpa.criteria;
+
+import io.micronaut.core.annotation.Experimental;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.metamodel.MapAttribute;
+import jakarta.persistence.metamodel.PluralAttribute;
+import jakarta.persistence.metamodel.SingularAttribute;
+
+import java.util.Collection;
+import java.util.Map;
+
+@Experimental
+public interface PersistentPathAccessors<T> extends Path<T> {
+
+    @Override
+    <Y> PersistentPropertyPath<Y> get(String attributeName);
+
+    @Override
+    default <Y> PersistentPropertyPath<Y> get(SingularAttribute<? super T, Y> attribute) {
+        return get(attribute.getName());
+    }
+
+    @Override
+    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super T, C, E> collection) {
+        return get(collection.getName());
+    }
+
+    @Override
+    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super T, K, V> map) {
+        return get(map.getName());
+    }
+}

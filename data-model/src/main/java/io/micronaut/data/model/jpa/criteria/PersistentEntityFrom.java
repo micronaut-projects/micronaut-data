@@ -43,7 +43,7 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
     /**
      * @return The persistent joins
      */
-    Collection<PersistentAssociationPath<AssociatedEntityType, ?>> getPersistentJoins();
+    Collection<? extends PersistentAssociationAttributePath<AssociatedEntityType, ?>> getPersistentJoins();
 
     @Override
     <X, Y> PersistentEntityJoin<X, Y> join(String attributeName);
@@ -137,6 +137,20 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
     <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, JoinType jt);
 
     <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, Join.Type jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentEntityMapJoin<AssociatedEntityType, K, V> joinMap(MapAttribute<? super AssociatedEntityType, K, V> map);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentEntityMapJoin<AssociatedEntityType, K, V> joinMap(MapAttribute<? super AssociatedEntityType, K, V> map, JoinType jt);
+
+    @Override
+    <X, K, V> PersistentEntityMapJoin<X, K, V> joinMap(String attributeName);
+
+    @Override
+    <X, K, V> PersistentEntityMapJoin<X, K, V> joinMap(String attributeName, JoinType jt);
+
+    <X, K, V> PersistentEntityMapJoin<X, K, V> joinMap(String attributeName, Join.Type jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentEntityMapJoin<AssociatedEntityType, K, V> joinMap(MapAttribute<? super AssociatedEntityType, K, V> map, Join.Type jt);
 
     @Override
     <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(SetAttribute<? super AssociatedEntityType, Y> set);
