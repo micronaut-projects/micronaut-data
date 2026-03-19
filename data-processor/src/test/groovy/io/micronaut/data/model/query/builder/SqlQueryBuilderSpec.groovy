@@ -42,6 +42,7 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.Vehicle
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
@@ -550,6 +551,22 @@ interface MyRepository {
                     'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
                     'CREATE TABLE "user_role_composite" ("user_id" BIGINT NOT NULL,"role_id" BIGINT NOT NULL, PRIMARY KEY("user_id","role_id"));'
             ]
+    }
+
+    void "test build create index from embedded class and field annotations"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Vehicle))
+
+        then:
+        statements[0] == 'CREATE TABLE "vehicle" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"plate_number" VARCHAR(255) NOT NULL,"status" VARCHAR(255) NOT NULL,"jurisdiction_country_code" VARCHAR(255) NOT NULL,"jurisdiction_region_code" VARCHAR(255) NOT NULL,"second_plate_number" VARCHAR(255) NOT NULL,"second_status" VARCHAR(255) NOT NULL,"second_jurisdiction_country_code" VARCHAR(255) NOT NULL,"second_jurisdiction_region_code" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE INDEX "idx_vehicle_name" ON "vehicle" ("name");'
+        statements[2] == 'CREATE INDEX "idx_vehicle_plate_number" ON "vehicle" ("plate_number");'
+        statements[3] == 'CREATE INDEX "idx_vehicle_status" ON "vehicle" ("status");'
+        statements[4] == 'CREATE INDEX "idx_vehicle_jurisdiction_region_code" ON "vehicle" ("jurisdiction_region_code");'
+        statements[5] == 'CREATE INDEX "idx_vehicle_second_plate_number" ON "vehicle" ("second_plate_number");'
+        statements[6] == 'CREATE INDEX "idx_vehicle_second_status" ON "vehicle" ("second_status");'
+        statements[7] == 'CREATE INDEX "idx_vehicle_second_jurisdiction_region_code" ON "vehicle" ("second_jurisdiction_region_code");'
     }
 
     void "test build create index from table annotation"() {
