@@ -183,6 +183,13 @@ public final class JpaMetamodelProcessor {
         return classDefBuilder;
     }
 
+    /**
+     * Resolves field elements based on the access type.
+     * @param element Class element.
+     * @param elementType Class element type.
+     * @param jakartaAccessAnnotation Jakarta access annotation value.
+     * @return List of supported fields for the static metamodel.
+     */
     private static List<? extends Element> resolveFieldElements(@NonNull ClassElement element, String elementType, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
         JakartaAccessType jakartaAccessType = resolveAccessType(element, jakartaAccessAnnotation);
 
@@ -209,6 +216,12 @@ public final class JpaMetamodelProcessor {
         return elements;
     }
 
+    /**
+     * Resolves the access type based.
+     * @param element Class element.
+     * @param jakartaAccessAnnotation Jakarta access annotation value.
+     * @return Jakarta access type.
+     */
     private static JakartaAccessType resolveAccessType(@NonNull ClassElement element, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
         if (jakartaAccessAnnotation == null && element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID))) {
             return JakartaAccessType.PROPERTY;
