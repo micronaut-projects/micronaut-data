@@ -44,6 +44,13 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
     }
 
     @Override
+    protected boolean supportsDeletingGeometryTypes() {
+        // SDO_UTIL.FROM_GEOJSON fails when NULL is passed to it.
+        // The issue has been reported and until it gets fixed, this method should return false.
+        return false
+    }
+
+    @Override
     protected void assertGeometryCollection(GeometryCollection geometryCollection, int n) {
         def geometries = geometryCollection.geometries()
         assertPoint((Point) geometries.get(0), n)

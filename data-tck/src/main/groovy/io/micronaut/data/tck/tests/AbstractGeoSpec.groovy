@@ -18,6 +18,9 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue
+import static org.junit.jupiter.api.Assertions.assertNull
+
 abstract class AbstractGeoSpec extends Specification {
 
     abstract GeoEntityRepository getGeoEntityRepository()
@@ -122,6 +125,67 @@ abstract class AbstractGeoSpec extends Specification {
             assertMultiPolygon(it.getMultiPolygon(), 2)
             assertGeometryCollection(it.getGeometryCollection(), 4)
         }
+    }
+
+    void "test deleting of all geometry types"() {
+        assumeTrue(supportsDeletingGeometryTypes())
+
+        given:
+        GeoEntity entity = new GeoEntity()
+        entity.setPoint(createPoint(5))
+        entity.setMultiPoint(createMultiPoint(5))
+        entity.setLineString(createLineString(5))
+        entity.setMultiLineString(createMultiLineString(5))
+        entity.setPolygon(createPolygon(5))
+        entity.setMultiPolygon(createMultiPolygon(5))
+        entity.setGeometryCollection(createGeometryCollection(8))
+
+        when:
+        GeoEntity savedEntity = getGeoEntityRepository().save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        Optional<GeoEntity> foundEntity = getGeoEntityRepository().findById(savedEntity.id)
+
+        then:
+        foundEntity.isPresent()
+        with (foundEntity.get()) {
+            assertPoint(it.getPoint(), 5)
+            assertMultiPoint(it.getMultiPoint(), 5)
+            assertLineString(it.getLineString(), 5)
+            assertMultiLineString(it.getMultiLineString(), 5)
+            assertPolygon(it.getPolygon(), 5)
+            assertMultiPolygon(it.getMultiPolygon(), 5)
+            assertGeometryCollection(it.getGeometryCollection(), 8)
+        }
+
+        when:
+        entity.setPoint(null)
+        entity.setMultiPoint(null)
+        entity.setLineString(null)
+        entity.setMultiLineString(null)
+        entity.setPolygon(null)
+        entity.setMultiPolygon(null)
+        entity.setGeometryCollection(null)
+        getGeoEntityRepository().update(entity)
+        foundEntity = getGeoEntityRepository().findById(savedEntity.id)
+
+        then:
+        with (foundEntity.get()) {
+            assertNull(it.getPoint())
+            assertNull(it.getMultiPoint())
+            assertNull(it.getLineString())
+            assertNull(it.getMultiLineString())
+            assertNull(it.getPolygon())
+            assertNull(it.getMultiPolygon())
+            assertNull(it.getGeometryCollection())
+        }
+    }
+
+    protected boolean supportsDeletingGeometryTypes() {
+        return true
     }
 
     Point createPoint(double x) {
