@@ -22,6 +22,8 @@ import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.metamodel.CollectionAttribute;
 import jakarta.persistence.metamodel.ListAttribute;
+import jakarta.persistence.metamodel.MapAttribute;
+import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
@@ -111,6 +113,30 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
 
     @Override
     <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName,  JoinType jt);
+
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName);
+
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, JoinType jt);
+
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, Join.Type jt);
+
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute);
+
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute, JoinType jt);
+
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute, Join.Type jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName, JoinType jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName, Join.Type jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, JoinType jt);
+
+    <K, V, M extends java.util.Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, Join.Type jt);
 
     @Override
     <Y> PersistentEntitySetJoin<AssociatedEntityType, Y> join(SetAttribute<? super AssociatedEntityType, Y> set);

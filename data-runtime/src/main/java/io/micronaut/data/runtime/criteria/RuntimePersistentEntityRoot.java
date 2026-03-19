@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.criteria.metamodel.RuntimePersistentEntityType;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
@@ -29,8 +30,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The runtime entity root.
@@ -44,11 +43,21 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
     implements PersistentEntityPath<T>, PersistentEntityRoot<T> {
 
     private final RuntimePersistentEntity<T> runtimePersistentEntity;
+    private final EntityType<T> model;
 
     public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity,
                                        CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
         this.runtimePersistentEntity = runtimePersistentEntity;
+        this.model = new RuntimePersistentEntityType<>(runtimePersistentEntity);
+    }
+
+    public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity,
+                                       jakarta.persistence.criteria.From<?, T> correlationParent,
+                                       CriteriaBuilder criteriaBuilder) {
+        super(correlationParent, criteriaBuilder);
+        this.runtimePersistentEntity = runtimePersistentEntity;
+        this.model = new RuntimePersistentEntityType<>(runtimePersistentEntity);
     }
 
     @Override
@@ -69,7 +78,7 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
 
     @Override
     public EntityType<T> getModel() {
-        throw notSupportedOperation();
+        return model;
     }
 
     @Override

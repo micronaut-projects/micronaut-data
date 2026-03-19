@@ -27,6 +27,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityListJoin;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySetJoin;
 import io.micronaut.data.model.jpa.criteria.PersistentListAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentMapAttributePath;
+import io.micronaut.data.model.jpa.criteria.PersistentPluralAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentSetAssociationPath;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Fetch;
@@ -37,6 +39,7 @@ import jakarta.persistence.criteria.MapJoin;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.CollectionAttribute;
 import jakarta.persistence.metamodel.ListAttribute;
+import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.MapAttribute;
 import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
@@ -63,6 +66,16 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEntityFrom<J, E> {
 
     protected final Map<String, PersistentAssociationPath<E, ?>> joins = new LinkedHashMap<>();
+    @Nullable
+    private final From<?, ?> correlationParent;
+
+    protected AbstractPersistentEntityFrom() {
+        this(null);
+    }
+
+    protected AbstractPersistentEntityFrom(@Nullable From<?, ?> correlationParent) {
+        this.correlationParent = correlationParent;
+    }
 
     @Override
     public abstract PersistentEntity getPersistentEntity();
@@ -118,6 +131,22 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
             throw new IllegalStateException("Join is not a Collection!");
         }
         return persistentCollectionAssociationPath;
+    }
+
+    private <Y> PersistentPluralAssociationPath<E, Y> getPluralJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
+        PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
+        if (!(join instanceof PersistentPluralAssociationPath<E, Y> persistentPluralAssociationPath)) {
+            throw new IllegalStateException("Join is not plural!");
+        }
+        return persistentPluralAssociationPath;
+    }
+
+    private <Y> PersistentMapAttributePath<E, Y> getMapPathJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
+        PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
+        if (!(join instanceof PersistentMapAttributePath<E, Y> persistentMapAttributePath)) {
+            throw new IllegalStateException("Join is not a map attribute path!");
+        }
+        return persistentMapAttributePath;
     }
 
     private <Y> PersistentSetAssociationPath<E, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join. @Nullable Type type) {
@@ -224,22 +253,22 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
 
     @Override
     public <Y> Join<E, Y> join(EntityType<Y> entity) {
-        throw notSupportedOperation();
+        return join(entity, JoinType.INNER);
     }
 
     @Override
     public <Y> Join<E, Y> join(EntityType<Y> entity, JoinType joinType) {
-        throw notSupportedOperation();
+        return join(Objects.requireNonNull(entity).getName(), Objects.requireNonNull(joinType));
     }
 
     @Override
     public <Y> Join<E, Y> join(Class<Y> entityClass) {
-        throw notSupportedOperation();
+        return join(entityClass, JoinType.INNER);
     }
 
     @Override
     public <Y> Join<E, Y> join(Class<Y> entityClass, JoinType joinType) {
-        throw notSupportedOperation();
+        return join(Objects.requireNonNull(entityClass).getSimpleName(), Objects.requireNonNull(joinType));
     }
 
     @Override
@@ -264,7 +293,69 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
 
     @Override
     public <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName, JoinType jt) {
-        return (PersistentEntityCollectionJoin<X, Y>) getCollectionJoin(attributeName, null);
+        return (PersistentEntityCollectionJoin<X, Y>) getCollectionJoin(attributeName, convert(Objects.requireNonNull(jt)));
+    }
+
+    @Override
+    public <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName) {
+        return (PersistentPluralAssociationPath<X, Y>) getPluralJoin(attributeName, null);
+    }
+
+    @Override
+    public <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, JoinType jt) {
+        return (PersistentPluralAssociationPath<X, Y>) getPluralJoin(attributeName, convert(Objects.requireNonNull(jt)));
+    }
+
+    @Override
+    public <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, io.micronaut.data.annotation.Join.Type jt) {
+        return (PersistentPluralAssociationPath<X, Y>) getPluralJoin(attributeName, Objects.requireNonNull(jt));
+    }
+
+    @Override
+    public <Y, C extends Collection<Y>> PersistentPluralAssociationPath<E, Y> joinPlural(PluralAttribute<? super E, C, Y> attribute) {
+        return getPluralJoin(attribute.getName(), null);
+    }
+
+    @Override
+    public <Y, C extends Collection<Y>> PersistentPluralAssociationPath<E, Y> joinPlural(PluralAttribute<? super E, C, Y> attribute, JoinType jt) {
+        return getPluralJoin(attribute.getName(), convert(Objects.requireNonNull(jt)));
+    }
+
+    @Override
+    public <Y, C extends Collection<Y>> PersistentPluralAssociationPath<E, Y> joinPlural(PluralAttribute<? super E, C, Y> attribute,
+                                                                                           io.micronaut.data.annotation.Join.Type jt) {
+        return getPluralJoin(attribute.getName(), Objects.requireNonNull(jt));
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(String attributeName) {
+        return getMapPathJoin(attributeName, null);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(String attributeName, JoinType jt) {
+        return getMapPathJoin(attributeName, convert(Objects.requireNonNull(jt)));
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(String attributeName, io.micronaut.data.annotation.Join.Type jt) {
+        return getMapPathJoin(attributeName, Objects.requireNonNull(jt));
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(MapAttribute<? super E, K, V> attribute) {
+        return getMapPathJoin(attribute.getName(), null);
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(MapAttribute<? super E, K, V> attribute, JoinType jt) {
+        return getMapPathJoin(attribute.getName(), convert(Objects.requireNonNull(jt)));
+    }
+
+    @Override
+    public <K, V, M extends Map<K, V>> PersistentMapAttributePath<E, V> joinMapPath(MapAttribute<? super E, K, V> attribute,
+                                                                                      io.micronaut.data.annotation.Join.Type jt) {
+        return getMapPathJoin(attribute.getName(), Objects.requireNonNull(jt));
     }
 
     @Override
@@ -296,12 +387,15 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
 
     @Override
     public boolean isCorrelated() {
-        throw notSupportedOperation();
+        return correlationParent != null;
     }
 
     @Override
     public From<J, E> getCorrelationParent() {
-        throw notSupportedOperation();
+        if (correlationParent == null) {
+            throw new IllegalStateException("Not a correlated from");
+        }
+        return (From<J, E>) correlationParent;
     }
 
      @Override

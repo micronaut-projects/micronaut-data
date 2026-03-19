@@ -45,7 +45,6 @@ public interface SelectionVisitor extends ExpressionVisitor {
 
     @Override
     default void visit(IParameterExpression<?> parameterExpression) {
-        throw new IllegalStateException("Parameter expression not supported in selection");
     }
 
     @Override

@@ -74,4 +74,13 @@ final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntityS
     public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
         return new RuntimePersistentEntitySubquery<>(this, criteriaBuilder, staticMetamodelInitializer, type.getJavaType(), runtimeEntityRegistry);
     }
+
+    @Override
+    public <Y> jakarta.persistence.criteria.Root<Y> correlate(jakarta.persistence.criteria.Root<Y> parentRoot) {
+        RuntimePersistentEntityRoot<Y> correlatedRoot = new RuntimePersistentEntityRoot<>(((RuntimePersistentEntityRoot<Y>) parentRoot).getPersistentEntity(),
+            (jakarta.persistence.criteria.From<?, Y>) parentRoot,
+            criteriaBuilder);
+        entityRoot = correlatedRoot;
+        return correlatedRoot;
+    }
 }

@@ -43,7 +43,7 @@ import java.util.List;
  */
 @Internal
 sealed class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityFrom<Owner, E>
-    implements PersistentEntityPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> permits RuntimePersistentCollectionAssociationPath, RuntimePersistentListAssociationPath, RuntimePersistentSetAssociationPath {
+    implements PersistentEntityPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> permits RuntimePersistentCollectionAssociationPath, RuntimePersistentListAssociationPath, RuntimePersistentSetAssociationPath, RuntimePersistentMapAttributePath {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final RuntimeAssociation<Owner> association;
@@ -58,7 +58,7 @@ sealed class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimeP
                                      Join. @Nullable Type associationJoinType,
                                      @Nullable String alias,
                                      CriteriaBuilder criteriaBuilder) {
-        super(criteriaBuilder);
+        super((jakarta.persistence.criteria.From<?, ?>) parent, criteriaBuilder);
         this.parent = parent;
         this.association = association;
         this.associations = associations;

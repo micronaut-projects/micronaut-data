@@ -22,16 +22,36 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.Subquery;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -181,6 +201,24 @@ public final class CriteriaUtils {
         return properties;
     }
 
+    public static Set<ParameterExpression<?>> extractParameters(@Nullable Expression<?> predicate,
+                                                                @Nullable Selection<?> selection,
+                                                                @Nullable List<Order> orders) {
+        ParameterCollector parameterCollector = new ParameterCollector();
+        if (predicate != null) {
+            parameterCollector.collect(predicate);
+        }
+        if (selection instanceof ISelection<?> iSelection) {
+            iSelection.visitSelection(parameterCollector);
+        }
+        if (orders != null) {
+            for (Order order : orders) {
+                parameterCollector.collect(order.getExpression());
+            }
+        }
+        return parameterCollector.parameters();
+    }
+
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
         switch (predicate) {
             case LiteralExpression<?> ignored -> {
@@ -212,6 +250,175 @@ public final class CriteriaUtils {
             }
             default ->
                 throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
+        }
+    }
+
+    private static final class ParameterCollector implements PredicateVisitor, SelectionVisitor {
+
+        private final Set<ParameterExpression<?>> parameters = new LinkedHashSet<>();
+
+        Set<ParameterExpression<?>> parameters() {
+            return parameters;
+        }
+
+        void collect(Expression<?> expression) {
+            if (expression instanceof IParameterExpression<?> parameterExpression) {
+                visit(parameterExpression);
+            } else if (expression instanceof IPredicate predicate) {
+                predicate.visitPredicate(this);
+            } else if (expression instanceof ISelection<?> selection) {
+                selection.visitSelection(this);
+            }
+        }
+
+        private void collectAll(Collection<? extends Expression<?>> expressions) {
+            for (Expression<?> expression : expressions) {
+                collect(expression);
+            }
+        }
+
+        @Override
+        public void visit(Predicate predicate) {
+            if (predicate instanceof IPredicate iPredicate) {
+                iPredicate.visitPredicate(this);
+            }
+        }
+
+        @Override
+        public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
+        }
+
+        @Override
+        public void visit(PersistentEntityRoot<?> entityRoot) {
+        }
+
+        @Override
+        public void visit(PersistentEntitySubquery<?> subquery) {
+            parameters.addAll(subquery.getParameters());
+        }
+
+        @Override
+        public void visit(LiteralExpression<?> literalExpression) {
+        }
+
+        @Override
+        public void visit(UnaryExpression<?> unaryExpression) {
+            collect(unaryExpression.getExpression());
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            collect(binaryExpression.getLeft());
+            collect(binaryExpression.getRight());
+        }
+
+        @Override
+        public void visit(IdExpression<?, ?> idExpression) {
+        }
+
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            collectAll(functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
+            for (SearchedCaseExpression.WhenClause<?> whenClause : searchedCaseExpression.getWhenClauses()) {
+                collect(whenClause.condition());
+                collect(whenClause.result());
+            }
+            if (searchedCaseExpression.getOtherwise() != null) {
+                collect(searchedCaseExpression.getOtherwise());
+            }
+        }
+
+        @Override
+        public void visit(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+            collect(simpleCaseExpression.getExpression());
+            for (SimpleCaseExpression.WhenClause<?, ?> whenClause : simpleCaseExpression.getWhenClauses()) {
+                collect(whenClause.condition());
+                collect(whenClause.result());
+            }
+            if (simpleCaseExpression.getOtherwise() != null) {
+                collect(simpleCaseExpression.getOtherwise());
+            }
+        }
+
+        @Override
+        public void visit(IParameterExpression<?> parameterExpression) {
+            parameters.add(parameterExpression);
+        }
+
+        @Override
+        public void visit(SubqueryExpression<?> subqueryExpression) {
+            parameters.addAll(subqueryExpression.getSubquery().getParameters());
+        }
+
+        @Override
+        public void visit(AliasedSelection<?> aliasedSelection) {
+            aliasedSelection.getSelection().visitSelection(this);
+        }
+
+        @Override
+        public void visit(CompoundSelection<?> compoundSelection) {
+            for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
+                if (selection instanceof ISelection<?> iSelection) {
+                    iSelection.visitSelection(this);
+                }
+            }
+        }
+
+        @Override
+        public void visit(ConjunctionPredicate conjunction) {
+            collectAll(conjunction.getPredicates());
+        }
+
+        @Override
+        public void visit(DisjunctionPredicate disjunction) {
+            collectAll(disjunction.getPredicates());
+        }
+
+        @Override
+        public void visit(NegatedPredicate negate) {
+            collect(negate.getNegated());
+        }
+
+        @Override
+        public void visit(InPredicate<?> inPredicate) {
+            collect(inPredicate.getExpression());
+            collectAll(inPredicate.getValues());
+        }
+
+        @Override
+        public void visit(UnaryPredicate unaryPredicate) {
+            collect(unaryPredicate.getExpression());
+        }
+
+        @Override
+        public void visit(BetweenPredicate betweenPredicate) {
+            collect(betweenPredicate.getValue());
+            collect(betweenPredicate.getFrom());
+            collect(betweenPredicate.getTo());
+        }
+
+        @Override
+        public void visit(BinaryPredicate binaryPredicate) {
+            collect(binaryPredicate.getLeftExpression());
+            collect(binaryPredicate.getRightExpression());
+        }
+
+        @Override
+        public void visit(LikePredicate likePredicate) {
+            collect(likePredicate.getExpression());
+            collect(likePredicate.getPattern());
+            if (likePredicate.getEscapeChar() != null) {
+                collect(likePredicate.getEscapeChar());
+            }
+        }
+
+        @Override
+        public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+            parameters.addAll(existsSubqueryPredicate.getSubquery().getParameters());
         }
     }
 

@@ -24,6 +24,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery.BaseQueryDefinitionImpl;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -88,7 +89,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> from(EntityType<T> entity) {
-        throw notSupportedOperation();
+        return from(Objects.requireNonNull(entity).getJavaType());
     }
 
     @Override
@@ -99,12 +100,12 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute, @Nullable X value) {
-        throw notSupportedOperation();
+        return set(Objects.requireNonNull(attribute).getName(), value);
     }
 
     @Override
     public <Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute, Expression<? extends Y> value) {
-        throw notSupportedOperation();
+        return set(Objects.requireNonNull(attribute).getName(), requireParameter(value));
     }
 
     @Override
@@ -169,7 +170,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
-        throw notSupportedOperation();
+        return subquery(new ClassExpressionType<>(Objects.requireNonNull(type).getJavaType()));
     }
 
     public final boolean hasVersionRestriction() {

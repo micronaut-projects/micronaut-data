@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -81,7 +82,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> from(EntityType<T> entity) {
-        throw CriteriaUtils.notSupportedOperation();
+        return from(Objects.requireNonNull(entity).getJavaType());
     }
 
     @Override
@@ -124,7 +125,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
-        throw notSupportedOperation();
+        return subquery(new ClassExpressionType<>(Objects.requireNonNull(type).getJavaType()));
     }
 
     public final boolean hasVersionRestriction() {

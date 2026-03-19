@@ -20,6 +20,7 @@ import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CollectionJoin;
 import jakarta.persistence.criteria.CommonAbstractCriteria;
@@ -36,6 +37,7 @@ import jakarta.persistence.metamodel.EntityType;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -52,6 +54,7 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
     implements PersistentEntitySubquery<T>, IExpression<T> {
 
     private final AbstractQuery<?> parentQuery;
+    private final Set<Join<?, ?>> correlatedJoins = new LinkedHashSet<>();
 
     protected AbstractPersistentEntitySubquery(AbstractQuery<?> parentQuery, ExpressionType<T> resultType, CriteriaBuilder criteriaBuilder) {
         super(resultType, criteriaBuilder);
@@ -104,22 +107,22 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
 
     @Override
     public Set<Join<?, ?>> getCorrelatedJoins() {
-        throw CriteriaUtils.notSupportedOperation();
+        return Set.copyOf(correlatedJoins);
     }
 
     @Override
     public CommonAbstractCriteria getContainingQuery() {
-        throw CriteriaUtils.notSupportedOperation();
+        return parentQuery;
     }
 
     @Override
     public Set<jakarta.persistence.criteria.ParameterExpression<?>> getParameters() {
-        throw CriteriaUtils.notSupportedOperation();
+        return CriteriaUtils.extractParameters(predicate, selection, orders);
     }
 
     @Override
     public <U> Subquery<U> subquery(EntityType<U> type) {
-        throw CriteriaUtils.notSupportedOperation();
+        return subquery(new ClassExpressionType<>(Objects.requireNonNull(type).getJavaType()));
     }
 
     @Override
@@ -129,27 +132,31 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
 
     @Override
     public <X, Y> ListJoin<X, Y> correlate(ListJoin<X, Y> parentList) {
-        throw CriteriaUtils.notSupportedOperation();
+        return (ListJoin<X, Y>) correlate((Join<X, Y>) parentList);
     }
 
     @Override
     public <X, Y> SetJoin<X, Y> correlate(SetJoin<X, Y> parentSet) {
-        throw CriteriaUtils.notSupportedOperation();
+        return (SetJoin<X, Y>) correlate((Join<X, Y>) parentSet);
     }
 
     @Override
     public <X, Y> CollectionJoin<X, Y> correlate(CollectionJoin<X, Y> parentCollection) {
-        throw CriteriaUtils.notSupportedOperation();
+        return (CollectionJoin<X, Y>) correlate((Join<X, Y>) parentCollection);
     }
 
     @Override
     public <X, Y> Join<X, Y> correlate(Join<X, Y> parentJoin) {
-        throw CriteriaUtils.notSupportedOperation();
+        Join<X, Y> correlatedJoin = Objects.requireNonNull(parentJoin);
+        correlatedJoins.add(correlatedJoin);
+        return correlatedJoin;
     }
 
     @Override
     public <Y> Root<Y> correlate(Root<Y> parentRoot) {
-        throw CriteriaUtils.notSupportedOperation();
+        Root<Y> correlatedRoot = Objects.requireNonNull(parentRoot);
+        entityRoot = (io.micronaut.data.model.jpa.criteria.PersistentEntityRoot<?>) correlatedRoot;
+        return correlatedRoot;
     }
 
 }

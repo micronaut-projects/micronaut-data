@@ -27,8 +27,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
-
 /**
  * The internal source version of {@link PersistentEntityRoot}.
  *
@@ -41,11 +39,13 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
     implements SourcePersistentEntityPath<T>, PersistentEntityRoot<T> {
 
     private final SourcePersistentEntity sourcePersistentEntity;
+    private final EntityType<T> model;
 
     public SourcePersistentEntityRoot(SourcePersistentEntity sourcePersistentEntity,
                                       CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
         this.sourcePersistentEntity = sourcePersistentEntity;
+        this.model = new SourcePersistentEntityType<>(sourcePersistentEntity);
     }
 
     @Override
@@ -71,7 +71,7 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
 
     @Override
     public EntityType<T> getModel() {
-        throw notSupportedOperation();
+        return model;
     }
 
     @Override

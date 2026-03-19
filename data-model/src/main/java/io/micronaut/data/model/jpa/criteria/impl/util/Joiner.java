@@ -34,6 +34,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -223,6 +225,29 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         functionExpression.getExpressions().forEach(this::visitExpression);
+    }
+
+    @Override
+    public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
+        searchedCaseExpression.getWhenClauses().forEach(whenClause -> {
+            visitPredicateExpression(whenClause.condition());
+            visitExpression(whenClause.result());
+        });
+        if (searchedCaseExpression.getOtherwise() != null) {
+            visitExpression(searchedCaseExpression.getOtherwise());
+        }
+    }
+
+    @Override
+    public void visit(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+        visitExpression(simpleCaseExpression.getExpression());
+        simpleCaseExpression.getWhenClauses().forEach(whenClause -> {
+            visitExpression(whenClause.condition());
+            visitExpression(whenClause.result());
+        });
+        if (simpleCaseExpression.getOtherwise() != null) {
+            visitExpression(simpleCaseExpression.getOtherwise());
+        }
     }
 
     @Override

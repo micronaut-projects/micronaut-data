@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Order;
@@ -30,8 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The abstract implementation of {@link PersistentEntityCriteriaQuery}.
@@ -99,12 +98,12 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractP
 
     @Override
     public Set<ParameterExpression<?>> getParameters() {
-        throw notSupportedOperation();
+        return CriteriaUtils.extractParameters(predicate, selection, orders);
     }
 
     @Override
     public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
-        throw notSupportedOperation();
+        return subquery(new ClassExpressionType<>(Objects.requireNonNull(type).getJavaType()));
     }
 
 }

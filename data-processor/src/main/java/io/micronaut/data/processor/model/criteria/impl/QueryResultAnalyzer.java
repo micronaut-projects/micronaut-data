@@ -25,6 +25,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -145,6 +147,16 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         queryResultTypeName = functionExpression.getJavaType().getName();
+    }
+
+    @Override
+    public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
+        queryResultTypeName = searchedCaseExpression.getJavaType().getName();
+    }
+
+    @Override
+    public void visit(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+        queryResultTypeName = simpleCaseExpression.getJavaType().getName();
     }
 
 }

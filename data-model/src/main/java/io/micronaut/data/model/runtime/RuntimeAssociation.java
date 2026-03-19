@@ -80,6 +80,9 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
         switch (getKind()) {
             case ONE_TO_MANY, MANY_TO_MANY -> {
                 Argument<?> typeArg = getProperty().asArgument().getFirstTypeVariable().orElse(null);
+                if (java.util.Map.class.isAssignableFrom(getProperty().getType())) {
+                    typeArg = getProperty().asArgument().getTypeVariables().get("V");
+                }
                 if (typeArg != null) {
                     //noinspection unchecked
                     return getOwner().getEntity((Class<T>) typeArg.getType());

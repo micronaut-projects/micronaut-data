@@ -23,6 +23,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import jakarta.persistence.criteria.Predicate;
@@ -86,6 +88,10 @@ public interface ExpressionVisitor {
      * @param binaryExpression The aggregateExpression
      */
     void visit(BinaryExpression<?> binaryExpression);
+
+    void visit(SearchedCaseExpression<?> searchedCaseExpression);
+
+    void visit(SimpleCaseExpression<?, ?> simpleCaseExpression);
 
     /**
      * Visit {@link IdExpression}.

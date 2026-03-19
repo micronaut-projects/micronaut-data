@@ -164,4 +164,40 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
 
     @Override
     <Y> PersistentAssociationPath<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute, io.micronaut.data.annotation.Join.Type jt);
+
+    @Override
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName);
+
+    @Override
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, JoinType jt);
+
+    @Override
+    <X, Y> PersistentPluralAssociationPath<X, Y> joinPlural(String attributeName, io.micronaut.data.annotation.Join.Type jt);
+
+    @Override
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute);
+
+    @Override
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute, JoinType jt);
+
+    @Override
+    <Y, C extends Collection<Y>> PersistentPluralAssociationPath<AssociatedEntityType, Y> joinPlural(PluralAttribute<? super AssociatedEntityType, C, Y> attribute, io.micronaut.data.annotation.Join.Type jt);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName, JoinType jt);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(String attributeName, io.micronaut.data.annotation.Join.Type jt);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, JoinType jt);
+
+    @Override
+    <K, V, M extends Map<K, V>> PersistentMapAttributePath<AssociatedEntityType, V> joinMapPath(MapAttribute<? super AssociatedEntityType, K, V> attribute, io.micronaut.data.annotation.Join.Type jt);
 }

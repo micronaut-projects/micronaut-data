@@ -110,7 +110,17 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
 
     @Override
     public Bindable<T> getModel() {
-        throw notSupportedOperation();
+        return new Bindable<>() {
+            @Override
+            public BindableType getBindableType() {
+                return BindableType.SINGULAR_ATTRIBUTE;
+            }
+
+            @Override
+            public Class<T> getBindableJavaType() {
+                return (Class<T>) DefaultPersistentPropertyPath.this.getJavaType();
+            }
+        };
     }
 
     @Override

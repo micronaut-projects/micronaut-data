@@ -102,7 +102,17 @@ public class DefaultEmbeddedPersistentPropertyPath<T> implements PersistentPrope
 
     @Override
     public Bindable<T> getModel() {
-        throw notSupportedOperation();
+        return new Bindable<>() {
+            @Override
+            public BindableType getBindableType() {
+                return BindableType.SINGULAR_ATTRIBUTE;
+            }
+
+            @Override
+            public Class<T> getBindableJavaType() {
+                return (Class<T>) DefaultEmbeddedPersistentPropertyPath.this.getJavaType();
+            }
+        };
     }
 
     @Override

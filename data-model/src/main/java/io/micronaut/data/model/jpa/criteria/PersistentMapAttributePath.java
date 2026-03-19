@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl.expression;
+package io.micronaut.data.model.jpa.criteria;
 
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Experimental;
 
-/**
- * The aggregate type.
- *
- * @author Denis Stepanov
- * @since 4.9
- */
-@Internal
-public enum BinaryExpressionType {
-    CONCAT, // "foo" + "bar"
-    SUM,    // +
-    PROD,   // *
-    QUOT,   // /
-    DIFF,   // -
-    MOD
+@Experimental
+public interface PersistentMapAttributePath<OwnerType, AssociatedEntityType>
+    extends PersistentPluralAssociationPath<OwnerType, AssociatedEntityType> {
 }

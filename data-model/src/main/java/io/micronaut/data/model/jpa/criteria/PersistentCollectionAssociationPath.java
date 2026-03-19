@@ -33,7 +33,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  */
 @Experimental
 public interface PersistentCollectionAssociationPath<OwnerType, AssociatedEntityType>
-    extends PersistentAssociationPath<OwnerType, AssociatedEntityType>, PersistentEntityCollectionJoin<OwnerType, AssociatedEntityType> {
+    extends PersistentPluralAssociationPath<OwnerType, AssociatedEntityType>, PersistentEntityCollectionJoin<OwnerType, AssociatedEntityType> {
 
     @Override
     default CollectionAttribute<? super OwnerType, AssociatedEntityType> getModel() {

@@ -23,6 +23,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -599,7 +601,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <N extends Number> Expression<N> neg(Expression<N> x) {
-        throw notSupportedOperation();
+        return new UnaryExpression<>(x, UnaryExpressionType.NEG);
     }
 
     /**
@@ -610,7 +612,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <N extends Number> Expression<N> abs(Expression<N> x) {
-        throw notSupportedOperation();
+        return new UnaryExpression<>(x, UnaryExpressionType.ABS);
     }
 
     @Override
@@ -693,7 +695,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> mod(Expression<Integer> x,  Expression<Integer> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.MOD, Integer.class);
     }
 
     /**
@@ -703,7 +705,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      */
     @Override
     public Expression<Integer> mod(Expression<Integer> x,  Integer y) {
-        throw notSupportedOperation();
+        return mod(x, literal(y));
     }
 
     /**
@@ -714,7 +716,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> mod(Integer x,  Expression<Integer> y) {
-        throw notSupportedOperation();
+        return mod(literal(x), y);
     }
 
     /**
@@ -725,7 +727,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Double> sqrt(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("SQRT", Double.class, x);
     }
 
     /**
@@ -736,7 +738,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Long> toLong(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_BIGINT", Long.class, x);
     }
 
     /**
@@ -747,7 +749,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> toInteger(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_INTEGER", Integer.class, x);
     }
 
     /**
@@ -758,7 +760,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Float> toFloat(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_FLOAT", Float.class, x);
     }
 
     /**
@@ -769,7 +771,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Double> toDouble(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_DOUBLE", Double.class, x);
     }
 
     /**
@@ -780,7 +782,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<BigDecimal> toBigDecimal(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_DECIMAL", BigDecimal.class, x);
     }
 
     /**
@@ -791,7 +793,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<BigInteger> toBigInteger(Expression<? extends Number> x) {
-        throw notSupportedOperation();
+        return function("CAST_BIGINT_DECIMAL", BigInteger.class, x);
     }
 
     /**
@@ -853,7 +855,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <C extends Collection<?>> Predicate isEmpty(Expression<C> collection) {
-        throw notSupportedOperation();
+        return new UnaryPredicate(collection, PredicateUnaryOp.IS_EMPTY);
     }
 
     /**
@@ -864,7 +866,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <C extends Collection<?>> Predicate isNotEmpty(Expression<C> collection) {
-        throw notSupportedOperation();
+        return new UnaryPredicate(collection, PredicateUnaryOp.IS_NOT_EMPTY);
     }
 
     /**
@@ -875,7 +877,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <C extends Collection<?>> Expression<Integer> size(Expression<C> collection) {
-        throw notSupportedOperation();
+        return function("SIZE", Integer.class, collection);
     }
 
     /**
@@ -886,7 +888,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <C extends Collection<?>> Expression<Integer> size(C collection) {
-        throw notSupportedOperation();
+        return literal(Objects.requireNonNull(collection).size());
     }
 
     /**
@@ -897,7 +899,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <E, C extends Collection<E>> Predicate isMember(Expression<E> elem,  Expression<C> collection) {
-        throw notSupportedOperation();
+        return isTrue(function("MEMBER_OF", Boolean.class, elem, collection));
     }
 
     /**
@@ -908,7 +910,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <E, C extends Collection<E>> Predicate isMember(E elem,  Expression<C> collection) {
-        throw notSupportedOperation();
+        return isMember(literal(elem), collection);
     }
 
     /**
@@ -919,7 +921,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <E, C extends Collection<E>> Predicate isNotMember(Expression<E> elem,  Expression<C> collection) {
-        throw notSupportedOperation();
+        return isFalse(function("MEMBER_OF", Boolean.class, elem, collection));
     }
 
     /**
@@ -930,7 +932,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <E, C extends Collection<E>> Predicate isNotMember(E elem,  Expression<C> collection) {
-        throw notSupportedOperation();
+        return isNotMember(literal(elem), collection);
     }
 
     /**
@@ -1084,7 +1086,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> substring(Expression<String> x,  Expression<Integer> from) {
-        throw notSupportedOperation();
+        return function("SUBSTRING", String.class, x, from);
     }
 
     /**
@@ -1095,7 +1097,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> substring(Expression<String> x, int from) {
-        throw notSupportedOperation();
+        return substring(x, literal(from));
     }
 
     /**
@@ -1106,7 +1108,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> substring(Expression<String> x,  Expression<Integer> from,  Expression<Integer> len) {
-        throw notSupportedOperation();
+        return function("SUBSTRING", String.class, x, from, len);
     }
 
     /**
@@ -1117,7 +1119,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> substring(Expression<String> x, int from, int len) {
-        throw notSupportedOperation();
+        return substring(x, literal(from), literal(len));
     }
 
     @Override
@@ -1148,7 +1150,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(Expression<String> x) {
-        throw notSupportedOperation();
+        return function("TRIM", String.class, x);
     }
 
     /**
@@ -1159,7 +1161,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(Trimspec ts,  Expression<String> x) {
-        throw notSupportedOperation();
+        return function("TRIM_" + Objects.requireNonNull(ts).name(), String.class, x);
     }
 
     /**
@@ -1170,7 +1172,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(Expression<Character> t,  Expression<String> x) {
-        throw notSupportedOperation();
+        return function("TRIM_CHAR", String.class, t, x);
     }
 
     /**
@@ -1181,7 +1183,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(Trimspec ts,  Expression<Character> t,  Expression<String> x) {
-        throw notSupportedOperation();
+        return function("TRIM_" + Objects.requireNonNull(ts).name() + "_CHAR", String.class, t, x);
     }
 
     /**
@@ -1192,7 +1194,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(char t,  Expression<String> x) {
-        throw notSupportedOperation();
+        return trim(literal(t), x);
     }
 
     /**
@@ -1203,7 +1205,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> trim(Trimspec ts, char t,  Expression<String> x) {
-        throw notSupportedOperation();
+        return trim(ts, literal(t), x);
     }
 
     @Override
@@ -1232,7 +1234,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> locate(Expression<String> x,  Expression<String> pattern) {
-        throw notSupportedOperation();
+        return function("LOCATE", Integer.class, pattern, x);
     }
 
     /**
@@ -1243,7 +1245,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> locate(Expression<String> x,  String pattern) {
-        throw notSupportedOperation();
+        return locate(x, literal(pattern));
     }
 
     /**
@@ -1254,7 +1256,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> locate(Expression<String> x,  Expression<String> pattern,  Expression<Integer> from) {
-        throw notSupportedOperation();
+        return function("LOCATE", Integer.class, pattern, x, from);
     }
 
     /**
@@ -1265,7 +1267,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Integer> locate(Expression<String> x,  String pattern, int from) {
-        throw notSupportedOperation();
+        return locate(x, literal(pattern), literal(from));
     }
 
     /**
@@ -1276,7 +1278,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Date> currentDate() {
-        throw notSupportedOperation();
+        return function("CURRENT_DATE", Date.class);
     }
 
     /**
@@ -1287,7 +1289,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Timestamp> currentTimestamp() {
-        throw notSupportedOperation();
+        return function("CURRENT_TIMESTAMP", Timestamp.class);
     }
 
     /**
@@ -1298,7 +1300,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<Time> currentTime() {
-        throw notSupportedOperation();
+        return function("CURRENT_TIME", Time.class);
     }
 
     @Override
@@ -1315,7 +1317,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <Y> Expression<Y> coalesce(Expression<? extends Y> x,  Expression<? extends Y> y) {
-        throw notSupportedOperation();
+        return function("COALESCE", (Class<Y>) x.getJavaType(), (Expression<?>) x, (Expression<?>) y);
     }
 
     /**
@@ -1326,7 +1328,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <Y> Expression<Y> coalesce(Expression<? extends Y> x, Y y) {
-        throw notSupportedOperation();
+        return coalesce(x, literal(y));
     }
 
     /**
@@ -1337,7 +1339,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <Y> Expression<Y> nullif(Expression<Y> x,  Expression<?> y) {
-        throw notSupportedOperation();
+        return function("NULLIF", (Class<Y>) x.getJavaType(), x, y);
     }
 
     /**
@@ -1348,7 +1350,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <Y> Expression<Y> nullif(Expression<Y> x, Y y) {
-        throw notSupportedOperation();
+        return nullif(x, literal(y));
     }
 
     /**
@@ -1370,7 +1372,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <C, R> SimpleCase<C, R> selectCase(Expression<? extends C> expression) {
-        throw notSupportedOperation();
+        return (SimpleCase<C, R>) new SimpleCaseExpression<>(expression, Object.class);
     }
 
     /**
@@ -1381,7 +1383,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public <R> Case<R> selectCase() {
-        throw notSupportedOperation();
+        return (Case<R>) new SearchedCaseExpression<>(Object.class);
     }
 
     @Override

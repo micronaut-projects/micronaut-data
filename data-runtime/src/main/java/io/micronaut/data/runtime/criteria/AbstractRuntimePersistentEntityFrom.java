@@ -40,6 +40,12 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
     private final CriteriaBuilder criteriaBuilder;
 
     AbstractRuntimePersistentEntityFrom(CriteriaBuilder criteriaBuilder) {
+        super();
+        this.criteriaBuilder = criteriaBuilder;
+    }
+
+    AbstractRuntimePersistentEntityFrom(jakarta.persistence.criteria.From<?, ?> correlationParent, CriteriaBuilder criteriaBuilder) {
+        super(correlationParent);
         this.criteriaBuilder = criteriaBuilder;
     }
 
@@ -54,6 +60,9 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
                                                                         @Nullable String alias) {
         RuntimeAssociation<E> runtimeAssociation = (RuntimeAssociation<E>) association;
         Class<?> type = runtimeAssociation.getProperty().getType();
+        if (java.util.Map.class.isAssignableFrom(type)) {
+            return new RuntimePersistentMapAttributePath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
+        }
         if (List.class.isAssignableFrom(type)) {
             return new RuntimePersistentListAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
         }

@@ -61,6 +61,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SearchedCaseExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SimpleCaseExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -1332,6 +1334,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         } else if (expression instanceof LiteralExpression<?> literalExpression) {
             query.append(asLiteral(literalExpression.getValue()));
+        } else if (expression instanceof io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression<?> unaryExpression) {
+            unaryExpression.visitExpression(new SqlSelectionVisitor(queryState, annotationMetadata, false));
+        } else if (expression instanceof io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression<?> binaryExpression) {
+            binaryExpression.visitExpression(new SqlSelectionVisitor(queryState, annotationMetadata, false));
+        } else if (expression instanceof io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression<?> functionExpression) {
+            functionExpression.visitExpression(new SqlSelectionVisitor(queryState, annotationMetadata, false));
         } else {
             throw new IllegalArgumentException("Unsupported expression type: " + expression.getClass());
         }
@@ -2476,6 +2484,99 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(CLOSE_BRACKET);
         }
 
+        protected final void appendNamedFunction(String functionName, List<Expression<?>> expressions) {
+            switch (functionName) {
+                case "SQRT" -> appendFunction("SQRT", expressions);
+                case "SIZE" -> appendSizeFunction(expressions.get(0));
+                case "MEMBER_OF" -> appendMemberOfFunction(expressions.get(0), expressions.get(1));
+                case "CAST_BIGINT" -> appendCastFunction(expressions.get(0), "BIGINT");
+                case "CAST_INTEGER" -> appendCastFunction(expressions.get(0), "INTEGER");
+                case "CAST_FLOAT" -> appendCastFunction(expressions.get(0), "FLOAT");
+                case "CAST_DOUBLE" -> appendCastFunction(expressions.get(0), "DOUBLE");
+                case "CAST_DECIMAL" -> appendCastFunction(expressions.get(0), "DECIMAL");
+                case "CAST_BIGINT_DECIMAL" -> appendCastFunction(expressions.get(0), "BIGINT");
+                case "TRIM" -> appendFunction("TRIM", expressions);
+                case "TRIM_LEADING" -> appendTrimFunction("LEADING", null, expressions.get(0));
+                case "TRIM_TRAILING" -> appendTrimFunction("TRAILING", null, expressions.get(0));
+                case "TRIM_BOTH" -> appendTrimFunction("BOTH", null, expressions.get(0));
+                case "TRIM_CHAR" -> appendTrimFunction("BOTH", expressions.get(0), expressions.get(1));
+                case "TRIM_LEADING_CHAR" -> appendTrimFunction("LEADING", expressions.get(0), expressions.get(1));
+                case "TRIM_TRAILING_CHAR" -> appendTrimFunction("TRAILING", expressions.get(0), expressions.get(1));
+                case "TRIM_BOTH_CHAR" -> appendTrimFunction("BOTH", expressions.get(0), expressions.get(1));
+                default -> appendFunction(functionName, expressions);
+            }
+        }
+
+        protected final void appendTrimFunction(String trimSpec, @Nullable Expression<?> trimChar, Expression<?> expression) {
+            query.append("TRIM(").append(trimSpec);
+            if (trimChar != null) {
+                query.append(SPACE);
+                appendExpression(trimChar);
+            }
+            query.append(" FROM ");
+            appendExpression(expression);
+            query.append(CLOSE_BRACKET);
+        }
+
+        protected final void appendCastFunction(Expression<?> expression, String castType) {
+            query.append("CAST(");
+            appendExpression(expression);
+            query.append(" AS ").append(castType).append(CLOSE_BRACKET);
+        }
+
+        protected final void appendSizeFunction(Expression<?> collectionExpression) {
+            appendCollectionFunctionExpression("COUNT(*)", collectionExpression);
+        }
+
+        protected final void appendMemberOfFunction(Expression<?> memberExpression, Expression<?> collectionExpression) {
+            query.append("EXISTS (SELECT 1 FROM ");
+            PersistentPropertyPath propertyPath = requireProperty(collectionExpression).getPropertyPath();
+            query.append(getNamingStrategy(propertyPath).mappedName(propertyPath.getProperty()));
+            query.append(" WHERE ");
+            query.append(getNamingStrategy(propertyPath).mappedName(propertyPath.getProperty().getOwner()));
+            query.append(" = ");
+            appendExpression(memberExpression);
+            query.append(CLOSE_BRACKET);
+        }
+
+        protected final void appendCollectionFunctionExpression(String projection, Expression<?> collectionExpression) {
+            query.append("(SELECT ").append(projection).append(" FROM ");
+            PersistentPropertyPath propertyPath = requireProperty(collectionExpression).getPropertyPath();
+            query.append(getNamingStrategy(propertyPath).mappedName(propertyPath.getProperty()));
+            query.append(CLOSE_BRACKET);
+        }
+
+        protected final void appendSearchedCaseExpression(SearchedCaseExpression<?> searchedCaseExpression) {
+            query.append("CASE");
+            for (SearchedCaseExpression.WhenClause<?> whenClause : searchedCaseExpression.getWhenClauses()) {
+                query.append(" WHEN ");
+                ((IPredicate) whenClause.condition()).visitPredicate(new SqlPredicateVisitor(queryState, annotationMetadata));
+                query.append(" THEN ");
+                appendExpression(whenClause.result());
+            }
+            if (searchedCaseExpression.getOtherwise() != null) {
+                query.append(" ELSE ");
+                appendExpression(searchedCaseExpression.getOtherwise());
+            }
+            query.append(" END");
+        }
+
+        protected final void appendSimpleCaseExpression(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+            query.append("CASE ");
+            appendExpression(simpleCaseExpression.getExpression());
+            for (SimpleCaseExpression.WhenClause<?, ?> whenClause : simpleCaseExpression.getWhenClauses()) {
+                query.append(" WHEN ");
+                appendExpression(whenClause.condition());
+                query.append(" THEN ");
+                appendExpression(whenClause.result());
+            }
+            if (simpleCaseExpression.getOtherwise() != null) {
+                query.append(" ELSE ");
+                appendExpression(simpleCaseExpression.getOtherwise());
+            }
+            query.append(" END");
+        }
+
         protected final void appendBindingParameter(BindingParameter bindingParameter,
                                                     @Nullable PersistentPropertyPath entityPropertyPath) {
             Runnable pushParameter = () -> {
@@ -2561,6 +2662,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(right);
                     query.append(")");
                 }
+                case MOD -> {
+                    query.append("(");
+                    appendExpression(left);
+                    query.append(" % ");
+                    appendExpression(right);
+                    query.append(")");
+                }
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
@@ -2581,7 +2689,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            appendNamedFunction(functionExpression.getName(), functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
+            appendSearchedCaseExpression(searchedCaseExpression);
+        }
+
+        @Override
+        public void visit(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+            appendSimpleCaseExpression(simpleCaseExpression);
         }
 
         @Override
@@ -2726,8 +2844,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         appendFunction("LENGTH", expression);
                     }
                 }
-                case SUM, AVG, MAX, MIN, UPPER, LOWER ->
+                case SUM, AVG, MAX, MIN, UPPER, LOWER, ABS ->
                     appendFunction(unaryExpression.getType().name(), expression);
+                case NEG -> {
+                    query.append('-');
+                    appendExpression(expression);
+                }
                 case COUNT -> {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCount(Objects.requireNonNull(tableAlias));
@@ -2777,6 +2899,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(" * ");
                     appendExpression(right);
                 }
+                case MOD -> {
+                    appendExpression(left);
+                    query.append(" % ");
+                    appendExpression(right);
+                }
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
@@ -2807,7 +2934,48 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            appendNamedFunction(functionExpression.getName(), functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(SearchedCaseExpression<?> searchedCaseExpression) {
+            appendSearchedCaseExpression(searchedCaseExpression);
+        }
+
+        @Override
+        public void visit(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+            appendSimpleCaseExpression(simpleCaseExpression);
+        }
+
+        private void appendSearchedCaseExpression(SearchedCaseExpression<?> searchedCaseExpression) {
+            query.append("CASE");
+            for (SearchedCaseExpression.WhenClause<?> whenClause : searchedCaseExpression.getWhenClauses()) {
+                query.append(" WHEN ");
+                ((IPredicate) whenClause.condition()).visitPredicate(new SqlPredicateVisitor(queryState, annotationMetadata));
+                query.append(" THEN ");
+                appendExpression(whenClause.result());
+            }
+            if (searchedCaseExpression.getOtherwise() != null) {
+                query.append(" ELSE ");
+                appendExpression(searchedCaseExpression.getOtherwise());
+            }
+            query.append(" END");
+        }
+
+        private void appendSimpleCaseExpression(SimpleCaseExpression<?, ?> simpleCaseExpression) {
+            query.append("CASE ");
+            appendExpression(simpleCaseExpression.getExpression());
+            for (SimpleCaseExpression.WhenClause<?, ?> whenClause : simpleCaseExpression.getWhenClauses()) {
+                query.append(" WHEN ");
+                appendExpression(whenClause.condition());
+                query.append(" THEN ");
+                appendExpression(whenClause.result());
+            }
+            if (simpleCaseExpression.getOtherwise() != null) {
+                query.append(" ELSE ");
+                appendExpression(simpleCaseExpression.getOtherwise());
+            }
+            query.append(" END");
         }
 
         /**
@@ -3038,6 +3206,53 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             query.append(CLOSE_BRACKET);
+            if (columnAlias != null) {
+                query.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+
+        private void appendNamedFunction(String functionName, List<Expression<?>> expressions) {
+            switch (functionName) {
+                case "SQRT" -> appendFunction("SQRT", expressions);
+                case "CAST_BIGINT" -> appendCastFunction(expressions.get(0), "BIGINT");
+                case "CAST_INTEGER" -> appendCastFunction(expressions.get(0), "INTEGER");
+                case "CAST_FLOAT" -> appendCastFunction(expressions.get(0), "FLOAT");
+                case "CAST_DOUBLE" -> appendCastFunction(expressions.get(0), "DOUBLE");
+                case "CAST_DECIMAL" -> appendCastFunction(expressions.get(0), "DECIMAL");
+                case "CAST_BIGINT_DECIMAL" -> appendCastFunction(expressions.get(0), "BIGINT");
+                case "TRIM" -> appendFunction("TRIM", expressions);
+                case "TRIM_LEADING" -> appendTrimFunction("LEADING", null, expressions.get(0));
+                case "TRIM_TRAILING" -> appendTrimFunction("TRAILING", null, expressions.get(0));
+                case "TRIM_BOTH" -> appendTrimFunction("BOTH", null, expressions.get(0));
+                case "TRIM_CHAR" -> appendTrimFunction("BOTH", expressions.get(0), expressions.get(1));
+                case "TRIM_LEADING_CHAR" -> appendTrimFunction("LEADING", expressions.get(0), expressions.get(1));
+                case "TRIM_TRAILING_CHAR" -> appendTrimFunction("TRAILING", expressions.get(0), expressions.get(1));
+                case "TRIM_BOTH_CHAR" -> appendTrimFunction("BOTH", expressions.get(0), expressions.get(1));
+                default -> appendFunction(functionName, expressions);
+            }
+            if (columnAlias != null && !functionName.equals("TRIM") && !functionName.startsWith("TRIM_")) {
+                query.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+
+        private void appendTrimFunction(String trimSpec, @Nullable Expression<?> trimChar, Expression<?> expression) {
+            query.append("TRIM(").append(trimSpec);
+            if (trimChar != null) {
+                query.append(SPACE);
+                appendExpression(trimChar);
+            }
+            query.append(" FROM ");
+            appendExpression(expression);
+            query.append(CLOSE_BRACKET);
+            if (columnAlias != null) {
+                query.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+
+        private void appendCastFunction(Expression<?> expression, String castType) {
+            query.append("CAST(");
+            appendExpression(expression);
+            query.append(" AS ").append(castType).append(CLOSE_BRACKET);
             if (columnAlias != null) {
                 query.append(AS_CLAUSE).append(columnAlias);
             }

@@ -38,7 +38,13 @@ public enum PredicateUnaryOp {
     void validate(Expression<?> expression) {
         switch (this) {
             case IS_EMPTY, IS_NOT_EMPTY -> {
-                CriteriaUtils.requireStringExpression(expression);
+                if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path) {
+                    if (path.getJavaType() == null || !java.util.Collection.class.isAssignableFrom(path.getJavaType())) {
+                        CriteriaUtils.requireStringExpression(expression);
+                    }
+                } else {
+                    CriteriaUtils.requireStringExpression(expression);
+                }
             }
             case IS_TRUE, IS_FALSE -> {
                 // Boolean?
