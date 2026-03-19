@@ -39,11 +39,13 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CollectionJoin;
+import jakarta.persistence.criteria.CriteriaSelect;
 import jakarta.persistence.criteria.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.ListJoin;
 import jakarta.persistence.criteria.MapJoin;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
@@ -52,6 +54,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.SetJoin;
 import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.TemporalField;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
@@ -140,15 +143,65 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public CompoundSelection<Tuple> tuple(List<Selection<?>> selections) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public CompoundSelection<Object[]> array(List<Selection<?>> selections) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> union(CriteriaSelect<? extends T> left, CriteriaSelect<? extends T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> unionAll(CriteriaSelect<? extends T> left, CriteriaSelect<? extends T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> intersect(CriteriaSelect<? super T> left, CriteriaSelect<? super T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> intersectAll(CriteriaSelect<? super T> left, CriteriaSelect<? super T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> except(CriteriaSelect<T> left, CriteriaSelect<?> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> exceptAll(CriteriaSelect<T> left, CriteriaSelect<?> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
 
     public Order asc(Expression<?> x) {
         return sort(x, true, false);
     }
 
     @Override
+    public Order asc(Expression<?> expression, Nulls nullPrecedence) {
+        return new DefaultOrder<>(expression, true, false, nullPrecedence);
+    }
+
+    @Override
 
     public Order desc(Expression<?> x) {
         return sort(x, false, false);
+    }
+
+    @Override
+    public Order desc(Expression<?> expression, Nulls nullPrecedence) {
+        return new DefaultOrder<>(expression, false, false, nullPrecedence);
     }
 
     @Override
@@ -241,6 +294,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public <N, T extends java.time.temporal.Temporal> Expression<N> extract(TemporalField<N, T> field, Expression<T> temporal) {
+        throw notSupportedOperation();
+    }
+
+    @Override
 
     public Predicate and(Expression<Boolean> x,  Expression<Boolean> y) {
         return new ConjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
@@ -256,6 +314,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     public Predicate and(Iterable<Predicate> restrictions) {
         return new ConjunctionPredicate(requireBoolExpressions(restrictions));
+    }
+
+    @Override
+    public Predicate and(List<Predicate> restrictions) {
+        return and((Iterable<Predicate>) restrictions);
     }
 
     @Override
@@ -350,6 +413,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     public Predicate or(Iterable<Predicate> restrictions) {
         return new DisjunctionPredicate(requireBoolExpressions(restrictions));
+    }
+
+    @Override
+    public Predicate or(List<Predicate> restrictions) {
+        return or((Iterable<Predicate>) restrictions);
     }
 
     @Override
@@ -983,6 +1051,31 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.CONCAT, String.class);
     }
 
+    @Override
+    public Expression<String> concat(List<Expression<String>> expressions) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, Expression<String> substring, Expression<String> replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, Expression<String> substring, String replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, String substring, Expression<String> replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, String substring, String replacement) {
+        throw notSupportedOperation();
+    }
+
     /**
      * Not supported yet.
      *
@@ -1024,6 +1117,26 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
 
     public Expression<String> substring(Expression<String> x, int from, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> left(Expression<String> x, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> left(Expression<String> x, Expression<Integer> len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> right(Expression<String> x, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> right(Expression<String> x, Expression<Integer> len) {
         throw notSupportedOperation();
     }
 
