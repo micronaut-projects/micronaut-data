@@ -59,6 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,boolean,boolean)" tabindex="0">DefaultOrder(Expression, boolean, boolean)</a></li>
+<li><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" tabindex="0">DefaultOrder(Expression, boolean, boolean, Nulls)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -67,6 +68,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#isIgnoreCase()" tabindex="0">isIgnoreCase()</a></li>
 <li><a href="#isAscending()" tabindex="0">isAscending()</a></li>
 <li><a href="#getExpression()" tabindex="0">getExpression()</a></li>
+<li><a href="#getNullPrecedence()" tabindex="0">getNullPrecedence()</a></li>
 </ol>
 </li>
 </ol>
@@ -117,6 +119,11 @@ implements jakarta.persistence.criteria.Order</span></div>
  boolean&nbsp;ascending,
  boolean&nbsp;ignoreCase)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" class="member-name-link">DefaultOrder</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="#type-param-T" title="type parameter in DefaultOrder">T</a>&gt;&nbsp;expression,
+ boolean&nbsp;ascending,
+ boolean&nbsp;ignoreCase,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -134,24 +141,24 @@ implements jakarta.persistence.criteria.Order</span></div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getExpression()" class="member-name-link">getExpression</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAscending()" class="member-name-link">isAscending</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Nulls</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getNullPrecedence()" class="member-name-link">getNullPrecedence</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isIgnoreCase()" class="member-name-link">isIgnoreCase</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAscending()" class="member-name-link">isAscending</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reverse()" class="member-name-link">reverse</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isIgnoreCase()" class="member-name-link">isIgnoreCase</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Order</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reverse()" class="member-name-link">reverse</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Order">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Order</h3>
-<code>getNullPrecedence</code></div>
 </section>
 </li>
 </ul>
@@ -170,6 +177,17 @@ implements jakarta.persistence.criteria.Order</span></div>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultOrder</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="#type-param-T" title="type parameter in DefaultOrder">T</a>&gt;&nbsp;expression,
  boolean&nbsp;ascending,
  boolean&nbsp;ignoreCase)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)">
+<h3>DefaultOrder</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultOrder</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="#type-param-T" title="type parameter in DefaultOrder">T</a>&gt;&nbsp;expression,
+ boolean&nbsp;ascending,
+ boolean&nbsp;ignoreCase,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</span></div>
 </div>
 </section>
 </li>
@@ -221,6 +239,18 @@ implements jakarta.persistence.criteria.Order</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getExpression</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Order</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getNullPrecedence()">
+<h3>getNullPrecedence</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Nulls</span>&nbsp;<span class="element-name">getNullPrecedence</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>getNullPrecedence</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Order</code></dd>
 </dl>
 </div>
 </section>
