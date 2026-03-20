@@ -585,9 +585,10 @@ abstract class AbstractRepositorySpec extends Specification {
         def entity = basicTypeRepository.save(new BasicTypes())
 
         expect:
-        basicTypeRepository.findByteArrayById(entity.myId).present
-        basicTypeRepository.findByteArrayById(entity.myId).get() == entity.byteArray
-        basicTypeRepository.findByteArrayById(entity.myId).get().class == byte[].class
+        def byteArrayOpt = basicTypeRepository.findByteArrayById(entity.myId)
+        byteArrayOpt.present
+        byteArrayOpt.get() == entity.byteArray
+        byteArrayOpt.get().class == byte[].class
     }
 
     void "test save and retrieve timezone basic types"() {
