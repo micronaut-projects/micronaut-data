@@ -206,17 +206,17 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     }
 
     @Override
-    public byte[] readBytes(Row resultSet, Integer name) {
+    public byte @Nullable [] readBytes(Row resultSet, Integer name) {
         try {
             return resultSet.get(name, byte[].class);
         } catch (Exception e) {
         }
         Object o = resultSet.get(name);
         if (o == null) {
-            return new byte[0];
+            return null;
         }
-        if (o instanceof byte[]) {
-            return (byte[]) o;
+        if (o instanceof byte[] bytes) {
+            return bytes;
         }
         if (o instanceof ByteBuffer byteBuffer) {
             return byteBuffer.array();

@@ -129,8 +129,8 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         if (o == null) {
             return null;
         }
-        if (o instanceof byte[]) {
-            return null;
+        if (o instanceof byte[] bytes) {
+            return bytes;
         }
         if (o instanceof ByteBuffer byteBuffer) {
             return byteBuffer.array();
