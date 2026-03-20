@@ -14,8 +14,8 @@ import io.micronaut.data.model.geo.MultiPolygon;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.serde.ObjectMapper;
 import io.micronaut.serde.annotation.Serdeable;
-import io.micronaut.serde.oracle.jdbc.json.OracleJdbcJsonTextObjectMapper;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
@@ -28,13 +28,9 @@ import java.util.List;
 public final class GeometryConverter implements AttributeConverter<Geometry, String> {
 
     private final JsonMapper jsonMapper;
-    //@Named
-    @Nullable
-    private final OracleJdbcJsonTextObjectMapper oracleJsonMapper;
 
-    GeometryConverter(JsonMapper jsonMapper, @Nullable OracleJdbcJsonTextObjectMapper oracleJsonMapper) {
-        this.jsonMapper = jsonMapper;
-        this.oracleJsonMapper = oracleJsonMapper;
+    GeometryConverter(JsonMapper jsonMapper, @Nullable @Named("oracleJdbcJsonText") ObjectMapper oracleJsonMapper) {
+        this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper;
     }
 
     @Override
@@ -45,7 +41,7 @@ public final class GeometryConverter implements AttributeConverter<Geometry, Str
         }
         GeoJson geoJson = getGeoJson(entityValue);
         try {
-            return getJsonMapper().writeValueAsString(geoJson);
+            return jsonMapper.writeValueAsString(geoJson);
         } catch (IOException e) {
             throw new SerializationException("Failed to serialize GeoJson entity [" + geoJson + "]", e);
         }
@@ -59,15 +55,11 @@ public final class GeometryConverter implements AttributeConverter<Geometry, Str
         }
         GeoJson geoJson;
         try {
-            geoJson = getJsonMapper().readValue(persistedValue, GeoJson.class);
+            geoJson = jsonMapper.readValue(persistedValue, GeoJson.class);
         } catch (IOException e) {
             throw new SerializationException("Failed to deserialize json [" + persistedValue + "]", e);
         }
         return geoJson == null ? null : getGeometry(geoJson);
-    }
-
-    private JsonMapper getJsonMapper() {
-        return oracleJsonMapper == null  ? jsonMapper : oracleJsonMapper;
     }
 
     private GeoJson getGeoJson(Geometry geometry) {
