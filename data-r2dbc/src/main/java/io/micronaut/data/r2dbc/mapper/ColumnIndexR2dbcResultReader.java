@@ -210,7 +210,9 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         try {
             return resultSet.get(name, byte[].class);
         } catch (Exception e) {
+            // Ignore
         }
+        // Second try for Oracle and H2
         Object o = resultSet.get(name);
         if (o == null) {
             return null;
