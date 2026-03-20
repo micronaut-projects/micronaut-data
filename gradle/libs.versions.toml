@@ -59,7 +59,7 @@ kotlin-coroutines = "1.10.2"
 antlr = "4.13.2"
 
 # TODO: Temporary version workaround until Hibernate Reactive is aligned with Hibernate Core
-hibernate-core-reactive-compat = "7.2.7.Final"
+hibernate-core-reactive-compat = "7.3.0.Final"
 
 
 [libraries]
