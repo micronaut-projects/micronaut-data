@@ -21,15 +21,12 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -210,27 +207,9 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         try {
             return resultSet.get(name, byte[].class);
         } catch (Exception e) {
-            // Ignore
+            // Ignore and fallback to generic handling (Oracle, H2, etc.)
         }
-        // Second try for Oracle and H2
-        Object o = resultSet.get(name);
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof byte[] bytes) {
-            return bytes;
-        }
-        if (o instanceof ByteBuffer byteBuffer) {
-            return byteBuffer.array();
-        }
-        if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
-                return new byte[0];
-            }
-            return byteBuffer.array();
-        }
-        return convertRequired(o, byte[].class);
+        return R2dbcBytesReader.toBytes(resultSet.get(name), conversionService);
     }
 
     @Nullable
