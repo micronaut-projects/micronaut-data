@@ -24,6 +24,7 @@ import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -510,6 +511,52 @@ interface MyRepository {
         expect:
         result.query == 'INSERT INTO "geo_entity" ("location","multi_point","line_string","multi_line_string","polygon","multi_polygon","geometry_collection") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
         result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+    }
+
+    void "test encode oracle update statement for geospatial properties"() {
+        given:
+        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        expect:
+        result.query == 'UPDATE "GEO_ENTITY" SET "LOCATION"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_POINT"=SDO_UTIL.FROM_GEOJSON(?),"LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?),"POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"MULTI_POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"GEOMETRY_COLLECTION"=SDO_UTIL.FROM_GEOJSON(?) WHERE ("ID" = ?)'
+    }
+
+    void "test encode mysql update statement for geospatial properties"() {
+        given:
+        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.MYSQL))
+
+        expect:
+        result.query == 'UPDATE `geo_entity` SET `location`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
+    }
+
+    void "test encode h2 update statement for geospatial properties"() {
+        given:
+        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.H2))
+
+        expect:
+        result.query == 'UPDATE `geo_entity` SET `location`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
+    }
+
+    void "test encode postgres update statement for geospatial properties"() {
+        given:
+        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.POSTGRES))
+
+        expect:
+        result.query == 'UPDATE "geo_entity" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_point"=ST_GeomFromGeoJSON(?),"line_string"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_line_string"=ST_GeomFromGeoJSON(?),"polygon"=ST_GeomFromGeoJSON(?),"multi_polygon"=ST_GeomFromGeoJSON(?),"geometry_collection"=ST_GeomFromGeoJSON(?) WHERE ("id" = ?)'
+    }
+
+    private PersistentEntityCriteriaUpdate<GeoEntity> geoEntityUpdateQuery() {
+        def query = builder.createCriteriaUpdate(GeoEntity)
+        def root = query.from(GeoEntity)
+        query.set(root.get('point'), builder.parameter(Object))
+        query.set(root.get('multiPoint'), builder.parameter(Object))
+        query.set(root.get('lineString'), builder.parameter(Object))
+        query.set(root.get('multiLineString'), builder.parameter(Object))
+        query.set(root.get('polygon'), builder.parameter(Object))
+        query.set(root.get('multiPolygon'), builder.parameter(Object))
+        query.set(root.get('geometryCollection'), builder.parameter(Object))
+        query.where(builder.equal(root.get('id'), builder.parameter(Object)))
+        return query
     }
 
     void "test encode create statement for embedded"() {
