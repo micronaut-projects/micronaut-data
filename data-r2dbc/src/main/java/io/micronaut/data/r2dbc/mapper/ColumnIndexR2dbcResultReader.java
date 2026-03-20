@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -26,6 +24,8 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
