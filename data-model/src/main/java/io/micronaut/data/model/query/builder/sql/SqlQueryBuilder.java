@@ -780,7 +780,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         addToCollectionIfNotContains(createStatements, builder.toString());
         createSequenceStatements(table, escape, createStatements);
+        createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+
+    private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
+        List<String> auxiliaryStatements = table.auxiliaryStatements();
+        if (CollectionUtils.isEmpty(auxiliaryStatements)) {
+            return;
+        }
+        for (String auxiliaryStatement : auxiliaryStatements) {
+            addToCollectionIfNotContains(createStatements, dialect == Dialect.ORACLE ? auxiliaryStatement : auxiliaryStatement + ';');
+        }
     }
 
     private void createSequenceStatements(SqlTableMapping table, boolean escape, List<String> createStatements) {
@@ -811,7 +823,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private  String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
         // Create index name without escaped table name and then escape if needed
         String columnNames = String.join(", ", indexMapping.columns());
         String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
@@ -822,13 +834,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         StringBuilder indexBuilder = new StringBuilder();
-        indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
-            .append("INDEX ");
+        indexBuilder.append("CREATE ");
+        if (indexMapping.unique()) {
+            indexBuilder.append("UNIQUE ");
+        } else if (indexMapping.spatial() && (dialect == Dialect.MYSQL || dialect == Dialect.SQL_SERVER || dialect == Dialect.H2)) {
+            indexBuilder.append("SPATIAL ");
+        }
+        indexBuilder.append("INDEX ");
         String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
-        indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(indexColumnNames);
-
+        indexBuilder.append(indexName).append(" ON ").append(escapedTableName);
+        if (indexMapping.spatial() && dialect == Dialect.POSTGRES) {
+            indexBuilder.append(" USING GIST");
+        }
+        indexBuilder.append(" (").append(indexColumnNames);
         if (dialect == Dialect.ORACLE) {
             indexBuilder.append(")");
+            if (indexMapping.spatial()) {
+                indexBuilder.append(" INDEXTYPE IS MDSYS.SPATIAL_INDEX");
+            }
         } else {
             indexBuilder.append(");");
         }

@@ -26,9 +26,14 @@ import java.util.Objects;
  * @param name The index name
  * @param unique Whether the index is unique
  * @param columns The column names in the index
+ * @param spatial Whether the index is spatial
  */
 @Internal
-public record SqlIndexMapping(String name, boolean unique, String[] columns) {
+public record SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial) {
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns) {
+        this(name, unique, columns, false);
+    }
 
     @Override
     public boolean equals(Object object) {
@@ -39,12 +44,12 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             return false;
         }
         SqlIndexMapping that = (SqlIndexMapping) object;
-        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns);
+        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns) && spatial == that.spatial;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, unique, Arrays.hashCode(columns));
+        return Objects.hash(name, unique, Arrays.hashCode(columns), spatial);
     }
 
     @Override
@@ -53,6 +58,7 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             "name='" + name + '\'' +
             ", unique=" + unique +
             ", columns=" + Arrays.toString(columns) +
+            ", spatial=" + spatial +
             '}';
     }
 }
