@@ -19,12 +19,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
-import io.micronaut.data.tck.entities.BasicTypes;
 import reactor.core.publisher.Mono;
 
 @R2dbcRepository(dialect = Dialect.H2)
-public interface H2ReactiveBasicTypesRepository extends ReactorCrudRepository<BasicTypes, Long> {
+public interface H2BlobEntityRepository extends ReactorCrudRepository<BlobEntity, Long> {
 
-    @Query("select byte_array from basic_types where my_id = :id")
-    Mono<byte[]> findByteArrayById(Long id);
+    @Query("select data from blob_entity where id = :id")
+    Mono<byte[]> findDataById(Long id);
 }
