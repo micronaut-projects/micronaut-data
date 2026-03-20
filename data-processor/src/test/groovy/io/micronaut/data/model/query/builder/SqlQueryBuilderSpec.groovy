@@ -43,6 +43,8 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
+import io.micronaut.data.tck.jdbc.entities.geo.GeoEntity
+import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
@@ -474,6 +476,42 @@ interface MyRepository {
         result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
+    void "test encode oracle insert statement for geospatial properties"() {
+        given:
+        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        expect:
+        result.query == 'INSERT INTO "GEO_ENTITY" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","POLYGON","MULTI_POLYGON","GEOMETRY_COLLECTION","ID") VALUES (SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),"GEO_ENTITY_SEQ".nextval)'
+        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+    }
+
+    void "test encode mysql insert statement for geospatial properties"() {
+        given:
+        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.MYSQL))
+
+        expect:
+        result.query == 'INSERT INTO `geo_entity` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+    }
+
+    void "test encode h2 insert statement for geospatial properties"() {
+        given:
+        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.H2))
+
+        expect:
+        result.query == 'INSERT INTO `geo_entity` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+    }
+
+    void "test encode postgres insert statement for geospatial properties"() {
+        given:
+        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.POSTGRES))
+
+        expect:
+        result.query == 'INSERT INTO "geo_entity" ("location","multi_point","line_string","multi_line_string","polygon","multi_polygon","geometry_collection") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+    }
+
     void "test encode create statement for embedded"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
@@ -628,6 +666,39 @@ interface MyRepository {
         statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" ("field");'
         statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" ("taxCode");'
         statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" ("field2", "taxCode2");'
+    }
+
+    void "test build create index for geospatial column on oracle"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(School))
+
+        then:
+        statements[0] == 'CREATE TABLE "SCHOOL" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"POINT" SDO_GEOMETRY,"DESCRIPTION" VARCHAR(255))'
+        statements[1] == 'CREATE SEQUENCE "SCHOOL_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[3] == 'CREATE INDEX "IDX_SCHOOL_POINT" ON "SCHOOL" ("POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+    }
+
+    void "test build create index for geo entity columns on oracle"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntity))
+
+        then:
+        statements[0] == 'CREATE TABLE "GEO_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"LOCATION" SDO_GEOMETRY,"MULTI_POINT" SDO_GEOMETRY,"LINE_STRING" SDO_GEOMETRY,"MULTI_LINE_STRING" SDO_GEOMETRY,"POLYGON" SDO_GEOMETRY,"MULTI_POLYGON" SDO_GEOMETRY,"GEOMETRY_COLLECTION" SDO_GEOMETRY)'
+        statements[1] == 'CREATE SEQUENCE "GEO_ENTITY_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[2].contains("'location'")
+        statements[2].contains("3857")
+        statements[3].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[3].contains("'multi_point'")
+        statements[3].contains("4326")
+        statements[4].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[4].contains("'line_string'")
+        statements[4].contains("3857")
+        statements[5] == 'CREATE INDEX "IDX_GEO_ENTITY_LOCATION" ON "GEO_ENTITY" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+        statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_MULTI_POINT" ON "GEO_ENTITY" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
     }
 
     void "test build composite id query"() {
