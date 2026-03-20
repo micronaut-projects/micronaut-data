@@ -381,7 +381,9 @@ public final class SqlSchemaUtils {
                                             NamingStrategy namingStrategy,
                                             List<Association> associations,
                                             Set<SqlIndexMapping> indexMappings) {
-        Map<String, PersistentProperty> propertyMap = entity.getPersistentProperties().stream().collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
+        Map<String, PersistentProperty> propertyMap = entity.getPersistentProperties().stream()
+            .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
+            .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
 
         Function<String, String> columnMapper = propertyName -> {
             PersistentProperty persistentProperty = propertyMap.get(propertyName);
