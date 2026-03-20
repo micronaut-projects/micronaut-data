@@ -58,6 +58,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -385,10 +386,10 @@ public final class SqlSchemaUtils {
             .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
             .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
 
-        Function<String, String> columnMapper = propertyName -> {
-            PersistentProperty persistentProperty = propertyMap.get(propertyName);
-            return persistentProperty == null ? null : namingStrategy.mappedName(associations, persistentProperty);
-        };
+        UnaryOperator<String> columnMapper = columnName ->
+            Optional.ofNullable(propertyMap.get(columnName))
+                .map(pp -> namingStrategy.mappedName(associations, pp))
+                .orElseThrow(() -> new MappingException("Persistent property not found for column: " + columnName));
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
