@@ -479,7 +479,10 @@ public final class SqlSchemaUtils {
                 String[] mappedColumns = Arrays.stream(declaredColumns)
                     .map(columnMapper)
                     .toArray(String[]::new);
-                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns));
+                boolean spatial = Arrays.stream(declaredColumns)
+                    .map(propertyMap::get)
+                    .anyMatch(pp -> pp.isAssignable(Geometry.class));
+                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns, spatial));
             });
 
         for (PersistentProperty property : entity.getPersistentProperties()) {
