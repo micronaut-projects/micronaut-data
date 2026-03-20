@@ -26,8 +26,10 @@ public class GeoEntity {
     @MappedProperty("location")
     private Point point;
 
+    @Index(columns = "multi_point")
     private MultiPoint multiPoint;
 
+    @Srid(3857)
     private LineString lineString;
 
     private MultiLineString multiLineString;
