@@ -24,6 +24,7 @@ import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
@@ -545,6 +546,38 @@ interface MyRepository {
         result.query == 'UPDATE "geo_entity" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_point"=ST_GeomFromGeoJSON(?),"line_string"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_line_string"=ST_GeomFromGeoJSON(?),"polygon"=ST_GeomFromGeoJSON(?),"multi_polygon"=ST_GeomFromGeoJSON(?),"geometry_collection"=ST_GeomFromGeoJSON(?) WHERE ("id" = ?)'
     }
 
+    void "test encode oracle read statement for geospatial properties"() {
+        given:
+        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        expect:
+        result.query == 'SELECT geo_entity_."ID",SDO_UTIL.TO_GEOJSON(geo_entity_."LOCATION") AS "LOCATION",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_GEOJSON(geo_entity_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_."POLYGON") AS "POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_POLYGON") AS "MULTI_POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_."GEOMETRY_COLLECTION") AS "GEOMETRY_COLLECTION" FROM "GEO_ENTITY" geo_entity_ WHERE (geo_entity_."ID" = ?)'
+    }
+
+    void "test encode mysql read statement for geospatial properties"() {
+        given:
+        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.MYSQL))
+
+        expect:
+        result.query == 'SELECT geo_entity_.`id`,ST_AsGeoJSON(geo_entity_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity` geo_entity_ WHERE (geo_entity_.`id` = ?)'
+    }
+
+    void "test encode h2 read statement for geospatial properties"() {
+        given:
+        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.H2))
+
+        expect:
+        result.query == 'SELECT geo_entity_.`id`,ST_AsGeoJSON(geo_entity_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity` geo_entity_ WHERE (geo_entity_.`id` = ?)'
+    }
+
+    void "test encode postgres read statement for geospatial properties"() {
+        given:
+        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.POSTGRES))
+
+        expect:
+        result.query == 'SELECT geo_entity_."id",ST_AsGeoJSON(geo_entity_."location") AS "location",ST_AsGeoJSON(geo_entity_."multi_point") AS "multi_point",ST_AsGeoJSON(geo_entity_."line_string") AS "line_string",ST_AsGeoJSON(geo_entity_."multi_line_string") AS "multi_line_string",ST_AsGeoJSON(geo_entity_."polygon") AS "polygon",ST_AsGeoJSON(geo_entity_."multi_polygon") AS "multi_polygon",ST_AsGeoJSON(geo_entity_."geometry_collection") AS "geometry_collection" FROM "geo_entity" geo_entity_ WHERE (geo_entity_."id" = ?)'
+    }
+
     private PersistentEntityCriteriaUpdate<GeoEntity> geoEntityUpdateQuery() {
         def query = builder.createCriteriaUpdate(GeoEntity)
         def root = query.from(GeoEntity)
@@ -555,6 +588,13 @@ interface MyRepository {
         query.set(root.get('polygon'), builder.parameter(Object))
         query.set(root.get('multiPolygon'), builder.parameter(Object))
         query.set(root.get('geometryCollection'), builder.parameter(Object))
+        query.where(builder.equal(root.get('id'), builder.parameter(Object)))
+        return query
+    }
+
+    private PersistentEntityCriteriaQuery<GeoEntity> geoEntityReadQuery() {
+        def query = builder.createQuery(GeoEntity)
+        def root = query.from(GeoEntity)
         query.where(builder.equal(root.get('id'), builder.parameter(Object)))
         return query
     }
