@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
 import java.nio.ByteBuffer;
 
 /**
- * Utility for safely converting R2DBC values to byte arrays across different drivers.
+ * Utility for safely read R2DBC byte array across different drivers.
  */
 final class R2dbcBytesReader {
 
@@ -39,20 +39,14 @@ final class R2dbcBytesReader {
             return bytes;
         }
         if (value instanceof ByteBuffer byteBuffer) {
-            ByteBuffer dup = byteBuffer.duplicate();
-            byte[] bytes = new byte[dup.remaining()];
-            dup.get(bytes);
-            return bytes;
+            return byteBuffer.array();
         }
         if (value instanceof Blob blob) {
             ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
             if (byteBuffer == null) {
                 return new byte[0];
             }
-            ByteBuffer dup = byteBuffer.duplicate();
-            byte[] bytes = new byte[dup.remaining()];
-            dup.get(bytes);
-            return bytes;
+            return byteBuffer.array();
         }
         return conversionService.convert(value, byte[].class)
             .orElseThrow(() -> new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: byte[]"));
