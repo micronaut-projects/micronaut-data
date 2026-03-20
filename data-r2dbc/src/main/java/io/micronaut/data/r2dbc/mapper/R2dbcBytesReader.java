@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Blob;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
@@ -31,7 +30,7 @@ final class R2dbcBytesReader {
     private R2dbcBytesReader() {
     }
 
-    static byte @Nullable [] toBytes(@Nullable Object value, ConversionService conversionService) {
+    static <RS, IDX> byte @Nullable [] toBytes(@Nullable Object value, ResultReader<RS, IDX> reader) {
         if (value == null) {
             return null;
         }
@@ -48,7 +47,6 @@ final class R2dbcBytesReader {
             }
             return byteBuffer.array();
         }
-        return conversionService.convert(value, byte[].class)
-            .orElseThrow(() -> new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: byte[]"));
+        return reader.convertRequired(value, byte[].class);
     }
 }

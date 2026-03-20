@@ -209,7 +209,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         } catch (Exception e) {
             // Ignore and fallback to generic handling (Oracle, H2, etc.)
         }
-        return R2dbcBytesReader.toBytes(resultSet.get(name), conversionService);
+        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
     }
 
     @Nullable
