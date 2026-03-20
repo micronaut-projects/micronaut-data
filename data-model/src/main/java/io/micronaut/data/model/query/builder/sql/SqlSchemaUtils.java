@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -87,6 +88,20 @@ public final class SqlSchemaUtils {
     public static final String COLUMN_SIZE_COLUMN = "COLUMN_SIZE";
     public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
     public static final String NULLABLE_COLUMN = "NULLABLE";
+
+    private static final String ORACLE_GEOM_METADATA_STATEMENT = """
+        INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+        VALUES (
+          '%s',
+          '%s',
+          MDSYS.SDO_DIM_ARRAY(
+            MDSYS.SDO_DIM_ELEMENT('X', %s, %s, %s),
+            MDSYS.SDO_DIM_ELEMENT('Y', %s, %s, %s)
+          ),
+          %s
+        )""";
+    private static final int SRID_WGS_84 = 4326;
+    private static final int SRID_WEB_MERCATOR = 3857;
 
     private SqlSchemaUtils() {
     }
@@ -175,10 +190,11 @@ public final class SqlSchemaUtils {
         }
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
+        List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, namingStrategy);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
-            indexes);
+            indexes, auxiliaryStatements);
         tables.add(table);
         return tables;
     }
@@ -399,6 +415,34 @@ public final class SqlSchemaUtils {
             }
         }
         return sequences;
+    }
+
+    private static List<String> getAuxiliaryStatements(PersistentEntity entity, String tableName, NamingStrategy namingStrategy, Dialect dialect) {
+        if (dialect != Dialect.ORACLE) {
+            return List.of();
+        }
+        List<String> statements = new ArrayList<>();
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (associations, persistentProperty) -> {
+                if (persistentProperty.isAssignable(Geometry.class)) {
+                    int srid = 0;
+                    AnnotationMetadata annotationMetadata = persistentProperty.getAnnotationMetadata();
+                    OptionalInt sridOpt = annotationMetadata.intValue(Srid.class);
+                    if (sridOpt.isPresent()) {
+                        srid = sridOpt.getAsInt();
+                    } else if (annotationMetadata.hasAnnotation(Index.class)) {
+                        srid = SRID_WGS_84;
+                    }
+                    String columnName = namingStrategy.mappedName(associations, persistentProperty);
+                    if (srid == SRID_WGS_84) {
+                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, -180, 180, "0.005", -90, 90, "0.005", srid));
+                    } else if (srid == SRID_WEB_MERCATOR) {
+                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, 0, 0, "0.00005", 0, 0, "0.00005", srid));
+                    }
+                }
+            });
+        }
+        return statements;
     }
 
     private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity,
