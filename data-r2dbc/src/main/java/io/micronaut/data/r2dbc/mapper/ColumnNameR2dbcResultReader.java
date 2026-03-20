@@ -27,6 +27,7 @@ import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -37,6 +38,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation of {@link ResultReader} for R2DBC.
@@ -136,11 +138,14 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             return byteBuffer.array();
         }
         if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
+            List<ByteBuffer> buffers = Flux.from(blob.stream()).collectList().block();
+            if (buffers == null || buffers.isEmpty()) {
                 return new byte[0];
             }
-            return byteBuffer.array();
+            int totalSize = buffers.stream().mapToInt(ByteBuffer::remaining).sum();
+            ByteBuffer combined = ByteBuffer.allocate(totalSize);
+            buffers.forEach(buf -> combined.put(buf.duplicate()));
+            return combined.array();
         }
         return convertRequired(o, byte[].class);
     }

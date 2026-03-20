@@ -26,7 +26,7 @@ import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -35,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation of {@link ResultReader} for R2DBC.
@@ -209,7 +210,8 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     public byte @Nullable [] readBytes(Row resultSet, Integer name) {
         try {
             return resultSet.get(name, byte[].class);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | R2dbcTransientResourceException e) {
+            // Ignore failures of typed access and fall back to untyped access below.
         }
         Object o = resultSet.get(name);
         if (o == null) {
@@ -222,11 +224,14 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             return byteBuffer.array();
         }
         if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
+            List<ByteBuffer> buffers = Flux.from(blob.stream()).collectList().block();
+            if (buffers == null || buffers.isEmpty()) {
                 return new byte[0];
             }
-            return byteBuffer.array();
+            int totalSize = buffers.stream().mapToInt(ByteBuffer::remaining).sum();
+            ByteBuffer combined = ByteBuffer.allocate(totalSize);
+            buffers.forEach(buf -> combined.put(buf.duplicate()));
+            return combined.array();
         }
         return convertRequired(o, byte[].class);
     }
