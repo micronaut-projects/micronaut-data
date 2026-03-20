@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.GeoEntityRepository
+import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
 class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyProvider {
@@ -12,9 +13,15 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         return context.getBean(PostgresGeoEntityRepository)
     }
 
+    @Memoized
+    @Override
+    SchoolRepository getSchoolRepository() {
+        return context.getBean(PostgresSchoolRepository)
+    }
+
     @Override
     List<String> packages() {
-        return Arrays.asList("io.micronaut.data.tck.jdbc.entities")
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
     }
 
     @Override

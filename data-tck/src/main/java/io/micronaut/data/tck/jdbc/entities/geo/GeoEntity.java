@@ -1,8 +1,11 @@
-package io.micronaut.data.tck.jdbc.entities;
+package io.micronaut.data.tck.jdbc.entities.geo;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.model.geo.GeometryCollection;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.MultiLineString;
@@ -18,9 +21,12 @@ public class GeoEntity {
     @GeneratedValue
     private Long id;
 
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty("location")
     private Point point;
 
-    /*private MultiPoint multiPoint;
+    private MultiPoint multiPoint;
 
     private LineString lineString;
 
@@ -30,7 +36,7 @@ public class GeoEntity {
 
     private MultiPolygon multiPolygon;
 
-    private GeometryCollection geometryCollection;*/
+    private GeometryCollection geometryCollection;
 
     public Long getId() {
         return id;
@@ -48,7 +54,7 @@ public class GeoEntity {
         this.point = point;
     }
 
-    /*public MultiPoint getMultiPoint() {
+    public MultiPoint getMultiPoint() {
         return multiPoint;
     }
 
@@ -94,5 +100,5 @@ public class GeoEntity {
 
     public void setGeometryCollection(GeometryCollection geometryCollection) {
         this.geometryCollection = geometryCollection;
-    }*/
+    }
 }

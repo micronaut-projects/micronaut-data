@@ -9,8 +9,11 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.MultiPolygon
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
-import io.micronaut.data.tck.jdbc.entities.GeoEntity
+import io.micronaut.data.tck.jdbc.entities.geo.GeoEntity
+import io.micronaut.data.tck.jdbc.entities.geo.Location
+import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.repositories.GeoEntityRepository
+import io.micronaut.data.tck.repositories.SchoolRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -19,9 +22,52 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract GeoEntityRepository getGeoEntityRepository()
 
+    abstract SchoolRepository getSchoolRepository()
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
+
+    void "test school"() {
+        given:
+        Location location1 = new Location()
+        location1.setPoint(new Point(2.0, 2.5))
+        School school = new School()
+        school.setName("school1")
+        school.setLocation(location1)
+
+        when:
+        School savedSchool = getSchoolRepository().save(school)
+
+        then:
+        savedSchool.id > 0
+
+        when:
+        Optional<School> foundSchool = getSchoolRepository().findById(savedSchool.id)
+
+        then:
+        foundSchool.isPresent()
+        with (foundSchool.get()) {
+            it.getName() == "school1"
+            it.getLocation().getPoint().x() == 2.0d
+            it.getLocation().getPoint().y() == 2.5d
+        }
+
+        when:
+        Location location2 = new Location()
+        location2.setPoint(new Point(3.0, 3.5))
+        school.setLocation(location2)
+        getSchoolRepository().update(school)
+        foundSchool = getSchoolRepository().findById(savedSchool.id)
+
+        then:
+        foundSchool.isPresent()
+        with (foundSchool.get()) {
+            it.getName() == "school1"
+            it.getLocation().getPoint().x() == 3.0d
+            it.getLocation().getPoint().y() == 3.5d
+        }
+    }
 
     void "test saving, reading and updating an entity with Point type"() {
         given:
@@ -53,7 +99,8 @@ abstract class AbstractGeoSpec extends Specification {
         foundEntity.get().getPoint().y() == 3.5d
     }
 
-    /*void "test saving, reading and updating an entity with MultiPoint type"() {
+
+    void "test saving, reading and updating an entity with MultiPoint type"() {
         given:
         GeoEntity entity = new GeoEntity()
         entity.setMultiPoint(new MultiPoint([
@@ -407,7 +454,7 @@ abstract class AbstractGeoSpec extends Specification {
             assertPolygon3(polygons.get(0))
             assertPolygon4(polygons.get(1))
         }
-    }*/
+    }
 
     Polygon createPolygon1() {
         return new Polygon([
