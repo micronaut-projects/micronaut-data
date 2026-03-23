@@ -27,6 +27,7 @@ import io.micronaut.data.document.mongodb.repositories.MongoSaleRepository
 import io.micronaut.data.document.mongodb.repositories.MongoStudentRepository
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
 import io.micronaut.data.document.tck.entities.Address
+import io.micronaut.data.document.tck.entities.Book
 import io.micronaut.data.document.tck.entities.Document
 import io.micronaut.data.document.tck.entities.Owner
 import io.micronaut.data.document.tck.entities.Person
@@ -965,6 +966,11 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     }
 
     @Memoized
+    MongoBookRepository getMongoBookRepository() {
+        return context.getBean(MongoBookRepository)
+    }
+
+    @Memoized
     @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MongoAuthorRepository)
@@ -1077,6 +1083,40 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             result != null
             result.name == "Jeff Options Updated"
             personRepository.findById(person.id).get().name == "Jeff Options Updated"
+    }
+
+    void "test mongo update query increment totalPages returning book"() {
+        given:
+            def book = new Book()
+            book.title = "Increment Test"
+            book.totalPages = 100
+            def saved = mongoBookRepository.save(book)
+
+        when:
+            def returned = mongoBookRepository.incrementTotalPages(saved.id)
+
+        then:
+            returned != null
+            returned.id == saved.id
+            returned.totalPages == 100
+            mongoBookRepository.findById(saved.id).get().totalPages == 101
+    }
+
+    void "test mongo update query increment totalPages returning book after"() {
+        given:
+            def book = new Book()
+            book.title = "Increment Test After"
+            book.totalPages = 100
+            def saved = mongoBookRepository.save(book)
+
+        when:
+            def returned = mongoBookRepository.incrementTotalPagesAfter(saved.id)
+
+        then:
+            returned != null
+            returned.id == saved.id
+            returned.totalPages == 101
+            mongoBookRepository.findById(saved.id).get().totalPages == 101
     }
 
 }

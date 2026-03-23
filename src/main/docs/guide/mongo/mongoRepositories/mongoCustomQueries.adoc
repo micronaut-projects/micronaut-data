@@ -50,6 +50,18 @@ Mongo update methods can either return the number of updated documents (for exam
 When the repository method returns an entity/DTO, Micronaut Data MongoDB will execute the update as a single-document update and map the returned document.
 To control whether the document is returned before or after the update, use the `returnDocument` member of ann:data.mongodb.annotation.MongoUpdateOptions[].
 
+The default value is `ReturnDocument.BEFORE`.
+If you want the updated state returned, use `returnDocument = ReturnDocument.AFTER` explicitly.
+
+[source,java]
+----
+@MongoUpdateQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1}}")
+@MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+Book incrementTotalPagesAfter(String id);
+----
+
+For update methods returning `void`, `boolean`, `int`, or `long`, `returnDocument` has no effect because those methods execute count/acknowledgement update operations.
+
 NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`). Update-returning methods must use a single-result return type (for example `Entity` or `Mono<Entity>`).
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
