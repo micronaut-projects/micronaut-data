@@ -142,8 +142,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                         actualOperationType,
                         matchContext);
 
-
-
                 ClassElement resultType = entry.returnType();
                 ClassElement interceptorType = entry.interceptor();
 
