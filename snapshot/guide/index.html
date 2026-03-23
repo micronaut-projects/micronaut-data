@@ -3042,18 +3042,6 @@ In the case of JPA each operation will run with its own transaction and session,
 <div class="paragraph">
 <p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used, and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Some operations (for example update methods that return updated data) require the backing implementation to support executing a prepared query and mapping a returned result. Support for such operations can vary by backend.
-</td>
-</tr>
-</table>
-</div>
 <div class="paragraph">
 <p>The following is an example of a couple of reactive methods:</p>
 </div>
@@ -14394,7 +14382,7 @@ Book incrementTotalPagesAfter(String id);</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-MongoDB can only return a single updated document for an update operation (using <code>findOneAndUpdate</code>). Update-returning methods must use a single-result return type (for example <code>Entity</code>, <code>Mono&lt;Entity&gt;</code>, or <code>CompletionStage&lt;Entity&gt;</code>).
+MongoDB can only return a single updated document for an update operation (using <code>findOneAndUpdate</code>). Update-returning methods must use a single blocking result type (for example <code>Entity</code>).
 </td>
 </tr>
 </table>
