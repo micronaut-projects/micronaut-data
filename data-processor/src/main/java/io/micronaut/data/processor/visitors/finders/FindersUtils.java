@@ -49,7 +49,6 @@ import io.micronaut.data.intercept.UpdateEntityInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.intercept.UpdateReturningManyInterceptor;
 import io.micronaut.data.intercept.UpdateReturningOneInterceptor;
-import io.micronaut.data.intercept.reactive.UpdateReturningReactiveInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
@@ -68,7 +67,6 @@ import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
-import io.micronaut.data.intercept.async.UpdateReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.UpdateEntityAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
@@ -221,14 +219,6 @@ public interface FindersUtils {
     }
 
     private static InterceptorMatch pickUpdateReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), UpdateReturningOneAsyncInterceptor.class);
-        }
-        if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext,
-                getFirstTypeArgumentOrFail(matchContext, returnType),
-                UpdateReturningReactiveInterceptor.class);
-        }
         if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), UpdateReturningManyInterceptor.class);
         } else {

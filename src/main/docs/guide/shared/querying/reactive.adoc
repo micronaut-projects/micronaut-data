@@ -4,8 +4,6 @@ In the case of reactive execution and if the backing implementation is blocking,
 
 If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used, and instead it is assumed the driver will handle the query in a non-blocking manner.
 
-NOTE: Some operations (for example update methods that return updated data) require the backing implementation to support executing a prepared query and mapping a returned result. Support for such operations can vary by backend.
-
 The following is an example of a couple of reactive methods:
 
 snippet::example.ProductRepository[project-base="doc-examples/hibernate-example", source="main",tags="reactive", indent="0"]

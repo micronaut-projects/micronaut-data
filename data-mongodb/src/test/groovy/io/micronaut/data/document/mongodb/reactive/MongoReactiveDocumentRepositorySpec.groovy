@@ -9,7 +9,6 @@ import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.MongoDocumentRepositorySpec
 import io.micronaut.data.document.mongodb.repositories.MongoReactiveExecutorPersonRepository
-import io.micronaut.data.document.mongodb.repositories.MongoReactiveMonoPersonReturningRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
@@ -21,10 +20,6 @@ class MongoReactiveDocumentRepositorySpec extends MongoDocumentRepositorySpec im
         return context.getBean(MongoReactiveExecutorPersonRepository)
     }
 
-    @Memoized
-    MongoReactiveMonoPersonReturningRepository getMongoReactiveMonoPersonReturningRepository() {
-        return context.getBean(MongoReactiveMonoPersonReturningRepository)
-    }
 
 
     void "test reactive query executor counts"() {
@@ -190,25 +185,6 @@ class MongoReactiveDocumentRepositorySpec extends MongoDocumentRepositorySpec im
         people = mongoReactiveExecutorPersonRepository.findAll().collectList().block()
         then:
         people.count{ it.name == "UPDATED" } == 2
-    }
-
-    void "test reactive mono custom update returning"() {
-        given:
-        def person = personRepository.save("Jeff Mono", 20)
-
-        when:
-        def updated = mongoReactiveMonoPersonReturningRepository.updateCustomReturning(person.id, "Updated Mono").block()
-
-        then:
-        updated != null
-        updated.id == person.id
-        updated.name == "Updated Mono"
-        personRepository.findById(person.id).get().name == "Updated Mono"
-    }
-
-    void "test reactive mono custom update returning no match"() {
-        expect:
-        mongoReactiveMonoPersonReturningRepository.updateCustomReturning("507f1f77bcf86cd799439011", "Updated Mono").block() == null
     }
 
 }

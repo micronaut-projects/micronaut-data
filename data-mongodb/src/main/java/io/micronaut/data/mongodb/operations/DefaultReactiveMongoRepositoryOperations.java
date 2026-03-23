@@ -192,11 +192,6 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     @Override
-    public <R> Flux<R> execute(PreparedQuery<?, R> preparedQuery) {
-        return withClientSessionMany(clientSession -> Flux.from(execute(clientSession, getMongoPreparedQuery(preparedQuery))));
-    }
-
-    @Override
     public <T> Mono<T> findOptional(Class<T> type, Object id) {
         return findOne(type, id);
     }
@@ -353,44 +348,6 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             return findAllAggregated(clientSession, preparedQuery, preparedQuery.isDtoProjection());
         }
         return Flux.from(find(clientSession, preparedQuery));
-    }
-
-    private <T, R> Publisher<R> execute(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
-        StoredQuery.OperationType operationType = preparedQuery.getOperationType();
-        if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
-            return executeUpdateReturning(clientSession, preparedQuery);
-        }
-        return Flux.error(new DataAccessException("Unsupported execute operation for MongoDB: " + operationType));
-    }
-
-    private <T, R> Publisher<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
-        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
-        if (Iterable.class.isAssignableFrom(declaredReturnType)) {
-            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result"));
-        }
-        MongoFindOneAndUpdate updateOne = preparedQuery.getUpdateOne();
-        if (QUERY_LOG.isDebugEnabled()) {
-            QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
-                updateOne.getFilter().toBsonDocument().toJson(),
-                updateOne.getUpdate().toBsonDocument().toJson());
-        }
-        Class<T> rootType = preparedQuery.getRootEntity();
-        Class<R> resultType = preparedQuery.getResultType();
-        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
-        MongoDatabase database = getDatabase(preparedQuery);
-        if (resultType.isAssignableFrom(rootType)) {
-            MongoCollection<R> collection = getCollection(database, persistentEntity, resultType);
-            return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
-                .map(result -> {
-                    if (rootType.isInstance(result)) {
-                        return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, rootType.cast(result));
-                    }
-                    return result;
-                });
-        }
-        MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
-        return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
-            .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
     }
 
     private <T, R> Mono<R> getCount(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {

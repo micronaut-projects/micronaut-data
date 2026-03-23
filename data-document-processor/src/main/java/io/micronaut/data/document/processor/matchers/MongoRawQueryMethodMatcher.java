@@ -109,25 +109,10 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 if (actualOperationType == DataMethod.OperationType.UPDATE) {
                     ClassElement returnType = matchContext.getReturnType();
                     if (!TypeUtils.isVoid(returnType) && !TypeUtils.isNumber(returnType) && !TypeUtils.isBoolean(returnType)) {
-                        if (TypeUtils.isFutureType(returnType)) {
-                            ClassElement futureType = returnType.getFirstTypeArgument().orElse(null);
-                            if (futureType != null && futureType.isAssignable(Iterable.class)) {
-                                throw new MatchFailedException("MongoDB update returning supports only a single result. Use CompletionStage<T>.");
-                            }
-                            if (futureType != null && !TypeUtils.isVoid(futureType) && !TypeUtils.isNumber(futureType) && !TypeUtils.isBoolean(futureType)) {
-                                actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
-                            }
-                        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-                            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(null);
-                            if (reactiveType != null && !TypeUtils.isVoid(reactiveType) && !TypeUtils.isNumber(reactiveType) && !TypeUtils.isBoolean(reactiveType)) {
-                                if (reactiveType.isAssignable(Iterable.class)) {
-                                    throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>)." );
-                                }
-                                actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
-                            }
-                        } else {
-                            actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
+                        if (TypeUtils.isReactiveOrFuture(returnType)) {
+                            throw new MatchFailedException("MongoDB update returning currently supports only blocking single-result return types");
                         }
+                        actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
                     }
                 }
                 ParameterElement[] parameters = matchContext.getParameters();

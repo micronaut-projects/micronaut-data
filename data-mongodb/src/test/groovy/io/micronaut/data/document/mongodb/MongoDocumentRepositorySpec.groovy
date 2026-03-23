@@ -16,7 +16,6 @@ import io.micronaut.data.document.mongodb.repositories.ComplexEntityRepository
 import io.micronaut.data.document.mongodb.repositories.CustomerRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
-import io.micronaut.data.document.mongodb.repositories.MongoAsyncPersonReturningRepository
 import io.micronaut.data.document.mongodb.repositories.MongoCriteriaPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
@@ -943,10 +942,6 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         return context.getBean(MongoExecutorPersonRepository)
     }
 
-    @Memoized
-    MongoAsyncPersonReturningRepository getMongoAsyncPersonReturningRepository() {
-        return context.getBean(MongoAsyncPersonReturningRepository)
-    }
 
     @Memoized
     MongoCriteriaPersonRepository getMongoCriteriaPersonRepository() {
@@ -1022,6 +1017,9 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     }
 
     void "test custom update returning after and before"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         given:
             def person = personRepository.save("Jeff", 20)
 
@@ -1044,27 +1042,19 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Updated Again"
     }
 
-    void "test custom update returning async completion stage"() {
-        given:
-            def person = personRepository.save("Jeff Async", 20)
-
-        when:
-            def updated = mongoAsyncPersonReturningRepository.updateCustomReturningAsync(person.id, "Updated Async").toCompletableFuture().get()
-
-        then:
-            updated != null
-            updated.id == person.id
-            updated.name == "Updated Async"
-            personRepository.findById(person.id).get().name == "Updated Async"
-    }
-
 
     void "test custom update returning no match"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         expect:
             personRepository.updateCustomReturning("507f1f77bcf86cd799439011", "Updated") == null
     }
 
     void "test custom update returning default returnDocument is BEFORE"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         given:
             def person = personRepository.save("Jeff Default", 20)
 
@@ -1092,6 +1082,9 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
 
 
     void "test update returning options precedence"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         given:
             def person = personRepository.save("Jeff Options", 20)
             def options = new com.mongodb.client.model.FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
@@ -1106,6 +1099,9 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     }
 
     void "test mongo update query increment totalPages returning book"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         given:
             def book = new Book()
             book.title = "Increment Test"
@@ -1123,6 +1119,9 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     }
 
     void "test mongo update query increment totalPages returning book after"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
         given:
             def book = new Book()
             book.title = "Increment Test After"

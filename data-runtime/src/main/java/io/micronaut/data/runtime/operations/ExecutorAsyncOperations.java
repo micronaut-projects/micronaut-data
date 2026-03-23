@@ -34,7 +34,6 @@ import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -172,11 +171,6 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     @Override
     public CompletionStage<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return supplyAsync(() -> datastore.executeDelete(preparedQuery).orElse(0));
-    }
-
-    @Override
-    public <R> CompletionStage<List<R>> execute(PreparedQuery<?, R> preparedQuery) {
-        return supplyAsync(() -> datastore.execute(preparedQuery));
     }
 
     @NonNull

@@ -62,7 +62,7 @@ Book incrementTotalPagesAfter(String id);
 
 For update methods returning `void`, `boolean`, `int`, or `long`, `returnDocument` has no effect because those methods execute count/acknowledgement update operations.
 
-NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`). Update-returning methods must use a single-result return type (for example `Entity`, `Mono<Entity>`, or `CompletionStage<Entity>`).
+NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`). Update-returning methods must use a single blocking result type (for example `Entity`).
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 
