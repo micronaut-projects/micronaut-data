@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.postgres;
+package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.repository.async.AsyncCrudRepository;
 import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.repositories.BookReactiveRepository;
-import reactor.core.publisher.Mono;
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresReactiveBookRepository extends BookReactiveRepository {
+import java.util.concurrent.CompletableFuture;
 
-    Mono<Book> updateReturning(Book book);
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface PostgresAsyncBookRepository extends AsyncCrudRepository<Book, Long> {
+
+    CompletableFuture<Book> updateReturning(Book book);
 }

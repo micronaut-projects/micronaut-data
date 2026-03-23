@@ -38,6 +38,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Memoized
+    PostgresAsyncBookRepository getAsyncBookRepository() {
+        return context.getBean(PostgresAsyncBookRepository)
+    }
+
+    @Memoized
     @Override
     GenreRepository getGenreRepository() {
         return context.getBean(PostgresGenreRepository)
@@ -274,6 +279,22 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             book.title = "old"
         then:
             newBook.title == "Xyz"
+            newBook.postLoad == 1
+            newBook.postUpdate == 1
+            book.postLoad == 1
+            book.preUpdate == 1
+    }
+
+    void "test async update returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Async Xyz"
+            Book newBook = asyncBookRepository.updateReturning(book).get()
+            book.title = "old"
+        then:
+            newBook.title == "Async Xyz"
             newBook.postLoad == 1
             newBook.postUpdate == 1
             book.postLoad == 1

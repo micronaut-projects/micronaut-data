@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.postgres;
+package io.micronaut.data.intercept.async;
 
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.repositories.BookReactiveRepository;
-import reactor.core.publisher.Mono;
+import io.micronaut.data.intercept.DataInterceptor;
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresReactiveBookRepository extends BookReactiveRepository {
+import java.util.concurrent.CompletionStage;
 
-    Mono<Book> updateReturning(Book book);
+/**
+ * Asynchronous interceptor for update queries that return a single value.
+ *
+ * @param <T> The entity type
+ * @param <R> The result type
+ * @author radovanradic
+ * @since 5.0.5
+ */
+public interface UpdateReturningOneAsyncInterceptor<T, R> extends DataInterceptor<T, CompletionStage<R>> {
 }

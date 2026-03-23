@@ -16,6 +16,7 @@ import io.micronaut.data.document.mongodb.repositories.ComplexEntityRepository
 import io.micronaut.data.document.mongodb.repositories.CustomerRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoAsyncPersonReturningRepository
 import io.micronaut.data.document.mongodb.repositories.MongoCriteriaPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
@@ -943,6 +944,11 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     }
 
     @Memoized
+    MongoAsyncPersonReturningRepository getMongoAsyncPersonReturningRepository() {
+        return context.getBean(MongoAsyncPersonReturningRepository)
+    }
+
+    @Memoized
     MongoCriteriaPersonRepository getMongoCriteriaPersonRepository() {
         return context.getBean(MongoCriteriaPersonRepository)
     }
@@ -1036,6 +1042,20 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             previous.id == person.id
             previous.name == "Updated"
             personRepository.findById(person.id).get().name == "Updated Again"
+    }
+
+    void "test custom update returning async completion stage"() {
+        given:
+            def person = personRepository.save("Jeff Async", 20)
+
+        when:
+            def updated = mongoAsyncPersonReturningRepository.updateCustomReturningAsync(person.id, "Updated Async").toCompletableFuture().get()
+
+        then:
+            updated != null
+            updated.id == person.id
+            updated.name == "Updated Async"
+            personRepository.findById(person.id).get().name == "Updated Async"
     }
 
 

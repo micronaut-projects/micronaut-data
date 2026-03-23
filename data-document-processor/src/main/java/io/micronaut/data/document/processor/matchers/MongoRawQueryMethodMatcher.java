@@ -110,9 +110,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     ClassElement returnType = matchContext.getReturnType();
                     if (!TypeUtils.isVoid(returnType) && !TypeUtils.isNumber(returnType) && !TypeUtils.isBoolean(returnType)) {
                         if (TypeUtils.isFutureType(returnType)) {
-                            throw new MatchFailedException("Update returning is not supported for Future/CompletionStage return types");
-                        }
-                        if (TypeUtils.isReactiveOrFuture(returnType)) {
+                            ClassElement futureType = returnType.getFirstTypeArgument().orElse(null);
+                            if (futureType != null && futureType.isAssignable(Iterable.class)) {
+                                throw new MatchFailedException("MongoDB update returning supports only a single result. Use CompletionStage<T>.");
+                            }
+                            if (futureType != null && !TypeUtils.isVoid(futureType) && !TypeUtils.isNumber(futureType) && !TypeUtils.isBoolean(futureType)) {
+                                actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
+                            }
+                        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
                             ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(null);
                             if (reactiveType != null && !TypeUtils.isVoid(reactiveType) && !TypeUtils.isNumber(reactiveType) && !TypeUtils.isBoolean(reactiveType)) {
                                 if (reactiveType.isAssignable(Iterable.class)) {
