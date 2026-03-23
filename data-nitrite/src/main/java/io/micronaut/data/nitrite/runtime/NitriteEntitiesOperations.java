@@ -131,13 +131,92 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             return;
         }
         try {
-            super.persist();
-        } catch (DataAccessException e) {
-            // Unwrap OptimisticLockException from DataAccessException
-            if (e.getCause() instanceof OptimisticLockException ole) {
-                throw ole;
+            collectAutoPopulatedPreviousValues();
+
+            List<T> newEntities = new ArrayList<>();
+            List<T> existingEntities = new ArrayList<>();
+            for (T entity : entities) {
+                boolean hasExistingId = persistentEntity.getIdentity() != null &&
+                    persistentEntity.getIdentity().getProperty().get(entity) != null;
+                if (hasExistingId) {
+                    existingEntities.add(entity);
+                } else {
+                    newEntities.add(entity);
+                }
             }
+
+            // Handle new entities (persist lifecycle)
+            if (!newEntities.isEmpty()) {
+                List<T> originalEntities = this.entities;
+                this.entities = newEntities;
+                boolean vetoed = triggerPrePersist();
+                if (!vetoed) {
+                    if (persistentEntity.cascadesPersist()) {
+                        cascadePre(Relation.Cascade.PERSIST);
+                    }
+                    // execute() handles both new and existing via its own internal branching, 
+                    // but we call it here for the new ones. 
+                    // Actually, we can just let execute() run once for all if we handle events correctly.
+                }
+                this.entities = originalEntities;
+            }
+
+            // Handle existing entities (update lifecycle)
+            if (!existingEntities.isEmpty()) {
+                List<T> originalEntities = this.entities;
+                this.entities = existingEntities;
+                boolean vetoed = triggerPreUpdate();
+                if (!vetoed) {
+                    if (persistentEntity.cascadesUpdate()) {
+                        cascadePre(Relation.Cascade.UPDATE);
+                    }
+                }
+                this.entities = originalEntities;
+            }
+
+            execute();
+
+            // Handle post-events (simplified for batch)
+            // Trigger postPersist for new, postUpdate for existing
+            List<T> finalNewEntities = new ArrayList<>();
+            List<T> finalExistingEntities = new ArrayList<>();
+            for (T entity : entities) {
+                boolean hasExistingId = persistentEntity.getIdentity() != null &&
+                    persistentEntity.getIdentity().getProperty().get(entity) != null;
+                // Note: new entities now HAVE IDs if they were generated
+                // So we should have tracked them before.
+                // For simplicity, fire appropriate events based on initial state
+                if (newEntities.contains(entity)) {
+                    finalNewEntities.add(entity);
+                } else {
+                    finalExistingEntities.add(entity);
+                }
+            }
+
+            if (!finalNewEntities.isEmpty()) {
+                List<T> originalEntities = this.entities;
+                this.entities = finalNewEntities;
+                triggerPostPersist();
+                if (persistentEntity.cascadesPersist()) {
+                    cascadePost(Relation.Cascade.PERSIST);
+                }
+                this.entities = originalEntities;
+            }
+
+            if (!finalExistingEntities.isEmpty()) {
+                List<T> originalEntities = this.entities;
+                this.entities = finalExistingEntities;
+                triggerPostUpdate();
+                if (persistentEntity.cascadesUpdate()) {
+                    cascadePost(Relation.Cascade.UPDATE);
+                }
+                this.entities = originalEntities;
+            }
+
+        } catch (OptimisticLockException e) {
             throw e;
+        } catch (Exception e) {
+            failed(e, "PERSIST");
         }
     }
 

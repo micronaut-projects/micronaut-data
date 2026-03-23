@@ -48,6 +48,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -851,26 +852,64 @@ public final class NitriteQueryExecutor {
         }
         final String finalBackFieldName = backFieldName;
 
-        // Build filter: backFieldName IN (parentIds)
+        // Build filter: backFieldName contains any of parentIds
         Filter filter;
-        if (parentIds.size() == 1) {
-            filter = FluentFilter.where(finalBackFieldName).eq(parentIds.get(0));
+        Comparable<?>[] comparableIds = parentIds.stream()
+            .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
+            .toArray(Comparable<?>[]::new);
+
+        if (kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+            // For MANY_TO_MANY, backFieldName is a collection in the document.
+            // Standard Nitrite filters like 'eq' or 'in' might not consistently handle 'contains'
+            // for non-indexed collection fields in all versions. A custom filter is more reliable.
+            // In Nitrite 4.x, Filter receives a Pair<NitriteId, Document>.
+            filter = pair -> {
+                org.dizitart.no2.collection.Document doc = pair.getSecond();
+                Object val = doc.get(finalBackFieldName);
+                if (val instanceof Collection<?> coll) {
+                    for (Object id : parentIds) {
+                        if (coll.contains(id)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
         } else {
-            filter = Filter.or(parentIds.stream()
-                .map(id -> FluentFilter.where(finalBackFieldName).eq(id))
-                .toArray(Filter[]::new));
+            // ONE_TO_MANY: backFieldName is a scalar
+            if (parentIds.size() == 1) {
+                filter = FluentFilter.where(finalBackFieldName).eq(parentIds.get(0));
+            } else {
+                filter = FluentFilter.where(finalBackFieldName).in(comparableIds);
+            }
         }
 
         // Group results by parent ID
+        // For ONE_TO_MANY: backRefValue is a scalar (single parent ID)
+        // For MANY_TO_MANY: backRefValue is a collection of parent IDs
         Map<Object, List<Object>> resultsByParentId = new HashMap<>();
         for (Document doc : assocCollection.find(filter)) {
             Object backRefValue = doc.get(finalBackFieldName);
             if (backRefValue != null) {
                 Object assocEntity = entityMapper.fromDocument(doc, associatedType);
-                if (!resultsByParentId.containsKey(backRefValue)) {
-                    resultsByParentId.put(backRefValue, new ArrayList<>());
+                
+                // Handle MANY_TO_MANY where backRefValue is a collection
+                if (backRefValue instanceof Collection<?> collection) {
+                    for (Object parentId : collection) {
+                        Object filterParentId = entityMapper.toFilterValue(parentId);
+                        if (!resultsByParentId.containsKey(filterParentId)) {
+                            resultsByParentId.put(filterParentId, new ArrayList<>());
+                        }
+                        resultsByParentId.get(filterParentId).add(assocEntity);
+                    }
+                } else {
+                    // ONE_TO_MANY: backRefValue is a scalar
+                    Object filterParentId = entityMapper.toFilterValue(backRefValue);
+                    if (!resultsByParentId.containsKey(filterParentId)) {
+                        resultsByParentId.put(filterParentId, new ArrayList<>());
+                    }
+                    resultsByParentId.get(filterParentId).add(assocEntity);
                 }
-                resultsByParentId.get(backRefValue).add(assocEntity);
             }
         }
 

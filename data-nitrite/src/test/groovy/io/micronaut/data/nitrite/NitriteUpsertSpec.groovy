@@ -197,6 +197,34 @@ class NitriteUpsertSpec extends Specification {
         mode << ["IN_MEMORY", "MVSTORE"]
     }
 
+    @Unroll
+    def "test save on existing versioned entity increments version in #mode mode"() {
+        given:
+            def ctx = createContext(mode, "versioned-save-${mode.toLowerCase()}")
+            def repo = ctx.getBean(VersionedRecordRepository)
+            repo.deleteAll()
+
+            def created = repo.save(new VersionedRecord("original"))
+
+        when:
+            def beforeUpdate = repo.findById(created.id).orElseThrow()
+            beforeUpdate.name = "updated"
+            def savedAgain = repo.save(beforeUpdate)
+            def reloaded = repo.findById(created.id).orElseThrow()
+
+        then:
+            created.version == 0L
+            savedAgain.version == 1L
+            reloaded.version == 1L
+            reloaded.name == "updated"
+
+        cleanup:
+            ctx.close()
+
+        where:
+        mode << ["IN_MEMORY", "MVSTORE"]
+    }
+
     // ========== Helper Methods ==========
 
     private ApplicationContext createContext(String mode, String testName) {

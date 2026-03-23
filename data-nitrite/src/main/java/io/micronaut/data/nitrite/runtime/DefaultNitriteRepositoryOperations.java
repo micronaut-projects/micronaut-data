@@ -256,15 +256,20 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             ? builder.buildFilterFromJson(associatedEntity, filterMap, params, namedParameters)
             : Filter.ALL;
         return assocCollection.find(subFilter).toList().stream()
-            .map(doc -> {
+            .flatMap(doc -> {
                 String fieldName = targetField;
                 if (fieldName == null) {
                     RuntimePersistentProperty<?> identity = associatedEntity.getIdentity();
                     fieldName = identity != null ? identity.getPersistedName() : "_id";
                 }
                 Object val = doc.get(fieldName);
-                return entityMapper.toFilterValue(val);
+                Object filterVal = entityMapper.toFilterValue(val);
+                if (filterVal instanceof Collection<?> collection) {
+                    return collection.stream().map(entityMapper::toFilterValue);
+                }
+                return Stream.of(filterVal);
             })
+            .distinct()
             .toList();
     };
     return new NitriteFilterBuilder(entityMapper, subQueryExecutor);

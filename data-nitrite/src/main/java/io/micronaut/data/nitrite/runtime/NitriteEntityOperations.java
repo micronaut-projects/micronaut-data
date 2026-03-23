@@ -133,6 +133,56 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         super.delete();
     }
 
+    /**
+     * Override persist to handle upsert semantics correctly.
+     * If the entity has an existing ID, trigger update lifecycle events (preUpdate/postUpdate)
+     * to ensure version increments and @DateUpdated fields are handled correctly.
+     */
+    @Override
+    public void persist() {
+        try {
+            collectAutoPopulatedPreviousValues();
+            
+            // Check if entity has an existing ID - if so, use update lifecycle
+            boolean hasExistingId = persistentEntity.getIdentity() != null &&
+                persistentEntity.getIdentity().getProperty().get(entity) != null;
+            
+            if (hasExistingId) {
+                // Entity has ID - use update lifecycle for proper version/@DateUpdated handling
+                boolean vetoed = triggerPreUpdate();
+                if (vetoed) {
+                    return;
+                }
+                boolean cascades = persistentEntity.cascadesUpdate();
+                if (cascades) {
+                    cascadePre(Relation.Cascade.UPDATE);
+                }
+                execute();
+                triggerPostUpdate();
+                if (cascades) {
+                    cascadePost(Relation.Cascade.UPDATE);
+                }
+            } else {
+                // No ID - use standard persist lifecycle
+                boolean vetoed = triggerPrePersist();
+                if (vetoed) {
+                    return;
+                }
+                boolean cascades = persistentEntity.cascadesPersist();
+                if (cascades) {
+                    cascadePre(Relation.Cascade.PERSIST);
+                }
+                execute();
+                triggerPostPersist();
+                if (cascades) {
+                    cascadePost(Relation.Cascade.PERSIST);
+                }
+            }
+        } catch (Exception e) {
+            failed(e, "PERSIST");
+        }
+    }
+
     @Override
     protected void execute() throws RuntimeException {
         if (LOG.isDebugEnabled()) {

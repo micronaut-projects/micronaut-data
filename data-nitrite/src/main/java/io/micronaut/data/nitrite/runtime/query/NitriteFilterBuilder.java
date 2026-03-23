@@ -667,9 +667,41 @@ public final class NitriteFilterBuilder {
                     return FluentFilter.where(fieldName).elemMatch(subFilter);
                 }
 
+                // Build sub-query filter map with the property name (remaining) preserved
+                Map<String, Object> subFilterMap = new java.util.LinkedHashMap<>();
+                Map<String, Object> resolvedOperators = new java.util.LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : operators.entrySet()) {
+                    Object resolvedValue = resolveValue(entry.getValue(), params, namedParameters);
+                    resolvedOperators.put(entry.getKey(), resolvedValue);
+                }
+                subFilterMap.put(remaining, resolvedOperators);
+
                 // Get the mappedBy property (the FK in the child entity pointing back to parent)
                 String mappedBy = assoc.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
                 if (mappedBy == null) {
+                    if (kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+                        // MANY_TO_MANY owner side: IDs are stored in the document field 'fieldName'
+                        // Find IDs of associated entities matching the filter
+                        List<Object> matchingIds = subQueryExecutor.executeSubQuery(
+                            associatedEntity, subFilterMap, null, params, namedParameters);
+                        if (matchingIds.isEmpty()) {
+                            return NONE;
+                        }
+                        // Filter current document where 'fieldName' (the collection) contains any of matchingIds
+                        // Standard Nitrite filters might not consistently handle 'contains' for non-indexed collections.
+                        return pair -> {
+                            org.dizitart.no2.collection.Document doc = pair.getSecond();
+                            Object val = doc.get(fieldName);
+                            if (val instanceof java.util.Collection<?> coll) {
+                                for (Object id : matchingIds) {
+                                    if (coll.contains(id)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        };
+                    }
                     return NONE;
                 }
 
@@ -679,19 +711,8 @@ public final class NitriteFilterBuilder {
                 }
                 String backRefPersistedName = backRefProp.getPersistedName();
 
-                // Build sub-query filter for the associated entity
-                // The 'remaining' path contains the property name (e.g., "name")
-                // We need to build a filter like {name: {$eq: "Austin"}}
-                Map<String, Object> subFilterMap = new java.util.LinkedHashMap<>();
-                Map<String, Object> resolvedOperators = new java.util.LinkedHashMap<>();
-                for (Map.Entry<String, Object> entry : operators.entrySet()) {
-                    Object resolvedValue = resolveValue(entry.getValue(), params, namedParameters);
-                    resolvedOperators.put(entry.getKey(), resolvedValue);
-                }
-                subFilterMap.put(remaining, resolvedOperators);
-
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("ONE_TO_MANY reverse lookup: entity={}, filter={}, backRef={}",
+                    LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
                         associatedEntity.getName(), subFilterMap, backRefPersistedName);
                 }
 
@@ -712,10 +733,14 @@ public final class NitriteFilterBuilder {
                 return comparableIds.length == 0 ? NONE : FluentFilter.where(idField).in(comparableIds);
             } else if (isManyToOne && subQueryExecutor != null) {
                 // For MANY_TO_ONE, execute sub-query on associated entity and join by ID
-                // Build filter for associated entity (e.g., Author.name = "Stephen King")
-                Filter subFilter = buildFieldFilter(associatedEntity, remaining, operators, params, namedParameters);
-                // Convert filter to filterMap format for sub-query (use operators directly)
-                Map<String, Object> subFilterMap = filterToMap(operators);
+                // Build sub-query filter map with the property name (remaining) preserved
+                Map<String, Object> subFilterMap = new java.util.LinkedHashMap<>();
+                Map<String, Object> resolvedOperators = new java.util.LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : operators.entrySet()) {
+                    Object resolvedValue = resolveValue(entry.getValue(), params, namedParameters);
+                    resolvedOperators.put(entry.getKey(), resolvedValue);
+                }
+                subFilterMap.put(remaining, resolvedOperators);
                 // Execute sub-query to get matching IDs
                 List<Object> matchingIds = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, null, params, namedParameters);

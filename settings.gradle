@@ -1,6 +1,13 @@
 pluginManagement {
     repositories {
         mavenLocal()
+        maven {
+            url = uri('https://maven.pkg.github.com/sfkamath/llm-build-compactor')
+            credentials {
+                username = System.getenv('GITHUB_ACTOR') ?: providers.gradleProperty('gpr.user').getOrNull()
+                password = System.getenv('GITHUB_TOKEN') ?: providers.gradleProperty('gpr.key').getOrNull()
+            }
+        }
         gradlePluginPortal()
         mavenCentral()
     }

@@ -86,13 +86,28 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends Abstract
         } else {
             associations = List.of();
         }
-        if (property instanceof RuntimeAssociation<?> association && association.isEmbedded()) {
-            return new RuntimeEmbeddedPersistentPropertyPathImpl<>(
-                parentPath,
-                associations,
-                (RuntimeAssociation<Y>) association,
-                (path, persistentProperty) -> asPropertyPath(path, (RuntimePersistentProperty) persistentProperty, criteriaBuilder)
-            );
+        if (property instanceof RuntimeAssociation<?> association) {
+            if (association.isEmbedded()) {
+                return new RuntimeEmbeddedPersistentPropertyPathImpl<>(
+                    parentPath,
+                    associations,
+                    (RuntimeAssociation<Y>) association,
+                    (path, persistentProperty) -> asPropertyPath(path, (RuntimePersistentProperty) persistentProperty, criteriaBuilder)
+                );
+            }
+            if (parentPath instanceof io.micronaut.data.model.jpa.criteria.PersistentEntityFrom<?, ?> from) {
+                Class<?> type = association.getProperty().getType();
+                if (List.class.isAssignableFrom(type)) {
+                    return (PersistentPropertyPath<Y>) new RuntimePersistentListAssociationPath<>(from, (RuntimeAssociation) association, associations, Join.Type.DEFAULT, null, criteriaBuilder);
+                }
+                if (Set.class.isAssignableFrom(type)) {
+                    return (PersistentPropertyPath<Y>) new RuntimePersistentSetAssociationPath<>(from, (RuntimeAssociation) association, associations, Join.Type.DEFAULT, null, criteriaBuilder);
+                }
+                if (Collection.class.isAssignableFrom(type)) {
+                    return (PersistentPropertyPath<Y>) new RuntimePersistentCollectionAssociationPath<>(from, (RuntimeAssociation) association, associations, Join.Type.DEFAULT, null, criteriaBuilder);
+                }
+                return (PersistentPropertyPath<Y>) new RuntimePersistentAssociationPath<>(from, (RuntimeAssociation) association, associations, Join.Type.DEFAULT, null, criteriaBuilder);
+            }
         }
         return new RuntimePersistentPropertyPathImpl<>(parentPath, associations, property, criteriaBuilder);
     }
