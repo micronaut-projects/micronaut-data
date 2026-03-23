@@ -23,14 +23,12 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -109,40 +107,13 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             case DOUBLE:
                 return resultSet.get(index, Double.class);
             case BYTE_ARRAY:
-                return readBlob(resultSet, index);
+                return readBytes(resultSet, index);
             case BIGDECIMAL:
                 return resultSet.get(index, BigDecimal.class);
             case OBJECT:
             default:
                 return getRequiredValue(resultSet, index, Object.class);
         }
-    }
-
-    private byte @Nullable [] readBlob(@NonNull Row resultSet, @NonNull String index) {
-        try {
-            return resultSet.get(index, byte[].class);
-        } catch (Exception e) {
-            // Ignore
-        }
-        // Second try for Oracle and H2
-        Object o = resultSet.get(index);
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof byte[]) {
-            return null;
-        }
-        if (o instanceof ByteBuffer byteBuffer) {
-            return byteBuffer.array();
-        }
-        if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
-                return new byte[0];
-            }
-            return byteBuffer.array();
-        }
-        return convertRequired(o, byte[].class);
     }
 
     @Nullable
@@ -285,8 +256,13 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
-    public byte[] readBytes(Row resultSet, String name) {
-        return resultSet.get(name, byte[].class);
+    public byte @Nullable [] readBytes(Row resultSet, String name) {
+        try {
+            return resultSet.get(name, byte[].class);
+        } catch (Exception e) {
+            // Ignore and fallback to generic handling (Oracle, H2, etc.)
+        }
+        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
     }
 
     @Nullable
