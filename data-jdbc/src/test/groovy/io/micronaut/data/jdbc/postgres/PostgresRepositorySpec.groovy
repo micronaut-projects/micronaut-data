@@ -37,7 +37,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return context.getBean(PostgresBookRepository)
     }
 
-
     @Memoized
     @Override
     GenreRepository getGenreRepository() {

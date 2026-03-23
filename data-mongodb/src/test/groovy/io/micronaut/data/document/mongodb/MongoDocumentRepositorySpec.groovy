@@ -942,7 +942,6 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         return context.getBean(MongoExecutorPersonRepository)
     }
 
-
     @Memoized
     MongoCriteriaPersonRepository getMongoCriteriaPersonRepository() {
         return context.getBean(MongoCriteriaPersonRepository)

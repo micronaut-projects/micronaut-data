@@ -20,8 +20,6 @@ class MongoReactiveDocumentRepositorySpec extends MongoDocumentRepositorySpec im
         return context.getBean(MongoReactiveExecutorPersonRepository)
     }
 
-
-
     void "test reactive query executor counts"() {
         given:
         savePersons(["Dennis", "Jeff", "James", "Dennis"])

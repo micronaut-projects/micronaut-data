@@ -41,4 +41,5 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         return context.getBean(PostgresReactiveBookRepository)
     }
 
+
 }
