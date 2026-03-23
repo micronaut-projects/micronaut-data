@@ -31,6 +31,9 @@ import java.util.List;
 @Internal
 public final class CollectionAggregator {
 
+    CollectionAggregator() {
+    }
+
     /**
      * Execute aggregation on a list of documents.
      *

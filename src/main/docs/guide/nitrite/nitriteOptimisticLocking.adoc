@@ -29,35 +29,33 @@ In this example:
 
 Optimistic locking works automatically with standard repository methods:
 
-snippet::example.VersionedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-repository"]
+snippet::example.VersionedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-repository-declaration"]
 
 When you update an entity, Micronaut Data Nitrite automatically checks the version:
 
-[source,java]
-----
-VersionedBook book = bookRepository.findById(id).orElse(null);
-book.setTitle("Updated Title");
-bookRepository.update(book); // Throws OptimisticLockException if version mismatch
-----
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="optimistic-locking-usage"]
+
+=== Using save() with Versioned Entities
+
+The `save()` method correctly handles versioned entities:
+
+* **New entities** (no ID): Inserts with initial version `0`
+* **Existing entities** (has ID): Updates and increments the version automatically
+
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="save-versioned-new,save-versioned-existing"]
+
+<1> New entities are saved with version `0`
+<2> Existing entities have their version incremented on save
+
+This allows you to use `save()` for both create and update operations while maintaining proper optimistic locking semantics.
 
 == Partial Updates with Optimistic Locking
 
 You can use the `@Version` field in partial update or delete methods. In this case, the version must match the version of the stored record:
 
-[source,java]
-----
-// Partial update with version check
-void updateTitle(@Id String id, String title, Long version);
+snippet::example.VersionedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-repository"]
 
-// Partial delete with version check
-void delete(@Id String id, Long version);
-----
-
-[source,java]
-----
-// The version parameter must match the current version in the database
-bookRepository.updateTitle(id, "New Title", currentVersion);
-----
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="partial-update-version,partial-delete-version"]
 
 == Temporal Version Types
 
@@ -71,10 +69,6 @@ For temporal versions, the repository methods accept `Instant` (or other tempora
 
 snippet::example.VersionedBookTemporalRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-temporal-repository"]
 
-[source,java]
-----
-// The version parameter must match the current version in the database
-bookRepository.updateTitle(id, "New Title", currentVersion);
-----
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="temporal-version-update"]
 
 TIP: For most use cases, numeric version types (`Long` or `Integer`) are recommended as they provide clearer version semantics and avoid potential issues with clock precision.

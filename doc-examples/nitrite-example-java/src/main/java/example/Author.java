@@ -19,8 +19,8 @@ public class Author {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY,
               mappedBy = "author",
-              cascade = Relation.Cascade.PERSIST) // <1>
-    private Set<Book> books = new HashSet<>();
+              cascade = Relation.Cascade.PERSIST)
+    private Set<Book> books = new HashSet<>(); // <1>
 
     public Author() {
     }

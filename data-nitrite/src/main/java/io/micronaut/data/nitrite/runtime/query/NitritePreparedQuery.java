@@ -31,6 +31,7 @@ import org.dizitart.no2.filters.Filter;
 public interface NitritePreparedQuery<E, R> extends PreparedQuery<E, R>, NitriteStoredQuery<E, R> {
 
   /**
+   * Returns the pre-calculated Nitrite filter.
    * @return The pre-calculated Nitrite filter
    */
   @NonNull

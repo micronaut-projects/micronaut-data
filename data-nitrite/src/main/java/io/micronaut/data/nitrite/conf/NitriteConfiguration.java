@@ -38,6 +38,9 @@ public final class NitriteConfiguration {
   /** Configuration prefix used for binding Nitrite settings (e.g. {@code nitrite.db-path}). */
   public static final String PREFIX = "nitrite";
 
+  NitriteConfiguration() {
+  }
+
   /**
    * Path to the NitriteDB file. If not provided and storage-mode is MVSTORE,
    * an in-memory database is created.
@@ -67,6 +70,7 @@ public final class NitriteConfiguration {
   @Nullable private String password;
 
   /**
+   * Returns the database file path.
    * @return the db path
    */
   @Nullable
@@ -75,6 +79,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets the database file path.
    * @param dbPath the db path
    */
   public void setDbPath(@Nullable final String dbPath) {
@@ -82,6 +87,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Returns the username for authenticated databases.
    * @return the username
    */
   @Nullable
@@ -90,6 +96,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets the username for authenticated databases.
    * @param username the username
    */
   public void setUsername(@Nullable final String username) {
@@ -97,6 +104,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Returns the password for authenticated databases.
    * @return the password
    */
   @Nullable
@@ -105,6 +113,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets the password for authenticated databases.
    * @param password the password
    */
   public void setPassword(@Nullable final String password) {
@@ -112,6 +121,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Returns the storage mode.
    * @return the storage mode
    */
   public StorageMode getStorageMode() {
@@ -119,6 +129,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets the storage mode.
    * @param storageMode the storage mode
    */
   public void setStorageMode(StorageMode storageMode) {
@@ -126,6 +137,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Returns the field separator character.
    * @return the field separator
    */
   public String getFieldSeparator() {
@@ -133,6 +145,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets the field separator character.
    * @param fieldSeparator the field separator
    */
   public void setFieldSeparator(String fieldSeparator) {
@@ -140,6 +153,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Indicates whether to automatically create indexes.
    * @return whether to create indexes
    */
   public boolean isCreateIndexes() {
@@ -147,6 +161,7 @@ public final class NitriteConfiguration {
   }
 
   /**
+   * Sets whether to automatically create indexes.
    * @param createIndexes whether to create indexes
    */
   public void setCreateIndexes(boolean createIndexes) {

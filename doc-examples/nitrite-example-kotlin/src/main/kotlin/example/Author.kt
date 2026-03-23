@@ -15,8 +15,8 @@ class Author {
 
     var name: String = ""
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author", cascade = [Relation.Cascade.PERSIST]) // <1>
-    var books: MutableSet<Book> = HashSet()
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author", cascade = [Relation.Cascade.PERSIST])
+    var books: MutableSet<Book> = HashSet() // <1>
 
     constructor()
 

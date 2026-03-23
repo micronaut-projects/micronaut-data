@@ -98,6 +98,7 @@ interface PersonRepository extends CrudRepository<Person, String>, JpaSpecificat
                     .arrayContains(root.get('interests'), criteriaBuilder.literal(interest))
             }
         }
+
     }
     // end::allSpecifications[]
     // end::specifications[]

@@ -32,18 +32,21 @@ import java.util.Map;
 public interface NitriteStoredQuery<E, R> extends StoredQuery<E, R> {
 
   /**
+   * Returns the pre-parsed filter structure if available (for JSON queries).
    * @return The pre-parsed filter structure if available (for JSON queries)
    */
   @Nullable
   Map<String, Object> getFilterMap();
 
   /**
+   * Returns the pre-parsed update structure ($set) if available.
    * @return The pre-parsed update structure ($set) if available
    */
   @Nullable
   Map<String, Object> getUpdateMap();
 
   /**
+   * Indicates whether this is a SQL-like query.
    * @return True if this is a SQL-like query
    */
   boolean isSql();

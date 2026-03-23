@@ -15,13 +15,13 @@ class Book {
     String title
 
     // tag::book-many-to-one[]
-    @Relation(value = Relation.Kind.MANY_TO_ONE) // <1>
-    Author author
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    Author author // <1>
     // end::book-many-to-one[]
 
     // tag::book-many-to-many[]
-    @Relation(value = Relation.Kind.MANY_TO_MANY) // <1>
-    Set<Student> students = [] as HashSet
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    Set<Student> students = [] as HashSet // <1>
     // end::book-many-to-many[]
 
     List<Page> pages = []

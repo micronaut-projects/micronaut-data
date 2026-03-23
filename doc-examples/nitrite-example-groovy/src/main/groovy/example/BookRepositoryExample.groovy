@@ -68,6 +68,15 @@ class BookRepositoryExample {
     }
     // end::manyToMany[]
 
+    // tag::many-to-many-fetch[]
+    void fetchManyToMany() {
+        def books = bookRepository.findAll() // <1>
+        for (book in books) {
+            def students = book.students // <2>
+        }
+    }
+    // end::many-to-many-fetch[]
+
     // tag::batch-operations[]
     void batchOperations() {
         def books = [

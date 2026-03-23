@@ -14,8 +14,8 @@ class Student {
 
     String name
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students") // <1>
-    Set<Book> books = [] as HashSet
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students")
+    Set<Book> books = [] as HashSet // <1>
 
     Student() {}
 

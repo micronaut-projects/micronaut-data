@@ -33,4 +33,3 @@ The following features are not yet implemented or have limitations:
 * Some complex projection queries with associations
 * `@Join` with custom join types (only default join type is supported; no `LEFT_FETCH`, `INNER_FETCH`, etc.)
 * Advanced aggregation pipelines (use the Criteria API for aggregations)
-* Sub-queries in Criteria API

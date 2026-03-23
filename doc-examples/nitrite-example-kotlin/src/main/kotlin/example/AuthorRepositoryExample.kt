@@ -17,16 +17,16 @@ class AuthorRepositoryExample {
         // Books will be empty (lazy loading)
         val author = authorRepository.findById("1").orElse(null)
 
-        // Books will be populated (eager loading)
-        val authorWithBooks = authorRepository.findById("1").orElse(null)
+        // Books will be populated (eager loading via @Join)
+        val authorWithBooks = authorRepository.searchByName("Stephen King")
     }
     // end::join-usage[]
 
     // tag::join-fetch[]
     fun fetchOneToMany() {
+        // findAll() has @Join("books") so each author's books are eagerly loaded
         val authors = authorRepository.findAll()
 
-        // Each author's books collection is now populated
         for (author in authors) {
             for (book in author.books) {
                 // Access book properties

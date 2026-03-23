@@ -58,6 +58,9 @@ public class NitriteTransactionHolder {
 
   private final ThreadLocal<NitriteTransactionContext> current = new ThreadLocal<>();
 
+  NitriteTransactionHolder() {
+  }
+
   /**
    * Bind a transaction context to the current thread.
    *

@@ -17,6 +17,10 @@ interface AuthorRepository : CrudRepository<Author, String> {
     @Join("books")
     fun searchByName(name: String): Author?
 
+    // Fetch all authors with their books eagerly loaded
+    @Join("books")
+    override fun findAll(): List<Author>
+
     // tag::reverse-lookup[]
     // Find authors by their book's title (reverse lookup on ONE_TO_MANY)
     fun findByBooksTitle(title: String): Author?

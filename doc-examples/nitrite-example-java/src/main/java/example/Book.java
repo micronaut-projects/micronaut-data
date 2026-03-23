@@ -25,8 +25,8 @@ public class Book {
     // end::book-many-to-one[]
 
     // tag::book-many-to-many[]
-    @Relation(value = Relation.Kind.MANY_TO_MANY) // <1>
-    private Set<Student> students = new HashSet<>();
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    private Set<Student> students = new HashSet<>(); // <1>
     // end::book-many-to-many[]
 
     private List<Page> pages = new ArrayList<>();

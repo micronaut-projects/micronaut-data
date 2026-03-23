@@ -24,9 +24,9 @@ final class AuthorRepositoryExample {
 
     // tag::join-fetch[]
     void fetchOneToMany() {
+        // findAll() has @Join("books") so each author's books are eagerly loaded
         List<Author> authors = authorRepository.findAll();
 
-        // Each author's books collection is now populated
         for (Author author : authors) {
             for (Book book : author.getBooks()) {
                 // Access book properties

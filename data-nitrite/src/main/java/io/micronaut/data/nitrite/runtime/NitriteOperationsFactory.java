@@ -54,6 +54,9 @@ public final class NitriteOperationsFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(NitriteOperationsFactory.class);
 
+  NitriteOperationsFactory() {
+  }
+
   private static final String ROCKSDB_MODULE_CLASS = "org.dizitart.no2.rocksdb.RocksDBModule";
   private static final String SPATIAL_MODULE_CLASS = "org.dizitart.no2.spatial.SpatialModule";
   private static final String JTS_MODULE_CLASS = "com.bedatadriven.jackson.datatype.jts.JtsModule";

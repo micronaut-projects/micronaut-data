@@ -55,6 +55,7 @@ public class Person {
     public void setInterests(List<String> interests) {
         this.interests = interests;
     }
+
 }
 // end::person[]
 

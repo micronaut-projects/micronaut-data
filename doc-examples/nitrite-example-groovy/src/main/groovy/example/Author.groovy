@@ -14,8 +14,8 @@ class Author {
 
     String name
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'author', cascade = [Relation.Cascade.PERSIST]) // <1>
-    Set<Book> books = [] as Set
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = 'author', cascade = [Relation.Cascade.PERSIST])
+    Set<Book> books = [] as Set // <1>
 
     Author() {
     }

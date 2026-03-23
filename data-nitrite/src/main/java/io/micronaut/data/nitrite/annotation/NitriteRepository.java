@@ -63,6 +63,7 @@ import java.lang.annotation.Target;
 public @interface NitriteRepository {
 
   /**
+   * Returns the datasource name for multi-datasource configurations.
    * @return The datasource name (for multi-datasource configurations).
    */
   @AliasFor(annotation = Repository.class, member = "value")

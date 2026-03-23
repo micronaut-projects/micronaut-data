@@ -70,9 +70,7 @@ snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-exampl
 
 == Example: Many-To-One
 
-A `MANY_TO_ONE` association stores the foreign key reference to the associated entity:
-
-snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book-many-to-one"]
+A `MANY_TO_ONE` association stores the foreign key reference to the associated entity (see the `Book` entity above).
 
 When querying, you can use the Criteria API or method names to filter by association properties:
 

@@ -28,6 +28,7 @@ import org.dizitart.no2.repository.ObjectRepository;
 public interface NitriteRepositoryOperations extends PrimaryRepositoryOperations {
 
   /**
+   * Returns the underlying Nitrite database instance.
    * @return the underlying Nitrite database instance
    */
   Nitrite getDatabase();

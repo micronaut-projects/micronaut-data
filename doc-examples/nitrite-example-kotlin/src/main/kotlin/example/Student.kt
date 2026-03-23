@@ -15,8 +15,8 @@ class Student {
 
     var name: String = ""
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students") // <1>
-    var books: MutableSet<Book> = HashSet()
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students")
+    var books: MutableSet<Book> = HashSet() // <1>
 
     constructor()
 

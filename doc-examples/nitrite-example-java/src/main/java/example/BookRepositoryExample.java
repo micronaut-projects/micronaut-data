@@ -72,6 +72,15 @@ final class BookRepositoryExample {
     }
     // end::manyToMany[]
 
+    // tag::many-to-many-fetch[]
+    void fetchManyToMany() {
+        java.util.List<Book> books = bookRepository.findAll(); // <1>
+        for (Book book : books) {
+            java.util.Set<Student> students = book.getStudents(); // <2>
+        }
+    }
+    // end::many-to-many-fetch[]
+
     // tag::batch-operations[]
     void batchOperations() {
         java.util.List<Book> books = java.util.List.of(

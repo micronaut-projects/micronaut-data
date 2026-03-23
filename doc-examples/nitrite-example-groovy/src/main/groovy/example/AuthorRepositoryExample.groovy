@@ -21,9 +21,9 @@ class AuthorRepositoryExample {
 
     // tag::join-fetch[]
     void fetchOneToMany() {
+        // findAll() has @Join("books") so each author's books are eagerly loaded
         def authors = authorRepository.findAll()
 
-        // Each author's books collection is now populated
         for (author in authors) {
             for (book in author.books) {
                 // Access book properties

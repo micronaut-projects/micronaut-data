@@ -83,6 +83,7 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
                     (criteriaBuilder as PersistentEntityCriteriaBuilder)
                         .arrayContains(root.get<Any>("interests"), criteriaBuilder.literal(interest))
                 }
+
         }
     }
     // end::allSpecifications[]

@@ -100,6 +100,7 @@ public interface PersonRepository extends CrudRepository<Person, String>, JpaSpe
             return (root, criteriaBuilder) -> ((PersistentEntityCriteriaBuilder) criteriaBuilder)
                 .arrayContains(root.get("interests"), criteriaBuilder.literal(interest));
         }
+
     }
     // end::allSpecifications[]
     // end::specifications[]

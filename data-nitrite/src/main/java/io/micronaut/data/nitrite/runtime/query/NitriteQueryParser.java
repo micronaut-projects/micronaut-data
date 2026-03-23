@@ -31,6 +31,12 @@ import java.util.Map;
 public final class NitriteQueryParser {
 
   /**
+   * Creates a new NitriteQueryParser.
+   */
+  public NitriteQueryParser() {
+  }
+
+  /**
    * Parse a JSON query string into a Map/List structure.
    *
    * @param jsonStr the JSON string

@@ -1,15 +1,25 @@
 package example
 
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.nitrite.annotation.NitriteRepository
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 
 // tag::repository[]
 @NitriteRepository
-interface BookRepository extends CrudRepository<Book, String> {
+interface BookRepository extends CrudRepository<Book, String>, JpaSpecificationExecutor<Book> {
 // end::repository[]
 
     Optional<Book> findByTitle(String title)
+
+    // tag::join-students[]
+    // Eagerly fetch students for all books (MANY_TO_MANY)
+    @Join("students")
+    @Override
+    List<Book> findAll()
+    // end::join-students[]
 
     // tag::update[]
     void update(@Id String id, String title)
@@ -48,6 +58,16 @@ interface BookRepository extends CrudRepository<Book, String> {
     // Aggregate functions
     Long countByTitle(String title)
     // end::projections[]
+
+    static class Specifications {
+        // tag::association-navigation[]
+        static PredicateSpecification<Book> authorNameEquals(String name) {
+            return { root, criteriaBuilder ->
+                criteriaBuilder.equal(root.get('author').get('name'), name)
+            } as PredicateSpecification<Book>
+        }
+        // end::association-navigation[]
+    }
 
 // tag::repository[]
 }

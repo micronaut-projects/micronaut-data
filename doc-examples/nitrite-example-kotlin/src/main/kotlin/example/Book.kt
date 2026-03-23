@@ -16,13 +16,13 @@ class Book {
     var title: String = ""
 
     // tag::book-many-to-one[]
-    @Relation(value = Relation.Kind.MANY_TO_ONE) // <1>
-    var author: Author? = null
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    var author: Author? = null // <1>
     // end::book-many-to-one[]
 
     // tag::book-many-to-many[]
-    @Relation(value = Relation.Kind.MANY_TO_MANY) // <1>
-    var students: MutableSet<Student> = HashSet()
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    var students: MutableSet<Student> = HashSet() // <1>
     // end::book-many-to-many[]
 
     constructor()
