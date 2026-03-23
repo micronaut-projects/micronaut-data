@@ -17,6 +17,8 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -358,15 +360,15 @@ public final class NitriteFilterBuilder {
         }
 
         // Find the association that this field belongs to
-        io.micronaut.data.model.runtime.RuntimeAssociation<?> association = null;
+        RuntimeAssociation<?> association = null;
         boolean isReverseLookup = false;
 
         // First, check for direct MANY_TO_ONE associations (field matches FK)
         for (RuntimePersistentProperty<?> prop : entity.getPersistentProperties()) {
-            if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
-                io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
+            if (prop instanceof RuntimeAssociation<?> assoc) {
+                Relation.Kind kind = assoc.getKind();
                 // Only handle MANY_TO_ONE here - ONE_TO_MANY is handled as reverse lookup
-                if (kind != io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE) {
+                if (kind != Relation.Kind.MANY_TO_ONE) {
                     continue;
                 }
                 // The persisted name is already the FK field name (e.g., "author_id")
@@ -385,10 +387,10 @@ public final class NitriteFilterBuilder {
         // - Lost property: field equals persisted name exactly (e.g., "book_author")
         if (association == null && (field.contains("_") || field.contains("."))) {
             for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                if (p instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
-                    io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
-                    if (kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY ||
-                        kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+                if (p instanceof RuntimeAssociation<?> assoc) {
+                    Relation.Kind kind = assoc.getKind();
+                    if (kind == Relation.Kind.ONE_TO_MANY ||
+                        kind == Relation.Kind.MANY_TO_MANY) {
 
                         String persistedName = assoc.getPersistedName();
                         // Use the associated entity's singular name for matching (handles irregular plurals like "cities" -> "city")
@@ -466,7 +468,7 @@ public final class NitriteFilterBuilder {
             String targetPropertyName = null;
 
             // The property that points back to the main entity (needed early for disambiguation)
-            String mappedBy = association.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+            String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
             if (mappedBy == null) {
                 return null;
             }
@@ -651,11 +653,11 @@ public final class NitriteFilterBuilder {
 
         String fieldName = prop != null ? prop.getPersistedName() : firstPart;
 
-        if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc) {
-            io.micronaut.data.annotation.Relation.Kind kind = assoc.getKind();
-            boolean isCollection = kind == io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY ||
-                                 kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY;
-            boolean isManyToOne = kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
+        if (prop instanceof RuntimeAssociation<?> assoc) {
+            Relation.Kind kind = assoc.getKind();
+            boolean isCollection = kind == Relation.Kind.ONE_TO_MANY ||
+                                 kind == Relation.Kind.MANY_TO_MANY;
+            boolean isManyToOne = kind == Relation.Kind.MANY_TO_ONE;
 
             RuntimePersistentEntity<?> associatedEntity = assoc.getAssociatedEntity();
             if (isCollection) {
@@ -677,9 +679,9 @@ public final class NitriteFilterBuilder {
                 subFilterMap.put(remaining, resolvedOperators);
 
                 // Get the mappedBy property (the FK in the child entity pointing back to parent)
-                String mappedBy = assoc.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+                String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
                 if (mappedBy == null) {
-                    if (kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
+                    if (kind == Relation.Kind.MANY_TO_MANY) {
                         // MANY_TO_MANY owner side: IDs are stored in the document field 'fieldName'
                         // Find IDs of associated entities matching the filter
                         List<Object> matchingIds = subQueryExecutor.executeSubQuery(

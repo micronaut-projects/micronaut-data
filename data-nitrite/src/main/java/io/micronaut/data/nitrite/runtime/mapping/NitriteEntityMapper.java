@@ -33,7 +33,6 @@ import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteId;
 import org.dizitart.no2.common.mapper.NitriteMapper;
-import org.dizitart.no2.common.tuples.Pair;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
@@ -106,6 +105,9 @@ public final class NitriteEntityMapper {
     if (value == null) {
       return null;
     }
+    if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character) {
+      return value;
+    }
     if (value instanceof Instant instant) {
       return instant.toString();
     }
@@ -123,9 +125,6 @@ public final class NitriteEntityMapper {
     }
     // BigDecimal should NOT be converted to String to preserve numeric comparison.
     // Nitrite can handle BigDecimal directly for numeric filters.
-    // if (value instanceof BigDecimal bigDecimal) {
-    //   return bigDecimal.toString();
-    // }
     if (value instanceof URL url) {
       return url.toString();
     }
@@ -142,9 +141,15 @@ public final class NitriteEntityMapper {
       return toFilterValue(opt.orElse(null));
     }
     
+    Class<?> clazz = value.getClass();
+    // Skip expensive entity registry lookups for JDK classes (Strings, Numbers, Collections, Arrays, etc.)
+    if (clazz.getName().startsWith("java.")) {
+        return value;
+    }
+
     // If it's an entity, try to get its ID
     try {
-        RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) value.getClass());
+        RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) clazz);
         if (entity != null) {
             RuntimePersistentProperty<Object> idProp = entity.getIdentity();
             if (idProp != null) {
@@ -266,12 +271,28 @@ public final class NitriteEntityMapper {
       RuntimePersistentProperty<?> property = entity.getPropertyByName(field);
       if (property != null) {
         Class<?> targetType = property.getType();
+        // If the target type is a number, we can use metadata for precise coercion.
         if (Number.class.isAssignableFrom(targetType) || targetType.isPrimitive()) {
-          return new NumericFilter(field, n);
+          Optional<?> converted = ((Optional<Object>) conversionService.convert(n, targetType));
+          if (converted.isPresent()) {
+            return FluentFilter.where(dottedPath).eq(converted.get());
+          }
         }
       }
     }
-    return FluentFilter.where(field).eq(value);
+    
+    Filter base = FluentFilter.where(dottedPath).eq(value);
+    if (!(value instanceof Number n) || value == null) {
+      return base;
+    }
+
+    // Fallback if no precise type could be derived
+    return Filter.or(
+        base,
+        FluentFilter.where(dottedPath).eq(n.longValue()),
+        FluentFilter.where(dottedPath).eq(n.intValue()),
+        FluentFilter.where(dottedPath).eq(n.doubleValue())
+    );
   }
 
   /**
@@ -727,31 +748,4 @@ public final class NitriteEntityMapper {
     return entity;
   }
 
-
-  /**
-   * Internal filter for numeric equality.
-   */
-  private static class NumericFilter implements Filter {
-    private final String field;
-    private final Number value;
-
-    NumericFilter(String field, Number value) {
-      this.field = field;
-      this.value = value;
-    }
-
-    @Override
-    public boolean apply(Pair<NitriteId, Document> element) {
-      Object val = element.getSecond().get(field);
-      if (val instanceof Number n) {
-        return n.doubleValue() == value.doubleValue();
-      }
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      return "(" + field + " == " + value + ")";
-    }
-  }
 }

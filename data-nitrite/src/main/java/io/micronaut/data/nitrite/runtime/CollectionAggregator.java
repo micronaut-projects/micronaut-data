@@ -21,6 +21,7 @@ import org.dizitart.no2.collection.Document;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Strategy for aggregation operations (Max, Min, Sum, Avg) on Nitrite documents.
@@ -30,6 +31,10 @@ import java.util.List;
  */
 @Internal
 public final class CollectionAggregator {
+
+    private static final Pattern AGG_FUNC_PATTERN = Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)[A-Z][a-zA-Z0-9]*By");
+    private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)([A-Z][a-zA-Z0-9]*)By");
+    private static final Pattern IS_AGG_PATTERN = Pattern.compile("^(find|get|read)(Max|Min|Sum|Avg)[A-Z][a-zA-Z0-9]*By.*");
 
     CollectionAggregator() {
     }
@@ -161,8 +166,7 @@ public final class CollectionAggregator {
      * @return the aggregation function (Max, Min, Sum, Avg), or null if not an aggregation method
      */
     public String extractAggFunc(String methodName) {
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)[A-Z][a-zA-Z0-9]*By");
-        java.util.regex.Matcher matcher = pattern.matcher(methodName);
+        java.util.regex.Matcher matcher = AGG_FUNC_PATTERN.matcher(methodName);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -176,8 +180,7 @@ public final class CollectionAggregator {
      * @return the field name, or null if not an aggregation method
      */
     public String extractFieldName(String methodName) {
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)([A-Z][a-zA-Z0-9]*)By");
-        java.util.regex.Matcher matcher = pattern.matcher(methodName);
+        java.util.regex.Matcher matcher = FIELD_NAME_PATTERN.matcher(methodName);
         if (matcher.find()) {
             String fieldName = matcher.group(2);
             return Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
@@ -192,6 +195,9 @@ public final class CollectionAggregator {
      * @return true if it's an aggregation method
      */
     public boolean isAggregationMethod(String methodName) {
-        return methodName.matches("^(find|get|read)(Max|Min|Sum|Avg)[A-Z][a-zA-Z0-9]*By.*");
+        if (methodName == null || methodName.length() < 10) {
+            return false;
+        }
+        return IS_AGG_PATTERN.matcher(methodName).matches();
     }
 }

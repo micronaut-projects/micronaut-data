@@ -22,7 +22,6 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;

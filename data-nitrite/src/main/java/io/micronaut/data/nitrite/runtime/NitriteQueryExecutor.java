@@ -69,6 +69,8 @@ import java.util.regex.Pattern;
 @Internal
 public final class NitriteQueryExecutor {
 
+    private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d+)");
+
     private static final Pattern SQL_COMPARISON =
         Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>|>|<|>=|<=)\\s*:(\\w+)");
     private static final Pattern SQL_IN_CLAUSE =
@@ -214,15 +216,18 @@ public final class NitriteQueryExecutor {
             return (R) valueConverter.convertWithTemporalHandling(result, nq.getResultType());
         }
 
+        Document doc = coll.find(filter).firstOrNull();
+        if (doc == null) {
+            return null;
+        }
+
         // Handle DTO projection
         if (nq.isDtoProjection()) {
-            Document doc = coll.find(filter).firstOrNull();
             return entityMapperHandler.projectDto(doc, nq.getResultType());
         }
 
         // Handle native single-field projection (result type differs from root entity)
         if (!nq.getResultType().equals(nq.getRootEntity())) {
-            Document doc = coll.find(filter).firstOrNull();
             R result = nativeProjectionHandler.project(doc, query, methodName, nq.getResultType());
             if (result != null) {
                 return result;
@@ -230,18 +235,14 @@ public final class NitriteQueryExecutor {
         }
 
         // Handle full entity load
-        Document doc = coll.find(filter).firstOrNull();
-        if (doc == null) {
-            return null;
-        }
         R entity = (R) entityMapperHandler.loadEntity(doc, nq.getRootEntity());
-        
+
         // Fetch joined associations if specified
         Set<JoinPath> joinPaths = nq.getJoinPaths();
         if (joinPaths != null && !joinPaths.isEmpty()) {
             fetchJoins(Collections.singletonList(entity), joinPaths, nq.getRootEntity());
         }
-        
+
         return entity;
     }
 
@@ -287,8 +288,7 @@ public final class NitriteQueryExecutor {
         Limit limit = nq.getQueryLimit();
         if (limit.maxResults() <= 0) {
             String methodName = q.getName();
-            java.util.regex.Pattern topPattern = java.util.regex.Pattern.compile("(?:Top|First)(\\d+)");
-            java.util.regex.Matcher matcher = topPattern.matcher(methodName);
+            java.util.regex.Matcher matcher = TOP_FIRST_PATTERN.matcher(methodName);
             if (matcher.find()) {
                 limit = Limit.of(Integer.parseInt(matcher.group(1)), 0);
             }
@@ -335,7 +335,7 @@ public final class NitriteQueryExecutor {
             }
             if (projectedFields == null || projectedFields.isEmpty()) {
                 if (!methodName.matches("^(find|get|read)(Max|Min|Sum|Avg|Count).*")) {
-                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
+                    Pattern pattern = Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
                     java.util.regex.Matcher matcher = pattern.matcher(methodName);
                     if (matcher.find()) {
                         String fieldName = matcher.group(1);
@@ -374,13 +374,13 @@ public final class NitriteQueryExecutor {
         for (Document doc : cursor) {
             results.add((R) entityMapperHandler.loadEntity(doc, nq.getRootEntity()));
         }
-        
+
         // Fetch joined associations if specified
         Set<JoinPath> joinPaths = nq.getJoinPaths();
         if (joinPaths != null && !joinPaths.isEmpty()) {
             fetchJoins(results, joinPaths, nq.getRootEntity());
         }
-        
+
         return results;
     }
 
@@ -892,7 +892,7 @@ public final class NitriteQueryExecutor {
             Object backRefValue = doc.get(finalBackFieldName);
             if (backRefValue != null) {
                 Object assocEntity = entityMapper.fromDocument(doc, associatedType);
-                
+
                 // Handle MANY_TO_MANY where backRefValue is a collection
                 if (backRefValue instanceof Collection<?> collection) {
                     for (Object parentId : collection) {

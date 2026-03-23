@@ -38,9 +38,6 @@ public final class NitriteConfiguration {
   /** Configuration prefix used for binding Nitrite settings (e.g. {@code nitrite.db-path}). */
   public static final String PREFIX = "nitrite";
 
-  NitriteConfiguration() {
-  }
-
   /**
    * Path to the NitriteDB file. If not provided and storage-mode is MVSTORE,
    * an in-memory database is created.
@@ -68,6 +65,9 @@ public final class NitriteConfiguration {
 
   /** Optional password for authenticated databases. */
   @Nullable private String password;
+
+  NitriteConfiguration() {
+  }
 
   /**
    * Returns the database file path.

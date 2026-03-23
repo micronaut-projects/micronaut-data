@@ -516,15 +516,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     } else {
       collection = database.getCollection(name);
     }
-    ensureIndexes(type, collection);
+    ensureIndexes(type, collection, name);
     return collection;
   }
 
-  private void ensureIndexes(Class<?> type, NitriteCollection collection) {
-    if (!configuration.isCreateIndexes() || indexedCollections.contains(collection.getName())) {
+  private void ensureIndexes(Class<?> type, NitriteCollection collection, String name) {
+    if (!configuration.isCreateIndexes() || indexedCollections.contains(name)) {
       return;
     }
-    indexedCollections.add(collection.getName());
+    indexedCollections.add(name);
     RuntimePersistentEntity<?> entity = getEntity(type);
     List<AnnotationValue<Index>> indexes = entity.getAnnotationMetadata().getAnnotationValuesByType(Index.class);
     for (AnnotationValue<Index> index : indexes) {
