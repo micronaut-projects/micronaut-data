@@ -364,8 +364,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T, R> Publisher<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
-        if (preparedQuery.getResultType().isAssignableFrom(Iterable.class)) {
-            return Flux.error(new DataAccessException("MongoDB update returning many is not supported"));
+        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
+        if (Iterable.class.isAssignableFrom(declaredReturnType)) {
+            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result"));
         }
         MongoFindOneAndUpdate updateOne = preparedQuery.getUpdateOne();
         if (QUERY_LOG.isDebugEnabled()) {
