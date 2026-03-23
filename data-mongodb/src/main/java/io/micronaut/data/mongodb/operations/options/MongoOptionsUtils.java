@@ -22,9 +22,11 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -68,6 +70,28 @@ public final class MongoOptionsUtils {
                     .map(BsonDocument::parse)
                     .ifPresent(bsonDocument -> options.collation(bsonDocumentAsCollation(bsonDocument)));
 
+        }
+        return Optional.of(options);
+    }
+
+    public static Optional<FindOneAndUpdateOptions> buildFindOneAndUpdateOptions(AnnotationMetadata annotationMetadata, boolean includeCollation) {
+        AnnotationValue<MongoUpdateOptions> optionsAnn = annotationMetadata.getAnnotation(MongoUpdateOptions.class);
+        if (optionsAnn == null) {
+            return Optional.empty();
+        }
+        FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
+        optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
+        optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
+        optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+        optionsAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
+        String[] arrayFilters = optionsAnn.stringValues("arrayFilters");
+        if (arrayFilters.length > 0) {
+            options.arrayFilters(Arrays.stream(arrayFilters).map(BsonDocument::parse).toList());
+        }
+        if (includeCollation) {
+            annotationMetadata.stringValue(MongoCollation.class)
+                .map(BsonDocument::parse)
+                .ifPresent(bsonDocument -> options.collation(bsonDocumentAsCollation(bsonDocument)));
         }
         return Optional.of(options);
     }

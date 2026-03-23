@@ -1,5 +1,7 @@
 package io.micronaut.data.document.mongodb.repositories;
 
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import io.micronaut.data.document.tck.entities.Person;
 import io.micronaut.data.document.tck.repositories.PersonRepository;
 import io.micronaut.data.model.Page;
@@ -65,6 +67,24 @@ public interface MongoPersonRepository extends PersonRepository {
 
     @MongoUpdateQuery(update = "{$set:{'addresses.$[address].zipCode': :zipCode}}", arrayFilters = "{'address.zipCode': null}}}")
     long updateMissingZipcodeInAddress(String zipCode);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    Person updateCustomReturning(String id, String newName);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    @MongoUpdateOptions(returnDocument = ReturnDocument.BEFORE)
+    Person updateCustomReturningBefore(String id, String newName);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    Person updateCustomReturningAfterWithOptions(String id, String newName, FindOneAndUpdateOptions options);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    Person updateCustomReturningDefault(String id, String newName);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    boolean updateCustomBooleanReturning(String id, String newName);
 
     @MongoFindQuery(filter = "{'name': {'$in': :names}}")
     List<Person> findByNameInList(String[] names);

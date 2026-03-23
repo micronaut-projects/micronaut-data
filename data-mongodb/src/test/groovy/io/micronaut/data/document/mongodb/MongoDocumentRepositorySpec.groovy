@@ -1008,4 +1008,75 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     CustomerRepository getCustomerRepository() {
         return context.getBean(CustomerRepository)
     }
+
+    void "test custom update returning after and before"() {
+        given:
+            def person = personRepository.save("Jeff", 20)
+
+        when:
+            def updated = personRepository.updateCustomReturning(person.id, "Updated")
+
+        then:
+            updated != null
+            updated.id == person.id
+            updated.name == "Updated"
+            personRepository.findById(person.id).get().name == "Updated"
+
+        when:
+            def previous = personRepository.updateCustomReturningBefore(person.id, "Updated Again")
+
+        then:
+            previous != null
+            previous.id == person.id
+            previous.name == "Updated"
+            personRepository.findById(person.id).get().name == "Updated Again"
+    }
+
+
+    void "test custom update returning no match"() {
+        expect:
+            personRepository.updateCustomReturning("507f1f77bcf86cd799439011", "Updated") == null
+    }
+
+    void "test custom update returning default returnDocument is BEFORE"() {
+        given:
+            def person = personRepository.save("Jeff Default", 20)
+
+        when:
+            def previous = personRepository.updateCustomReturningDefault(person.id, "Jeff Default Updated")
+
+        then:
+            previous != null
+            previous.id == person.id
+            previous.name == "Jeff Default"
+            personRepository.findById(person.id).get().name == "Jeff Default Updated"
+    }
+
+    void "test custom update boolean returning is treated as update"() {
+        given:
+            def person = personRepository.save("Jeff Bool", 20)
+
+        when:
+            def result = personRepository.updateCustomBooleanReturning(person.id, "Jeff Bool Updated")
+
+        then:
+            result == true
+            personRepository.findById(person.id).get().name == "Jeff Bool Updated"
+    }
+
+
+    void "test update returning options precedence"() {
+        given:
+            def person = personRepository.save("Jeff Options", 20)
+            def options = new com.mongodb.client.model.FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
+
+        when:
+            def result = personRepository.updateCustomReturningAfterWithOptions(person.id, "Jeff Options Updated", options)
+
+        then:
+            result != null
+            result.name == "Jeff Options Updated"
+            personRepository.findById(person.id).get().name == "Jeff Options Updated"
+    }
+
 }

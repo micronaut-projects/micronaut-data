@@ -46,6 +46,12 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 
 Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with `:`.
 
+Mongo update methods can either return the number of updated documents (for example `long`, `int` or `boolean`) or return a single updated document.
+When the repository method returns an entity/DTO, Micronaut Data MongoDB will execute the update as a single-document update and map the returned document.
+To control whether the document is returned before or after the update, use the `returnDocument` member of ann:data.mongodb.annotation.MongoUpdateOptions[].
+
+NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`). Update-returning methods must use a single-result return type (for example `Entity` or `Mono<Entity>`).
+
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 
 NOTE: Only queries for the filter, pipeline and the update can reference method parameters.

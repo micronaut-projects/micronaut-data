@@ -49,6 +49,7 @@ import io.micronaut.data.intercept.UpdateEntityInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.intercept.UpdateReturningManyInterceptor;
 import io.micronaut.data.intercept.UpdateReturningOneInterceptor;
+import io.micronaut.data.intercept.reactive.UpdateReturningReactiveInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
@@ -98,7 +99,6 @@ import org.reactivestreams.Publisher;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -220,6 +220,11 @@ public interface FindersUtils {
     }
 
     private static InterceptorMatch pickUpdateReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(matchContext,
+                getFirstTypeArgumentOrFail(matchContext, returnType),
+                UpdateReturningReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), UpdateReturningManyInterceptor.class);
         } else {

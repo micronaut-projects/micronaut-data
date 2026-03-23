@@ -17,6 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -100,6 +101,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     private final RuntimePersistentEntity<E> persistentEntity;
     @Nullable
     private final UpdateData updateData;
+    @Nullable
+    private final UpdateReturningData updateReturningData;
     @Nullable
     private final FindData findData;
     @Nullable
@@ -194,6 +197,21 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else {
             updateData = null;
         }
+
+        if (operationType == OperationType.UPDATE_RETURNING) {
+            if (StringUtils.isEmpty(updateJson)) {
+                throw new IllegalStateException("Update query is expected!");
+            }
+            String query = storedQuery.getQuery();
+            updateReturningData = new UpdateReturningData(
+                BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                getParameterInRole(MongoRoles.FILTER_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
+            );
+        } else {
+            updateReturningData = null;
+        }
     }
 
     private List<Bson> parseAggregation(String query, boolean isCount) {
@@ -287,6 +305,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             throw new IllegalStateException("Expected update query!");
         }
         return updateData.getUpdateOne(entity);
+    }
+
+    @Override
+    public MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext) {
+        if (updateReturningData == null) {
+            throw new IllegalStateException("Expected update returning query!");
+        }
+        return updateReturningData.getUpdateOne(invocationContext);
     }
 
     @Override
@@ -802,6 +828,123 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             if (options == null) {
                 options = new UpdateOptions();
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.collation(collation);
+            }
+            return options;
+        }
+
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
+            return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+    }
+
+    private final class UpdateReturningData extends CollationSupported {
+        @Nullable
+        private final Bson update;
+        private final boolean updateNeedsProcessing;
+        @Nullable
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        @Nullable
+        private final FindOneAndUpdateOptions options;
+        private final int filterParameterIndex;
+        private final int updateParameterIndex;
+        private final int optionsParameterIndex;
+
+        private UpdateReturningData(@Nullable Bson update, @Nullable Bson filter, @Nullable String filterParameter, @Nullable String updateParameter,
+                                    @Nullable String optionsParameter) {
+            this.update = update;
+            this.updateNeedsProcessing = needsProcessing(update);
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.updateParameterIndex = getParameterIndexByName(updateParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
+            this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
+        }
+
+        private FindOneAndUpdateOptions copy(FindOneAndUpdateOptions options) {
+            FindOneAndUpdateOptions newOptions = new FindOneAndUpdateOptions();
+            newOptions.collation(options.getCollation());
+            newOptions.upsert(options.isUpsert());
+            newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
+            newOptions.hint(options.getHint());
+            newOptions.hintString(options.getHintString());
+            newOptions.arrayFilters(options.getArrayFilters());
+            newOptions.returnDocument(options.getReturnDocument());
+            return newOptions;
+        }
+
+        private void copyNonNullFrom(FindOneAndUpdateOptions to, FindOneAndUpdateOptions from) {
+            if (from.getCollation() != null) {
+                to.collation(from.getCollation());
+            }
+            if (from.isUpsert()) {
+                to.upsert(from.isUpsert());
+            }
+            if (from.getBypassDocumentValidation() != null) {
+                to.bypassDocumentValidation(from.getBypassDocumentValidation());
+            }
+            if (from.getHint() != null) {
+                to.hint(from.getHint());
+            }
+            if (from.getHintString() != null) {
+                to.hintString(from.getHintString());
+            }
+            if (from.getArrayFilters() != null) {
+                to.arrayFilters(from.getArrayFilters());
+            }
+            to.returnDocument(from.getReturnDocument());
+        }
+
+        private MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext) {
+            return new MongoFindOneAndUpdate(
+                getUpdate(invocationContext, null),
+                getFilter(invocationContext, null),
+                getOptions(invocationContext));
+        }
+
+        private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            Bson update = this.update;
+            if (updateParameterIndex != -1) {
+                update = getParameterAtIndex(invocationContext, updateParameterIndex);
+            }
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            return update;
+        }
+
+        @NonNull
+        private FindOneAndUpdateOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
+            FindOneAndUpdateOptions options = this.options;
+            if (optionsParameterIndex != -1) {
+                FindOneAndUpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        options = paramOptions;
+                    } else {
+                        options = copy(options);
+                        copyNonNullFrom(options, paramOptions);
+                    }
+                }
+            }
+            if (options == null) {
+                options = new FindOneAndUpdateOptions();
             }
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {

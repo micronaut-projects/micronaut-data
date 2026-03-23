@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.mongodb.annotation;
 
+import com.mongodb.client.model.ReturnDocument;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -62,5 +64,13 @@ public @interface MongoUpdateOptions {
      * @since 4.2.0
      */
     String[] arrayFilters() default {};
+
+    /**
+     * Controls whether MongoDB returns the document state before or after the update.
+     *
+     * @return The requested returned document state
+     * @since 5.0.0
+     */
+    ReturnDocument returnDocument() default ReturnDocument.BEFORE;
 
 }

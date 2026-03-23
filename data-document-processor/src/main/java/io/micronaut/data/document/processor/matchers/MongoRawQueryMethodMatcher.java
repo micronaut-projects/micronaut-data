@@ -105,6 +105,26 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
             @Override
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                DataMethod.OperationType actualOperationType = operationType;
+                if (actualOperationType == DataMethod.OperationType.UPDATE) {
+                    ClassElement returnType = matchContext.getReturnType();
+                    if (!TypeUtils.isVoid(returnType) && !TypeUtils.isNumber(returnType) && !TypeUtils.isBoolean(returnType)) {
+                        if (TypeUtils.isFutureType(returnType)) {
+                            throw new MatchFailedException("Update returning is not supported for Future/CompletionStage return types");
+                        }
+                        if (TypeUtils.isReactiveOrFuture(returnType)) {
+                            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(null);
+                            if (reactiveType != null && !TypeUtils.isVoid(reactiveType) && !TypeUtils.isNumber(reactiveType) && !TypeUtils.isBoolean(reactiveType)) {
+                                if (reactiveType.isAssignable(Iterable.class)) {
+                                    throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>)." );
+                                }
+                                actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
+                            }
+                        } else {
+                            actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
+                        }
+                    }
+                }
                 ParameterElement[] parameters = matchContext.getParameters();
                 ParameterElement entityParameter;
                 ParameterElement entitiesParameter;
@@ -119,8 +139,10 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
-                        operationType,
+                        actualOperationType,
                         matchContext);
+
+
 
                 ClassElement resultType = entry.returnType();
                 ClassElement interceptorType = entry.interceptor();
@@ -137,14 +159,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 }
 
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                        operationType,
+                        actualOperationType,
                         resultType,
                         interceptorType
                 );
 
                 methodMatchInfo.dto(isDto);
 
-                buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
+                buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, actualOperationType);
 
                 if (entityParameter != null) {
                     methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
@@ -203,6 +225,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                                        ParameterElement entityParam,
                                        @Nullable
                                        SourcePersistentEntity persistentEntity) {
+        if (matchContext.getMethodElement().hasAnnotation(MongoAnnotations.UPDATE_QUERY)) {
+            return getUpdateQueryResult(matchContext, parameters, entityParam, persistentEntity);
+        }
         String filterQueryString;
         if (matchContext.getMethodElement().hasAnnotation(MongoAnnotations.AGGREGATION_QUERY)) {
             filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.AGGREGATION_QUERY).orElseThrow(() ->
