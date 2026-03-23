@@ -187,7 +187,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
 
         QueryResult queryResult;
-        if (operationType == DataMethod.OperationType.UPDATE) {
+        if (operationType == DataMethod.OperationType.UPDATE || methodElement.hasAnnotation(MongoAnnotations.UPDATE_QUERY)) {
             queryResult = getUpdateQueryResult(matchContext, parameters, entityParam, persistentEntity);
         } else {
             queryResult = getQueryResult(matchContext, parameters, entityParam, persistentEntity);
@@ -213,9 +213,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                                        ParameterElement entityParam,
                                        @Nullable
                                        SourcePersistentEntity persistentEntity) {
-        if (matchContext.getMethodElement().hasAnnotation(MongoAnnotations.UPDATE_QUERY)) {
-            return getUpdateQueryResult(matchContext, parameters, entityParam, persistentEntity);
-        }
         String filterQueryString;
         if (matchContext.getMethodElement().hasAnnotation(MongoAnnotations.AGGREGATION_QUERY)) {
             filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.AGGREGATION_QUERY).orElseThrow(() ->
