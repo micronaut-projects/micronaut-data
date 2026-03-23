@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.jdbc.entities.geo;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Index;
@@ -32,12 +33,16 @@ public class GeoEntity {
     @Srid(3857)
     private LineString lineString;
 
+    @Nullable
     private MultiLineString multiLineString;
 
+    @Nullable
     private Polygon polygon;
 
+    @Nullable
     private MultiPolygon multiPolygon;
 
+    @Nullable
     private GeometryCollection geometryCollection;
 
     public Long getId() {

@@ -127,7 +127,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test deleting of all geometry types"() {
+    void "test deleting of nullable geometry types"() {
         assumeTrue(supportsDeletingGeometryTypes())
 
         given:
@@ -162,9 +162,6 @@ abstract class AbstractGeoSpec extends Specification {
         }
 
         when:
-        entity.setPoint(null)
-        entity.setMultiPoint(null)
-        entity.setLineString(null)
         entity.setMultiLineString(null)
         entity.setPolygon(null)
         entity.setMultiPolygon(null)
@@ -174,9 +171,9 @@ abstract class AbstractGeoSpec extends Specification {
 
         then:
         with (foundEntity.get()) {
-            assertNull(it.getPoint())
-            assertNull(it.getMultiPoint())
-            assertNull(it.getLineString())
+            assertPoint(it.getPoint(), 5)
+            assertMultiPoint(it.getMultiPoint(), 5)
+            assertLineString(it.getLineString(), 5)
             assertNull(it.getMultiLineString())
             assertNull(it.getPolygon())
             assertNull(it.getMultiPolygon())
