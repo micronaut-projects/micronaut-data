@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_TOKEN }}
-      - uses: gradle/actions/wrapper-validation@v5
+      - uses: gradle/actions/wrapper-validation@v6
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
