@@ -397,4 +397,35 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
     }
 
+    void "test criteria navigation across MANY_TO_ONE association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "Navigate across MANY_TO_ONE association using get()"
+            // This tests that root.get("test").get("name") works correctly
+            // Without the fix in AbstractRuntimePersistentEntityJoinSupport, this throws:
+            // IllegalArgumentException: Property path doesn't support get operation
+            def testAssociationPath = otherEntityRoot.get("test")
+            def testNamePath = testAssociationPath.get("name")
+            criteriaQuery.where(criteriaBuilder.equal(testNamePath, "testValue"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then:
+            // The query should successfully navigate the association with a JOIN
+            // Expected format: SELECT ... FROM "other_entity" ... INNER JOIN "test" test_ ON ... WHERE (test_."name" = ?)
+            query.contains('INNER JOIN "test"')
+            query.contains('test_."name"')
+
+        when: "Navigate using static metamodel"
+            criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            otherEntityRoot = criteriaQuery.from(OtherEntity)
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
+            String query2 = getSqlQuery(criteriaQuery)
+
+        then:
+            query2.contains('INNER JOIN "test"')
+            query2.contains('test_."name"')
+    }
+
 }
