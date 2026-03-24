@@ -6,6 +6,7 @@ import io.micronaut.data.document.tck.entities.Person;
 import io.micronaut.data.document.tck.repositories.PersonRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoAggregateQuery;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
@@ -81,6 +82,10 @@ public interface MongoPersonRepository extends PersonRepository {
     Person updateCustomReturningAfterWithOptions(String id, String newName, FindOneAndUpdateOptions options);
 
     @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    PersonNameDto updateCustomReturningDto(String id, String newName);
+
+    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
     Person updateCustomReturningDefault(String id, String newName);
 
     @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
@@ -90,4 +95,8 @@ public interface MongoPersonRepository extends PersonRepository {
     List<Person> findByNameInList(String[] names);
 
     List<Person> findByNameNotLike(String name);
+
+    @Introspected
+    record PersonNameDto(String name) {
+    }
 }

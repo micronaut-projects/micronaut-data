@@ -312,7 +312,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
             return executeUpdateReturning(clientSession, preparedQuery);
         }
-        throw new DataAccessException("Unsupported execute operation for MongoDB: " + operationType);
+        throw new DataAccessException("Unsupported MongoDB execute operation: " + operationType + ". Expected update returning single entity or DTO.");
     }
 
     private <T, R> List<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
