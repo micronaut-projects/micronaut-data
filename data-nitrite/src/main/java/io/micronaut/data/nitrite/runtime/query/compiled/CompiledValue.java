@@ -36,4 +36,34 @@ public interface CompiledValue {
      * @return the resolved value
      */
     Object resolve(Object[] params, Map<String, Object> namedParameters);
+
+    /**
+     * A literal value that doesn't change.
+     */
+    record Literal(Object value) implements CompiledValue {
+        @Override
+        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+            return value;
+        }
+    }
+
+    /**
+     * A positional parameter value (e.g. $mn_qp:0).
+     */
+    record Parameter(int index) implements CompiledValue {
+        @Override
+        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+            return params != null && index >= 0 && index < params.length ? params[index] : null;
+        }
+    }
+
+    /**
+     * A named parameter value (e.g. :name).
+     */
+    record NamedParameter(String name) implements CompiledValue {
+        @Override
+        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+            return namedParameters != null ? namedParameters.get(name) : null;
+        }
+    }
 }

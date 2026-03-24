@@ -24,6 +24,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.query.compiled.CompiledValue;
+import io.micronaut.data.nitrite.runtime.query.compiled.NitriteFilterAST;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -94,10 +96,10 @@ public final class NitriteFilterBuilder {
      */
     public CompiledNitriteFilter compile(final RuntimePersistentEntity<?> entity, final Map<String, Object> filterObj) {
         if (filterObj == null || filterObj.isEmpty()) {
-            return (params, named) -> Filter.ALL;
+            return new NitriteFilterAST.AllNode();
         }
 
-        final List<CompiledNitriteFilter> compiledFilters = new ArrayList<>();
+        final List<NitriteFilterAST> compiledFilters = new ArrayList<>();
         for (Map.Entry<String, Object> entry : filterObj.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
@@ -112,41 +114,23 @@ public final class NitriteFilterBuilder {
 
             if ("$and".equals(key)) {
                 if (value instanceof List<?> list) {
-                    final List<CompiledNitriteFilter> ands = new ArrayList<>();
+                    final List<NitriteFilterAST> ands = new ArrayList<>();
                     for (Object item : list) {
                         if (item instanceof Map<?, ?> m) {
-                            ands.add(compile(entity, toStringObjectMap(m)));
+                            ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
                         }
                     }
-                    compiledFilters.add((params, named) -> {
-                        List<Filter> results = new ArrayList<>(ands.size());
-                        for (CompiledNitriteFilter cf : ands) {
-                            Filter f = cf.bind(params, named);
-                            if (f != null && f != Filter.ALL) {
-                                results.add(f);
-                            }
-                        }
-                        return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.and(results.toArray(new Filter[0]));
-                    });
+                    compiledFilters.add(new NitriteFilterAST.AndNode(ands));
                 }
             } else if ("$or".equals(key)) {
                 if (value instanceof List<?> list) {
-                    final List<CompiledNitriteFilter> ors = new ArrayList<>();
+                    final List<NitriteFilterAST> ors = new ArrayList<>();
                     for (Object item : list) {
                         if (item instanceof Map<?, ?> m) {
-                            ors.add(compile(entity, toStringObjectMap(m)));
+                            ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
                         }
                     }
-                    compiledFilters.add((params, named) -> {
-                        List<Filter> results = new ArrayList<>(ors.size());
-                        for (CompiledNitriteFilter cf : ors) {
-                            Filter f = cf.bind(params, named);
-                            if (f != null && f != Filter.ALL) {
-                                results.add(f);
-                            }
-                        }
-                        return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.or(results.toArray(new Filter[0]));
-                    });
+                    compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                 }
             } else {
                 compiledFilters.add(compileFieldFilter(entity, key, value));
@@ -154,134 +138,53 @@ public final class NitriteFilterBuilder {
         }
 
         if (compiledFilters.isEmpty()) {
-            return (params, named) -> Filter.ALL;
+            return new NitriteFilterAST.AllNode();
         }
         if (compiledFilters.size() == 1) {
             return compiledFilters.get(0);
         }
-        return (params, named) -> {
-            List<Filter> results = new ArrayList<>(compiledFilters.size());
-            for (CompiledNitriteFilter cf : compiledFilters) {
-                Filter f = cf.bind(params, named);
-                if (f != null && f != Filter.ALL) {
-                    results.add(f);
-                }
-            }
-            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.and(results.toArray(new Filter[0]));
-        };
+        return new NitriteFilterAST.AndNode(compiledFilters);
     }
 
-    private CompiledNitriteFilter compileFieldFilter(
+    private NitriteFilterAST compileFieldFilter(
         final RuntimePersistentEntity<?> entity,
         final String rawField,
         final Object rawValue) {
 
-        // Compile the value resolution
-        final CompiledValue compiledValue = compileValue(rawValue);
-
-        // Pre-normalize field name and find property metadata
-        String field = rawField;
-        boolean isIdentity = false;
-        RuntimePersistentProperty<?> property = null;
-        RuntimeAssociation<?> association = null;
-        boolean isManyToOne = false;
-        boolean isReverseLookup = false;
-
-        if (entity != null) {
-            RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity != null && (identity.getName().equals(rawField) || "id".equals(rawField) || "_id".equals(rawField))) {
-                field = entityMapper.normalizeFieldName(rawField, entity);
-                isIdentity = true;
-                property = identity;
-            } else {
-                property = entity.getPropertyByName(rawField);
-                if (property != null) {
-                    field = property.getPersistedName();
-                }
+        final Map<String, CompiledValue> operators = new LinkedHashMap<>();
+        if (rawValue instanceof Map<?, ?> m && !isPlaceholder(rawValue)) {
+            for (Map.Entry<?, ?> entry : m.entrySet()) {
+                operators.put(entry.getKey().toString(), compileValue(entry.getValue()));
             }
-
-            // Pre-detect association potential (ManyToOne or OneToMany reverse)
-            // This avoids iterating all properties on every bind() call
-            if (property instanceof RuntimeAssociation<?> assoc && assoc.getKind() == Relation.Kind.MANY_TO_ONE) {
-                association = assoc;
-                isManyToOne = true;
-            } else if (property == null || property instanceof RuntimeAssociation<?>) {
-                // If property is null or an association (likely OneToMany), search for reverse lookup patterns
-                for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                    if (p instanceof RuntimeAssociation<?> assoc) {
-                        Relation.Kind kind = assoc.getKind();
-                        if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
-                            String persistedName = assoc.getPersistedName();
-                            String singularName = assoc.getAssociatedEntity().getSimpleName();
-                            String decapitalizedName = assoc.getAssociatedEntity().getDecapitalizedName();
-
-                            if (rawField.contains(".")) {
-                                String assocPart = rawField.substring(0, rawField.indexOf('.'));
-                                if (assocPart.equals(persistedName) || assocPart.equals(singularName) || assocPart.equals(decapitalizedName)) {
-                                    association = assoc;
-                                    isReverseLookup = true;
-                                    break;
-                                }
-                            } else if (rawField.startsWith(persistedName + "_") || rawField.startsWith(singularName + "_") || rawField.startsWith(decapitalizedName + "_") || rawField.equals(persistedName)) {
-                                association = assoc;
-                                isReverseLookup = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+        } else {
+            operators.put("$eq", compileValue(rawValue));
         }
 
-        final String finalField = field;
-        final boolean finalIsIdentity = isIdentity;
-        final RuntimeAssociation<?> finalAssoc = association;
-        final boolean finalIsReverse = isReverseLookup;
-
-        return (params, named) -> {
-            Object resolvedValue = compiledValue.resolve(params, named);
-            if (resolvedValue instanceof Map<?, ?> m && !isPlaceholder(resolvedValue)) {
-                // For complex operator maps, we still use buildFieldFilter but can pass pre-cached info if we expand its signature
-                return buildFieldFilter(entity, rawField, toStringObjectMap(m), params, named);
-            } else {
-                // Common case: simple equality
-                // If we found an association potential, check if we should trigger sub-query logic
-                if (finalAssoc != null && resolvedValue instanceof String strValue) {
-                    RuntimePersistentProperty<?> assocId = finalAssoc.getAssociatedEntity().getIdentity();
-                    if (assocId != null && !looksLikeId(strValue, assocId.getType())) {
-                        // Trigger optimized association resolution
-                        return buildAssociationFilter(entity, rawField, Collections.singletonMap("$eq", resolvedValue), params, named);
-                    }
-                }
-
-                // Regular field equality
-                Object finalValue = entityMapper.toNitriteFilterValue(preConvertForFilter(maybeCoerceUuid(finalField, resolvedValue)), rawField);
-                return FluentFilter.where(finalField).eq(finalValue);
-            }
-        };
+        return new NitriteFilterAST.FieldNode(this, entity, rawField, operators);
     }
 
     private CompiledValue compileValue(final Object value) {
         if (value instanceof String s) {
             if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
                 try {
-                    final int idx = Integer.parseInt(s.substring(7));
-                    return (params, named) -> params != null && idx >= 0 && idx < params.length ? params[idx] : null;
+                    return new CompiledValue.Parameter(Integer.parseInt(s.substring(7)));
                 } catch (Exception ignored) {
                 }
             }
             if (s.startsWith(":")) {
-                final String name = s.substring(1);
-                return (params, named) -> named != null ? named.get(name) : null;
+                return new CompiledValue.NamedParameter(s.substring(1));
             }
             if (s.contains("$mn_qp:")) {
+                // For complex strings with embedded placeholders, we use a lambda-based fallback for now
+                // but keep it wrapped in the structured AST.
                 return (params, named) -> resolveValueInternal(s, params, named);
             }
+            return new CompiledValue.Literal(s);
         }
         if (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) {
-            return (params, named) -> params != null && idx >= 0 && idx < params.length ? params[idx] : null;
+            return new CompiledValue.Parameter(idx);
         }
-        return (params, named) -> value;
+        return new CompiledValue.Literal(value);
     }
 
     /**
