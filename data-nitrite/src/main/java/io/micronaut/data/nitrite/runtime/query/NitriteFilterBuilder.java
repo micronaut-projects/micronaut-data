@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -379,18 +380,16 @@ public final class NitriteFilterBuilder {
             return null;
         }
         if (value instanceof Instant instant) {
-            // Nitrite stores Instant as double (epoch seconds) in some configurations, 
-            // or we force it here to ensure numeric comparison works.
-            return (double) instant.getEpochSecond() + (double) instant.getNano() / 1_000_000_000.0;
+            return NitriteEntityMapper.epochNanos(instant);
         }
         if (value instanceof LocalDate localDate) {
-            return localDate.toString();
+            return localDate.toEpochDay();
         }
         if (value instanceof LocalDateTime localDateTime) {
-            return localDateTime.toString();
+            return NitriteEntityMapper.epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
         }
         if (value instanceof LocalTime localTime) {
-            return localTime.toString();
+            return localTime.toNanoOfDay();
         }
         return value;
     }

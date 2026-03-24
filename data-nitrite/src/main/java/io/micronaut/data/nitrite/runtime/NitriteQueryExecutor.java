@@ -43,10 +43,6 @@ import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -157,18 +153,6 @@ public final class NitriteQueryExecutor {
                 list.add(toFilterValue(o));
             }
             return list;
-        }
-        if (value instanceof Instant instant) {
-            return instant.toString();
-        }
-        if (value instanceof LocalDate localDate) {
-            return localDate.toString();
-        }
-        if (value instanceof LocalDateTime localDateTime) {
-            return localDateTime.toString();
-        }
-        if (value instanceof LocalTime localTime) {
-            return localTime.toString();
         }
         return entityMapper.toFilterValue(value);
     }

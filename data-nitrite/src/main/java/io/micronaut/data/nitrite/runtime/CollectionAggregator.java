@@ -111,7 +111,7 @@ public final class CollectionAggregator {
             };
         }
 
-        // Handle LocalDate aggregation (stored as String in Nitrite)
+        // Handle LocalDate aggregation (stored as epoch day; values may be pre-converted)
         if (first instanceof LocalDate) {
             List<LocalDate> dates = values.stream().map(v -> (LocalDate) v).toList();
             return switch (aggFunc) {
@@ -121,7 +121,7 @@ public final class CollectionAggregator {
             };
         }
 
-        // Handle LocalDateTime aggregation (stored as String in Nitrite)
+        // Handle LocalDateTime aggregation (stored as epoch nanos; values may be pre-converted)
         if (first instanceof LocalDateTime) {
             List<LocalDateTime> dateTimes = values.stream().map(v -> (LocalDateTime) v).toList();
             return switch (aggFunc) {
@@ -143,7 +143,7 @@ public final class CollectionAggregator {
                     default -> null;
                 };
             } catch (Exception e) {
-                // Not a date string, fall through to generic Comparable handling
+                // Not a parseable date string, fall through to generic Comparable handling
             }
         }
 

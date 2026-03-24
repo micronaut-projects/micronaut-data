@@ -151,7 +151,7 @@ public final class NitriteOperationsFactory {
    *
    * <p>This factory method centralizes Jackson configuration in a single place to ensure:</p>
    * <ul>
-   *   <li>ISO date strings (not epoch timestamps) for Instant/LocalDate/LocalDateTime</li>
+   *   <li>Consistent date handling for any raw temporal values Nitrite stores internally</li>
    *   <li>Optional JTS module support for Geometry types</li>
    * </ul>
    *
@@ -162,8 +162,8 @@ public final class NitriteOperationsFactory {
     // This is NOT Micronaut's ObjectMapper bean.
     ObjectMapper mapper = new ObjectMapper();
 
-    // Micronaut-consistent: ISO date strings, not epoch timestamps
-    // This ensures query parameters match stored Instant/LocalDate/LocalDateTime values
+    // Entity temporal fields are stored as epoch numbers via toFilterValue — this
+    // setting only applies to raw temporal values Nitrite itself may serialize internally.
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     mapper.registerModule(new JavaTimeModule());
 
@@ -231,7 +231,7 @@ public final class NitriteOperationsFactory {
   /**
    * NitriteModule wrapping a locally-constructed, Nitrite-internal Jackson ObjectMapper.
    * This is not Micronaut's ObjectMapper bean — it is a dedicated instance configured
-   * for ISO date strings and optional spatial type support, used only inside Nitrite.
+   * with configured date handling and optional spatial type support, used only inside Nitrite.
    */
   private static class NitriteJacksonMapperModule implements NitriteModule {
     private final JacksonMapper jacksonMapper;

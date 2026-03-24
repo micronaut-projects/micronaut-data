@@ -81,7 +81,7 @@ public final class ValueConverter {
             return (T) value;
         }
 
-        // Handle temporal types directly for ISO string format
+        // Handle temporal types from String (legacy ISO format or other string sources)
         if (value instanceof String str) {
             if (targetType == LocalDate.class) {
                 try {

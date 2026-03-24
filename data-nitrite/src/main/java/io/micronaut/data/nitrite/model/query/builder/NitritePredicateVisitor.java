@@ -36,10 +36,12 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import jakarta.persistence.criteria.Expression;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -659,17 +661,13 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
   private static Object convertValue(final Object value) {
     if (value instanceof Instant instant) {
-      // Convert to ISO string format to match Jackson serialization
-      // when WRITE_DATES_AS_TIMESTAMPS is disabled
-      return instant.toString();
+      return NitriteEntityMapper.epochNanos(instant);
     }
     if (value instanceof LocalDate localDate) {
-      // Convert to ISO string format (e.g., "1986-06-05") to match Jackson serialization
-      return localDate.toString();
+      return localDate.toEpochDay();
     }
     if (value instanceof LocalDateTime localDateTime) {
-      // Convert to ISO string format (e.g., "1986-06-05T12:30:45") to match Jackson serialization
-      return localDateTime.toString();
+      return NitriteEntityMapper.epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
     }
     if (value instanceof ZonedDateTime zonedDateTime) {
       return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);

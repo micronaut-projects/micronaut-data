@@ -84,9 +84,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1471,7 +1473,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    */
   @Override
   public <T, R> R findOne(@NonNull final PreparedQuery<T, R> q) {
-    return queryExecutor.findOne(q, getNitritePreparedQuery(q));
+    R result = queryExecutor.findOne(q, getNitritePreparedQuery(q));
+    // Projected scalar results (e.g. LocalDate, Instant) come back as raw numbers from Nitrite.
+    // Convert them here before the framework interceptor calls ConversionService on them.
+    if (!(result instanceof Number)) {
+      return result;
+    }
+    @SuppressWarnings("unchecked")
+    R converted = (R) convertValue(result, q.getResultType());
+    return converted;
   }
 
   /**
@@ -1520,30 +1530,20 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return value;
     }
 
-    // Handle LocalDate conversion from ISO string format (e.g., "1986-06-05")
-    if (targetType == LocalDate.class && value instanceof String) {
-      try {
-        return LocalDate.parse((String) value);
-      } catch (Exception e) {
-        // Fall through to conversion service
+    // Reverse the epoch-number storage format produced by NitriteEntityMapper.toFilterValue.
+    // Nitrite's Jackson may return Integer, Long, or Double for stored numeric values.
+    if (value instanceof Number n) {
+      if (targetType == Instant.class) {
+        return NitriteEntityMapper.fromEpochNanos(n.longValue());
       }
-    }
-
-    // Handle LocalDateTime conversion from ISO string format
-    if (targetType == LocalDateTime.class && value instanceof String) {
-      try {
-        return LocalDateTime.parse((String) value);
-      } catch (Exception e) {
-        // Fall through to conversion service
+      if (targetType == LocalDate.class) {
+        return LocalDate.ofEpochDay(n.longValue());
       }
-    }
-
-    // Handle LocalTime conversion from ISO string format
-    if (targetType == LocalTime.class && value instanceof String) {
-      try {
-        return LocalTime.parse((String) value);
-      } catch (Exception e) {
-        // Fall through to conversion service
+      if (targetType == LocalDateTime.class) {
+        return LocalDateTime.ofInstant(NitriteEntityMapper.fromEpochNanos(n.longValue()), ZoneOffset.UTC);
+      }
+      if (targetType == LocalTime.class) {
+        return LocalTime.ofNanoOfDay(n.longValue());
       }
     }
 

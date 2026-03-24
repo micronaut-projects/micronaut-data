@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -367,16 +368,16 @@ public final class NitriteCriteriaExecutor {
             return list;
         }
         if (value instanceof Instant instant) {
-            return instant.toString();
+            return NitriteEntityMapper.epochNanos(instant);
         }
         if (value instanceof LocalDate localDate) {
-            return localDate.toString();
+            return localDate.toEpochDay();
         }
         if (value instanceof LocalDateTime localDateTime) {
-            return localDateTime.toString();
+            return NitriteEntityMapper.epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
         }
         if (value instanceof LocalTime localTime) {
-            return localTime.toString();
+            return localTime.toNanoOfDay();
         }
         if (value instanceof Number || value instanceof Boolean || value instanceof Character) {
             return value;
