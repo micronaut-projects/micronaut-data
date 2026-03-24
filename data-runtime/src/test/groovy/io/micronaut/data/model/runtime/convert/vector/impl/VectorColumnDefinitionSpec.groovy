@@ -1,6 +1,7 @@
 package io.micronaut.data.model.runtime.convert.vector.impl
 
 import io.micronaut.core.type.Argument
+import io.micronaut.data.annotation.VectorShape
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.vector.ByteVector
 import io.micronaut.data.model.vector.DoubleVector
@@ -34,7 +35,7 @@ class VectorColumnDefinitionSpec extends Specification {
                 vectorStorageAttributes.put("length", vectorStorageLength)
             }
             if (sparse != null) {
-                vectorStorageAttributes.put("sparse", sparse)
+                vectorStorageAttributes.put("shape", sparse ? VectorShape.SPARSE : VectorShape.DENSE)
             }
             declaredAnnotations.put("io.micronaut.data.annotation.VectorStorage", vectorStorageAttributes)
         }
@@ -110,5 +111,27 @@ class VectorColumnDefinitionSpec extends Specification {
         expect:
         conv.getColumnDefinition(arg(Vector, null, null, true), DatabaseType.ORACLE) == "VECTOR(*,FLOAT32,SPARSE)"
         conv.getColumnDefinition(arg(Vector, null, 5, true), DatabaseType.ORACLE) == "VECTOR(5,FLOAT32,SPARSE)"
+    }
+
+    void "oracle: deprecated sparse flag is still honored"() {
+        given:
+        def conv = new DefaultVectorAttributeConverter(Collections.emptyList())
+        Map<String, Map<CharSequence, Object>> declaredAnnotations = [
+            "io.micronaut.data.annotation.VectorStorage": [
+                "length": 5,
+                "sparse": true
+            ]
+        ]
+        def metadata = new DefaultAnnotationMetadata(
+            declaredAnnotations,
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            declaredAnnotations,
+            Collections.emptyMap()
+        )
+        def argument = Argument.of(Vector, "embedding", metadata)
+
+        expect:
+        conv.getColumnDefinition(argument, DatabaseType.ORACLE) == "VECTOR(5,FLOAT32,SPARSE)"
     }
 }

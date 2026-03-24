@@ -34,7 +34,7 @@ snippet::example.DocumentEmbedding[project-base="doc-examples/jdbc-vector-exampl
 To create a vector index, annotate the vector property with @VectorIndex (params: name optional, vectorIndexType IVF|HNSW, distanceType, accuracy).
 Dialect notes:
 - PostgreSQL (pgvector): Creates ivfflat/hnsw; operator class is derived from distance (e.g. COSINE -> vector_cosine_ops, DOT -> vector_ip_ops, L1/L2 -> vector_l1_ops/vector_l2_ops).
-  For sparse columns (`@VectorStorage(sparse = true)`), Micronaut Data emits sparse opclasses (`sparsevec_*_ops`) and requires `HNSW`.
+  For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse opclasses (`sparsevec_*_ops`) and requires `HNSW`.
 - Oracle: Creates CREATE VECTOR INDEX with ORGANIZATION NEIGHBOR PARTITIONS (IVF) or GRAPH (HNSW), uses DISTANCE and target ACCURACY.
 
 === Repository usage
@@ -108,7 +108,7 @@ If an unsupported function is requested for the active dialect, Micronaut Data f
 
 === Oracle sparse vector columns
 
-For Oracle, declare sparse vector storage with `@VectorStorage(sparse = true)` on the vector property.
+For Oracle, declare sparse vector storage with `@VectorStorage(shape = VectorShape.SPARSE)` on the vector property.
 You can also set dimensions with `@VectorStorage(length = N)` (equivalent to `@Column(length = N)` for vectors).
 
 When the property type is generic `Vector` (not `FloatVector`/`DoubleVector`/`ByteVector`) and sparse storage is enabled,
@@ -137,7 +137,7 @@ snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector
 
 Micronaut Data honors vector dimension from `@VectorStorage(length = N)` and, when absent, from `@jakarta.persistence.Column(length = N)`:
 
-- PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(sparse = true)` is set
+- PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set
 - Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
 - MySQL HeatWave: `VECTOR(N)` or `VECTOR`
 
@@ -146,14 +146,14 @@ The Oracle `<TYPE>` is inferred from the vector subtype:
 - `FloatVector`  -> `FLOAT32`
 - `ByteVector`   -> `INT8`
 
-For sparse columns declared as generic `Vector` (`@VectorStorage(sparse = true)`), Oracle defaults to `FLOAT32`.
+For sparse columns declared as generic `Vector` (`@VectorStorage(shape = VectorShape.SPARSE)`), Oracle defaults to `FLOAT32`.
 
 If the dialect does not support vectors, Micronaut Data falls back to `VARCHAR(255)` for vector column definitions and logs a warning.
 
 
 === PostgreSQL (pgvector)
 
-- Column type: `vector` / `vector(N)` (dense) or `sparsevec` / `sparsevec(N)` when `@VectorStorage(sparse = true)` is used
+- Column type: `vector` / `vector(N)` (dense) or `sparsevec` / `sparsevec(N)` when `@VectorStorage(shape = VectorShape.SPARSE)` is used
 - Only `FloatVector` is supported.
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.

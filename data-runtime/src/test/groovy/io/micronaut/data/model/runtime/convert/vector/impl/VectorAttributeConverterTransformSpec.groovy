@@ -5,6 +5,7 @@ import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.inject.annotation.DefaultAnnotationMetadata
 import io.micronaut.data.runtime.mapper.ResultReader
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorShape
 import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.DoubleVector
@@ -25,7 +26,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
 
     @MappedEntity("vector_contract_doc")
     static class VectorContractEntity {
-        @VectorStorage(length = 5, sparse = true)
+        @VectorStorage(length = 5, shape = VectorShape.SPARSE)
         Vector sparseEmbedding
 
         Vector denseEmbedding
@@ -232,7 +233,7 @@ class VectorAttributeConverterTransformSpec extends Specification {
         persisted == "oracle:SparseFloatVector"
     }
 
-    def "dense vector written through sparse=true field is preserved through shared conversion path"() {
+    def "dense vector written through sparse-shape field is preserved through shared conversion path"() {
         given:
         def vectorConverter = Stub(VectorTypeConverter) {
             getPersistedType() >> String

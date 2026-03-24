@@ -28,7 +28,6 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.VectorIndex;
-import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -50,6 +49,7 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
+import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -446,7 +446,7 @@ public final class SqlSchemaUtils {
                 VectorIndexType indexType = vi.enumValue("vectorIndexType", VectorIndexType.class).orElse(VectorIndexType.IVF);
                 VectorIndexType.DistanceType distanceType = vi.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
                 int accuracy = vi.intValue("accuracy").orElse(90);
-                boolean sparse = prop.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
+                boolean sparse = VectorStorageShapeResolver.isSparse(prop.getAnnotationMetadata());
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), prop);
                 VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy, sparse);
                 SqlIndexDefinitionProvider provider = null;

@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
 import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.annotation.VectorShape
 import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
@@ -45,7 +46,7 @@ class OracleXeVectorIndexDdlSpec extends Specification {
     static class DocumentEmbeddingSparseEntity {
         Long id
 
-        @VectorStorage(length = 5, sparse = true)
+        @VectorStorage(length = 5, shape = VectorShape.SPARSE)
         ByteVector embedding
     }
 

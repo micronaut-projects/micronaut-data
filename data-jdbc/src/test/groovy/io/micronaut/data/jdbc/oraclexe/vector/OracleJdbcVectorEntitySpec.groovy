@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.VectorShape
 import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
@@ -258,7 +259,7 @@ class SparseVectorDoc {
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
 
-    @VectorStorage(length = 5, sparse = true)
+    @VectorStorage(length = 5, shape = VectorShape.SPARSE)
     Vector embedding
 }
 

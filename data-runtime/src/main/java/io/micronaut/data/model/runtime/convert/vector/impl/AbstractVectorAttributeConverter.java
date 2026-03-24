@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import io.micronaut.core.type.Argument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,7 +233,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
                 .intValue("jakarta.persistence.Column", "length")
                 .orElse(-1));
         boolean hasLen = dim > 0;
-        boolean sparse = argument.getAnnotationMetadata().booleanValue(VectorStorage.class, "sparse").orElse(false);
+        boolean sparse = VectorStorageShapeResolver.isSparse(argument.getAnnotationMetadata());
 
         return switch (databaseType) {
             case ORACLE -> {

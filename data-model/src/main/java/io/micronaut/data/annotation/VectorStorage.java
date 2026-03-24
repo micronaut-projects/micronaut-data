@@ -39,7 +39,13 @@ public @interface VectorStorage {
     int length() default -1;
 
     /**
+     * @return Vector shape.
+     */
+    VectorShape shape() default VectorShape.DENSE;
+
+    /**
      * @return Whether sparse vector storage should be used.
      */
+    @Deprecated(forRemoval = false)
     boolean sparse() default false;
 }

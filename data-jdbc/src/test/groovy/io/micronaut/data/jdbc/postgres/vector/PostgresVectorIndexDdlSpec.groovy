@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
 import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.annotation.VectorShape
 import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
@@ -37,7 +38,7 @@ class PostgresVectorIndexDdlSpec extends Specification {
     static class DocumentEmbeddingSparseEntity {
         Long id
 
-        @VectorStorage(length = 3, sparse = true)
+        @VectorStorage(length = 3, shape = VectorShape.SPARSE)
         @VectorIndex(
             vectorIndexType = VectorIndexType.HNSW,
             distanceType = VectorIndexType.DistanceType.COSINE,
@@ -50,7 +51,7 @@ class PostgresVectorIndexDdlSpec extends Specification {
     static class DocumentEmbeddingSparseIvfEntity {
         Long id
 
-        @VectorStorage(length = 3, sparse = true)
+        @VectorStorage(length = 3, shape = VectorShape.SPARSE)
         @VectorIndex(
             vectorIndexType = VectorIndexType.IVF,
             distanceType = VectorIndexType.DistanceType.COSINE,
