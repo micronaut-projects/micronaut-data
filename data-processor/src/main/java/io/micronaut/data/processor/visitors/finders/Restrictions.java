@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -39,8 +40,6 @@ import java.util.stream.Collectors;
  */
 @Internal
 public final class Restrictions {
-
-    private static final String VECTOR_SCORE_FUNCTION = "mn_vector_score";
 
     private static final List<PropertyRestriction> PROPERTY_RESTRICTIONS_LIST = Arrays.stream(Restrictions.class.getClasses())
             .filter(clazz -> PropertyRestriction.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers()))
@@ -715,7 +714,7 @@ public final class Restrictions {
                               PersistentEntityCriteriaBuilder cb,
                               Expression<Object> expression,
                               List<ParameterExpression<Object>> parameters) {
-            Expression<Double> score = cb.function(VECTOR_SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+            Expression<Double> score = cb.function(VectorScoringFunctionDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
             Expression<Double> threshold = (Expression<Double>) (Expression<?>) parameters.get(1);
             return cb.lessThanOrEqualTo(score, threshold);
         }
@@ -741,7 +740,7 @@ public final class Restrictions {
                               PersistentEntityCriteriaBuilder cb,
                               Expression<Object> expression,
                               List<ParameterExpression<Object>> parameters) {
-            Expression<Double> score = cb.function(VECTOR_SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+            Expression<Double> score = cb.function(VectorScoringFunctionDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
             Expression<Double> min = (Expression<Double>) (Expression<?>) parameters.get(1);
             Expression<Double> max = (Expression<Double>) (Expression<?>) parameters.get(2);
             return cb.and(cb.greaterThanOrEqualTo(score, min), cb.lessThanOrEqualTo(score, max));

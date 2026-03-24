@@ -27,6 +27,8 @@ import java.util.EnumSet;
 @Internal
 public interface VectorScoringFunctionDialectSupport {
 
+    String SCORE_FUNCTION = "mn_vector_score";
+
     /**
      * @return The dialect this strategy supports.
      */

@@ -39,9 +39,9 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
-import io.micronaut.data.model.vector.search.VectorSearch;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -495,7 +495,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             vectorPropertyExpression.getProperty()
         );
         ParameterExpression<Vector> vectorParameter = cb.parameter(vectorElement, propertyPath);
-        Expression<Double> scoreExpr = cb.function(VectorSearch.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
+        Expression<Double> scoreExpr = cb.function(VectorScoringFunctionDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
         query.multiselect(root, scoreExpr.alias("mn_score"));
     }
 

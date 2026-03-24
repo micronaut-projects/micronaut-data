@@ -108,7 +108,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
-import static io.micronaut.data.model.vector.search.VectorSearch.SCORE_FUNCTION;
+import static io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport.SCORE_FUNCTION;
 
 /**
  * An abstract class for builders that build SQL-like queries.
