@@ -42,4 +42,35 @@ tasks.withType(JavaCompile).configureEach {
             "-Amicronaut.data.jpa.metamodel.enabled=true"
     ]
 }
+// To test the metamodel generation when micronaut.data.jpa.metamodel.enabled=false
+def disabledGenDir = layout.buildDirectory.dir("generated/metamodel-disabled")
+def disabledClassesDir = layout.buildDirectory.dir("classes/metamodel-disabled")
+
+tasks.register("compileMetamodelDisabled", JavaCompile) {
+    dependsOn("clean")
+    source = sourceSets.main.java
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = disabledClassesDir
+
+    options.annotationProcessorPath = configurations.annotationProcessor
+    options.compilerArgs += [
+            "-proc:only",
+            "-s", disabledGenDir.get().asFile.absolutePath,
+            "-Amicronaut.data.jpa.metamodel.enabled=false"
+    ]
+}
+
+tasks.register("verifyMetamodelDisabled") {
+    dependsOn("compileMetamodelDisabled")
+    doLast {
+        def generated = fileTree(disabledGenDir).matching { include "**/*_.java" }.files
+        if (!generated.isEmpty()) {
+            throw new GradleException("Expected no metamodel files when disabled; found: $generated")
+        }
+    }
+}
+
+tasks.named("test") {
+    dependsOn("verifyMetamodelDisabled")
+}
 
