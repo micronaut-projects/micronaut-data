@@ -37,4 +37,9 @@ dependencies {
 application {
     mainClass = "com.example.Application"
 }
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            "-Amicronaut.data.jpa.metamodel.enabled=true"
+    ]
+}
 

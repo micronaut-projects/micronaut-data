@@ -32,6 +32,11 @@ import java.util.*;
 public final class JpaMetamodelProcessor {
 
     /**
+     * JPA MetaModel generation build time flag name.
+     */
+    public static final String JPA_METAMODEL_ENABLED_FLAG = "micronaut.data.jpa.metamodel.enabled";
+
+    /**
      * Jakarta Generated annotation name.
      */
     public static final String JAKARTA_ANNOTATION_GENERATED = "jakarta.annotation.Generated";

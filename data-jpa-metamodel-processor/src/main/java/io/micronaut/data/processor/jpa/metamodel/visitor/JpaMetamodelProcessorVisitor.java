@@ -18,7 +18,6 @@ package io.micronaut.data.processor.jpa.metamodel.visitor;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -27,22 +26,20 @@ import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
 
+import javax.annotation.processing.SupportedOptions;
 import java.util.HashSet;
 import java.util.Set;
+
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*;
 
 /**
  * Jpa static meta model annotation processor visitor.
  */
 @Internal
+@SupportedOptions(JPA_METAMODEL_ENABLED_FLAG)
 public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Object, Object> {
 
     private final Set<String> processed = new HashSet<>();
-
-    /**
-     * Default constructor.
-     */
-    public JpaMetamodelProcessorVisitor() {
-    }
 
     /**
      * Supported Jakarta annotation names.
@@ -50,7 +47,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
      */
     @Override
     public Set<String> getSupportedAnnotationNames() {
-        return JpaMetamodelProcessor.SUPPORTED_JAKARTA_ANNOTATIONS;
+        return SUPPORTED_JAKARTA_ANNOTATIONS;
     }
 
     /**
@@ -59,12 +56,13 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
      */
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
-        if (!JpaMetamodelProcessor.supportedClass(element) ||
+        if (!isEnabled(context) ||
+            !supportedClass(element) ||
             processed.contains(element.getName())) {
             return;
         }
         try {
-            ClassDef.ClassDefBuilder builder = JpaMetamodelProcessor.createJpaMetaModelClassDefBuilder(element.getPackageName(), element);
+            ClassDef.ClassDefBuilder builder = createJpaMetaModelClassDefBuilder(element.getPackageName(), element);
             ClassDef builderDef = builder.build();
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {
@@ -76,7 +74,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
             throw e;
         } catch (Exception e) {
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            throw new ProcessingException(element, "Failed to generate a @" + JpaMetamodelProcessor.JAKARTA_STATIC_METAMODEL + ": " + message, e);
+            throw new ProcessingException(element, "Failed to generate a @" + JAKARTA_STATIC_METAMODEL + ": " + message, e);
         }
     }
 
@@ -96,4 +94,12 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
         return VisitorKind.ISOLATING;
     }
 
+    @Override
+    public Set<String> getSupportedOptions() {
+        return Set.of(JPA_METAMODEL_ENABLED_FLAG);
+    }
+
+    private boolean isEnabled(VisitorContext context) {
+        return Boolean.parseBoolean(context.getOptions().getOrDefault(JPA_METAMODEL_ENABLED_FLAG, "true"));
+    }
 }
