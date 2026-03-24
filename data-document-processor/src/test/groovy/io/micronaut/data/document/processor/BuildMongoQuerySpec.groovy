@@ -428,9 +428,9 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         repository.getRequiredMethod("customUpdateReturningString", String)
     }
 
-    void "test update query entity return should use update returning annotation"() {
+    void "test update query entity return remains regular update path"() {
         when:
-        buildRepository('test.MyInterface2', """
+        def repository = buildRepository('test.MyInterface2', """
 import io.micronaut.data.mongodb.annotation.*;
 import io.micronaut.data.document.tck.entities.Book;
 
@@ -444,8 +444,7 @@ interface MyInterface2 extends GenericRepository<Book, String> {
 """
         )
         then:
-        def ex = thrown(Exception)
-        ex.message.contains('MongoDB update query return type must be void/number/boolean. Use @MongoUpdateReturningQuery for update-returning methods.')
+        repository.getRequiredMethod("customUpdateReturningEntity", String)
     }
 
     void "test update returning annotation does not support void return type"() {

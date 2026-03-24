@@ -109,13 +109,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             @Override
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
                 DataMethod.OperationType actualOperationType = operationType;
-                if (actualOperationType == DataMethod.OperationType.UPDATE) {
-                    MethodElement methodElement = matchContext.getMethodElement();
-                    ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
-                    if (producedType != null && !TypeUtils.isVoid(producedType) && !TypeUtils.isNumber(producedType) && !TypeUtils.isBoolean(producedType)) {
-                        throw new MatchFailedException("MongoDB update query return type must be void/number/boolean. Use @MongoUpdateReturningQuery for update-returning methods.");
-                    }
-                } else if (actualOperationType == DataMethod.OperationType.UPDATE_RETURNING) {
+                if (actualOperationType == DataMethod.OperationType.UPDATE_RETURNING) {
                     MethodElement methodElement = matchContext.getMethodElement();
                     ClassElement returnType = matchContext.getReturnType();
                     ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);

@@ -89,8 +89,6 @@ public final class MongoOptionsUtils {
         }
         if (updateReturningAnn != null) {
             updateReturningAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
-        } else if (optionsAnn != null) {
-            optionsAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
         }
         String[] arrayFilters;
         if (updateReturningAnn != null) {
