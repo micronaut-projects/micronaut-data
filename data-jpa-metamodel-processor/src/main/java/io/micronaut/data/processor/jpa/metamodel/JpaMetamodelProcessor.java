@@ -217,7 +217,7 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
-     * Resolves the access type based.
+     * Resolves the access type.
      * @param element Class element.
      * @param jakartaAccessAnnotation Jakarta access annotation value.
      * @return Jakarta access type.
