@@ -112,6 +112,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                         if (TypeUtils.isReactiveOrFuture(returnType)) {
                             throw new MatchFailedException("MongoDB update returning currently supports only blocking single-result return types");
                         }
+                        if (returnType.isAssignable(Iterable.class)) {
+                            throw new MatchFailedException("MongoDB update returning supports only a single result");
+                        }
                         actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
                     }
                 }

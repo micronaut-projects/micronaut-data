@@ -388,6 +388,27 @@ interface MyInterface2 extends GenericRepository<Book, String> {
             collation == '{ locale: \'en_US\', numericOrdering: true}'
     }
 
+    void "test update returning does not support iterable return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import java.util.List;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    List<Book> customUpdateReturningList(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result')
+    }
+
     void "test find by ids method"() {
         given:
         def repository = buildRepository('test.PersonRepository', """
