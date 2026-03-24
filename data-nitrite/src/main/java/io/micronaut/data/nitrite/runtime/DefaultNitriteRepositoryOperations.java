@@ -68,6 +68,7 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
@@ -196,9 +197,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @param configuration The Nitrite configuration
    * @param dateTimeProvider Date/time provider used by the base operations
    * @param runtimeEntityRegistry Entity metadata registry
-   * @param conversionService Conversion service
+   * @param conversionService Conversion service (for field-level conversions)
    * @param attributeConverterRegistry Attribute converter registry
    * @param transactionHolder Transaction context holder
+   * @param serdeObjectMapper Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
    */
   public DefaultNitriteRepositoryOperations(
       final Nitrite database,
@@ -207,13 +209,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       final RuntimeEntityRegistry runtimeEntityRegistry,
       final DataConversionService conversionService,
       final AttributeConverterRegistry attributeConverterRegistry,
-      final NitriteTransactionHolder transactionHolder) {
+      final NitriteTransactionHolder transactionHolder,
+      final ObjectMapper serdeObjectMapper) {
     super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
     this.database = database;
     this.configuration = configuration;
     this.entityMapper =
         new NitriteEntityMapper(
-            conversionService, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
+            conversionService, serdeObjectMapper, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
     this.entityMapper.setHelper(this);
     this.transactionHolder = transactionHolder;
     this.queryParser = new NitriteQueryParser();

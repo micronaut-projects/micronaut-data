@@ -53,8 +53,10 @@ dependencies {
     compileOnly libs.nitrite.rocksdb.adapter
     compileOnly libs.nitrite.spatial
     compileOnly libs.jackson.datatype.jts
-    api libs.jackson.datatype.jsr310
+    implementation libs.jackson.datatype.jsr310
     api libs.jakarta.persistence.api
+    implementation mnSerde.micronaut.serde.jackson
+    implementation mnSerde.micronaut.serde.support
 
     compileOnly mn.micronaut.inject.groovy
 

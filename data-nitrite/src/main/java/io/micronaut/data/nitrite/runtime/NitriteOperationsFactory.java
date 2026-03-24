@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.nitrite.runtime;
 
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -35,6 +36,7 @@ import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
+import org.dizitart.no2.mapper.jackson.JacksonMapper;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +66,7 @@ public final class NitriteOperationsFactory {
    * Create a Nitrite database instance.
    *
    * <p>Note: the mapper is configured with Jackson's {@link JavaTimeModule}. The runtime normalizes
-   * certain values (notably {@link java.time.Instant}) to match the mapper’s stored representation
+   * certain values (notably {@link java.time.Instant}) to match the mapper's stored representation
    * when building query filters (see {@code DefaultNitriteRepositoryOperations.toFilterValue}).
    *
    * @param config the configuration
@@ -139,18 +141,38 @@ public final class NitriteOperationsFactory {
     return Optional.empty();
   }
 
+  /**
+   * Creates a NitriteModule with a Nitrite-internal Jackson ObjectMapper.
+   *
+   * <p><strong>Architecture Note:</strong> Jackson is an internal implementation detail of the
+   * Nitrite integration, not part of this module's public API. Entity ↔ Map conversion at the
+   * module boundary is handled by {@code NitriteEntityMapper} using Micronaut Serde. This
+   * Jackson ObjectMapper is used only for Nitrite's internal Document storage.</p>
+   *
+   * <p>This factory method centralizes Jackson configuration in a single place to ensure:</p>
+   * <ul>
+   *   <li>ISO date strings (not epoch timestamps) for Instant/LocalDate/LocalDateTime</li>
+   *   <li>Optional JTS module support for Geometry types</li>
+   * </ul>
+   *
+   * @return NitriteModule with configured internal Jackson mapper
+   */
   private NitriteModule createJacksonMapperModule() {
-    // Create JacksonMapperModule with JavaTimeModule and optional JTS module
-    // The CustomJacksonMapper will configure ObjectMapper for ISO date strings
-    java.util.List<com.fasterxml.jackson.databind.Module> modules = new java.util.ArrayList<>();
-    modules.add(new JavaTimeModule());
+    // Dedicated ObjectMapper for Nitrite's internal document serialization only.
+    // This is NOT Micronaut's ObjectMapper bean.
+    ObjectMapper mapper = new ObjectMapper();
 
-    // Check if JTS module is available for Geometry serialization
+    // Micronaut-consistent: ISO date strings, not epoch timestamps
+    // This ensures query parameters match stored Instant/LocalDate/LocalDateTime values
+    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    mapper.registerModule(new JavaTimeModule());
+
+    // Optional: JTS module for Geometry serialization (spatial queries)
     if (ClassUtils.isPresent(JTS_MODULE_CLASS, null)) {
         try {
             Class<?> jtsModuleClass = Class.forName(JTS_MODULE_CLASS);
             Object jtsModule = jtsModuleClass.getDeclaredConstructor().newInstance();
-            modules.add((com.fasterxml.jackson.databind.Module) jtsModule);
+            mapper.registerModule((Module) jtsModule);
         } catch (Exception e) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn("JTS module found but could not be registered: {}", e.getMessage());
@@ -158,13 +180,7 @@ public final class NitriteOperationsFactory {
         }
     }
 
-    // Use our custom JacksonMapper that configures ObjectMapper properly
-    CustomJacksonMapper customMapper = new CustomJacksonMapper();
-    for (com.fasterxml.jackson.databind.Module module : modules) {
-      customMapper.registerJacksonModule(module);
-    }
-
-    return new CustomJacksonMapperModule(customMapper);
+    return new NitriteJacksonMapperModule(mapper);
   }
 
   private File prepareDbFile(String dbPath) {
@@ -183,9 +199,10 @@ public final class NitriteOperationsFactory {
    * @param configuration the configuration
    * @param dateTimeProvider the date time provider
    * @param runtimeEntityRegistry the runtime entity registry
-   * @param conversionService the conversion service
+   * @param conversionService the conversion service (for field-level conversions)
    * @param attributeConverterRegistry the attribute converter registry
    * @param transactionHolder the transaction holder
+   * @param serdeObjectMapper the Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
    * @return the repository operations
    */
   @Bean
@@ -198,7 +215,8 @@ public final class NitriteOperationsFactory {
       RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
       AttributeConverterRegistry attributeConverterRegistry,
-      NitriteTransactionHolder transactionHolder) {
+      NitriteTransactionHolder transactionHolder,
+      io.micronaut.serde.ObjectMapper serdeObjectMapper) {
     return new DefaultNitriteRepositoryOperations(
         database,
         configuration,
@@ -206,31 +224,25 @@ public final class NitriteOperationsFactory {
         runtimeEntityRegistry,
         conversionService,
         attributeConverterRegistry,
-        transactionHolder);
+        transactionHolder,
+        serdeObjectMapper);
   }
 
   /**
-   * Custom JacksonMapper that configures ObjectMapper to serialize dates as ISO strings
-   * instead of arrays. This is required for Nitrite to properly compare dates in queries.
+   * NitriteModule wrapping a locally-constructed, Nitrite-internal Jackson ObjectMapper.
+   * This is not Micronaut's ObjectMapper bean — it is a dedicated instance configured
+   * for ISO date strings and optional spatial type support, used only inside Nitrite.
    */
-  private static class CustomJacksonMapper extends org.dizitart.no2.mapper.jackson.JacksonMapper {
-    @Override
-    public ObjectMapper getObjectMapper() {
-      ObjectMapper mapper = super.getObjectMapper();
-      // Disable writing dates as timestamps (arrays) - use ISO strings instead
-      mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-      return mapper;
-    }
-  }
+  private static class NitriteJacksonMapperModule implements NitriteModule {
+    private final JacksonMapper jacksonMapper;
 
-  /**
-   * Custom JacksonMapperModule that uses our CustomJacksonMapper.
-   */
-  private static class CustomJacksonMapperModule implements NitriteModule {
-    private final CustomJacksonMapper jacksonMapper;
-
-    CustomJacksonMapperModule(CustomJacksonMapper jacksonMapper) {
-      this.jacksonMapper = jacksonMapper;
+    NitriteJacksonMapperModule(ObjectMapper nitriteMapper) {
+      this.jacksonMapper = new JacksonMapper() {
+        @Override
+        public ObjectMapper getObjectMapper() {
+          return nitriteMapper;
+        }
+      };
     }
 
     @Override
