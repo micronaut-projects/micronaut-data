@@ -1128,6 +1128,25 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Jeff Scalar Updated"
     }
 
+    void "test custom update returning uses sort to select matched document"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
+        given:
+            personRepository.save("Sorted Candidate", 40)
+            personRepository.save("Sorted Candidate", 20)
+
+        when:
+            def returnedBefore = personRepository.updateCustomReturningSortedBefore("Sorted Candidate", "Sorted Updated")
+
+        then:
+            returnedBefore != null
+            returnedBefore.age == 20
+            returnedBefore.name == "Sorted Candidate"
+            personRepository.findByName("Sorted Updated")*.age == [20]
+            personRepository.findByName("Sorted Candidate")*.age.sort() == [40]
+    }
+
     void "test mongo update query increment totalPages returning book"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
             return

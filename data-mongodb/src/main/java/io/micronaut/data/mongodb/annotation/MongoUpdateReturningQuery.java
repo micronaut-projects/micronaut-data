@@ -72,6 +72,14 @@ public @interface MongoUpdateReturningQuery {
     String project() default "";
 
     /**
+     * The custom sort represented in JSON.
+     *
+     * @return The sort JSON
+     */
+    @AliasFor(member = "value", annotation = MongoSort.class)
+    String sort() default "";
+
+    /**
      * The array filters.
      *
      * @return The array filters

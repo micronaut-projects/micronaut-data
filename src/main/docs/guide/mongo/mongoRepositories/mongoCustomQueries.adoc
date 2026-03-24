@@ -16,7 +16,7 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 |Allows defining a custom update method execution with values for filter, update and collation.
 
 |ann:data.mongodb.annotation.MongoUpdateReturningQuery[]
-|Allows defining a custom single-document update-returning execution with values for filter, update, projection, collation and `returnDocument`.
+|Allows defining a custom single-document update-returning execution with values for filter, update, sort, projection, collation and `returnDocument`.
 
 |ann:data.mongodb.annotation.MongoDeleteQuery[]
 |Allows defining a custom update method execution with values for filter and collation.
@@ -68,10 +68,11 @@ NOTE: MongoDB can only return a single updated document for an update operation 
 Update-returning methods must use a single blocking result type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
 Collection/iterable and `void` return types are rejected for ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
 If you use a scalar return type (for example `String`), configure a matching projection with `project`.
+If your filter can match multiple documents, use `sort` to control which document is selected by `findOneAndUpdate`.
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 
-NOTE: Only queries for the filter, pipeline and the update can reference method parameters.
+NOTE: Filter, update, projection, sort and pipeline JSON can reference method parameters.
 
 Some annotations support to be defined on the repository, that can be used to provide the defaults for all operations that support it:
 

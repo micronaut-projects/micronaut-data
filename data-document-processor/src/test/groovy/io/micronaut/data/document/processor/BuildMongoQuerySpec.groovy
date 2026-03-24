@@ -428,6 +428,28 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         repository.getRequiredMethod("customUpdateReturningString", String)
     }
 
+    void "test update returning annotation stores sort metadata"() {
+        when:
+        def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{title:{\$eq: :t}}", update = "{\$set:{name: \\\"tom\\\"}}", sort = "{age: 1}")
+    Book customUpdateReturningSorted(String t);
+
+}
+"""
+        )
+        def method = repository.getRequiredMethod("customUpdateReturningSorted", String)
+        then:
+        method.stringValue(MongoAnnotations.SORT).orElse(null) == '{age: 1}'
+        method.stringValue(Query).orElse(null) == '{title:{$eq: {$mn_qp:0}}}'
+        method.stringValue(Query, "update").orElse(null) == '{$set:{name: "tom"}}'
+    }
+
     void "test update query entity return remains regular update path"() {
         when:
         def repository = buildRepository('test.MyInterface2', """
