@@ -151,16 +151,103 @@ public final class NitriteFilterBuilder {
         final String rawField,
         final Object rawValue) {
 
-        final Map<String, CompiledValue> operators = new LinkedHashMap<>();
-        if (rawValue instanceof Map<?, ?> m && !isPlaceholder(rawValue)) {
-            for (Map.Entry<?, ?> entry : m.entrySet()) {
-                operators.put(entry.getKey().toString(), compileValue(entry.getValue()));
+        // Pre-normalize field name and find property metadata
+        String persistedName = rawField;
+        RuntimePersistentProperty<?> property = null;
+        RuntimeAssociation<?> association = null;
+
+        if (entity != null) {
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity != null && (identity.getName().equals(rawField) || "id".equals(rawField) || "_id".equals(rawField))) {
+                persistedName = entityMapper.normalizeFieldName(rawField, entity);
+                property = identity;
+            } else {
+                property = entity.getPropertyByName(rawField);
+                if (property != null) {
+                    persistedName = property.getPersistedName();
+                } else {
+                    // Search by persisted name (handles FK fields like author_id)
+                    for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+                        if (p.getPersistedName().equals(rawField)) {
+                            property = p;
+                            persistedName = rawField;
+                            break;
+                        }
+                    }
+                }
             }
-        } else {
-            operators.put("$eq", compileValue(rawValue));
+
+            // Detect association potential
+            if (property instanceof RuntimeAssociation<?> assoc) {
+                association = assoc;
+            } else if (property == null) {
+                // Search for reverse lookup patterns
+                for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+                    if (p instanceof RuntimeAssociation<?> assoc) {
+                        Relation.Kind kind = assoc.getKind();
+                        if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
+                            String pName = assoc.getPersistedName();
+                            String sName = assoc.getAssociatedEntity().getSimpleName();
+                            String dName = assoc.getAssociatedEntity().getDecapitalizedName();
+
+                            if (rawField.contains(".")) {
+                                String assocPart = rawField.substring(0, rawField.indexOf('.'));
+                                if (assocPart.equals(pName) || assocPart.equals(sName) || assocPart.equals(dName)) {
+                                    association = assoc;
+                                    break;
+                                }
+                            } else if (rawField.startsWith(pName + "_") || rawField.startsWith(sName + "_") || rawField.startsWith(dName + "_") || rawField.equals(pName)) {
+                                association = assoc;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        return new NitriteFilterAST.FieldNode(this, entity, rawField, operators);
+        final Map<String, Object> operators;
+        final Map<String, CompiledValue> operatorValues = new LinkedHashMap<>();
+        boolean isOperatorMap = false;
+        if (rawValue instanceof Map<?, ?> m && !isPlaceholder(rawValue)) {
+            isOperatorMap = true;
+            operators = toStringObjectMap(m);
+            for (Map.Entry<String, Object> entry : operators.entrySet()) {
+                operatorValues.put(entry.getKey(), compileValue(entry.getValue()));
+            }
+        } else {
+            operators = Collections.singletonMap("$eq", rawValue);
+            operatorValues.put("$eq", compileValue(rawValue));
+        }
+
+        // Strategy Decision:
+        // 1. If it's a potential association or has dots, use the dynamic fallback (100% correct)
+        if (association != null || rawField.contains(".")) {
+            return new NitriteFilterAST.DynamicFieldNode(this, entity, rawField, operators);
+        }
+
+        // 2. Simple equality optimization (the most common case)
+        if (!isOperatorMap) {
+            return new NitriteFilterAST.SimpleEqualityNode(this, entity, persistedName, rawField, operatorValues.get("$eq"));
+        }
+
+        // 3. Simple operator optimization (gt, lt, in, etc.)
+        List<NitriteFilterAST.OperatorBinding> bindings = new ArrayList<>(operatorValues.size());
+        for (Map.Entry<String, CompiledValue> entry : operatorValues.entrySet()) {
+            bindings.add(new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()));
+        }
+        return new NitriteFilterAST.SimpleOperatorNode(this, entity, persistedName, rawField, bindings);
+    }
+
+    /**
+     * Prepare a value for filtering (coercion, conversion, UUID handling).
+     * @param persistedName The persisted field name
+     * @param value The raw value
+     * @param rawField The original field name
+     * @return The prepared value
+     */
+    public Object prepareFilterValue(String persistedName, Object value, String rawField) {
+        return entityMapper.toNitriteFilterValue(preConvertForFilter(maybeCoerceUuid(persistedName, value)), rawField);
     }
 
     private CompiledValue compileValue(final Object value) {
@@ -842,7 +929,7 @@ public final class NitriteFilterBuilder {
         return fieldFilters.size() == 1 ? fieldFilters.get(0) : Filter.and(fieldFilters.toArray(new Filter[0]));
     }
 
-    private Filter buildOperatorFilter(
+    public Filter buildOperatorFilter(
         final RuntimePersistentEntity<?> entity,
         final String field,
         final String op,
