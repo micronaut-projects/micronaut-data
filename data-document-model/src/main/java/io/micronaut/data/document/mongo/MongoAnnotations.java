@@ -31,6 +31,7 @@ public interface MongoAnnotations {
     String AGGREGATION_QUERY = "io.micronaut.data.mongodb.annotation.MongoAggregateQuery";
     String DELETE_QUERY = "io.micronaut.data.mongodb.annotation.MongoDeleteQuery";
     String UPDATE_QUERY = "io.micronaut.data.mongodb.annotation.MongoUpdateQuery";
+    String UPDATE_RETURNING_QUERY = "io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery";
     String FILTER = "io.micronaut.data.mongodb.annotation.MongoFilter";
     String SORT = "io.micronaut.data.mongodb.annotation.MongoSort";
     String PROJECTION = "io.micronaut.data.mongodb.annotation.MongoProjection";

@@ -857,6 +857,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final boolean filterNeedsProcessing;
         @Nullable
         private final FindOneAndUpdateOptions options;
+        @Nullable
+        private final Bson projection;
+        private final boolean projectionNeedsProcessing;
         private final int filterParameterIndex;
         private final int updateParameterIndex;
         private final int optionsParameterIndex;
@@ -870,6 +873,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             this.filterParameterIndex = getParameterIndexByName(filterParameter);
             this.updateParameterIndex = getParameterIndexByName(updateParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
+            this.projection = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).map(BsonDocument::parse).orElse(null);
+            this.projectionNeedsProcessing = needsProcessing(this.projection);
             this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
         }
 
@@ -882,6 +887,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.hintString(options.getHintString());
             newOptions.arrayFilters(options.getArrayFilters());
             newOptions.returnDocument(options.getReturnDocument());
+            newOptions.projection(options.getProjection());
             return newOptions;
         }
 
@@ -905,6 +911,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 to.arrayFilters(from.getArrayFilters());
             }
             to.returnDocument(from.getReturnDocument());
+            if (from.getProjection() != null) {
+                to.projection(from.getProjection());
+            }
         }
 
         private MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext) {
@@ -953,6 +962,13 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 }
                 options.collation(collation);
             }
+            Bson projection = getProjection(invocationContext, null);
+            if (projection != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.projection(projection);
+            }
             return options;
         }
 
@@ -962,6 +978,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 return getParameterAtIndex(invocationContext, filterParameterIndex);
             }
             return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+
+        @Nullable
+        private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (projection == null) {
+                return null;
+            }
+            return projectionNeedsProcessing ? replaceQueryParameters(projection, invocationContext, entity) : projection;
         }
     }
 

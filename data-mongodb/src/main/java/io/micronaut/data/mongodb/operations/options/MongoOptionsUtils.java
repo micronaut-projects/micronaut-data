@@ -35,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
+import io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -75,16 +76,30 @@ public final class MongoOptionsUtils {
     }
 
     public static Optional<FindOneAndUpdateOptions> buildFindOneAndUpdateOptions(AnnotationMetadata annotationMetadata, boolean includeCollation) {
+        AnnotationValue<MongoUpdateReturningQuery> updateReturningAnn = annotationMetadata.getAnnotation(MongoUpdateReturningQuery.class);
         AnnotationValue<MongoUpdateOptions> optionsAnn = annotationMetadata.getAnnotation(MongoUpdateOptions.class);
-        if (optionsAnn == null) {
+        if (optionsAnn == null && updateReturningAnn == null) {
             return Optional.empty();
         }
         FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
-        optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
-        optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
-        optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
-        optionsAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
-        String[] arrayFilters = optionsAnn.stringValues("arrayFilters");
+        if (optionsAnn != null) {
+            optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
+            optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
+            optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+        }
+        if (updateReturningAnn != null) {
+            updateReturningAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
+        } else if (optionsAnn != null) {
+            optionsAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
+        }
+        String[] arrayFilters;
+        if (updateReturningAnn != null) {
+            arrayFilters = updateReturningAnn.stringValues("arrayFilters");
+        } else if (optionsAnn != null) {
+            arrayFilters = optionsAnn.stringValues("arrayFilters");
+        } else {
+            arrayFilters = new String[0];
+        }
         if (arrayFilters.length > 0) {
             options.arrayFilters(Arrays.stream(arrayFilters).map(BsonDocument::parse).toList());
         }

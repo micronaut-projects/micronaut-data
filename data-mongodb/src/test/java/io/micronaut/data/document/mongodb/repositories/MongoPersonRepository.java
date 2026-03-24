@@ -16,6 +16,7 @@ import io.micronaut.data.mongodb.annotation.MongoFindQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import io.micronaut.data.mongodb.annotation.MongoUpdateQuery;
+import io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery;
 import org.bson.BsonDocument;
 
 import java.util.List;
@@ -69,24 +70,23 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoUpdateQuery(update = "{$set:{'addresses.$[address].zipCode': :zipCode}}", arrayFilters = "{'address.zipCode': null}}}")
     long updateMissingZipcodeInAddress(String zipCode);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
-    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     Person updateCustomReturning(String id, String newName);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
-    @MongoUpdateOptions(returnDocument = ReturnDocument.BEFORE)
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.BEFORE)
     Person updateCustomReturningBefore(String id, String newName);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
-    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     Person updateCustomReturningAfterWithOptions(String id, String newName, FindOneAndUpdateOptions options);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
-    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     PersonNameDto updateCustomReturningDto(String id, String newName);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
     Person updateCustomReturningDefault(String id, String newName);
+
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", project = "{name: 1}", returnDocument = ReturnDocument.AFTER)
+    String updateCustomReturningNameProjection(String id, String newName);
 
     @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
     boolean updateCustomBooleanReturning(String id, String newName);

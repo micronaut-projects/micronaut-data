@@ -1113,6 +1113,21 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Jeff DTO Updated"
     }
 
+    void "test custom update returning scalar projection"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
+        given:
+            def person = personRepository.save("Jeff Scalar", 20)
+
+        when:
+            def updatedName = personRepository.updateCustomReturningNameProjection(person.id, "Jeff Scalar Updated")
+
+        then:
+            updatedName == "Jeff Scalar Updated"
+            personRepository.findById(person.id).get().name == "Jeff Scalar Updated"
+    }
+
     void "test mongo update query increment totalPages returning book"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
             return

@@ -4,8 +4,7 @@ import io.micronaut.data.document.tck.entities.Book;
 import io.micronaut.data.document.tck.repositories.AuthorRepository;
 import io.micronaut.data.document.tck.repositories.BookRepository;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
-import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
-import io.micronaut.data.mongodb.annotation.MongoUpdateQuery;
+import io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery;
 import com.mongodb.client.model.ReturnDocument;
 
 import jakarta.transaction.Transactional;
@@ -21,10 +20,9 @@ public abstract class MongoBookRepository extends BookRepository {
     @Transactional(Transactional.TxType.MANDATORY)
     public abstract Optional<Book> queryById(String id);
 
-    @MongoUpdateQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1} }")
+    @MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1} }")
     public abstract Book incrementTotalPages(String id);
 
-    @MongoUpdateQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1} }")
-    @MongoUpdateOptions(returnDocument = ReturnDocument.AFTER)
+    @MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1} }", returnDocument = ReturnDocument.AFTER)
     public abstract Book incrementTotalPagesAfter(String id);
 }

@@ -398,7 +398,7 @@ import java.util.List;
 @MongoRepository
 interface MyInterface2 extends GenericRepository<Book, String> {
 
-    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
     List<Book> customUpdateReturningList(String id);
 
 }
@@ -409,7 +409,26 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         ex.message.contains('MongoDB update returning supports only a single result')
     }
 
-    void "test update returning does not support scalar return type"() {
+    void "test update returning supports scalar return type with dedicated annotation"() {
+        when:
+        def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}", project = "{counter: 1}")
+    String customUpdateReturningString(String id);
+
+}
+"""
+        )
+        then:
+        repository.getRequiredMethod("customUpdateReturningString", String)
+    }
+
+    void "test update query entity return should use update returning annotation"() {
         when:
         buildRepository('test.MyInterface2', """
 import io.micronaut.data.mongodb.annotation.*;
@@ -419,14 +438,34 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
-    String customUpdateReturningString(String id);
+    Book customUpdateReturningEntity(String id);
 
 }
 """
         )
         then:
         def ex = thrown(Exception)
-        ex.message.contains('MongoDB update query return type must be void/number/boolean, or a single entity/DTO for update returning')
+        ex.message.contains('MongoDB update query return type must be void/number/boolean. Use @MongoUpdateReturningQuery for update-returning methods.')
+    }
+
+    void "test update returning annotation does not support void return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    void customUpdateReturningVoid(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB @MongoUpdateReturningQuery requires a non-void single return type')
     }
 
     void "test find by ids method"() {
