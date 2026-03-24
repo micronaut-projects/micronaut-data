@@ -2891,11 +2891,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             boolean escape = propertyPath.shouldEscape();
             NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
 
+            // Projection for Embeddable retrieval. EmbeddedId is covered in Id projection/traversal.
             boolean isIdentityProperty = propertyPath.getProperty().getOwner().hasIdentity() && propertyPath.getProperty().getOwner().getIdentity() == propertyPath.getProperty();
             if (propertyPath.getProperty() instanceof Association association && association.isEmbedded() && !isIdentityProperty) {
+                int resultAssociationOffset = propertyPath.getAssociations().size() + 1;
+                NamingStrategy resultNamingStrategy = getNamingStrategy(association.getAssociatedEntity());
                 PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
                     String projectedColumnName = getMappedName(namingStrategy, associations, property);
-                    String resultColumnName = getMappedName(getNamingStrategy(property.getOwner()), Collections.emptyList(), property);
+                    // Nested embedded fields
+                    List<Association> resultAssociations = associations.size() <= resultAssociationOffset
+                        ? Collections.emptyList()
+                        : associations.subList(resultAssociationOffset, associations.size());
+                    String resultColumnName = getMappedName(resultNamingStrategy, resultAssociations, property);
                     query
                         .append(tableAlias)
                         .append(DOT)

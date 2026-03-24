@@ -1042,6 +1042,46 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         ex.message.contains("method returns an incompatible type")
     }
 
+    void "test nested embedded projection result"() {
+        given:
+        def repository = buildRepository('test.VehicleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Jurisdiction;
+import io.micronaut.data.tck.entities.Registration;
+import io.micronaut.data.tck.entities.Vehicle;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface VehicleRepository extends GenericRepository<Vehicle, Long> {
+
+    Registration findFirstRegistrationById(Long id);
+
+    Registration findSecondRegistrationById(Long id);
+
+    Jurisdiction findFirstRegistrationJurisdictionById(Long id);
+
+    Jurisdiction findSecondRegistrationJurisdictionById(Long id);
+}
+
+""")
+
+        def firstRegistrationMethod = repository.getRequiredMethod("findFirstRegistrationById", Long)
+        def secondRegistrationMethod = repository.getRequiredMethod("findSecondRegistrationById", Long)
+        def firstJurisdictionMethod = repository.getRequiredMethod("findFirstRegistrationJurisdictionById", Long)
+        def secondJurisdictionMethod = repository.getRequiredMethod("findSecondRegistrationJurisdictionById", Long)
+
+        expect:
+        getQuery(firstRegistrationMethod) == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondRegistrationMethod) == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(firstJurisdictionMethod) == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondJurisdictionMethod) == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getResultDataType(firstRegistrationMethod) == DataType.ENTITY
+        getResultDataType(secondRegistrationMethod) == DataType.ENTITY
+        getResultDataType(firstJurisdictionMethod) == DataType.ENTITY
+        getResultDataType(secondJurisdictionMethod) == DataType.ENTITY
+    }
+
     void "test count query with joins"() {
         given:
         def repository = buildRepository('test.AuthorRepository', """

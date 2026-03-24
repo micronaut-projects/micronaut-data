@@ -16,7 +16,10 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.data.tck.entities.Address
+import io.micronaut.data.tck.entities.Jurisdiction
+import io.micronaut.data.tck.entities.Registration
 import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.entities.Vehicle
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -30,6 +33,10 @@ class H2EmbeddedSpec extends Specification {
     @Inject
     @Shared
     H2RestaurantRepository restaurantRepository
+
+    @Inject
+    @Shared
+    H2VehicleRepository vehicleRepository
 
     void "test save and retrieve entity with embedded"() {
         when:"An entity is saved"
@@ -99,6 +106,59 @@ class H2EmbeddedSpec extends Specification {
 
         then:"The correct query is executed"
         restaurant.address.street == 'Smith St.'
+    }
 
+    void "test save and retrieve nested embedded projections"() {
+        given:"A vehicle with two embedded registrations and nested jurisdictions"
+        def firstJurisdiction = new Jurisdiction()
+        firstJurisdiction.countryCode = "US"
+        firstJurisdiction.regionCode = "CA"
+        def firstRegistration = new Registration()
+        firstRegistration.plateNumber = "ABC-123"
+        firstRegistration.status = "ACTIVE"
+        firstRegistration.jurisdiction = firstJurisdiction
+
+        def secondJurisdiction = new Jurisdiction()
+        secondJurisdiction.countryCode = "CA"
+        secondJurisdiction.regionCode = "ON"
+        def secondRegistration = new Registration()
+        secondRegistration.plateNumber = "XYZ-789"
+        secondRegistration.status = "EXPIRED"
+        secondRegistration.jurisdiction = secondJurisdiction
+
+        def vehicle = new Vehicle()
+        vehicle.name = "Delivery Van"
+        vehicle.firstRegistration = firstRegistration
+        vehicle.secondRegistration = secondRegistration
+
+        when:"The vehicle is saved and embedded values are projected back"
+        vehicle = vehicleRepository.save(vehicle)
+        def projectedFirstRegistration = vehicleRepository.findFirstRegistrationById(vehicle.id)
+        def projectedSecondRegistration = vehicleRepository.findSecondRegistrationById(vehicle.id)
+        def projectedFirstJurisdiction = vehicleRepository.findFirstRegistrationJurisdictionById(vehicle.id)
+        def projectedSecondJurisdiction = vehicleRepository.findSecondRegistrationJurisdictionById(vehicle.id)
+
+        then:"Top-level embedded projections contain nested embedded values"
+        projectedFirstRegistration
+        projectedFirstRegistration.plateNumber == "ABC-123"
+        projectedFirstRegistration.status == "ACTIVE"
+        projectedFirstRegistration.jurisdiction
+        projectedFirstRegistration.jurisdiction.countryCode == "US"
+        projectedFirstRegistration.jurisdiction.regionCode == "CA"
+
+        projectedSecondRegistration
+        projectedSecondRegistration.plateNumber == "XYZ-789"
+        projectedSecondRegistration.status == "EXPIRED"
+        projectedSecondRegistration.jurisdiction
+        projectedSecondRegistration.jurisdiction.countryCode == "CA"
+        projectedSecondRegistration.jurisdiction.regionCode == "ON"
+
+        and:"Nested embedded field can be projected directly"
+        projectedFirstJurisdiction
+        projectedFirstJurisdiction.countryCode == "US"
+        projectedFirstJurisdiction.regionCode == "CA"
+        projectedSecondJurisdiction
+        projectedSecondJurisdiction.countryCode == "CA"
+        projectedSecondJurisdiction.regionCode == "ON"
     }
 }
