@@ -982,6 +982,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Address;
 import io.micronaut.data.tck.entities.Restaurant;
 import java.util.Optional;
 
@@ -994,6 +995,10 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
 
     Restaurant findByAddressStreet(String street);
 
+    Address findAddressById(Long id);
+
+    Optional<Address> findHqAddressById(Long id);
+
     String getMaxAddressStreetByName(String name);
 }
 
@@ -1002,12 +1007,39 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         def findByNameQuery = getQuery(repository.getRequiredMethod("findByName", String))
         def saveQuery = getQuery(repository.getRequiredMethod("save", Restaurant))
         def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
+        def findAddressByIdMethod = repository.getRequiredMethod("findAddressById", Long)
+        def findAddressByIdQuery = getQuery(findAddressByIdMethod)
+        def findHqAddressByIdMethod = repository.getRequiredMethod("findHqAddressById", Long)
+        def findHqAddressByIdQuery = getQuery(findHqAddressByIdMethod)
         def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
         expect:
         findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
         saveQuery == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
+        findAddressByIdQuery == 'SELECT restaurant_.`street`,restaurant_.`zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
+        findHqAddressByIdQuery == 'SELECT restaurant_.`hqaddress_street` AS street,restaurant_.`hqaddress_zip_code` AS zip_code FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
         getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        getResultDataType(findAddressByIdMethod) == DataType.ENTITY
+        getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
+    }
+
+    void "test invalid embedded projection result"() {
+        when:
+        buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import io.micronaut.data.tck.entities.ShipmentId;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+    Optional<ShipmentId> findAddressByName(String name);
+}
+""")
+        then:
+        Throwable ex = thrown()
+        ex.message.contains("method returns an incompatible type")
     }
 
     void "test count query with joins"() {

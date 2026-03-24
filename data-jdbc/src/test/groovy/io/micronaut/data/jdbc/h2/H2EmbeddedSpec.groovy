@@ -65,6 +65,16 @@ class H2EmbeddedSpec extends Specification {
         restaurant.address.zipCode == '1234'
         restaurant.hqAddress == null
 
+        when:"Embedded field is projected as return type"
+        def address = restaurantRepository.findAddressById(restaurant.id)
+        def hqAddress = restaurantRepository.findHqAddressById(restaurant.id).orElse(null)
+
+        then:"Address projection contains all fields and nullable hq projection is null"
+        address
+        address.street == 'Smith St.'
+        address.zipCode == '1234'
+        hqAddress == null
+
         when:"The object is updated with non-null value"
         restaurant.hqAddress = new Address("John St.", "4567")
         restaurantRepository.update(restaurant)
@@ -75,6 +85,14 @@ class H2EmbeddedSpec extends Specification {
         restaurant.address
         restaurant.hqAddress
         restaurant.hqAddress.street == "John St."
+
+        when:"Nullable embedded field is projected after it is set"
+        hqAddress = restaurantRepository.findHqAddressById(restaurant.id).orElse(null)
+
+        then:"Projected nullable embedded field contains all fields"
+        hqAddress
+        hqAddress.street == "John St."
+        hqAddress.zipCode == "4567"
 
         when:"A query is done by an embedded object"
         restaurant = restaurantRepository.findByAddress(restaurant.address)

@@ -2890,6 +2890,25 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String tableAlias = propertyPath.getTableAlias();
             boolean escape = propertyPath.shouldEscape();
             NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
+
+            boolean isIdentityProperty = propertyPath.getProperty().getOwner().hasIdentity() && propertyPath.getProperty().getOwner().getIdentity() == propertyPath.getProperty();
+            if (propertyPath.getProperty() instanceof Association association && association.isEmbedded() && !isIdentityProperty) {
+                PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
+                    String projectedColumnName = getMappedName(namingStrategy, associations, property);
+                    String resultColumnName = getMappedName(getNamingStrategy(property.getOwner()), Collections.emptyList(), property);
+                    query
+                        .append(tableAlias)
+                        .append(DOT)
+                        .append(escape ? quote(projectedColumnName) : projectedColumnName);
+                    if (!projectedColumnName.equals(resultColumnName)) {
+                        query.append(AS_CLAUSE).append(resultColumnName);
+                    }
+                    query.append(COMMA);
+                });
+                query.setLength(query.length() - 1);
+                return;
+            }
+
             boolean[] needsTrimming = {false};
             int[] propertiesCount = new int[1];
 

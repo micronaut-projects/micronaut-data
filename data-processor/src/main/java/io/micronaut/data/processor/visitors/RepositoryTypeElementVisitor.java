@@ -33,6 +33,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Delete;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Insert;
 import io.micronaut.data.annotation.Join;
@@ -680,7 +681,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
             ClassElement type = resultType.getType();
             if (!TypeUtils.isVoid(type)) {
-                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));
+                DataType resultDataType = TypeUtils.resolveDataType(type, dataTypes);
+                if (operationType == DataMethod.OperationType.QUERY && type.hasStereotype(Embeddable.class)) {
+                    resultDataType = DataType.ENTITY;
+                }
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, resultDataType);
             }
         }
 
