@@ -27,7 +27,6 @@ micronautBuild {
     importMicronautCatalog("micronaut-r2dbc")
     importMicronautCatalog("micronaut-spring")
     importMicronautCatalog("micronaut-serde")
-    requiresDevelopmentVersion("micronaut-serialization", "andriy/oracle-data-serialization")
     importMicronautCatalog("micronaut-sql")
     importMicronautCatalog("micronaut-kotlin")
     importMicronautCatalog("micronaut-multitenancy")
