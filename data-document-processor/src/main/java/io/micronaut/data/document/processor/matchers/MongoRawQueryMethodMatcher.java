@@ -107,13 +107,18 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
                 DataMethod.OperationType actualOperationType = operationType;
                 if (actualOperationType == DataMethod.OperationType.UPDATE) {
+                    MethodElement methodElement = matchContext.getMethodElement();
                     ClassElement returnType = matchContext.getReturnType();
-                    if (!TypeUtils.isVoid(returnType) && !TypeUtils.isNumber(returnType) && !TypeUtils.isBoolean(returnType)) {
-                        if (TypeUtils.isReactiveOrFuture(returnType)) {
-                            throw new MatchFailedException("MongoDB update returning currently supports only blocking single-result return types");
-                        }
-                        if (returnType.isAssignable(Iterable.class)) {
+                    ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
+                    if (producedType != null && !TypeUtils.isVoid(producedType) && !TypeUtils.isNumber(producedType) && !TypeUtils.isBoolean(producedType)) {
+                        if (TypeUtils.doesMethodProducesIterableOfAnEntityOrDto(methodElement)) {
                             throw new MatchFailedException("MongoDB update returning supports only a single result");
+                        }
+                        if (!TypeUtils.isEntityOrDto(producedType)) {
+                            throw new MatchFailedException("MongoDB update query return type must be void/number/boolean, or a single entity/DTO for update returning");
+                        }
+                        if (TypeUtils.isReactiveOrFuture(returnType) || methodElement.isSuspend()) {
+                            throw new MatchFailedException("MongoDB update returning currently supports only blocking single-result return types");
                         }
                         actualOperationType = DataMethod.OperationType.UPDATE_RETURNING;
                     }
@@ -138,15 +143,16 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 ClassElement resultType = entry.returnType();
                 ClassElement interceptorType = entry.interceptor();
 
-                boolean isDto = false;
                 if (resultType == null) {
                     resultType = matchContext.getRootEntity().getType();
-                } else {
-                    if (resultType.hasAnnotation(Introspected.class)) {
-                        if (!resultType.hasAnnotation(MappedEntity.class)) {
-                            isDto = true;
-                        }
-                    }
+                }
+                if (actualOperationType == DataMethod.OperationType.UPDATE_RETURNING && !TypeUtils.isEntityOrDto(resultType)) {
+                    throw new MatchFailedException("MongoDB update returning supports only entity or DTO return types");
+                }
+
+                boolean isDto = false;
+                if (resultType.hasAnnotation(Introspected.class) && !resultType.hasAnnotation(MappedEntity.class)) {
+                    isDto = true;
                 }
 
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(

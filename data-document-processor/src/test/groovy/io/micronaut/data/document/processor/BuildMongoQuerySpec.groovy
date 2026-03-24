@@ -409,6 +409,26 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         ex.message.contains('MongoDB update returning supports only a single result')
     }
 
+    void "test update returning does not support scalar return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    String customUpdateReturningString(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update query return type must be void/number/boolean, or a single entity/DTO for update returning')
+    }
+
     void "test find by ids method"() {
         given:
         def repository = buildRepository('test.PersonRepository', """
