@@ -21,32 +21,34 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 
 import java.util.Map;
 
 /**
- * Delegating implementation of {@link NitriteStoredQuery}.
+ * Default implementation of {@link NitriteStoredQuery}.
  *
  * @param <E> The entity type
  * @param <R> The result type
- * @since 1.0.0
  */
 @Internal
-public class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements NitriteStoredQuery<E, R> {
+public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements NitriteStoredQuery<E, R> {
 
     private final Map<String, Object> filterMap;
+    private final CompiledNitriteFilter compiledFilter;
     private final Map<String, Object> updateMap;
     private final boolean sql;
 
     /**
-     * Create a delegating Nitrite stored query.
+     * Default constructor.
      *
-     * @param delegate The original stored query
+     * @param delegate The delegate
      * @param runtimePersistentEntity The persistent entity
      * @param conversionService The conversion service
-     * @param filterMap The pre-parsed filter map (JSON queries) or {@code null}
-     * @param updateMap The pre-parsed update map (JSON {@code $set}) or {@code null}
+     * @param filterMap The filter map
+     * @param compiledFilter The pre-compiled filter
+     * @param updateMap The update map
      * @param sql Whether the underlying query is SQL-like
      */
     public DefaultNitriteStoredQuery(
@@ -54,10 +56,12 @@ public class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParametersSt
         @NonNull RuntimePersistentEntity<E> runtimePersistentEntity,
         @NonNull ConversionService conversionService,
         @Nullable Map<String, Object> filterMap,
+        @Nullable CompiledNitriteFilter compiledFilter,
         @Nullable Map<String, Object> updateMap,
         boolean sql) {
         super(delegate, runtimePersistentEntity, conversionService);
         this.filterMap = filterMap;
+        this.compiledFilter = compiledFilter;
         this.updateMap = updateMap;
         this.sql = sql;
     }
@@ -66,6 +70,12 @@ public class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParametersSt
     @Nullable
     public Map<String, Object> getFilterMap() {
         return filterMap;
+    }
+
+    @Override
+    @Nullable
+    public CompiledNitriteFilter getCompiledFilter() {
+        return compiledFilter;
     }
 
     @Override

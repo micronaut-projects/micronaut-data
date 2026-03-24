@@ -1114,6 +1114,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       return nsq;
     }
     Map<String, Object> filterMap = null;
+    io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter compiledFilter = null;
     Map<String, Object> updateMap = null;
     boolean sql = false;
     String query = storedQuery.getQuery();
@@ -1125,6 +1126,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           filterMap = new LinkedHashMap<>(m);
           filterMap.remove("$project");  // Remove projection field from filter
           updateMap = (Map<String, Object>) m.get("$set");
+          compiledFilter = filterBuilder.compile(getEntity(storedQuery.getRootEntity()), filterMap);
         }
       } catch (Exception ignored) {
       }
@@ -1132,7 +1134,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String upper = query.trim().toUpperCase();
       sql = upper.startsWith("SELECT") || upper.startsWith("DELETE") || upper.startsWith("UPDATE");
     }
-    return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, updateMap, sql);
+    return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, compiledFilter, updateMap, sql);
   }
 
   /**
@@ -1154,7 +1156,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     } else {
       storedQuery = createNitriteStoredQuery(preparedQuery);
     }
-    return new DefaultNitritePreparedQuery<>(preparedQuery, buildFilterFromPreparedQuery(preparedQuery, storedQuery), storedQuery.getFilterMap(), storedQuery.getUpdateMap(), storedQuery.isSql());
+    return new DefaultNitritePreparedQuery<>(preparedQuery, buildFilterFromPreparedQuery(preparedQuery, storedQuery), storedQuery.getFilterMap(), storedQuery.getCompiledFilter(), storedQuery.getUpdateMap(), storedQuery.isSql());
   }
 
   private <E, R> NitritePreparedQuery<E, R> getNitritePreparedQuery(PreparedQuery<E, R> q) {
@@ -1166,6 +1168,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   private Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
     Map<String, Object> namedParameters = buildNamedParameterValues(q);
+    if (stored.getCompiledFilter() != null) {
+        return stored.getCompiledFilter().bind(ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
+    }
     if (stored.getFilterMap() != null) {
       return filterBuilder.buildFilterFromJson(getEntity(stored.getRootEntity()), stored.getFilterMap(), ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
     }

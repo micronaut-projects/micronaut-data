@@ -404,7 +404,11 @@ public final class NitriteQueryExecutor {
                     setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
                 }
             }
-            filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
+            if (nq.getCompiledFilter() != null) {
+                filter = nq.getCompiledFilter().bind(jsonParams, namedParameters);
+            } else {
+                filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
+            }
         } else if (nq.getQuery().trim().toUpperCase().startsWith("UPDATE")) {
             Object[] sqlParams = reorderParamsForSql(nq);
             setFields = updateExecutor.parseSetClause(nq.getQuery(), sqlParams, (pname, ps) -> toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
@@ -500,6 +504,9 @@ public final class NitriteQueryExecutor {
      */
     public Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
         Map<String, Object> namedParameters = buildNamedParameterValues(q);
+        if (stored.getCompiledFilter() != null) {
+            return stored.getCompiledFilter().bind(ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
+        }
         if (stored.getFilterMap() != null) {
             return filterBuilder.buildFilterFromJson(entityFactory.apply(stored.getRootEntity()), stored.getFilterMap(), ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
         }
