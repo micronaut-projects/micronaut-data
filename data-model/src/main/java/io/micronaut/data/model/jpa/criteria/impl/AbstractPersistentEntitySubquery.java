@@ -31,6 +31,8 @@ import jakarta.persistence.criteria.MapJoin;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
+import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.metamodel.EntityType;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -107,6 +109,16 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
 
     @Override
     public CommonAbstractCriteria getContainingQuery() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public Set<jakarta.persistence.criteria.ParameterExpression<?>> getParameters() {
+        throw CriteriaUtils.notSupportedOperation();
+    }
+
+    @Override
+    public <U> Subquery<U> subquery(EntityType<U> type) {
         throw CriteriaUtils.notSupportedOperation();
     }
 

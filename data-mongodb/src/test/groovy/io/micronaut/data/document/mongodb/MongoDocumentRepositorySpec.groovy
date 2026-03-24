@@ -714,6 +714,17 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personsByNamesInList.size() == 1
     }
 
+    void "test find by not like with parameterized pattern"() {
+        given:
+            savePersons(["John", "Joan", "Michael"])
+        when:
+            def matchingPeople = personRepository.findByNameLike("%Jo_n%")
+            def notMatchingPeople = personRepository.findByNameNotLike("%Jo_n%")
+        then:
+            matchingPeople*.name.toSet() == ["John", "Joan"] as Set
+            notMatchingPeople*.name == ["Michael"]
+    }
+
     void "test find by array contains"() {
         given:
         var doc1 = new Document()

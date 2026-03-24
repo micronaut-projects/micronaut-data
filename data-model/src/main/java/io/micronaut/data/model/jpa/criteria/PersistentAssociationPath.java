@@ -135,12 +135,12 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<AssociatedEntityType, C, E> collection) {
+    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super AssociatedEntityType, C, E> collection) {
         return get(collection.getName());
     }
 
     @Override
-    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<AssociatedEntityType, K, V> map) {
+    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super AssociatedEntityType, K, V> map) {
         return get(map.getName());
     }
 

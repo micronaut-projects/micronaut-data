@@ -56,13 +56,19 @@ import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.core.annotation.AnnotationMetadata.VALUE_MEMBER;
@@ -422,9 +428,31 @@ public final class SqlSchemaUtils {
     }
 
     @SuppressWarnings("java:S3776")
-    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity, Dialect dialect, List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
-        List<SqlIndexMapping> indexMappings = new ArrayList<>();
+    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity,
+                                                             Dialect dialect,
+                                                             List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         NamingStrategy namingStrategy = entity.getNamingStrategy();
+        Set<SqlIndexMapping> indexMappings = new LinkedHashSet<>();
+        addSqlIndexMappings(entity, namingStrategy, Collections.emptyList(), indexMappings, dialect, sqlIndexDefinitionProviders);
+        return new ArrayList<>(indexMappings);
+    }
+
+    @SuppressWarnings("java:S3776")
+    private static void addSqlIndexMappings(PersistentEntity entity,
+                                            NamingStrategy namingStrategy,
+                                            List<Association> associations,
+                                            Set<SqlIndexMapping> indexMappings,
+                                            Dialect dialect,
+                                            List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
+        Map<String, PersistentProperty> propertyMap = entity.getPersistentProperties().stream()
+            .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
+            .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
+
+        UnaryOperator<String> columnMapper = columnName ->
+            Optional.ofNullable(propertyMap.get(columnName))
+                .map(pp -> namingStrategy.mappedName(associations, pp))
+                .orElseThrow(() -> new MappingException("Persistent property not found for column: " + columnName));
+
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
             .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
@@ -435,8 +463,11 @@ public final class SqlSchemaUtils {
             .forEach(index -> {
                 String name = index.stringValue("name").orElse("");
                 boolean unique = index.booleanValue("unique").orElse(false);
-                String[] columns = index.stringValues("columns");
-                indexMappings.add(new SqlIndexMapping(name, unique, columns));
+                String[] declaredColumns = index.stringValues("columns");
+                String[] mappedColumns = Arrays.stream(declaredColumns)
+                    .map(columnMapper)
+                    .toArray(String[]::new);
+                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns));
             });
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -447,7 +478,7 @@ public final class SqlSchemaUtils {
                 VectorIndexType.DistanceType distanceType = vi.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
                 int accuracy = vi.intValue("accuracy").orElse(90);
                 boolean sparse = VectorStorageShapeResolver.isSparse(prop.getAnnotationMetadata());
-                String columnName = namingStrategy.mappedName(Collections.emptyList(), prop);
+                String columnName = namingStrategy.mappedName(associations, prop);
                 VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy, sparse);
                 SqlIndexDefinitionProvider provider = null;
                 io.micronaut.core.type.Argument<?> arg;
@@ -469,7 +500,15 @@ public final class SqlSchemaUtils {
                 indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta));
             }
         }
-        return indexMappings;
+
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
+                PersistentEntity embeddedEntity = association.getAssociatedEntity();
+                List<Association> newAssociations = new ArrayList<>(associations);
+                newAssociations.add(association);
+                addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings, dialect, sqlIndexDefinitionProviders);
+            }
+        }
     }
 
     private static List<SqlColumnMapping> getPrimaryKeyColumns(List<SqlColumnDefinitionProvider> columnDefinitionProviders,

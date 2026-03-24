@@ -18,11 +18,13 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Selection;
+import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -97,6 +99,11 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractP
 
     @Override
     public Set<ParameterExpression<?>> getParameters() {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
         throw notSupportedOperation();
     }
 

@@ -87,6 +87,36 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
         throw notSupportedOperation();
     }
 
+    @Override
+
+    default <X> Expression<X> cast(Class<X> type) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    default Predicate equalTo(Expression<?> value) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    default Predicate equalTo(Object value) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    default Predicate notEqualTo(Expression<?> value) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    default Predicate notEqualTo(Object value) {
+        throw notSupportedOperation();
+    }
+
     /**
      * Visit the expression.
      *
