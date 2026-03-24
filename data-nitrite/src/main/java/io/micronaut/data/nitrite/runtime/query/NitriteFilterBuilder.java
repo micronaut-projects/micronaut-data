@@ -379,7 +379,9 @@ public final class NitriteFilterBuilder {
             return null;
         }
         if (value instanceof Instant instant) {
-            return instant.toString();
+            // Nitrite stores Instant as double (epoch seconds) in some configurations, 
+            // or we force it here to ensure numeric comparison works.
+            return (double) instant.getEpochSecond() + (double) instant.getNano() / 1_000_000_000.0;
         }
         if (value instanceof LocalDate localDate) {
             return localDate.toString();
@@ -391,6 +393,15 @@ public final class NitriteFilterBuilder {
             return localTime.toString();
         }
         return value;
+    }
+
+    private String convertLikeToRegex(String pattern) {
+        // We do NOT escape standard regex characters because legacy tests (and likely users)
+        // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
+        // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
+        return pattern
+            .replace("%", ".*")
+            .replace("_", ".");
     }
 
     /**
@@ -957,7 +968,11 @@ public final class NitriteFilterBuilder {
             }
             case "$regex" -> {
                 Object resolved = resolveValue(finalValue, params, namedParameters);
-                yield FluentFilter.where(field).regex(resolved != null ? resolved.toString() : "");
+                yield FluentFilter.where(field).regex(resolved != null ? convertLikeToRegex(resolved.toString()) : "");
+            }
+            case "$like" -> {
+                Object resolved = resolveValue(finalValue, params, namedParameters);
+                yield FluentFilter.where(field).regex(resolved != null ? convertLikeToRegex(resolved.toString()) : "");
             }
             case "$not" -> finalValue instanceof Map<?, ?> m ? buildFieldFilter(entity, field, toStringObjectMap(m), params, namedParameters).not() : Filter.ALL;
             case "$exists" -> Boolean.TRUE.equals(finalValue) ? FluentFilter.where(field).notEq(null) : FluentFilter.where(field).eq(null);

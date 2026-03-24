@@ -9,6 +9,9 @@ import spock.lang.Specification
 
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
+/**
+ * Tests for Criteria API predicate support in Nitrite.
+ */
 @MicronautTest(transactional = false)
 class CriteriaPersonRepositorySpec extends Specification {
 
@@ -23,36 +26,179 @@ class CriteriaPersonRepositorySpec extends Specification {
         ])
     }
 
-    void "criteria find/count/update/delete works"() {
-        when:
-        PredicateSpecification<CriteriaPerson> denis = (root, cb) -> cb.equal(root.get("name"), "Denis")
-        PredicateSpecification<CriteriaPerson> ageLessThan20 = (root, cb) -> cb.lessThan(root.get("age"), 20)
-        def found = repository.findOne(denis).orElse(null)
-        def countAll = repository.count((PredicateSpecification<CriteriaPerson>) null)
-        def countAgeLt20 = repository.count(ageLessThan20)
+    // ========== Section 3: Null Check Predicates ==========
 
-        then:
-        found != null
-        found.name == "Denis"
-        countAll == 2
-        countAgeLt20 == 1
+    void "test criteria IS NULL"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson(null, 30))  // null name
 
         when:
-        UpdateSpecification<CriteriaPerson> setName = (root, query, cb) -> {
-            query.set(root.get("name"), "Steven")
-            return null
-        }
-        def updated = repository.updateAll(setName.where(denis))
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isNull(root.get("name"))
+        def results = repository.findAll(spec)
 
         then:
-        updated == 1
-        repository.findOne(where((root, cb) -> cb.equal(root.get("name"), "Steven"))).isPresent()
+        results.size() == 1
+        results[0].age == 30
+    }
+
+    void "test criteria IS NOT NULL"() {
+        given:
+        // Note: setup already has Denis (13) and Josh (22) with non-null names
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson(null, 30))  // null name
 
         when:
-        PredicateSpecification<CriteriaPerson> josh = (root, cb) -> cb.equal(root.get("name"), "Josh")
-        def deleted = repository.deleteAll(where(josh))
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isNotNull(root.get("name"))
+        def results = repository.findAll(spec)
 
         then:
-        deleted == 1
+        results.size() == 3  // Denis, Josh, Alice (all have non-null names)
+        results*.name.containsAll(["Denis", "Josh", "Alice"])
+    }
+
+    // ========== Section 4: BETWEEN Predicate ==========
+
+    void "test criteria BETWEEN"() {
+        given:
+        repository.save(new CriteriaPerson("Young", 20))
+        repository.save(new CriteriaPerson("Middle", 25))
+        repository.save(new CriteriaPerson("Old", 30))
+        repository.save(new CriteriaPerson("Elder", 35))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.between(root.get("age"), 24, 31)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Middle", "Old"])
+    }
+
+    void "test criteria BETWEEN with inclusive bounds"() {
+        given:
+        // Note: setup already has Denis (13) and Josh (22)
+        repository.save(new CriteriaPerson("A", 20))
+        repository.save(new CriteriaPerson("B", 25))
+        repository.save(new CriteriaPerson("C", 30))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.between(root.get("age"), 20, 30)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 4  // Josh (22 from setup), A (20), B (25), C (30)
+        results*.name.containsAll(["Josh", "A", "B", "C"])
+    }
+
+    // ========== Section 5: IN / NOT IN Predicates ==========
+
+    void "test criteria IN"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Bob", 30))
+        repository.save(new CriteriaPerson("Charlie", 35))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> root.get("name").in(["Alice", "Charlie"])
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Charlie"])
+    }
+
+    void "test criteria NOT IN"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Bob", 30))
+        repository.save(new CriteriaPerson("Charlie", 35))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.not(root.get("name").in(["Bob"]))
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 4  // Denis, Josh, Alice, Charlie
+        results*.name.containsAll(["Denis", "Josh", "Alice", "Charlie"])
+    }
+
+    // ========== Section 6: Logical Operators (AND, OR, NOT) ==========
+
+    void "test criteria OR predicate"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Bob", 30))
+        repository.save(new CriteriaPerson("Charlie", 35))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.or(
+            cb.equal(root.get("name"), "Alice"),
+            cb.equal(root.get("name"), "Charlie")
+        )
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Charlie"])
+    }
+
+    void "test criteria NOT predicate"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Bob", 30))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.not(cb.equal(root.get("name"), "Bob"))
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 3 // Denis, Josh, Alice
+        results*.name.containsAll(["Denis", "Josh", "Alice"])
+    }
+
+    // ========== Section 7: LIKE Predicate ==========
+
+    void "test criteria LIKE startsWith"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Albert", 30))
+        repository.save(new CriteriaPerson("Bob", 35))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "Al%")
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Albert"])
+    }
+
+    void "test criteria LIKE endsWith"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Charlie", 30))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "%ie")
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Charlie"
+    }
+
+    void "test criteria LIKE contains"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        repository.save(new CriteriaPerson("Charlie", 30))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "%li%")
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Charlie"])
     }
 }

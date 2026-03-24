@@ -22,6 +22,7 @@ import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,7 @@ import java.util.Optional;
  */
 @NitriteRepository
 public interface PersonRepository
-    extends CrudRepository<Person, String>, PageableRepository<Person, String> {
+    extends CrudRepository<Person, String>, PageableRepository<Person, String>, JpaSpecificationExecutor<Person> {
   /**
    * Finds a person by the exact name.
    *

@@ -225,6 +225,57 @@ class NitriteUpsertSpec extends Specification {
         mode << ["IN_MEMORY", "MVSTORE"]
     }
 
+    @Unroll
+    def "test saveAll with versioned records in #mode mode"() {
+        given:
+            def ctx = createContext(mode, "versioned-batch-${mode.toLowerCase()}")
+            def repo = ctx.getBean(VersionedRecordRepository)
+            repo.deleteAll()
+
+        when:
+            def record1 = new VersionedRecord("Record 1")
+            def record2 = new VersionedRecord("Record 2")
+            def saved = repo.saveAll([record1, record2])
+
+        then:
+            saved.every { it.version != null }
+            saved.every { it.version == 0L }  // Version starts at 0
+
+        cleanup:
+            ctx.close()
+
+        where:
+        mode << ["IN_MEMORY", "MVSTORE"]
+    }
+
+    @Unroll
+    def "test multiple updates increment version in #mode mode"() {
+        given:
+            def ctx = createContext(mode, "versioned-multi-update-${mode.toLowerCase()}")
+            def repo = ctx.getBean(VersionedRecordRepository)
+            repo.deleteAll()
+            def record = repo.save(new VersionedRecord("initial"))
+
+        when:
+            record.name = "first update"
+            repo.save(record)
+            record.name = "second update"
+            repo.save(record)
+            record.name = "third update"
+            repo.save(record)
+            def reloaded = repo.findById(record.id).orElseThrow()
+
+        then:
+            reloaded.version == 3L  // Initial (0) + 3 updates = version 3
+            reloaded.name == "third update"
+
+        cleanup:
+            ctx.close()
+
+        where:
+        mode << ["IN_MEMORY", "MVSTORE"]
+    }
+
     // ========== Helper Methods ==========
 
     private ApplicationContext createContext(String mode, String testName) {

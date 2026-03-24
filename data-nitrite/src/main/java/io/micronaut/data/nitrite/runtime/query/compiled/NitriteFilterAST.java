@@ -19,11 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +48,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
 
     /**
      * Logical AND of multiple filters.
+     *
+     * @param children the child filter AST nodes
      */
     record AndNode(List<NitriteFilterAST> children) implements NitriteFilterAST {
         @Override
@@ -68,6 +67,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
 
     /**
      * Logical OR of multiple filters.
+     *
+     * @param children the child filter AST nodes
      */
     record OrNode(List<NitriteFilterAST> children) implements NitriteFilterAST {
         @Override
@@ -86,6 +87,12 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     /**
      * A highly optimized node for standard property equality.
      * Bypasses all metadata lookups and dynamic strategy detection.
+     *
+     * @param builder the Nitrite filter builder
+     * @param entity the runtime persistent entity
+     * @param persistedName the persisted field name
+     * @param rawField the raw field name
+     * @param valueExpression the compiled value expression
      */
     record SimpleEqualityNode(
         NitriteFilterBuilder builder,
@@ -104,6 +111,12 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
 
     /**
      * A specialized node for range and other standard operators on simple fields.
+     *
+     * @param builder the Nitrite filter builder
+     * @param entity the runtime persistent entity
+     * @param persistedName the persisted field name
+     * @param rawField the raw field name
+     * @param operators the list of operator bindings
      */
     record SimpleOperatorNode(
         NitriteFilterBuilder builder,
@@ -130,6 +143,9 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
 
     /**
      * A binding for a single operator.
+     *
+     * @param op the operator name
+     * @param valueExpression the compiled value expression
      */
     record OperatorBinding(String op, CompiledValue valueExpression) {
         public Filter toFilter(NitriteFilterBuilder builder, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
@@ -142,6 +158,11 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     /**
      * A fallback node for complex paths (associations, dot-notation).
      * Uses the full dynamic logic to ensure 100% correctness.
+     *
+     * @param builder the Nitrite filter builder
+     * @param entity the runtime persistent entity
+     * @param rawField the raw field name
+     * @param operators the map of operators
      */
     record DynamicFieldNode(
         NitriteFilterBuilder builder,

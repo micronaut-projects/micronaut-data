@@ -269,25 +269,42 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         CriteriaUtils.requireProperty(expression).getPropertyPath();
     String fieldName = getFieldName(propertyPath);
 
-    // Handle null or empty collection
+    // Handle null or empty collection - IN with no values matches nothing, NOT IN matches all
     if (values == null || values.isEmpty()) {
-      // IN with no values matches nothing; NOT IN with no values matches everything
       if (negated) {
         // NOT IN with empty set matches all - don't add any filter
         return;
       } else {
         // IN with empty set matches nothing - add impossible condition
-        query.put("_id", Map.of("$eq", null));
+        query.put("_id", Collections.singletonMap("$eq", null));
         return;
       }
     }
 
     // Handle case where values is a single BindingParameter representing a collection
     List<Object> resolvedValues;
-    if (values.size() == 1 && values.iterator().next() instanceof BindingParameter bp) {
-      // Bind the collection parameter and use its elements
-      int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
-      resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
+    if (values.size() == 1) {
+      Object singleValue = values.iterator().next();
+      if (singleValue instanceof BindingParameter bp) {
+        // Bind the collection parameter and use its elements
+        int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
+        resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
+      } else if (singleValue instanceof Collection<?> nestedColl) {
+        // Handle nested collection from Criteria API
+        if (nestedColl.isEmpty()) {
+          if (negated) {
+            return;
+          } else {
+            query.put("_id", Map.of("$eq", null));
+            return;
+          }
+        }
+        resolvedValues = nestedColl.stream()
+            .map(val -> valueRepresentation(queryState, propertyPath, val))
+            .toList();
+      } else {
+        resolvedValues = List.of(valueRepresentation(queryState, propertyPath, singleValue));
+      }
     } else {
       resolvedValues = values.stream()
           .map(val -> valueRepresentation(queryState, propertyPath, val))
@@ -299,7 +316,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       if (negated) {
         return;  // NOT IN with empty set matches all
       } else {
-        query.put("_id", Map.of("$eq", null));  // IN with empty set matches nothing
+        query.put("_id", Collections.singletonMap("$eq", null));  // IN with empty set matches nothing
         return;
       }
     }
@@ -457,19 +474,13 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
   @Override
   public void visit(final LikePredicate likePredicate) {
-    Expression<String> pattern = likePredicate.getPattern();
-    if (pattern instanceof LiteralExpression<?> literalExpression
-        && literalExpression.getValue() instanceof String patternString) {
-      patternString = patternString.replace("_", ".").replace("%", ".*");
-      pattern = new LiteralExpression<>(patternString);
-    }
     handleRegexExpression(
         likePredicate.getExpression(),
         likePredicate.isCaseInsensitive(),
         likePredicate.isNegated(),
         false,
         false,
-        pattern,
+        likePredicate.getPattern(),
         true);
   }
 
@@ -556,7 +567,8 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpr) {
       final PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
       final String fieldName = getFieldName(propertyPath);
-      Object regexValue;
+      String regexValue;
+      String ciPrefix = ignoreCase ? "(?i)" : "";
       if (rightExpression instanceof LiteralExpression<?> literal) {
         String pattern = literal.getValue().toString();
         if (isLike) {
@@ -568,32 +580,20 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         } else {
           pattern = ".*" + Pattern.quote(pattern) + ".*";
         }
-        if (ignoreCase) {
-          pattern = "(?i)" + pattern;
-        }
-        regexValue = new RegexPattern(pattern);
+        regexValue = ciPrefix + pattern;
       } else {
         // For parameter expressions, build a regex pattern with placeholder
         // The pattern structure is built now, parameter value is substituted at runtime
-        String ciPrefix = ignoreCase ? "(?i)" : "";
         String prefix = startsWith ? "^" : ".*";
         String suffix = endsWith ? "$" : ".*";
         // Get the parameter placeholder
         Object paramPlaceholder = valueRepresentation(
             queryState, propertyPath, propertyPath, (Expression<?>) rightExpression);
-        // Build pattern like "(?i)^<placeholder>.*" or "(?i).*<placeholder>.*"
-        String pattern = ciPrefix + prefix + paramPlaceholder + suffix;
-        regexValue = new RegexPattern(pattern);
+        // Build pattern like "(?i)^$mn_qp:0.*" or "(?i).*$mn_qp:0.*"
+        regexValue = ciPrefix + prefix + paramPlaceholder + suffix;
       }
       Map<String, Object> fieldFilter = new LinkedHashMap<>();
-      if (regexValue instanceof RegexPattern rp) {
-        fieldFilter.put(REGEX, rp.value());
-      } else {
-        fieldFilter.put(
-            REGEX,
-            valueRepresentation(
-                queryState, propertyPath, propertyPath, (Expression<?>) regexValue));
-      }
+      fieldFilter.put(REGEX, regexValue);
       query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
     }
   }
@@ -820,19 +820,19 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   }
 
   static String convertLikeToRegex(final String likePattern) {
-    StringBuilder regex = new StringBuilder("^");
-    for (char c : likePattern.toCharArray()) {
-      if (c == '%') {
-        regex.append(".*");
-      } else if (c == '_') {
-        regex.append(".");
-      } else if ("\\.^$|?*+()[]{}".indexOf(c) >= 0) {
-        regex.append("\\").append(c);
-      } else {
-        regex.append(c);
-      }
-    }
-    regex.append("$");
-    return regex.toString();
+    // We do NOT escape standard regex characters because legacy tests (and likely users)
+    // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
+    // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
+    return likePattern
+        .replace("%", ".*")
+        .replace("_", ".");
+  }
+
+  /**
+   * Internal representation of a regex pattern to distinguish it from a normal string.
+   *
+   * @param value the regex pattern value
+   */
+  private static final record RegexPattern(String value) {
   }
 }

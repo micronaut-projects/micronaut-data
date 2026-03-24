@@ -3,6 +3,7 @@ package io.micronaut.data.nitrite
 
 import io.micronaut.data.nitrite.model.Event
 import io.micronaut.data.nitrite.repository.EventRepository
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -73,35 +74,26 @@ class QueryBuilder2BugSpec extends Specification {
 
     // ========== Bug #4: MongoDB $expr/$multiply/$strLenCP operators ==========
 
-    @Ignore('Placeholder: requires a repository method that triggers $expr/$strLenCP; Nitrite does not support it (bug #4)')
     void "test string length query throws UnsupportedOperationException"() {
         given: "Events with different payload lengths"
         eventRepository.save(new Event("E1", "a"))      // length 1
         eventRepository.save(new Event("E2", "abc"))    // length 3
-        eventRepository.save(new Event("E3", "abcde"))  // length 5
 
-        when: "Querying by string length (uses $strLenCP which is MongoDB-only)"
-        // This generates: { "$expr": { "$gt": [{ "$strLenCP": "$payload" }, 2 ] } }
-        // Nitrite doesn't support $expr or $strLenCP
-        def results = eventRepository.findByPayloadLengthGreaterThan(2)
+        when: 'Querying by string length using Criteria API (Nitrite doesn\'t support $strLenCP)'
+        eventRepository.findAll({ root, cb -> cb.gt(cb.length(root.get("payload")), 2) } as PredicateSpecification)
 
         then: "Should throw UnsupportedOperationException for unsupported operator"
         thrown(UnsupportedOperationException)
     }
 
-    @Ignore('Placeholder: requires a repository method that triggers $expr/$multiply; Nitrite does not support it (bug #4)')
     void "test multiplication expression throws UnsupportedOperationException"() {
         given: "Events with priorities"
         def e1 = new Event("E1", "p1")
         e1.setPriority(2)
-        def e2 = new Event("E2", "p2")
-        e2.setPriority(3)
-        eventRepository.saveAll([e1, e2])
+        eventRepository.save(e1)
 
-        when: "Querying with multiplication expression"
-        // This generates: { "$expr": { "$eq": [{ "$multiply": [...] }, ...] } }
-        // Nitrite doesn't support $expr or $multiply
-        def results = eventRepository.findAll() // Would need criteria with multiply
+        when: 'Querying with multiplication expression using Criteria API (Nitrite doesn\'t support $multiply)'
+        eventRepository.findAll({ root, cb -> cb.equal(cb.prod(root.get("priority"), 2), 4) } as PredicateSpecification)
 
         then: "Should throw UnsupportedOperationException for unsupported operator"
         thrown(UnsupportedOperationException)

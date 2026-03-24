@@ -20,6 +20,7 @@ import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.Event;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,7 @@ import java.util.Optional;
  */
 @NitriteRepository
 public interface EventRepository
-    extends CrudRepository<Event, String>, PageableRepository<Event, String> {
+    extends CrudRepository<Event, String>, PageableRepository<Event, String>, JpaSpecificationExecutor<Event> {
 
   /**
    * Finds events having the exact supplied type.

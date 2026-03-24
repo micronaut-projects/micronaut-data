@@ -325,7 +325,7 @@ public final class NitriteQueryExecutor {
         }
 
         // Handle native single-field projection
-        if (!nq.getResultType().equals(nq.getRootEntity())) {
+        if (!nq.getResultType().equals(nq.getRootEntity()) && !nq.isDtoProjection()) {
             List<String> projectedFields = queryParser.parseSelectClause(query);
             if (projectedFields == null || projectedFields.isEmpty()) {
                 String projectField = queryParser.extractProjectionField(query);
@@ -334,14 +334,9 @@ public final class NitriteQueryExecutor {
                 }
             }
             if (projectedFields == null || projectedFields.isEmpty()) {
-                if (!methodName.matches("^(find|get|read)(Max|Min|Sum|Avg|Count).*")) {
-                    Pattern pattern = Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
-                    java.util.regex.Matcher matcher = pattern.matcher(methodName);
-                    if (matcher.find()) {
-                        String fieldName = matcher.group(1);
-                        fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
-                        projectedFields = Collections.singletonList(fieldName);
-                    }
+                String fieldName = nativeProjectionHandler.extractFieldName(query, methodName);
+                if (fieldName != null) {
+                    projectedFields = Collections.singletonList(fieldName);
                 }
             }
 
@@ -349,8 +344,9 @@ public final class NitriteQueryExecutor {
                 var cursor = coll.find(filter, findOptions);
                 if (projectedFields.size() == 1) {
                     List<R> results = new ArrayList<>();
+                    String field = projectedFields.get(0);
                     for (Document doc : cursor) {
-                        R result = nativeProjectionHandler.project(doc, projectedFields.get(0), nq.getResultType());
+                        R result = nativeProjectionHandler.project(doc, field, nq.getResultType());
                         if (result != null) {
                             results.add(result);
                         }

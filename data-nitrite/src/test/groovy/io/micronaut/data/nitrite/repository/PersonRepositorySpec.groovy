@@ -292,78 +292,61 @@ class PersonRepositorySpec extends Specification {
     }
 
     // ========== Section 6: Set Operators (IN/NOT IN) ==========
-    // Note: IN/NOT IN via repository methods use SQL fallback in document processor.
-    // The NitriteQueryBuilder supports $in/$nin operators for programmatic queries.
 
-    void "test in operator concept"() {
+    void "test IN operator via criteria"() {
         given:
         def p1 = personRepository.save(new Person("Alice", 25))
         def p2 = personRepository.save(new Person("Bob", 30))
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        // IN operator tested via in-memory filtering
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.id in [p1.id, p2.id] }
+        def spec = { root, cb -> root.get("id").in([p1.id, p2.id]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
 
         then:
         results.size() == 2
         results*.id.containsAll([p1.id, p2.id])
     }
 
-    void "test not in operator concept"() {
+    void "test NOT IN operator via criteria"() {
         given:
         def p1 = personRepository.save(new Person("Alice", 25))
         personRepository.save(new Person("Bob", 30))
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { !(it.id in [p1.id]) }
+        def spec = { root, cb -> cb.not(root.get("id").in([p1.id])) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
 
         then:
         results.size() == 2
         !results*.id.contains(p1.id)
     }
 
-    void "test find by name in concept"() {
+    void "test IN with empty collection returns no results"() {
         given:
         personRepository.save(new Person("Alice", 25))
         personRepository.save(new Person("Bob", 30))
-        personRepository.save(new Person("Charlie", 35))
 
         when:
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.name in ["Alice", "Charlie"] }
+        def spec = { root, cb -> root.get("id").in([]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 0
+    }
+
+    void "test NOT IN with empty collection returns all"() {
+        given:
+        personRepository.save(new Person("Alice", 25))
+        personRepository.save(new Person("Bob", 30))
+
+        when:
+        def spec = { root, cb -> cb.not(root.get("id").in([])) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
 
         then:
         results.size() == 2
-        results*.name.containsAll(["Alice", "Charlie"])
-    }
-
-    void "test in with empty collection concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("Bob", 30))
-
-        when:
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.id in [] }
-
-        then:
-        results.size() == 0
-    }
-
-    void "test in with null collection concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-
-        when:
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.id in null }
-
-        then:
-        results.size() == 0
     }
 
     // ========== Section 7: Range Operators (BETWEEN) ==========
@@ -584,34 +567,36 @@ class PersonRepositorySpec extends Specification {
 
     // ========== Section 11: Junction Operators ($and, $or) ==========
 
-    void "test or operator concept"() {
+    void "test OR operator via criteria"() {
         given:
         personRepository.save(new Person("Alice", 25))
         personRepository.save(new Person("Bob", 30))
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        // OR operator tested via in-memory filtering
-        // The NitriteQueryBuilder supports $or junction
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.age < 26 || it.age > 34 }
+        def spec = { root, cb -> cb.or(
+            cb.lessThan(root.get("age"), 26),
+            cb.greaterThan(root.get("age"), 34)
+        )} as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
 
         then:
         results.size() == 2
         results*.name.containsAll(["Alice", "Charlie"])
     }
 
-    void "test and operator concept"() {
+    void "test AND operator via criteria"() {
         given:
         personRepository.save(new Person("Alice", 25))
         personRepository.save(new Person("Bob", 30))
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        // AND operator tested via in-memory filtering
-        // The NitriteQueryBuilder supports $and junction (default for multiple criteria)
-        def all = personRepository.findAll(Pageable.from(0, 10))
-        def results = all.findAll { it.age > 25 && it.age < 35 }
+        def spec = { root, cb -> cb.and(
+            cb.greaterThan(root.get("age"), 25),
+            cb.lessThan(root.get("age"), 35)
+        )} as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
 
         then:
         results.size() == 1
@@ -634,6 +619,34 @@ class PersonRepositorySpec extends Specification {
         then:
         activeResults.size() == 2
         inactiveResults.size() == 1
+    }
+
+    void "test IS TRUE via criteria"() {
+        given:
+        personRepository.save(new Person("Active", 25, true))
+        personRepository.save(new Person("Inactive", 30, false))
+
+        when:
+        def spec = { root, cb -> cb.isTrue(root.get("active")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Active"
+    }
+
+    void "test IS FALSE via criteria"() {
+        given:
+        personRepository.save(new Person("Active", 25, true))
+        personRepository.save(new Person("Inactive", 30, false))
+
+        when:
+        def spec = { root, cb -> cb.isFalse(root.get("active")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Inactive"
     }
 
     // ========== Section 13: Exists Operator ($exists) ==========

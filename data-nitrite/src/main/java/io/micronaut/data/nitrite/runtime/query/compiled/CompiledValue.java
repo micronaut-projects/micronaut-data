@@ -39,6 +39,8 @@ public interface CompiledValue {
 
     /**
      * A literal value that doesn't change.
+     *
+     * @param value the literal value
      */
     record Literal(Object value) implements CompiledValue {
         @Override
@@ -49,6 +51,8 @@ public interface CompiledValue {
 
     /**
      * A positional parameter value (e.g. $mn_qp:0).
+     *
+     * @param index the parameter index
      */
     record Parameter(int index) implements CompiledValue {
         @Override
@@ -59,6 +63,8 @@ public interface CompiledValue {
 
     /**
      * A named parameter value (e.g. :name).
+     *
+     * @param name the parameter name
      */
     record NamedParameter(String name) implements CompiledValue {
         @Override

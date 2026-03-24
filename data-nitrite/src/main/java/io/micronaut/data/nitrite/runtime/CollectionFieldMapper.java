@@ -92,10 +92,10 @@ public final class CollectionFieldMapper {
      * @param methodName the method name
      * @return the field name, or null if not found
      */
-    private String extractFieldName(String query, String methodName) {
+    public String extractFieldName(String query, String methodName) {
         // First try to extract field from method name (most reliable for native projections)
-        if (!methodName.matches("^(find|get|read)(Count).*")) {
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read)([A-Z][a-z0-9]+)By");
+        if (!methodName.matches("^(find|get|read|list|search|query)(Count).*")) {
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read|list|search|query)([A-Z][a-z0-9]+)By");
             java.util.regex.Matcher matcher = pattern.matcher(methodName);
             if (matcher.find()) {
                 String fieldName = matcher.group(1);
