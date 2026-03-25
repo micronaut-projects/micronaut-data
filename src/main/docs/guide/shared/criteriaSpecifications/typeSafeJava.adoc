@@ -44,7 +44,7 @@ Prior versions are based on `javax.persistence`.
 
 [NOTE]
 ====
-For Kotlin, add the dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope].
+For Kotlin, add the dependency in https://docs.micronaut.io/4.10.18/guide/#kaptOrKsp[kapt or ksp scope].
 For Groovy, add it in `compileOnly` scope.
 ====
 
@@ -72,9 +72,8 @@ sourceSets {
 ----
 
 If everything is correctly set up you should be able to see the generated metamodel classes in IDE code completion and be able to use them:
+
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
----
-snippet::example.ProductRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
 
 NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification].
 
