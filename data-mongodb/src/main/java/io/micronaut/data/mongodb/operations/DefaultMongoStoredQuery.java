@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -876,15 +877,11 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             this.filterParameterIndex = getParameterIndexByName(filterParameter);
             this.updateParameterIndex = getParameterIndexByName(updateParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
-            this.projection = storedQuery.getAnnotationMetadata()
-                    .stringValue(MongoProjection.class)
-                    .map(json -> parseProjectionOrSortJson(json, "MongoProjection"))
-                    .orElse(null);
+            String projectionJson = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).orElse(null);
+            this.projection = projectionJson == null ? null : parseProjectionOrSortJson(projectionJson, "MongoProjection");
             this.projectionNeedsProcessing = needsProcessing(this.projection);
-            this.sort = storedQuery.getAnnotationMetadata()
-                    .stringValue(MongoSort.class)
-                    .map(json -> parseProjectionOrSortJson(json, "MongoSort"))
-                    .orElse(null);
+            String sortJson = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).orElse(null);
+            this.sort = sortJson == null ? null : parseProjectionOrSortJson(sortJson, "MongoSort");
             this.sortNeedsProcessing = needsProcessing(this.sort);
             this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
         }
@@ -913,6 +910,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 );
             }
         }
+
         private FindOneAndUpdateOptions copy(FindOneAndUpdateOptions options) {
             FindOneAndUpdateOptions newOptions = new FindOneAndUpdateOptions();
             newOptions.collation(options.getCollation());
@@ -924,6 +922,16 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.returnDocument(options.getReturnDocument());
             newOptions.projection(options.getProjection());
             newOptions.sort(options.getSort());
+            if (options.getComment() != null) {
+                newOptions.comment(options.getComment());
+            }
+            if (options.getLet() != null) {
+                newOptions.let(options.getLet());
+            }
+            long maxTimeMs = options.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                newOptions.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
+            }
             return newOptions;
         }
 
@@ -954,6 +962,16 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             if (from.getSort() != null) {
                 to.sort(from.getSort());
+            }
+            if (from.getComment() != null) {
+                to.comment(from.getComment());
+            }
+            if (from.getLet() != null) {
+                to.let(from.getLet());
+            }
+            long maxTimeMs = from.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                to.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
             }
         }
 

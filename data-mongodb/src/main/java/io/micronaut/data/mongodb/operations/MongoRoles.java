@@ -16,6 +16,7 @@
 package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.document.mongo.MongoAnnotations;
 
 /**
  * Mongo parameter roles contansts.
@@ -26,12 +27,12 @@ import io.micronaut.core.annotation.Internal;
 @Internal
 public interface MongoRoles {
 
-    String FILTER_ROLE = "filter";
-    String PIPELINE_ROLE = "pipeline";
-    String UPDATE_ROLE = "update";
-    String FIND_OPTIONS_ROLE = "findOptions";
-    String AGGREGATE_OPTIONS_ROLE = "aggregateOptions";
-    String UPDATE_OPTIONS_ROLE = "updateOptions";
-    String DELETE_OPTIONS_ROLE = "deleteOptions";
+    String FILTER_ROLE = MongoAnnotations.FILTER_ROLE;
+    String PIPELINE_ROLE = MongoAnnotations.PIPELINE_ROLE;
+    String UPDATE_ROLE = MongoAnnotations.UPDATE_ROLE;
+    String FIND_OPTIONS_ROLE = MongoAnnotations.FIND_OPTIONS_ROLE;
+    String AGGREGATE_OPTIONS_ROLE = MongoAnnotations.AGGREGATE_OPTIONS_ROLE;
+    String UPDATE_OPTIONS_ROLE = MongoAnnotations.UPDATE_OPTIONS_ROLE;
+    String DELETE_OPTIONS_ROLE = MongoAnnotations.DELETE_OPTIONS_ROLE;
 
 }
