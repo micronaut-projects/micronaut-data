@@ -30,6 +30,7 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
@@ -65,8 +66,9 @@ final class SyncCosmosRepositoryOperations implements
      * @param reactiveCosmosRepositoryOperations    The reactive cosmos repository operations
      * @param executorService                       The executor service
      */
-    private SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
-                                           @Named("io") @Nullable ExecutorService executorService) {
+    @Inject
+    SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
+                                   @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
         this.executorService = executorService;
     }
