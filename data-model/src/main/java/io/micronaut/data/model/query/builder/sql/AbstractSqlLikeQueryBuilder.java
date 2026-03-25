@@ -2908,7 +2908,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         .append(DOT)
                         .append(escape ? quote(projectedColumnName) : projectedColumnName);
                     if (!projectedColumnName.equals(resultColumnName)) {
-                        query.append(AS_CLAUSE).append(escape ? quote(resultColumnName) : resultColumnName);
+                        query.append(AS_CLAUSE).append(resultColumnName);
                     }
                     query.append(COMMA);
                 });
