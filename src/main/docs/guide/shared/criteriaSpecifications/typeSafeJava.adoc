@@ -1,4 +1,3 @@
-== Type-safe Criteria queries (static metamodel)
 
 Jakarta Persistence Criteria API supports type-safe queries by using static metamodel classes that are generated at compilation time.
 A metamodel generator produces a corresponding metamodel class with an underscore suffix, e.g. an entity `MyEntity` will have a generated metamodel `MyEntity_` in the same package.
@@ -20,8 +19,8 @@ q.select(customer.get(Customer_.name))
 
 Micronaut supports generating Jakarta Persistence static metamodel classes using one of the following annotation processors:
 
-* *Micronaut static metamodel generator (recommended)* - a Micronaut-native annotation processor that generates `*_` metamodel sources using the Micronaut SourceGen project.
-* *Hibernate static metamodel generator* - Hibernate's `hibernate-jpamodelgen` annotation processor.
+* *Micronaut static metamodel generator (recommended)* : a Micronaut-native annotation processor that generates `class_` metamodel sources using the Micronaut SourceGen project.
+* *Hibernate static metamodel generator* : Hibernate's `hibernate-jpamodelgen` annotation processor.
 
 [NOTE]
 ====
@@ -78,3 +77,37 @@ snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",sourc
 snippet::example.ProductRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
 
 NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification].
+
+=== Disabling Micronaut static metamodel generation
+
+If you are using another JPA static metamodel generator (for example Hibernate `hibernate-jpamodelgen`), you can disable Micronaut's static metamodel generation by setting the following build-time flag:
+
+`micronaut.data.jpa.metamodel.enabled=false`
+
+NOTE: This is a *compile-time* (annotation processor) option.
+It must be configured in your build tool (as a compiler argument), not in `application.properties`.
+
+==== Gradle (Java)
+
+[source,groovy]
+----
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Amicronaut.data.jpa.metamodel.enabled=false"
+    ]
+}
+----
+
+==== Maven
+
+[source,xml]
+----
+<plugin>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <configuration>
+    <compilerArgs>
+      <arg>-Amicronaut.data.jpa.metamodel.enabled=false</arg>
+    </compilerArgs>
+  </configuration>
+</plugin>
+----
