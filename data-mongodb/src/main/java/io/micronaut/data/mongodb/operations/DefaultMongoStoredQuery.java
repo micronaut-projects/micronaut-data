@@ -860,10 +860,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final FindOneAndUpdateOptions options;
         @Nullable
         private final Bson projection;
-        private final boolean projectionNeedsProcessing;
         @Nullable
         private final Bson sort;
-        private final boolean sortNeedsProcessing;
         private final int filterParameterIndex;
         private final int updateParameterIndex;
         private final int optionsParameterIndex;
@@ -879,10 +877,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             String projectionJson = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).orElse(null);
             this.projection = projectionJson == null ? null : parseProjectionOrSortJson(projectionJson, "MongoProjection");
-            this.projectionNeedsProcessing = needsProcessing(this.projection);
             String sortJson = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).orElse(null);
             this.sort = sortJson == null ? null : parseProjectionOrSortJson(sortJson, "MongoSort");
-            this.sortNeedsProcessing = needsProcessing(this.sort);
             this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
         }
 
@@ -1004,7 +1000,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 FindOneAndUpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
                 if (paramOptions != null) {
                     if (options == null) {
-                        options = paramOptions;
+                        options = copy(paramOptions);
                     } else {
                         options = copy(options);
                         copyNonNullFrom(options, paramOptions);
@@ -1048,18 +1044,12 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
         @Nullable
         private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-            if (projection == null) {
-                return null;
-            }
-            return projectionNeedsProcessing ? replaceQueryParameters(projection, invocationContext, entity) : projection;
+            return projection;
         }
 
         @Nullable
         private Bson getSort(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-            if (sort == null) {
-                return null;
-            }
-            return sortNeedsProcessing ? replaceQueryParameters(sort, invocationContext, entity) : sort;
+            return sort;
         }
     }
 

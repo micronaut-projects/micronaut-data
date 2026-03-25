@@ -330,15 +330,15 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         Class<R> resultType = preparedQuery.getResultType();
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         MongoDatabase database = getDatabase(preparedQuery);
-        if (resultType.isAssignableFrom(rootType)) {
-            MongoCollection<R> collection = getCollection(database, persistentEntity, resultType);
-            R result = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
-            if (result == null) {
+        if (rootType.isAssignableFrom(resultType)) {
+            MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
+            T entity = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
+            if (entity == null) {
                 return Collections.emptyList();
             }
-            if (rootType.isInstance(result)) {
-                result = (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, rootType.cast(result));
-            }
+            entity = triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity);
+            @SuppressWarnings("unchecked")
+            R result = (R) entity;
             return Collections.singletonList(result);
         }
         MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
