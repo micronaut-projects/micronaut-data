@@ -1066,12 +1066,13 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Jeff Default Updated"
     }
 
-    void "test update returning options precedence"() {
+    void "test annotation returnDocument takes precedence over options returnDocument"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
             return
         }
         given:
             def person = personRepository.save("Jeff Options", 20)
+            // Options specify BEFORE but the annotation declares returnDocument = AFTER, so the annotation wins
             def options = new com.mongodb.client.model.FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
 
         when:
@@ -1079,6 +1080,8 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
 
         then:
             result != null
+            // Result contains the AFTER (updated) document because @MongoUpdateReturningQuery(returnDocument = AFTER)
+            // overrides the BEFORE passed via FindOneAndUpdateOptions
             result.name == "Jeff Options Updated"
             personRepository.findById(person.id).get().name == "Jeff Options Updated"
     }
