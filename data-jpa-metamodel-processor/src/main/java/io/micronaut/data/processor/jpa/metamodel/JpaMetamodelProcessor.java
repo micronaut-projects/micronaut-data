@@ -82,6 +82,16 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_METAMODEL_ENTITY_TYPE = "jakarta.persistence.metamodel.EntityType";
 
     /**
+     * Jakarta persistence metamodel EmbeddableType annotation name.
+     */
+    public static final String JAKARTA_METAMODEL_EMBEDDABLE_TYPE = "jakarta.persistence.metamodel.EmbeddableType";
+
+    /**
+     * Jakarta persistence metamodel MappedSuperclassType annotation name.
+     */
+    public static final String JAKARTA_METAMODEL_MAPPED_SUPER_CLASS_TYPE = "jakarta.persistence.metamodel.MappedSuperclassType";
+
+    /**
      * Jakarta persistence Entity annotation name.
      */
     public static final String JAKARTA_ENTITY = "jakarta.persistence.Entity";
@@ -105,6 +115,11 @@ public final class JpaMetamodelProcessor {
      * Jakarta persistence Access annotation name.
      */
     public static final String JAKARTA_ID = "jakarta.persistence.Id";
+
+    /**
+     * Jakarta persistence EmbeddedId annotation name.
+     */
+    public static final String JAKARTA_EMBEDDED_ID = "jakarta.persistence.EmbeddedId";
 
     /**
      * Jakarta persistence AccessType enum.
@@ -191,7 +206,7 @@ public final class JpaMetamodelProcessor {
 
         classDefBuilder.addFields(constantPropertyName);
         classDefBuilder.addFields(attributeFields);
-        classDefBuilder.addField(createEntityTypeField(elementType));
+        classDefBuilder.addField(createJakartaManagedEntityTypeField(elementType, element.getAnnotationNames()));
         return classDefBuilder;
     }
 
@@ -235,7 +250,9 @@ public final class JpaMetamodelProcessor {
      * @return Jakarta access type.
      */
     private static JakartaAccessType resolveAccessType(@NonNull ClassElement element, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
-        if (jakartaAccessAnnotation == null && element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID))) {
+        if (jakartaAccessAnnotation == null &&
+            element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID) ||
+                element.hasAnnotation(JAKARTA_EMBEDDED_ID))) {
             return JakartaAccessType.PROPERTY;
         }
         if (jakartaAccessAnnotation == null) {
@@ -270,12 +287,31 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
+     * Utility function to create jakarta managed type field.
      * @param elementType class type definition
      * @return FieldDef
      */
-    private static FieldDef createEntityTypeField(ClassTypeDef elementType) {
-        return FieldDef.builder("class_").addModifiers(Modifier.PUBLIC, Modifier.VOLATILE, Modifier.STATIC)
-            .ofType(TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_ENTITY_TYPE), elementType)).build();
+    private static FieldDef createJakartaManagedEntityTypeField(ClassTypeDef elementType, Set<String> classAnnotations) {
+        String jakartaManegedType = resolveJakartaManegedType(classAnnotations);
+
+        return FieldDef.builder("class_")
+            .addModifiers(Modifier.PUBLIC, Modifier.VOLATILE, Modifier.STATIC)
+            .ofType(TypeDef.parameterized(ClassTypeDef.of(jakartaManegedType), elementType)).build();
+    }
+
+    /**
+     * Utility function to resolve the jakarta managed type based on the annotations on the classElement.
+     * @param classAnnotations set of annotation names found on the class element.
+     * @return jakarta managed type name.
+     */
+    private static String resolveJakartaManegedType(Set<String> classAnnotations) {
+        if (classAnnotations.contains(JAKARTA_MAPPED_SUPER_CLASS)) {
+            return JAKARTA_METAMODEL_MAPPED_SUPER_CLASS_TYPE;
+        } else if (classAnnotations.contains(JAKARTA_EMBEDDABLE)) {
+            return JAKARTA_METAMODEL_EMBEDDABLE_TYPE;
+        } else {
+            return JAKARTA_METAMODEL_ENTITY_TYPE;
+        }
     }
 
     /**
@@ -303,25 +339,35 @@ public final class JpaMetamodelProcessor {
 
         Map<String, ClassElement> typeArguments = fieldType.getTypeArguments();
 
-        TypeDef typeDef;
+        TypeDef attributeTypeDef;
         String fieldTypeName = fieldType.getName();
-        if (fieldTypeName.equals(JAVA_UTIL_COLLECTION)) {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef,
-                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (fieldTypeName.equals(JAVA_UTIL_SET)) {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef,
-                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (fieldTypeName.equals(JAVA_UTIL_LIST)) {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef,
-                TypeDef.of(Objects.requireNonNull(typeArguments.get("E"))));
-        } else if (fieldTypeName.equals(JAVA_UTIL_MAP)) {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef,
-                TypeDef.of(Objects.requireNonNull(typeArguments.get("K"))),
-                TypeDef.of(Objects.requireNonNull(typeArguments.get("V"))));
+        if (fieldTypeName.equals(JAVA_UTIL_COLLECTION) &&
+            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
+            TypeDef e = TypeDef.of(typeArguments.get("E"));
+            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef, e);
+
+        } else if (fieldTypeName.equals(JAVA_UTIL_SET) &&
+            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
+            TypeDef e = TypeDef.of(typeArguments.get("E"));
+            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef, e);
+
+        } else if (fieldTypeName.equals(JAVA_UTIL_LIST) &&
+            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
+            TypeDef e = TypeDef.of(typeArguments.get("E"));
+            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef, e);
+
+        } else if (fieldTypeName.equals(JAVA_UTIL_MAP) &&
+            typeArguments.get("K") != null && !typeArguments.get("K").getName().equals(Object.class.getName()) &&
+            typeArguments.get("V") != null && !typeArguments.get("V").getName().equals(Object.class.getName())) {
+
+            TypeDef k = TypeDef.of(typeArguments.get("K"));
+            TypeDef v = TypeDef.of(typeArguments.get("V"));
+            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef, k, v);
+
         } else {
-            typeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(fieldType)));
+            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(fieldType)));
         }
-        return attributeDefBuilder.ofType(typeDef).build();
+        return attributeDefBuilder.ofType(attributeTypeDef).build();
     }
 
     /**

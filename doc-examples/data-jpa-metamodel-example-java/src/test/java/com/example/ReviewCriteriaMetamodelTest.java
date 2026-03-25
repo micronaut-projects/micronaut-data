@@ -21,6 +21,7 @@ import com.example.repository.ReviewRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
+import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
@@ -98,5 +99,8 @@ public class ReviewCriteriaMetamodelTest {
         assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("reviewer").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("content").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("book").getType().getName());
+
+        MetamodelAssertions.assertClassFieldIsEntityType(Review_.class, EntityType.class, Review.class);
+
     }
 }

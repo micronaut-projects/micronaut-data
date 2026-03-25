@@ -24,6 +24,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
@@ -243,5 +244,7 @@ public class BookCriteriaMetamodelTest {
         assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("title").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("pages").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("category").getType().getName());
+
+        MetamodelAssertions.assertClassFieldIsEntityType(Book_.class, EntityType.class, Book.class);
     }
 }

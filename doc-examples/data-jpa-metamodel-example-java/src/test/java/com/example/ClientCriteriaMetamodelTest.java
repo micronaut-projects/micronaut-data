@@ -221,5 +221,6 @@ public class ClientCriteriaMetamodelTest {
         assertEquals(MapAttribute.class.getName(), Client_.class.getDeclaredField("properties").getType().getName());
 
         assertThrows(NoSuchFieldException.class, () -> Client_.class.getDeclaredField("nonPersistent"));
+        MetamodelAssertions.assertClassFieldIsEntityType(Client_.class, EntityType.class, Client.class);
     }
 }

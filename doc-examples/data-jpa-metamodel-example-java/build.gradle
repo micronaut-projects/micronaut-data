@@ -47,7 +47,11 @@ def disabledGenDir = layout.buildDirectory.dir("generated/metamodel-disabled")
 def disabledClassesDir = layout.buildDirectory.dir("classes/metamodel-disabled")
 
 tasks.register("compileMetamodelDisabled", JavaCompile) {
-    dependsOn("clean")
+    doFirst {
+        delete(disabledGenDir)
+        delete(disabledClassesDir)
+    }
+
     source = sourceSets.main.java
     classpath = sourceSets.main.compileClasspath
     destinationDirectory = disabledClassesDir

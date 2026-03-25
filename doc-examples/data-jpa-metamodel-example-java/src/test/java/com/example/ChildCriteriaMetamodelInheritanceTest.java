@@ -21,6 +21,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.MappedSuperclassType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
@@ -115,7 +117,7 @@ public class ChildCriteriaMetamodelInheritanceTest {
         assertEquals(SingularAttribute.class.getName(), Child_.class.getField("name").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Child_.class.getDeclaredField("age").getType().getName());
 
-
+        MetamodelAssertions.assertClassFieldIsEntityType(Child_.class, EntityType.class, Child.class);
     }
 
     @Test
@@ -131,6 +133,8 @@ public class ChildCriteriaMetamodelInheritanceTest {
             parentMetamodel.getDeclaredField("name").getType().getName());
 
         assertThrows(NoSuchFieldException.class, () -> Parent_.class.getDeclaredField("age"));
+        MetamodelAssertions.assertClassFieldIsEntityType(Parent_.class, MappedSuperclassType.class, Parent.class);
+
 
     }
 }

@@ -22,6 +22,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.ListAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
@@ -75,6 +76,8 @@ public class CategoryCriteriaMetamodelTest {
         assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("id").getType().getName());
         assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("name").getType().getName());
         assertEquals(ListAttribute.class.getName(), Category_.class.getDeclaredField("books").getType().getName());
+
+        MetamodelAssertions.assertClassFieldIsEntityType(Category_.class, EntityType.class, Category.class);
     }
 
 }

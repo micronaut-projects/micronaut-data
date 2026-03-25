@@ -59,7 +59,5 @@ public class EmployeeMixedAccess {
     @SuppressWarnings("checkstyle:DesignForExtension")
     public void setSalary(double salary) {
         this.salary = salary;
-        // Logging addition logic
-        System.out.println("Salary updated: " + salary);
     }
 }

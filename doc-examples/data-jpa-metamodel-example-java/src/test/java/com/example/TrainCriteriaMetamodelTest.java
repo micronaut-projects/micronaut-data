@@ -21,6 +21,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
@@ -250,5 +251,6 @@ public class TrainCriteriaMetamodelTest {
         assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("transientField"));
         assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("FINAL_STATIC_FIELD"));
 
+        MetamodelAssertions.assertClassFieldIsEntityType(Train_.class, EntityType.class, Train.class);
     }
 }

@@ -22,6 +22,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
@@ -62,7 +63,6 @@ public class EmbeddableCriteriaMetamodelTest {
         CriteriaQuery<EmbeddedOwner> cq = cb.createQuery(EmbeddedOwner.class);
         Root<EmbeddedOwner> root = cq.from(EmbeddedOwner.class);
 
-        // nested path: embedded.embeddedName
         cq.select(root)
             .where(cb.equal(
                 root.get(EmbeddedOwner_.embedded).get(EmbeddableClass_.embeddedName),
@@ -94,7 +94,6 @@ public class EmbeddableCriteriaMetamodelTest {
         CriteriaQuery<PurchaseOrder> cq = cb.createQuery(PurchaseOrder.class);
         Root<PurchaseOrder> root = cq.from(PurchaseOrder.class);
 
-        // embeddedId path: id.tenantId and id.orderNo
         cq.select(root)
             .where(cb.and(
                 cb.equal(root.get(PurchaseOrder_.id).get(OrderPk_.tenantId), "t1"),
@@ -133,7 +132,6 @@ public class EmbeddableCriteriaMetamodelTest {
 
     @Test
     void generatedMetamodelHasExpectedFields_embeddedOwner_and_purchaseOrder() throws Exception {
-        // EmbeddedOwner_
         assertNotNull(EmbeddedOwner_.class.getDeclaredField("id"));
         assertNotNull(EmbeddedOwner_.class.getDeclaredField("ownerName"));
         assertNotNull(EmbeddedOwner_.class.getDeclaredField("embedded"));
@@ -142,10 +140,9 @@ public class EmbeddableCriteriaMetamodelTest {
         assertEquals(SingularAttribute.class.getName(), EmbeddedOwner_.class.getDeclaredField("ownerName").getType().getName());
         assertEquals(SingularAttribute.class.getName(), EmbeddedOwner_.class.getDeclaredField("embedded").getType().getName());
 
-        // PurchaseOrder_
-        assertNotNull(PurchaseOrder_.class.getDeclaredField("id"));       // embedded id still shows up as SingularAttribute<PurchaseOrder, OrderPk>
+        assertNotNull(PurchaseOrder_.class.getDeclaredField("id"));
         assertNotNull(PurchaseOrder_.class.getDeclaredField("description"));
-        assertNotNull(PurchaseOrder_.class.getDeclaredField("details"));  // regular @Embedded
+        assertNotNull(PurchaseOrder_.class.getDeclaredField("details"));
 
         assertEquals(SingularAttribute.class.getName(), PurchaseOrder_.class.getDeclaredField("id").getType().getName());
         assertEquals(SingularAttribute.class.getName(), PurchaseOrder_.class.getDeclaredField("description").getType().getName());
@@ -154,9 +151,6 @@ public class EmbeddableCriteriaMetamodelTest {
 
     @Test
     void generatedMetamodelHasExpectedFields_embeddables_optionalIfYouGenerateThem() throws Exception {
-        // If your generator generates metamodels for embeddables, keep these assertions.
-        // If not, remove this test or change it to assert ClassNotFoundException.
-
         assertNotNull(EmbeddableClass_.class.getDeclaredField("embeddedName"));
         assertNotNull(EmbeddableClass_.class.getDeclaredField("number"));
         assertNotNull(EmbeddableClass_.class.getDeclaredField("n"));
@@ -171,5 +165,7 @@ public class EmbeddableCriteriaMetamodelTest {
         assertNotNull(OrderPk_.class.getDeclaredField("orderNo"));
         assertEquals(SingularAttribute.class.getName(), OrderPk_.class.getDeclaredField("tenantId").getType().getName());
         assertEquals(SingularAttribute.class.getName(), OrderPk_.class.getDeclaredField("orderNo").getType().getName());
+
+        MetamodelAssertions.assertClassFieldIsEntityType(EmbeddableClass_.class, EmbeddableType.class, EmbeddableClass.class);
     }
 }
