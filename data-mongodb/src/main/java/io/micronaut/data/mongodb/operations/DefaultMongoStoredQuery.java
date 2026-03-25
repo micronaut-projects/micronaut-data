@@ -876,13 +876,43 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             this.filterParameterIndex = getParameterIndexByName(filterParameter);
             this.updateParameterIndex = getParameterIndexByName(updateParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
-            this.projection = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).map(BsonDocument::parse).orElse(null);
+            this.projection = storedQuery.getAnnotationMetadata()
+                    .stringValue(MongoProjection.class)
+                    .map(json -> parseProjectionOrSortJson(json, "MongoProjection"))
+                    .orElse(null);
             this.projectionNeedsProcessing = needsProcessing(this.projection);
-            this.sort = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).map(BsonDocument::parse).orElse(null);
+            this.sort = storedQuery.getAnnotationMetadata()
+                    .stringValue(MongoSort.class)
+                    .map(json -> parseProjectionOrSortJson(json, "MongoSort"))
+                    .orElse(null);
             this.sortNeedsProcessing = needsProcessing(this.sort);
             this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
         }
 
+        /**
+         * Parse BSON JSON for MongoProjection/MongoSort annotations.
+         * <p>
+         * Projection and sort definitions are expected to be constant JSON. Using
+         * {@code :param}-style placeholders is not supported and will result in
+         * a {@link DataAccessException}.
+         *
+         * @param json         The raw JSON from the annotation.
+         * @param annotationId The annotation identifier (for error messages).
+         * @return The parsed {@link BsonDocument}.
+         */
+        @NonNull
+        private BsonDocument parseProjectionOrSortJson(@NonNull String json, @NonNull String annotationId) {
+            try {
+                return BsonDocument.parse(json);
+            } catch (RuntimeException e) {
+                throw new DataAccessException(
+                        "Failed to parse " + annotationId + " JSON. " +
+                        annotationId + " must contain constant JSON and does not support :param-style placeholders. " +
+                        "Invalid value: " + json,
+                        e
+                );
+            }
+        }
         private FindOneAndUpdateOptions copy(FindOneAndUpdateOptions options) {
             FindOneAndUpdateOptions newOptions = new FindOneAndUpdateOptions();
             newOptions.collation(options.getCollation());
