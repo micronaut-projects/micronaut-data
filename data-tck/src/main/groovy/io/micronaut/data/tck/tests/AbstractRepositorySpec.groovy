@@ -579,6 +579,20 @@ abstract class AbstractRepositorySpec extends Specification {
         }
     }
 
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/3757")
+    void 'test retrieve single byte array column'() {
+        given:
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        expect:
+        def byteArrayOpt = basicTypeRepository.findByteArrayById(entity.myId)
+        byteArrayOpt.present
+        def byteArray = byteArrayOpt.get()
+        // Compare byte[] contents instead of reference equality
+        Arrays.equals(byteArray, entity.byteArray)
+        byteArray.class == byte[].class
+    }
+
     void "test save and retrieve timezone basic types"() {
         if (!timezoneBasicTypeRepository) {
             return
