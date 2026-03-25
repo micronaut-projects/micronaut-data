@@ -110,7 +110,14 @@ public final class JpaMetamodelProcessor {
      * Jakarta persistence AccessType enum.
      */
     public enum JakartaAccessType {
-        FIELD, PROPERTY
+        /**
+         * Jakarta persistence AccessType Field.
+         */
+        FIELD,
+        /**
+         * Jakarta persistence AccessType Property.
+         */
+        PROPERTY
     }
 
     /**
