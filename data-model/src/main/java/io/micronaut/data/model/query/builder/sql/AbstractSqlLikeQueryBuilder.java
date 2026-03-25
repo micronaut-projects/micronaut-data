@@ -2896,6 +2896,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (propertyPath.getProperty() instanceof Association association && association.isEmbedded() && !isIdentityProperty) {
                 int resultAssociationOffset = propertyPath.getAssociations().size() + 1;
                 NamingStrategy resultNamingStrategy = getNamingStrategy(association.getAssociatedEntity());
+                boolean[] needsTrimming = {false};
                 PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
                     String projectedColumnName = getMappedName(namingStrategy, associations, property);
                     // Nested embedded fields
@@ -2911,8 +2912,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         query.append(AS_CLAUSE).append(resultColumnName);
                     }
                     query.append(COMMA);
+                    needsTrimming[0] = true;
                 });
-                query.setLength(query.length() - 1);
+                if (needsTrimming[0]) {
+                    query.setLength(query.length() - 1);
+                }
                 return;
             }
 
