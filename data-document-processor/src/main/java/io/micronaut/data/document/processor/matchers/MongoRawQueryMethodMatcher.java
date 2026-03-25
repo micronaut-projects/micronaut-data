@@ -108,8 +108,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
             @Override
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
-                DataMethod.OperationType actualOperationType = operationType;
-                if (actualOperationType == DataMethod.OperationType.UPDATE_RETURNING) {
+                if (operationType == DataMethod.OperationType.UPDATE_RETURNING) {
                     MethodElement methodElement = matchContext.getMethodElement();
                     ClassElement returnType = matchContext.getReturnType();
                     ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
@@ -126,6 +125,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 ParameterElement[] parameters = matchContext.getParameters();
                 ParameterElement entityParameter;
                 ParameterElement entitiesParameter;
+                ParameterElement updateReturningOptionsParameter = null;
                 if (parameters.length > 1) {
                     entityParameter = null;
                     entitiesParameter = null;
@@ -133,11 +133,17 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
                     entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
                 }
+                if (operationType == DataMethod.OperationType.UPDATE_RETURNING) {
+                    updateReturningOptionsParameter = Arrays.stream(parameters)
+                        .filter(p -> p.getType().isAssignable(MongoAnnotations.UPDATE_RETURNING_OPTIONS_BEAN))
+                        .findFirst()
+                        .orElse(null);
+                }
 
                 FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
-                        actualOperationType,
+                        operationType,
                         matchContext);
 
                 ClassElement resultType = entry.returnType();
@@ -152,19 +158,22 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 }
 
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                        actualOperationType,
+                        operationType,
                         resultType,
                         interceptorType
                 );
 
                 methodMatchInfo.dto(isDto);
 
-                buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, actualOperationType);
+                buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
 
                 if (entityParameter != null) {
                     methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                 } else if (entitiesParameter != null) {
                     methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
+                }
+                if (updateReturningOptionsParameter != null) {
+                    methodMatchInfo.addParameterRole(updateReturningOptionsParameter, MongoAnnotations.UPDATE_OPTIONS_ROLE);
                 }
                 return methodMatchInfo;
             }
@@ -259,7 +268,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         );
         removeAnnotation(matchContext.getAnnotationMetadata(), MongoAnnotations.FILTER); // Mapped to query
         removeAnnotation(matchContext.getAnnotationMetadata(), MongoAnnotations.UPDATE_QUERY); // Mapped to query
-        removeAnnotation(matchContext.getAnnotationMetadata(), MongoAnnotations.UPDATE_RETURNING_QUERY); // Mapped to query
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         String filterQuery = processCustomQuery(matchContext, filterQueryString, parameters, entityParam, persistentEntity, parameterBindings);
         String updateQuery = processCustomQuery(matchContext, updateQueryString, parameters, entityParam, persistentEntity, parameterBindings);

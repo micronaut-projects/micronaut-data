@@ -916,7 +916,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             if (from.getArrayFilters() != null) {
                 to.arrayFilters(from.getArrayFilters());
             }
-            to.returnDocument(from.getReturnDocument());
+            if (from.getReturnDocument() != null && to.getReturnDocument() == null) {
+                to.returnDocument(from.getReturnDocument());
+            }
             if (from.getProjection() != null) {
                 to.projection(from.getProjection());
             }

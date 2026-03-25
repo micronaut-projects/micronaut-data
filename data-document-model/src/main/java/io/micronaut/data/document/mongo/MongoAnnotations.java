@@ -52,6 +52,7 @@ public interface MongoAnnotations {
     String FIND_OPTIONS_BEAN = "io.micronaut.data.mongodb.operations.options.MongoFindOptions";
     String AGGREGATION_OPTIONS_BEAN = "io.micronaut.data.mongodb.operations.options.MongoAggregationOptions";
     String UPDATE_OPTIONS_BEAN = "com.mongodb.client.model.UpdateOptions";
+    String UPDATE_RETURNING_OPTIONS_BEAN = "com.mongodb.client.model.FindOneAndUpdateOptions";
     String DELETE_OPTIONS_BEAN = "com.mongodb.client.model.DeleteOptions";
     String PAGEABLE_BEAN = "io.micronaut.data.model.Pageable";
 

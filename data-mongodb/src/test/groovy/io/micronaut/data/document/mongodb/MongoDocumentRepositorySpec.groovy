@@ -1083,6 +1083,25 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Jeff Options Updated"
     }
 
+    void "test update returning options parameter is applied while annotation returnDocument wins"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
+        given:
+            def id = "507f1f77bcf86cd799439012"
+            def options = new com.mongodb.client.model.FindOneAndUpdateOptions()
+                .upsert(true)
+                .returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
+
+        when:
+            def result = personRepository.updateCustomReturningAfterWithOptions(id, "Inserted Via Options", options)
+
+        then:
+            result != null
+            result.name == "Inserted Via Options"
+            personRepository.findById(id).present
+    }
+
     void "test custom update returning dto projection"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
             return
