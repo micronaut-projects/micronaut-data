@@ -137,6 +137,7 @@ class H2EmbeddedSpec extends Specification {
         def projectedSecondRegistration = vehicleRepository.findSecondRegistrationById(vehicle.id)
         def projectedFirstJurisdiction = vehicleRepository.findFirstRegistrationJurisdictionById(vehicle.id)
         def projectedSecondJurisdiction = vehicleRepository.findSecondRegistrationJurisdictionById(vehicle.id)
+        def criteriaFirstRegistration = vehicleRepository.findOne(H2VehicleRepository.Specifications.findFirstRegistrationById(vehicle.id))
 
         then:"Top-level embedded projections contain nested embedded values"
         projectedFirstRegistration
@@ -145,6 +146,13 @@ class H2EmbeddedSpec extends Specification {
         projectedFirstRegistration.jurisdiction
         projectedFirstRegistration.jurisdiction.countryCode == "US"
         projectedFirstRegistration.jurisdiction.regionCode == "CA"
+
+        criteriaFirstRegistration
+        criteriaFirstRegistration.plateNumber == "ABC-123"
+        criteriaFirstRegistration.status == "ACTIVE"
+        criteriaFirstRegistration.jurisdiction
+        criteriaFirstRegistration.jurisdiction.countryCode == "US"
+        criteriaFirstRegistration.jurisdiction.regionCode == "CA"
 
         projectedSecondRegistration
         projectedSecondRegistration.plateNumber == "XYZ-789"

@@ -18,12 +18,14 @@ package io.micronaut.data.jdbc.h2;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
 import io.micronaut.data.tck.entities.Jurisdiction;
 import io.micronaut.data.tck.entities.Registration;
 import io.micronaut.data.tck.entities.Vehicle;
 
 @JdbcRepository(dialect = Dialect.H2)
-public interface H2VehicleRepository extends CrudRepository<Vehicle, Long> {
+public interface H2VehicleRepository extends CrudRepository<Vehicle, Long>, JpaSpecificationExecutor<Vehicle> {
 
     Registration findFirstRegistrationById(Long id);
 
@@ -32,4 +34,15 @@ public interface H2VehicleRepository extends CrudRepository<Vehicle, Long> {
     Jurisdiction findFirstRegistrationJurisdictionById(Long id);
 
     Jurisdiction findSecondRegistrationJurisdictionById(Long id);
+
+    class Specifications {
+        static CriteriaQueryBuilder<Registration> findFirstRegistrationById(Long id) {
+            return criteriaBuilder -> {
+                var query = criteriaBuilder.createQuery(Registration.class);
+                var root = query.from(Vehicle.class);
+                query.select(root.get("firstRegistration")).where(criteriaBuilder.equal(root.get("id"), id));
+                return query;
+            };
+        }
+    }
 }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
@@ -98,9 +99,27 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.pageable = pageable;
         this.isCount = isCount;
         this.operationType = operationType;
-        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
+        DataType resolvedResultDataType = DataType.forType(resultType);
+        if (!isCount
+            && operationType == OperationType.QUERY
+            && resolvedResultDataType == DataType.OBJECT
+            && isEmbeddable(resultType)) {
+            resolvedResultDataType = DataType.ENTITY;
+        }
+        this.resultDataType = isCount ? resolvedResultDataType : (rootEntity == resultType) ? DataType.ENTITY : resolvedResultDataType;
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         this.isDto = isDto;
+    }
+
+    private static boolean isEmbeddable(Class<?> type) {
+        return BeanIntrospector.SHARED.findIntrospection(type)
+            .map(introspection -> {
+                AnnotationMetadata metadata = introspection.getAnnotationMetadata();
+                return metadata.hasStereotype(Embeddable.class)
+                    || metadata.hasStereotype("jakarta.persistence.Embeddable")
+                    || metadata.hasStereotype("javax.persistence.Embeddable");
+            })
+            .orElse(false);
     }
 
     @Override
