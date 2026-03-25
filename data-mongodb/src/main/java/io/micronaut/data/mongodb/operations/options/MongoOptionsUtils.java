@@ -90,13 +90,15 @@ public final class MongoOptionsUtils {
         if (updateReturningAnn != null) {
             updateReturningAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
         }
-        String[] arrayFilters;
-        if (updateReturningAnn != null) {
-            arrayFilters = updateReturningAnn.stringValues("arrayFilters");
-        } else if (optionsAnn != null) {
+        String[] arrayFilters = new String[0];
+        if (optionsAnn != null) {
             arrayFilters = optionsAnn.stringValues("arrayFilters");
-        } else {
-            arrayFilters = new String[0];
+        }
+        if ((arrayFilters == null || arrayFilters.length == 0) && updateReturningAnn != null) {
+            String[] updateReturningArrayFilters = updateReturningAnn.stringValues("arrayFilters");
+            if (updateReturningArrayFilters != null && updateReturningArrayFilters.length > 0) {
+                arrayFilters = updateReturningArrayFilters;
+            }
         }
         if (arrayFilters.length > 0) {
             options.arrayFilters(Arrays.stream(arrayFilters).map(BsonDocument::parse).toList());
