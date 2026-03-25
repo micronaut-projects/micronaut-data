@@ -20,6 +20,8 @@ interface BookRepository : CoroutineCrudRepository<Book, Long> {
     @Join("author")
     override fun findAll(): Flow<Book>
 
+    suspend fun findTitleById(id: Long): String?
+
     // tag::mandatory[]
     @Transactional(Transactional.TxType.MANDATORY)
     override suspend fun <S : Book> save(entity: S): S

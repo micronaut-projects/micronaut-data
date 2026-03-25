@@ -66,7 +66,7 @@ class Project {
         def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder()).query
 
         expect:
-        sql == 'INSERT INTO "project" ("name","db_name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?,?)'
+        sql == 'INSERT INTO "project" ("name","db_name","org","department_id","project_id") VALUES (UPPER(?),?,?,?,?)'
     }
 
     void "test build update with column writer"() {
@@ -85,7 +85,7 @@ class Project {
         def sql = query.build(queryBuilder).query
 
         expect:
-        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_'
+        sql == 'SELECT project_."department_id",project_."project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_'
     }
     void "test build query with column reader in where"() {
         given:
@@ -94,7 +94,7 @@ class Project {
         def sql = query.where(builder.equal(root.get("name"), builder.parameter(String))).build(queryBuilder).query
 
         expect:
-        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."name" = UPPER(?))'
+        sql == 'SELECT project_."department_id",project_."project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."name" = UPPER(?))'
     }
 
     void "test update query with column readers and writers"() {
@@ -119,7 +119,7 @@ class Project {
             def sql = query.build(new SqlQueryBuilder()).query
 
         expect:
-            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(?),?,?)'
+            sql == 'INSERT INTO "transform" ("xyz","department_id","project_id") VALUES (LOWER(?),?,?)'
     }
 
     void "test build update with column writer2"() {
@@ -137,7 +137,7 @@ class Project {
             def sql = query.build(new SqlQueryBuilder()).query
 
         expect:
-            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'
+            sql == 'SELECT transform_."department_id",transform_."project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'
     }
 
     void "test build query with column reader in where2"() {
@@ -147,6 +147,6 @@ class Project {
             def sql = query.where(builder.equal(root.get("xyz"), builder.parameter(String))).build(queryBuilder).query
 
         expect:
-            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(?))'
+            sql == 'SELECT transform_."department_id",transform_."project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(?))'
     }
 }

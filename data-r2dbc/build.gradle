@@ -86,9 +86,6 @@ dependencies {
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
-
-    testRuntimeOnly mnFlyway.micronaut.flyway
-    testRuntimeOnly mnFlyway.flyway.oracle
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
 }
 

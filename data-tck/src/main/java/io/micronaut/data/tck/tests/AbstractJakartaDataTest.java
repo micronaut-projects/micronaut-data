@@ -1385,7 +1385,7 @@ public abstract class AbstractJakartaDataTest {
                 .filter(train -> train.getCapacity() / 2 > 100)
                 .count()
         );
-        Restriction<Train> restriction = _Train.capacity.divide(2).greaterThan(100);
+        Restriction<Train> restriction = _Train.capacity.dividedBy(2).greaterThan(100);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(2, trains.size());
         trains.forEach(train -> assertTrue(train.getCapacity() > 200));

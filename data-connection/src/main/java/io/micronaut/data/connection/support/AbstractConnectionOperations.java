@@ -104,6 +104,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     public final <R> R execute(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, R> callback) {
         DefaultConnectionStatus<C> connection = getConnection(definition);
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Executing with a connection: [{}]", connection);
+            }
             setupConnection(connection);
             return connection.propagate(() -> callback.apply(connection));
         } finally {
@@ -114,6 +117,9 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     @NonNull
     @Override
     public DefaultConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Getting a connection for a definition: [{}]", definition);
+        }
         ConnectionStatus<C> existingConnection = findConnectionStatus().orElse(null);
         return switch (definition.getPropagationBehavior()) {
             case REQUIRED -> {

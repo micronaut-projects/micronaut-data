@@ -70,6 +70,14 @@ public enum DataType {
      */
     TIME(Time.class),
     /**
+     * A {@link Duration} value.
+     */
+    DURATION(Duration.class),
+    /**
+     * A {@link Period} value.
+     */
+    PERIOD(Period.class),
+    /**
      * A {@link Double} value.
      */
     DOUBLE(Double.class),

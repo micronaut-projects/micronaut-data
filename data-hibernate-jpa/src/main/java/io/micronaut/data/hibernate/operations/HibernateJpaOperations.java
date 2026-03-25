@@ -338,7 +338,15 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        return findOne(preparedQuery) != null;
+        return executeRead(session -> {
+            Limit limit = preparedQuery.getQueryLimit();
+            if (!limit.isLimited()) {
+                limit = Limit.of(1, 0);
+            }
+            FirstResultCollector<Boolean> collector = new FirstResultCollector<>(true);
+            collectResults(session, preparedQuery.getQuery(), preparedQuery, limit, preparedQuery.getSort(), collector);
+            return collector.result != null;
+        });
     }
 
     @NonNull

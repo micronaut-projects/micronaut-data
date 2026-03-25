@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
@@ -189,9 +188,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, long value) {
+    public QueryStatement<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, @Nullable Long value) {
         try {
+            if (value == null) {
+                statement.setNull(name, Types.BIGINT);
+            } else {
             statement.setLong(name, value);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -199,9 +202,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, char value) {
+    public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, @Nullable Character value) {
         try {
-            statement.setString(name, String.valueOf(value));
+            if (value == null) {
+                statement.setNull(name, Types.CHAR);
+            } else {
+                statement.setString(name, String.valueOf(value));
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -237,9 +244,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, int integer) {
+    public QueryStatement<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, @Nullable Integer integer) {
         try {
-            statement.setInt(name, integer);
+            if (integer == null) {
+                statement.setNull(name, Types.INTEGER);
+            } else {
+                statement.setInt(name, integer);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -247,9 +258,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, boolean bool) {
+    public QueryStatement<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, @Nullable Boolean bool) {
         try {
-            statement.setBoolean(name, bool);
+            if (bool == null) {
+                statement.setNull(name, Types.BOOLEAN);
+            } else {
+                statement.setBoolean(name, bool);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -257,9 +272,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, float f) {
+    public QueryStatement<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, @Nullable Float f) {
         try {
-            statement.setFloat(name, f);
+            if (f == null) {
+                statement.setNull(name, Types.FLOAT);
+            } else {
+                statement.setFloat(name, f);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -267,9 +286,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, byte b) {
+    public QueryStatement<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, @Nullable Byte b) {
         try {
-            statement.setByte(name, b);
+            if (b == null) {
+                statement.setNull(name, Types.BIT);
+            } else {
+                statement.setByte(name, b);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -277,9 +300,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, short s) {
+    public QueryStatement<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, @Nullable Short s) {
         try {
-            statement.setShort(name, s);
+            if (s == null) {
+                statement.setNull(name, Types.TINYINT);
+            } else {
+                statement.setShort(name, s);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -287,9 +314,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     }
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, double d) {
+    public QueryStatement<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, @Nullable Double d) {
         try {
-            statement.setDouble(name, d);
+            if (d == null) {
+                statement.setNull(name, Types.DOUBLE);
+            } else {
+                statement.setDouble(name, d);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }

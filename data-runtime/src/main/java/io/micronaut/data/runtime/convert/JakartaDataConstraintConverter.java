@@ -20,8 +20,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.data.constraint.AtLeast;
@@ -37,8 +40,10 @@ import jakarta.data.constraint.NotIn;
 import jakarta.data.constraint.NotLike;
 import jakarta.data.repository.By;
 import jakarta.data.repository.Is;
+import jakarta.inject.Provider;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
@@ -57,9 +62,11 @@ import java.util.Optional;
 final class JakartaDataConstraintConverter<E> implements TypeConverter<SpecificationConstraint, PredicateSpecification<E>> {
 
     private final DateTimeProvider<OffsetDateTime> dateTimeProvider;
+    private final Provider<RuntimeEntityRegistry> runtimeEntityRegistry;
 
-    JakartaDataConstraintConverter(DateTimeProvider<OffsetDateTime> dateTimeProvider) {
+    JakartaDataConstraintConverter(DateTimeProvider<OffsetDateTime> dateTimeProvider, Provider<RuntimeEntityRegistry> runtimeEntityRegistry) {
         this.dateTimeProvider = dateTimeProvider;
+        this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
 
     @Override
@@ -144,12 +151,25 @@ final class JakartaDataConstraintConverter<E> implements TypeConverter<Specifica
     }
 
     private <V> Expression<V> getExpression(Root<E> root, Argument<?> argument) {
-        String propertyName = argument.getAnnotationMetadata().stringValue(By.class)
-            .or(() -> argument.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.By.class))
-            .orElse(argument.getName());
-        if (propertyName.equals(By.ID)) {
-            return ((PersistentEntityRoot<E>) root).id();
+        Optional<String> byPropertyName = argument.getAnnotationMetadata().stringValue(By.class)
+            .or(() -> argument.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.By.class));
+        if (byPropertyName.isPresent()) {
+            String propertyName = byPropertyName.get();
+            if (propertyName.equals(By.ID)) {
+                return ((PersistentEntityRoot<E>) root).id();
+            }
+            return getPropertyByPath(root, propertyName);
         }
-        return root.get(propertyName);
+        RuntimePersistentEntity<? extends E> entity = runtimeEntityRegistry.get().getEntity(root.getJavaType());
+        String propertyName = argument.getName();
+        return getPropertyByPath(root, entity.getPath(propertyName).orElseThrow(() -> new IllegalStateException("Cannot find property: " + propertyName + " in entity: " + entity.getName())));
+    }
+
+    private <V> Path<V> getPropertyByPath(Root<E> root, String propertyName) {
+        Path path = root;
+        for (String p : StringUtils.splitOmitEmptyStrings(propertyName, '.')) {
+            path = path.get(p);
+        }
+        return path;
     }
 }

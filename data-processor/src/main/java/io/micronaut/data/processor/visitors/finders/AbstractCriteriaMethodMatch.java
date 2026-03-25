@@ -201,16 +201,21 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             List<Predicate> predicates = new ArrayList<>(queryParams.size());
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
+                String path = null;
                 boolean isId = TypeRole.ID.equals(paramName);
                 if (queryParam.hasAnnotation(By.class)) {
                     paramName = queryParam.stringValue(By.class).orElseThrow();
+                    path = paramName;
                     isId = By.ID.equals(paramName);
                 }
                 PersistentPropertyPath propPath;
                 if (isId && rootEntity.hasIdentity()) {
                     propPath = new PersistentPropertyPath(Objects.requireNonNull(rootEntity.getIdentity()));
                 } else {
-                    propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
+                    if (path == null) {
+                        path = rootEntity.getPath(paramName).orElse(paramName);
+                    }
+                    propPath = rootEntity.getPropertyPath(path);
                 }
                 ParameterExpression<Object> param = ((SourcePersistentEntityCriteriaBuilder) cb).parameter(queryParam, propPath);
                 if (propPath == null) {

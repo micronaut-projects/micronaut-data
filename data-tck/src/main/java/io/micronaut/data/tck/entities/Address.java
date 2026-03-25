@@ -16,9 +16,12 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
 
 @Embeddable
 public class Address {
+
     private final String street;
     private final String zipCode;
 

@@ -27,13 +27,19 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentAssociationPath;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Abstract cascade operations.
@@ -156,6 +162,9 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
             Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
             if (newInnerEntity != innerEntity) {
                 innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
@@ -196,6 +205,9 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
             Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
             if (newInnerEntity != innerEntity) {
                 innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
@@ -234,6 +246,75 @@ abstract class AbstractCascadeOperations {
         newAssociations.addAll(associations);
         newAssociations.add(association);
         return newAssociations;
+    }
+
+    /**
+     * Common decision if a child should be persisted on PERSIST cascade for single association.
+     */
+    protected static boolean shouldPersistChildOnPersist(RuntimePersistentEntity<Object> childPersistentEntity, Object child) {
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        boolean hasId = identity.getProperty().get(child) != null;
+        boolean generatedId = identity.isGenerated();
+        return (!hasId || identity instanceof Association || !generatedId);
+    }
+
+    /**
+     * Build a veto predicate for batch persist of many children.
+     * For join-table associations, veto any child with a non-null id (existing). For direct FKs, veto when id present and generated.
+     */
+    protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
+                                                        @Nullable RuntimeAssociation<Object> association,
+                                                        java.util.Set<Object> alreadyPersisted) {
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+            return val -> alreadyPersisted.contains(val) || identity.getProperty().get(val) != null;
+        }
+        return val -> {
+            if (alreadyPersisted.contains(val)) {
+                return true;
+            }
+            Object idVal = identity.getProperty().get(val);
+            return idVal != null && identity.isGenerated() && !(identity instanceof Association);
+        };
+    }
+
+    /**
+     * For join-table batch operations, build a unique list of children by id combining old and new values.
+     */
+    protected static List<Object> uniqueByIdForJoin(RuntimePersistentEntity<Object> childPersistentEntity,
+                                                     Iterable<Object>... sources) {
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        Map<Object, Object> byId = new LinkedHashMap<>();
+        for (Iterable<Object> src : sources) {
+            if (src == null) {
+                continue;
+            }
+            for (Object c : src) {
+                Object idVal = identity.getProperty().get(c);
+                if (idVal != null) {
+                    byId.putIfAbsent(idVal, c);
+                }
+            }
+        }
+        return new ArrayList<>(byId.values());
+    }
+
+    /**
+     * For join-table batch persist source, include children without IDs and de-duplicate by id or instance identity.
+     */
+    protected static Iterable<Object> deduplicateSourceForJoinBatch(RuntimePersistentEntity<Object> childPersistentEntity,
+                                                                    Iterable<Object> source) {
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        Map<Object, Object> map = new LinkedHashMap<>();
+        for (Object c : source) {
+            Object idVal = identity.getProperty().get(c);
+            if (idVal != null) {
+                map.putIfAbsent(idVal, c);
+            } else {
+                map.putIfAbsent(System.identityHashCode(c), c);
+            }
+        }
+        return map.values();
     }
 
     /**
@@ -359,6 +440,7 @@ abstract class AbstractCascadeOperations {
          *
          * @return last association
          */
+        @Nullable
         public Association getAssociation() {
             return CollectionUtils.last(associations);
         }

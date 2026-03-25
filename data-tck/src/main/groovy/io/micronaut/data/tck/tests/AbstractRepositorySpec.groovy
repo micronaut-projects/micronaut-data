@@ -57,6 +57,7 @@ import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
@@ -77,7 +78,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Connection
+import java.time.Duration
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -124,6 +127,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
     abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
     abstract ExampleEntityRepository getExampleEntityRepository()
+    abstract IntervalRepository getIntervalRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -192,6 +196,7 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
         personRepository.deleteAll()
+        intervalRepository.deleteAll()
     }
 
     protected void cleanupMeals() {
@@ -572,6 +577,20 @@ abstract class AbstractRepositorySpec extends Specification {
             // The point of test is that it won't throw error when field value is null
             retrievedBook.wrapperChar == 'c'
         }
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/3757")
+    void 'test retrieve single byte array column'() {
+        given:
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        expect:
+        def byteArrayOpt = basicTypeRepository.findByteArrayById(entity.myId)
+        byteArrayOpt.present
+        def byteArray = byteArrayOpt.get()
+        // Compare byte[] contents instead of reference equality
+        Arrays.equals(byteArray, entity.byteArray)
+        byteArray.class == byte[].class
     }
 
     void "test save and retrieve timezone basic types"() {
@@ -3475,6 +3494,158 @@ abstract class AbstractRepositorySpec extends Specification {
         entity.uppercaseColumn() == "foo"
         cleanup:
         exampleEntityRepository.deleteById(1)
+    }
+
+    void "test save, find and update single interval entity"() {
+        given:
+        def entity = new IntervalEntity()
+        entity.setDuration(Duration.ofHours(4).negated())
+        entity.setPeriod(Period.ofMonths(7))
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.duration == entity.duration
+        foundEntity.period == entity.period
+
+        when:
+        foundEntity.setDuration(Duration.ofHours(8))
+        foundEntity.setPeriod(Period.ofMonths(10))
+        intervalRepository.update(foundEntity)
+        def updatedEntityOpt = intervalRepository.findById(savedEntity.id)
+        def updatedEntity = updatedEntityOpt.orElse(null)
+
+        then:
+        updatedEntity != null
+        updatedEntity.duration == foundEntity.duration
+        updatedEntity.period == foundEntity.period
+    }
+
+    void "test save, find and update multiple interval entities"() {
+        given:
+        def entity1 = new IntervalEntity()
+        entity1.setDuration(Duration.ofHours(4))
+        entity1.setPeriod(Period.ofMonths(7))
+
+        def entity2 = new IntervalEntity()
+        entity2.setDuration(Duration.ofMinutes(5))
+        entity2.setPeriod(Period.ofYears(8))
+
+        when:
+        def savedEntities = intervalRepository.saveAll([entity1, entity2])
+
+        then:
+        savedEntities != null
+        savedEntities.size() == 2
+        savedEntities.get(0).id != null
+        savedEntities.get(1).id != null
+
+        when:
+        def foundEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 2
+        foundEntities.get(0).duration == entity1.duration
+        foundEntities.get(0).period == entity1.period
+        foundEntities.get(1).duration == entity2.duration
+        foundEntities.get(1).period == entity2.period
+
+        when:
+        entity1.setDuration(Duration.ofSeconds(30))
+        entity1.setPeriod(Period.ofYears(5))
+        entity2.setDuration(Duration.ofHours(5).plusMinutes(10).plusSeconds(14).plusMillis(250))
+        entity2.setPeriod(Period.ofYears(2).plusMonths(4))
+        intervalRepository.updateAll([entity1, entity2])
+        def updatedEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        updatedEntities != null
+        updatedEntities.size() == 2
+        updatedEntities.get(0).duration == entity1.duration
+        updatedEntities.get(0).period == entity1.period
+        updatedEntities.get(1).duration == entity2.duration
+        updatedEntities.get(1).period == entity2.period
+    }
+
+    void "test save, find and update single interval entity using custom queries"() {
+        given:
+        def duration1 = Duration.ofHours(4)
+        def period1 = Period.ofMonths(7)
+        def duration2 = Duration.ofHours(5)
+        def period2 = Period.ofMonths(8)
+        def duration3 = Duration.ofHours(5)
+        def period3 = Period.ofMonths(8)
+        def duration4 = Duration.ofHours(6)
+        def period4 = Period.ofMonths(11)
+
+        when:
+        intervalRepository.saveCustom(duration1, period1)
+        intervalRepository.saveCustom(duration2, period2)
+        intervalRepository.saveCustom(duration3, period3)
+        intervalRepository.saveCustom(duration4, period4)
+        def savedEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        savedEntities != null
+        savedEntities.size() == 4
+        savedEntities.get(0).duration == duration1
+        savedEntities.get(0).period == period1
+        savedEntities.get(1).duration == duration2
+        savedEntities.get(1).period == period2
+        savedEntities.get(2).duration == duration3
+        savedEntities.get(2).period == period3
+        savedEntities.get(3).duration == duration4
+        savedEntities.get(3).period == period4
+
+        when:
+        def foundEntities = intervalRepository.findCustom(Duration.ofHours(5), Period.ofMonths(8))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 2
+        foundEntities.get(0).duration == duration2
+        foundEntities.get(0).period == period2
+        foundEntities.get(1).duration == duration3
+        foundEntities.get(1).period == period3
+
+        when:
+        intervalRepository.updateCustom(foundEntities.get(1).id, duration3.minusHours(3), period3)
+        foundEntities = intervalRepository.findCustom(Duration.ofHours(5), Period.ofMonths(8))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 1
+        foundEntities.get(0).duration == duration2
+        foundEntities.get(0).period == period2
+    }
+
+    void "test save and find when interval properties are null"() {
+        given:
+        def entity = new IntervalEntity()
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.id == savedEntity.id
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

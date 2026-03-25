@@ -36,7 +36,10 @@ dependencies {
 
     runtimeOnly mnR2dbc.r2dbc.mariadb
     runtimeOnly mnSql.mariadb.java.client
-    runtimeOnly mnFlyway.micronaut.flyway
+    runtimeOnly (mnFlyway.micronaut.flyway) {
+        // It is imported already and flyway might bring different version
+        exclude group: 'io.micronaut.sql', module: 'micronaut-jdbc'
+    }
     runtimeOnly mnFlyway.flyway.mysql
 
     testImplementation mn.micronaut.http.client

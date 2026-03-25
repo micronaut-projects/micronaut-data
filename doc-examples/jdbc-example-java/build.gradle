@@ -23,6 +23,8 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
     implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSerde.micronaut.serde.jackson)
+    implementation(mnSerde.micronaut.serde.support)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic
@@ -32,7 +34,7 @@ dependencies {
 sourceSets {
     generated {
         java {
-            srcDirs = ["$build/generated/java"]
+            srcDirs = [layout.buildDirectory.dir("generated/java")]
         }
     }
 }

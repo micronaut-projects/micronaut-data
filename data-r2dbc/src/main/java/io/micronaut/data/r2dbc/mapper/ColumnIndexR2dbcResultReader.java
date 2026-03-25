@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -25,6 +23,8 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -77,7 +77,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             case FLOAT -> resultSet.get(index, Float.class);
             case SHORT -> resultSet.get(index, Short.class);
             case DOUBLE -> resultSet.get(index, Double.class);
-            case BYTE_ARRAY -> resultSet.get(index, byte[].class);
+            case BYTE_ARRAY -> readBytes(resultSet, index);
             case BIGDECIMAL -> resultSet.get(index, BigDecimal.class);
             default -> getRequiredValue(resultSet, index, Object.class);
         };
@@ -202,10 +202,14 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         return resultSet.get(name, BigDecimal.class);
     }
 
-    @Nullable
     @Override
-    public byte[] readBytes(Row resultSet, Integer name) {
-        return resultSet.get(name, byte[].class);
+    public byte @Nullable [] readBytes(Row resultSet, Integer name) {
+        try {
+            return resultSet.get(name, byte[].class);
+        } catch (Exception e) {
+            // Ignore and fallback to generic handling (Oracle, H2, etc.)
+        }
+        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
     }
 
     @Nullable
@@ -216,7 +220,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
-                return conversionService.convertRequired(resultSet.get(name), type);
+                return conversionService.convert(resultSet.get(name), type).orElse(null);
             } catch (Exception exception) {
                 throw exceptionForColumn(name, e);
             }

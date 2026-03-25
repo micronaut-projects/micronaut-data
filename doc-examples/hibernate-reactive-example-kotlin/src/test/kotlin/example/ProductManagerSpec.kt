@@ -30,7 +30,8 @@ internal class ProductManagerSpec : PostgresHibernateReactiveProperties {
     fun testProductManager() : Unit = runBlocking {
         val apple = manufacturerRepository.save("Apple")
         productManager.save("VR", apple).block()
-        val (_, name) = productManager.find("VR").block()
+        val product = productManager.find("VR").block() ?: error("Product not found")
+        val (_, name) = product
         Assertions.assertEquals("VR", name)
     }
 }

@@ -122,12 +122,16 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
+    protected static final String SELECT_JSON_CLAUSE = "SELECT JSON ";
     protected static final String AS_CLAUSE = " AS ";
     protected static final String FROM_CLAUSE = " FROM ";
     protected static final String WHERE_CLAUSE = " WHERE ";
+    protected static final String WITH_CLAUSE = " WITH ";
     protected static final char COMMA = ',';
     protected static final char CLOSE_BRACKET = ')';
     protected static final char OPEN_BRACKET = '(';
+    protected static final char CLOSE_CURLY_BRACKET = '}';
+    protected static final char OPEN_CURLY_BRACKET = '{';
     protected static final char SPACE = ' ';
     protected static final char DOT = '.';
     protected static final String NOT = "NOT";
@@ -139,6 +143,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String DISTINCT = "DISTINCT ";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+    protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
 
@@ -1365,9 +1371,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(jsonEntityColumn).append(DOT);
                     PersistentProperty property = propertyPath.getProperty();
                     if (queryState.entity.hasIdentity() && property == queryState.entity.getIdentity()) {
-                        query.append('"').append(property.getPersistedName()).append('"');
+                        String persistedName = property.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                            .orElse(property.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                                .orElse(property.getName()));
+                            query.append('"').append(persistedName).append('"');
                     } else {
-                        query.append(propertyPath.getPath());
+                        String path = propertyPath.getPath();
+                        String identityPrefix = queryState.entity.getIdentity().getName() + ".";
+                        if (path.startsWith(identityPrefix)) {
+                            path = "\"_id\"." + path.substring(identityPrefix.length());
+                        }
+                        query.append(path);
                     }
                     DataType dataType = propertyPath.getProperty().getDataType();
                     appendJsonProjection(query, dataType);

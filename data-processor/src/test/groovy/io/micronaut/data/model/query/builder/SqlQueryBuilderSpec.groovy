@@ -42,6 +42,7 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.Vehicle
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
@@ -233,7 +234,7 @@ interface MyRepository {
         def encoded = criteriaQuery.build(encoder)
 
         expect:
-        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
+        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
     }
 
     void "test h2 crud"() {
@@ -469,7 +470,7 @@ interface MyRepository {
         def result = builder.createCriteriaInsert(Restaurant).build(new SqlQueryBuilder())
 
         expect:
-        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
+        result.query == 'INSERT INTO "restaurant" ("name","street","zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
@@ -480,7 +481,7 @@ interface MyRepository {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"street" VARCHAR(255) NOT NULL,"zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
@@ -525,8 +526,8 @@ interface MyRepository {
             ]
             query << [
                     'INSERT INTO "Shipment1" ("field","sp_country","sp_city") VALUES (?,?,?)',
-                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child_embedded_child2_id","nullable_value","uuid") VALUES (?,?,?,?,?,?)',
-                    'INSERT INTO "user_role_composite" ("id_user_id","id_role_id") VALUES (?,?)'
+                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child2_id","nullable_value","uuid") VALUES (?,?,?,?,?,?)',
+                    'INSERT INTO "user_role_composite" ("user_id","role_id") VALUES (?,?)'
             ]
     }
 
@@ -547,9 +548,25 @@ interface MyRepository {
             ]
             query << [
                     'CREATE TABLE "Shipment1" ("sp_country" VARCHAR(255) NOT NULL,"sp_city" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL, PRIMARY KEY("sp_country","sp_city"));',
-                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
-                    'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
+                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
+                    'CREATE TABLE "user_role_composite" ("user_id" BIGINT NOT NULL,"role_id" BIGINT NOT NULL, PRIMARY KEY("user_id","role_id"));'
             ]
+    }
+
+    void "test build create index from embedded class and field annotations"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Vehicle))
+
+        then:
+        statements[0] == 'CREATE TABLE "vehicle" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"plate_number" VARCHAR(255) NOT NULL,"status" VARCHAR(255) NOT NULL,"jurisdiction_country_code" VARCHAR(255) NOT NULL,"jurisdiction_region_code" VARCHAR(255) NOT NULL,"second_plate_number" VARCHAR(255) NOT NULL,"second_status" VARCHAR(255) NOT NULL,"second_jurisdiction_country_code" VARCHAR(255) NOT NULL,"second_jurisdiction_region_code" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE INDEX "idx_vehicle_name" ON "vehicle" ("name");'
+        statements[2] == 'CREATE INDEX "idx_vehicle_plate_number" ON "vehicle" ("plate_number");'
+        statements[3] == 'CREATE INDEX "idx_vehicle_status" ON "vehicle" ("status");'
+        statements[4] == 'CREATE INDEX "idx_vehicle_jurisdiction_region_code" ON "vehicle" ("jurisdiction_region_code");'
+        statements[5] == 'CREATE INDEX "idx_vehicle_second_plate_number" ON "vehicle" ("second_plate_number");'
+        statements[6] == 'CREATE INDEX "idx_vehicle_second_status" ON "vehicle" ("second_status");'
+        statements[7] == 'CREATE INDEX "idx_vehicle_second_jurisdiction_region_code" ON "vehicle" ("second_jurisdiction_region_code");'
     }
 
     void "test build create index from table annotation"() {
@@ -621,7 +638,7 @@ interface MyRepository {
             def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(encoder)
 
         then:
-            q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'
+            q.query == 'SELECT project_."department_id",project_."project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id" = ?)'
             q.parameters == [
                     '1': 'projectId.departmentId',
                     '2': 'projectId.projectId'

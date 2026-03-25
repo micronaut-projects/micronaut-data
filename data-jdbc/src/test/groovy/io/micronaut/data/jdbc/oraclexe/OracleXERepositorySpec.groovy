@@ -16,12 +16,15 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
-import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.PendingFeature
+
+import java.time.Duration
+import java.time.Period
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
@@ -180,6 +183,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         return context.getBean(OracleExampleEntityRepository)
     }
 
+    @Memoized
+    @Override
+    OracleXEIntervalRepository getIntervalRepository() {
+        return context.getBean(OracleXEIntervalRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
@@ -296,4 +305,85 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         faceRepository.delete(face)
     }
 
+    void "test comparison operations on interval properties"() {
+        given:
+        def entity1 = new IntervalEntity()
+        entity1.setDuration(Duration.ofHours(4))
+        entity1.setPeriod(Period.ofYears(7))
+
+        def entity2 = new IntervalEntity()
+        entity2.setDuration(Duration.ofHours(4).plusMinutes(15))
+        entity2.setPeriod(Period.ofYears(7).plusMonths(4))
+
+        def entity3 = new IntervalEntity()
+        entity3.setDuration(Duration.ofHours(4).plusMinutes(30))
+        entity3.setPeriod(Period.ofYears(7).minusMonths(4))
+
+        def entity4 = new IntervalEntity()
+        entity4.setDuration(Duration.ofHours(4).plusMinutes(45))
+        entity4.setPeriod(Period.ofYears(7).plusMonths(2))
+
+        def entity5 = new IntervalEntity()
+        entity5.setDuration(Duration.ofHours(5))
+        entity5.setPeriod(Period.ofYears(8))
+
+        def savedEntities = intervalRepository.saveAll([entity1, entity2, entity3, entity4, entity5])
+
+        when:
+        def foundEntities = intervalRepository.findByDurationBetweenOrderById(
+                Duration.ofHours(4).plusMinutes(10),
+                Duration.ofHours(4).plusMinutes(50))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 3
+        foundEntities.get(0).id == savedEntities.get(1).id
+        foundEntities.get(1).id == savedEntities.get(2).id
+        foundEntities.get(2).id == savedEntities.get(3).id
+
+        when:
+        foundEntities = intervalRepository.findByDurationGreaterThanEqualsOrderById(
+                Duration.ofHours(4).plusMinutes(45))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 2
+        foundEntities.get(0).id == savedEntities.get(3).id
+        foundEntities.get(1).id == savedEntities.get(4).id
+
+        when:
+        Integer count = intervalRepository.countByDurationLessThan(Duration.ofHours(5))
+
+        then:
+        count == 4
+
+        when:
+        foundEntities = intervalRepository.findByPeriodBetweenOrderById(
+                Period.ofYears(7).minusMonths(2),
+                Period.ofYears(7).plusMonths(5))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 3
+        foundEntities.get(0).id == savedEntities.get(0).id
+        foundEntities.get(1).id == savedEntities.get(1).id
+        foundEntities.get(2).id == savedEntities.get(3).id
+
+        when:
+        foundEntities = intervalRepository.findByPeriodGreaterThanOrderById(
+                Period.ofYears(7))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 3
+        foundEntities.get(0).id == savedEntities.get(1).id
+        foundEntities.get(1).id == savedEntities.get(3).id
+        foundEntities.get(2).id == savedEntities.get(4).id
+
+        when:
+        count = intervalRepository.countByPeriodLessThanEquals(Period.ofYears(7))
+
+        then:
+        count == 2
+    }
 }

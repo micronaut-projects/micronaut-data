@@ -302,7 +302,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected void buildJoin(String joinType, StringBuilder query, QueryState queryState, PersistentAssociationPath joinAssociation, PersistentEntity associationOwner, String currentJoinAlias, String lastJoinAlias) {
+    protected void buildJoin(@Nullable String joinType, StringBuilder query, QueryState queryState, PersistentAssociationPath joinAssociation, PersistentEntity associationOwner, String currentJoinAlias, String lastJoinAlias) {
         // Does nothing since joins in Cosmos Db work different way
     }
 

@@ -53,9 +53,9 @@ interface RestaurantRepoSave {
         def saveAllArray = repository.getRequiredMethod("customSaveArray", Restaurant[])
 
         then:
-        getQuery(saveOne) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        getQuery(saveAllList) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        getQuery(saveAllArray) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(saveOne) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(saveAllList) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(saveAllArray) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
     }
 
     void "test Jakarta Data @Insert on repository without base interface (single, list, array)"() {
@@ -89,9 +89,9 @@ interface RestaurantRepoInsert {
         def insertAllArray = repository.getRequiredMethod("customInsertArray", Restaurant[])
 
         then:
-        getQuery(insertOne) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        getQuery(insertAllList) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        getQuery(insertAllArray) == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(insertOne) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(insertAllList) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        getQuery(insertAllArray) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
     }
 
     void "test Jakarta Data @Update on repository without base interface (single, list, array)"() {
@@ -125,9 +125,9 @@ interface RestaurantRepoUpdate {
         def updateAllArray = repository.getRequiredMethod("customUpdateArray", Restaurant[])
 
         then:
-        getQuery(updateOne) == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
-        getQuery(updateAllList) == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
-        getQuery(updateAllArray) == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        getQuery(updateOne) == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        getQuery(updateAllList) == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        getQuery(updateAllArray) == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
     }
 
     void "test Jakarta Data @Delete on repository without base interface (single, list, array)"() {

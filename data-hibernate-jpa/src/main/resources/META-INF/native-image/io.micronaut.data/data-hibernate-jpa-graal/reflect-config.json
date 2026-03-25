@@ -29,5 +29,16 @@
         ]
       }
     ]
+  },
+  {
+    "name": "org.hibernate.loader.ast.internal.MultiKeyLoadLogging_$logger",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "org.jboss.logging.Logger"
+        ]
+      }
+    ]
   }
 ]

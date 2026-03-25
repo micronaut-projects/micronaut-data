@@ -47,13 +47,19 @@ import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.core.annotation.AnnotationMetadata.VALUE_MEMBER;
@@ -108,7 +114,6 @@ public final class SqlSchemaUtils {
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                List<SqlColumnMapping> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);
@@ -133,32 +138,10 @@ public final class SqlSchemaUtils {
                     -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                if (leftJoinTableColumns.size() == leftProperties.size()) {
-                    for (int i = 0; i < leftJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = leftProperties.get(i);
-                        String columnName = leftJoinTableColumns.get(i);
-                        // TODO: Should we treat join table fields as primary keys?
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : leftProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                }
-                if (rightJoinTableColumns.size() == rightProperties.size()) {
-                    for (int i = 0; i < rightJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = rightProperties.get(i);
-                        String columnName = rightJoinTableColumns.get(i);
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : rightProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
-                    }
-                }
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, List.of(), columns);
+                List<SqlColumnMapping> joinColumns = new ArrayList<>();
+                addJoinTableColumns(entity, namingStrategy, leftProperties, leftJoinTableColumns, joinColumns);
+                addJoinTableColumns(entity, namingStrategy, rightProperties, rightJoinTableColumns, joinColumns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
                 tables.add(joinTable);
             }
         }
@@ -189,12 +172,36 @@ public final class SqlSchemaUtils {
         }
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
-        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity);
+        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, namingStrategy);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
             indexes);
         tables.add(table);
         return tables;
+    }
+
+    /**
+     * Create Join table columns.
+     *
+     * @param entity The entity
+     * @param namingStrategy The naming strategy
+     * @param joinProperties The properties that are used for joining (typically left or right identity)
+     * @param joinColumns The corresponding columns that are used for joining
+     * @param joinTableColumns The resulting columns used for joing table
+     */
+    private static void addJoinTableColumns(PersistentEntity entity, NamingStrategy namingStrategy, List<PersistentPropertyPath> joinProperties, List<String> joinColumns, List<SqlColumnMapping> joinTableColumns) {
+        if (joinColumns.size() == joinProperties.size()) {
+            for (int i = 0; i < joinColumns.size(); i++) {
+                PersistentPropertyPath pp = joinProperties.get(i);
+                String columnName = joinColumns.get(i);
+                joinTableColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
+            }
+        } else {
+            for (PersistentPropertyPath pp : joinProperties) {
+                String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
+                joinTableColumns.add(getColumnDefinition(pp.getProperty(), columnName, true, true, true));
+            }
+        }
     }
 
     /**
@@ -266,6 +273,8 @@ public final class SqlSchemaUtils {
                 yield new SqlColumnMapping(column, dataType, dbType, null, precision, scale, required, autoGenerated, generatedValueType,
                     definition, null);
             }
+            case DURATION, PERIOD -> new SqlColumnMapping(column, dataType, dbType, null, null, null, required, autoGenerated, generatedValueType,
+                definition, null);
             default -> {
                 if (StringUtils.isNotEmpty(definition)) {
                     yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, required, autoGenerated, generatedValueType, definition);
@@ -302,6 +311,8 @@ public final class SqlSchemaUtils {
             case DOUBLE -> SqlDbType.DOUBLE;
             case SHORT, BYTE -> SqlDbType.SMALLINT;
             case JSON -> SqlDbType.JSON;
+            case DURATION -> SqlDbType.DURATION;
+            case PERIOD -> SqlDbType.PERIOD;
             case STRING_ARRAY, CHARACTER_ARRAY, SHORT_ARRAY, INTEGER_ARRAY,
                 LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> SqlDbType.ARRAY;
             default -> {
@@ -360,8 +371,26 @@ public final class SqlSchemaUtils {
         return sequences;
     }
 
-    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity) {
-        List<SqlIndexMapping> indexMappings = new ArrayList<>();
+    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity,
+                                                             NamingStrategy namingStrategy) {
+        Set<SqlIndexMapping> indexMappings = new LinkedHashSet<>();
+        addSqlIndexMappings(entity, namingStrategy, Collections.emptyList(), indexMappings);
+        return new ArrayList<>(indexMappings);
+    }
+
+    private static void addSqlIndexMappings(PersistentEntity entity,
+                                            NamingStrategy namingStrategy,
+                                            List<Association> associations,
+                                            Set<SqlIndexMapping> indexMappings) {
+        Map<String, PersistentProperty> propertyMap = entity.getPersistentProperties().stream()
+            .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
+            .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
+
+        UnaryOperator<String> columnMapper = columnName ->
+            Optional.ofNullable(propertyMap.get(columnName))
+                .map(pp -> namingStrategy.mappedName(associations, pp))
+                .orElseThrow(() -> new MappingException("Persistent property not found for column: " + columnName));
+
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
             .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
@@ -372,10 +401,21 @@ public final class SqlSchemaUtils {
             .forEach(index -> {
                 String name = index.stringValue("name").orElse("");
                 boolean unique = index.booleanValue("unique").orElse(false);
-                String[] columns = index.stringValues("columns");
-                indexMappings.add(new SqlIndexMapping(name, unique, columns));
+                String[] declaredColumns = index.stringValues("columns");
+                String[] mappedColumns = Arrays.stream(declaredColumns)
+                    .map(columnMapper)
+                    .toArray(String[]::new);
+                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns));
             });
-        return indexMappings;
+
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
+                PersistentEntity embeddedEntity = association.getAssociatedEntity();
+                List<Association> newAssociations = new ArrayList<>(associations);
+                newAssociations.add(association);
+                addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings);
+            }
+        }
     }
 
     private static List<SqlColumnMapping> getPrimaryKeyColumns(List<PersistentProperty> identities, NamingStrategy namingStrategy) {

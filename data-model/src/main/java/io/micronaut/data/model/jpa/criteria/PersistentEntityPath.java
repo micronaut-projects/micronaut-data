@@ -59,12 +59,12 @@ public interface PersistentEntityPath<T> extends Path<T>, IExpression<T> {
     }
 
     @Override
-    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<T, C, E> collection) {
+    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super T, C, E> collection) {
         return get(collection.getName());
     }
 
     @Override
-    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<T, K, V> map) {
+    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super T, K, V> map) {
         return get(map.getName());
     }
 }

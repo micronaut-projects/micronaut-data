@@ -37,7 +37,7 @@ class BuildTableSpec extends AbstractDataSpec {
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
 
         and:"regular @Embedded does include NOT NULL declaration"
-        sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
+        sql.contains("\"street\" VARCHAR(255) NOT NULL,")
     }
 
     @Unroll
@@ -508,8 +508,69 @@ class Teacher {
         then:
         sql.length == 4
         sql[0] == 'CREATE SCHEMA "students";'
-        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
-        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
+        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL, PRIMARY KEY("st_id","cs_id"));'
+        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL, PRIMARY KEY("st_id","te_id"));'
         sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+    }
+
+    @Unroll
+    void "test build create table for Duration and Period types for dialect #dialect"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import java.time.Duration;
+import java.time.Period;
+
+@MappedEntity
+class Test {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private Duration duration;
+
+    private Period period;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public Period getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(Period period) {
+        this.period = period;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        sql == statement
+
+        where:
+        dialect          | statement
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`duration` VARCHAR(255) NOT NULL,`period` VARCHAR(255) NOT NULL);'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`duration` VARCHAR(255) NOT NULL,`period` VARCHAR(255) NOT NULL);'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"duration" VARCHAR(255) NOT NULL,"period" VARCHAR(255) NOT NULL);'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"DURATION" INTERVAL DAY TO SECOND NOT NULL,"PERIOD" INTERVAL YEAR TO MONTH NOT NULL)' + System.lineSeparator() +
+                           'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 }

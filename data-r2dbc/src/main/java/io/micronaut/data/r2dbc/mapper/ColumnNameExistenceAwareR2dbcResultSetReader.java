@@ -25,6 +25,7 @@ import io.r2dbc.spi.RowMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -58,9 +59,9 @@ public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelega
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             knownColumns = CollectionUtils.newHashSet(columnMetadatas.size());
             for (ColumnMetadata columnMetadata : columnMetadatas) {
-                knownColumns.add(columnMetadata.getName().toLowerCase());
+                knownColumns.add(columnMetadata.getName().toLowerCase(Locale.ENGLISH));
             }
         }
-        return knownColumns.contains(name.toLowerCase());
+        return knownColumns.contains(name.toLowerCase(Locale.ENGLISH));
     }
 }

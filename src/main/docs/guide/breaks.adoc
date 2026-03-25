@@ -2,6 +2,13 @@ This section documents breaking changes between Micronaut versions
 
 == 5.0
 
+=== Mapping between Java time types and Oracle database INTERVAL types
+
+The following Java time types are now mapped to INTERVAL database types instead of string database types when using Oracle database:
+
+- `java.time.Duration` is mapped to `INTERVAL DAY TO SECOND (INTERVALDS)`
+- `java.time.Period` is mapped to `INTERVAL YEAR TO MONTH (INTERVALYM)`
+
 === Interactions with synchronous transaction and connection manager
 
 Creating a new transaction with `io.micronaut.transaction.SynchronousTransactionManager` or a connection with `io.micronaut.data.connection.SynchronousConnectionManager` no longer places the resulting status into the current `PropagatedContext` automatically.
@@ -35,6 +42,148 @@ connection.propagate(() -> {
 ----
 
 NOTE: These changes are required for Micronaut 5 to support propagating context with scoped values.
+
+=== Embedded Fields Naming Strategy
+
+Before Micronaut Data 5.0.0 version, for classes using composite key using `@EmbeddedId` annotation
+Micronaut Data would generate column names using field name annotated with `@EmbeddedId` annotation.
+
+For such entity class:
+
+snippet::example.Project[project-base="doc-examples/jdbc-example", source="main"]
+
+and composite id class:
+
+snippet::example.ProjectId[project-base="doc-examples/jdbc-example", source="main"]
+
+create table before Micronaut Data 5.0.0 SQL script would look like this:
+
+[source,sql]
+----
+CREATE TABLE `project` (
+    `project_id_department_id` INT NOT NULL,
+    `project_id_project_id` INT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    PRIMARY KEY(`project_id_department_id`,`project_id_project_id`)
+);
+----
+
+which is not correct since `project_id_` prefix is not really needed. After 5.0.0, create table SQL script will look like this:
+
+[source,sql]
+----
+CREATE TABLE `project` (
+    `department_id` INT NOT NULL,
+    `project_id` INT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    PRIMARY KEY(`department_id`,`project_id`)
+);
+----
+
+If you have such tables in your system, after 5.0.0 you might need to annotate your composite id like this:
+
+[source,java]
+----
+@EmbeddedId
+@MappedProperty("project_id")
+private ProjectId projectId;
+----
+
+which will generate column names to be backward compatible.
+
+Similar, for given mapped entity with embedded fields:
+
+[source,java]
+----
+@MappedEntity
+public record Restaurant(
+    @GeneratedValue
+    @Id
+    Long id,
+    String name,
+    @Relation(Relation.Kind.EMBEDDED)
+    Address address,
+    @Relation(Relation.Kind.EMBEDDED)
+    @Nullable
+    Address hqAddress
+) {
+}
+@Embeddable
+public record Address(
+    String street,
+    String zipCode
+) {
+}
+----
+
+before Micronaut Data 5.0.0 create table SQL script would look like this:
+
+[source,sql]
+----
+CREATE TABLE `restaurant` (
+    `id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `address_street` VARCHAR(255) NOT NULL,
+    `address_zip_code` VARCHAR(255) NOT NULL,
+    `hq_address_street` VARCHAR(255),
+    `hq_address_zip_code` VARCHAR(255)
+);
+----
+
+And to keep behavior backward compatible then you would need to map `Restaurant` entity like this:
+
+[source,java]
+----
+@MappedEntity
+public record Restaurant(
+    @GeneratedValue
+    @Id
+    Long id,
+    String name,
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("address")
+    Address address,
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("hq_address")
+    @Nullable
+    Address hqAddress
+) {
+}
+----
+
+Suggested entity after Micronaut Data 5.0.0 should look like this:
+
+[source,java]
+----
+@MappedEntity
+public record Restaurant(
+    @GeneratedValue
+    @Id
+    Long id,
+    String name,
+    @Relation(Relation.Kind.EMBEDDED)
+    Address address,
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("hq_address")
+    @Nullable
+    Address hqAddress
+) {
+}
+----
+
+in order to make distinction between two embedded fields of the same type. This entity would generate create table SQL script:
+
+[source,sql]
+----
+CREATE TABLE `restaurant` (
+    `id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `street` VARCHAR(255) NOT NULL,
+    `zip_code` VARCHAR(255) NOT NULL,
+    `hq_address_street` VARCHAR(255),
+    `hq_address_zip_code` VARCHAR(255)
+);
+----
 
 == 4.0
 

@@ -37,14 +37,16 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
 
     void "test save and retrieve entity with embedded"() {
         when:"An entity is saved"
-        restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
-        def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234")))
+        def firstRestaurant = restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
+        def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234"), new Address("5th Boulevard", "1235")))
 
         then:"The entity was saved"
         restaurant
         restaurant.id
         restaurant.address.street == 'Smith St.'
         restaurant.address.zipCode == '1234'
+        restaurant.hqAddress.street == '5th Boulevard'
+        restaurant.hqAddress.zipCode == '1235'
 
         when:"The entity is retrieved"
         restaurant = restaurantRepository.findById(restaurant.id).orElse(null)
@@ -53,7 +55,17 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
         restaurant.id
         restaurant.address.street == 'Smith St.'
         restaurant.address.zipCode == '1234'
-        restaurant.hqAddress == null
+        restaurant.hqAddress.street == '5th Boulevard'
+        restaurant.hqAddress.zipCode == '1235'
+
+        when:"First restaurant is retrieved"
+        def loadedFirstRestaurant = restaurantRepository.findById(firstRestaurant.id).orElse(null)
+
+        then:"The embedded is populated correctly for first restaurant"
+        loadedFirstRestaurant.id == firstRestaurant.id
+        loadedFirstRestaurant.address.street == firstRestaurant.address.street
+        loadedFirstRestaurant.address.zipCode == firstRestaurant.address.zipCode
+        !loadedFirstRestaurant.hqAddress
 
         when:"The object is updated with non-null value"
         restaurant.hqAddress = new Address("John St.", "4567")

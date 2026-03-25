@@ -324,7 +324,19 @@ public enum SqlDbType {
      * A type code representing the generic SQL type {@code ENUM}.
      * It does not have corresponding value in {@link Types}.
      */
-    ENUM(12001);
+    ENUM(12001),
+
+    /**
+     * A type code representing oracle jdbc type {@code oracle.sql.INTERVALDS}.
+     * It does not have corresponding value in {@link Types}.
+     */
+    DURATION(13001),
+
+    /**
+     * A type code representing oracle jdbc type {@code oracle.sql.INTERVALYM}.
+     * It does not have corresponding value in {@link Types}.
+     */
+    PERIOD(13002);
 
     private final int type;
 
