@@ -353,44 +353,31 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   // ========== SyncCascadeOperationsHelper implementation ==========
 
   @Override
+  @SuppressWarnings("unchecked")
   public <T> T persistOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
     if (LOG.isDebugEnabled()) {
         LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
     }
 
-    // Set back-references for bi-directional associations
-    for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
-        if (prop instanceof RuntimeAssociation<?> assoc) {
-            String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-            if (mappedBy != null) {
-                Object value = prop.getProperty().get(entityValue);
-                if (value instanceof Iterable<?> iterable) {
-                    RuntimePersistentEntity<?> childEntity = assoc.getAssociatedEntity();
-                    RuntimePersistentProperty<?> backProp = childEntity.getPropertyByName(mappedBy);
-                    if (backProp != null) {
-                        for (Object child : iterable) {
-                            if (child != null) {
-                                // Ensure back-reference is set
-                                if (((BeanProperty<Object, Object>) backProp.getProperty()).get(child) == null) {
-                                    ((BeanProperty<Object, Object>) backProp.getProperty()).set(child, entityValue);
-                                }
-                                
-                                // ALSO: ensure child is in parent collection if it's bi-directional
-                                // This is often handled by the user code, but TCK might rely on it.
-                            }
-                        }
-                    }
-                } else if (value != null) {
-                    RuntimePersistentEntity<?> childEntity = assoc.getAssociatedEntity();
-                    RuntimePersistentProperty<?> backProp = childEntity.getPropertyByName(mappedBy);
-                    if (backProp != null && ((BeanProperty<Object, Object>) backProp.getProperty()).get(value) == null) {
-                        ((BeanProperty<Object, Object>) backProp.getProperty()).set(value, entityValue);
+    // Set back-references using pre-computed mappedBy metadata — no annotation lookups on hot path.
+    NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
+    for (NitriteEntityMapper.WritablePropertyMeta<T> assocMeta : meta.mappedByAssocs()) {
+        Object value = assocMeta.prop().getProperty().get(entityValue);
+        if (value instanceof Iterable<?> iterable) {
+            if (assocMeta.backRefProperty() != null) {
+                for (Object child : iterable) {
+                    if (child != null && assocMeta.backRefProperty().get(child) == null) {
+                        assocMeta.backRefProperty().set(child, entityValue);
                     }
                 }
             }
+        } else if (value != null && assocMeta.backRefProperty() != null) {
+            if (assocMeta.backRefProperty().get(value) == null) {
+                assocMeta.backRefProperty().set(value, entityValue);
+            }
         }
     }
-    
+
     NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
         ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
         persistentEntity, conversionService, entityMapper, this, entityValue, NitriteEntityOperations.OperationType.INSERT);

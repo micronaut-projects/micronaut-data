@@ -6,6 +6,7 @@ import io.micronaut.data.nitrite.repository.IndexedBookRepository
 import org.dizitart.no2.Nitrite
 import org.dizitart.no2.index.IndexType
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Polygon
 import spock.lang.Specification
@@ -35,6 +36,9 @@ class NitriteIndexSpec extends Specification {
 
         then: "Books should be saved"
         repository.findAll().size() == 2
+
+        and: "GEOMETRY strategy preserves the Geometry object — not serialized to a Map or String"
+        repository.findAll().every { it.location == null || it.location instanceof Geometry }
 
         and: "Indexes should be present in the collection"
         def collection = db.getCollection("IndexedBook")
