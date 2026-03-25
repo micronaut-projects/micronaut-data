@@ -320,7 +320,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (Iterable.class.isAssignableFrom(declaredReturnType)) {
             throw new DataAccessException("MongoDB update returning supports only a single result");
         }
-        MongoFindOneAndUpdate updateOne = preparedQuery.getUpdateOne();
+        MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
                 updateOne.getFilter().toBsonDocument().toJson(),

@@ -309,11 +309,11 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     @Override
-    public MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext) {
+    public MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
         if (updateReturningData == null) {
             throw new IllegalStateException("Expected update returning query!");
         }
-        return updateReturningData.getUpdateOne(invocationContext);
+        return updateReturningData.getFindOneAndUpdate(invocationContext);
     }
 
     @Override
@@ -971,7 +971,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
         }
 
-        private MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext) {
+        private MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
             return new MongoFindOneAndUpdate(
                 getUpdate(invocationContext, null),
                 getFilter(invocationContext, null),

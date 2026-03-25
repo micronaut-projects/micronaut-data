@@ -70,7 +70,7 @@ public interface MongoStoredQuery<E, R> extends StoredQuery<E, R> {
      * @return The data to execute a single-document update returning the document
      * @since 5.0.0
      */
-    MongoFindOneAndUpdate getUpdateOne(InvocationContext<?, ?> invocationContext);
+    MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext);
 
     /**
      * @param invocationContext The invocation context to have query parameters extracted from

@@ -152,8 +152,8 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     }
 
     @Override
-    public MongoFindOneAndUpdate getUpdateOne() {
-        return mongoStoredQuery.getUpdateOne(defaultPreparedQuery.getContext());
+    public MongoFindOneAndUpdate getFindOneAndUpdate() {
+        return mongoStoredQuery.getFindOneAndUpdate(defaultPreparedQuery.getContext());
     }
 
     @Override
