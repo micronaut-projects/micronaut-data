@@ -383,7 +383,6 @@ abstract class AbstractRepositorySpec extends Specification {
             page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
 
         when:
-            // Ignore-case sort: 'a'/'A'(65) < 't'/'T'(84), so "along Came a Spider" comes before "The Stand"
             def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true)))
             page = bookRepository.findAll(criteria, pageable)
 
