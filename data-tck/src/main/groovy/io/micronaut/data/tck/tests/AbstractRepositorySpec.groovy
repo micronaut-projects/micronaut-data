@@ -358,7 +358,9 @@ abstract class AbstractRepositorySpec extends Specification {
             Student kevin = new Student("Kevin")
             def book1 = new Book(title: "The Stand", students: [denis, josh])
             def book2 = new Book(title: "Pet Cemetery", students: [kevin])
-            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            // Lowercase 'a' so case-sensitive order is ["The Stand", "along Came a Spider"]
+            // but case-insensitive order is ["along Came a Spider", "The Stand"]
+            def book3 = new Book(title: "along Came a Spider", students: [kevin, josh])
             bookRepository.save(book1)
             bookRepository.save(book2)
             bookRepository.save(book3
@@ -374,23 +376,25 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             }
         when:
+            // Case-sensitive sort: 'T'(84) < 'a'(97), so "The Stand" comes before "along Came a Spider"
             io.micronaut.data.model.Page<Book> page = bookRepository.findAll(criteria, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title")))) as io.micronaut.data.model.Page<Book>
 
         then:
             page.totalSize == page.content.size()
             page.totalSize == 2
-            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
-            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
-            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+            page.content.collect { it.title }.sort() == ["The Stand", "along Came a Spider"]
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+            page.content[1].students.collect { it.name }.sort() == ["Josh", "Kevin"]
 
         when:
+            // Ignore-case sort: 'a'/'A'(65) < 't'/'T'(84), so "along Came a Spider" comes before "The Stand"
             def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true)))
             page = bookRepository.findAll(criteria, pageable)
 
         then:
             page.totalSize == 2
             page.content.size() == 1
-            page.content[0].title == "Along Came a Spider"
+            page.content[0].title == "along Came a Spider"
             page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
 
         when:

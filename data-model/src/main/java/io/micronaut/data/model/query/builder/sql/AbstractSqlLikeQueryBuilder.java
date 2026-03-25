@@ -697,13 +697,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            var expr = order.getExpression();
+            Expression<?> expr = order.getExpression();
+            boolean lowerExpression = false;
             if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+                lowerExpression = true;
                 expr = ue.getExpression();
             }
             QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());
             String currentAlias = propertyPath.getTableAlias();
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
+                || lowerExpression;
             if (ignoreCase) {
                 buff.append("LOWER(");
             }

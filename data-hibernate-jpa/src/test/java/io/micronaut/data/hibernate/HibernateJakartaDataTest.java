@@ -23,7 +23,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.data.Sort;
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
-import jakarta.data.restrict.Restrict;
 import jakarta.data.restrict.Restriction;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
