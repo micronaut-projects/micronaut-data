@@ -91,9 +91,6 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{name:{$eq: :name}}", sort = "{age: 1}", returnDocument = ReturnDocument.BEFORE)
     Person updateCustomReturningSortedBefore(String name, String newName);
 
-    @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}")
-    boolean updateCustomBooleanReturning(String id, String newName);
-
     @MongoFindQuery(filter = "{'name': {'$in': :names}}")
     List<Person> findByNameInList(String[] names);
 

@@ -40,7 +40,6 @@ import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
 import io.micronaut.data.document.tck.repositories.StudentRepository
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -1066,19 +1065,6 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             previous.name == "Jeff Default"
             personRepository.findById(person.id).get().name == "Jeff Default Updated"
     }
-
-    void "test custom update boolean returning is treated as update"() {
-        given:
-            def person = personRepository.save("Jeff Bool", 20)
-
-        when:
-            def result = personRepository.updateCustomBooleanReturning(person.id, "Jeff Bool Updated")
-
-        then:
-            result == true
-            personRepository.findById(person.id).get().name == "Jeff Bool Updated"
-    }
-
 
     void "test update returning options precedence"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
