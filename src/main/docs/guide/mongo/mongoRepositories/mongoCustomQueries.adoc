@@ -19,7 +19,7 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 |Allows defining a custom single-document update-returning execution with values for filter, update, sort, projection, collation and `returnDocument`.
 
 |ann:data.mongodb.annotation.MongoDeleteQuery[]
-|Allows defining a custom update method execution with values for filter and collation.
+|Allows defining a custom delete method execution with values for filter and collation.
 
 |ann:data.mongodb.annotation.MongoFilter[]
 |Allows defining a custom filter value for operations that support it. Can be used on annotation to create a predefined filter annotation.
@@ -47,22 +47,20 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 
 |===
 
-Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with `:`.
+Custom queries for MongoDB are defined in JSON and method parameters can be referenced as variables prefixed with `:`.
 
 Mongo update methods can either return the number of updated documents (for example `long`, `int` or `boolean`) or return a single updated document.
 Use ann:data.mongodb.annotation.MongoUpdateQuery[] for count/acknowledgement update methods.
 Use ann:data.mongodb.annotation.MongoUpdateReturningQuery[] for single-document update-returning methods.
 
-The default value is `ReturnDocument.BEFORE`.
-If you want the updated state returned, use `returnDocument = ReturnDocument.AFTER` explicitly.
+For ann:data.mongodb.annotation.MongoUpdateReturningQuery[], the default `returnDocument` value is `ReturnDocument.BEFORE`.
+If you want the updated state returned, set `returnDocument = ReturnDocument.AFTER` explicitly.
 
 [source,java]
 ----
 @MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1}}", returnDocument = ReturnDocument.AFTER)
 Book incrementTotalPagesAfter(String id);
 ----
-
-For update methods returning `void`, `boolean`, `int`, or `long`, `returnDocument` has no effect because those methods execute count/acknowledgement update operations.
 
 NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`).
 Update-returning methods must use a single blocking result type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[].

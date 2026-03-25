@@ -35,8 +35,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
-import io.micronaut.data.mongodb.annotation.MongoProjection;
-import io.micronaut.data.mongodb.annotation.MongoSort;
 import io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import org.bson.BsonDocument;
@@ -91,8 +89,6 @@ public final class MongoOptionsUtils {
         }
         if (updateReturningAnn != null) {
             updateReturningAnn.enumValue("returnDocument", ReturnDocument.class).ifPresent(options::returnDocument);
-            annotationMetadata.stringValue(MongoProjection.class).map(BsonDocument::parse).ifPresent(options::projection);
-            annotationMetadata.stringValue(MongoSort.class).map(BsonDocument::parse).ifPresent(options::sort);
         }
         String[] arrayFilters;
         if (updateReturningAnn != null) {
