@@ -15,8 +15,13 @@
  */
 package io.micronaut.data.jakarta.tck;
 
+import ee.jakarta.tck.data.framework.read.only.FruitPopulator;
 import ee.jakarta.tck.data.standalone.entity.Coordinate;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
+import ee.jakarta.tck.data.standalone.entity.FruitSummary;
+import ee.jakarta.tck.data.standalone.entity.JakartaDeleteQueryTests;
+import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
+import ee.jakarta.tck.data.standalone.entity.JakartaUpdateQueryTests;
 import ee.jakarta.tck.data.standalone.entity.MultipleEntityRepo;
 import org.jboss.arquillian.container.test.spi.client.deployment.ApplicationArchiveProcessor;
 import org.jboss.arquillian.test.spi.TestClass;
@@ -32,6 +37,16 @@ public class TCKArchiveProcessor implements ApplicationArchiveProcessor {
             if (testClass.getName().equals(EntityTests.class.getName())) {
                 ((ClassContainer<?>) applicationArchive).addClass(MultipleEntityRepo.class);
                 ((ClassContainer<?>) applicationArchive).addClass(Coordinate.class);
+            }
+            if (testClass.getName().equals(JakartaDeleteQueryTests.class.getName())) {
+                ((ClassContainer<?>) applicationArchive).addClass(FruitPopulator.class);
+            }
+            if (testClass.getName().equals(JakartaQueryTests.class.getName())) {
+                ((ClassContainer<?>) applicationArchive).addClass(FruitPopulator.class);
+                ((ClassContainer<?>) applicationArchive).addClass(FruitSummary.class);
+            }
+            if (testClass.getName().equals(JakartaUpdateQueryTests.class.getName())) {
+                ((ClassContainer<?>) applicationArchive).addClass(FruitPopulator.class);
             }
         }
     }

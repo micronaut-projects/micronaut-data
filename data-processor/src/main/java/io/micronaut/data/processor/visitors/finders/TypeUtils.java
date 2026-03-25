@@ -39,6 +39,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Period;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.chrono.ChronoLocalDate;
@@ -341,7 +342,20 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.isAssignable(Comparable.class) || isNumber(type) || isBoolean(type);
+        return type.isAssignable(Comparable.class) || isNumber(type) || isBoolean(type) || isPeriod(type);
+    }
+
+    /**
+     * Is the type a period.
+     * @param type The type
+     * @return True if is a period
+     * @since 5.0
+     */
+    public static boolean isPeriod(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(Period.class);
     }
 
     /**

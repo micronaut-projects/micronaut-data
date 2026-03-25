@@ -2,6 +2,13 @@ This section documents breaking changes between Micronaut versions
 
 == 5.0
 
+=== Mapping between Java time types and Oracle database INTERVAL types
+
+The following Java time types are now mapped to INTERVAL database types instead of string database types when using Oracle database:
+
+- `java.time.Duration` is mapped to `INTERVAL DAY TO SECOND (INTERVALDS)`
+- `java.time.Period` is mapped to `INTERVAL YEAR TO MONTH (INTERVALYM)`
+
 === Interactions with synchronous transaction and connection manager
 
 Creating a new transaction with `io.micronaut.transaction.SynchronousTransactionManager` or a connection with `io.micronaut.data.connection.SynchronousConnectionManager` no longer places the resulting status into the current `PropagatedContext` automatically.
@@ -78,7 +85,7 @@ If you have such tables in your system, after 5.0.0 you might need to annotate y
 [source,java]
 ----
 @EmbeddedId
-@MappedProperty("project_id_")
+@MappedProperty("project_id")
 private ProjectId projectId;
 ----
 

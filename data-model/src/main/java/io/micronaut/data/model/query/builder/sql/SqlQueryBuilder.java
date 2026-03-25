@@ -117,6 +117,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
+    // Shared, stateless no-op predicate to avoid per-call allocations in createQueryState().predicate()
+    private static final Predicate EMPTY_PREDICATE = new RenderablePredicate() {
+        @Override
+        void render(StringBuilder query, PropertyParameterCreator propertyParameterCreator) {
+            // no-op: intentionally renders nothing
+        }
+
+        @Override
+        public String toString() {
+            return "RenderablePredicate.EMPTY";
+        }
+    };
+
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
@@ -1030,6 +1043,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         if (isJsonEntity(repositoryMetadata, entity)) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue == null) {
+                throw new MappingException("Cannot find entity representation annotation for entity: " + entity.getName());
+            }
             String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
             int key = 1;
             builder = INSERT_INTO + getTableName(entity) + " VALUES (" + formatParameter(key) + ")";
@@ -1642,12 +1658,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
             @Override
             public Predicate predicate() {
-                return new RenderablePredicate() {
-                    @Override
-                    void render(StringBuilder query, PropertyParameterCreator propertyParameterCreator) {
-
-                    }
-                };
+                // No extra WHERE; return a no-op predicate for SQL rendering
+                return EMPTY_PREDICATE;
             }
 
             @Override

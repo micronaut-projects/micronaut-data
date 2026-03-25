@@ -16,12 +16,9 @@
 package io.micronaut.data.jdbc.mariadb
 
 import groovy.transform.Memoized
-import io.micronaut.data.jdbc.h2.H2EntityWithIdClass2Repository
-import io.micronaut.data.jdbc.h2.H2EntityWithIdClassRepository
 import io.micronaut.data.jdbc.mysql.*
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.Shared
 
 class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPropertyProvider {
 
@@ -173,6 +170,12 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
     @Override
     ExampleEntityRepository getExampleEntityRepository() {
         return context.getBean(MySqlExampleEntityRepository)
+    }
+
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(MySqlIntervalRepository)
     }
 
     @Override

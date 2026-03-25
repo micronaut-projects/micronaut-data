@@ -30,6 +30,7 @@ import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import java.util.ArrayList;
@@ -161,6 +162,9 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
             Object newInnerEntity = afterCascadedOne(innerEntity, associations.subList(1, associations.size()), prevChild, newChild);
             if (newInnerEntity != innerEntity) {
                 innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
@@ -201,6 +205,9 @@ abstract class AbstractCascadeOperations {
         } else {
             BeanProperty<T, Object> property = association.getProperty();
             Object innerEntity = property.get(entity);
+            if (innerEntity == null) {
+                throw new IllegalStateException("Cannot cascade for property: " + property);
+            }
             Object newInnerEntity = afterCascadedMany(innerEntity, associations.subList(1, associations.size()), prevChildren, newChildren);
             if (newInnerEntity != innerEntity) {
                 innerEntity = convertAndSetWithValue(property, entity, newInnerEntity);
@@ -256,10 +263,10 @@ abstract class AbstractCascadeOperations {
      * For join-table associations, veto any child with a non-null id (existing). For direct FKs, veto when id present and generated.
      */
     protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
-                                                        RuntimeAssociation<Object> association,
+                                                        @Nullable RuntimeAssociation<Object> association,
                                                         java.util.Set<Object> alreadyPersisted) {
         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-        if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+        if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
             return val -> alreadyPersisted.contains(val) || identity.getProperty().get(val) != null;
         }
         return val -> {
@@ -433,6 +440,7 @@ abstract class AbstractCascadeOperations {
          *
          * @return last association
          */
+        @Nullable
         public Association getAssociation() {
             return CollectionUtils.last(associations);
         }

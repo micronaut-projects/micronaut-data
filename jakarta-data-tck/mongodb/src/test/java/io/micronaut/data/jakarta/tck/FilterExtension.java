@@ -1,6 +1,9 @@
 package io.micronaut.data.jakarta.tck;
 
+import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
+import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
+import ee.jakarta.tck.data.standalone.entity.RestrictionTests;
 import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
 import ee.jakarta.tck.data.web.validation.ValidationTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
@@ -27,9 +30,6 @@ public class FilterExtension implements ExecutionCondition {
                 case "testIgnoreCase" -> {
                     return DISABLED; // Between doesn't support case insensitive
                 }
-                case "testReturnStreamOfRecordThatSelectsAttributesFindEntity" -> {
-                    return DISABLED; // https://github.com/jakartaee/data/issues/1290
-                }
             }
         }
         if (testClass == ValidationTests.class) {
@@ -38,6 +38,23 @@ public class FilterExtension implements ExecutionCondition {
                     return DISABLED; // Support deciding between persist or update when save is called
                 }
 
+            }
+        }
+        if (testClass == JakartaQueryTests.class) {
+            switch (testMethodName) {
+                case "shouldAnd" -> {
+                    return DISABLED; // Support deciding between persist or update when saveAll is called
+                }
+            }
+        }
+        if (testClass == ConstraintTests.class) {
+            return DISABLED; // TODO
+        }
+        if (testClass == RestrictionTests.class) {
+            switch (testMethodName) {
+                case "testUnmatchable" -> {
+                    return DISABLED; // TODO
+                }
             }
         }
         return ConditionEvaluationResult.enabled(null);

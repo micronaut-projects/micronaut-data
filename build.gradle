@@ -10,7 +10,7 @@ repositories {
 if (System.getenv("SONAR_TOKEN") != null) {
     sonarqube {
         properties {
-            property "sonar.exclusions", "**/example/**"
+            property "sonar.exclusions", "**/example/**, **/data/tck/**"
         }
     }
 }

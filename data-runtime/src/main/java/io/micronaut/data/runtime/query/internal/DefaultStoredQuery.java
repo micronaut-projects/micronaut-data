@@ -109,7 +109,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         @NonNull ExecutableMethod<?, ?> method,
         boolean isCount,
         HintsCapableRepository repositoryOperations) {
-        this(method, method.getAnnotation(DataMethod.NAME), isCount, repositoryOperations);
+        this(method, getRequiredDataMethod(method), isCount, repositoryOperations);
     }
 
     /**
@@ -162,7 +162,10 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         String query;
         if (isCount) {
             // Legacy count definition
-            AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
+            final AnnotationValue<Annotation> queryAnnotation = Objects.requireNonNull(
+                method.getAnnotation(Query.class.getName()),
+                () -> "No @Query present on method: " + method
+            );
             query = queryAnnotation.stringValue(DataMethod.META_MEMBER_COUNT_QUERY)
                 .orElseGet(() -> queryAnnotation.stringValue()
                     .orElseThrow(() -> new IllegalStateException("No query present in method")));
@@ -189,7 +192,10 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 this.rawQuery = rawQueryString.isPresent();
                 this.query = rawQueryString.orElseGet(q::get);
             } else {
-                AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
+                final AnnotationValue<Annotation> queryAnnotation = Objects.requireNonNull(
+                    method.getAnnotation(Query.class.getName()),
+                    () -> "No @Query present on method: " + method
+                );
                 query = queryAnnotation.stringValue().orElseThrow(() ->
                     new IllegalStateException("No query present in method")
                 );
@@ -490,5 +496,16 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
             return o;
         };
+    }
+
+    private static AnnotationValue<Annotation> getRequiredDataMethod(ExecutableMethod<?, ?> method) {
+        AnnotationValue<Annotation> av = method.getAnnotation(DataMethod.NAME);
+        if (av == null) {
+            av = method.getDeclaredAnnotation(DataMethod.NAME);
+        }
+        if (av == null) {
+            throw new IllegalStateException("No @DataMethod metadata present on method: " + method);
+        }
+        return av;
     }
 }

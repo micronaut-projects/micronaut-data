@@ -134,9 +134,11 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                 // for JSON entity representation we don't update all entity fields but all fields at once via JSON update
                 if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
                     AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = rootEntity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
-                    String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
-                    query.set(columnName, cb.parameter(entityParameter, null));
-                    return;
+                    if (entityRepresentationAnnotationValue != null) {
+                        String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+                        query.set(columnName, cb.parameter(entityParameter, null));
+                        return;
+                    }
                 }
 
                 Stream.concat(rootEntity.getPersistentProperties().stream(), rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.of())

@@ -86,7 +86,8 @@ public final class MatchUtils {
     }
 
     public static boolean isDto(ClassElement entityType, ClassElement resultType) {
-        return resultType.hasStereotype(Introspected.class) && entityType.hasStereotype(MappedEntity.class);
+        return resultType.hasStereotype(Introspected.class) && entityType.hasStereotype(MappedEntity.class)
+            || resultType.isArray() && resultType.getName().equals(Object.class.getName()); // Allow Object[] as a DTO
     }
 
     private static boolean isVoid(ClassElement resultType) {

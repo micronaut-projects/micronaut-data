@@ -162,6 +162,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
+    @Nullable
     protected <R> R convertResult(PreparedQuery<?, ?> preparedQuery,
                                   CodecRegistry codecRegistry,
                                   Class<R> resultType,
@@ -189,6 +190,14 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 value = result.values().iterator().next();
             }
         } else if (isDtoProjection) {
+            if (resultType.equals(Object[].class)) {
+                Object[] array = result.asDocument().entrySet().
+                    stream()
+                    .filter(e -> !e.getKey().equals(MongoUtils.ID))
+                    .map(e -> MongoUtils.toValue(e.getValue()))
+                    .toArray();
+                return (R) array;
+            }
             R dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {
                 return dtoResult;
@@ -197,7 +206,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
-        return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+        return conversionService.convert(MongoUtils.toValue(value), resultType).orElse(null);
     }
 
     /**
