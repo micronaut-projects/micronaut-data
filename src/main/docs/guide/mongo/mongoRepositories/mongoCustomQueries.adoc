@@ -67,6 +67,7 @@ Update-returning methods must use a single blocking result type and ann:data.mon
 Collection/iterable and `void` return types are rejected for ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
 If you use a scalar return type (for example `String`), configure a matching projection with `project`.
 If your filter can match multiple documents, use `sort` to control which document is selected by `findOneAndUpdate`.
+`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive and must not be used together on the same method.
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 

@@ -489,6 +489,27 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         ex.message.contains('MongoDB @MongoUpdateReturningQuery requires a non-void single return type')
     }
 
+    void "test update and update returning annotations are mutually exclusive"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Book conflictingUpdateAnnotations(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive. Use only one on a method.')
+    }
+
     void "test find by ids method"() {
         given:
         def repository = buildRepository('test.PersonRepository', """

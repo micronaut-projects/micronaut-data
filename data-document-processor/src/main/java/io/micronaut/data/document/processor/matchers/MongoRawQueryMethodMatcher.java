@@ -79,6 +79,10 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         if (annotationMetadata.hasAnnotation(MongoAnnotations.DELETE_QUERY)) {
             return methodMatchByFilterQuery(DataMethod.OperationType.DELETE);
         }
+        if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_QUERY)
+            && annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)) {
+            throw new MatchFailedException("`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive. Use only one on a method.");
+        }
         if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_QUERY)) {
             return methodMatchByFilterQuery(DataMethod.OperationType.UPDATE);
         }
