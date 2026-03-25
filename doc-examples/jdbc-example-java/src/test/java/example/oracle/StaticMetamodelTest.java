@@ -1,8 +1,9 @@
-package example;
+package example.oracle;
 
 import example.metamodel.Category_;
 import example.metamodel.Client;
 import example.metamodel.Client_;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @MicronautTest
+@Requires(env="oracle")
 class StaticMetamodelTest {
     @Inject
     RuntimeCriteriaBuilder runtimeCriteriaBuilder;

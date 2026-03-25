@@ -1,6 +1,5 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -9,8 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@MicronautTest
-class UserRepositorySpec {
+public abstract class UserRepositorySpec {
     @Inject UserRepository userRepository;
 
     @Test

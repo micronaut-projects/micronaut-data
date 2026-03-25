@@ -1,5 +1,9 @@
-package example;
+package example.oracle;
 
+import example.Address;
+import example.City;
+import example.User;
+import example.UserRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 

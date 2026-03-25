@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-add-lombok-first"
     id "io.micronaut.build.internal.data-native-example"
@@ -11,6 +13,15 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        if (providers.environmentVariable('TESTPILOT_USERNAME').isPresent()) {
+            additionalModules.add(KnownModules.JDBC_ORACLE_TEST_PILOT)
+        }
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
@@ -29,6 +40,9 @@ dependencies {
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.h2
+    runtimeOnly mnSql.ojdbc11
+
+    testResourcesService mnSql.ojdbc11
 }
 
 sourceSets {
