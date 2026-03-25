@@ -682,7 +682,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             ClassElement type = resultType.getType();
             if (!TypeUtils.isVoid(type)) {
                 DataType resultDataType = TypeUtils.resolveDataType(type, dataTypes);
-                if (operationType == DataMethod.OperationType.QUERY && type.hasStereotype(Embeddable.class)) {
+                if (operationType == DataMethod.OperationType.QUERY
+                    && (type.hasStereotype(Embeddable.class)
+                        || type.hasStereotype("jakarta.persistence.Embeddable")
+                        || type.hasStereotype("javax.persistence.Embeddable"))) {
                     resultDataType = DataType.ENTITY;
                 }
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, resultDataType);
