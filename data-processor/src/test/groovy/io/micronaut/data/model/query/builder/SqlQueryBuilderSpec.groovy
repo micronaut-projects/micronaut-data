@@ -24,8 +24,6 @@ import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -45,7 +43,8 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntity
+import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityJson
+import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -478,109 +477,33 @@ interface MyRepository {
         result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
-    void "test encode oracle insert statement for geospatial properties"() {
+    @Unroll
+    void "test encode #dialect insert statement for geospatial properties for #entityClass.simpleName"() {
         given:
-        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.ORACLE))
+        def result = builder.createCriteriaInsert(entityClass).build(new SqlQueryBuilder(dialect))
 
         expect:
-        result.query == 'INSERT INTO "GEO_ENTITY" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","POLYGON","MULTI_POLYGON","GEOMETRY_COLLECTION","ID") VALUES (SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),"GEO_ENTITY_SEQ".nextval)'
-        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
+        result.query == expectedQuery
+
+        where:
+        dialect            | entityClass   || expectedQuery
+        Dialect.ORACLE     | GeoEntityJson || 'INSERT INTO "GEO_ENTITY_JSON" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","POLYGON","MULTI_POLYGON","GEOMETRY_COLLECTION","ID") VALUES (SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?),"GEO_ENTITY_JSON_SEQ".nextval)'
+        Dialect.ORACLE     | GeoEntityWkt  || 'INSERT INTO "GEO_ENTITY_WKT" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","POLYGON","MULTI_POLYGON","GEOMETRY_COLLECTION","ID") VALUES (SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4258),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4326),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4258),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"GEO_ENTITY_WKT_SEQ".nextval)'
+        Dialect.MYSQL      | GeoEntityJson || 'INSERT INTO `geo_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        Dialect.MYSQL      | GeoEntityWkt  || 'INSERT INTO `geo_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_GeomFromText(?, 4258),ST_GeomFromText(?, 4326),ST_GeomFromText(?, 4258),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?))'
+        Dialect.H2         | GeoEntityJson || 'INSERT INTO `geo_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        Dialect.H2         | GeoEntityWkt  || 'INSERT INTO `geo_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_GeomFromText(?, 4258),ST_GeomFromText(?, 4326),ST_GeomFromText(?, 4258),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?))'
+        Dialect.POSTGRES   | GeoEntityJson || 'INSERT INTO "geo_entity_json" ("location","multi_point","line_string","multi_line_string","polygon","multi_polygon","geometry_collection") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
+        Dialect.POSTGRES   | GeoEntityWkt  || 'INSERT INTO "geo_entity_wkt" ("location","multi_point","line_string","multi_line_string","polygon","multi_polygon","geometry_collection") VALUES (ST_GeomFromText(?, 4258),ST_GeomFromText(?, 4326),ST_GeomFromText(?, 4258),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?),ST_GeomFromText(?))'
+        Dialect.SQL_SERVER | GeoEntityJson || 'INSERT INTO [geo_entity_json] ([location],[multi_point],[line_string],[multi_line_string],[polygon],[multi_polygon],[geometry_collection]) VALUES (geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326))'
+        Dialect.SQL_SERVER | GeoEntityWkt  || 'INSERT INTO [geo_entity_wkt] ([location],[multi_point],[line_string],[multi_line_string],[polygon],[multi_polygon],[geometry_collection]) VALUES (geography::STGeomFromText(?, 4258),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4258),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 4326))'
     }
 
-    void "test encode mysql insert statement for geospatial properties"() {
+    @Unroll
+    void "test encode #dialect update statement for geospatial properties for #entityClass.simpleName"() {
         given:
-        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.MYSQL))
-
-        expect:
-        result.query == 'INSERT INTO `geo_entity` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
-        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
-    }
-
-    void "test encode h2 insert statement for geospatial properties"() {
-        given:
-        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.H2))
-
-        expect:
-        result.query == 'INSERT INTO `geo_entity` (`location`,`multi_point`,`line_string`,`multi_line_string`,`polygon`,`multi_polygon`,`geometry_collection`) VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
-        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
-    }
-
-    void "test encode postgres insert statement for geospatial properties"() {
-        given:
-        def result = builder.createCriteriaInsert(GeoEntity).build(new SqlQueryBuilder(Dialect.POSTGRES))
-
-        expect:
-        result.query == 'INSERT INTO "geo_entity" ("location","multi_point","line_string","multi_line_string","polygon","multi_polygon","geometry_collection") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?))'
-        result.parameters.equals('1': 'point', '2': 'multiPoint', '3': 'lineString', '4': 'multiLineString', '5': 'polygon', '6': 'multiPolygon', '7': 'geometryCollection')
-    }
-
-    void "test encode oracle update statement for geospatial properties"() {
-        given:
-        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.ORACLE))
-
-        expect:
-        result.query == 'UPDATE "GEO_ENTITY" SET "LOCATION"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_POINT"=SDO_UTIL.FROM_GEOJSON(?),"LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?),"POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"MULTI_POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"GEOMETRY_COLLECTION"=SDO_UTIL.FROM_GEOJSON(?) WHERE ("ID" = ?)'
-    }
-
-    void "test encode mysql update statement for geospatial properties"() {
-        given:
-        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.MYSQL))
-
-        expect:
-        result.query == 'UPDATE `geo_entity` SET `location`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
-    }
-
-    void "test encode h2 update statement for geospatial properties"() {
-        given:
-        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.H2))
-
-        expect:
-        result.query == 'UPDATE `geo_entity` SET `location`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
-    }
-
-    void "test encode postgres update statement for geospatial properties"() {
-        given:
-        def result = geoEntityUpdateQuery().build(new SqlQueryBuilder(Dialect.POSTGRES))
-
-        expect:
-        result.query == 'UPDATE "geo_entity" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_point"=ST_GeomFromGeoJSON(?),"line_string"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_line_string"=ST_GeomFromGeoJSON(?),"polygon"=ST_GeomFromGeoJSON(?),"multi_polygon"=ST_GeomFromGeoJSON(?),"geometry_collection"=ST_GeomFromGeoJSON(?) WHERE ("id" = ?)'
-    }
-
-    void "test encode oracle read statement for geospatial properties"() {
-        given:
-        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.ORACLE))
-
-        expect:
-        result.query == 'SELECT geo_entity_."ID",SDO_UTIL.TO_GEOJSON(geo_entity_."LOCATION") AS "LOCATION",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_GEOJSON(geo_entity_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_."POLYGON") AS "POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_."MULTI_POLYGON") AS "MULTI_POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_."GEOMETRY_COLLECTION") AS "GEOMETRY_COLLECTION" FROM "GEO_ENTITY" geo_entity_ WHERE (geo_entity_."ID" = ?)'
-    }
-
-    void "test encode mysql read statement for geospatial properties"() {
-        given:
-        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.MYSQL))
-
-        expect:
-        result.query == 'SELECT geo_entity_.`id`,ST_AsGeoJSON(geo_entity_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity` geo_entity_ WHERE (geo_entity_.`id` = ?)'
-    }
-
-    void "test encode h2 read statement for geospatial properties"() {
-        given:
-        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.H2))
-
-        expect:
-        result.query == 'SELECT geo_entity_.`id`,ST_AsGeoJSON(geo_entity_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity` geo_entity_ WHERE (geo_entity_.`id` = ?)'
-    }
-
-    void "test encode postgres read statement for geospatial properties"() {
-        given:
-        def result = geoEntityReadQuery().build(new SqlQueryBuilder(Dialect.POSTGRES))
-
-        expect:
-        result.query == 'SELECT geo_entity_."id",ST_AsGeoJSON(geo_entity_."location") AS "location",ST_AsGeoJSON(geo_entity_."multi_point") AS "multi_point",ST_AsGeoJSON(geo_entity_."line_string") AS "line_string",ST_AsGeoJSON(geo_entity_."multi_line_string") AS "multi_line_string",ST_AsGeoJSON(geo_entity_."polygon") AS "polygon",ST_AsGeoJSON(geo_entity_."multi_polygon") AS "multi_polygon",ST_AsGeoJSON(geo_entity_."geometry_collection") AS "geometry_collection" FROM "geo_entity" geo_entity_ WHERE (geo_entity_."id" = ?)'
-    }
-
-    private PersistentEntityCriteriaUpdate<GeoEntity> geoEntityUpdateQuery() {
-        def query = builder.createCriteriaUpdate(GeoEntity)
-        def root = query.from(GeoEntity)
+        def query = builder.createCriteriaUpdate(entityClass)
+        def root = query.from(entityClass)
         query.set(root.get('point'), builder.parameter(Object))
         query.set(root.get('multiPoint'), builder.parameter(Object))
         query.set(root.get('lineString'), builder.parameter(Object))
@@ -589,14 +512,48 @@ interface MyRepository {
         query.set(root.get('multiPolygon'), builder.parameter(Object))
         query.set(root.get('geometryCollection'), builder.parameter(Object))
         query.where(builder.equal(root.get('id'), builder.parameter(Object)))
-        return query
+        def result = query.build(new SqlQueryBuilder(dialect))
+
+        expect:
+        result.query == expectedQuery
+
+        where:
+        dialect            | entityClass   || expectedQuery
+        Dialect.ORACLE     | GeoEntityJson || 'UPDATE "GEO_ENTITY_JSON" SET "LOCATION"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_POINT"=SDO_UTIL.FROM_GEOJSON(?),"LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),"MULTI_LINE_STRING"=SDO_UTIL.FROM_GEOJSON(?),"POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"MULTI_POLYGON"=SDO_UTIL.FROM_GEOJSON(?),"GEOMETRY_COLLECTION"=SDO_UTIL.FROM_GEOJSON(?) WHERE ("ID" = ?)'
+        Dialect.ORACLE     | GeoEntityWkt  || 'UPDATE "GEO_ENTITY_WKT" SET "LOCATION"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4258),"MULTI_POINT"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4326),"LINE_STRING"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4258),"MULTI_LINE_STRING"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"POLYGON"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"MULTI_POLYGON"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"GEOMETRY_COLLECTION"=SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)) WHERE ("ID" = ?)'
+        Dialect.MYSQL      | GeoEntityJson || 'UPDATE `geo_entity_json` SET `location`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_GeomFromGeoJSON(?, 1, 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
+        Dialect.MYSQL      | GeoEntityWkt  || 'UPDATE `geo_entity_wkt` SET `location`=ST_GeomFromText(?, 4258),`multi_point`=ST_GeomFromText(?, 4326),`line_string`=ST_GeomFromText(?, 4258),`multi_line_string`=ST_GeomFromText(?),`polygon`=ST_GeomFromText(?),`multi_polygon`=ST_GeomFromText(?),`geometry_collection`=ST_GeomFromText(?) WHERE (`id` = ?)'
+        Dialect.H2         | GeoEntityJson || 'UPDATE `geo_entity_json` SET `location`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_point`=ST_GeomFromGeoJSON(?),`line_string`=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),`multi_line_string`=ST_GeomFromGeoJSON(?),`polygon`=ST_GeomFromGeoJSON(?),`multi_polygon`=ST_GeomFromGeoJSON(?),`geometry_collection`=ST_GeomFromGeoJSON(?) WHERE (`id` = ?)'
+        Dialect.H2         | GeoEntityWkt  || 'UPDATE `geo_entity_wkt` SET `location`=ST_GeomFromText(?, 4258),`multi_point`=ST_GeomFromText(?, 4326),`line_string`=ST_GeomFromText(?, 4258),`multi_line_string`=ST_GeomFromText(?),`polygon`=ST_GeomFromText(?),`multi_polygon`=ST_GeomFromText(?),`geometry_collection`=ST_GeomFromText(?) WHERE (`id` = ?)'
+        Dialect.POSTGRES   | GeoEntityJson || 'UPDATE "geo_entity_json" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_point"=ST_GeomFromGeoJSON(?),"line_string"=ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),"multi_line_string"=ST_GeomFromGeoJSON(?),"polygon"=ST_GeomFromGeoJSON(?),"multi_polygon"=ST_GeomFromGeoJSON(?),"geometry_collection"=ST_GeomFromGeoJSON(?) WHERE ("id" = ?)'
+        Dialect.POSTGRES   | GeoEntityWkt  || 'UPDATE "geo_entity_wkt" SET "location"=ST_GeomFromText(?, 4258),"multi_point"=ST_GeomFromText(?, 4326),"line_string"=ST_GeomFromText(?, 4258),"multi_line_string"=ST_GeomFromText(?),"polygon"=ST_GeomFromText(?),"multi_polygon"=ST_GeomFromText(?),"geometry_collection"=ST_GeomFromText(?) WHERE ("id" = ?)'
+        Dialect.SQL_SERVER | GeoEntityJson || 'UPDATE [geo_entity_json] SET [location]=geography::STGeomFromText(?, 3857),[multi_point]=geography::STGeomFromText(?, 4326),[line_string]=geography::STGeomFromText(?, 3857),[multi_line_string]=geography::STGeomFromText(?, 4326),[polygon]=geography::STGeomFromText(?, 4326),[multi_polygon]=geography::STGeomFromText(?, 4326),[geometry_collection]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
+        Dialect.SQL_SERVER | GeoEntityWkt  || 'UPDATE [geo_entity_wkt] SET [location]=geography::STGeomFromText(?, 4258),[multi_point]=geography::STGeomFromText(?, 4326),[line_string]=geography::STGeomFromText(?, 4258),[multi_line_string]=geography::STGeomFromText(?, 4326),[polygon]=geography::STGeomFromText(?, 4326),[multi_polygon]=geography::STGeomFromText(?, 4326),[geometry_collection]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
     }
 
-    private PersistentEntityCriteriaQuery<GeoEntity> geoEntityReadQuery() {
-        def query = builder.createQuery(GeoEntity)
-        def root = query.from(GeoEntity)
+    @Unroll
+    void "test encode #dialect read statement for geospatial properties for #entityClass.simpleName"() {
+        given:
+        def query = builder.createQuery(entityClass)
+        def root = query.from(entityClass)
         query.where(builder.equal(root.get('id'), builder.parameter(Object)))
-        return query
+        def result = query.build(new SqlQueryBuilder(dialect))
+
+        expect:
+        result.query == expectedQuery
+
+        where:
+        dialect            | entityClass   || expectedQuery
+        Dialect.ORACLE     | GeoEntityJson || 'SELECT geo_entity_json_."ID",SDO_UTIL.TO_GEOJSON(geo_entity_json_."LOCATION") AS "LOCATION",SDO_UTIL.TO_GEOJSON(geo_entity_json_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_GEOJSON(geo_entity_json_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_json_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING",SDO_UTIL.TO_GEOJSON(geo_entity_json_."POLYGON") AS "POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_json_."MULTI_POLYGON") AS "MULTI_POLYGON",SDO_UTIL.TO_GEOJSON(geo_entity_json_."GEOMETRY_COLLECTION") AS "GEOMETRY_COLLECTION" FROM "GEO_ENTITY_JSON" geo_entity_json_ WHERE (geo_entity_json_."ID" = ?)'
+        Dialect.ORACLE     | GeoEntityWkt  || 'SELECT geo_entity_wkt_."ID",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."LOCATION") AS "LOCATION",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."POLYGON") AS "POLYGON",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."MULTI_POLYGON") AS "MULTI_POLYGON",SDO_UTIL.TO_WKTGEOMETRY(geo_entity_wkt_."GEOMETRY_COLLECTION") AS "GEOMETRY_COLLECTION" FROM "GEO_ENTITY_WKT" geo_entity_wkt_ WHERE (geo_entity_wkt_."ID" = ?)'
+        Dialect.MYSQL      | GeoEntityJson || 'SELECT geo_entity_json_.`id`,ST_AsGeoJSON(geo_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_json_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_json_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_json_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_json_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity_json` geo_entity_json_ WHERE (geo_entity_json_.`id` = ?)'
+        Dialect.MYSQL      | GeoEntityWkt  || 'SELECT geo_entity_wkt_.`id`,ST_AsText(geo_entity_wkt_.`location`) AS `location`,ST_AsText(geo_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geo_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geo_entity_wkt_.`multi_line_string`) AS `multi_line_string`,ST_AsText(geo_entity_wkt_.`polygon`) AS `polygon`,ST_AsText(geo_entity_wkt_.`multi_polygon`) AS `multi_polygon`,ST_AsText(geo_entity_wkt_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity_wkt` geo_entity_wkt_ WHERE (geo_entity_wkt_.`id` = ?)'
+        Dialect.H2         | GeoEntityJson || 'SELECT geo_entity_json_.`id`,ST_AsGeoJSON(geo_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geo_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geo_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geo_entity_json_.`multi_line_string`) AS `multi_line_string`,ST_AsGeoJSON(geo_entity_json_.`polygon`) AS `polygon`,ST_AsGeoJSON(geo_entity_json_.`multi_polygon`) AS `multi_polygon`,ST_AsGeoJSON(geo_entity_json_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity_json` geo_entity_json_ WHERE (geo_entity_json_.`id` = ?)'
+        Dialect.H2         | GeoEntityWkt  || 'SELECT geo_entity_wkt_.`id`,ST_AsText(geo_entity_wkt_.`location`) AS `location`,ST_AsText(geo_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geo_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geo_entity_wkt_.`multi_line_string`) AS `multi_line_string`,ST_AsText(geo_entity_wkt_.`polygon`) AS `polygon`,ST_AsText(geo_entity_wkt_.`multi_polygon`) AS `multi_polygon`,ST_AsText(geo_entity_wkt_.`geometry_collection`) AS `geometry_collection` FROM `geo_entity_wkt` geo_entity_wkt_ WHERE (geo_entity_wkt_.`id` = ?)'
+        Dialect.POSTGRES   | GeoEntityJson || 'SELECT geo_entity_json_."id",ST_AsGeoJSON(geo_entity_json_."location") AS "location",ST_AsGeoJSON(geo_entity_json_."multi_point") AS "multi_point",ST_AsGeoJSON(geo_entity_json_."line_string") AS "line_string",ST_AsGeoJSON(geo_entity_json_."multi_line_string") AS "multi_line_string",ST_AsGeoJSON(geo_entity_json_."polygon") AS "polygon",ST_AsGeoJSON(geo_entity_json_."multi_polygon") AS "multi_polygon",ST_AsGeoJSON(geo_entity_json_."geometry_collection") AS "geometry_collection" FROM "geo_entity_json" geo_entity_json_ WHERE (geo_entity_json_."id" = ?)'
+        Dialect.POSTGRES   | GeoEntityWkt  || 'SELECT geo_entity_wkt_."id",ST_AsText(geo_entity_wkt_."location") AS "location",ST_AsText(geo_entity_wkt_."multi_point") AS "multi_point",ST_AsText(geo_entity_wkt_."line_string") AS "line_string",ST_AsText(geo_entity_wkt_."multi_line_string") AS "multi_line_string",ST_AsText(geo_entity_wkt_."polygon") AS "polygon",ST_AsText(geo_entity_wkt_."multi_polygon") AS "multi_polygon",ST_AsText(geo_entity_wkt_."geometry_collection") AS "geometry_collection" FROM "geo_entity_wkt" geo_entity_wkt_ WHERE (geo_entity_wkt_."id" = ?)'
+        Dialect.SQL_SERVER | GeoEntityJson || 'SELECT geo_entity_json_.[id],geo_entity_json_.[location].STAsText() AS [location],geo_entity_json_.[multi_point].STAsText() AS [multi_point],geo_entity_json_.[line_string].STAsText() AS [line_string],geo_entity_json_.[multi_line_string].STAsText() AS [multi_line_string],geo_entity_json_.[polygon].STAsText() AS [polygon],geo_entity_json_.[multi_polygon].STAsText() AS [multi_polygon],geo_entity_json_.[geometry_collection].STAsText() AS [geometry_collection] FROM [geo_entity_json] geo_entity_json_ WHERE (geo_entity_json_.[id] = ?)'
+        Dialect.SQL_SERVER | GeoEntityWkt  || 'SELECT geo_entity_wkt_.[id],geo_entity_wkt_.[location].STAsText() AS [location],geo_entity_wkt_.[multi_point].STAsText() AS [multi_point],geo_entity_wkt_.[line_string].STAsText() AS [line_string],geo_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string],geo_entity_wkt_.[polygon].STAsText() AS [polygon],geo_entity_wkt_.[multi_polygon].STAsText() AS [multi_polygon],geo_entity_wkt_.[geometry_collection].STAsText() AS [geometry_collection] FROM [geo_entity_wkt] geo_entity_wkt_ WHERE (geo_entity_wkt_.[id] = ?)'
     }
 
     void "test encode create statement for embedded"() {
@@ -761,7 +718,7 @@ interface MyRepository {
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(School))
 
         then:
-        statements[0] == 'CREATE TABLE "SCHOOL" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"POINT" SDO_GEOMETRY,"DESCRIPTION" VARCHAR(255))'
+        statements[0] == 'CREATE TABLE "SCHOOL" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"POINT" SDO_GEOMETRY NOT NULL,"DESCRIPTION" VARCHAR(255))'
         statements[1] == 'CREATE SEQUENCE "SCHOOL_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
         statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[3] == 'CREATE INDEX "IDX_SCHOOL_POINT" ON "SCHOOL" ("POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
@@ -770,11 +727,11 @@ interface MyRepository {
     void "test build create index for geo entity columns on oracle"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntity))
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntityJson))
 
         then:
-        statements[0] == 'CREATE TABLE "GEO_ENTITY" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"LOCATION" SDO_GEOMETRY,"MULTI_POINT" SDO_GEOMETRY,"LINE_STRING" SDO_GEOMETRY,"MULTI_LINE_STRING" SDO_GEOMETRY,"POLYGON" SDO_GEOMETRY,"MULTI_POLYGON" SDO_GEOMETRY,"GEOMETRY_COLLECTION" SDO_GEOMETRY)'
-        statements[1] == 'CREATE SEQUENCE "GEO_ENTITY_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        statements[0] == 'CREATE TABLE "GEO_ENTITY_JSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"LOCATION" SDO_GEOMETRY NOT NULL,"MULTI_POINT" SDO_GEOMETRY NOT NULL,"LINE_STRING" SDO_GEOMETRY NOT NULL,"MULTI_LINE_STRING" SDO_GEOMETRY,"POLYGON" SDO_GEOMETRY,"MULTI_POLYGON" SDO_GEOMETRY,"GEOMETRY_COLLECTION" SDO_GEOMETRY)'
+        statements[1] == 'CREATE SEQUENCE "GEO_ENTITY_JSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
         statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[2].contains("'location'")
         statements[2].contains("3857")
@@ -784,8 +741,8 @@ interface MyRepository {
         statements[4].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[4].contains("'line_string'")
         statements[4].contains("3857")
-        statements[5] == 'CREATE INDEX "IDX_GEO_ENTITY_LOCATION" ON "GEO_ENTITY" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
-        statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_MULTI_POINT" ON "GEO_ENTITY" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+        statements[5] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_LOCATION" ON "GEO_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+        statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_MULTI_POINT" ON "GEO_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
     }
 
     void "test build composite id query"() {
