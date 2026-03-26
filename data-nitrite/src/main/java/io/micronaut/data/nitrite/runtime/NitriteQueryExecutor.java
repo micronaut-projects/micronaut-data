@@ -133,7 +133,7 @@ public final class NitriteQueryExecutor {
         this.valueConverter = new ValueConverter(conversionService);
         this.entityMapperHandler = new ObjectRepositoryMapper(entityMapper);
         this.projectionMapper = new CollectionProjectionMapper(valueConverter, entityMapper);
-        this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter);
+        this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter, entityMapper);
         this.aggregationHandler = new CollectionAggregator();
     }
 
@@ -212,7 +212,7 @@ public final class NitriteQueryExecutor {
 
         // Handle native single-field projection (result type differs from root entity)
         if (!nq.getResultType().equals(nq.getRootEntity())) {
-            R result = nativeProjectionHandler.project(doc, query, methodName, nq.getResultType());
+            R result = nativeProjectionHandler.project(doc, query, methodName, entityFactory.apply(nq.getRootEntity()), nq.getResultType());
             if (result != null) {
                 return result;
             }
@@ -326,11 +326,12 @@ public final class NitriteQueryExecutor {
 
             if (projectedFields != null && !projectedFields.isEmpty()) {
                 var cursor = coll.find(filter, findOptions);
+                RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
                 if (projectedFields.size() == 1) {
                     List<R> results = new ArrayList<>();
                     String field = projectedFields.get(0);
                     for (Document doc : cursor) {
-                        R result = nativeProjectionHandler.project(doc, field, nq.getResultType());
+                        R result = nativeProjectionHandler.project(doc, field, entity, nq.getResultType());
                         if (result != null) {
                             results.add(result);
                         }
@@ -343,7 +344,7 @@ public final class NitriteQueryExecutor {
                         projection.put(field, null);
                     }
                     RecordStream<Document> projectedCursor = cursor.project(projection);
-                    return projectionMapper.mapResults(projectedCursor, projectedFields, nq.getResultType(), nq.isDtoProjection());
+                    return projectionMapper.mapResults(projectedCursor, projectedFields, entity, nq.getResultType(), nq.isDtoProjection());
                 }
             }
         }

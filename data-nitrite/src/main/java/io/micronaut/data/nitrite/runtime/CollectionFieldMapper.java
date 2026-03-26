@@ -16,10 +16,15 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import org.dizitart.no2.collection.Document;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Strategy for native single-field projections from Nitrite documents.
@@ -30,18 +35,24 @@ import java.util.List;
 @Internal
 public final class CollectionFieldMapper {
 
+    private static final Pattern COUNT_METHOD_PATTERN = Pattern.compile("^(find|get|read|list|search|query)(Count).*");
+    private static final Pattern FIELD_BY_PATTERN = Pattern.compile("^(?:find|get|read|list|search|query)([A-Z][A-Za-z0-9]*)By");
+
     private final NitriteQueryParser queryParser;
     private final ValueConverter valueConverter;
+    private final NitriteEntityMapper entityMapper;
 
     /**
      * Creates a new CollectionFieldMapper.
      *
      * @param queryParser the query parser
      * @param valueConverter the value converter
+     * @param entityMapper the entity mapper
      */
-    public CollectionFieldMapper(NitriteQueryParser queryParser, ValueConverter valueConverter) {
+    public CollectionFieldMapper(NitriteQueryParser queryParser, ValueConverter valueConverter, NitriteEntityMapper entityMapper) {
         this.queryParser = queryParser;
         this.valueConverter = valueConverter;
+        this.entityMapper = entityMapper;
     }
 
     /**
@@ -54,10 +65,28 @@ public final class CollectionFieldMapper {
      * @return the extracted value, or null if document or field is null
      */
     public <R> R project(Document doc, String fieldName, Class<R> resultType) {
+        return project(doc, fieldName, null, resultType);
+    }
+
+    /**
+     * Extract a single field value from a document.
+     *
+     * @param doc the document
+     * @param fieldName the field name to extract
+     * @param entity the entity metadata
+     * @param resultType the result type
+     * @param <R> the result type
+     * @return the extracted value, or null if document or field is null
+     */
+    public <R> R project(Document doc, String fieldName, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType) {
         if (doc == null) {
             return null;
         }
-        Object value = doc.get(fieldName);
+        String normalized = entityMapper.normalizeFieldName(fieldName, entity);
+        Object value = doc.get(normalized);
+        if (value == null && !normalized.equals(fieldName)) {
+            value = doc.get(fieldName);
+        }
         return valueConverter.convert(value, resultType);
     }
 
@@ -67,19 +96,19 @@ public final class CollectionFieldMapper {
      * @param doc the document
      * @param query the query string (SQL or JSON)
      * @param methodName the method name
+     * @param entity the entity metadata
      * @param resultType the result type
      * @param <R> the result type
      * @return the projected value, or null if no projection found
      */
-    public <R> R project(Document doc, String query, String methodName, Class<R> resultType) {
+    public <R> R project(Document doc, String query, String methodName, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType) {
         if (doc == null) {
             return null;
         }
 
         String fieldName = extractFieldName(query, methodName);
         if (fieldName != null) {
-            Object value = doc.get(fieldName);
-            return valueConverter.convert(value, resultType);
+            return project(doc, fieldName, entity, resultType);
         }
 
         return null;
@@ -94,9 +123,8 @@ public final class CollectionFieldMapper {
      */
     public String extractFieldName(String query, String methodName) {
         // First try to extract field from method name (most reliable for native projections)
-        if (!methodName.matches("^(find|get|read|list|search|query)(Count).*")) {
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(?:find|get|read|list|search|query)([A-Z][a-z0-9]+)By");
-            java.util.regex.Matcher matcher = pattern.matcher(methodName);
+        if (!COUNT_METHOD_PATTERN.matcher(methodName).matches()) {
+            Matcher matcher = FIELD_BY_PATTERN.matcher(methodName);
             if (matcher.find()) {
                 String fieldName = matcher.group(1);
                 return Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);

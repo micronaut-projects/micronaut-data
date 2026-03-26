@@ -16,6 +16,8 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.common.RecordStream;
@@ -57,9 +59,24 @@ public final class CollectionProjectionMapper {
      * @return list of projected values
      */
     public <R> List<R> mapResults(RecordStream<Document> cursor, List<String> fields, Class<R> resultType, boolean isDto) {
+        return mapResults(cursor, fields, null, resultType, isDto);
+    }
+
+    /**
+     * Extract projected results from a cursor.
+     *
+     * @param cursor the projected cursor
+     * @param fields the projected field names
+     * @param entity the entity metadata
+     * @param resultType the expected result type
+     * @param isDto whether this is a DTO projection
+     * @param <R> the result type
+     * @return list of projected values
+     */
+    public <R> List<R> mapResults(RecordStream<Document> cursor, List<String> fields, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
         List<R> results = new ArrayList<>();
         for (Document doc : cursor) {
-            R result = mapDocument(doc, fields, resultType, isDto);
+            R result = mapDocument(doc, fields, entity, resultType, isDto);
             if (result != null) {
                 results.add(result);
             }
@@ -77,15 +94,30 @@ public final class CollectionProjectionMapper {
      * @param <R> the result type
      * @return the mapped result, or null if not applicable
      */
-    @SuppressWarnings("unchecked")
     public <R> R mapDocument(Document doc, List<String> fields, Class<R> resultType, boolean isDto) {
+        return mapDocument(doc, fields, null, resultType, isDto);
+    }
+
+    /**
+     * Map a single document to a projected result.
+     *
+     * @param doc the document
+     * @param fields the projected field names
+     * @param entity the entity metadata
+     * @param resultType the expected result type
+     * @param isDto whether this is a DTO projection
+     * @param <R> the result type
+     * @return the mapped result, or null if not applicable
+     */
+    @SuppressWarnings("unchecked")
+    public <R> R mapDocument(Document doc, List<String> fields, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
         if (doc == null) {
             return null;
         }
 
         if (fields.size() == 1) {
             // Single field projection - extract and convert the value
-            Object value = doc.get(fields.get(0));
+            Object value = getProjectedValue(doc, fields.get(0), entity);
             return valueConverter.convert(value, resultType);
         } else if (isDto) {
             // DTO projection with multiple fields - use Micronaut introspection-based mapping
@@ -106,10 +138,33 @@ public final class CollectionProjectionMapper {
      * @return the mapped value, or null if document or field is null
      */
     public <R> R mapSingleField(Document doc, String fieldName, Class<R> resultType) {
+        return mapSingleField(doc, fieldName, null, resultType);
+    }
+
+    /**
+     * Map a single document to a single projected value.
+     *
+     * @param doc the document
+     * @param fieldName the projected field name
+     * @param entity the entity metadata
+     * @param resultType the expected result type
+     * @param <R> the result type
+     * @return the mapped value, or null if document or field is null
+     */
+    public <R> R mapSingleField(Document doc, String fieldName, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType) {
         if (doc == null) {
             return null;
         }
-        Object value = doc.get(fieldName);
+        Object value = getProjectedValue(doc, fieldName, entity);
         return valueConverter.convert(value, resultType);
+    }
+
+    private Object getProjectedValue(Document doc, String fieldName, @Nullable RuntimePersistentEntity<?> entity) {
+        String normalized = entityMapper.normalizeFieldName(fieldName, entity);
+        Object value = doc.get(normalized);
+        if (value == null && !normalized.equals(fieldName)) {
+            value = doc.get(fieldName);
+        }
+        return value;
     }
 }
