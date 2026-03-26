@@ -18,7 +18,10 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.geo.Geometry;
+import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -193,6 +196,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return value.toString().toUpperCase(Locale.ROOT);
         }
         return "'" + value + "'";
+    }
+
+    protected final String getPropertyGeometryConverter(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter").orElse(GeometryJsonConverter.class.getName());
     }
 
     protected final QueryPropertyPath asQueryPropertyPath(@Nullable String tableAlias, PersistentProperty persistentProperty) {
@@ -3014,7 +3021,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 column = escapeColumnIfNeeded(column, escape);
                 String columnWithTableAlias = tableAlias == null ? column : tableAlias + DOT + column;
                 if (property.isAssignable(Geometry.class)) {
-                    sb.append(addGeoJsonFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column));
+                    sb.append(getGeoJsonFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column, property));
                 } else if (useAlias) {
                     sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
                 } else {
@@ -3025,12 +3032,30 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @SuppressWarnings("NullAway")
-        private String addGeoJsonFunction(String column, String columnAlias) {
+        private String getGeoJsonFunction(String column, String columnAlias, PersistentProperty property) {
+            boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
             return switch (getDialect()) {
-                case ORACLE -> "SDO_UTIL.TO_GEOJSON(" + column + ")" + AS_CLAUSE + columnAlias;
-                case MYSQL, POSTGRES, H2 -> "ST_AsGeoJSON(" + column + ")" + AS_CLAUSE + columnAlias;
+                case ORACLE -> getOracleGeoJsonFunction(column, columnAlias, isWkt);
+                case SQL_SERVER ->  getSqlServerGeoJsonFunction(column, columnAlias);
+                case MYSQL, POSTGRES, H2 -> getOtherGeoJsonFunction(column, columnAlias, isWkt);
                 default -> column + AS_CLAUSE + columnAlias;
             };
+        }
+
+        private String getOracleGeoJsonFunction(String column, String columnAlias, boolean isWkt) {
+            String function = isWkt ? "SDO_UTIL.TO_WKTGEOMETRY(" : "SDO_UTIL.TO_GEOJSON(";
+            return function + column + ")" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getSqlServerGeoJsonFunction(String column, String columnAlias) {
+            // since sqlserver doesn't have built-in functions for conversion between
+            // json and internal geospatial data type, use always Well-Known Text (WKT) functions
+            return column + ".STAsText()" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getOtherGeoJsonFunction(String column, String columnAlias, boolean isWkt) {
+            String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
+            return function + column + ")" + AS_CLAUSE + columnAlias;
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {

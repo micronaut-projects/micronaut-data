@@ -18,7 +18,7 @@ package io.micronaut.data.model.geo;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.convert.GeometryConverter;
+import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.List;
  * @since 5.0
  */
 @Serdeable
-@TypeDef(type = DataType.STRING, converter = GeometryConverter.class)
+@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)
 public record Point(double x, double y) implements Geometry {
 
     /**

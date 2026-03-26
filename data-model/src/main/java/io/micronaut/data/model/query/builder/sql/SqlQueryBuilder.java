@@ -25,6 +25,7 @@ import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
@@ -81,6 +82,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -1332,6 +1334,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             switch (dialect) {
                 case ORACLE -> values.add(getOracleGeoJsonExpression(param, property));
                 case MYSQL -> values.add(getMysqlGeoJsonExpression(param, property));
+                case SQL_SERVER -> values.add(getSqlServerGeoJsonExpression(param, property));
                 case POSTGRES, H2 -> values.add(getSridWrappedGeoJsonExpression(param, property));
                 default -> values.add(param);
             }
@@ -1374,6 +1377,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 case MYSQL:
                     appendMysqlGeoJsonExpression(sb, prop, appendParameter);
                     break;
+                case SQL_SERVER:
+                    appendSqlServerGeoJsonExpression(sb, prop, appendParameter);
+                    break;
                 case POSTGRES, H2:
                     appendSridWrappedGeoJsonExpression(sb, prop, appendParameter);
                     break;
@@ -1392,11 +1398,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private void appendOracleGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
-        sb.append("SDO_UTIL.FROM_GEOJSON(");
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        if (isWkt) {
+            sb.append("SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(");
+        } else {
+            sb.append("SDO_UTIL.FROM_GEOJSON(");
+        }
         appendParameter.run();
-        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
-            .append(", NULL, ")
-            .append(srid));
+        if (isWkt) {
+            sb.append(")");
+        }
+        if (optSrid.isPresent()) {
+            sb.append(", ");
+            if (isWkt) {
+                sb.append(optSrid.getAsInt());
+            } else {
+                sb.append("NULL, ").append(optSrid.getAsInt());
+            }
+        }
         sb.append(")");
     }
 
@@ -1407,12 +1428,52 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private void appendMysqlGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
-        sb.append("ST_GeomFromGeoJSON(");
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        if (isWkt) {
+            sb.append("ST_GeomFromText(");
+        } else {
+            sb.append("ST_GeomFromGeoJSON(");
+        }
         appendParameter.run();
-        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
-            .append(", 1, ")
-            .append(srid));
+        if (optSrid.isPresent()) {
+            sb.append(", ");
+            if (isWkt) {
+                sb.append(optSrid.getAsInt());
+            } else {
+                sb.append("1, ").append(optSrid.getAsInt());
+            }
+        }
         sb.append(")");
+    }
+
+    private String getSqlServerGeoJsonExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendSqlServerGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendSqlServerGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        // since sqlserver doesn't have built-in functions for conversion between
+        // json and internal geospatial data type, use always Well-Known Text (WKT) functions
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+
+        String geoDataType;
+        int defaultSrid;
+        if (optDefinition.isEmpty() || optDefinition.get().toLowerCase().contains("geography")) {
+            geoDataType = "geography";
+            defaultSrid = 4326;
+        } else {
+            geoDataType = "geometry";
+            defaultSrid = 3857;
+        }
+
+        sb.append(geoDataType).append("::STGeomFromText(");
+        appendParameter.run();
+        sb.append(", ").append(optSrid.orElse(defaultSrid)).append(")");
     }
 
     private String getSridWrappedGeoJsonExpression(String parameter, PersistentProperty property) {
@@ -1422,17 +1483,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private void appendSridWrappedGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
-        boolean hasSrid = property.getAnnotationMetadata().hasAnnotation(Srid.class);
-        if (hasSrid) {
-            sb.append("ST_SetSRID(");
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        if (isWkt) {
+            sb.append("ST_GeomFromText(");
+            appendParameter.run();
+            if (optSrid.isPresent()) {
+                sb.append(", ").append(optSrid.getAsInt());
+            }
+            sb.append(")");
+        }  else {
+            if (optSrid.isPresent()) {
+                sb.append("ST_SetSRID(");
+            }
+            sb.append("ST_GeomFromGeoJSON(");
+            appendParameter.run();
+            sb.append(')');
+            if (optSrid.isPresent()) {
+                sb.append(", ").append(optSrid.getAsInt()).append(')');
+            }
         }
-        sb.append("ST_GeomFromGeoJSON(");
-        appendParameter.run();
-        sb.append(')');
-        property.getAnnotationMetadata().intValue(Srid.class).ifPresent(srid -> sb
-            .append(", ")
-            .append(srid)
-            .append(')'));
     }
 
     @Override

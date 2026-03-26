@@ -25,11 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public final class GeometryConverter implements AttributeConverter<Geometry, String> {
+public final class GeometryJsonConverter implements AttributeConverter<Geometry, String> {
 
     private final JsonMapper jsonMapper;
 
-    GeometryConverter(JsonMapper jsonMapper, @Nullable @Named("oracleJdbcJsonText") ObjectMapper oracleJsonMapper) {
+    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable @Named("oracleJdbcJsonText") ObjectMapper oracleJsonMapper) {
         this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper;
     }
 

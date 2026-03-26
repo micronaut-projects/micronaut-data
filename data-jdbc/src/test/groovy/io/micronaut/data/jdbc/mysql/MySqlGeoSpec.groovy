@@ -1,7 +1,8 @@
 package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.GeoEntityRepository
+import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeoEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -9,8 +10,14 @@ class MySqlGeoSpec extends AbstractGeoSpec implements MySQLTestPropertyProvider 
 
     @Memoized
     @Override
-    GeoEntityRepository getGeoEntityRepository() {
-        return context.getBean(MySqlGeoEntityRepository)
+    GeoEntityJsonRepository getGeoEntityJsonRepository() {
+        return context.getBean(MySqlGeoEntityJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    GeoEntityWktRepository getGeoEntityWktRepository() {
+        return context.getBean(MySqlGeoEntityWktRepository)
     }
 
     @Memoized
