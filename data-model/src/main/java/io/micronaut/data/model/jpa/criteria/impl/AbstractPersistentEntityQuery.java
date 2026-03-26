@@ -28,6 +28,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -155,7 +157,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
         if (orders != null) {
             for (Order o : orders) {
-                joiner.joinIfNeeded(requireProperty(o.getExpression()));
+                var expr = o.getExpression();
+                if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+                    expr = ue.getExpression();
+                }
+                joiner.joinIfNeeded(requireProperty(expr));
             }
         }
         Map<String, JoinPath> joinPaths = new LinkedHashMap<>();

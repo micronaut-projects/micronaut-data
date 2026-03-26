@@ -894,6 +894,40 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             book.title == "The Stand"
     }
 
+    void "test criteria pagination sort ignore case with join"() {
+        given:
+        def book1 = new Book(title: "The Stand", students: [new Student("Denis"), new Student("Josh")])
+        def book2 = new Book(title: "Pet Cemetery", students: [new Student("Kevin")])
+        def book3 = new Book(title: "along Came a Spider", students: [new Student("Kevin"), new Student("Josh")])
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        bookRepository.save(book3)
+        def criteria = new PredicateSpecification<Book>() {
+            @Override
+            Predicate toPredicate(Root<Book> root, CriteriaBuilder criteriaBuilder) {
+                def students = root.joinSet("students", jakarta.persistence.criteria.JoinType.LEFT)
+                return criteriaBuilder.or(
+                        criteriaBuilder.equal(students.get("name"), "Denis"),
+                        criteriaBuilder.equal(students.get("name"), "Josh")
+                )
+            }
+        }
+
+        when:
+        def page = bookRepository.findAll(criteria, Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["along Came a Spider"]
+
+        when:
+        page = bookRepository.findAll(criteria, Pageable.from(1, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["The Stand"]
+    }
+
     static QuerySpecification<Book> testJoin(String value) {
         return new QuerySpecification<Book>() {
             @Override
