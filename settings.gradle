@@ -136,7 +136,7 @@ include 'doc-examples:hibernate-spring-tx-example-java'
 include 'doc-examples:jdbc-spring-template-example-java'
 include 'doc-examples:jdbc-spring-template-example-groovy'
 include 'doc-examples:jdbc-spring-template-example-kotlin'
-include 'doc-examples:data-jpa-metamodel-example-java'
+include 'doc-examples:data-jpa-metamodel-hibernate-example-java'
 
 include 'doc-examples:jooq-r2dbc-postgres'
 
