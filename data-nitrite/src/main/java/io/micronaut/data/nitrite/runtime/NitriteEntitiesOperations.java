@@ -132,11 +132,15 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         try {
             collectAutoPopulatedPreviousValues();
 
+            // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
+            Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+            NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
             for (T entity : entities) {
-                boolean hasExistingId = persistentEntity.getIdentity() != null &&
-                    persistentEntity.getIdentity().getProperty().get(entity) != null;
+                // Use cached idAccessor from meta - eliminates chained lookups
+                boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
                 if (hasExistingId) {
                     existingEntities.add(entity);
                 } else {
@@ -180,8 +184,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             List<T> finalNewEntities = new ArrayList<>();
             List<T> finalExistingEntities = new ArrayList<>();
             for (T entity : entities) {
-                boolean hasExistingId = persistentEntity.getIdentity() != null &&
-                    persistentEntity.getIdentity().getProperty().get(entity) != null;
+                // Use cached idAccessor from meta - eliminates chained lookups
+                boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
                 // Note: new entities now HAVE IDs if they were generated
                 // So we should have tracked them before.
                 // For simplicity, fire appropriate events based on initial state
@@ -289,12 +293,15 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
         }
 
+        // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
+        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+
         if (insert) {
             // saveAll() operation uses upsert semantics for each entity:
             // - If entity has no ID: generate ID and insert as new document
             // - If entity has ID: update (replace) existing document, or insert if not found
             // This allows saveAll() to work for mixed batches of new and existing entities
-            Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
             List<Document> docsToInsert = new ArrayList<>();
 
             for (int i = 0; i < entities.size(); i++) {
@@ -306,7 +313,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
 
                 // If the entity already has an ID, use upsert
-                Object id = entityMapper.getEntityIdValue(entity, type);
+                // Use cached idAccessor from meta - eliminates chained lookups
+                Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
                 if (id != null) {
                     // Entity has ID - use upsert (update with insert-if-absent)
                     // Initialize version to 0 if not set (for optimistic locking)
@@ -316,7 +324,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                         entities.set(i, entity);
                     }
                     Document doc = repositoryWriter.toDocument(entity);
-                    Filter filter = entityMapper.idEqualsFilter(type, id);
+                    Filter filter = entityMapper.idEqualsFilter(meta, id);
                     helper.logUpdate(collection.getName(), filter, doc);
                     long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
                     if (persistentEntity.getVersion() != null) {
@@ -351,13 +359,14 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         } else {
             // updateAll() operation: replace existing documents by ID
             // Requires all entities to have IDs; throws OptimisticLockException if version mismatch
-            Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
             int expectedCount = entities.size();
             int affectedCount = 0;
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
-                Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
+                // Use cached idAccessor from meta - eliminates chained lookups
+                Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+                Filter filter = entityMapper.idEqualsFilter(meta, id);
                 if (persistentEntity.getVersion() != null) {
                     Object versionValue = (preVersionValues != null && i < preVersionValues.size()) ? preVersionValues.get(i) : null;
                     if (versionValue == null) {

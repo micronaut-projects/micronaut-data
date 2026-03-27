@@ -191,6 +191,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
+  /** Cache for non-transactional collections - keyed by collection name to handle discriminators */
+  private final Map<String, NitriteCollection> collectionCache = new ConcurrentHashMap<>();
 
   /**
    * Create Nitrite repository operations.
@@ -361,21 +363,25 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     // Set back-references using pre-computed mappedBy metadata — no annotation lookups on hot path.
     NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
-    for (NitriteEntityMapper.WritablePropertyMeta<T> assocMeta : meta.mappedByAssocs()) {
+    // Early exit if no back-references to set
+    if (meta.hasBackReferences()) {
+      for (NitriteEntityMapper.WritablePropertyMeta<T> assocMeta : meta.mappedByAssocs()) {
         Object value = assocMeta.prop().getProperty().get(entityValue);
         if (value instanceof Iterable<?> iterable) {
-            if (assocMeta.backRefProperty() != null) {
-                for (Object child : iterable) {
-                    if (child != null && assocMeta.backRefProperty().get(child) == null) {
-                        assocMeta.backRefProperty().set(child, entityValue);
-                    }
-                }
+          // Move null check outside inner loop - loop-invariant hoist
+          if (assocMeta.backRefProperty() != null) {
+            for (Object child : iterable) {
+              if (child != null && assocMeta.backRefProperty().get(child) == null) {
+                assocMeta.backRefProperty().set(child, entityValue);
+              }
             }
+          }
         } else if (value != null && assocMeta.backRefProperty() != null) {
-            if (assocMeta.backRefProperty().get(value) == null) {
-                assocMeta.backRefProperty().set(value, entityValue);
-            }
+          if (assocMeta.backRefProperty().get(value) == null) {
+            assocMeta.backRefProperty().set(value, entityValue);
+          }
         }
+      }
     }
 
     NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
@@ -501,12 +507,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     String name = getCollectionName(type);
     NitriteCollection collection;
     if (transactionHolder.isActive()) {
+      // Transaction path: never cache, always dynamic
       // Nitrite transactions require the collection to pre-exist before the transaction started.
       // Touch the collection on the database first (idempotent: creates if absent).
       database.getCollection(name);
       collection = transactionHolder.get().getCollection(name);
     } else {
-      collection = database.getCollection(name);
+      // Non-transaction path: safe to cache by collection name (handles discriminators)
+      collection = collectionCache.computeIfAbsent(name, k -> database.getCollection(k));
     }
     ensureIndexes(type, collection, name);
     return collection;
@@ -572,10 +580,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   /** Generate and set ID on entity if @GeneratedValue is present and ID is null. */
   @Override
   public <T> void generateIdIfNecessary(final T entity, final Class<T> type) {
-    RuntimePersistentEntity<T> persistentEntity = getEntity(type);
-    var idProperty = persistentEntity.getIdentity();
+    // Use cached metadata with pre-computed idAccessor
+    NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+    var idProperty = meta.idProp();
+    var idAccessor = meta.idAccessor();
     if (idProperty != null && idProperty.isAnnotationPresent(GeneratedValue.class)) {
-      if (idProperty.getProperty().get(entity) != null) {
+      if (idAccessor != null && idAccessor.get(entity) != null) {
           return;
       }
       Class<?> idType = idProperty.getType();
@@ -584,7 +594,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                            (idType == Long.class || idType == long.class) ? ID_GENERATOR.incrementAndGet() :
                            (idType == Integer.class || idType == int.class) ? (int) (ID_GENERATOR.incrementAndGet() % Integer.MAX_VALUE) :
                            UUID.randomUUID().toString();
-      idProperty.getProperty().set(entity, generatedId);
+      if (idAccessor != null) {
+        idAccessor.set(entity, generatedId);
+      }
     }
   }
 

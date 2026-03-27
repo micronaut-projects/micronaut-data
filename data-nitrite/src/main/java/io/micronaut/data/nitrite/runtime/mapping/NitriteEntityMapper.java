@@ -250,12 +250,24 @@ public final class NitriteEntityMapper {
    * @param <T> the entity type
    */
   public <T> Filter idEqualsFilter(final Class<T> type, final Object id) {
-    RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
-    RuntimePersistentProperty<T> idProperty = persistentEntity.getIdentity();
+    NitriteEntityMeta<T> meta = getOrBuildMeta(type);
+    return idEqualsFilter(meta, id);
+  }
+
+  /**
+   * Create a filter matching the entity ID using pre-computed metadata.
+   *
+   * @param meta the pre-computed entity metadata
+   * @param id the ID value
+   * @return the Nitrite Filter
+   * @param <T> the entity type
+   */
+  public <T> Filter idEqualsFilter(final NitriteEntityMeta<T> meta, final Object id) {
+    RuntimePersistentProperty<T> idProperty = meta.idProp();
 
     // In Nitrite, we consistently use ID_FIELD ("id") for the identity property.
     String idField = ID_FIELD;
-    
+
     if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class) && id != null) {
       try {
         Document idDoc = Document.createDocument();
@@ -271,7 +283,7 @@ public final class NitriteEntityMapper {
       } catch (Exception ignored) {
       }
     }
-    return eqWithNumericCoercion(persistentEntity, idField, toFilterValue(id), idField);
+    return eqWithNumericCoercion(meta.persistentEntity(), idField, toFilterValue(id), idField);
   }
 
   /**
@@ -342,21 +354,21 @@ public final class NitriteEntityMapper {
     visited.add(entity);
 
     Document doc = convertToDocumentInternal(entity, visited);
-    
+
+    // Cache getEntity() result - called twice in original code, now only once
+    RuntimePersistentEntity<T> persistentEntity =
+        (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(entity.getClass());
+
     // Entities with @JsonProperty("_id") cause Jackson to serialize the id as "_id".
     // Nitrite reserves "_id" for NitriteId — rename user's id to its property name to avoid InvalidIdException.
     Object reservedId = doc.get("_id");
     if (reservedId != null && !(reservedId instanceof NitriteId)) {
       doc.remove("_id");
-      RuntimePersistentEntity<T> persistentEntity =
-          (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(entity.getClass());
       RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
       String idField = idProp != null ? idProp.getName() : "id";
       doc.put(idField, toFilterValue(reservedId));
     }
 
-    RuntimePersistentEntity<T> persistentEntity =
-        (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(entity.getClass());
     RuntimePersistentProperty<T> idProperty = persistentEntity.getIdentity();
     if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class)) {
       Object embeddedId = idProperty.getProperty().get(entity);
@@ -473,6 +485,8 @@ public final class NitriteEntityMapper {
   private <T> NitriteEntityMeta<T> buildEntityMeta(RuntimePersistentEntity<T> persistentEntity) {
     List<WritablePropertyMeta<T>> writableList = new ArrayList<>();
     List<WritablePropertyMeta<T>> mappedByList = new ArrayList<>();
+    List<RuntimeAssociation<T>> cascadeList = new ArrayList<>();
+    boolean hasBackRefs = false;
 
     for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
       if (prop.isReadOnly()
@@ -494,6 +508,11 @@ public final class NitriteEntityMapper {
           RuntimePersistentProperty<?> backPropRaw = assoc.getAssociatedEntity().getPropertyByName(mappedByValue);
           if (backPropRaw != null) {
             backRefProp = (BeanProperty<Object, Object>) backPropRaw.getProperty();
+            hasBackRefs = true;
+          }
+          // Pre-compute cascade-capable associations for PERSIST/ALL
+          if (assoc.doesCascade(Relation.Cascade.ALL) || assoc.doesCascade(Relation.Cascade.PERSIST)) {
+            cascadeList.add((RuntimeAssociation<T>) assoc);
           }
         } else if (assoc.isEmbedded()) {
           strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
@@ -504,6 +523,10 @@ public final class NitriteEntityMapper {
           if (idPropRaw != null) {
             associatedIdProp = (BeanProperty<Object, Object>) idPropRaw.getProperty();
           }
+        }
+        // Pre-compute cascade-capable associations for PERSIST/ALL (for ALL associations, not just mappedBy)
+        if (assoc.doesCascade(Relation.Cascade.ALL) || assoc.doesCascade(Relation.Cascade.PERSIST)) {
+          cascadeList.add((RuntimeAssociation<T>) assoc);
         }
       } else {
         strategy = classifyValueStrategy(prop.getType());
@@ -527,16 +550,29 @@ public final class NitriteEntityMapper {
       }
     }
 
+    // Cache ID accessor for fast ID property access
+    BeanProperty<T, Object> idAccessor = null;
+    RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+    if (idProp != null) {
+      idAccessor = (BeanProperty<T, Object>) idProp.getProperty();
+    }
+
     return new NitriteEntityMeta<>(
         List.copyOf(writableList),
         List.copyOf(mappedByList),
-        persistentEntity.getIdentity(),
-        persistentEntity.getVersion());
+        idProp,
+        persistentEntity.getVersion(),
+        persistentEntity,
+        List.copyOf(cascadeList),
+        hasBackRefs,
+        idAccessor);
   }
 
   /**
    * Return the cached {@link NitriteEntityMeta} for {@code type}, building it on first access.
    * After the first call per entity type, no registry or annotation lookups are performed.
+   *
+   * <p>Uses get-first pattern to avoid computeIfAbsent lock contention on cache hits.</p>
    *
    * @param <T> the entity type
    * @param type the entity class
@@ -544,6 +580,12 @@ public final class NitriteEntityMapper {
    */
   @SuppressWarnings("unchecked")
   public <T> NitriteEntityMeta<T> getOrBuildMeta(Class<T> type) {
+    // Fast path: avoid computeIfAbsent lock contention on cache hits
+    NitriteEntityMeta<T> existing = (NitriteEntityMeta<T>) entityMetaCache.get(type);
+    if (existing != null) {
+      return existing;
+    }
+    // Lambda allocation only happens on cache miss path now
     return (NitriteEntityMeta<T>) entityMetaCache.computeIfAbsent(
         type, k -> buildEntityMeta(runtimeEntityRegistry.getEntity((Class<T>) k)));
   }
@@ -1134,11 +1176,19 @@ public final class NitriteEntityMapper {
    * @param mappedByAssocs the list of mapped-by associations
    * @param idProp the identity property (if any)
    * @param versionProp the version property (if any)
+   * @param persistentEntity the cached RuntimePersistentEntity (avoids registry lookup)
+   * @param cascadeProps pre-filtered list of cascade-capable associations (for PERSIST/ALL)
+   * @param hasBackReferences true if this entity has any mappedBy associations with back-ref properties
+   * @param idAccessor cached BeanProperty accessor for the ID property
    */
   public record NitriteEntityMeta<T>(
       List<WritablePropertyMeta<T>> writableProps,
       List<WritablePropertyMeta<T>> mappedByAssocs,
       @Nullable RuntimePersistentProperty<T> idProp,
-      @Nullable RuntimePersistentProperty<T> versionProp
+      @Nullable RuntimePersistentProperty<T> versionProp,
+      RuntimePersistentEntity<T> persistentEntity,
+      List<RuntimeAssociation<T>> cascadeProps,
+      boolean hasBackReferences,
+      @Nullable BeanProperty<T, Object> idAccessor
   ) { }
 }

@@ -142,11 +142,14 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     public void persist() {
         try {
             collectAutoPopulatedPreviousValues();
-            
+
+            // Cache NitriteEntityMeta at method start - avoids repeated registry lookups
+            Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+            NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+
             // Check if entity has an existing ID - if so, use update lifecycle
-            boolean hasExistingId = persistentEntity.getIdentity() != null &&
-                persistentEntity.getIdentity().getProperty().get(entity) != null;
-            
+            boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
+
             if (hasExistingId) {
                 // Entity has ID - use update lifecycle for proper version/@DateUpdated handling
                 boolean vetoed = triggerPreUpdate();
@@ -157,7 +160,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (cascades) {
                     cascadePre(Relation.Cascade.UPDATE);
                 }
-                execute();
+                execute(meta);
                 triggerPostUpdate();
                 if (cascades) {
                     cascadePost(Relation.Cascade.UPDATE);
@@ -172,7 +175,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (cascades) {
                     cascadePre(Relation.Cascade.PERSIST);
                 }
-                execute();
+                execute(meta);
                 triggerPostPersist();
                 if (cascades) {
                     cascadePost(Relation.Cascade.PERSIST);
@@ -185,6 +188,17 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @Override
     protected void execute() throws RuntimeException {
+        // Cache NitriteEntityMeta at method start - avoids repeated registry lookups
+        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        execute(meta);
+    }
+
+    /**
+     * Execute with pre-computed metadata.
+     * @param meta the pre-computed entity metadata
+     */
+    private void execute(NitriteEntityMapper.NitriteEntityMeta<T> meta) throws RuntimeException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("execute: operationType={}, entity={}", operationType, entity);
         }
@@ -202,9 +216,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // - If entity has no ID: generate ID and insert as new document
             // - If entity has ID: update (replace) existing document, or insert if not found
             // This allows save() to work for both create and update scenarios
-            Object entityId = persistentEntity.getIdentity() != null
-                ? persistentEntity.getIdentity().getProperty().get(entity)
-                : null;
+            // Use cached idAccessor from meta - eliminates chained lookups
+            Object entityId = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
 
             if (entityId != null) {
                 // Entity has ID - use upsert (update with insert-if-absent)
@@ -214,7 +227,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
                 }
                 Document doc = repositoryWriter.toDocument(entity);
-                Filter filter = entityMapper.idEqualsFilter(type, entityId);
+                Filter filter = entityMapper.idEqualsFilter(meta, entityId);
                 helper.logUpdate(collection.getName(), filter, doc);
                 long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
                 if (persistentEntity.getVersion() != null) {
@@ -232,8 +245,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 helper.logInsert(collection.getName(), doc);
                 collection.insert(doc);
                 Object generatedId = doc.get("_id");
-                if (generatedId != null && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                    entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty(), entity, generatedId);
+                if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
+                    entity = helper.updateEntityId((BeanProperty<T, Object>) meta.idAccessor(), entity, generatedId);
                 }
             }
             ctx.persisted.add(entity);
@@ -241,7 +254,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Update operation: replace existing document by ID
             // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
-            Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
+            // Use cached idAccessor from meta - eliminates chained lookups
+            Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Filter filter = entityMapper.idEqualsFilter(meta, id);
             if (persistentEntity.getVersion() != null) {
                 Object versionValue = preVersionValue;
                 if (versionValue == null) {
@@ -255,7 +270,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             checkOptimisticLocking(1, rows);
         } else {
             // Delete operation
-            Filter filter = entityMapper.idEqualsFilter(type, entityMapper.getEntityIdValue(entity, type));
+            // Use cached idAccessor from meta - eliminates chained lookups
+            Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Filter filter = entityMapper.idEqualsFilter(meta, id);
             if (persistentEntity.getVersion() != null) {
                 Object versionValue = preVersionValue;
                 if (versionValue == null) {
@@ -280,27 +297,24 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         if (LOG.isDebugEnabled()) {
             LOG.debug("triggerPrePersist: entity={}", entity);
         }
-        
+
         // Generate ID early so children can reference it
         Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
         helper.generateIdIfNecessary(entity, type);
-        
-        // Manual cascade to ensure events fire for children BEFORE parent
-        for (io.micronaut.data.model.runtime.RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
-            if (prop instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> assoc && assoc.doesCascade(io.micronaut.data.annotation.Relation.Cascade.ALL, io.micronaut.data.annotation.Relation.Cascade.PERSIST)) {
-                Object value = prop.getProperty().get(entity);
-                if (value instanceof Iterable<?> iterable) {
-                    java.util.List<Object> list = new java.util.ArrayList<>();
-                    for (Object o : iterable) {
-                        list.add(o);
-                    }
-                    if (!list.isEmpty()) {
-                        Class<Object> associatedType = (Class<Object>) assoc.getAssociatedEntity().getIntrospection().getBeanType();
-                        ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, list, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), null);
-                    }
-                } else if (value != null) {
-                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity());
+
+        // Use pre-computed cascadeProps from metadata - avoids iterating all properties + instanceof checks
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
+            Object value = assoc.getProperty().get(entity);
+            if (value instanceof Iterable<?> iterable) {
+                // No ArrayList copy needed - persistBatch accepts Iterable directly
+                if (iterable.iterator().hasNext()) {
+                    @SuppressWarnings("unchecked")
+                    Iterable<Object> iterableObjects = (Iterable<Object>) iterable;
+                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, iterableObjects, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), null);
                 }
+            } else if (value != null) {
+                ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity());
             }
         }
 
