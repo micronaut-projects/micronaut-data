@@ -31,15 +31,21 @@ public final class MongoDataConfiguration {
 
     public static final String PREFIX = "micronaut.data.mongodb";
     public static final String CREATE_COLLECTIONS_PROPERTY = PREFIX + ".create-collections";
+    public static final String CREATE_INDEXES_PROPERTY = PREFIX + ".create-indexes";
     public static final String DRIVER_TYPE_PROPERTY = PREFIX + ".driver-type";
     public static final String JSON_VIEWS_PROPERTY = PREFIX + ".ignore-json-views";
     public static final String DRIVER_TYPE_SYNC = DriverType.SYNC.name();
     public static final String DRIVER_TYPE_REACTIVE = DriverType.REACTIVE.name();
-    public static final String DATABASE_CONFIGURATION_ERROR_MESSAGE = "MongoDB database name is not specified in the url! You can specify it as '@MongoRepository(database: \"mydb\")' or in the connect url: 'mongodb://username:password@localhost:27017/mydb'.";
+    public static final String DATABASE_CONFIGURATION_ERROR_MESSAGE = "MongoDB database name is not specified in the url! You can specify it as '@MongoRepository(databaseName: \"mydb\")' or in the connect url: 'mongodb://username:password@localhost:27017/mydb'.";
     /**
      * Create MongoDB collection at app initialization.
      */
     private boolean createCollections;
+
+    /**
+     * Create MongoDB indexes at app initialization.
+     */
+    private boolean createIndexes;
 
     /**
      * Choose the appropriate driver type when both are on classpath.
@@ -57,6 +63,14 @@ public final class MongoDataConfiguration {
 
     public void setCreateCollections(boolean createCollections) {
         this.createCollections = createCollections;
+    }
+
+    public boolean isCreateIndexes() {
+        return createIndexes;
+    }
+
+    public void setCreateIndexes(boolean createIndexes) {
+        this.createIndexes = createIndexes;
     }
 
     public boolean isIgnoreJsonViews() {
