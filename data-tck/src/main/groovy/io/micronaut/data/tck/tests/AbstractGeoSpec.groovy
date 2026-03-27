@@ -190,7 +190,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test creating, reading, updating and deleting of all geometry types when wkt conversion used"() {
+    void "test crud of all geometry types when wkt conversion used"() {
         given:
         GeoEntityWkt entity = new GeoEntityWkt()
         entity.setPoint(createPoint(1))

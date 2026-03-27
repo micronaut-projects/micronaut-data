@@ -854,6 +854,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (indexMapping.spatial()) {
                 indexBuilder.append(" INDEXTYPE IS MDSYS.SPATIAL_INDEX");
             }
+        } else if (dialect == Dialect.SQL_SERVER) {
+            indexBuilder.append(")");
+            if (indexMapping.spatial()) {
+                // sqlserver geospatial columns can be geometry or geography type
+                // when geometry column type is used, the index must have BOUNDING_BOX
+                Optional<SqlColumnMapping> optSqlColumnMapping = tableMapping.columns()
+                    .stream()
+                    .filter(column -> column.getName().equals(indexMapping.columns()[0]))
+                    .findFirst();
+                if (optSqlColumnMapping.isPresent()) {
+                    String definition = optSqlColumnMapping.get().getDefinition();
+                    if (definition != null && definition.toLowerCase().contains("geometry")) {
+                        // should be used with srid = 3857 which is default value when geometry type is used
+                        indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
+                    }
+                }
+            }
+            indexBuilder.append(";");
         } else {
             indexBuilder.append(");");
         }
