@@ -18,6 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Converts {@link Geometry} values to and from their Well-Known Text (WKT) representation.
+ *
+ * <p>This converter supports the Micronaut Data geo model hierarchy and handles nested
+ * structures such as {@link GeometryCollection} values during formatting and parsing.
+ *
+ * @since 5.0
+ */
 @Singleton
 public final class GeometryWktConverter implements AttributeConverter<Geometry, String> {
 

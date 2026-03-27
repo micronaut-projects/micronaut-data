@@ -24,6 +24,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Converts {@link Geometry} values to and from their GeoJSON string representation.
+ *
+ * <p>This converter is used for geo model types that are persisted as JSON text and supports
+ * all Micronaut Data geometry implementations, including nested {@link GeometryCollection}
+ * values.
+ *
+ * @since 5.0
+ */
 @Singleton
 public final class GeometryJsonConverter implements AttributeConverter<Geometry, String> {
 
