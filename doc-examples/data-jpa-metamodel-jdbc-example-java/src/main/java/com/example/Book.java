@@ -19,16 +19,26 @@ package com.example;
 import jakarta.persistence.*;
 
 @Entity
-public class EmbeddedOwner {
+@Table(name = "book")
+public class Book {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String title;
+    private int pages;
 
-    private String ownerName;
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Category category;
 
-    @Embedded
-    private EmbeddableClass embedded;
+    public Book() {
+    }
+
+    public Book(Long id, String title, int pages, Category category) {
+        this.id = id;
+        this.title = title;
+        this.pages = pages;
+        this.category = category;
+    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
@@ -36,22 +46,37 @@ public class EmbeddedOwner {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public String getTitle() {
+        return title;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    public int getPages() {
+        return pages;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setPages(int pages) {
+        this.pages = pages;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public Category getCategory() {
+        return category;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

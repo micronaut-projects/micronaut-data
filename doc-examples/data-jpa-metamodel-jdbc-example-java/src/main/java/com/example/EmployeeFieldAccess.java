@@ -18,17 +18,28 @@ package com.example;
 
 import jakarta.persistence.*;
 
+@Access(AccessType.FIELD)
 @Entity
-public class EmbeddedOwner {
+public class EmployeeFieldAccess {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String ownerName;
+    @Column(name = "name")
+    private String name;
 
-    @Embedded
-    private EmbeddableClass embedded;
+    @Column(name = "salary")
+    private double salary;
+
+    public EmployeeFieldAccess() {
+    }
+
+    public EmployeeFieldAccess(Long id, String name, double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
@@ -36,22 +47,27 @@ public class EmbeddedOwner {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public String getName() {
+        return name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
+    public void setName(String name) {
+        this.name = name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    public double getSalary() {
+        return salary;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setSalary(double salary) {
+        this.salary = salary;
     }
 }

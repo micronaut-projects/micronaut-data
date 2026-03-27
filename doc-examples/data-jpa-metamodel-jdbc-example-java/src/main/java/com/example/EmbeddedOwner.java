@@ -36,6 +36,11 @@ public class EmbeddedOwner {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getOwnerName() {
         return ownerName;
     }

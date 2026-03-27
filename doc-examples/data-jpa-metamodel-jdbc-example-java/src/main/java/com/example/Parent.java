@@ -16,42 +16,40 @@
 
 package com.example;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 
-@Entity
-public class EmbeddedOwner {
-
+@MappedSuperclass
+public class Parent {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
+    String name;
 
-    private String ownerName;
+    public Parent() {
+    }
 
-    @Embedded
-    private EmbeddableClass embedded;
+    public Parent(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
-        return id;
+        return this.id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public String getName() {
+        return this.name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -16,42 +16,49 @@
 
 package com.example;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
-public class EmbeddedOwner {
+public class PurchaseOrder {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private OrderPk id;
 
-    private String ownerName;
+    private String description;
 
     @Embedded
-    private EmbeddableClass embedded;
+    private EmbeddableClass details;
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getId() {
+    public OrderPk getId() {
         return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public void setId(OrderPk id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public String getDescription() {
+        return description;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    public EmbeddableClass getDetails() {
+        return details;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setDetails(EmbeddableClass details) {
+        this.details = details;
     }
 }
+

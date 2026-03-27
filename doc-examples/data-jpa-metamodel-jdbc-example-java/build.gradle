@@ -1,0 +1,34 @@
+plugins {
+    id "io.micronaut.build.internal.data-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime 'netty'
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.http.validation
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor projects.micronautDataJpaMetamodelProcessor
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+
+    implementation mnSql.jakarta.persistence.api
+    implementation projects.micronautDataJdbc
+
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly("com.h2database:h2")
+    compileOnly("io.micronaut:micronaut-http-client")
+    testImplementation mnTest.micronaut.test.junit5
+    testImplementation("io.micronaut:micronaut-http-client")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+application {
+    mainClass = "com.example.Application"
+}
+

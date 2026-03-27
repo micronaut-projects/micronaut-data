@@ -16,42 +16,28 @@
 
 package com.example;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
 
+@SuppressWarnings("checkstyle:FinalClass")
 @Entity
-public class EmbeddedOwner {
+public class Child extends Parent {
+    Long age;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Child() {
+    }
 
-    private String ownerName;
-
-    @Embedded
-    private EmbeddableClass embedded;
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getId() {
-        return id;
+    public Child(Long id, String name, Long age) {
+        super(id, name);
+        this.age = age;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public Long getAge() {
+        return this.age;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    public void setAge(Long age) {
+        this.age = age;
     }
 }
