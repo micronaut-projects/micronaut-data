@@ -73,7 +73,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)" tabindex="0">executeDelete(PreparedQuery)</a></li>
 <li><a href="#execute(io.micronaut.data.model.runtime.PreparedQuery)" tabindex="0">execute(PreparedQuery)</a></li>
 <li><a href="#delete(io.micronaut.data.model.runtime.DeleteOperation)" tabindex="0">delete(DeleteOperation)</a></li>
+<li><a href="#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)" tabindex="0">deleteReturning(DeleteReturningOperation)</a></li>
 <li><a href="#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" tabindex="0">deleteAll(DeleteBatchOperation)</a></li>
+<li><a href="#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)" tabindex="0">deleteAllReturning(DeleteReturningBatchOperation)</a></li>
 <li><a href="#findPage(io.micronaut.data.model.runtime.PagedQuery)" tabindex="0">findPage(PagedQuery)</a></li>
 </ol>
 </li>
@@ -137,6 +139,16 @@ extends io.micronaut.core.convert.ConversionServiceProvider</span></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll</a><wbr>(<a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Deletes all the entities of the given type.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;E,<wbr>R&gt;&nbsp;org.reactivestreams.Publisher<wbr>&lt;R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)" class="member-name-link">deleteAllReturning</a><wbr>(<a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Deletes the entities and emits deleted results.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;E,<wbr>R&gt;&nbsp;org.reactivestreams.Publisher<wbr>&lt;R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)" class="member-name-link">deleteReturning</a><wbr>(<a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Deletes the entity and emits a deleted result.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;org.reactivestreams.Publisher<wbr>&lt;R&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#execute(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">execute</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
@@ -523,6 +535,27 @@ return the number of objects updated, then do so.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)">
+<h3>deleteReturning</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@SingleResult
+</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>R&gt;</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;R&gt;</span>&nbsp;<span class="element-name">deleteReturning</span><wbr><span class="parameters">(<a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</span></div>
+<div class="block">Deletes the entity and emits a deleted result.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)-type-param-E"><code>E</code> - The entity type</span></dd>
+<dd><span id="deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)-type-param-R"><code>R</code> - The result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>operation</code> - The delete returning operation</dd>
+<dt>Returns:</dt>
+<dd>A publisher that emits the deleted result</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)">
 <h3>deleteAll</h3>
 <div class="horizontal-scroll">
@@ -536,6 +569,26 @@ return the number of objects updated, then do so.</div>
 <dd><code>operation</code> - The batch operation</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the number of entities deleted</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)">
+<h3>deleteAllReturning</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>R&gt;</span>&nbsp;<span class="return-type">org.reactivestreams.Publisher&lt;R&gt;</span>&nbsp;<span class="element-name">deleteAllReturning</span><wbr><span class="parameters">(<a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</span></div>
+<div class="block">Deletes the entities and emits deleted results.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)-type-param-E"><code>E</code> - The entity type</span></dd>
+<dd><span id="deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)-type-param-R"><code>R</code> - The result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>operation</code> - The delete returning batch operation</dd>
+<dt>Returns:</dt>
+<dd>A publisher that emits deleted results</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
 </dl>
 </div>
 </section>
