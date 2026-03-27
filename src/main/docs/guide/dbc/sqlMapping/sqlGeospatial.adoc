@@ -1,0 +1,230 @@
+Micronaut Data supports geospatial persistence for SQL repositories through the `io.micronaut.data.model.geo` model types:
+
+* `Point`
+* `MultiPoint`
+* `LineString`
+* `MultiLineString`
+* `Polygon`
+* `MultiPolygon`
+* `GeometryCollection`
+
+The implementation is database-aware. Micronaut Data uses attribute converters in the Java model, and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.
+
+=== JSON and WKT converters
+
+The geometry model types in `io.micronaut.data.model.geo` are declared with `@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)`, so GeoJSON is the default mapping.
+
+`GeometryJsonConverter` converts between Micronaut Data geometry objects and GeoJSON strings. `GeometryWktConverter` converts the same model types to and from Well-Known Text (WKT).
+
+Use the default GeoJSON mapping when you want Micronaut Data to serialize geometry values as JSON:
+
+[source,java]
+----
+@MappedEntity
+class GeoEntityJson {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty("location")
+    private Point point;
+
+    private MultiPoint multiPoint;
+}
+----
+
+Use `@MappedProperty(converter = GeometryWktConverter.class)` when you want WKT conversion instead:
+
+[source,java]
+----
+@MappedEntity
+class GeoEntityWkt {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
+    private Point point;
+
+    @MappedProperty(converter = GeometryWktConverter.class)
+    private Polygon polygon;
+}
+----
+
+On SQL Server you can also override the generated spatial column type explicitly, for example with `definition = "geometry"`:
+
+[source,java]
+----
+@MappedEntity
+class GeoEntityWktGeom {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geometry")
+    private Point point;
+}
+----
+
+NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions and native spatial column definitions when the dialect supports them.
+
+=== Database conversion functions
+
+Micronaut Data does not use the same SQL for every database. The SQL query builder chooses spatial read and write functions from the active dialect and from the selected converter.
+
+==== Read conversion
+
+When Micronaut Data reads a geometry property from a result set, it converts the native spatial value to either GeoJSON or WKT before passing the value to the converter.
+
+[cols="1,1,1"]
+|===
+| Database | GeoJSON-mapped properties | WKT-mapped properties
+
+| Oracle
+| `SDO_UTIL.TO_GEOJSON(column)`
+| `SDO_UTIL.TO_WKTGEOMETRY(column)`
+
+| PostgreSQL
+| `ST_AsGeoJSON(column)`
+| `ST_AsText(column)`
+
+| MySQL
+| `ST_AsGeoJSON(column)`
+| `ST_AsText(column)`
+
+| H2
+| `ST_AsGeoJSON(column)`
+| `ST_AsText(column)`
+
+| SQL Server
+| `column.STAsText()`
+| `column.STAsText()`
+|===
+
+SQL Server is a special case. The query builder always reads spatial values as WKT because SQL Server does not provide built-in JSON conversion functions for the supported geometry/geography types.
+
+==== Write conversion
+
+When Micronaut Data inserts or updates geometry properties, it turns the converter output into the dialect-specific spatial expression.
+
+[cols="1,1,1"]
+|===
+| Database | GeoJSON-mapped properties | WKT-mapped properties
+
+| Oracle
+| `SDO_UTIL.FROM_GEOJSON(?)` or `SDO_UTIL.FROM_GEOJSON(?, NULL, srid)`
+| `SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?))` or `SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)`
+
+| PostgreSQL
+| `ST_GeomFromGeoJSON(?)` or `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)`
+| `ST_GeomFromText(?)` or `ST_GeomFromText(?, srid)`
+
+| MySQL
+| `ST_GeomFromGeoJSON(?)` or `ST_GeomFromGeoJSON(?, 1, srid)`
+| `ST_GeomFromText(?)` or `ST_GeomFromText(?, srid)`
+
+| H2
+| `ST_GeomFromGeoJSON(?)` or `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)`
+| `ST_GeomFromText(?)` or `ST_GeomFromText(?, srid)`
+
+| SQL Server
+| `geography::STGeomFromText(?, srid)` by default
+| `geography::STGeomFromText(?, srid)` by default
+|===
+
+For SQL Server, Micronaut Data chooses `geometry::STGeomFromText(?, srid)` instead of `geography::STGeomFromText(?, srid)` when the column definition contains `geometry`.
+
+=== Schema creation
+
+When Micronaut Data generates schema for geometry properties, it creates native spatial columns per dialect.
+
+[cols="1,1"]
+|===
+| Database | Generated default column definition
+
+| Oracle
+| `SDO_GEOMETRY`
+
+| PostgreSQL
+| `GEOMETRY`
+
+| MySQL
+| `GEOMETRY`
+
+| H2
+| `GEOMETRY`
+
+| SQL Server
+| `GEOGRAPHY`
+|===
+
+If the geometry property is required, Micronaut Data appends `NOT NULL` to the generated definition.
+
+You can override the default generated definition with `@MappedProperty(definition = "...")`. This is especially useful on SQL Server when you want `geometry` instead of the default `geography`.
+
+=== SRID handling
+
+Use ann:data.annotation.Srid[] on geometry properties to attach a spatial reference identifier to generated SQL.
+
+Micronaut Data uses the SRID in write conversion SQL. For example:
+
+* Oracle writes `SDO_UTIL.FROM_GEOJSON(?, NULL, 3857)` or `SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 4258)`
+* PostgreSQL and H2 wrap GeoJSON inserts with `ST_SetSRID(..., srid)`
+* MySQL passes the SRID directly to `ST_GeomFromGeoJSON` and `ST_GeomFromText`
+* SQL Server passes the SRID to `geometry::STGeomFromText` or `geography::STGeomFromText`
+
+If no `@Srid` is present, Micronaut Data omits the SRID-specific wrapper or argument and uses the database default behavior for that expression.
+
+=== Indexes
+
+Spatial indexes are created from `@Index` metadata and use dialect-specific DDL.
+
+[cols="1,1"]
+|===
+| Database | Spatial index DDL
+
+| Oracle
+| `CREATE INDEX ... INDEXTYPE IS MDSYS.SPATIAL_INDEX`
+
+| PostgreSQL
+| `CREATE INDEX ... USING GIST (...)`
+
+| MySQL
+| `CREATE SPATIAL INDEX ...`
+
+| H2
+| `CREATE SPATIAL INDEX ...`
+
+| SQL Server
+| `CREATE SPATIAL INDEX ...`
+|===
+
+SQL Server has one additional rule. If the indexed column definition contains `geometry`, Micronaut Data adds:
+
+[source,sql]
+----
+USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))
+----
+
+That clause is generated for geometry-based SQL Server mappings such as `GeoEntityWktGeom`.
+
+=== Oracle spatial metadata
+
+Oracle requires metadata rows in `USER_SDO_GEOM_METADATA` for spatial columns. During schema generation Micronaut Data adds those auxiliary statements automatically for Oracle geometry properties.
+
+The generated metadata depends on the SRID:
+
+* `@Srid(4326)` uses WGS 84 metadata bounds
+* `@Srid(3857)` uses Web Mercator metadata bounds
+* if no `@Srid` is present but the property is spatially indexed, Micronaut Data defaults Oracle metadata generation to SRID `4326`
+
+This Oracle-specific metadata generation is in addition to column creation and spatial index generation.
+
+=== Embedded properties and repository support
+
+Geospatial support is covered by the SQL TCK for:
+
+* embedded geometry properties
+* CRUD with all supported geometry types
+* nullable geometry columns
+* both GeoJSON and WKT mappings
+* SQL Server `geometry` mappings in addition to the default `geography` mapping
+
+See the JDBC TCK entities and tests under `data-tck` and `data-jdbc` for complete examples.
