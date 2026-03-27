@@ -279,10 +279,10 @@ class NitriteUpsertSpec extends Specification {
     // ========== Helper Methods ==========
 
     private ApplicationContext createContext(String mode, String testName) {
-        Files.createDirectories(Paths.get("target/test-db"))
+        Files.createDirectories(Paths.get("build/test-db"))
         def props = [
             "nitrite.storage-mode": mode,
-            "nitrite.db-path": "target/test-db/${testName}.db"
+            "nitrite.db-path": "build/test-db/${testName}.db"
         ]
         if (mode == "IN_MEMORY") {
             props.remove("nitrite.db-path")

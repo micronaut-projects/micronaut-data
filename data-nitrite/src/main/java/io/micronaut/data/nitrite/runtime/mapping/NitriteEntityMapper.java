@@ -23,7 +23,6 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -55,6 +54,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -189,7 +189,35 @@ public final class NitriteEntityMapper {
    * @return the normalized value
    */
   public Object toNitriteFilterValue(final Object val, @Nullable final String rawField) {
-   return toFilterValue(val);
+    if (val == null) {
+      return null;
+    }
+    if (val instanceof Document) {
+      return val;
+    }
+    Class<?> clazz = val.getClass();
+    if (!clazz.getName().startsWith("java.")) {
+      try {
+        RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) clazz);
+        if (entity != null) {
+          RuntimePersistentProperty<Object> idProp = entity.getIdentity();
+          if (idProp != null) {
+            Object idValue = idProp.getProperty().get(val);
+            if (idValue != null) {
+              return normalizeIdentityValue(idProp, idValue);
+            }
+          }
+        }
+      } catch (Exception ignored) {
+      }
+      try {
+        if (BeanIntrospector.SHARED.findIntrospection((Class<Object>) clazz).isPresent()) {
+          return toDocumentValue(val);
+        }
+      } catch (Exception ignored) {
+      }
+    }
+    return toFilterValue(val);
   }
 
   /**
@@ -268,19 +296,18 @@ public final class NitriteEntityMapper {
     // In Nitrite, we consistently use ID_FIELD ("id") for the identity property.
     String idField = ID_FIELD;
 
-    if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class) && id != null) {
-      try {
-        Document idDoc = Document.createDocument();
-        BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(idProperty.getType());
-        for (BeanProperty prop : introspection.getBeanProperties()) {
-          Object val = prop.get(id);
-          if (val != null) {
-            String name = prop.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(prop.getName());
-            idDoc.put(name, toFilterValue(val));
+    if (idProperty != null && id != null) {
+      Object normalizedId = normalizeIdentityValue(idProperty, id);
+      if (normalizedId instanceof Document idDoc) {
+        return pair -> {
+          Document doc = pair.getSecond();
+          for (String field : idDoc.getFields()) {
+            if (!Objects.equals(doc.get(field), idDoc.get(field))) {
+              return false;
+            }
           }
-        }
-        return FluentFilter.where(idField).eq(idDoc);
-      } catch (Exception ignored) {
+          return true;
+        };
       }
     }
     return eqWithNumericCoercion(meta.persistentEntity(), idField, toFilterValue(id), idField);
@@ -370,20 +397,33 @@ public final class NitriteEntityMapper {
     }
 
     RuntimePersistentProperty<T> idProperty = persistentEntity.getIdentity();
-    if (idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class)) {
-      Object embeddedId = idProperty.getProperty().get(entity);
-      if (embeddedId != null) {
-        try {
-          Document idDoc = (Document) nitriteMapper.tryConvert(embeddedId, Document.class);
-          doc.put(idProperty.getName(), idDoc);
-          for (String field : idDoc.getFields()) {
-            if (field.equals(idProperty.getName())) {
-              continue;
-            }
-            doc.put(field, toFilterValue(idDoc.get(field)));
+    Object normalizedId = null;
+    Object idValue = idProperty != null ? idProperty.getProperty().get(entity) : null;
+    boolean embeddedIdProperty = idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class);
+    if (idValue != null && !embeddedIdProperty) {
+      normalizedId = normalizeIdentityValue(idProperty, idValue);
+      doc.put(ID_FIELD, normalizedId);
+    }
+    if (embeddedIdProperty && idValue != null) {
+      try {
+        Document idDoc = toDocumentValue(idValue);
+        Document persistedIdDoc = toPersistedDocument(idDoc);
+        doc.put(ID_FIELD, idDoc);
+        doc.put(idProperty.getName(), idDoc);
+        doc.put(idProperty.getPersistedName(), persistedIdDoc);
+        for (String field : idDoc.getFields()) {
+          if (field.equals(idProperty.getName())) {
+            continue;
           }
-        } catch (Exception ignored) {
+          Object fieldValue = toFilterValue(idDoc.get(field));
+          doc.put(field, fieldValue);
+          doc.put(camelToSnake(field), fieldValue);
         }
+      } catch (Exception ignored) {
+      }
+    } else if (normalizedId instanceof Document idDoc) {
+      for (String field : idDoc.getFields()) {
+        doc.put(field, toFilterValue(idDoc.get(field)));
       }
     }
     return doc;
@@ -399,7 +439,7 @@ public final class NitriteEntityMapper {
           Object idValue = idProp.getProperty().get(entity);
           if (idValue != null) {
               Document idDoc = Document.createDocument();
-              idDoc.put(ID_FIELD, toFilterValue(idValue));
+              idDoc.put(ID_FIELD, normalizeIdentityValue(idProp, idValue));
               return idDoc;
           }
       }
@@ -510,17 +550,15 @@ public final class NitriteEntityMapper {
             backRefProp = (BeanProperty<Object, Object>) backPropRaw.getProperty();
             hasBackRefs = true;
           }
-          // Pre-compute cascade-capable associations for PERSIST/ALL
-          if (assoc.doesCascade(Relation.Cascade.ALL) || assoc.doesCascade(Relation.Cascade.PERSIST)) {
-            cascadeList.add((RuntimeAssociation<T>) assoc);
-          }
         } else if (assoc.isEmbedded()) {
           strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
         } else {
-          boolean isCollection = Iterable.class.isAssignableFrom(prop.getType());
-          strategy = isCollection ? PropertyStrategy.ASSOCIATION_IDS_REF : PropertyStrategy.ASSOCIATION_ID_REF;
           RuntimePersistentProperty<?> idPropRaw = assoc.getAssociatedEntity().getIdentity();
-          if (idPropRaw != null) {
+          if (idPropRaw == null) {
+            strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
+          } else {
+            boolean isCollection = Iterable.class.isAssignableFrom(prop.getType());
+            strategy = isCollection ? PropertyStrategy.ASSOCIATION_IDS_REF : PropertyStrategy.ASSOCIATION_ID_REF;
             associatedIdProp = (BeanProperty<Object, Object>) idPropRaw.getProperty();
           }
         }
@@ -680,7 +718,7 @@ public final class NitriteEntityMapper {
     if (idProp != null) {
       Object idValue = ((BeanProperty<T, Object>) idProp.getProperty()).get(entity);
       if (idValue != null) {
-        doc.put(ID_FIELD, toFilterValue(idValue));
+        doc.put(ID_FIELD, normalizeIdentityValue(idProp, idValue));
       }
     }
 
@@ -776,25 +814,90 @@ public final class NitriteEntityMapper {
    */
   @SuppressWarnings("unchecked")
   private <P> P mapToPojo(Map<?, ?> map, BeanIntrospection<P> intro) {
-    P pojo = intro.instantiate();
+    Argument<?>[] ctorArgs = intro.getConstructorArguments();
+    P pojo;
+    Set<String> ctorArgNames = new java.util.HashSet<>();
+    if (ctorArgs.length > 0) {
+      Object[] args = new Object[ctorArgs.length];
+      for (int i = 0; i < ctorArgs.length; i++) {
+        Argument<?> arg = ctorArgs[i];
+        String argName = arg.getName();
+        ctorArgNames.add(argName);
+        Object raw = getMapValueByName(map, argName);
+        args[i] = raw == null ? null : convertMapValue(raw, arg);
+      }
+      pojo = intro.instantiate(args);
+    } else {
+      pojo = intro.instantiate();
+    }
     for (BeanProperty<P, Object> p : intro.getBeanProperties()) {
       if (p.isReadOnly()) {
         continue;
       }
-      Object v = map.get(p.getName());
+      if (ctorArgNames.contains(p.getName())) {
+        continue;
+      }
+      Object v = getMapValueByName(map, p.getName());
       if (v == null) {
         continue;
       }
-      if (v instanceof Map<?, ?> nested) {
-        BeanIntrospector.SHARED.findIntrospection(p.getType()).ifPresentOrElse(
-            ni -> p.set(pojo, mapToPojo(nested, (BeanIntrospection<Object>) ni)),
-            () -> p.set(pojo, conversionService.convert(v, p.asArgument()).orElse(null))
-        );
-      } else {
-        p.set(pojo, conversionService.convert(v, p.asArgument()).orElse(null));
-      }
+      p.set(pojo, convertMapValue(v, p.asArgument()));
     }
     return pojo;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Object convertMapValue(Object value, Argument<?> target) {
+    if (value instanceof Map<?, ?> nested) {
+      Optional<BeanIntrospection<Object>> nestedIntro =
+          BeanIntrospector.SHARED.findIntrospection((Class<Object>) target.getType());
+      if (nestedIntro.isPresent()) {
+        return mapToPojo(nested, nestedIntro.get());
+      }
+    }
+    return conversionService.convert(value, target).orElse(null);
+  }
+
+  private Object getMapValueByName(Map<?, ?> map, String name) {
+    Object value = map.get(name);
+    if (value != null) {
+      return value;
+    }
+    String snake = camelToSnake(name);
+    if (!Objects.equals(name, snake)) {
+      value = map.get(snake);
+      if (value != null) {
+        return value;
+      }
+    }
+    String camel = snakeToCamel(name);
+    if (!Objects.equals(name, camel)) {
+      value = map.get(camel);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  private String snakeToCamel(String value) {
+    if (value == null || value.indexOf('_') < 0) {
+      return value;
+    }
+    StringBuilder result = new StringBuilder(value.length());
+    boolean upperNext = false;
+    for (int i = 0; i < value.length(); i++) {
+      char ch = value.charAt(i);
+      if (ch == '_') {
+        upperNext = true;
+      } else if (upperNext) {
+        result.append(Character.toUpperCase(ch));
+        upperNext = false;
+      } else {
+        result.append(ch);
+      }
+    }
+    return result.toString();
   }
 
   /**
@@ -930,6 +1033,97 @@ public final class NitriteEntityMapper {
     return filtered;
   }
 
+  private Object normalizeIdentityValue(RuntimePersistentProperty<?> idProperty, Object idValue) {
+    if (idValue == null) {
+      return null;
+    }
+    if (idProperty.isAnnotationPresent(EmbeddedId.class)) {
+      return toDocumentValue(idValue);
+    }
+    Class<?> idType = idProperty.getType();
+    if (isSimpleType(idType) || idType.isEnum() || idType.isArray() || idType.getName().startsWith("java.")) {
+      return toFilterValue(idValue);
+    }
+    return toDocumentValue(idValue);
+  }
+
+  private Document toDocumentValue(Object value) {
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof Document document) {
+      return document;
+    }
+    if (value instanceof Map<?, ?> map) {
+      Document document = Document.createDocument();
+      for (Map.Entry<?, ?> entry : map.entrySet()) {
+        Object nested = entry.getValue();
+        if (nested instanceof Map<?, ?> nestedMap) {
+          document.put(String.valueOf(entry.getKey()), toDocumentValue(nestedMap));
+        } else {
+          document.put(String.valueOf(entry.getKey()), serializeForDocument(nested));
+        }
+      }
+      return document;
+    }
+    Optional<BeanIntrospection<Object>> maybeIntro =
+        BeanIntrospector.SHARED.findIntrospection((Class<Object>) value.getClass());
+    if (maybeIntro.isPresent()) {
+      Document document = Document.createDocument();
+      for (Map.Entry<String, Object> entry : pojoToMap(value).entrySet()) {
+        Object nested = entry.getValue();
+        if (nested instanceof Map<?, ?> nestedMap) {
+          document.put(entry.getKey(), toDocumentValue(nestedMap));
+        } else {
+          document.put(entry.getKey(), nested);
+        }
+      }
+      return document;
+    }
+    try {
+      return (Document) nitriteMapper.tryConvert(value, Document.class);
+    } catch (Exception ignored) {
+      Document document = Document.createDocument();
+      document.put(ID_FIELD, serializeForDocument(value));
+      return document;
+    }
+  }
+
+  private Document toPersistedDocument(Document document) {
+    if (document == null) {
+      return null;
+    }
+    Document persisted = Document.createDocument();
+    for (String field : document.getFields()) {
+      Object value = document.get(field);
+      if (value instanceof Document nested) {
+        persisted.put(camelToSnake(field), toPersistedDocument(nested));
+      } else {
+        persisted.put(camelToSnake(field), value);
+      }
+    }
+    return persisted;
+  }
+
+  private String camelToSnake(String value) {
+    if (value == null || value.isEmpty()) {
+      return value;
+    }
+    StringBuilder result = new StringBuilder(value.length() + 4);
+    for (int i = 0; i < value.length(); i++) {
+      char ch = value.charAt(i);
+      if (Character.isUpperCase(ch)) {
+        if (i > 0) {
+          result.append('_');
+        }
+        result.append(Character.toLowerCase(ch));
+      } else {
+        result.append(ch);
+      }
+    }
+    return result.toString();
+  }
+
   /**
    * Hydrate an entity from a Nitrite Document.
    *
@@ -1042,7 +1236,9 @@ public final class NitriteEntityMapper {
         }
 
         if (value != null) {
-            if (prop instanceof RuntimeAssociation association && !association.isEmbedded()) {
+            boolean associationStoredEmbedded = prop instanceof RuntimeAssociation association
+                && (association.isEmbedded() || association.getAssociatedEntity().getIdentity() == null);
+            if (prop instanceof RuntimeAssociation association && !associationStoredEmbedded) {
                 if (helper != null) {
                     Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
                     if (value instanceof Iterable<?> ids) {
@@ -1064,7 +1260,7 @@ public final class NitriteEntityMapper {
                         }
                     }
                 }
-            } else if (prop instanceof RuntimeAssociation association && association.isEmbedded()) {
+            } else if (prop instanceof RuntimeAssociation association && associationStoredEmbedded) {
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, (Class<Object>) association.getAssociatedEntity().getIntrospection().getBeanType(), visited));
                     continue;

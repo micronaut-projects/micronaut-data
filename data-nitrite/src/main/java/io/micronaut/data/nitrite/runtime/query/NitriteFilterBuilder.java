@@ -395,12 +395,33 @@ public final class NitriteFilterBuilder {
     }
 
     private String convertLikeToRegex(String pattern) {
-        // We do NOT escape standard regex characters because legacy tests (and likely users)
-        // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
-        // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
-        return pattern
-            .replace("%", ".*")
-            .replace("_", ".");
+        // Support SQL LIKE wildcards plus the shell-style '*' used by the ported document tests.
+        // Keep existing regex constructs intact (for example "J.*"), and anchor the final regex so
+        // LIKE behaves as a whole-string match instead of a substring scan.
+        StringBuilder regex = new StringBuilder(pattern.length() + 6);
+        if (pattern.isEmpty() || pattern.charAt(0) != '^') {
+            regex.append('^');
+        }
+        for (int i = 0; i < pattern.length(); i++) {
+            char ch = pattern.charAt(i);
+            if (ch == '%') {
+                regex.append(".*");
+            } else if (ch == '_') {
+                regex.append('.');
+            } else if (ch == '*' && (i == 0 || pattern.charAt(i - 1) != '.')) {
+                regex.append(".*");
+            } else {
+                regex.append(ch);
+            }
+        }
+        if (regex.length() == 0 || regex.charAt(regex.length() - 1) != '$') {
+            regex.append('$');
+        }
+        String converted = regex.toString();
+        if (!converted.startsWith("(?s)")) {
+            converted = "(?s)" + converted;
+        }
+        return converted;
     }
 
     /**
@@ -903,8 +924,43 @@ public final class NitriteFilterBuilder {
             }
         }
 
+        if (prop != null) {
+            return buildOperatorFiltersForPath(entity, prop.getName() + "." + snakeToCamelPath(remaining), operators, params, namedParameters);
+        }
+
         // Fallback to dot notation
-        return buildOperatorFiltersForPath(entity, fieldPath, operators, params, namedParameters);
+        return buildOperatorFiltersForPath(entity, snakeToCamelPath(fieldPath), operators, params, namedParameters);
+    }
+
+    private String snakeToCamelPath(String path) {
+        if (path == null || path.indexOf('_') < 0) {
+            return path;
+        }
+        String[] parts = path.split("\\.");
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = snakeToCamel(parts[i]);
+        }
+        return String.join(".", parts);
+    }
+
+    private String snakeToCamel(String value) {
+        if (value == null || value.indexOf('_') < 0) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder(value.length());
+        boolean upperNext = false;
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch == '_') {
+                upperNext = true;
+            } else if (upperNext) {
+                result.append(Character.toUpperCase(ch));
+                upperNext = false;
+            } else {
+                result.append(ch);
+            }
+        }
+        return result.toString();
     }
 
     /**
@@ -967,7 +1023,7 @@ public final class NitriteFilterBuilder {
             }
             case "$regex" -> {
                 Object resolved = resolveValue(finalValue, params, namedParameters);
-                yield FluentFilter.where(field).regex(resolved != null ? convertLikeToRegex(resolved.toString()) : "");
+                yield FluentFilter.where(field).regex(resolveRegexPattern(resolved));
             }
             case "$like" -> {
                 Object resolved = resolveValue(finalValue, params, namedParameters);
@@ -982,6 +1038,40 @@ public final class NitriteFilterBuilder {
             case "$intersects" -> createSpatialFilter(field, finalValue, "intersects");
             default -> FluentFilter.where(field).eq(finalValue);
         };
+    }
+
+    private String resolveRegexPattern(Object resolved) {
+        if (resolved == null) {
+            return "";
+        }
+        if (resolved instanceof java.util.regex.Pattern pattern) {
+            return pattern.pattern();
+        }
+        String value = resolved.toString();
+        if (value.length() >= 2 && value.startsWith("/") && value.endsWith("/")) {
+            return value.substring(1, value.length() - 1);
+        }
+        // Derived LIKE/CONTAINING methods are emitted as $regex with wildcard-like text payloads.
+        if (looksLikeWildcardPattern(value)) {
+            return convertLikeToRegex(value);
+        }
+        return value;
+    }
+
+    private boolean looksLikeWildcardPattern(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        // Keep explicit regexes untouched (for example "^J", "J.*", "[A-Z]").
+        if (value.startsWith("^")
+            || value.endsWith("$")
+            || value.contains("[")
+            || value.contains("(")
+            || value.contains("|")
+            || value.contains("\\")) {
+            return false;
+        }
+        return value.indexOf('%') >= 0 || value.indexOf('_') >= 0 || value.indexOf('*') >= 0;
     }
 
     private Filter buildInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {

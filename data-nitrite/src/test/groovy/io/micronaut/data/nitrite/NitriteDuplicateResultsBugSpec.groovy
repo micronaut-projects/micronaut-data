@@ -21,10 +21,10 @@ class NitriteDuplicateResultsBugSpec extends Specification {
 
     def "test findAll does not return duplicate results in MVSTORE mode"() {
         given: "MVSTORE configuration with db in target folder"
-            Files.createDirectories(Paths.get("target/test-db"))
+            Files.createDirectories(Paths.get("build/test-db"))
             def props = [
                 "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "target/test-db/duplicate-test.db"
+                "nitrite.db-path": "build/test-db/duplicate-test.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)
@@ -49,10 +49,10 @@ class NitriteDuplicateResultsBugSpec extends Specification {
 
     def "test findByName does not return duplicate results in MVSTORE mode"() {
         given: "MVSTORE configuration"
-            Files.createDirectories(Paths.get("target/test-db"))
+            Files.createDirectories(Paths.get("build/test-db"))
             def props = [
                 "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "target/test-db/duplicate-test2.db"
+                "nitrite.db-path": "build/test-db/duplicate-test2.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)
@@ -75,10 +75,10 @@ class NitriteDuplicateResultsBugSpec extends Specification {
 
     def "test save on existing record does not create duplicate in MVSTORE mode"() {
         given: "MVSTORE configuration"
-            Files.createDirectories(Paths.get("target/test-db"))
+            Files.createDirectories(Paths.get("build/test-db"))
             def props = [
                 "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "target/test-db/duplicate-test3.db"
+                "nitrite.db-path": "build/test-db/duplicate-test3.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)

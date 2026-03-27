@@ -89,10 +89,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -191,7 +193,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
-  /** Cache for non-transactional collections - keyed by collection name to handle discriminators */
+  /** Cache for non-transactional collections - keyed by collection name to handle discriminators. */
   private final Map<String, NitriteCollection> collectionCache = new ConcurrentHashMap<>();
 
   /**
@@ -917,17 +919,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
     int idx = binding.getParameterIndex();
     Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
-    String[] path = binding.getParameterBindingPath() != null ? binding.getParameterBindingPath() : binding.getPropertyPath();
-    if (path == null || path.length == 0) {
-      return toFilterValue(base);
-    }
-    // Special handling for collection parameters (e.g., IN clause): if base is already a collection,
-    // return it as-is instead of trying to extract a property from it.
-    if (base instanceof Collection) {
-      return toFilterValue(base);
-    }
-    // Also handle array parameters (e.g., String[] for IN clause)
-    if (base != null && base.getClass().isArray()) {
+    String[] parameterBindingPath = binding.getParameterBindingPath();
+    String[] path = parameterBindingPath != null ? parameterBindingPath : binding.getPropertyPath();
+    if (path == null
+        || path.length == 0
+        || isDirectBindableScalar(base)
+        || base instanceof Collection
+        || (base != null && base.getClass().isArray())) {
       return toFilterValue(base);
     }
     Object current = base;
@@ -935,19 +933,23 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       if (current == null) {
         break;
       }
-      if (current instanceof Map<?, ?> m) {
-        current = m.get(segment);
-      } else if (current instanceof Document d) {
-        current = d.get(segment);
-      } else {
-        try {
-          current = ((Document) database.getConfig().nitriteMapper().tryConvert(current, Document.class)).get(segment);
-        } catch (Exception ignored) {
-          return toFilterValue(base);
-        }
-      }
+      current = readSegmentValue(current, segment);
     }
     return toFilterValue(current);
+  }
+
+  private boolean isDirectBindableScalar(Object value) {
+    if (value == null) {
+      return false;
+    }
+    return value instanceof CharSequence
+        || value instanceof Number
+        || value instanceof Boolean
+        || value instanceof Character
+        || value instanceof Enum<?>
+        || value instanceof UUID
+        || value instanceof Temporal
+        || value instanceof Date;
   }
 
   /** Ensure JSON params array is large enough for all placeholders in filter. */
@@ -1057,41 +1059,66 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (methodParams == null || methodParams.length != 1 || methodParams[0] == null) {
       return null;
     }
-    try {
-      Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(methodParams[0], Document.class);
-      if (doc.containsKey(property)) {
-        return toFilterValue(doc.get(property));
-      }
-      // Handle dotted path for EmbeddedId
-      if (property.contains(".")) {
-        String[] parts = property.split("\\.");
-        Object current = doc;
-        // If the first part matches nothing in the doc, but subsequent parts might,
-        // it might be that the doc IS the first part (the EmbeddedId itself).
-        if (!doc.containsKey(parts[0])) {
-            // Try stripping the first part
-            String subPath = property.substring(parts[0].length() + 1);
-            if (doc.containsKey(subPath)) {
-                return toFilterValue(doc.get(subPath));
-            }
+    Object arg = methodParams[0];
+    if ("id".equals(property) || "_id".equals(property)) {
+      return entityMapper.toNitriteFilterValue(arg, property);
+    }
+    String[] parts = property.split("\\.");
+    for (int start = 0; start < parts.length; start++) {
+      Object current = arg;
+      for (int i = start; i < parts.length; i++) {
+        current = readSegmentValue(current, parts[i]);
+        if (current == null) {
+          break;
         }
+      }
+      if (current != null) {
+        return entityMapper.toNitriteFilterValue(current, property);
+      }
+    }
+    return entityMapper.toNitriteFilterValue(arg, property);
+  }
 
-        for (String part : parts) {
-          if (current instanceof Document d) {
-            current = d.get(part);
-          } else if (current instanceof Map m) {
-            current = m.get(part);
-          } else {
-            current = null;
-            break;
-          }
-        }
-        return toFilterValue(current);
-      }
+  private Object readSegmentValue(Object current, String segment) {
+    if (current == null) {
       return null;
+    }
+    String alt = snakeToCamel(segment);
+    if (current instanceof Map<?, ?> m) {
+      Object value = m.get(segment);
+      return value != null || segment.equals(alt) ? value : m.get(alt);
+    }
+    if (current instanceof Document d) {
+      Object value = d.get(segment);
+      return value != null || segment.equals(alt) ? value : d.get(alt);
+    }
+    try {
+      Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(current, Document.class);
+      Object value = doc.get(segment);
+      return value != null || segment.equals(alt) ? value : doc.get(alt);
     } catch (Exception ignored) {
       return null;
     }
+  }
+
+  private String snakeToCamel(String value) {
+    if (value == null || value.indexOf('_') < 0) {
+      return value;
+    }
+    StringBuilder result = new StringBuilder(value.length());
+    boolean upperNext = false;
+    for (int i = 0; i < value.length(); i++) {
+      char ch = value.charAt(i);
+      if (ch == '_') {
+        upperNext = true;
+      } else if (upperNext) {
+        result.append(Character.toUpperCase(ch));
+        upperNext = false;
+      } else {
+        result.append(ch);
+      }
+    }
+    return result.toString();
   }
 
   @Override

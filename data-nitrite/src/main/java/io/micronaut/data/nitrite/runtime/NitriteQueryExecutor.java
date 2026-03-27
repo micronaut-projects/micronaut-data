@@ -768,14 +768,56 @@ public final class NitriteQueryExecutor {
         }
 
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
+        Map<String, List<String>> nestedPaths = new LinkedHashMap<>();
 
         for (JoinPath joinPath : joinPaths) {
             String path = joinPath.getPath();
-            // For now, only handle single-level joins (e.g., "books")
-            if (!path.contains(".")) {
-                fetchSingleLevelJoin(entities, persistentEntity, path);
+            int dotIndex = path.indexOf('.');
+            if (dotIndex == -1) {
+                nestedPaths.computeIfAbsent(path, ignored -> new ArrayList<>());
+            } else {
+                String head = path.substring(0, dotIndex);
+                String tail = path.substring(dotIndex + 1);
+                nestedPaths.computeIfAbsent(head, ignored -> new ArrayList<>()).add(tail);
             }
-            // Nested joins (e.g., "books.pages") would require recursive handling
+        }
+
+        for (Map.Entry<String, List<String>> entry : nestedPaths.entrySet()) {
+            List<Object> children = fetchSingleLevelJoin(entities, persistentEntity, entry.getKey());
+            if (!entry.getValue().isEmpty() && !children.isEmpty()) {
+                var assocProp = persistentEntity.getPropertyByName(entry.getKey());
+                if (assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association) {
+                    fetchJoinsForPaths(children, association.getAssociatedEntity(), entry.getValue());
+                }
+            }
+        }
+    }
+
+    private void fetchJoinsForPaths(List<?> entities, RuntimePersistentEntity<?> persistentEntity, List<String> paths) {
+        if (entities == null || entities.isEmpty() || paths == null || paths.isEmpty()) {
+            return;
+        }
+
+        Map<String, List<String>> nestedPaths = new LinkedHashMap<>();
+        for (String path : paths) {
+            int dotIndex = path.indexOf('.');
+            if (dotIndex == -1) {
+                nestedPaths.computeIfAbsent(path, ignored -> new ArrayList<>());
+            } else {
+                String head = path.substring(0, dotIndex);
+                String tail = path.substring(dotIndex + 1);
+                nestedPaths.computeIfAbsent(head, ignored -> new ArrayList<>()).add(tail);
+            }
+        }
+
+        for (Map.Entry<String, List<String>> entry : nestedPaths.entrySet()) {
+            List<Object> children = fetchSingleLevelJoin(entities, persistentEntity, entry.getKey());
+            if (!entry.getValue().isEmpty() && !children.isEmpty()) {
+                var assocProp = persistentEntity.getPropertyByName(entry.getKey());
+                if (assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association) {
+                    fetchJoinsForPaths(children, association.getAssociatedEntity(), entry.getValue());
+                }
+            }
         }
     }
 
@@ -786,30 +828,30 @@ public final class NitriteQueryExecutor {
      * @param persistentEntity the parent entity metadata
      * @param associationName the association name to fetch
      */
-    private void fetchSingleLevelJoin(List<?> entities, RuntimePersistentEntity<?> persistentEntity, String associationName) {
+    private List<Object> fetchSingleLevelJoin(List<?> entities, RuntimePersistentEntity<?> persistentEntity, String associationName) {
         // Find the association property
         var assocProp = persistentEntity.getPropertyByName(associationName);
         if (!(assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association)) {
-            return;
+            return List.of();
         }
 
         // Only handle ONE_TO_MANY and MANY_TO_MANY (mappedBy associations)
         var kind = association.getKind();
         if (kind != io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY &&
             kind != io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
-            return;
+            return List.of();
         }
 
         String mappedBy = association.getAnnotationMetadata()
             .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
         if (mappedBy == null) {
-            return;
+            return List.of();
         }
 
         // Get parent IDs
         RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
         if (idProp == null) {
-            return;
+            return List.of();
         }
 
         List<Object> parentIds = new ArrayList<>();
@@ -821,7 +863,7 @@ public final class NitriteQueryExecutor {
         }
 
         if (parentIds.isEmpty()) {
-            return;
+            return List.of();
         }
 
         // Query associated entities
@@ -831,7 +873,7 @@ public final class NitriteQueryExecutor {
         RuntimePersistentProperty<?> backProp = associatedEntity.getPropertyByName(mappedBy);
 
         if (backProp == null) {
-            return;
+            return List.of();
         }
 
         String backFieldName = backProp.getPersistedName();
@@ -876,10 +918,12 @@ public final class NitriteQueryExecutor {
         // For ONE_TO_MANY: backRefValue is a scalar (single parent ID)
         // For MANY_TO_MANY: backRefValue is a collection of parent IDs
         Map<Object, List<Object>> resultsByParentId = new HashMap<>();
+        List<Object> fetchedChildren = new ArrayList<>();
         for (Document doc : assocCollection.find(filter)) {
             Object backRefValue = doc.get(finalBackFieldName);
             if (backRefValue != null) {
                 Object assocEntity = entityMapper.fromDocument(doc, associatedType);
+                fetchedChildren.add(assocEntity);
 
                 // Handle MANY_TO_MANY where backRefValue is a collection
                 if (backRefValue instanceof Collection<?> collection) {
@@ -913,5 +957,6 @@ public final class NitriteQueryExecutor {
                 }
             }
         }
+        return fetchedChildren;
     }
 }

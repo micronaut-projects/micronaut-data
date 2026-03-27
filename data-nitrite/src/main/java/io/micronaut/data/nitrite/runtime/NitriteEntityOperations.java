@@ -23,6 +23,7 @@ import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
@@ -254,6 +255,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Update operation: replace existing document by ID
             // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
+            persistNewCascadeChildren(meta);
             // Use cached idAccessor from meta - eliminates chained lookups
             Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
             Filter filter = entityMapper.idEqualsFilter(meta, id);
@@ -283,6 +285,41 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             helper.logFind(collection.getName(), filter);
             long rows = collection.remove(filter, false).getAffectedCount();
             checkOptimisticLocking(1, rows);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void persistNewCascadeChildren(NitriteEntityMapper.NitriteEntityMeta<T> meta) {
+        for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
+            RuntimePersistentEntity<Object> associatedEntity =
+                (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity();
+            RuntimePersistentProperty<Object> associatedId = associatedEntity.getIdentity();
+            BeanProperty<Object, Object> backRefProperty = null;
+            String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+            if (mappedBy != null) {
+                RuntimePersistentProperty<?> backProp = associatedEntity.getPropertyByName(mappedBy);
+                if (backProp != null) {
+                    backRefProperty = (BeanProperty<Object, Object>) backProp.getProperty();
+                }
+            }
+            Object value = assoc.getProperty().get(entity);
+            if (value instanceof Iterable<?> iterable) {
+                for (Object child : iterable) {
+                    if (child != null && backRefProperty != null && backRefProperty.get(child) == null) {
+                        backRefProperty.set(child, entity);
+                    }
+                    if (child != null && (associatedId == null || associatedId.getProperty().get(child) == null)) {
+                        ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, child, associatedEntity);
+                    }
+                }
+            } else if (value != null) {
+                if (backRefProperty != null && backRefProperty.get(value) == null) {
+                    backRefProperty.set(value, entity);
+                }
+                if (associatedId == null || associatedId.getProperty().get(value) == null) {
+                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, associatedEntity);
+                }
+            }
         }
     }
 
