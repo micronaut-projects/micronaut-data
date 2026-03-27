@@ -27,7 +27,7 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
         if (entityValue == null) {
             return null;
         }
-        return toWkt(entityValue);
+        return formatGeometry(entityValue);
     }
 
     @Override
@@ -43,11 +43,11 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
         }
     }
 
-    private String toWkt(Geometry geometry) {
+    private String formatGeometry(Geometry geometry) {
         return switch (geometry) {
             case Point point -> "POINT " + formatPoint(point, true);
-            case MultiPoint multiPoint -> "MULTIPOINT " + formatMultiPoint(multiPoint);
-            case LineString lineString -> "LINESTRING " + formatLineString(lineString);
+            case MultiPoint multiPoint -> "MULTIPOINT " + formatPoints(multiPoint.points());
+            case LineString lineString -> "LINESTRING " + formatPoints(lineString.points());
             case MultiLineString multiLineString -> "MULTILINESTRING " + formatLineStrings(multiLineString.lineStrings());
             case Polygon polygon -> "POLYGON " + formatLineStrings(polygon.lineStrings());
             case MultiPolygon multiPolygon -> "MULTIPOLYGON " + formatMultiPolygon(multiPolygon);
@@ -88,17 +88,8 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
         return useParentheses ? '(' + wktPoint + ')' : wktPoint;
     }
 
-    private String formatMultiPoint(MultiPoint multiPoint) {
-        String formatted = multiPoint.points()
-            .stream()
-            .map(point -> formatPoint(point, false))
-            .collect(Collectors.joining(", "));
-        return addOuterParentheses(formatted);
-    }
-
-    private String formatLineString(LineString lineString) {
-        String formatted = lineString.points()
-            .stream()
+    private String formatPoints(List<Point> points) {
+        String formatted = points.stream()
             .map(point -> formatPoint(point, false))
             .collect(Collectors.joining(", "));
         return addOuterParentheses(formatted);
@@ -106,7 +97,7 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
 
     private String formatLineStrings(List<LineString> lineStrings) {
         String formatted = lineStrings.stream()
-            .map(this::formatLineString)
+            .map(lineString -> formatPoints(lineString.points()))
             .collect(Collectors.joining(", "));
         return addOuterParentheses(formatted);
     }
@@ -122,7 +113,7 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
     private String formatGeometryCollection(GeometryCollection geometryCollection) {
         String formatted = geometryCollection.geometries()
             .stream()
-            .map(this::toWkt)
+            .map(this::formatGeometry)
             .collect(Collectors.joining(", "));
         return addOuterParentheses(formatted);
     }

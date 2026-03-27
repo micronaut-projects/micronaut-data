@@ -135,7 +135,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test deleting of nullable geometry types"() {
+    void "test deleting of nullable geometry types when json conversion used"() {
         assumeTrue(supportsGeometryJsonConversion())
         assumeTrue(supportsDeletingGeometryTypes())
 
@@ -190,7 +190,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test creating, reading and updating of all geometry types when wkt conversion used"() {
+    void "test creating, reading, updating and deleting of all geometry types when wkt conversion used"() {
         given:
         GeoEntityWkt entity = new GeoEntityWkt()
         entity.setPoint(createPoint(1))
@@ -242,6 +242,25 @@ abstract class AbstractGeoSpec extends Specification {
             assertPolygon(it.getPolygon(), 2)
             assertMultiPolygon(it.getMultiPolygon(), 2)
             assertGeometryCollection(it.getGeometryCollection(), 4)
+        }
+
+        when:
+        entity.setMultiLineString(null)
+        entity.setPolygon(null)
+        entity.setMultiPolygon(null)
+        entity.setGeometryCollection(null)
+        getGeoEntityWktRepository().update(entity)
+        foundEntity = getGeoEntityWktRepository().findById(savedEntity.id)
+
+        then:
+        with (foundEntity.get()) {
+            assertPoint(it.getPoint(), 2)
+            assertMultiPoint(it.getMultiPoint(), 2)
+            assertLineString(it.getLineString(), 2)
+            assertNull(it.getMultiLineString())
+            assertNull(it.getPolygon())
+            assertNull(it.getMultiPolygon())
+            assertNull(it.getGeometryCollection())
         }
     }
 

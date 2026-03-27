@@ -198,8 +198,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return "'" + value + "'";
     }
 
-    protected final String getPropertyGeometryConverter(PersistentProperty property) {
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter").orElse(GeometryJsonConverter.class.getName());
+    protected final boolean isJsonOrWktGeometry(PersistentProperty property) {
+        if (property.isAssignable(Geometry.class)) {
+            Optional<String> optPropConverter = property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter");
+            if (optPropConverter.isPresent()) {
+                String converter = optPropConverter.get();
+                return converter.equals(GeometryJsonConverter.class.getName()) || converter.equals(GeometryWktConverter.class.getName());
+            }
+        }
+        return false;
     }
 
     protected final QueryPropertyPath asQueryPropertyPath(@Nullable String tableAlias, PersistentProperty persistentProperty) {
@@ -3020,8 +3027,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String column = getMappedName(namingStrategy, associations, property);
                 column = escapeColumnIfNeeded(column, escape);
                 String columnWithTableAlias = tableAlias == null ? column : tableAlias + DOT + column;
-                if (property.isAssignable(Geometry.class)) {
-                    sb.append(getGeoJsonFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column, property));
+                if (isJsonOrWktGeometry(property)) {
+                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column, property));
                 } else if (useAlias) {
                     sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
                 } else {
@@ -3032,28 +3039,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @SuppressWarnings("NullAway")
-        private String getGeoJsonFunction(String column, String columnAlias, PersistentProperty property) {
-            boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        private String getGeometryFunction(String column, String columnAlias, PersistentProperty property) {
+            String converter = property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter").orElse(null);
+            boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
             return switch (getDialect()) {
-                case ORACLE -> getOracleGeoJsonFunction(column, columnAlias, isWkt);
-                case SQL_SERVER ->  getSqlServerGeoJsonFunction(column, columnAlias);
-                case MYSQL, POSTGRES, H2 -> getOtherGeoJsonFunction(column, columnAlias, isWkt);
+                case ORACLE -> getOracleGeometryFunction(column, columnAlias, isWkt);
+                case SQL_SERVER ->  getSqlServerGeometryFunction(column, columnAlias);
+                case MYSQL, POSTGRES, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
                 default -> column + AS_CLAUSE + columnAlias;
             };
         }
 
-        private String getOracleGeoJsonFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOracleGeometryFunction(String column, String columnAlias, boolean isWkt) {
             String function = isWkt ? "SDO_UTIL.TO_WKTGEOMETRY(" : "SDO_UTIL.TO_GEOJSON(";
             return function + column + ")" + AS_CLAUSE + columnAlias;
         }
 
-        private String getSqlServerGeoJsonFunction(String column, String columnAlias) {
+        private String getSqlServerGeometryFunction(String column, String columnAlias) {
             // since sqlserver doesn't have built-in functions for conversion between
             // json and internal geospatial data type, use always Well-Known Text (WKT) functions
             return column + ".STAsText()" + AS_CLAUSE + columnAlias;
         }
 
-        private String getOtherGeoJsonFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             return function + column + ")" + AS_CLAUSE + columnAlias;
         }

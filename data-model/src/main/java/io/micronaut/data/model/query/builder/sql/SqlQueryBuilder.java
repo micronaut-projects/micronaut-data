@@ -1330,12 +1330,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             return true;
         }
-        if (property.isAssignable(Geometry.class)) {
+        if (isJsonOrWktGeometry(property)) {
             switch (dialect) {
-                case ORACLE -> values.add(getOracleGeoJsonExpression(param, property));
-                case MYSQL -> values.add(getMysqlGeoJsonExpression(param, property));
-                case SQL_SERVER -> values.add(getSqlServerGeoJsonExpression(param, property));
-                case POSTGRES, H2 -> values.add(getSridWrappedGeoJsonExpression(param, property));
+                case ORACLE -> values.add(getOracleGeometryExpression(param, property));
+                case MYSQL -> values.add(getMysqlGeometryExpression(param, property));
+                case SQL_SERVER -> values.add(getSqlServerGeometryExpression(param, property));
+                case POSTGRES, H2 -> values.add(getPostgresGeometryExpression(param, property));
                 default -> values.add(param);
             }
             return true;
@@ -1369,19 +1369,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 default:
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
             }
-        } else if (prop.isAssignable(Geometry.class)) {
+        } else if (isJsonOrWktGeometry(prop)) {
             switch (dialect) {
                 case ORACLE:
-                    appendOracleGeoJsonExpression(sb, prop, appendParameter);
+                    appendOracleGeometryExpression(sb, prop, appendParameter);
                     break;
                 case MYSQL:
-                    appendMysqlGeoJsonExpression(sb, prop, appendParameter);
+                    appendMysqlGeometryExpression(sb, prop, appendParameter);
                     break;
                 case SQL_SERVER:
-                    appendSqlServerGeoJsonExpression(sb, prop, appendParameter);
+                    appendSqlServerGeometryExpression(sb, prop, appendParameter);
                     break;
                 case POSTGRES, H2:
-                    appendSridWrappedGeoJsonExpression(sb, prop, appendParameter);
+                    appendPostgresGeometryExpression(sb, prop, appendParameter);
                     break;
                 default:
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
@@ -1391,16 +1391,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private String getOracleGeoJsonExpression(String parameter, PersistentProperty property) {
+    private String getOracleGeometryExpression(String parameter, PersistentProperty property) {
         StringBuilder sb = new StringBuilder();
-        appendOracleGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        appendOracleGeometryExpression(sb, property, () -> sb.append(parameter));
         return sb.toString();
     }
 
-    private void appendOracleGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+    private void appendOracleGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
-        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
         if (isWkt) {
             sb.append("SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(");
         } else {
@@ -1421,16 +1422,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         sb.append(")");
     }
 
-    private String getMysqlGeoJsonExpression(String parameter, PersistentProperty property) {
+    private String getMysqlGeometryExpression(String parameter, PersistentProperty property) {
         StringBuilder sb = new StringBuilder();
-        appendMysqlGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        appendMysqlGeometryExpression(sb, property, () -> sb.append(parameter));
         return sb.toString();
     }
 
-    private void appendMysqlGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+    private void appendMysqlGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
-        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
         if (isWkt) {
             sb.append("ST_GeomFromText(");
         } else {
@@ -1448,13 +1450,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         sb.append(")");
     }
 
-    private String getSqlServerGeoJsonExpression(String parameter, PersistentProperty property) {
+    private String getSqlServerGeometryExpression(String parameter, PersistentProperty property) {
         StringBuilder sb = new StringBuilder();
-        appendSqlServerGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        appendSqlServerGeometryExpression(sb, property, () -> sb.append(parameter));
         return sb.toString();
     }
 
-    private void appendSqlServerGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+    private void appendSqlServerGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
         // since sqlserver doesn't have built-in functions for conversion between
         // json and internal geospatial data type, use always Well-Known Text (WKT) functions
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
@@ -1476,16 +1478,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         sb.append(", ").append(optSrid.orElse(defaultSrid)).append(")");
     }
 
-    private String getSridWrappedGeoJsonExpression(String parameter, PersistentProperty property) {
+    private String getPostgresGeometryExpression(String parameter, PersistentProperty property) {
         StringBuilder sb = new StringBuilder();
-        appendSridWrappedGeoJsonExpression(sb, property, () -> sb.append(parameter));
+        appendPostgresGeometryExpression(sb, property, () -> sb.append(parameter));
         return sb.toString();
     }
 
-    private void appendSridWrappedGeoJsonExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+    private void appendPostgresGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
-        boolean isWkt = getPropertyGeometryConverter(property).equals(GeometryWktConverter.class.getName());
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
         if (isWkt) {
             sb.append("ST_GeomFromText(");
             appendParameter.run();
