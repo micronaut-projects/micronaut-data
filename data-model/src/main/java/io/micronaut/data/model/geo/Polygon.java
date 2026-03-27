@@ -54,12 +54,24 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
         }
     }
 
+    /**
+     * Returns this polygon as a list of ring coordinate sequences.
+     *
+     * @return the coordinates of each ring in this polygon
+     */
     public List<List<List<Double>>> asCoords() {
         return lineStrings.stream()
             .map(LineString::asCoords)
             .toList();
     }
 
+    /**
+     * Creates a {@link Polygon} from a list of ring coordinate sequences.
+     *
+     * @param coords the polygon ring coordinates to convert
+     * @return a polygon created from the provided coordinates
+     * @throws IllegalArgumentException if {@code coords} is {@code null}, empty, or describes an invalid polygon ring
+     */
     public static Polygon fromCoords(List<List<List<Double>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");

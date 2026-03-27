@@ -42,12 +42,24 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
         }
     }
 
+    /**
+     * Returns this multi-line string as a list of line coordinate sequences.
+     *
+     * @return the coordinates of each line string in this geometry
+     */
     public List<List<List<Double>>> asCoords() {
         return lineStrings.stream()
             .map(LineString::asCoords)
             .toList();
     }
 
+    /**
+     * Creates a {@link MultiLineString} from a list of line coordinate sequences.
+     *
+     * @param coords the line coordinates to convert
+     * @return a multi-line string created from the provided coordinates
+     * @throws IllegalArgumentException if {@code coords} is {@code null} or empty
+     */
     public static MultiLineString fromCoords(List<List<List<Double>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");

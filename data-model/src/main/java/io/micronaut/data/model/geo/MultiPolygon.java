@@ -42,12 +42,24 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
         }
     }
 
+    /**
+     * Returns this multi-polygon as a list of polygon ring coordinate sequences.
+     *
+     * @return the coordinates of each polygon in this geometry
+     */
     public List<List<List<List<Double>>>> asCoords() {
         return polygons.stream()
             .map(Polygon::asCoords)
             .toList();
     }
 
+    /**
+     * Creates a {@link MultiPolygon} from a list of polygon ring coordinate sequences.
+     *
+     * @param coords the polygon coordinates to convert
+     * @return a multi-polygon created from the provided coordinates
+     * @throws IllegalArgumentException if {@code coords} is {@code null} or empty
+     */
     public static MultiPolygon fromCoords(List<List<List<List<Double>>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");

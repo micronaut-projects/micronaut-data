@@ -42,12 +42,24 @@ public record LineString(List<Point> points) implements Geometry {
         }
     }
 
+    /**
+     * Returns this line string as an ordered list of point coordinate pairs.
+     *
+     * @return the coordinates of each point in this line string
+     */
     public List<List<Double>> asCoords() {
         return points.stream()
             .map(Point::asCoords)
             .toList();
     }
 
+    /**
+     * Creates a {@link LineString} from an ordered list of point coordinate pairs.
+     *
+     * @param coords the point coordinates to convert
+     * @return a line string created from the provided coordinates
+     * @throws IllegalArgumentException if {@code coords} is {@code null}, empty, or contains fewer than two points
+     */
     public static LineString fromCoords(List<List<Double>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");

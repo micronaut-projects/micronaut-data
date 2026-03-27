@@ -758,11 +758,11 @@ interface MyRepository {
         statements[1] == indexStatement
 
         where:
-        dialect             | tableStatement                                                                                                                   | indexStatement
-        Dialect.MYSQL      | 'CREATE TABLE `school` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
+        dialect            | tableStatement                                                                                                                                                    | indexStatement
+        Dialect.MYSQL      | 'CREATE TABLE `school` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));'               | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
         Dialect.POSTGRES   | 'CREATE TABLE "school" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"point" GEOMETRY NOT NULL,"description" VARCHAR(255));' | 'CREATE INDEX "idx_school_point" ON "school" USING GIST ("point");'
         Dialect.H2         | 'CREATE TABLE `school` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
-        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOGRAPHY NOT NULL,[description] VARCHAR(255));' | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
+        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOGRAPHY NOT NULL,[description] VARCHAR(255));'      | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
     }
 
     @Unroll
@@ -775,26 +775,26 @@ interface MyRepository {
         statements == expectedStatements
 
         where:
-        dialect             | expectedStatements
+        dialect            | expectedStatements
         Dialect.MYSQL      | [
-            'CREATE TABLE `geo_entity_json` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
-            'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
-            'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
+                'CREATE TABLE `geo_entity_json` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+                'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
+                'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
         ]
         Dialect.POSTGRES   | [
-            'CREATE TABLE "geo_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOMETRY NOT NULL,"multi_point" GEOMETRY NOT NULL,"line_string" GEOMETRY NOT NULL,"multi_line_string" GEOMETRY,"polygon" GEOMETRY,"multi_polygon" GEOMETRY,"geometry_collection" GEOMETRY);',
-            'CREATE INDEX "idx_geo_entity_json_location" ON "geo_entity_json" USING GIST ("location");',
-            'CREATE INDEX "idx_geo_entity_json_multi_point" ON "geo_entity_json" USING GIST ("multi_point");'
+                'CREATE TABLE "geo_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOMETRY NOT NULL,"multi_point" GEOMETRY NOT NULL,"line_string" GEOMETRY NOT NULL,"multi_line_string" GEOMETRY,"polygon" GEOMETRY,"multi_polygon" GEOMETRY,"geometry_collection" GEOMETRY);',
+                'CREATE INDEX "idx_geo_entity_json_location" ON "geo_entity_json" USING GIST ("location");',
+                'CREATE INDEX "idx_geo_entity_json_multi_point" ON "geo_entity_json" USING GIST ("multi_point");'
         ]
         Dialect.H2         | [
-            'CREATE TABLE `geo_entity_json` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
-            'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
-            'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
+                'CREATE TABLE `geo_entity_json` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+                'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
+                'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
         ]
         Dialect.SQL_SERVER | [
-            'CREATE TABLE [geo_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL,[multi_point] GEOGRAPHY NOT NULL,[line_string] GEOGRAPHY NOT NULL,[multi_line_string] GEOGRAPHY,[polygon] GEOGRAPHY,[multi_polygon] GEOGRAPHY,[geometry_collection] GEOGRAPHY);',
-            'CREATE SPATIAL INDEX [idx_geo_entity_json_location] ON [geo_entity_json] ([location]);',
-            'CREATE SPATIAL INDEX [idx_geo_entity_json_multi_point] ON [geo_entity_json] ([multi_point]);'
+                'CREATE TABLE [geo_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL,[multi_point] GEOGRAPHY NOT NULL,[line_string] GEOGRAPHY NOT NULL,[multi_line_string] GEOGRAPHY,[polygon] GEOGRAPHY,[multi_polygon] GEOGRAPHY,[geometry_collection] GEOGRAPHY);',
+                'CREATE SPATIAL INDEX [idx_geo_entity_json_location] ON [geo_entity_json] ([location]);',
+                'CREATE SPATIAL INDEX [idx_geo_entity_json_multi_point] ON [geo_entity_json] ([multi_point]);'
         ]
     }
 
