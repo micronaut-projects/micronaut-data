@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.model.runtime.convert;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -130,26 +145,26 @@ public final class GeometryJsonConverter implements AttributeConverter<Geometry,
         @JsonSubTypes.Type(value = GeoJsonCollection.class, name = "GeometryCollection")
     })
     sealed interface GeoJson permits PointGeoJson, MultiPointGeoJson, LineStringGeoJson,
-        MultiLineStringGeoJson, PolygonGeoJson, GeoJsonCollection, MultiPolygonGeoJson {}
+        MultiLineStringGeoJson, PolygonGeoJson, GeoJsonCollection, MultiPolygonGeoJson { }
 
     @Serdeable
-    record PointGeoJson(String type, List<Double> coordinates) implements GeoJson {}
+    record PointGeoJson(String type, List<Double> coordinates) implements GeoJson { }
 
     @Serdeable
-    record MultiPointGeoJson(String type, List<List<Double>> coordinates) implements GeoJson {}
+    record MultiPointGeoJson(String type, List<List<Double>> coordinates) implements GeoJson { }
 
     @Serdeable
-    record LineStringGeoJson(String type, List<List<Double>> coordinates) implements GeoJson {}
+    record LineStringGeoJson(String type, List<List<Double>> coordinates) implements GeoJson { }
 
     @Serdeable
-    record MultiLineStringGeoJson(String type, List<List<List<Double>>> coordinates) implements GeoJson {}
+    record MultiLineStringGeoJson(String type, List<List<List<Double>>> coordinates) implements GeoJson { }
 
     @Serdeable
-    record PolygonGeoJson(String type, List<List<List<Double>>> coordinates) implements GeoJson {}
+    record PolygonGeoJson(String type, List<List<List<Double>>> coordinates) implements GeoJson { }
 
     @Serdeable
-    record MultiPolygonGeoJson(String type, List<List<List<List<Double>>>> coordinates) implements GeoJson {}
+    record MultiPolygonGeoJson(String type, List<List<List<List<Double>>>> coordinates) implements GeoJson { }
 
     @Serdeable
-    record GeoJsonCollection(String type, List<GeoJson> geometries) implements GeoJson {}
+    record GeoJsonCollection(String type, List<GeoJson> geometries) implements GeoJson { }
 }

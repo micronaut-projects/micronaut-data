@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
-import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
@@ -785,7 +784,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
     }
-
 
     private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
         List<String> auxiliaryStatements = table.auxiliaryStatements();
