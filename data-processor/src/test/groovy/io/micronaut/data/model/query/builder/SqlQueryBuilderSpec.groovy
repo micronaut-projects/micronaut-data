@@ -45,6 +45,7 @@ import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
 import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWkt
+import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWktGeom
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -743,6 +744,72 @@ interface MyRepository {
         statements[4].contains("3857")
         statements[5] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_LOCATION" ON "GEO_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
         statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_MULTI_POINT" ON "GEO_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+    }
+
+
+    @Unroll
+    void "test build create index for geospatial column on #dialect"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(dialect)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(School))
+
+        then:
+        statements[0] == tableStatement
+        statements[1] == indexStatement
+
+        where:
+        dialect             | tableStatement                                                                                                                   | indexStatement
+        Dialect.MYSQL      | 'CREATE TABLE `school` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
+        Dialect.POSTGRES   | 'CREATE TABLE "school" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"point" GEOMETRY NOT NULL,"description" VARCHAR(255));' | 'CREATE INDEX "idx_school_point" ON "school" USING GIST ("point");'
+        Dialect.H2         | 'CREATE TABLE `school` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
+        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOGRAPHY NOT NULL,[description] VARCHAR(255));' | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
+    }
+
+    @Unroll
+    void "test build create index for geo entity columns on #dialect"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(dialect)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntityJson))
+
+        then:
+        statements == expectedStatements
+
+        where:
+        dialect             | expectedStatements
+        Dialect.MYSQL      | [
+            'CREATE TABLE `geo_entity_json` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+            'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
+            'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
+        ]
+        Dialect.POSTGRES   | [
+            'CREATE TABLE "geo_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOMETRY NOT NULL,"multi_point" GEOMETRY NOT NULL,"line_string" GEOMETRY NOT NULL,"multi_line_string" GEOMETRY,"polygon" GEOMETRY,"multi_polygon" GEOMETRY,"geometry_collection" GEOMETRY);',
+            'CREATE INDEX "idx_geo_entity_json_location" ON "geo_entity_json" USING GIST ("location");',
+            'CREATE INDEX "idx_geo_entity_json_multi_point" ON "geo_entity_json" USING GIST ("multi_point");'
+        ]
+        Dialect.H2         | [
+            'CREATE TABLE `geo_entity_json` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+            'CREATE SPATIAL INDEX `idx_geo_entity_json_location` ON `geo_entity_json` (`location`);',
+            'CREATE SPATIAL INDEX `idx_geo_entity_json_multi_point` ON `geo_entity_json` (`multi_point`);'
+        ]
+        Dialect.SQL_SERVER | [
+            'CREATE TABLE [geo_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL,[multi_point] GEOGRAPHY NOT NULL,[line_string] GEOGRAPHY NOT NULL,[multi_line_string] GEOGRAPHY,[polygon] GEOGRAPHY,[multi_polygon] GEOGRAPHY,[geometry_collection] GEOGRAPHY);',
+            'CREATE SPATIAL INDEX [idx_geo_entity_json_location] ON [geo_entity_json] ([location]);',
+            'CREATE SPATIAL INDEX [idx_geo_entity_json_multi_point] ON [geo_entity_json] ([multi_point]);'
+        ]
+    }
+
+
+    void "test build create index for geo entity columns on sql server with geometry definition"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntityWktGeom))
+
+        then:
+        statements == [
+            'CREATE TABLE [geo_entity_wkt_geom] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] geometry,[multi_point] geometry,[line_string] geometry,[multi_line_string] geometry,[polygon] geometry,[multi_polygon] geometry,[geometry_collection] geometry);',
+            'CREATE SPATIAL INDEX [idx_geo_entity_wkt_geom_location] ON [geo_entity_wkt_geom] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));',
+            'CREATE SPATIAL INDEX [idx_geo_entity_wkt_geom_multi_point] ON [geo_entity_wkt_geom] ([multi_point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
+        ]
     }
 
     void "test build composite id query"() {
