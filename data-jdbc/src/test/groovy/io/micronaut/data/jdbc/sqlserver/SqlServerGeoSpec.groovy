@@ -1,7 +1,6 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWktGeom
 import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeoEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
@@ -36,7 +35,7 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
 
     @Override
     List<String> packages() {
-        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo", "io.micronaut.data.jdbc.sqlserver")
     }
 
     @Override

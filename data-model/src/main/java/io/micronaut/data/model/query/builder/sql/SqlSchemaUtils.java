@@ -101,6 +101,7 @@ public final class SqlSchemaUtils {
           %s
         )""";
     private static final int SRID_WGS_84 = 4326;
+    private static final int SRID_ETRS_89 = 4258;
     private static final int SRID_WEB_MERCATOR = 3857;
 
     private SqlSchemaUtils() {
@@ -439,7 +440,7 @@ public final class SqlSchemaUtils {
                         srid = SRID_WGS_84;
                     }
                     String columnName = namingStrategy.mappedName(associations, persistentProperty);
-                    if (srid == SRID_WGS_84) {
+                    if (srid == SRID_WGS_84 || srid == SRID_ETRS_89) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, -180, 180, "0.005", -90, 90, "0.005", srid));
                     } else if (srid == SRID_WEB_MERCATOR) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, 0, 0, "0.00005", 0, 0, "0.00005", srid));

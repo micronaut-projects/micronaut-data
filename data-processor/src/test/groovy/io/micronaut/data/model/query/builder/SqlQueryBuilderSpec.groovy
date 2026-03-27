@@ -27,6 +27,7 @@ import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.processor.entity.GeoEntityWktGeom
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
@@ -45,7 +46,6 @@ import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
 import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWkt
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWktGeom
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -746,7 +746,6 @@ interface MyRepository {
         statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_MULTI_POINT" ON "GEO_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
     }
 
-
     @Unroll
     void "test build create index for geospatial column on #dialect"() {
         when:
@@ -797,7 +796,6 @@ interface MyRepository {
                 'CREATE SPATIAL INDEX [idx_geo_entity_json_multi_point] ON [geo_entity_json] ([multi_point]);'
         ]
     }
-
 
     void "test build create index for geo entity columns on sql server with geometry definition"() {
         when:
