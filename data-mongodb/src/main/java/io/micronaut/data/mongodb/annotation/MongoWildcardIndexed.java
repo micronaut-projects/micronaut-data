@@ -54,4 +54,9 @@ public @interface MongoWildcardIndexed {
      */
     String comment() default "";
 
+    /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
+
 }

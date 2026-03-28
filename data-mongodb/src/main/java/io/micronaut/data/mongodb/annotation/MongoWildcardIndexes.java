@@ -23,39 +23,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a simple MongoDB text index for a property.
+ * Repeatable annotation for {@link MongoWildcardIndex}.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target(ElementType.TYPE)
 @Documented
 @Inherited
-public @interface MongoTextIndexed {
+public @interface MongoWildcardIndexes {
 
     /**
-     * @return The index name.
+     * @return The indexes.
      */
-    String name() default "";
-
-    /**
-     * @return The text index weight.
-     */
-    int weight() default 1;
-
-    /**
-     * @return Whether the index is hidden.
-     */
-    boolean hidden() default false;
-
-    /**
-     * @return The index creation command comment.
-     */
-    String comment() default "";
-
-    /**
-     * @return The storage engine options as JSON.
-     */
-    String storageEngine() default "";
+    MongoWildcardIndex[] value() default {};
 }

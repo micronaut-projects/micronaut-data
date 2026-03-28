@@ -264,6 +264,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     index.min(),
                     index.max(),
                     normalizeJsonString(index.wildcardProjection()),
+                    normalizeJsonString(index.storageEngine()),
                     index.comment(),
                     index.commitQuorum()
             ));
@@ -440,6 +441,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                               @Nullable Double min,
                               @Nullable Double max,
                               @Nullable String wildcardProjection,
+                              @Nullable String storageEngine,
                               @Nullable String comment,
                               @Nullable String commitQuorum) {
 
@@ -457,7 +459,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     && Objects.equals(bits, other.bits)
                     && Objects.equals(min, other.min)
                     && Objects.equals(max, other.max)
-                    && Objects.equals(wildcardProjection, other.wildcardProjection);
+                    && Objects.equals(wildcardProjection, other.wildcardProjection)
+                    && Objects.equals(storageEngine, other.storageEngine);
         }
 
         private static boolean collationMatches(@Nullable String existingCollation,
@@ -509,6 +512,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     + ", min=" + min
                     + ", max=" + max
                     + ", wildcardProjection=" + wildcardProjection
+                    + ", storageEngine=" + storageEngine
                     + ", comment=" + comment
                     + ", commitQuorum=" + commitQuorum
                     + '}';

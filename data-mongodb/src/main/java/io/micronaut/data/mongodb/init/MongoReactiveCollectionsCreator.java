@@ -167,6 +167,7 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                                             toDouble(indexDocument.get("min")),
                                             toDouble(indexDocument.get("max")),
                                             normalizeJsonValue(indexDocument.get("wildcardProjection")),
+                                            normalizeJsonValue(indexDocument.get("storageEngine")),
                                             null,
                                             null
                                     ));
@@ -220,6 +221,9 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                     if (index.wildcardProjection() != null) {
                         indexOptions.wildcardProjection(Document.parse(index.wildcardProjection()));
                     }
+                    if (index.storageEngine() != null) {
+                        indexOptions.storageEngine(Document.parse(index.storageEngine()));
+                    }
                     Mono.from(mongoCollection.createIndex(index.keysDocument(), indexOptions)).block();
                 }
             };
@@ -260,6 +264,9 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
         }
         if (index.wildcardProjection() != null) {
             indexDocument.append("wildcardProjection", Document.parse(index.wildcardProjection()));
+        }
+        if (index.storageEngine() != null) {
+            indexDocument.append("storageEngine", Document.parse(index.storageEngine()));
         }
         return indexDocument;
     }

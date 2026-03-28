@@ -85,4 +85,9 @@ public @interface MongoCompoundIndex {
      * @return The createIndexes commit quorum.
      */
     String commitQuorum() default "";
+
+    /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
 }

@@ -78,4 +78,9 @@ public @interface MongoIndexed {
      * @return The index creation command comment.
      */
     String comment() default "";
+
+    /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
 }

@@ -55,6 +55,11 @@ public @interface MongoGeoIndexed {
     String comment() default "";
 
     /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
+
+    /**
      * @return The 2d index bits setting, or -1 if unset.
      */
     int bits() default -1;

@@ -21,7 +21,7 @@ Micronaut Data currently supports the following MongoDB index annotations:
 
 Use ann:data.mongodb.annotation.MongoIndexed[] to declare standard single-field indexes.
 
-Supported options include direction, `unique`, `sparse`, `hidden`, `expireAfterSeconds` (TTL), `partialFilterExpression`, `collation`, and index-build `comment`.
+Supported options include direction, `unique`, `sparse`, `hidden`, `expireAfterSeconds` (TTL), `partialFilterExpression`, `collation`, index-build `comment`, and `storageEngine`.
 
 [source,java]
 ----
@@ -40,7 +40,7 @@ class ProductEntity {
 
 Use ann:data.mongodb.annotation.MongoCompoundIndex[] for multi-field index declarations at entity level.
 
-Compound declarations also support index-build `comment` and create-index command `commitQuorum`.
+Compound declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
 
 [source,java]
 ----
@@ -62,7 +62,7 @@ class OrderEntity {
 }
 ----
 
-NOTE: TTL on compound indexes is rejected during startup validation.
+NOTE: TTL on compound indexes is rejected during startup validation because MongoDB TTL semantics are single-field oriented. This is fail-fast validation: the application startup fails immediately with a clear error instead of silently creating a non-expiring index definition.
 
 == Text indexes
 
@@ -107,10 +107,16 @@ Use ann:data.mongodb.annotation.MongoWildcardIndexed[] for field-level wildcard 
 
 Use ann:data.mongodb.annotation.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
 
-Top-level wildcard declarations also support index-build `comment` and create-index command `commitQuorum`.
+ann:data.mongodb.annotation.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key are merged into a single managed index definition.
+
+Top-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
+NOTE: `storageEngine` must be valid JSON. Invalid declarations are rejected during startup validation (fail-fast).
 
 NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
-Using `wildcardProjection` on field-level ann:data.mongodb.annotation.MongoWildcardIndexed[] is rejected during startup validation.
+Using `wildcardProjection` on field-level ann:data.mongodb.annotation.MongoWildcardIndexed[] is rejected during startup validation (fail-fast), with an explicit error that points to ann:data.mongodb.annotation.MongoWildcardIndex[].
+
+NOTE: If multiple top-level wildcard declarations define conflicting options for `$**`, startup fails fast with an explicit conflict error.
 
 == TTL indexes
 
