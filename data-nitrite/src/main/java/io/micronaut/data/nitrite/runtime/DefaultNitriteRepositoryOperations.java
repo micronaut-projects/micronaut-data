@@ -531,10 +531,16 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     List<AnnotationValue<Index>> indexes = entity.getAnnotationMetadata().getAnnotationValuesByType(Index.class);
     for (AnnotationValue<Index> index : indexes) {
       String[] columns = index.getRequiredValue("columns", String[].class);
+      String[] translatedColumns = new String[columns.length];
+      for (int i = 0; i < columns.length; i++) {
+          String col = columns[i];
+          RuntimePersistentProperty<?> prop = entity.getPropertyByName(col);
+          translatedColumns[i] = prop != null ? prop.getPersistedName() : col;
+      }
       boolean unique = index.booleanValue("unique").orElse(false);
       IndexOptions options = indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE);
       try {
-        collection.createIndex(options, columns);
+        collection.createIndex(options, translatedColumns);
       } catch (Exception e) {
         if (LOG.isWarnEnabled()) {
           LOG.warn("Could not create index for collection {}: {}", collection.getName(), e.getMessage());

@@ -45,4 +45,12 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      */
     @Query("{\"location\": {\"$intersects\": :geometry}}")
     List<IndexedBook> findByLocationIntersects(Geometry geometry);
+
+    /**
+     * Find books by title and pages combination to test compound index.
+     * @param title the book title
+     * @param pages the number of pages
+     * @return books matching both criteria
+     */
+    List<IndexedBook> findByTitleAndPages(String title, int pages);
 }

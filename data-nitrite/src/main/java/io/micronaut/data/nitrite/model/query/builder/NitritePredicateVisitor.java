@@ -28,6 +28,8 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+
+import java.util.Arrays;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
@@ -342,9 +344,12 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final Expression<?> to,
       final boolean negated) {
     PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(value).getPropertyPath();
-    Map<String, Object> betweenOp = new LinkedHashMap<>();
-    betweenOp.put("$gte", valueRepresentation(queryState, propertyPath, propertyPath, from));
-    betweenOp.put("$lte", valueRepresentation(queryState, propertyPath, propertyPath, to));
+    // Use Nitrite's native $between operator instead of decomposing to $gte + $lte
+    List<Object> betweenValues = Arrays.asList(
+        valueRepresentation(queryState, propertyPath, propertyPath, from),
+        valueRepresentation(queryState, propertyPath, propertyPath, to)
+    );
+    Map<String, Object> betweenOp = Map.of("$between", betweenValues);
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {

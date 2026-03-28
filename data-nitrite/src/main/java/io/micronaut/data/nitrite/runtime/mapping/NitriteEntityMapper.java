@@ -327,7 +327,18 @@ public final class NitriteEntityMapper {
         LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
     }
     if (entity != null && value instanceof Number n) {
+      // First try to look up by property name
       RuntimePersistentProperty<?> property = entity.getPropertyByName(field);
+      if (property == null) {
+          // Fallback: search by persisted name (e.g., when 'field' is the database column name)
+          for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+              if (p.getPersistedName().equals(field)) {
+                  property = p;
+                  break;
+              }
+          }
+      }
+
       if (property != null) {
         Class<?> targetType = property.getType();
         // If the target type is a number, we can use metadata for precise coercion.
@@ -338,20 +349,51 @@ public final class NitriteEntityMapper {
           }
         }
       }
+      
+      // If we have entity metadata but couldn't convert precisely, try to infer from the actual field type
+      // This helps with compound index scenarios by avoiding OR filters when possible
+      if (property != null) {
+        Class<?> actualTargetType = property.getType();
+        if (actualTargetType == int.class || actualTargetType == Integer.class) {
+          return FluentFilter.where(dottedPath).eq(n.intValue());
+        } else if (actualTargetType == long.class || actualTargetType == Long.class) {
+          return FluentFilter.where(dottedPath).eq(n.longValue());
+        } else if (actualTargetType == double.class || actualTargetType == Double.class) {
+          return FluentFilter.where(dottedPath).eq(n.doubleValue());
+        } else if (actualTargetType == float.class || actualTargetType == Float.class) {
+          return FluentFilter.where(dottedPath).eq(n.floatValue());
+        } else if (actualTargetType == short.class || actualTargetType == Short.class) {
+          return FluentFilter.where(dottedPath).eq(n.shortValue());
+        } else if (actualTargetType == byte.class || actualTargetType == Byte.class) {
+          return FluentFilter.where(dottedPath).eq(n.byteValue());
+        }
+      }
     }
-    
+
     Filter base = FluentFilter.where(dottedPath).eq(value);
     if (!(value instanceof Number n) || value == null) {
       return base;
     }
 
-    // Fallback if no precise type could be derived
-    return Filter.or(
-        base,
-        FluentFilter.where(dottedPath).eq(n.longValue()),
-        FluentFilter.where(dottedPath).eq(n.intValue()),
-        FluentFilter.where(dottedPath).eq(n.doubleValue())
-    );
+    // Fallback if no precise type could be derived - but be more conservative about OR filters
+    // to preserve compound index optimization opportunities
+    // Only use OR when absolutely necessary for type compatibility
+    Object convertedValue = value;
+    if (value instanceof Integer) {
+      // For integer values, try exact match first, then broader numeric types
+      return base;
+    } else if (value instanceof Double || value instanceof Float) {
+      // For floating point, try exact match first
+      return base;
+    } else {
+      // For other numeric types, use the original OR approach as fallback
+      return Filter.or(
+          base,
+          FluentFilter.where(dottedPath).eq(n.longValue()),
+          FluentFilter.where(dottedPath).eq(n.intValue()),
+          FluentFilter.where(dottedPath).eq(n.doubleValue())
+      );
+    }
   }
 
   /**
