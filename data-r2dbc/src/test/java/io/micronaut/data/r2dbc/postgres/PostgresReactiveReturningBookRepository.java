@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,26 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.entities.Author;
-import io.micronaut.data.tck.repositories.AuthorRepository;
-import org.jspecify.annotations.Nullable;
-
-import java.util.List;
+import io.micronaut.data.tck.entities.Book;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresAuthorRepository extends AuthorRepository {
+public interface PostgresReactiveReturningBookRepository {
+
+    Mono<Book> saveReturning(Book book);
+
+    Flux<Book> saveReturningMany(Iterable<Book> books);
+
+    Mono<Book> deleteReturning(Book book);
+
+    Flux<Book> deleteReturning(Iterable<Book> books);
 
     @Query("""
-        INSERT INTO "author" ("name", "nick_name")
-        VALUES (:name, :nickName)
-        RETURNING *
+        UPDATE "book" SET "author_id"=:authorId WHERE "id" IN (:ids) RETURNING *
         """)
-    Author customInsertReturningAuthor(String name, @Nullable String nickName);
-
-    @Override
-    @Join(value = "books", type = Join.Type.LEFT_FETCH)
-    List<Author> listAll();
-
-    @Override
-    @Join(value = "books", type = Join.Type.LEFT_FETCH)
-    Author queryByName(String name);
-
+    Flux<Book> customUpdateReturning(Long authorId, Iterable<Long> ids);
 }

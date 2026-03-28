@@ -140,9 +140,17 @@ public interface FindersUtils {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch updateEntry;
                 if (hasEntityParameter && returnsEntity) {
-                    updateEntry = pickDeleteInterceptor(matchContext, returnType);
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
+                        updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickDeleteInterceptor(matchContext, returnType);
+                    }
                 } else if (hasMultipleEntityParameter && returnsEntity) {
-                    updateEntry = pickDeleteAllReturningInterceptor(matchContext, returnType);
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
+                        updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickDeleteAllReturningInterceptor(matchContext, returnType);
+                    }
                 } else {
                     updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
                 }
@@ -170,10 +178,15 @@ public interface FindersUtils {
             case UPDATE_RETURNING -> {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch updateEntry;
+                boolean reactiveOrFuture = isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType);
                 if (hasMultipleEntityParameter && returnsEntity) {
                     updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
                 } else if (hasEntityParameter && returnsEntity) {
-                    updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
+                    if (reactiveOrFuture) {
+                        updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
+                    }
                 } else {
                     updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
                 }
@@ -201,7 +214,8 @@ public interface FindersUtils {
             case INSERT_RETURNING -> {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch saveEntry;
-                if (hasEntityParameter && returnsEntity) {
+                boolean reactiveOrFuture = isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType);
+                if (hasEntityParameter && returnsEntity && !reactiveOrFuture) {
                     saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
                 } else if (hasMultipleEntityParameter && returnsEntity) {
                     saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
@@ -219,6 +233,19 @@ public interface FindersUtils {
     }
 
     private static InterceptorMatch pickUpdateReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), UpdateReturningManyInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, UpdateReturningOneInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.UpdateReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.UpdateReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), UpdateReturningManyInterceptor.class);
         } else {
@@ -227,6 +254,19 @@ public interface FindersUtils {
     }
 
     private static InterceptorMatch pickDeleteReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), DeleteReturningManyInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, DeleteReturningOneInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.DeleteReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.DeleteReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), DeleteReturningManyInterceptor.class);
         } else {
@@ -235,6 +275,19 @@ public interface FindersUtils {
     }
 
     private static InterceptorMatch pickInsertReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), InsertReturningManyInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, InsertReturningOneInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.InsertReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.InsertReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), InsertReturningManyInterceptor.class);
         } else {
@@ -299,11 +352,6 @@ public interface FindersUtils {
     }
 
     static FindersUtils.InterceptorMatch pickDeleteAllReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-//        if (isFutureType(matchContext.getMethodElement(), returnType)) {
-//            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), DeleteAllAsyncInterceptor.class);
-//        } else if (isReactiveType(returnType)) {
-//            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), DeleteAllReactiveInterceptor.class);
-//        }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), DeleteAllReturningInterceptor.class);
     }
 

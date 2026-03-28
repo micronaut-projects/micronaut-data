@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - '[0-9]+.[0-9]+.x'
+      - radovanradic/reactive-returning
   pull_request:
     branches:
       - master

@@ -46,6 +46,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.EntityOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
@@ -58,10 +60,12 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery.OperationType;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
@@ -142,13 +146,13 @@ import java.util.stream.Stream;
 @EachBean(ConnectionFactory.class)
 @Internal
 final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Row, Statement, RuntimeException>
-    implements BlockingExecutorReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations,
+    implements BlockingExecutorReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, DeleteReturningRepositoryOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultR2dbcRepositoryOperations.R2dbcOperationContext> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
 
     private final ConnectionFactory connectionFactory;
-    private final ReactorReactiveRepositoryOperations reactiveOperations;
+    private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
     @Nullable
     private ExecutorService ioExecutorService;
     @Nullable
@@ -267,6 +271,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return Mono.defer(() -> supplier.apply(reactive())
                 .contextWrite(ReactorPropagation.addPropagatedContext(Context.empty(), propagatedContext)))
             .blockOptional();
+    }
+
+    @Override
+    public <E, R> R deleteReturning(DeleteReturningOperation<E, R> operation) {
+        return block(reactive -> reactiveOperations.deleteReturning(operation));
+    }
+
+    @Override
+    public <E, R> List<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        return block(reactive -> reactiveOperations.deleteAllReturning(operation).collectList());
     }
 
     @Override
@@ -624,7 +638,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                     return executeAndMapEachReadable(statement, preparedQuery.getDialect(), readable -> readable.get(0, preparedQuery.getResultType()));
                 } else {
-                    throw new IllegalStateException("Not implemented");
+                    Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, false);
+                    preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+
+                    SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
+                    if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
+                        final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
+                        if (!hasJoins) {
+                            return executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(preparedQuery.getDialect()));
+                        }
+                        SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
+                        return executeAndMapEachRow(statement, row -> {
+                            rowsMapper.processRow(row);
+                            return "";
+                        }).collectList().flatMapIterable(ignore -> rowsMapper.getResult()).onErrorResume(errorHandler(preparedQuery.getDialect()));
+                    }
+                    return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType())).onErrorResume(errorHandler(preparedQuery.getDialect()));
                 }
             });
         }
@@ -638,6 +667,41 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
                 op.delete();
                 return op.getRowsUpdated();
+            });
+        }
+
+        @Override
+        @NonNull
+        public <E, R> Mono<R> deleteReturning(@NonNull DeleteReturningOperation<E, R> operation) {
+            return executeWriteMono(operation, status -> {
+                final SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+                final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
+                R2dbcEntityOperations<E> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+                op.delete();
+                return op.getEntity().map(entity -> (R) entity);
+            });
+        }
+
+        @Override
+        @NonNull
+        public <E, R> Flux<R> deleteAllReturning(@NonNull DeleteReturningBatchOperation<E, R> operation) {
+            return executeWriteFlux(operation, connection -> {
+                final SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+                RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
+                final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
+                if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
+                    R2dbcEntitiesOperations<E> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                    op.delete();
+                    return op.getEntities().map(entity -> (R) entity);
+                }
+                return concatMono(
+                    operation.split().stream()
+                        .map(deleteOp -> {
+                            R2dbcEntityOperations<E> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                            op.delete();
+                            return op.getEntity().map(entity -> (R) entity);
+                        })
+                );
             });
         }
 
@@ -1001,7 +1065,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (hasGeneratedId) {
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     return statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
-                } else {
+                } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
                     return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
                 }
             }
@@ -1037,6 +1101,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 data = data.flatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
+                    }
+                    if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
+                        SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
+                        if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
+                            return Mono.error(new DataAccessException("Expected entity mapper for INSERT_RETURNING operation: " + storedQuery.getQuery()));
+                        }
+                        @SuppressWarnings("unchecked")
+                        SqlResultEntityTypeMapper<Row, T> entityTypeMapper = (SqlResultEntityTypeMapper<Row, T>) rawEntityTypeMapper;
+                        return executeAndMapEachRowSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
+                            .map(entity -> {
+                                d.entity = entity;
+                                return d;
+                            });
                     }
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     Function<Object, Data> idMapper = id -> {
@@ -1126,12 +1203,49 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
+            if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
+                entities = entities.flatMap(list -> {
+                    SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
+                    if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
+                        return Mono.error(new DataAccessException("Expected entity mapper for INSERT_RETURNING operation: " + storedQuery.getQuery()));
+                    }
+                    @SuppressWarnings("unchecked")
+                    SqlResultEntityTypeMapper<Row, T> entityTypeMapper = (SqlResultEntityTypeMapper<Row, T>) rawEntityTypeMapper;
+                    return Flux.fromIterable(list)
+                        .concatMap((Data d) -> {
+                            if (d.vetoed) {
+                                return Mono.just(d);
+                            }
+                            SqlStoredQuery<T, ?> entityStoredQuery = storedQuery;
+                            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+                                @SuppressWarnings("unchecked")
+                                SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
+                                @SuppressWarnings("unchecked")
+                                SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
+                                DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
+                                entityPreparedQuery.prepare(d.entity);
+                                entityStoredQuery = entityPreparedQuery;
+                            }
+                            Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
+                            entityStoredQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, entityStoredQuery), ctx.invocationContext, d.entity, d.previousValues);
+                            return executeAndMapEachRow(statement, entityTypeMapper::readEntity)
+                                .onErrorResume(errorHandler(ctx.dialect))
+                                .as(DefaultR2dbcRepositoryOperations::toSingleResult)
+                                .map(entity -> {
+                                    d.entity = entity;
+                                    return d;
+                                });
+                        })
+                        .collectList();
+                });
+                return;
+            }
             Statement statement;
             if (hasGeneratedId) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
-                } else {
+                } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
                     statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
                 }
             } else {
