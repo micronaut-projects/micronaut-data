@@ -55,6 +55,11 @@ public @interface MongoIndexed {
     boolean sparse() default false;
 
     /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
      * @return The index expiration in seconds.
      */
     int expireAfterSeconds() default -1;
@@ -68,4 +73,9 @@ public @interface MongoIndexed {
      * @return The collation definition as JSON.
      */
     String collation() default "";
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
 }

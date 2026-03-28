@@ -45,6 +45,16 @@ public @interface MongoGeoIndexed {
     MongoGeoIndexType type() default MongoGeoIndexType.GEO_2DSPHERE;
 
     /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
+
+    /**
      * @return The 2d index bits setting, or -1 if unset.
      */
     int bits() default -1;

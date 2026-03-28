@@ -43,4 +43,14 @@ public @interface MongoTextIndexed {
      * @return The text index weight.
      */
     int weight() default 1;
+
+    /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
 }

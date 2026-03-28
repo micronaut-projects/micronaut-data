@@ -21,7 +21,7 @@ Micronaut Data currently supports the following MongoDB index annotations:
 
 Use ann:data.mongodb.annotation.MongoIndexed[] to declare standard single-field indexes.
 
-Supported options include direction, `unique`, `sparse`, `expireAfterSeconds` (TTL), `partialFilterExpression`, and `collation`.
+Supported options include direction, `unique`, `sparse`, `hidden`, `expireAfterSeconds` (TTL), `partialFilterExpression`, `collation`, and index-build `comment`.
 
 [source,java]
 ----
@@ -39,6 +39,8 @@ class ProductEntity {
 == Compound indexes
 
 Use ann:data.mongodb.annotation.MongoCompoundIndex[] for multi-field index declarations at entity level.
+
+Compound declarations also support index-build `comment` and create-index command `commitQuorum`.
 
 [source,java]
 ----
@@ -95,6 +97,8 @@ For geometry-collection modeled values, Micronaut Data applies `MongoGeoGeometry
 
 With `MongoGeoGeometryCollection` in place, modeled support now covers all standard GeoJSON geometry kinds (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`).
 
+For raw Mongo query annotations (for example ann:data.mongodb.annotation.MongoFindQuery[]), supported modeled geospatial parameter types are also converted implicitly to GeoJSON persisted shapes (`type` + `coordinates`) when no explicit converter is specified.
+
 NOTE: ann:data.mongodb.annotation.MongoGeoIndexed[] now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
 
 == Wildcard indexes
@@ -102,6 +106,8 @@ NOTE: ann:data.mongodb.annotation.MongoGeoIndexed[] now validates property type 
 Use ann:data.mongodb.annotation.MongoWildcardIndexed[] for field-level wildcard indexes.
 
 Use ann:data.mongodb.annotation.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
+
+Top-level wildcard declarations also support index-build `comment` and create-index command `commitQuorum`.
 
 NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
 Using `wildcardProjection` on field-level ann:data.mongodb.annotation.MongoWildcardIndexed[] is rejected during startup validation.

@@ -37,6 +37,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -92,13 +93,16 @@ public final class MongoEntityIndexes {
                     List.of(new ResolvedIndexField("$**", 1, null, null, null, null)),
                     false,
                     false,
+                    annotation.booleanValue("hidden").orElse(false),
                     null,
                     null,
                     null,
                     null,
                     null,
                     null,
-                    annotation.stringValue("wildcardProjection").filter(s -> !s.isEmpty()).orElse(null)
+                    annotation.stringValue("wildcardProjection").filter(s -> !s.isEmpty()).orElse(null),
+                    annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
+                    annotation.stringValue("commitQuorum").filter(s -> !s.isEmpty()).orElse(null)
             ));
         }
         return indexes;
@@ -119,12 +123,15 @@ public final class MongoEntityIndexes {
                         List.of(new ResolvedIndexField(property.getPersistedName(), annotation.enumValue("direction", MongoIndexDirection.class).orElse(MongoIndexDirection.ASC) == MongoIndexDirection.DESC ? -1 : 1, null, null, null, null)),
                         annotation.booleanValue("unique").orElse(false),
                         annotation.booleanValue("sparse").orElse(false),
+                        annotation.booleanValue("hidden").orElse(false),
                         annotation.intValue("expireAfterSeconds").isPresent() && annotation.intValue("expireAfterSeconds").getAsInt() >= 0 ? annotation.intValue("expireAfterSeconds").getAsInt() : null,
                         annotation.stringValue("partialFilterExpression").filter(s -> !s.isEmpty()).orElse(null),
                         annotation.stringValue("collation").filter(s -> !s.isEmpty()).orElse(null),
                         null,
                         null,
                         null,
+                        null,
+                        annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
                 continue;
@@ -140,12 +147,15 @@ public final class MongoEntityIndexes {
                         List.of(new ResolvedIndexField(property.getPersistedName(), null, null, "hashed", null, null)),
                         false,
                         false,
+                        hashedAnnotation.booleanValue("hidden").orElse(false),
                         null,
                         null,
                         null,
                         null,
                         null,
                         null,
+                        null,
+                        hashedAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
                 continue;
@@ -165,12 +175,15 @@ public final class MongoEntityIndexes {
                         List.of(new ResolvedIndexField(property.getPersistedName(), null, null, type.getKey(), min, max)),
                         false,
                         false,
+                        geoAnnotation.booleanValue("hidden").orElse(false),
                         null,
                         null,
                         null,
                         bits,
                         min,
                         max,
+                        null,
+                        geoAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
                 continue;
@@ -186,12 +199,15 @@ public final class MongoEntityIndexes {
                         List.of(new ResolvedIndexField(property.getPersistedName() + ".$**", 1, null, null, null, null)),
                         false,
                         false,
+                        wildcardAnnotation.booleanValue("hidden").orElse(false),
                         null,
                         null,
                         null,
                         null,
                         null,
                         null,
+                        null,
+                        wildcardAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
             }
@@ -215,6 +231,8 @@ public final class MongoEntityIndexes {
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {
         List<ResolvedIndexField> fields = new ArrayList<>();
         String name = null;
+        Boolean hidden = null;
+        String comment = null;
         BeanIntrospection<?> introspection = entity.getIntrospection();
         for (BeanProperty<?, Object> beanProperty : introspection.getBeanProperties()) {
             RuntimePersistentProperty<?> property = entity.getPropertyByName(beanProperty.getName());
@@ -233,13 +251,25 @@ public final class MongoEntityIndexes {
                 } else if (declaredName != null && !declaredName.equals(name)) {
                     throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same index name");
                 }
+                boolean declaredHidden = textAnnotation.booleanValue("hidden").orElse(false);
+                if (hidden == null) {
+                    hidden = declaredHidden;
+                } else if (!hidden.equals(declaredHidden)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same hidden option");
+                }
+                String declaredComment = textAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null);
+                if (comment == null) {
+                    comment = declaredComment;
+                } else if (!Objects.equals(comment, declaredComment)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same comment option");
+                }
                 fields.add(new ResolvedIndexField(property.getPersistedName(), null, weight, "text", null, null));
             }
         }
         if (fields.isEmpty()) {
             return List.of();
         }
-        return List.of(new ResolvedIndex(name, List.copyOf(fields), false, false, null, null, null, null, null, null, null));
+        return List.of(new ResolvedIndex(name, List.copyOf(fields), false, false, hidden != null && hidden, null, null, null, null, null, null, null, comment, null));
     }
 
     private static List<ResolvedIndex> resolveCompoundIndexes(RuntimePersistentEntity<?> entity) {
@@ -332,13 +362,16 @@ public final class MongoEntityIndexes {
                     List.copyOf(fields),
                     annotationValue.booleanValue("unique").orElse(false),
                     sparse,
+                    annotationValue.booleanValue("hidden").orElse(false),
                     null,
                     partialFilterExpression,
                     annotationValue.stringValue("collation").filter(s -> !s.isEmpty()).orElse(null),
                     indexBits,
                     indexMin,
                     indexMax,
-                    null
+                    null,
+                    annotationValue.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
+                    annotationValue.stringValue("commitQuorum").filter(s -> !s.isEmpty()).orElse(null)
             ));
         }
         return indexes;
@@ -351,6 +384,7 @@ public final class MongoEntityIndexes {
      * @param fields The index fields
      * @param unique Whether unique
      * @param sparse Whether sparse
+     * @param hidden Whether hidden
      * @param expireAfterSeconds TTL in seconds if any
      * @param partialFilterExpression The partial filter expression JSON
      * @param collation The collation JSON
@@ -358,18 +392,23 @@ public final class MongoEntityIndexes {
      * @param min The geospatial min option for 2d indexes
      * @param max The geospatial max option for 2d indexes
      * @param wildcardProjection The wildcard projection JSON
+     * @param comment The index creation comment
+     * @param commitQuorum The createIndexes commit quorum
      */
     public record ResolvedIndex(@Nullable String name,
                                 List<ResolvedIndexField> fields,
                                 boolean unique,
                                 boolean sparse,
+                                boolean hidden,
                                 @Nullable Integer expireAfterSeconds,
                                 @Nullable String partialFilterExpression,
                                 @Nullable String collation,
                                 @Nullable Integer bits,
                                 @Nullable Double min,
                                 @Nullable Double max,
-                                @Nullable String wildcardProjection) {
+                                @Nullable String wildcardProjection,
+                                @Nullable String comment,
+                                @Nullable String commitQuorum) {
     }
 
     /**

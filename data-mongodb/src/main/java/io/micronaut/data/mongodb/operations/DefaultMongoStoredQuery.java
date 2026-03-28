@@ -408,8 +408,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             @Nullable
             @Override
             public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
-                if (converterClass == null) {
-                    return value;
+                if (converterClass == null || converterClass == Object.class) {
+                    if (value == null) {
+                        return value;
+                    }
+                    Class<?> geoType = argument != null ? argument.getType() : value.getClass();
+                    if (!MongoGeoConverters.supportsImplicitGeoType(geoType)) {
+                        return value;
+                    }
+                    AttributeConverter<Object, Object> implicitConverter = attributeConverterRegistry.getConverter(MongoGeoConverters.resolveImplicitGeoConverterClass(geoType));
+                    ConversionContext conversionContext = argument != null ? ConversionContext.of(argument) : ConversionContext.of(Argument.of(geoType));
+                    return implicitConverter.convertToPersistedValue(value, conversionContext);
                 }
                 AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                 ConversionContext conversionContext = createTypeConversionContext(null, argument);

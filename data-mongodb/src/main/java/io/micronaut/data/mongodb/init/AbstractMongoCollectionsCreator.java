@@ -256,13 +256,16 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     fields,
                     index.unique(),
                     index.sparse(),
+                    index.hidden(),
                     index.expireAfterSeconds(),
                     normalizeJsonString(index.partialFilterExpression()),
                     normalizeJsonString(index.collation()),
                     index.bits(),
                     index.min(),
                     index.max(),
-                    normalizeJsonString(index.wildcardProjection())
+                    normalizeJsonString(index.wildcardProjection()),
+                    index.comment(),
+                    index.commitQuorum()
             ));
         }
         return indexes;
@@ -429,13 +432,16 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                               List<MongoResolvedIndexField> fields,
                               boolean unique,
                               boolean sparse,
+                              boolean hidden,
                               @Nullable Integer expireAfterSeconds,
                               @Nullable String partialFilterExpression,
                               @Nullable String collation,
                               @Nullable Integer bits,
                               @Nullable Double min,
                               @Nullable Double max,
-                              @Nullable String wildcardProjection) {
+                              @Nullable String wildcardProjection,
+                              @Nullable String comment,
+                              @Nullable String commitQuorum) {
 
         boolean hasSameKey(MongoResolvedIndex other) {
             return fields.equals(other.fields);
@@ -444,6 +450,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         boolean matchesManagedOptions(MongoResolvedIndex other) {
             return unique == other.unique
                     && sparse == other.sparse
+                    && hidden == other.hidden
                     && Objects.equals(expireAfterSeconds, other.expireAfterSeconds)
                     && Objects.equals(partialFilterExpression, other.partialFilterExpression)
                     && collationMatches(collation, other.collation)
@@ -494,6 +501,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     + ", fields=" + fields
                     + ", unique=" + unique
                     + ", sparse=" + sparse
+                    + ", hidden=" + hidden
                     + ", expireAfterSeconds=" + expireAfterSeconds
                     + ", partialFilterExpression=" + partialFilterExpression
                     + ", collation=" + collation
@@ -501,6 +509,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     + ", min=" + min
                     + ", max=" + max
                     + ", wildcardProjection=" + wildcardProjection
+                    + ", comment=" + comment
+                    + ", commitQuorum=" + commitQuorum
                     + '}';
         }
     }

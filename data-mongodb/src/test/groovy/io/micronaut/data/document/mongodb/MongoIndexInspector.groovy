@@ -32,6 +32,7 @@ final class MongoIndexInspector {
                     fields            : List.copyOf(fields),
                     unique            : indexDocument.getBoolean('unique', false),
                     sparse            : indexDocument.getBoolean('sparse', false),
+                    hidden            : indexDocument.getBoolean('hidden', false),
                     expireAfterSeconds: indexDocument.getInteger('expireAfterSeconds'),
                     partialFilterExpression: indexDocument.get('partialFilterExpression'),
                     collation            : indexDocument.get('collation'),

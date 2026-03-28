@@ -29,6 +29,10 @@ class MongoTopLevelWildcardProjectionIndexCreationSpec extends Specification imp
         ['io.micronaut.data.document.mongodb.wildcard.toplevel']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -42,7 +46,7 @@ class MongoTopLevelWildcardProjectionIndexCreationSpec extends Specification imp
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'top_level_wildcard_projection_indexed_entities')
             assert indexes*.name.contains('top_level_wildcard_projection_idx')

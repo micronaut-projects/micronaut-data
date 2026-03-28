@@ -43,4 +43,19 @@ public @interface MongoWildcardIndex {
      * @return The wildcard projection definition as JSON.
      */
     String wildcardProjection() default "";
+
+    /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 }

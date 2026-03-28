@@ -44,4 +44,14 @@ public @interface MongoWildcardIndexed {
      */
     String wildcardProjection() default "";
 
+    /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
+
 }

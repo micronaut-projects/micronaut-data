@@ -57,6 +57,11 @@ public @interface MongoCompoundIndex {
     boolean sparse() default false;
 
     /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
      * @return The index expiration in seconds.
      */
     int expireAfterSeconds() default -1;
@@ -70,4 +75,14 @@ public @interface MongoCompoundIndex {
      * @return The collation definition as JSON.
      */
     String collation() default "";
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 }

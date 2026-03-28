@@ -154,18 +154,21 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                                             fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
                                         }
                                     }
-                                    resolvedIndexes.add(new MongoResolvedIndex(
-                                            indexDocument.getString("name"),
-                                            List.copyOf(fields),
-                                            indexDocument.getBoolean("unique", false),
-                                            indexDocument.getBoolean("sparse", false),
-                                            indexDocument.getInteger("expireAfterSeconds"),
-                                            normalizeJsonValue(indexDocument.get("partialFilterExpression")),
-                                            normalizeJsonValue(indexDocument.get("collation")),
+                        resolvedIndexes.add(new MongoResolvedIndex(
+                                indexDocument.getString("name"),
+                                List.copyOf(fields),
+                                indexDocument.getBoolean("unique", false),
+                                indexDocument.getBoolean("sparse", false),
+                                indexDocument.getBoolean("hidden", false),
+                                indexDocument.getInteger("expireAfterSeconds"),
+                                normalizeJsonValue(indexDocument.get("partialFilterExpression")),
+                                normalizeJsonValue(indexDocument.get("collation")),
                                             toInteger(indexDocument.get("bits")),
                                             toDouble(indexDocument.get("min")),
                                             toDouble(indexDocument.get("max")),
-                                            normalizeJsonValue(indexDocument.get("wildcardProjection"))
+                                            normalizeJsonValue(indexDocument.get("wildcardProjection")),
+                                            null,
+                                            null
                                     ));
                                 }
                                 return resolvedIndexes;
@@ -177,7 +180,22 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 @Override
                 public void createIndex(MongoDatabase database, String collection, MongoResolvedIndex index) {
                     MongoCollection<Document> mongoCollection = database.getCollection(collection);
+                    if (index.comment() != null || index.commitQuorum() != null) {
+                        Document command = new Document("createIndexes", collection)
+                                .append("indexes", List.of(toIndexCommandDocument(index)));
+                        if (index.comment() != null) {
+                            command.append("comment", index.comment());
+                        }
+                        if (index.commitQuorum() != null) {
+                            command.append("commitQuorum", toCommitQuorumValue(index.commitQuorum()));
+                        }
+                        Mono.from(database.runCommand(command)).block();
+                        return;
+                    }
                     IndexOptions indexOptions = new IndexOptions().unique(index.unique()).sparse(index.sparse());
+                    if (index.hidden()) {
+                        indexOptions.hidden(true);
+                    }
                     if (index.name() != null) {
                         indexOptions.name(index.name());
                     }
@@ -206,6 +224,52 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 }
             };
         }, mongoCollectionNameProvider);
+    }
+
+    private Document toIndexCommandDocument(MongoResolvedIndex index) {
+        Document indexDocument = new Document("key", index.keysDocument());
+        if (index.name() != null) {
+            indexDocument.append("name", index.name());
+        }
+        if (index.unique()) {
+            indexDocument.append("unique", true);
+        }
+        if (index.sparse()) {
+            indexDocument.append("sparse", true);
+        }
+        if (index.hidden()) {
+            indexDocument.append("hidden", true);
+        }
+        if (index.expireAfterSeconds() != null) {
+            indexDocument.append("expireAfterSeconds", index.expireAfterSeconds());
+        }
+        if (index.partialFilterExpression() != null) {
+            indexDocument.append("partialFilterExpression", Document.parse(index.partialFilterExpression()));
+        }
+        if (index.collation() != null) {
+            indexDocument.append("collation", Document.parse(index.collation()));
+        }
+        if (index.bits() != null) {
+            indexDocument.append("bits", index.bits());
+        }
+        if (index.min() != null) {
+            indexDocument.append("min", index.min());
+        }
+        if (index.max() != null) {
+            indexDocument.append("max", index.max());
+        }
+        if (index.wildcardProjection() != null) {
+            indexDocument.append("wildcardProjection", Document.parse(index.wildcardProjection()));
+        }
+        return indexDocument;
+    }
+
+    private Object toCommitQuorumValue(String commitQuorum) {
+        try {
+            return Integer.parseInt(commitQuorum);
+        } catch (NumberFormatException ignored) {
+            return commitQuorum;
+        }
     }
 
     private Collation toCollation(Document document) {

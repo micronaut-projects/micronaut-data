@@ -1,4 +1,4 @@
-package io.micronaut.data.document.mongodb.wildcard.toplevel
+package io.micronaut.data.document.mongodb.comment
 
 import com.mongodb.client.MongoClient
 import io.micronaut.context.ApplicationContext
@@ -7,15 +7,16 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
+import io.micronaut.data.mongodb.annotation.MongoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.annotation.MongoWildcardIndex
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
-class MongoTopLevelWildcardIndexCreationSpec extends Specification implements MongoTestPropertyProvider {
+class MongoIndexCommentCreationSpec extends Specification implements MongoTestPropertyProvider {
+
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext
@@ -25,7 +26,7 @@ class MongoTopLevelWildcardIndexCreationSpec extends Specification implements Mo
 
     @Override
     List<String> getPackageNames() {
-        ['io.micronaut.data.document.mongodb.wildcard.toplevel']
+        ['io.micronaut.data.document.mongodb.comment']
     }
 
     Class<?> expectedCollectionsCreatorBeanType() {
@@ -40,35 +41,33 @@ class MongoTopLevelWildcardIndexCreationSpec extends Specification implements Mo
         mongoClient = applicationContext.getBean(MongoClient)
     }
 
-    void 'creates top-level wildcard index'() {
+    void 'creates index when comment option is declared'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
         applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
-            def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'top_level_wildcard_indexed_entities')
-            assert indexes*.name.contains('top_level_wildcard_idx')
-            def index = indexes.find { it.name == 'top_level_wildcard_idx' }
+            def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'comment_indexed_entities')
+            assert indexes*.name.contains('comment_name_idx')
+            def index = indexes.find { it.name == 'comment_name_idx' }
             assert index.fields.size() == 1
-            assert index.fields[0].path() == '$**'
+            assert index.fields[0].path() == 'name'
             assert index.fields[0].order() == 1
         }
     }
 }
 
 @MongoRepository
-interface TopLevelWildcardIndexedEntityRepository extends CrudRepository<TopLevelWildcardIndexedEntity, String> {
+interface CommentIndexedEntityRepository extends CrudRepository<CommentIndexedEntity, String> {
 }
 
-@MongoWildcardIndex(name = 'top_level_wildcard_idx')
-@MappedEntity('top_level_wildcard_indexed_entities')
-class TopLevelWildcardIndexedEntity {
+@MappedEntity('comment_indexed_entities')
+class CommentIndexedEntity {
     @Id
     @GeneratedValue
     String id
 
+    @MongoIndexed(name = 'comment_name_idx', comment = 'comment-index-build')
     String name
-
-    Map<String, Object> metadata
 }
