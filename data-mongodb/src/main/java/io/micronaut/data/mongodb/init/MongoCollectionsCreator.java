@@ -20,6 +20,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationStrength;
+import com.mongodb.client.model.ClusteredIndexOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptions;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
@@ -27,8 +29,8 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
@@ -44,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MongoDB's collections creator.
@@ -87,8 +90,44 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 }
 
                 @Override
-                public void createCollection(MongoDatabase database, String collection) {
-                    database.createCollection(collection);
+                public void createCollection(MongoDatabase database, String collection, @Nullable MongoResolvedCollectionOptions options) {
+                    if (options == null) {
+                        database.createCollection(collection);
+                        return;
+                    }
+                    CreateCollectionOptions collectionOptions = new CreateCollectionOptions();
+                    ClusteredIndexOptions clusteredIndexOptions = new ClusteredIndexOptions(new Document("_id", 1), options.clusteredIndexUnique());
+                    if (options.clusteredIndexName() != null) {
+                        clusteredIndexOptions.name(options.clusteredIndexName());
+                    }
+                    collectionOptions.clusteredIndexOptions(clusteredIndexOptions);
+                    if (options.expireAfterSeconds() != null) {
+                        collectionOptions.expireAfter(options.expireAfterSeconds().longValue(), TimeUnit.SECONDS);
+                    }
+                    database.createCollection(collection, collectionOptions);
+                }
+
+                @Override
+                public @Nullable MongoResolvedCollectionOptions getCollectionOptions(MongoDatabase database, String collection) {
+                    for (Document collectionDocument : database.listCollections()) {
+                        if (!collection.equals(collectionDocument.getString("name"))) {
+                            continue;
+                        }
+                        Document options = collectionDocument.get("options", Document.class);
+                        if (options == null) {
+                            return null;
+                        }
+                        Document clustered = options.get("clusteredIndex", Document.class);
+                        if (clustered == null) {
+                            return null;
+                        }
+                        return new MongoResolvedCollectionOptions(
+                                clustered.getString("name"),
+                                clustered.getBoolean("unique", true),
+                                options.getInteger("expireAfterSeconds")
+                        );
+                    }
+                    return null;
                 }
 
                 @Override
@@ -115,12 +154,12 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                                 indexDocument.getBoolean("unique", false),
                                 indexDocument.getBoolean("sparse", false),
                                 indexDocument.getInteger("expireAfterSeconds"),
-                                indexDocument.get("partialFilterExpression") == null ? null : indexDocument.get("partialFilterExpression").toString(),
-                                indexDocument.get("collation") == null ? null : indexDocument.get("collation").toString(),
-                                null,
-                                null,
-                                null,
-                                indexDocument.get("wildcardProjection") == null ? null : indexDocument.get("wildcardProjection").toString()
+                                normalizeJsonValue(indexDocument.get("partialFilterExpression")),
+                                normalizeJsonValue(indexDocument.get("collation")),
+                                toInteger(indexDocument.get("bits")),
+                                toDouble(indexDocument.get("min")),
+                                toDouble(indexDocument.get("max")),
+                                normalizeJsonValue(indexDocument.get("wildcardProjection"))
                         ));
                     }
                     return indexes;
@@ -151,12 +190,14 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                     if (index.max() != null) {
                         indexOptions.max(index.max());
                     }
+                    if (index.wildcardProjection() != null) {
+                        indexOptions.wildcardProjection(Document.parse(index.wildcardProjection()));
+                    }
                     mongoCollection.createIndex(index.keysDocument(), indexOptions);
                 }
             };
         }, mongoCollectionNameProvider);
     }
-
 
     private Collation toCollation(Document document) {
         Collation.Builder builder = Collation.builder();

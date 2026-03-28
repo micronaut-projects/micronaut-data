@@ -39,4 +39,9 @@ public @interface MongoWildcardIndexed {
      */
     String name() default "";
 
+    /**
+     * @return The wildcard projection definition as JSON.
+     */
+    String wildcardProjection() default "";
+
 }

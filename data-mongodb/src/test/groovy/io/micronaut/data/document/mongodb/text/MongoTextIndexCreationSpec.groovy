@@ -28,6 +28,10 @@ class MongoTextIndexCreationSpec extends Specification implements MongoTestPrope
         ['io.micronaut.data.document.mongodb.text']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -41,7 +45,7 @@ class MongoTextIndexCreationSpec extends Specification implements MongoTestPrope
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'text_indexed_entities')
             assert indexes*.name.contains('text_name_idx')

@@ -32,7 +32,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.mongodb.annotation.MongoIndexDirection;
+import io.micronaut.data.mongodb.annotation.MongoClusteredIndex;
 import io.micronaut.data.mongodb.common.MongoEntityIndexes;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
@@ -47,6 +47,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.Date;
 
 /**
  * MongoDB's collections creator.
@@ -124,12 +128,19 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 Dtbs database = databaseOperations.find(entity);
                 Set<String> collections = databaseOperations.listCollectionNames(database);
                 String persistedName = mongoCollectionNameProvider.provide(entity);
+                MongoResolvedCollectionOptions desiredCollectionOptions = resolveCollectionOptions(entity);
                 boolean collectionExists = collections.contains(persistedName);
+                if (collectionExists && desiredCollectionOptions != null) {
+                    MongoResolvedCollectionOptions existingCollectionOptions = databaseOperations.getCollectionOptions(database, persistedName);
+                    if (!desiredCollectionOptions.matches(existingCollectionOptions)) {
+                        throw new IllegalStateException("Conflicting existing MongoDB collection options for entity [" + entity.getName() + "] and collection [" + persistedName + "]: desired " + desiredCollectionOptions.describe() + ", existing " + (existingCollectionOptions == null ? "null" : existingCollectionOptions.describe()));
+                    }
+                }
                 if (!collectionExists && createCollections) {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));
                     }
-                    databaseOperations.createCollection(database, persistedName);
+                    databaseOperations.createCollection(database, persistedName, desiredCollectionOptions);
                     collections.add(persistedName);
                 }
                 if ((collectionExists || createCollections) && createIndexes) {
@@ -158,11 +169,45 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                         if (LOG.isInfoEnabled()) {
                             LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));
                         }
-                        databaseOperations.createCollection(database, joinCollectionName);
+                        databaseOperations.createCollection(database, joinCollectionName, null);
                     }
                 }
             }
         }
+    }
+
+    @Nullable
+    private MongoResolvedCollectionOptions resolveCollectionOptions(PersistentEntity entity) {
+        RuntimePersistentEntity<?> runtimePersistentEntity = (RuntimePersistentEntity<?>) entity;
+        var annotation = runtimePersistentEntity.getAnnotationMetadata().getAnnotation(MongoClusteredIndex.class);
+        if (annotation == null) {
+            return null;
+        }
+        boolean unique = annotation.booleanValue("unique").orElse(true);
+        if (!unique) {
+            throw new IllegalStateException("Mongo clustered index for entity [" + entity.getName() + "] must be unique=true");
+        }
+        Integer expireAfterSeconds = annotation.intValue("expireAfterSeconds").isPresent() && annotation.intValue("expireAfterSeconds").getAsInt() >= 0
+                ? annotation.intValue("expireAfterSeconds").getAsInt() : null;
+        if (expireAfterSeconds != null) {
+            PersistentProperty identity = entity.getIdentity();
+            if (identity == null) {
+                throw new IllegalStateException("Mongo clustered TTL collection for entity [" + entity.getName() + "] requires an identity property");
+            }
+            String idType = identity.getTypeName();
+            boolean supportedTtlIdType = idType.equals(Date.class.getName())
+                    || idType.equals(Instant.class.getName())
+                    || idType.equals(LocalDateTime.class.getName())
+                    || idType.equals(OffsetDateTime.class.getName());
+            if (!supportedTtlIdType) {
+                throw new IllegalStateException("Mongo clustered TTL collection for entity [" + entity.getName() + "] requires a date/time identity type, but found [" + idType + "]");
+            }
+        }
+        return new MongoResolvedCollectionOptions(
+                annotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
+                unique,
+                expireAfterSeconds
+        );
     }
 
     private void createIndexes(DatabaseOperations<Dtbs> databaseOperations,
@@ -206,13 +251,66 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             List<MongoResolvedIndexField> fields = index.fields().stream()
                     .map(field -> new MongoResolvedIndexField(field.path(), field.order(), field.weight(), field.kind(), field.min(), field.max()))
                     .toList();
-            indexes.add(new MongoResolvedIndex(index.name(), fields, index.unique(), index.sparse(), index.expireAfterSeconds(), index.partialFilterExpression(), index.collation(), index.bits(), index.min(), index.max(), index.wildcardProjection()));
+            indexes.add(new MongoResolvedIndex(
+                    index.name(),
+                    fields,
+                    index.unique(),
+                    index.sparse(),
+                    index.expireAfterSeconds(),
+                    normalizeJsonString(index.partialFilterExpression()),
+                    normalizeJsonString(index.collation()),
+                    index.bits(),
+                    index.min(),
+                    index.max(),
+                    normalizeJsonString(index.wildcardProjection())
+            ));
         }
         return indexes;
     }
 
-    private int toOrder(MongoIndexDirection direction) {
-        return direction == MongoIndexDirection.DESC ? -1 : 1;
+    static @Nullable String normalizeJsonValue(@Nullable Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Document document) {
+            return document.toJson();
+        }
+        if (value instanceof org.bson.BsonDocument bsonDocument) {
+            return bsonDocument.toJson();
+        }
+        if (value instanceof String stringValue) {
+            return normalizeJsonString(stringValue);
+        }
+        return value.toString();
+    }
+
+    static @Nullable String normalizeJsonString(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        try {
+            return Document.parse(trimmed).toJson();
+        } catch (RuntimeException ignored) {
+            return trimmed;
+        }
+    }
+
+    static @Nullable Integer toInteger(@Nullable Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return null;
+    }
+
+    static @Nullable Double toDouble(@Nullable Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return null;
     }
 
     /**
@@ -264,12 +362,23 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         Set<String> listCollectionNames(Dtbs database);
 
         /**
-         * Create a collection in the given database.
+         * Create a collection in the given database with options.
          *
          * @param database   The database
          * @param collection The collection
+         * @param options The resolved collection options
          */
-        void createCollection(Dtbs database, String collection);
+        void createCollection(Dtbs database, String collection, @Nullable MongoResolvedCollectionOptions options);
+
+        /**
+         * Read collection options for an existing collection.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @return The collection options if clustered, or {@code null}
+         */
+        @Nullable
+        MongoResolvedCollectionOptions getCollectionOptions(Dtbs database, String collection);
 
         /**
          * List indexes for the given collection.
@@ -289,6 +398,26 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
          */
         void createIndex(Dtbs database, String collection, MongoResolvedIndex index);
 
+    }
+
+    @Internal
+    record MongoResolvedCollectionOptions(@Nullable String clusteredIndexName,
+                                          boolean clusteredIndexUnique,
+                                          @Nullable Integer expireAfterSeconds) {
+
+        boolean matches(@Nullable MongoResolvedCollectionOptions other) {
+            return other != null
+                    && clusteredIndexUnique == other.clusteredIndexUnique
+                    && Objects.equals(expireAfterSeconds, other.expireAfterSeconds)
+                    && (clusteredIndexName == null || other.clusteredIndexName == null || Objects.equals(clusteredIndexName, other.clusteredIndexName));
+        }
+
+        String describe() {
+            return "MongoResolvedCollectionOptions{clusteredIndexName=" + clusteredIndexName
+                    + ", clusteredIndexUnique=" + clusteredIndexUnique
+                    + ", expireAfterSeconds=" + expireAfterSeconds
+                    + '}';
+        }
     }
 
     @Internal
@@ -317,11 +446,33 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     && sparse == other.sparse
                     && Objects.equals(expireAfterSeconds, other.expireAfterSeconds)
                     && Objects.equals(partialFilterExpression, other.partialFilterExpression)
-                    && Objects.equals(collation, other.collation)
+                    && collationMatches(collation, other.collation)
                     && Objects.equals(bits, other.bits)
                     && Objects.equals(min, other.min)
                     && Objects.equals(max, other.max)
                     && Objects.equals(wildcardProjection, other.wildcardProjection);
+        }
+
+        private static boolean collationMatches(@Nullable String existingCollation,
+                                                @Nullable String desiredCollation) {
+            if (desiredCollation == null) {
+                return existingCollation == null;
+            }
+            if (existingCollation == null) {
+                return false;
+            }
+            try {
+                Document desired = Document.parse(desiredCollation);
+                Document existing = Document.parse(existingCollation);
+                for (String key : desired.keySet()) {
+                    if (!Objects.equals(existing.get(key), desired.get(key))) {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (RuntimeException ignored) {
+                return Objects.equals(existingCollation, desiredCollation);
+            }
         }
 
         Document keysDocument() {
@@ -339,7 +490,18 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
 
         String describe() {
-            return "MongoResolvedIndex{name=" + name + ", fields=" + fields + ", unique=" + unique + ", sparse=" + sparse + ", expireAfterSeconds=" + expireAfterSeconds + ", partialFilterExpression=" + partialFilterExpression + '}';
+            return "MongoResolvedIndex{name=" + name
+                    + ", fields=" + fields
+                    + ", unique=" + unique
+                    + ", sparse=" + sparse
+                    + ", expireAfterSeconds=" + expireAfterSeconds
+                    + ", partialFilterExpression=" + partialFilterExpression
+                    + ", collation=" + collation
+                    + ", bits=" + bits
+                    + ", min=" + min
+                    + ", max=" + max
+                    + ", wildcardProjection=" + wildcardProjection
+                    + '}';
         }
     }
 }

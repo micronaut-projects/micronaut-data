@@ -28,6 +28,10 @@ class MongoGeoIndexCreationSpec extends Specification implements MongoTestProper
         ['io.micronaut.data.document.mongodb.geo']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -41,7 +45,7 @@ class MongoGeoIndexCreationSpec extends Specification implements MongoTestProper
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'geo_indexed_entities')
             assert indexes*.name.contains('geo_location_idx')

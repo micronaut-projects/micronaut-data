@@ -31,6 +31,10 @@ class MongoCompoundGeoIndexCreationSpec extends Specification implements MongoTe
         ['io.micronaut.data.document.mongodb.geocompound']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -44,7 +48,7 @@ class MongoCompoundGeoIndexCreationSpec extends Specification implements MongoTe
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'geo_compound_indexed_entities')
             assert indexes*.name.contains('geo_name_idx')

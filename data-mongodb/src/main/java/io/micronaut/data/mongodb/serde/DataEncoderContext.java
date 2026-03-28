@@ -26,7 +26,9 @@ import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import io.micronaut.data.document.serde.IdSerializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.mongodb.annotation.MongoGeoIndexed;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
+import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.serde.Encoder;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.custom.CodecBsonDecoder;
@@ -39,6 +41,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link Serializer.EncoderContext}.
@@ -125,7 +128,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                     Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
                             .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
-                    Serializer<? super Object> serializer = findSerializer(convertedType);
+                    Serializer<? super Object> serializer = findSerializer(convertedType).createSpecific(encoderContext, convertedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                     return new Serializer<>() {
 
@@ -158,6 +161,26 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     @Override
     public <T> Serializer<? super T> findSerializer(Argument<? extends T> type) throws SerdeException {
+        if (shouldUseImplicitGeoConverter(type)) {
+            Argument<Map> mapArgument = Argument.of(Map.class);
+            Serializer<? super Map> serializer = findSerializer(mapArgument).createSpecific(this, mapArgument);
+            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(resolveImplicitGeoConverterClass(type));
+            return (Serializer<? super T>) new Serializer<>() {
+                @Override
+                public void serialize(Encoder encoder, EncoderContext context, Argument<?> argument, Object value) throws IOException {
+                    if (value == null) {
+                        encoder.encodeNull();
+                        return;
+                    }
+                    Object converted = converter.convertToPersistedValue(value, ConversionContext.of(type));
+                    if (converted == null) {
+                        encoder.encodeNull();
+                        return;
+                    }
+                    serializer.serialize(encoder, context, mapArgument, (Map) converted);
+                }
+            };
+        }
         Codec<? extends T> codec = codecRegistry.get(type.getType(), codecRegistry);
         if (codec instanceof MappedCodec mappedCodec) {
             return mappedCodec.serializer;
@@ -166,6 +189,18 @@ final class DataEncoderContext implements Serializer.EncoderContext {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findSerializer(type);
+    }
+
+    private boolean shouldUseImplicitGeoConverter(Argument<?> type) {
+        if (!type.isAnnotationPresent(MongoGeoIndexed.class)) {
+            return false;
+        }
+        Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").orElse(null);
+        return (converterClass == null || converterClass == Object.class) && MongoGeoConverters.supportsImplicitGeoType(type.getType());
+    }
+
+    private Class<?> resolveImplicitGeoConverterClass(Argument<?> type) {
+        return MongoGeoConverters.resolveImplicitGeoConverterClass(type.getType());
     }
 
     @Override

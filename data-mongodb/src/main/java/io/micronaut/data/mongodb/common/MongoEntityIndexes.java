@@ -29,6 +29,7 @@ import io.micronaut.data.mongodb.annotation.MongoIndexed;
 import io.micronaut.data.mongodb.annotation.MongoTextIndexed;
 import io.micronaut.data.mongodb.annotation.MongoWildcardIndex;
 import io.micronaut.data.mongodb.annotation.MongoWildcardIndexed;
+import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -47,7 +48,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Internal
 public final class MongoEntityIndexes {
-
 
     private static final Map<RuntimePersistentEntity<?>, MongoEntityIndexes> INDEXES_BY_ENTITY = new ConcurrentHashMap<>();
 
@@ -152,6 +152,7 @@ public final class MongoEntityIndexes {
             }
             var geoAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoGeoIndexed.class);
             if (geoAnnotation != null) {
+                validateGeoIndexedType(entity, property);
                 MongoGeoIndexType type = geoAnnotation.enumValue("type", MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
                 Integer bits = geoAnnotation.intValue("bits").isPresent() && geoAnnotation.intValue("bits").getAsInt() >= 0 ? geoAnnotation.intValue("bits").getAsInt() : null;
                 Double min = geoAnnotation.doubleValue("min").isPresent() && !Double.isNaN(geoAnnotation.doubleValue("min").getAsDouble()) ? geoAnnotation.doubleValue("min").getAsDouble() : null;
@@ -176,6 +177,10 @@ public final class MongoEntityIndexes {
             }
             var wildcardAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoWildcardIndexed.class);
             if (wildcardAnnotation != null) {
+                String wildcardProjection = wildcardAnnotation.stringValue("wildcardProjection").filter(s -> !s.isEmpty()).orElse(null);
+                if (wildcardProjection != null) {
+                    throw new IllegalStateException("Mongo wildcardProjection on field-level @MongoWildcardIndexed is not supported by MongoDB. Use @MongoWildcardIndex on the entity instead for top-level wildcard projection.");
+                }
                 indexes.add(new ResolvedIndex(
                         wildcardAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
                         List.of(new ResolvedIndexField(property.getPersistedName() + ".$**", 1, null, null, null, null)),
@@ -192,6 +197,19 @@ public final class MongoEntityIndexes {
             }
         }
         return indexes;
+    }
+
+    private static void validateGeoIndexedType(RuntimePersistentEntity<?> entity,
+                                               RuntimePersistentProperty<?> property) {
+        Class<?> propertyType = property.getType();
+        if (MongoGeoConverters.supportsGeoIndexedPropertyType(propertyType)) {
+            return;
+        }
+        throw new IllegalStateException("Mongo geospatial index on entity ["
+                + entity.getName()
+                + "] property ["
+                + property.getName()
+                + "] requires a supported type (MongoGeoPoint, MongoGeoPointLike, point-like bean shape, MongoGeoMultiPoint, MongoGeoLineString, MongoGeoMultiLineString, MongoGeoPolygon, MongoGeoMultiPolygon, or MongoGeoGeometryCollection)");
     }
 
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {
@@ -229,6 +247,9 @@ public final class MongoEntityIndexes {
         for (var annotationValue : entity.getAnnotationMetadata().getAnnotationValuesByType(MongoCompoundIndex.class)) {
             List<ResolvedIndexField> fields = new ArrayList<>();
             java.util.Set<String> seenPaths = new java.util.LinkedHashSet<>();
+            Integer indexBits = null;
+            Double indexMin = null;
+            Double indexMax = null;
             for (var fieldAnnotation : annotationValue.getAnnotations("fields", MongoCompoundIndexField.class)) {
                 String path = fieldAnnotation.stringValue().orElseThrow();
                 String persistedPath = PersistentEntityUtils.getPersistentPropertyPath(entity, path)
@@ -267,7 +288,25 @@ public final class MongoEntityIndexes {
                     if (geoType != MongoGeoIndexType.GEO_2D && (bits != null || min != null || max != null)) {
                         throw new IllegalStateException("2d-specific geospatial options are only supported for Mongo 2d compound geospatial fields on entity [" + entity.getName() + "]");
                     }
-                    fields.add(new ResolvedIndexField(persistedPath, null, bits, geoType.getKey(), min, max));
+                    if (bits != null) {
+                        if (indexBits != null && !indexBits.equals(bits)) {
+                            throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] declares conflicting bits options for geospatial fields");
+                        }
+                        indexBits = bits;
+                    }
+                    if (min != null) {
+                        if (indexMin != null && !indexMin.equals(min)) {
+                            throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] declares conflicting min options for geospatial fields");
+                        }
+                        indexMin = min;
+                    }
+                    if (max != null) {
+                        if (indexMax != null && !indexMax.equals(max)) {
+                            throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] declares conflicting max options for geospatial fields");
+                        }
+                        indexMax = max;
+                    }
+                    fields.add(new ResolvedIndexField(persistedPath, null, null, geoType.getKey(), min, max));
                 } else {
                     if ((fieldAnnotation.intValue("bits").isPresent() && fieldAnnotation.intValue("bits").getAsInt() >= 0)
                             || (fieldAnnotation.doubleValue("min").isPresent() && !Double.isNaN(fieldAnnotation.doubleValue("min").getAsDouble()))
@@ -296,9 +335,9 @@ public final class MongoEntityIndexes {
                     null,
                     partialFilterExpression,
                     annotationValue.stringValue("collation").filter(s -> !s.isEmpty()).orElse(null),
-                    null,
-                    null,
-                    null,
+                    indexBits,
+                    indexMin,
+                    indexMax,
                     null
             ));
         }
@@ -313,6 +352,12 @@ public final class MongoEntityIndexes {
      * @param unique Whether unique
      * @param sparse Whether sparse
      * @param expireAfterSeconds TTL in seconds if any
+     * @param partialFilterExpression The partial filter expression JSON
+     * @param collation The collation JSON
+     * @param bits The geospatial bits option for 2d indexes
+     * @param min The geospatial min option for 2d indexes
+     * @param max The geospatial max option for 2d indexes
+     * @param wildcardProjection The wildcard projection JSON
      */
     public record ResolvedIndex(@Nullable String name,
                                 List<ResolvedIndexField> fields,
@@ -332,6 +377,10 @@ public final class MongoEntityIndexes {
      *
      * @param path The persisted path
      * @param order The field order
+     * @param weight The text index weight
+     * @param kind The index kind
+     * @param min The geospatial min option for 2d indexes
+     * @param max The geospatial max option for 2d indexes
      */
     public record ResolvedIndexField(String path, @Nullable Integer order, @Nullable Integer weight, @Nullable String kind, @Nullable Double min, @Nullable Double max) {
     }

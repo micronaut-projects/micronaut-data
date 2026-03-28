@@ -1,0 +1,153 @@
+Micronaut Data MongoDB supports declaration-based index creation for mapped entities.
+
+To enable startup index creation, set `micronaut.data.mongodb.create-indexes=true`.
+
+NOTE: Index creation is opt-in and runs during startup collection initialization.
+
+== Supported index annotations
+
+Micronaut Data currently supports the following MongoDB index annotations:
+
+* ann:data.mongodb.annotation.MongoIndexed[] (single-field indexes)
+* ann:data.mongodb.annotation.MongoCompoundIndex[] / ann:data.mongodb.annotation.MongoCompoundIndexes[] (compound indexes)
+* ann:data.mongodb.annotation.MongoTextIndexed[] (text indexes, including multi-field aggregation)
+* ann:data.mongodb.annotation.MongoHashedIndexed[] (hashed indexes)
+* ann:data.mongodb.annotation.MongoGeoIndexed[] (geospatial indexes: `2d`, `2dsphere`)
+* ann:data.mongodb.annotation.MongoWildcardIndexed[] (field-level wildcard indexes)
+* ann:data.mongodb.annotation.MongoWildcardIndex[] (top-level wildcard indexes)
+* ann:data.mongodb.annotation.MongoClusteredIndex[] (clustered collection options)
+
+== Single-field indexes
+
+Use ann:data.mongodb.annotation.MongoIndexed[] to declare standard single-field indexes.
+
+Supported options include direction, `unique`, `sparse`, `expireAfterSeconds` (TTL), `partialFilterExpression`, and `collation`.
+
+[source,java]
+----
+@MappedEntity("products")
+class ProductEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    @MongoIndexed(name = "product_sku_idx", unique = true)
+    String sku;
+}
+----
+
+== Compound indexes
+
+Use ann:data.mongodb.annotation.MongoCompoundIndex[] for multi-field index declarations at entity level.
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "order_customer_created_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "customerId", direction = MongoIndexDirection.ASC),
+        @MongoCompoundIndexField(value = "createdAt", direction = MongoIndexDirection.DESC)
+    }
+)
+@MappedEntity("orders")
+class OrderEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    String customerId;
+    Instant createdAt;
+}
+----
+
+NOTE: TTL on compound indexes is rejected during startup validation.
+
+== Text indexes
+
+Use ann:data.mongodb.annotation.MongoTextIndexed[] on text fields.
+
+Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.
+
+== Hashed indexes
+
+Use ann:data.mongodb.annotation.MongoHashedIndexed[] to create hashed indexes.
+
+== Geospatial indexes
+
+Use ann:data.mongodb.annotation.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
+
+Modeled geospatial values are supported for `MongoGeoPoint`, `MongoGeoMultiPoint`, `MongoGeoLineString`, `MongoGeoMultiLineString`, `MongoGeoPolygon`, `MongoGeoMultiPolygon`, `MongoGeoGeometryCollection`, and custom point-like modeled types.
+
+For properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[], Micronaut Data now applies `MongoGeoPointConverter` implicitly when no explicit `@MappedProperty(converter=...)` is declared.
+Point-like modeled types can map coordinates through numeric properties such as `x/y`, `longitude/latitude`, or `lng|lon/lat`.
+
+For polygon modeled values, Micronaut Data applies `MongoGeoPolygonConverter` implicitly for `MongoGeoPolygon` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+For line-string modeled values, Micronaut Data applies `MongoGeoLineStringConverter` implicitly for `MongoGeoLineString` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+For multi-line-string modeled values, Micronaut Data applies `MongoGeoMultiLineStringConverter` implicitly for `MongoGeoMultiLineString` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+For multi-point modeled values, Micronaut Data applies `MongoGeoMultiPointConverter` implicitly for `MongoGeoMultiPoint` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+For multi-polygon modeled values, Micronaut Data applies `MongoGeoMultiPolygonConverter` implicitly for `MongoGeoMultiPolygon` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+For geometry-collection modeled values, Micronaut Data applies `MongoGeoGeometryCollectionConverter` implicitly for `MongoGeoGeometryCollection` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+
+With `MongoGeoGeometryCollection` in place, modeled support now covers all standard GeoJSON geometry kinds (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`).
+
+NOTE: ann:data.mongodb.annotation.MongoGeoIndexed[] now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
+
+== Wildcard indexes
+
+Use ann:data.mongodb.annotation.MongoWildcardIndexed[] for field-level wildcard indexes.
+
+Use ann:data.mongodb.annotation.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
+
+NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
+Using `wildcardProjection` on field-level ann:data.mongodb.annotation.MongoWildcardIndexed[] is rejected during startup validation.
+
+== TTL indexes
+
+Use ann:data.mongodb.annotation.MongoIndexed[] with `expireAfterSeconds` to create TTL indexes:
+
+[source,java]
+----
+@MappedEntity("sessions")
+class SessionEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    @MongoIndexed(name = "expires_at_ttl_idx", expireAfterSeconds = 60)
+    Instant expiresAt;
+}
+----
+
+== Clustered collections
+
+Use ann:data.mongodb.annotation.MongoClusteredIndex[] on the entity to configure clustered collection options during startup collection initialization.
+
+[source,java]
+----
+@MongoClusteredIndex(name = "events_clustered_idx", unique = true, expireAfterSeconds = 3600)
+@MappedEntity("events")
+class EventEntity {
+    @Id
+    Instant id;
+
+    String payload;
+}
+----
+
+Clustered collection support follows MongoDB collection-level rules:
+
+* clustered options are applied through collection creation, not ordinary index creation
+* `unique` must remain `true`
+* when `expireAfterSeconds` is set, the identity type must be a date/time type (`Date`, `Instant`, `LocalDateTime`, `OffsetDateTime`)
+
+== Existing collections and conflicts
+
+When `create-indexes` is enabled, Micronaut Data checks existing collection indexes before creating new ones.
+If an index with the same key exists but managed options differ, startup fails fast with an explicit conflict message.
+
+For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.

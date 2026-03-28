@@ -28,6 +28,10 @@ class MongoPartialFilterIndexCreationSpec extends Specification implements Mongo
         ['io.micronaut.data.document.mongodb.partialfilter']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -41,7 +45,7 @@ class MongoPartialFilterIndexCreationSpec extends Specification implements Mongo
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'partial_filter_indexed_entities')
             assert indexes*.name.contains('partial_name_idx')

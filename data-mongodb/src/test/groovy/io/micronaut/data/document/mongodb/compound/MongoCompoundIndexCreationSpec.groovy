@@ -25,6 +25,10 @@ class MongoCompoundIndexCreationSpec extends Specification implements MongoTestP
     List<String> getPackageNames() {
         ['io.micronaut.data.document.mongodb.compound']
     }
+
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties() + [
@@ -45,7 +49,7 @@ class MongoCompoundIndexCreationSpec extends Specification implements MongoTestP
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'compound_indexed_entities')
             assert indexes*.name.contains('name_age_idx')

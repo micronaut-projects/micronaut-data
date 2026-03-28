@@ -16,7 +16,7 @@ class MongoCompoundIndexValidationSpec extends Specification implements MongoTes
 
     @Override
     List<String> getPackageNames() {
-        ['io.micronaut.data.document.mongodb']
+        ['io.micronaut.data.document.mongodb.validation.invalidpath']
     }
 
 

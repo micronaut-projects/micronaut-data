@@ -26,5 +26,5 @@ import io.micronaut.serde.annotation.Serdeable;
  * @since 5.0.0
  */
 @Serdeable
-public record MongoGeoPoint(double x, double y) implements MongoGeoPointLike {
+public record MongoGeoPoint(double x, double y) implements MongoGeoPointLike, MongoGeoGeometry {
 }

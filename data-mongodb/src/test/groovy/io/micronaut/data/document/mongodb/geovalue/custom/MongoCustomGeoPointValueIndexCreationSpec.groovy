@@ -13,7 +13,6 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.mongodb.geo.MongoGeoPointConverter
-import io.micronaut.data.mongodb.geo.MongoGeoPointLike
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -28,9 +27,16 @@ class MongoCustomGeoPointValueIndexCreationSpec extends Specification implements
     @Shared
     MongoClient mongoClient
 
+    @Shared
+    CustomGeoPointValueIndexedEntityRepository repository
+
     @Override
     List<String> getPackageNames() {
         ['io.micronaut.data.document.mongodb.geovalue.custom']
+    }
+
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
     }
 
     def setupSpec() {
@@ -39,6 +45,7 @@ class MongoCustomGeoPointValueIndexCreationSpec extends Specification implements
                 'micronaut.data.mongodb.create-indexes'    : 'true'
         ])
         mongoClient = applicationContext.getBean(MongoClient)
+        repository = applicationContext.getBean(CustomGeoPointValueIndexedEntityRepository)
     }
 
     void 'creates geospatial index on a custom point-like modeled value'() {
@@ -46,7 +53,7 @@ class MongoCustomGeoPointValueIndexCreationSpec extends Specification implements
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'custom_geo_point_value_indexed_entities')
             assert indexes*.name.contains('custom_geo_point_location_idx')
@@ -55,6 +62,16 @@ class MongoCustomGeoPointValueIndexCreationSpec extends Specification implements
             assert index.fields[0].path() == 'location'
             assert index.fields[0].kind() == '2dsphere'
         }
+    }
+
+    void 'persists and reads arbitrary custom geospatial modeled value'() {
+        when:
+        def saved = repository.save(new CustomGeoPointValueIndexedEntity(location: new CustomGeoPoint(longitude: 12.5d, latitude: 45.8d)))
+        def loaded = repository.findById(saved.id).orElseThrow()
+
+        then:
+        loaded.location.longitude == 12.5d
+        loaded.location.latitude == 45.8d
     }
 }
 
@@ -75,17 +92,7 @@ class CustomGeoPointValueIndexedEntity {
 }
 
 @MappedEntity
-class CustomGeoPoint implements MongoGeoPointLike {
-    double x
-    double y
-
-    @Override
-    double x() {
-        return x
-    }
-
-    @Override
-    double y() {
-        return y
-    }
+class CustomGeoPoint {
+    double longitude
+    double latitude
 }

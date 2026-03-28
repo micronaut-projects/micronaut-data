@@ -29,6 +29,10 @@ class MongoGeo2dOptionsIndexCreationSpec extends Specification implements MongoT
         ['io.micronaut.data.document.mongodb.geo2d.options']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -42,7 +46,7 @@ class MongoGeo2dOptionsIndexCreationSpec extends Specification implements MongoT
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'geo2d_options_indexed_entities')
             assert indexes*.name.contains('geo2d_options_idx')

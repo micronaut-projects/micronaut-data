@@ -17,6 +17,8 @@ package io.micronaut.data.mongodb.init;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationStrength;
+import com.mongodb.client.model.ClusteredIndexOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -27,6 +29,7 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
@@ -45,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MongoDB's reactive collections creator.
@@ -88,8 +92,45 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 }
 
                 @Override
-                public void createCollection(MongoDatabase database, String collection) {
-                    Mono.from(database.createCollection(collection)).block();
+                public void createCollection(MongoDatabase database, String collection, @Nullable MongoResolvedCollectionOptions options) {
+                    if (options == null) {
+                        Mono.from(database.createCollection(collection)).block();
+                        return;
+                    }
+                    CreateCollectionOptions collectionOptions = new CreateCollectionOptions();
+                    ClusteredIndexOptions clusteredIndexOptions = new ClusteredIndexOptions(new Document("_id", 1), options.clusteredIndexUnique());
+                    if (options.clusteredIndexName() != null) {
+                        clusteredIndexOptions.name(options.clusteredIndexName());
+                    }
+                    collectionOptions.clusteredIndexOptions(clusteredIndexOptions);
+                    if (options.expireAfterSeconds() != null) {
+                        collectionOptions.expireAfter(options.expireAfterSeconds().longValue(), TimeUnit.SECONDS);
+                    }
+                    Mono.from(database.createCollection(collection, collectionOptions)).block();
+                }
+
+                @Override
+                public @Nullable MongoResolvedCollectionOptions getCollectionOptions(MongoDatabase database, String collection) {
+                    Document collectionDocument = Flux.from(database.listCollections())
+                            .filter(document -> collection.equals(document.getString("name")))
+                            .next()
+                            .block();
+                    if (collectionDocument == null) {
+                        return null;
+                    }
+                    Document options = collectionDocument.get("options", Document.class);
+                    if (options == null) {
+                        return null;
+                    }
+                    Document clustered = options.get("clusteredIndex", Document.class);
+                    if (clustered == null) {
+                        return null;
+                    }
+                    return new MongoResolvedCollectionOptions(
+                            clustered.getString("name"),
+                            clustered.getBoolean("unique", true),
+                            options.getInteger("expireAfterSeconds")
+                    );
                 }
 
                 @Override
@@ -119,12 +160,12 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                                             indexDocument.getBoolean("unique", false),
                                             indexDocument.getBoolean("sparse", false),
                                             indexDocument.getInteger("expireAfterSeconds"),
-                                            indexDocument.get("partialFilterExpression") == null ? null : indexDocument.get("partialFilterExpression").toString(),
-                                            indexDocument.get("collation") == null ? null : indexDocument.get("collation").toString(),
-                                            null,
-                                            null,
-                                            null,
-                                            indexDocument.get("wildcardProjection") == null ? null : indexDocument.get("wildcardProjection").toString()
+                                            normalizeJsonValue(indexDocument.get("partialFilterExpression")),
+                                            normalizeJsonValue(indexDocument.get("collation")),
+                                            toInteger(indexDocument.get("bits")),
+                                            toDouble(indexDocument.get("min")),
+                                            toDouble(indexDocument.get("max")),
+                                            normalizeJsonValue(indexDocument.get("wildcardProjection"))
                                     ));
                                 }
                                 return resolvedIndexes;
@@ -158,12 +199,14 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                     if (index.max() != null) {
                         indexOptions.max(index.max());
                     }
+                    if (index.wildcardProjection() != null) {
+                        indexOptions.wildcardProjection(Document.parse(index.wildcardProjection()));
+                    }
                     Mono.from(mongoCollection.createIndex(index.keysDocument(), indexOptions)).block();
                 }
             };
         }, mongoCollectionNameProvider);
     }
-
 
     private Collation toCollation(Document document) {
         Collation.Builder builder = Collation.builder();

@@ -29,6 +29,10 @@ class MongoCollationIndexCreationSpec extends Specification implements MongoTest
         ['io.micronaut.data.document.mongodb.collation']
     }
 
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
     def setupSpec() {
         applicationContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
@@ -42,7 +46,7 @@ class MongoCollationIndexCreationSpec extends Specification implements MongoTest
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'collation_indexed_entities')
             assert indexes*.name.contains('collation_name_idx')

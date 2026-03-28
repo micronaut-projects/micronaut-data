@@ -35,6 +35,7 @@ final class MongoIndexInspector {
                     expireAfterSeconds: indexDocument.getInteger('expireAfterSeconds'),
                     partialFilterExpression: indexDocument.get('partialFilterExpression'),
                     collation            : indexDocument.get('collation'),
+                    wildcardProjection   : indexDocument.get('wildcardProjection'),
                     min                  : indexDocument.get('min'),
                     max                  : indexDocument.get('max'),
             ]

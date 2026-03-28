@@ -21,6 +21,10 @@ class MongoIndexCreationSpec extends Specification implements MongoTestPropertyP
     List<String> getPackageNames() {
         ['io.micronaut.data.document.mongodb.simple']
     }
+
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext
@@ -43,7 +47,7 @@ class MongoIndexCreationSpec extends Specification implements MongoTestPropertyP
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
         expect:
-        applicationContext.containsBean(io.micronaut.data.mongodb.init.MongoCollectionsCreator)
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'indexed_entities')
             assert indexes*.name.contains('name_idx')

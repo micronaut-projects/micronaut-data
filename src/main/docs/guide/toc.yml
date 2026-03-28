@@ -114,6 +114,7 @@ mongo:
   mongoMapping:
     title: Mapping Entities
     mongoAnnotations: Mapping Annotations
+    mongoIndexes: MongoDB Indexes
     mongoIdGenerator: ID Generation
     mongoCompositeId: Composite Primary Keys
     mongoConstructorArguments: Constructor Arguments
@@ -150,4 +151,3 @@ graal:
 spring:
   title: Spring Data Support
 dataGuides: Guides
-
