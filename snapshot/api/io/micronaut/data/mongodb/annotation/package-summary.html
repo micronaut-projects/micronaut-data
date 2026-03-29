@@ -68,7 +68,8 @@ loadScripts(document, 'script');</script>
 <ul class="summary-list">
 <li>
 <div id="class-summary">
-<div class="caption"><span>Annotation Interfaces</span></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button><button id="class-summary-tab6" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab6', 2)" class="table-tab">Annotation Interfaces</button></div>
+<div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
@@ -80,9 +81,25 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB query for aggregating results.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoCollation.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoCollation</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoClusteredIndex.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoClusteredIndex</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares MongoDB clustered collection options for an entity collection.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoCollation.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoCollation</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB's collation.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoCompoundIndex.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoCompoundIndex</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a compound MongoDB index for an entity.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoCompoundIndexes.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoCompoundIndexes</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
+<div class="block">Repeatable annotation for <a href="MongoCompoundIndex.html" title="annotation interface in io.micronaut.data.mongodb.annotation"><code>MongoCompoundIndex</code></a>.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoCompoundIndexField.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoCompoundIndexField</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a field within a compound MongoDB index.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoDeleteOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoDeleteOptions</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab6">
@@ -104,17 +121,41 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB query for finding results.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoProjection.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoProjection</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoGeoIndexed.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoGeoIndexed</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a simple MongoDB geospatial index for a property.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="MongoGeoIndexType.html" title="enum class in io.micronaut.data.mongodb.annotation">MongoGeoIndexType</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="block">Supported MongoDB geospatial index kinds.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoHashedIndexed.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoHashedIndexed</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a simple MongoDB hashed index for a property.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="MongoIndexDirection.html" title="enum class in io.micronaut.data.mongodb.annotation">MongoIndexDirection</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="block">MongoDB index direction.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoIndexed.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoIndexed</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a simple MongoDB index for a property.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoProjection.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoProjection</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB's fields projection.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoRepository.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoRepository</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab6">
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoRepository.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoRepository</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
 <div class="block">Stereotype repository that configures a <a href="../../annotation/Repository.html" title="annotation interface in io.micronaut.data.annotation"><code>Repository</code></a> as a <a href="MongoRepository.html" title="annotation interface in io.micronaut.data.mongodb.annotation"><code>MongoRepository</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoSort.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoSort</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoSort.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoSort</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB's sort.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoTextIndexed.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoTextIndexed</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a simple MongoDB text index for a property.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoUpdateOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoUpdateOptions</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab6">
@@ -123,6 +164,19 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoUpdateQuery.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoUpdateQuery</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab6">
 <div class="block">Defines a custom MongoDB update query.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoWildcardIndex.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoWildcardIndex</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
+<div class="block">Declares a top-level MongoDB wildcard index for an entity.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="MongoWildcardIndexed.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoWildcardIndexed</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="block">Declares a simple MongoDB wildcard index for a property.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="MongoWildcardIndexes.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoWildcardIndexes</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
+<div class="block">Repeatable annotation for <a href="MongoWildcardIndex.html" title="annotation interface in io.micronaut.data.mongodb.annotation"><code>MongoWildcardIndex</code></a>.</div>
+</div>
 </div>
 </div>
 </div>

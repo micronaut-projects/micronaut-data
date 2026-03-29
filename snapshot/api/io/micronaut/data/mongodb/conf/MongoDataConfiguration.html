@@ -62,6 +62,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#PREFIX" tabindex="0">PREFIX</a></li>
 <li><a href="#CREATE_COLLECTIONS_PROPERTY" tabindex="0">CREATE_COLLECTIONS_PROPERTY</a></li>
+<li><a href="#CREATE_INDEXES_PROPERTY" tabindex="0">CREATE_INDEXES_PROPERTY</a></li>
 <li><a href="#DRIVER_TYPE_PROPERTY" tabindex="0">DRIVER_TYPE_PROPERTY</a></li>
 <li><a href="#JSON_VIEWS_PROPERTY" tabindex="0">JSON_VIEWS_PROPERTY</a></li>
 <li><a href="#DRIVER_TYPE_SYNC" tabindex="0">DRIVER_TYPE_SYNC</a></li>
@@ -78,6 +79,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#isCreateCollections()" tabindex="0">isCreateCollections()</a></li>
 <li><a href="#setCreateCollections(boolean)" tabindex="0">setCreateCollections(boolean)</a></li>
+<li><a href="#isCreateIndexes()" tabindex="0">isCreateIndexes()</a></li>
+<li><a href="#setCreateIndexes(boolean)" tabindex="0">setCreateIndexes(boolean)</a></li>
 <li><a href="#isIgnoreJsonViews()" tabindex="0">isIgnoreJsonViews()</a></li>
 <li><a href="#setIgnoreJsonViews(boolean)" tabindex="0">setIgnoreJsonViews(boolean)</a></li>
 <li><a href="#getDriverType()" tabindex="0">getDriverType()</a></li>
@@ -146,23 +149,26 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><code><a href="#CREATE_COLLECTIONS_PROPERTY" class="member-name-link">CREATE_COLLECTIONS_PROPERTY</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DATABASE_CONFIGURATION_ERROR_MESSAGE" class="member-name-link">DATABASE_CONFIGURATION_ERROR_MESSAGE</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#CREATE_INDEXES_PROPERTY" class="member-name-link">CREATE_INDEXES_PROPERTY</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DRIVER_TYPE_PROPERTY" class="member-name-link">DRIVER_TYPE_PROPERTY</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DATABASE_CONFIGURATION_ERROR_MESSAGE" class="member-name-link">DATABASE_CONFIGURATION_ERROR_MESSAGE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DRIVER_TYPE_REACTIVE" class="member-name-link">DRIVER_TYPE_REACTIVE</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DRIVER_TYPE_PROPERTY" class="member-name-link">DRIVER_TYPE_PROPERTY</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DRIVER_TYPE_SYNC" class="member-name-link">DRIVER_TYPE_SYNC</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DRIVER_TYPE_REACTIVE" class="member-name-link">DRIVER_TYPE_REACTIVE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#JSON_VIEWS_PROPERTY" class="member-name-link">JSON_VIEWS_PROPERTY</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DRIVER_TYPE_SYNC" class="member-name-link">DRIVER_TYPE_SYNC</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-second even-row-color"><code><a href="#JSON_VIEWS_PROPERTY" class="member-name-link">JSON_VIEWS_PROPERTY</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#PREFIX" class="member-name-link">PREFIX</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -197,10 +203,16 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isCreateCollections()" class="member-name-link">isCreateCollections</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isIgnoreJsonViews()" class="member-name-link">isIgnoreJsonViews</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isCreateIndexes()" class="member-name-link">isCreateIndexes</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isIgnoreJsonViews()" class="member-name-link">isIgnoreJsonViews</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setCreateCollections(boolean)" class="member-name-link">setCreateCollections</a><wbr>(boolean&nbsp;createCollections)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setCreateCollections(boolean)" class="member-name-link">setCreateCollections</a><wbr>(boolean&nbsp;createCollections)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setCreateIndexes(boolean)" class="member-name-link">setCreateIndexes</a><wbr>(boolean&nbsp;createIndexes)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDriverType(io.micronaut.data.mongodb.conf.MongoDataConfiguration.DriverType)" class="member-name-link">setDriverType</a><wbr>(<a href="MongoDataConfiguration.DriverType.html" title="enum class in io.micronaut.data.mongodb.conf">MongoDataConfiguration.DriverType</a>&nbsp;driverType)</code></div>
@@ -251,6 +263,22 @@ loadScripts(document, 'script');</script>
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../constant-values.html#io.micronaut.data.mongodb.conf.MongoDataConfiguration.CREATE_COLLECTIONS_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="CREATE_INDEXES_PROPERTY">
+<h3>CREATE_INDEXES_PROPERTY</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">CREATE_INDEXES_PROPERTY</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#io.micronaut.data.mongodb.conf.MongoDataConfiguration.CREATE_INDEXES_PROPERTY">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -358,6 +386,22 @@ loadScripts(document, 'script');</script>
 <h3>setCreateCollections</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setCreateCollections</span><wbr><span class="parameters">(boolean&nbsp;createCollections)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isCreateIndexes()">
+<h3>isCreateIndexes</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isCreateIndexes</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setCreateIndexes(boolean)">
+<h3>setCreateIndexes</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setCreateIndexes</span><wbr><span class="parameters">(boolean&nbsp;createIndexes)</span></div>
 </div>
 </section>
 </li>
