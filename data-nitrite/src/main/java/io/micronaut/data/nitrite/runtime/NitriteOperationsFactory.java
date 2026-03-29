@@ -152,6 +152,7 @@ public final class NitriteOperationsFactory {
    * <p>This factory method centralizes Jackson configuration in a single place to ensure:</p>
    * <ul>
    *   <li>Consistent date handling for any raw temporal values Nitrite stores internally</li>
+   *   <li>Proper NitriteId serialization via NitriteIdModule</li>
    *   <li>Optional JTS module support for Geometry types</li>
    * </ul>
    *
@@ -166,6 +167,17 @@ public final class NitriteOperationsFactory {
     // setting only applies to raw temporal values Nitrite itself may serialize internally.
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     mapper.registerModule(new JavaTimeModule());
+
+    // Register NitriteIdModule for proper NitriteId serialization/deserialization
+    // This is essential for correct handling of Nitrite's internal _id field
+    try {
+        Class<?> nitriteIdModuleClass = Class.forName("org.dizitart.no2.mapper.jackson.modules.NitriteIdModule");
+        mapper.registerModule((Module) nitriteIdModuleClass.getDeclaredConstructor().newInstance());
+    } catch (Exception e) {
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("NitriteIdModule found but could not be registered: {}", e.getMessage());
+        }
+    }
 
     // Optional: JTS module for Geometry serialization (spatial queries)
     if (ClassUtils.isPresent(JTS_MODULE_CLASS, null)) {
