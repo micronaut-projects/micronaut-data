@@ -14646,6 +14646,19 @@ Micronaut Data MongoDB doesn&#8217;t support JPA annotations
 <div class="paragraph">
 <p>To enable startup index creation, set <code>micronaut.data.mongodb.create-indexes=true</code>.</p>
 </div>
+<div class="paragraph">
+<p>Use <code>micronaut.data.mongodb.create-indexes-failure-policy</code> to control startup behavior when index initialization fails:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FAIL_FAST</code> (default): fail startup immediately</p>
+</li>
+<li>
+<p><code>WARN_AND_CONTINUE</code>: log the failure and continue startup</p>
+</li>
+</ul>
+</div>
 <div class="admonitionblock note">
 <table>
 <tr>
@@ -14657,6 +14670,10 @@ Index creation is opt-in and runs during startup collection initialization.
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>When <code>micronaut.data.mongodb.create-indexes=true</code> and <code>micronaut.data.mongodb.create-collections=false</code>, Micronaut Data still performs index reconciliation/creation for collections that already exist.
+If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -14679,28 +14696,28 @@ Query-side usage for MongoDB text/geospatial operators is documented in <a href=
 <div class="ulist">
 <ul>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoIndexed.html">@MongoIndexed</a> (single-field indexes)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> (single-field indexes)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoCompoundIndex.html">@MongoCompoundIndex</a> / <a href="../api/io/micronaut/data/mongodb/annotation/MongoCompoundIndexes.html">@MongoCompoundIndexes</a> (compound indexes)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndex.html">@MongoCompoundIndex</a> / <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndexes.html">@MongoCompoundIndexes</a> (compound indexes)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoTextIndexed.html">@MongoTextIndexed</a> (text indexes, including multi-field aggregation)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> (text indexes, including multi-field aggregation)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoHashedIndexed.html">@MongoHashedIndexed</a> (hashed indexes)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoHashedIndexed.html">@MongoHashedIndexed</a> (hashed indexes)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a> (geospatial indexes: <code>2d</code>, <code>2dsphere</code>)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> (geospatial indexes: <code>2d</code>, <code>2dsphere</code>)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> (field-level wildcard indexes)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> (field-level wildcard indexes)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndex.html">@MongoWildcardIndex</a> (top-level wildcard indexes)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> (top-level wildcard indexes)</p>
 </li>
 <li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoClusteredIndex.html">@MongoClusteredIndex</a> (clustered collection options)</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoClusteredIndex.html">@MongoClusteredIndex</a> (clustered collection options)</p>
 </li>
 </ul>
 </div>
@@ -14710,7 +14727,7 @@ Query-side usage for MongoDB text/geospatial operators is documented in <a href=
 <h2 id="_single_field_indexes">Single-field indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoIndexed.html">@MongoIndexed</a> to declare standard single-field indexes.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> to declare standard single-field indexes.</p>
 </div>
 <div class="paragraph">
 <p>Supported options include direction, <code>unique</code>, <code>sparse</code>, <code>hidden</code>, <code>expireAfterSeconds</code> (TTL), <code>partialFilterExpression</code>, <code>collation</code>, index-build <code>comment</code>, and <code>storageEngine</code>.</p>
@@ -14734,7 +14751,7 @@ class ProductEntity {
 <h2 id="_compound_indexes">Compound indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoCompoundIndex.html">@MongoCompoundIndex</a> for multi-field index declarations at entity level.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndex.html">@MongoCompoundIndex</a> for multi-field index declarations at entity level.</p>
 </div>
 <div class="paragraph">
 <p>Compound declarations also support index-build <code>comment</code>, create-index command <code>commitQuorum</code>, and <code>storageEngine</code>.</p>
@@ -14771,13 +14788,58 @@ TTL on compound indexes is rejected during startup validation because MongoDB TT
 </tr>
 </table>
 </div>
+<div class="sect2">
+<h3 id="_compound_path_examples">Compound path examples</h3>
+<div class="paragraph">
+<p>Embedded dot-notation path:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoCompoundIndex(
+    name = "location_state_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "location.state", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("addresses")
+class AddressEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    AddressLocation location;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Collection/array field (multikey) path:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoCompoundIndex(
+    name = "tags_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "tags", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("articles")
+class ArticleEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    List&lt;String&gt; tags;
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_text_indexes">Text indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoTextIndexed.html">@MongoTextIndexed</a> on text fields.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> on text fields.</p>
 </div>
 <div class="paragraph">
 <p>Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.</p>
@@ -14792,7 +14854,7 @@ TTL on compound indexes is rejected during startup validation because MongoDB TT
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating <a href="../api/io/micronaut/data/mongodb/annotation/MongoTextIndexed.html">@MongoTextIndexed</a> fields; conflicting declarations fail fast during startup validation.
+For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> fields; conflicting declarations fail fast during startup validation.
 </td>
 </tr>
 </table>
@@ -14803,7 +14865,7 @@ For aggregated multi-field text indexes, these text-specific options must be dec
 <h2 id="_hashed_indexes">Hashed indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoHashedIndexed.html">@MongoHashedIndexed</a> to create hashed indexes.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoHashedIndexed.html">@MongoHashedIndexed</a> to create hashed indexes.</p>
 </div>
 </div>
 </div>
@@ -14811,10 +14873,10 @@ For aggregated multi-field text indexes, these text-specific options must be dec
 <h2 id="_geospatial_indexes">Geospatial indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a> for geospatial indexing (<code>2d</code> and <code>2dsphere</code>).</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> for geospatial indexing (<code>2d</code> and <code>2dsphere</code>).</p>
 </div>
 <div class="paragraph">
-<p>For <code>2dsphere</code> indexes, <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a> also supports <code>sphereVersion</code>.</p>
+<p>For <code>2dsphere</code> indexes, <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> also supports <code>sphereVersion</code>.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -14832,26 +14894,26 @@ For aggregated multi-field text indexes, these text-specific options must be dec
 <p>Modeled geospatial values are supported for <code>MongoGeoPoint</code>, <code>MongoGeoMultiPoint</code>, <code>MongoGeoLineString</code>, <code>MongoGeoMultiLineString</code>, <code>MongoGeoPolygon</code>, <code>MongoGeoMultiPolygon</code>, <code>MongoGeoGeometryCollection</code>, and custom point-like modeled types.</p>
 </div>
 <div class="paragraph">
-<p>For properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>, Micronaut Data now applies <code>MongoGeoPointConverter</code> implicitly when no explicit <code>@MappedProperty(converter=&#8230;&#8203;)</code> is declared.
+<p>For properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>, Micronaut Data now applies <code>MongoGeoPointConverter</code> implicitly when no explicit <code>@MappedProperty(converter=&#8230;&#8203;)</code> is declared.
 Point-like modeled types can map coordinates through numeric properties such as <code>x/y</code>, <code>longitude/latitude</code>, or <code>lng|lon/lat</code>.</p>
 </div>
 <div class="paragraph">
-<p>For polygon modeled values, Micronaut Data applies <code>MongoGeoPolygonConverter</code> implicitly for <code>MongoGeoPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For polygon modeled values, Micronaut Data applies <code>MongoGeoPolygonConverter</code> implicitly for <code>MongoGeoPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
-<p>For line-string modeled values, Micronaut Data applies <code>MongoGeoLineStringConverter</code> implicitly for <code>MongoGeoLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For line-string modeled values, Micronaut Data applies <code>MongoGeoLineStringConverter</code> implicitly for <code>MongoGeoLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
-<p>For multi-line-string modeled values, Micronaut Data applies <code>MongoGeoMultiLineStringConverter</code> implicitly for <code>MongoGeoMultiLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For multi-line-string modeled values, Micronaut Data applies <code>MongoGeoMultiLineStringConverter</code> implicitly for <code>MongoGeoMultiLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
-<p>For multi-point modeled values, Micronaut Data applies <code>MongoGeoMultiPointConverter</code> implicitly for <code>MongoGeoMultiPoint</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For multi-point modeled values, Micronaut Data applies <code>MongoGeoMultiPointConverter</code> implicitly for <code>MongoGeoMultiPoint</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
-<p>For multi-polygon modeled values, Micronaut Data applies <code>MongoGeoMultiPolygonConverter</code> implicitly for <code>MongoGeoMultiPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For multi-polygon modeled values, Micronaut Data applies <code>MongoGeoMultiPolygonConverter</code> implicitly for <code>MongoGeoMultiPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
-<p>For geometry-collection modeled values, Micronaut Data applies <code>MongoGeoGeometryCollectionConverter</code> implicitly for <code>MongoGeoGeometryCollection</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
+<p>For geometry-collection modeled values, Micronaut Data applies <code>MongoGeoGeometryCollectionConverter</code> implicitly for <code>MongoGeoGeometryCollection</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
 </div>
 <div class="paragraph">
 <p>With <code>MongoGeoGeometryCollection</code> in place, modeled support now covers all standard GeoJSON geometry kinds (<code>Point</code>, <code>MultiPoint</code>, <code>LineString</code>, <code>MultiLineString</code>, <code>Polygon</code>, <code>MultiPolygon</code>, <code>GeometryCollection</code>).</p>
@@ -14866,7 +14928,7 @@ Point-like modeled types can map coordinates through numeric properties such as 
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a> now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
+<a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
 </td>
 </tr>
 </table>
@@ -14877,13 +14939,13 @@ Point-like modeled types can map coordinates through numeric properties such as 
 <h2 id="_wildcard_indexes">Wildcard indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> for field-level wildcard indexes.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> for field-level wildcard indexes.</p>
 </div>
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndex.html">@MongoWildcardIndex</a> for top-level wildcard indexes and <code>wildcardProjection</code>.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> for top-level wildcard indexes and <code>wildcardProjection</code>.</p>
 </div>
 <div class="paragraph">
-<p><a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndex.html">@MongoWildcardIndex</a> is repeatable. Multiple equivalent top-level declarations for the same <code>$**</code> key are merged into a single managed index definition.</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> is repeatable. Multiple equivalent top-level declarations for the same <code>$**</code> key are merged into a single managed index definition.</p>
 </div>
 <div class="paragraph">
 <p>Top-level wildcard declarations also support index-build <code>comment</code>, create-index command <code>commitQuorum</code>, and <code>storageEngine</code>.</p>
@@ -14908,7 +14970,7 @@ Point-like modeled types can map coordinates through numeric properties such as 
 </td>
 <td class="content">
 MongoDB allows <code>wildcardProjection</code> only for top-level wildcard indexes (<code>{"$**": 1}</code>).
-Using <code>wildcardProjection</code> on field-level <a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> is rejected during startup validation (fail-fast), with an explicit error that points to <a href="../api/io/micronaut/data/mongodb/annotation/MongoWildcardIndex.html">@MongoWildcardIndex</a>.
+Using <code>wildcardProjection</code> on field-level <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> is rejected during startup validation (fail-fast), with an explicit error that points to <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a>.
 </td>
 </tr>
 </table>
@@ -14931,7 +14993,7 @@ If multiple top-level wildcard declarations define conflicting options for <code
 <h2 id="_ttl_indexes">TTL indexes</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoIndexed.html">@MongoIndexed</a> with <code>expireAfterSeconds</code> to create TTL indexes:</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> with <code>expireAfterSeconds</code> to create TTL indexes:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -14952,7 +15014,7 @@ class SessionEntity {
 <h2 id="_clustered_collections">Clustered collections</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoClusteredIndex.html">@MongoClusteredIndex</a> on the entity to configure clustered collection options during startup collection initialization.</p>
+<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoClusteredIndex.html">@MongoClusteredIndex</a> on the entity to configure clustered collection options during startup collection initialization.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -15006,6 +15068,12 @@ If an index with the same key exists but managed options differ, startup fails f
 <p>if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>Managed option matching includes: uniqueness/sparse/hidden, TTL, partial filter, collation, geospatial/text-specific options, wildcard projection, and storage engine.</p>
+</div>
+<div class="paragraph">
+<p><code>comment</code> and <code>commitQuorum</code> are treated as index-creation command options and are not part of existing-index managed option reconciliation.</p>
 </div>
 <div class="paragraph">
 <p>For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.</p>
@@ -16437,7 +16505,7 @@ PredicateSpecification&lt;Book&gt; textSearchAdvanced(String term) {
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-MongoDB text search requires a text index on the queried collection (for example <a href="../api/io/micronaut/data/mongodb/annotation/MongoTextIndexed.html">@MongoTextIndexed</a>).
+MongoDB text search requires a text index on the queried collection (for example <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a>).
 </td>
 </tr>
 </table>
@@ -16489,7 +16557,7 @@ PredicateSpecification&lt;Place&gt; nearSphere(MongoGeoPoint point) {
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Geospatial operators require compatible geospatial indexes and data modeling (for example <a href="../api/io/micronaut/data/mongodb/annotation/MongoGeoIndexed.html">@MongoGeoIndexed</a>).
+Geospatial operators require compatible geospatial indexes and data modeling (for example <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>).
 </td>
 </tr>
 </table>
