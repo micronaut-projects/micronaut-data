@@ -4,6 +4,8 @@ To enable startup index creation, set `micronaut.data.mongodb.create-indexes=tru
 
 NOTE: Index creation is opt-in and runs during startup collection initialization.
 
+NOTE: Query-side usage for MongoDB text/geospatial operators is documented in xref:mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc[Mongo criteria execute query].
+
 == Supported index annotations
 
 Micronaut Data currently supports the following MongoDB index annotations:

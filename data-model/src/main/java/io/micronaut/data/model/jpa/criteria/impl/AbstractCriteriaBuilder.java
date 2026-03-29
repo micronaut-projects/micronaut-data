@@ -27,7 +27,11 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -1484,6 +1488,42 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                           @Nullable Expression<Boolean> caseSensitive,
                           @Nullable Expression<Boolean> diacriticSensitive) {
         return new TextPredicate(search, language, caseSensitive, diacriticSensitive);
+    }
+
+    @Override
+    public Predicate geoWithin(Expression<?> expression, Expression<?> geometry) {
+        return new GeoWithinPredicate(expression, geometry);
+    }
+
+    @Override
+    public Predicate geoIntersects(Expression<?> expression, Expression<?> geometry) {
+        return new GeoIntersectsPredicate(expression, geometry);
+    }
+
+    @Override
+    public Predicate near(Expression<?> expression, Expression<?> geometry) {
+        return near(expression, geometry, (Expression<? extends Number>) null, (Expression<? extends Number>) null);
+    }
+
+    @Override
+    public Predicate near(Expression<?> expression,
+                          Expression<?> geometry,
+                          @Nullable Expression<? extends Number> minDistance,
+                          @Nullable Expression<? extends Number> maxDistance) {
+        return new NearPredicate(expression, geometry, minDistance, maxDistance);
+    }
+
+    @Override
+    public Predicate nearSphere(Expression<?> expression, Expression<?> geometry) {
+        return nearSphere(expression, geometry, (Expression<? extends Number>) null, (Expression<? extends Number>) null);
+    }
+
+    @Override
+    public Predicate nearSphere(Expression<?> expression,
+                                Expression<?> geometry,
+                                @Nullable Expression<? extends Number> minDistance,
+                                @Nullable Expression<? extends Number> maxDistance) {
+        return new NearSpherePredicate(expression, geometry, minDistance, maxDistance);
     }
 
     @Override

@@ -26,7 +26,11 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -212,6 +216,50 @@ public final class CriteriaUtils {
                     parameters.add(parameterExpression);
                 }
                 if (textPredicate.getDiacriticSensitive() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+            }
+            case GeoWithinPredicate geoWithinPredicate -> {
+                if (geoWithinPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (geoWithinPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+            }
+            case GeoIntersectsPredicate geoIntersectsPredicate -> {
+                if (geoIntersectsPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (geoIntersectsPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+            }
+            case NearPredicate nearPredicate -> {
+                if (nearPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearPredicate.getMinDistance() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearPredicate.getMaxDistance() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+            }
+            case NearSpherePredicate nearSpherePredicate -> {
+                if (nearSpherePredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearSpherePredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearSpherePredicate.getMinDistance() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (nearSpherePredicate.getMaxDistance() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }

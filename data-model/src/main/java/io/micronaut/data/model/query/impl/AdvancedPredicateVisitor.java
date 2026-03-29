@@ -21,7 +21,11 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
@@ -149,6 +153,26 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     @Override
     default void visit(TextPredicate textPredicate) {
         throw new UnsupportedOperationException("Text predicate is not supported by this implementation.");
+    }
+
+    @Override
+    default void visit(GeoWithinPredicate geoWithinPredicate) {
+        throw new UnsupportedOperationException("GeoWithin predicate is not supported by this implementation.");
+    }
+
+    @Override
+    default void visit(GeoIntersectsPredicate geoIntersectsPredicate) {
+        throw new UnsupportedOperationException("GeoIntersects predicate is not supported by this implementation.");
+    }
+
+    @Override
+    default void visit(NearPredicate nearPredicate) {
+        throw new UnsupportedOperationException("Near predicate is not supported by this implementation.");
+    }
+
+    @Override
+    default void visit(NearSpherePredicate nearSpherePredicate) {
+        throw new UnsupportedOperationException("NearSphere predicate is not supported by this implementation.");
     }
 
     void visitIn(Expression<?> expression, Collection<?> values, boolean negated);

@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.mongodb.geo.MongoGeoMultiPoint;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,6 +31,7 @@ class Test {
     private OtherEntity manyToOneOther;
 
     private List<String> colors;
+    private MongoGeoMultiPoint locations;
 
     public Test(String name) {
         this.name = name;
@@ -117,5 +119,13 @@ class Test {
 
     public void setColors(List<String> colors) {
         this.colors = colors;
+    }
+
+    public MongoGeoMultiPoint getLocations() {
+        return locations;
+    }
+
+    public void setLocations(MongoGeoMultiPoint locations) {
+        this.locations = locations;
     }
 }

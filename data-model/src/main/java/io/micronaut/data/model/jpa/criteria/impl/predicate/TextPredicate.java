@@ -21,6 +21,11 @@ import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
+/**
+ * MongoDB full-text search predicate.
+ *
+ * @since 5.0.0
+ */
 @Internal
 public final class TextPredicate extends AbstractPredicate {
 

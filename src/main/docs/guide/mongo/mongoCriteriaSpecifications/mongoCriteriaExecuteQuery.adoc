@@ -65,3 +65,77 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/mongo-example",
 NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
 It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
 
+== MongoDB-specific query operators
+
+When using MongoDB criteria runtime queries, you can use MongoDB-specific operators through api:data.model.jpa.criteria.PersistentEntityCriteriaBuilder[].
+
+=== Text search
+
+[source,java]
+----
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+
+PredicateSpecification<Book> textSearch(String term) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).text(term);
+}
+
+PredicateSpecification<Book> textSearchAdvanced(String term) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).text(
+        cb.literal(term),
+        cb.literal("en"),
+        cb.literal(false),
+        cb.literal(false)
+    );
+}
+----
+
+NOTE: MongoDB text search requires a text index on the queried collection (for example ann:data.mongodb.annotation.MongoTextIndexed[]).
+
+=== Geospatial predicates
+
+[source,java]
+----
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+import io.micronaut.data.mongodb.geo.MongoGeoPoint;
+import io.micronaut.data.mongodb.geo.MongoGeoPolygon;
+
+PredicateSpecification<Place> inArea(MongoGeoPolygon polygon) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).geoWithin(
+        root.get("location"),
+        cb.literal(polygon)
+    );
+}
+
+PredicateSpecification<Place> intersects(MongoGeoPoint point) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).geoIntersects(
+        root.get("location"),
+        cb.literal(point)
+    );
+}
+
+PredicateSpecification<Place> near(MongoGeoPoint point, double minDistance, double maxDistance) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).near(
+        root.get("location"),
+        cb.literal(point),
+        cb.literal(minDistance),
+        cb.literal(maxDistance)
+    );
+}
+
+PredicateSpecification<Place> nearSphere(MongoGeoPoint point) {
+    return (root, cb) -> ((PersistentEntityCriteriaBuilder) cb).nearSphere(
+        root.get("location"),
+        cb.literal(point)
+    );
+}
+----
+
+NOTE: Geospatial operators require compatible geospatial indexes and data modeling (for example ann:data.mongodb.annotation.MongoGeoIndexed[]).
+
+=== Unsupported negated operators
+
+Negated MongoDB-specific predicates below are intentionally rejected at query build time:
+
+- negated `$text`
+- negated `$near`
+- negated `$nearSphere`

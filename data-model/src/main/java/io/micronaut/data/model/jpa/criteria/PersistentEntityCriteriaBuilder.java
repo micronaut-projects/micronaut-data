@@ -250,4 +250,58 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
             diacriticSensitive == null ? null : literal(diacriticSensitive)
         );
     }
+
+    Predicate geoWithin(Expression<?> expression, Expression<?> geometry);
+
+    default Predicate geoWithin(Expression<?> expression, Object geometry) {
+        return geoWithin(expression, literal(geometry));
+    }
+
+    Predicate geoIntersects(Expression<?> expression, Expression<?> geometry);
+
+    default Predicate geoIntersects(Expression<?> expression, Object geometry) {
+        return geoIntersects(expression, literal(geometry));
+    }
+
+    Predicate near(Expression<?> expression, Expression<?> geometry);
+
+    Predicate near(Expression<?> expression,
+                   Expression<?> geometry,
+                   @Nullable Expression<? extends Number> minDistance,
+                   @Nullable Expression<? extends Number> maxDistance);
+
+    default Predicate near(Expression<?> expression, Object geometry) {
+        return near(expression, literal(geometry));
+    }
+
+    default Predicate near(Expression<?> expression,
+                           Object geometry,
+                           @Nullable Number minDistance,
+                           @Nullable Number maxDistance) {
+        return near(expression,
+            literal(geometry),
+            minDistance == null ? null : literal(minDistance),
+            maxDistance == null ? null : literal(maxDistance));
+    }
+
+    Predicate nearSphere(Expression<?> expression, Expression<?> geometry);
+
+    Predicate nearSphere(Expression<?> expression,
+                         Expression<?> geometry,
+                         @Nullable Expression<? extends Number> minDistance,
+                         @Nullable Expression<? extends Number> maxDistance);
+
+    default Predicate nearSphere(Expression<?> expression, Object geometry) {
+        return nearSphere(expression, literal(geometry));
+    }
+
+    default Predicate nearSphere(Expression<?> expression,
+                                 Object geometry,
+                                 @Nullable Number minDistance,
+                                 @Nullable Number maxDistance) {
+        return nearSphere(expression,
+            literal(geometry),
+            minDistance == null ? null : literal(minDistance),
+            maxDistance == null ? null : literal(maxDistance));
+    }
 }

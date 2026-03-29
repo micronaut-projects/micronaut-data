@@ -19,7 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -93,6 +97,14 @@ public interface PredicateVisitor {
     void visit(LikePredicate likePredicate);
 
     void visit(TextPredicate textPredicate);
+
+    void visit(GeoWithinPredicate geoWithinPredicate);
+
+    void visit(GeoIntersectsPredicate geoIntersectsPredicate);
+
+    void visit(NearPredicate nearPredicate);
+
+    void visit(NearSpherePredicate nearSpherePredicate);
 
     /**
      * Visit {@link ExistsSubqueryPredicate}.
