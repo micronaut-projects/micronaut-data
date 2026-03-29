@@ -12,7 +12,7 @@ import jakarta.transaction.Transactional
 import kotlinx.coroutines.flow.Flow
 import reactor.core.publisher.Mono
 
-@R2dbcRepository(dialect = Dialect.MYSQL) // <1>
+@R2dbcRepository(dialect = Dialect.POSTGRES) // <1>
 interface BookRepository : CoroutineCrudRepository<Book, Long> {
     @Join("author")
     override suspend fun findById(id: Long): Book? // <2>
