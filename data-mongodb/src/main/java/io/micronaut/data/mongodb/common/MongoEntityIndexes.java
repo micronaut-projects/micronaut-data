@@ -392,7 +392,8 @@ public final class MongoEntityIndexes {
             Double indexMax = null;
             for (var fieldAnnotation : annotationValue.getAnnotations("fields", MongoCompoundIndexField.class)) {
                 String path = fieldAnnotation.stringValue().orElseThrow();
-                String persistedPath = PersistentEntityUtils.getPersistentPropertyPath(entity, path)
+                String pathForLookup = path.contains(".") ? path.replace('.', '_') : path;
+                String persistedPath = PersistentEntityUtils.getPersistentPropertyPath(entity, pathForLookup)
                         .map(persistentPath -> {
                             var propertyPath = entity.getPropertyPath(persistentPath);
                             if (propertyPath == null) {

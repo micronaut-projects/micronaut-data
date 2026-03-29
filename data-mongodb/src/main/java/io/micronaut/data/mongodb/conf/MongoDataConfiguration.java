@@ -32,6 +32,7 @@ public final class MongoDataConfiguration {
     public static final String PREFIX = "micronaut.data.mongodb";
     public static final String CREATE_COLLECTIONS_PROPERTY = PREFIX + ".create-collections";
     public static final String CREATE_INDEXES_PROPERTY = PREFIX + ".create-indexes";
+    public static final String CREATE_INDEXES_FAILURE_POLICY_PROPERTY = PREFIX + ".create-indexes-failure-policy";
     public static final String DRIVER_TYPE_PROPERTY = PREFIX + ".driver-type";
     public static final String JSON_VIEWS_PROPERTY = PREFIX + ".ignore-json-views";
     public static final String DRIVER_TYPE_SYNC = DriverType.SYNC.name();
@@ -46,6 +47,11 @@ public final class MongoDataConfiguration {
      * Create MongoDB indexes at app initialization.
      */
     private boolean createIndexes;
+
+    /**
+     * Policy controlling application startup behavior when MongoDB index initialization fails.
+     */
+    private IndexCreationFailurePolicy createIndexesFailurePolicy = IndexCreationFailurePolicy.FAIL_FAST;
 
     /**
      * Choose the appropriate driver type when both are on classpath.
@@ -81,6 +87,14 @@ public final class MongoDataConfiguration {
         this.ignoreJsonViews = ignoreJsonViews;
     }
 
+    public IndexCreationFailurePolicy getCreateIndexesFailurePolicy() {
+        return createIndexesFailurePolicy;
+    }
+
+    public void setCreateIndexesFailurePolicy(IndexCreationFailurePolicy createIndexesFailurePolicy) {
+        this.createIndexesFailurePolicy = createIndexesFailurePolicy;
+    }
+
     public DriverType getDriverType() {
         return driverType;
     }
@@ -94,6 +108,21 @@ public final class MongoDataConfiguration {
      */
     public enum DriverType {
         SYNC, REACTIVE
+    }
+
+    /**
+     * Startup behavior policy when index creation fails.
+     */
+    public enum IndexCreationFailurePolicy {
+        /**
+         * Fail startup immediately when index initialization fails.
+         */
+        FAIL_FAST,
+
+        /**
+         * Log and continue startup when index initialization fails.
+         */
+        WARN_AND_CONTINUE
     }
 
     /**

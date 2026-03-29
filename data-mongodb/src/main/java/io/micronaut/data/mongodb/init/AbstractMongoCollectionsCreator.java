@@ -39,6 +39,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.mongodb.annotation.index.MongoClusteredIndex;
 import io.micronaut.data.mongodb.common.MongoEntityIndexes;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration.IndexCreationFailurePolicy;
 import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.Document;
@@ -112,6 +113,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
 
         boolean createCollections = mongoDataConfiguration.isCreateCollections();
         boolean createIndexes = mongoDataConfiguration.isCreateIndexes();
+        IndexCreationFailurePolicy indexCreationFailurePolicy = mongoDataConfiguration.getCreateIndexesFailurePolicy();
         if (!createCollections && !createIndexes) {
             return;
         }
@@ -131,9 +133,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     .toArray(PersistentEntity[]::new);
 
             DatabaseOperations<Dtbs> databaseOperations = databaseOperationsProvider.get(mongoConfiguration);
+            int indexProcessedCount = 0;
+            int indexFailureCount = 0;
+            String telemetryDatabaseName = "<unknown>";
 
             for (PersistentEntity entity : entities) {
                 Dtbs database = databaseOperations.find(entity);
+                telemetryDatabaseName = databaseOperations.getDatabaseName(database);
                 Set<String> collections = databaseOperations.listCollectionNames(database);
                 String persistedName = mongoCollectionNameProvider.provide(entity);
                 MongoResolvedCollectionOptions desiredCollectionOptions = resolveCollectionOptions(entity);
@@ -151,11 +157,49 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     databaseOperations.createCollection(database, persistedName, desiredCollectionOptions);
                     collections.add(persistedName);
                 }
-                if ((collectionExists || createCollections) && createIndexes) {
-                    createIndexes(databaseOperations, database, entity, persistedName);
+                if (createIndexes) {
+                    if (collectionExists || createCollections) {
+                        try {
+                            createIndexes(databaseOperations, database, entity, persistedName);
+                            indexProcessedCount++;
+                        } catch (RuntimeException e) {
+                            if (indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
+                                indexFailureCount++;
+                                LOG.warn("MongoDB index initialization failed for entity: {} in collection: {} in database: {}. Continuing due to policy {}.",
+                                        entity.getName(),
+                                        persistedName,
+                                        databaseOperations.getDatabaseName(database),
+                                        indexCreationFailurePolicy,
+                                        e);
+                            } else {
+                                throw e;
+                            }
+                        }
+                    } else if (LOG.isDebugEnabled()) {
+                        LOG.debug("Skipping MongoDB index initialization for entity: {} in collection: {} in database: {} because collection does not exist and {} is disabled.",
+                                entity.getName(),
+                                persistedName,
+                                databaseOperations.getDatabaseName(database),
+                                MongoDataConfiguration.CREATE_COLLECTIONS_PROPERTY);
+                    }
                 }
                 if (createCollections) {
                     createJoinCollections(databaseOperations, database, collections, entity, persistedName);
+                }
+            }
+            if (createIndexes) {
+                if (indexFailureCount > 0 && indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
+                    LOG.warn("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
+                            telemetryDatabaseName,
+                            indexProcessedCount,
+                            indexFailureCount,
+                            indexCreationFailurePolicy);
+                } else if (LOG.isInfoEnabled()) {
+                    LOG.info("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
+                            telemetryDatabaseName,
+                            indexProcessedCount,
+                            indexFailureCount,
+                            indexCreationFailurePolicy);
                 }
             }
         }

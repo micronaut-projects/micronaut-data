@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb.query
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -10,8 +11,12 @@ import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed
 import io.micronaut.data.mongodb.geo.MongoGeoPoint
+import io.micronaut.data.mongodb.geo.MongoGeoPointConverter
+import io.micronaut.data.mongodb.geo.MongoGeoPolygon
+import io.micronaut.data.mongodb.geo.MongoGeoPolygonConverter
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import org.jspecify.annotations.NonNull
 import spock.lang.AutoCleanup
@@ -138,6 +143,86 @@ class MongoCriteriaQueryOperatorsExecutionSpec extends Specification implements 
         then:
         nearResults*.description == ['near']
         nearSphereResults*.description == ['near']
+    }
+
+    void 'predicate specification supports text and near operators'() {
+        given:
+        def center = new MongoGeoPoint(-73.9857d, 40.7484d)
+        def centerGeometry = new MongoGeoPointConverter().convertToPersistedValue(center, ConversionContext.DEFAULT)
+        repository.saveAll([
+                new QueryOperatorEntity(description: 'coffee near center', location: center),
+                new QueryOperatorEntity(description: 'coffee far away', location: new MongoGeoPoint(-74.3000d, 40.6000d)),
+                new QueryOperatorEntity(description: 'tea near center', location: new MongoGeoPoint(-73.9856d, 40.7485d))
+        ])
+
+        PredicateSpecification<QueryOperatorEntity> textSpecification = { root, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).text('coffee')
+        } as PredicateSpecification<QueryOperatorEntity>
+
+        PredicateSpecification<QueryOperatorEntity> nearSpecification = { root, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).near(
+                    root.get('location'),
+                    cb.literal(centerGeometry),
+                    cb.literal(0d),
+                    cb.literal(2_000d)
+            )
+        } as PredicateSpecification<QueryOperatorEntity>
+
+        when:
+        def textResults = repository.findAll(textSpecification)
+        def nearResults = repository.findAll(nearSpecification)
+
+        then:
+        textResults*.description as Set == ['coffee near center', 'coffee far away'] as Set
+        nearResults*.description as Set == ['coffee near center', 'tea near center'] as Set
+    }
+
+    void 'criteria execution supports modeled geospatial values via converters'() {
+        given:
+        def inside = new MongoGeoPoint(-73.9857d, 40.7484d)
+        def outside = new MongoGeoPoint(-74.3000d, 40.6000d)
+        repository.saveAll([
+                new QueryOperatorEntity(description: 'inside-modeled', location: inside),
+                new QueryOperatorEntity(description: 'outside-modeled', location: outside)
+        ])
+
+        def modeledPolygon = new MongoGeoPolygon([[
+                new MongoGeoPoint(-74.0500d, 40.7000d),
+                new MongoGeoPoint(-74.0500d, 40.8000d),
+                new MongoGeoPoint(-73.9000d, 40.8000d),
+                new MongoGeoPoint(-73.9000d, 40.7000d),
+                new MongoGeoPoint(-74.0500d, 40.7000d)
+        ]])
+        def pointGeometry = new MongoGeoPointConverter().convertToPersistedValue(inside, ConversionContext.DEFAULT)
+        def polygonGeometry = new MongoGeoPolygonConverter().convertToPersistedValue(modeledPolygon, ConversionContext.DEFAULT)
+
+        QuerySpecification<QueryOperatorEntity> withinSpecification = { root, query, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).geoWithin(root.get('location'), cb.literal(polygonGeometry))
+        } as QuerySpecification<QueryOperatorEntity>
+
+        QuerySpecification<QueryOperatorEntity> intersectsSpecification = { root, query, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).geoIntersects(root.get('location'), cb.literal(pointGeometry))
+        } as QuerySpecification<QueryOperatorEntity>
+
+        QuerySpecification<QueryOperatorEntity> nearSpecification = { root, query, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).near(root.get('location'), cb.literal(pointGeometry), cb.literal(0d), cb.literal(2_000d))
+        } as QuerySpecification<QueryOperatorEntity>
+
+        QuerySpecification<QueryOperatorEntity> nearSphereSpecification = { root, query, cb ->
+            ((PersistentEntityCriteriaBuilder) cb).nearSphere(root.get('location'), cb.literal(pointGeometry), cb.literal(0d), cb.literal(2_000d))
+        } as QuerySpecification<QueryOperatorEntity>
+
+        when:
+        def withinResults = repository.findAll(withinSpecification)
+        def intersectsResults = repository.findAll(intersectsSpecification)
+        def nearResults = repository.findAll(nearSpecification)
+        def nearSphereResults = repository.findAll(nearSphereSpecification)
+
+        then:
+        withinResults*.description == ['inside-modeled']
+        intersectsResults*.description == ['inside-modeled']
+        nearResults*.description == ['inside-modeled']
+        nearSphereResults*.description == ['inside-modeled']
     }
 
     @NonNull

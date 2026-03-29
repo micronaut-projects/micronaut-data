@@ -2,7 +2,15 @@ Micronaut Data MongoDB supports declaration-based index creation for mapped enti
 
 To enable startup index creation, set `micronaut.data.mongodb.create-indexes=true`.
 
+Use `micronaut.data.mongodb.create-indexes-failure-policy` to control startup behavior when index initialization fails:
+
+* `FAIL_FAST` (default): fail startup immediately
+* `WARN_AND_CONTINUE`: log the failure and continue startup
+
 NOTE: Index creation is opt-in and runs during startup collection initialization.
+
+When `micronaut.data.mongodb.create-indexes=true` and `micronaut.data.mongodb.create-collections=false`, Micronaut Data still performs index reconciliation/creation for collections that already exist.
+If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.
 
 NOTE: Query-side usage for MongoDB text/geospatial operators is documented in xref:mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc[Mongo criteria execute query].
 
@@ -65,6 +73,48 @@ class OrderEntity {
 ----
 
 NOTE: TTL on compound indexes is rejected during startup validation because MongoDB TTL semantics are single-field oriented. This is fail-fast validation: the application startup fails immediately with a clear error instead of silently creating a non-expiring index definition.
+
+=== Compound path examples
+
+Embedded dot-notation path:
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "location_state_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "location.state", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("addresses")
+class AddressEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    AddressLocation location;
+}
+----
+
+Collection/array field (multikey) path:
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "tags_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "tags", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("articles")
+class ArticleEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    List<String> tags;
+}
+----
 
 == Text indexes
 
@@ -177,5 +227,9 @@ Managed reconciliation is key-first and option-aware:
 * existing indexes with matching key + managed options are accepted (startup continues)
 * if a desired explicit name differs from an existing same-key index name, startup fails fast with an explicit name-conflict message
 * if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)
+
+Managed option matching includes: uniqueness/sparse/hidden, TTL, partial filter, collation, geospatial/text-specific options, wildcard projection, and storage engine.
+
+`comment` and `commitQuorum` are treated as index-creation command options and are not part of existing-index managed option reconciliation.
 
 For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.
