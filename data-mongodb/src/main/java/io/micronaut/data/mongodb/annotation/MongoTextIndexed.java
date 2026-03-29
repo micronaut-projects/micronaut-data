@@ -58,4 +58,19 @@ public @interface MongoTextIndexed {
      * @return The storage engine options as JSON.
      */
     String storageEngine() default "";
+
+    /**
+     * @return The text index default language.
+     */
+    String defaultLanguage() default "";
+
+    /**
+     * @return The document field that overrides language for text processing.
+     */
+    String languageOverride() default "";
+
+    /**
+     * @return The text index version, or -1 if unset.
+     */
+    int textIndexVersion() default -1;
 }

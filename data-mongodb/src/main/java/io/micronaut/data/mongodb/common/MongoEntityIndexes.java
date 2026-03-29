@@ -96,6 +96,10 @@ public final class MongoEntityIndexes {
                     null,
                     null,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
                     annotation.stringValue("wildcardProjection").filter(s -> !s.isEmpty()).orElse(null),
                     parseJsonOption(annotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                     annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
@@ -119,6 +123,10 @@ public final class MongoEntityIndexes {
                     || !Objects.equals(first.bits(), candidate.bits())
                     || !Objects.equals(first.min(), candidate.min())
                     || !Objects.equals(first.max(), candidate.max())
+                    || !Objects.equals(first.defaultLanguage(), candidate.defaultLanguage())
+                    || !Objects.equals(first.languageOverride(), candidate.languageOverride())
+                    || !Objects.equals(first.textIndexVersion(), candidate.textIndexVersion())
+                    || !Objects.equals(first.sphereVersion(), candidate.sphereVersion())
                     || !Objects.equals(first.wildcardProjection(), candidate.wildcardProjection())
                     || !Objects.equals(first.storageEngine(), candidate.storageEngine())
                     || !Objects.equals(first.comment(), candidate.comment())
@@ -143,6 +151,10 @@ public final class MongoEntityIndexes {
                 first.bits(),
                 first.min(),
                 first.max(),
+                first.defaultLanguage(),
+                first.languageOverride(),
+                first.textIndexVersion(),
+                first.sphereVersion(),
                 first.wildcardProjection(),
                 first.storageEngine(),
                 first.comment(),
@@ -173,6 +185,10 @@ public final class MongoEntityIndexes {
                         null,
                         null,
                         null,
+                        null,
+                        null,
+                        null,
+                        null,
                         parseJsonOption(annotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                         annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
@@ -198,6 +214,10 @@ public final class MongoEntityIndexes {
                         null,
                         null,
                         null,
+                        null,
+                        null,
+                        null,
+                        null,
                         parseJsonOption(hashedAnnotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                         hashedAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
@@ -208,11 +228,15 @@ public final class MongoEntityIndexes {
             if (geoAnnotation != null) {
                 validateGeoIndexedType(entity, property);
                 MongoGeoIndexType type = geoAnnotation.enumValue("type", MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
+                Integer sphereVersion = geoAnnotation.intValue("sphereVersion").isPresent() && geoAnnotation.intValue("sphereVersion").getAsInt() >= 0 ? geoAnnotation.intValue("sphereVersion").getAsInt() : null;
                 Integer bits = geoAnnotation.intValue("bits").isPresent() && geoAnnotation.intValue("bits").getAsInt() >= 0 ? geoAnnotation.intValue("bits").getAsInt() : null;
                 Double min = geoAnnotation.doubleValue("min").isPresent() && !Double.isNaN(geoAnnotation.doubleValue("min").getAsDouble()) ? geoAnnotation.doubleValue("min").getAsDouble() : null;
                 Double max = geoAnnotation.doubleValue("max").isPresent() && !Double.isNaN(geoAnnotation.doubleValue("max").getAsDouble()) ? geoAnnotation.doubleValue("max").getAsDouble() : null;
                 if (type != MongoGeoIndexType.GEO_2D && (bits != null || min != null || max != null)) {
                     throw new IllegalStateException("2d-specific geospatial options are only supported for Mongo 2d indexes on entity [" + entity.getName() + "]");
+                }
+                if (type != MongoGeoIndexType.GEO_2DSPHERE && sphereVersion != null) {
+                    throw new IllegalStateException("2dsphere-specific geospatial options are only supported for Mongo 2dsphere indexes on entity [" + entity.getName() + "]");
                 }
                 indexes.add(new ResolvedIndex(
                         geoAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
@@ -226,6 +250,10 @@ public final class MongoEntityIndexes {
                         bits,
                         min,
                         max,
+                        null,
+                        null,
+                        null,
+                        sphereVersion,
                         null,
                         parseJsonOption(geoAnnotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                         geoAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
@@ -245,6 +273,10 @@ public final class MongoEntityIndexes {
                         false,
                         false,
                         wildcardAnnotation.booleanValue("hidden").orElse(false),
+                        null,
+                        null,
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -280,6 +312,9 @@ public final class MongoEntityIndexes {
         Boolean hidden = null;
         String storageEngine = null;
         String comment = null;
+        String defaultLanguage = null;
+        String languageOverride = null;
+        Integer textIndexVersion = null;
         BeanIntrospection<?> introspection = entity.getIntrospection();
         for (BeanProperty<?, Object> beanProperty : introspection.getBeanProperties()) {
             RuntimePersistentProperty<?> property = entity.getPropertyByName(beanProperty.getName());
@@ -316,13 +351,35 @@ public final class MongoEntityIndexes {
                 } else if (!Objects.equals(storageEngine, declaredStorageEngine)) {
                     throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same storageEngine option");
                 }
+                String declaredDefaultLanguage = textAnnotation.stringValue("defaultLanguage").filter(s -> !s.isEmpty()).orElse(null);
+                if (defaultLanguage == null) {
+                    defaultLanguage = declaredDefaultLanguage;
+                } else if (!Objects.equals(defaultLanguage, declaredDefaultLanguage)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same defaultLanguage option");
+                }
+                String declaredLanguageOverride = textAnnotation.stringValue("languageOverride").filter(s -> !s.isEmpty()).orElse(null);
+                if (languageOverride == null) {
+                    languageOverride = declaredLanguageOverride;
+                } else if (!Objects.equals(languageOverride, declaredLanguageOverride)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same languageOverride option");
+                }
+                Integer declaredTextIndexVersion = textAnnotation.intValue("textIndexVersion").isPresent() && textAnnotation.intValue("textIndexVersion").getAsInt() >= 0
+                        ? textAnnotation.intValue("textIndexVersion").getAsInt() : null;
+                if (declaredTextIndexVersion != null && declaredTextIndexVersion <= 0) {
+                    throw new IllegalStateException("Mongo text index version must be greater than zero for entity [" + entity.getName() + "]");
+                }
+                if (textIndexVersion == null) {
+                    textIndexVersion = declaredTextIndexVersion;
+                } else if (!Objects.equals(textIndexVersion, declaredTextIndexVersion)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
+                }
                 fields.add(new ResolvedIndexField(property.getPersistedName(), null, weight, "text", null, null));
             }
         }
         if (fields.isEmpty()) {
             return List.of();
         }
-        return List.of(new ResolvedIndex(name, List.copyOf(fields), false, false, hidden != null && hidden, null, null, null, null, null, null, null, storageEngine, comment, null));
+        return List.of(new ResolvedIndex(name, List.copyOf(fields), false, false, hidden != null && hidden, null, null, null, null, null, null, defaultLanguage, languageOverride, textIndexVersion, null, null, storageEngine, comment, null));
     }
 
     private static List<ResolvedIndex> resolveCompoundIndexes(RuntimePersistentEntity<?> entity) {
@@ -423,12 +480,29 @@ public final class MongoEntityIndexes {
                     indexMin,
                     indexMax,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
                     parseJsonOption(annotationValue.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                     annotationValue.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                     annotationValue.stringValue("commitQuorum").filter(s -> !s.isEmpty()).orElse(null)
             ));
         }
         return indexes;
+    }
+
+    private static @Nullable String parseJsonOption(@Nullable String json,
+                                                    String option,
+                                                    String entityName) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return Document.parse(json).toJson();
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Mongo " + option + " for entity [" + entityName + "] must be valid JSON", e);
+        }
     }
 
     /**
@@ -445,6 +519,10 @@ public final class MongoEntityIndexes {
      * @param bits The geospatial bits option for 2d indexes
      * @param min The geospatial min option for 2d indexes
      * @param max The geospatial max option for 2d indexes
+     * @param defaultLanguage The text index default language
+     * @param languageOverride The text index language override field
+     * @param textIndexVersion The text index version
+     * @param sphereVersion The 2dsphere index version
      * @param wildcardProjection The wildcard projection JSON
      * @param storageEngine The storage engine options JSON
      * @param comment The index creation comment
@@ -461,23 +539,14 @@ public final class MongoEntityIndexes {
                                 @Nullable Integer bits,
                                 @Nullable Double min,
                                 @Nullable Double max,
+                                @Nullable String defaultLanguage,
+                                @Nullable String languageOverride,
+                                @Nullable Integer textIndexVersion,
+                                @Nullable Integer sphereVersion,
                                 @Nullable String wildcardProjection,
                                 @Nullable String storageEngine,
                                 @Nullable String comment,
                                 @Nullable String commitQuorum) {
-    }
-
-    private static @Nullable String parseJsonOption(@Nullable String json,
-                                                    String option,
-                                                    String entityName) {
-        if (json == null || json.isBlank()) {
-            return null;
-        }
-        try {
-            return Document.parse(json).toJson();
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("Mongo " + option + " for entity [" + entityName + "] must be valid JSON", e);
-        }
     }
 
     /**

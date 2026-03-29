@@ -54,6 +54,7 @@ class MongoGeoIndexCreationSpec extends Specification implements MongoTestProper
             assert index.fields[0].path() == 'location'
             assert index.fields[0].order() == null
             assert index.fields[0].kind() == '2dsphere'
+            assert index.sphereVersion == 3
         }
     }
 }
@@ -68,6 +69,6 @@ class GeoIndexedEntity {
     @GeneratedValue
     String id
 
-    @MongoGeoIndexed(name = 'geo_location_idx')
+    @MongoGeoIndexed(name = 'geo_location_idx', sphereVersion = 3)
     Map<String, Object> location
 }

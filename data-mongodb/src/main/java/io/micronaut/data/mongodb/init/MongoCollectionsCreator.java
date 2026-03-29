@@ -139,13 +139,34 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                         if (keyDocument == null || (keyDocument.size() == 1 && keyDocument.getInteger("_id", 0) == 1)) {
                             continue;
                         }
-                        List<MongoResolvedIndexField> fields = new ArrayList<>(keyDocument.size());
-                        for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
-                            Object value = entry.getValue();
-                            if (value instanceof Number number) {
-                                fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
+                        List<MongoResolvedIndexField> fields;
+                        if ("text".equals(keyDocument.getString("_fts"))) {
+                            Document weights = indexDocument.get("weights", Document.class);
+                            if (weights != null && !weights.isEmpty()) {
+                                fields = new ArrayList<>(weights.size());
+                                for (Map.Entry<String, Object> entry : weights.entrySet()) {
+                                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, toInteger(entry.getValue()), "text", null, null));
+                                }
                             } else {
-                                fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
+                                fields = new ArrayList<>(keyDocument.size());
+                                for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
+                                    Object value = entry.getValue();
+                                    if (value instanceof Number number) {
+                                        fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
+                                    } else {
+                                        fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
+                                    }
+                                }
+                            }
+                        } else {
+                            fields = new ArrayList<>(keyDocument.size());
+                            for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
+                                Object value = entry.getValue();
+                                if (value instanceof Number number) {
+                                    fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
+                                } else {
+                                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
+                                }
                             }
                         }
                         indexes.add(new MongoResolvedIndex(
@@ -160,6 +181,10 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                                 toInteger(indexDocument.get("bits")),
                                 toDouble(indexDocument.get("min")),
                                 toDouble(indexDocument.get("max")),
+                                indexDocument.getString("default_language"),
+                                indexDocument.getString("language_override"),
+                                toInteger(indexDocument.get("textIndexVersion")),
+                                toInteger(indexDocument.get("2dsphereIndexVersion")),
                                 normalizeJsonValue(indexDocument.get("wildcardProjection")),
                                 normalizeJsonValue(indexDocument.get("storageEngine")),
                                 null,
@@ -209,6 +234,18 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                     if (index.max() != null) {
                         indexOptions.max(index.max());
                     }
+                    if (index.defaultLanguage() != null) {
+                        indexOptions.defaultLanguage(index.defaultLanguage());
+                    }
+                    if (index.languageOverride() != null) {
+                        indexOptions.languageOverride(index.languageOverride());
+                    }
+                    if (index.textIndexVersion() != null) {
+                        indexOptions.textVersion(index.textIndexVersion());
+                    }
+                    if (index.sphereVersion() != null) {
+                        indexOptions.sphereVersion(index.sphereVersion());
+                    }
                     if (index.wildcardProjection() != null) {
                         indexOptions.wildcardProjection(Document.parse(index.wildcardProjection()));
                     }
@@ -252,6 +289,18 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
         }
         if (index.max() != null) {
             indexDocument.append("max", index.max());
+        }
+        if (index.defaultLanguage() != null) {
+            indexDocument.append("default_language", index.defaultLanguage());
+        }
+        if (index.languageOverride() != null) {
+            indexDocument.append("language_override", index.languageOverride());
+        }
+        if (index.textIndexVersion() != null) {
+            indexDocument.append("textIndexVersion", index.textIndexVersion());
+        }
+        if (index.sphereVersion() != null) {
+            indexDocument.append("2dsphereIndexVersion", index.sphereVersion());
         }
         if (index.wildcardProjection() != null) {
             indexDocument.append("wildcardProjection", Document.parse(index.wildcardProjection()));

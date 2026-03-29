@@ -53,6 +53,9 @@ class MongoAggregatedTextIndexCreationSpec extends Specification implements Mong
             assert index.fields.size() == 2
             assert index.fields*.path().contains('_fts')
             assert index.fields*.path().contains('_ftsx')
+            assert index.defaultLanguage == 'french'
+            assert index.languageOverride == 'lang'
+            assert index.textIndexVersion == 3
         }
     }
 }
@@ -67,9 +70,9 @@ class AggregatedTextIndexedEntity {
     @GeneratedValue
     String id
 
-    @MongoTextIndexed(name = 'aggregated_text_idx', weight = 2)
+    @MongoTextIndexed(name = 'aggregated_text_idx', weight = 2, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
     String title
 
-    @MongoTextIndexed(name = 'aggregated_text_idx', weight = 5)
+    @MongoTextIndexed(name = 'aggregated_text_idx', weight = 5, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
     String description
 }

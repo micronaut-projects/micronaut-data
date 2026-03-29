@@ -70,6 +70,10 @@ Use ann:data.mongodb.annotation.MongoTextIndexed[] on text fields.
 
 Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.
 
+Text declarations also support `defaultLanguage`, `languageOverride`, and `textIndexVersion`.
+
+NOTE: For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating ann:data.mongodb.annotation.MongoTextIndexed[] fields; conflicting declarations fail fast during startup validation.
+
 == Hashed indexes
 
 Use ann:data.mongodb.annotation.MongoHashedIndexed[] to create hashed indexes.
@@ -77,6 +81,10 @@ Use ann:data.mongodb.annotation.MongoHashedIndexed[] to create hashed indexes.
 == Geospatial indexes
 
 Use ann:data.mongodb.annotation.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
+
+For `2dsphere` indexes, ann:data.mongodb.annotation.MongoGeoIndexed[] also supports `sphereVersion`.
+
+NOTE: `sphereVersion` is only valid for `2dsphere` indexes; declaring it for other geospatial kinds is rejected during startup validation (fail-fast).
 
 Modeled geospatial values are supported for `MongoGeoPoint`, `MongoGeoMultiPoint`, `MongoGeoLineString`, `MongoGeoMultiLineString`, `MongoGeoPolygon`, `MongoGeoMultiPolygon`, `MongoGeoGeometryCollection`, and custom point-like modeled types.
 
@@ -161,5 +169,11 @@ Clustered collection support follows MongoDB collection-level rules:
 
 When `create-indexes` is enabled, Micronaut Data checks existing collection indexes before creating new ones.
 If an index with the same key exists but managed options differ, startup fails fast with an explicit conflict message.
+
+Managed reconciliation is key-first and option-aware:
+
+* existing indexes with matching key + managed options are accepted (startup continues)
+* if a desired explicit name differs from an existing same-key index name, startup fails fast with an explicit name-conflict message
+* if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)
 
 For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.

@@ -60,6 +60,11 @@ public @interface MongoGeoIndexed {
     String storageEngine() default "";
 
     /**
+     * @return The 2dsphere index version, or -1 if unset.
+     */
+    int sphereVersion() default -1;
+
+    /**
      * @return The 2d index bits setting, or -1 if unset.
      */
     int bits() default -1;

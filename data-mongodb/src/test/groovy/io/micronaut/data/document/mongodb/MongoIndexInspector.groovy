@@ -39,6 +39,10 @@ final class MongoIndexInspector {
                     wildcardProjection   : indexDocument.get('wildcardProjection'),
                     min                  : indexDocument.get('min'),
                     max                  : indexDocument.get('max'),
+                    defaultLanguage      : indexDocument.getString('default_language'),
+                    languageOverride     : indexDocument.getString('language_override'),
+                    textIndexVersion     : indexDocument.getInteger('textIndexVersion'),
+                    sphereVersion        : indexDocument.getInteger('2dsphereIndexVersion'),
             ]
         }
         indexes

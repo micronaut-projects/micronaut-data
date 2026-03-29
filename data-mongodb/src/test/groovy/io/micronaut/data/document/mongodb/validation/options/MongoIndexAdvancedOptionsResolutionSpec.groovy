@@ -4,6 +4,8 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.mongodb.annotation.MongoCompoundIndex
 import io.micronaut.data.mongodb.annotation.MongoCompoundIndexField
+import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
+import io.micronaut.data.mongodb.annotation.MongoGeoIndexType
 import io.micronaut.data.mongodb.annotation.MongoIndexed
 import io.micronaut.data.mongodb.annotation.MongoTextIndexed
 import io.micronaut.data.mongodb.annotation.MongoWildcardIndex
@@ -71,6 +73,46 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         e.message.contains('must use the same storageEngine option')
     }
 
+    void 'resolves text default language, override, and text index version'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(TextLanguageOptionsEntity)).indexes
+        def index = indexes.find { it.name() == 'text_lang_idx' }
+
+        then:
+        index != null
+        index.defaultLanguage() == 'french'
+        index.languageOverride() == 'lang'
+        index.textIndexVersion() == 3
+    }
+
+    void 'fails when text indexed fields define different defaultLanguage options'() {
+        when:
+        MongoEntityIndexes.create(getRuntimePersistentEntity(InvalidTextDefaultLanguageEntity))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains('must use the same defaultLanguage option')
+    }
+
+    void 'resolves 2dsphere sphereVersion'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(GeoSphereVersionEntity)).indexes
+        def index = indexes.find { it.name() == 'geo_sphere_version_idx' }
+
+        then:
+        index != null
+        index.sphereVersion() == 3
+    }
+
+    void 'fails when 2dsphere sphereVersion is used on non-2dsphere index type'() {
+        when:
+        MongoEntityIndexes.create(getRuntimePersistentEntity(InvalidGeoSphereVersionOn2dEntity))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains('2dsphere-specific geospatial options are only supported for Mongo 2dsphere indexes')
+    }
+
     private RuntimePersistentEntity<?> getRuntimePersistentEntity(Class<?> type) {
         RuntimePersistentEntity<?> entity = entities.get(type)
         if (entity == null) {
@@ -130,4 +172,34 @@ class InvalidTextStorageEngineEntity {
 
     @MongoTextIndexed(storageEngine = '{ "wiredTiger": { "configString": "block_compressor=zlib" } }')
     String second
+}
+
+@MappedEntity('text_language_options_entity')
+class TextLanguageOptionsEntity {
+    @MongoTextIndexed(name = 'text_lang_idx', weight = 2, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
+    String title
+
+    @MongoTextIndexed(name = 'text_lang_idx', weight = 5, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
+    String description
+}
+
+@MappedEntity('invalid_text_default_language_entity')
+class InvalidTextDefaultLanguageEntity {
+    @MongoTextIndexed(defaultLanguage = 'english')
+    String first
+
+    @MongoTextIndexed(defaultLanguage = 'spanish')
+    String second
+}
+
+@MappedEntity('geo_sphere_version_entity')
+class GeoSphereVersionEntity {
+    @MongoGeoIndexed(name = 'geo_sphere_version_idx', sphereVersion = 3)
+    Map<String, Object> location
+}
+
+@MappedEntity('invalid_geo_sphere_version_on_2d_entity')
+class InvalidGeoSphereVersionOn2dEntity {
+    @MongoGeoIndexed(name = 'invalid_geo_sphere_version_idx', type = MongoGeoIndexType.GEO_2D, sphereVersion = 3)
+    Map<String, Object> location
 }

@@ -15,6 +15,10 @@
  */
 package io.micronaut.data.mongodb.init;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoCommandException;
+import com.mongodb.MongoWriteException;
+import com.mongodb.WriteError;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.configuration.mongo.core.DefaultMongoConfiguration;
 import io.micronaut.configuration.mongo.core.NamedMongoConfiguration;
@@ -64,6 +68,10 @@ import java.util.Date;
 public class AbstractMongoCollectionsCreator<Dtbs> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoCollectionsCreator.class);
+    private static final int INDEX_OPTIONS_CONFLICT_CODE = 85;
+    private static final int INDEX_KEY_SPECS_CONFLICT_CODE = 86;
+    private static final String INDEX_OPTIONS_CONFLICT_CODE_NAME = "IndexOptionsConflict";
+    private static final String INDEX_KEY_SPECS_CONFLICT_CODE_NAME = "IndexKeySpecsConflict";
 
     /**
      * Get MongoDB database factory.
@@ -222,7 +230,11 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         for (MongoResolvedIndex desiredIndex : desiredIndexes) {
             MongoResolvedIndex existingIndex = findMatchingIndex(existingIndexes, desiredIndex);
             if (existingIndex == null) {
-                databaseOperations.createIndex(database, collectionName, desiredIndex);
+                try {
+                    databaseOperations.createIndex(database, collectionName, desiredIndex);
+                } catch (RuntimeException e) {
+                    throw mapCreateIndexConflict(e, entity, collectionName, desiredIndex);
+                }
                 continue;
             }
             if (!existingIndex.matchesManagedOptions(desiredIndex)) {
@@ -263,6 +275,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     index.bits(),
                     index.min(),
                     index.max(),
+                    index.defaultLanguage(),
+                    index.languageOverride(),
+                    index.textIndexVersion(),
+                    index.sphereVersion(),
                     normalizeJsonString(index.wildcardProjection()),
                     normalizeJsonString(index.storageEngine()),
                     index.comment(),
@@ -315,6 +331,64 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             return number.doubleValue();
         }
         return null;
+    }
+
+    private RuntimeException mapCreateIndexConflict(RuntimeException e,
+                                                    PersistentEntity entity,
+                                                    String collectionName,
+                                                    MongoResolvedIndex desiredIndex) {
+        MongoIndexConflict mongoIndexConflict = findMongoIndexConflict(e);
+        if (mongoIndexConflict == null) {
+            return e;
+        }
+        return new IllegalStateException("Conflicting existing MongoDB index while creating desired index for entity ["
+                + entity.getName()
+                + "] and collection ["
+                + collectionName
+                + "]: desired "
+                + desiredIndex.describe()
+                + ", mongoErrorCodeName="
+                + mongoIndexConflict.errorCodeName()
+                + ", mongoErrorCode="
+                + mongoIndexConflict.errorCode()
+                + ", mongoMessage="
+                + String.valueOf(mongoIndexConflict.message()), e);
+    }
+
+    private @Nullable MongoIndexConflict findMongoIndexConflict(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof MongoCommandException mongoCommandException) {
+                int errorCode = mongoCommandException.getErrorCode();
+                String errorCodeName = mongoCommandException.getErrorCodeName();
+                if (isIndexConflict(errorCode, errorCodeName)) {
+                    return new MongoIndexConflict(errorCode, errorCodeName, mongoCommandException.getMessage());
+                }
+            }
+            if (current instanceof MongoWriteException mongoWriteException) {
+                WriteError writeError = mongoWriteException.getError();
+                int errorCode = writeError.getCode();
+                if (isIndexConflict(errorCode, null)) {
+                    return new MongoIndexConflict(errorCode, null, mongoWriteException.getMessage());
+                }
+            }
+            if (current instanceof MongoException mongoException) {
+                int errorCode = mongoException.getCode();
+                if (isIndexConflict(errorCode, null)) {
+                    return new MongoIndexConflict(errorCode, null, mongoException.getMessage());
+                }
+            }
+            current = current.getCause();
+        }
+        return null;
+    }
+
+    private boolean isIndexConflict(int errorCode,
+                                    @Nullable String errorCodeName) {
+        return errorCode == INDEX_OPTIONS_CONFLICT_CODE
+                || errorCode == INDEX_KEY_SPECS_CONFLICT_CODE
+                || INDEX_OPTIONS_CONFLICT_CODE_NAME.equals(errorCodeName)
+                || INDEX_KEY_SPECS_CONFLICT_CODE_NAME.equals(errorCodeName);
     }
 
     /**
@@ -428,6 +502,11 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     record MongoResolvedIndexField(String path, @Nullable Integer order, @Nullable Integer weight, @Nullable String kind, @Nullable Double min, @Nullable Double max) {
     }
 
+    private record MongoIndexConflict(int errorCode,
+                                      @Nullable String errorCodeName,
+                                      @Nullable String message) {
+    }
+
     @Internal
     record MongoResolvedIndex(@Nullable String name,
                               List<MongoResolvedIndexField> fields,
@@ -440,6 +519,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                               @Nullable Integer bits,
                               @Nullable Double min,
                               @Nullable Double max,
+                              @Nullable String defaultLanguage,
+                              @Nullable String languageOverride,
+                              @Nullable Integer textIndexVersion,
+                              @Nullable Integer sphereVersion,
                               @Nullable String wildcardProjection,
                               @Nullable String storageEngine,
                               @Nullable String comment,
@@ -456,11 +539,20 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     && Objects.equals(expireAfterSeconds, other.expireAfterSeconds)
                     && Objects.equals(partialFilterExpression, other.partialFilterExpression)
                     && collationMatches(collation, other.collation)
-                    && Objects.equals(bits, other.bits)
-                    && Objects.equals(min, other.min)
-                    && Objects.equals(max, other.max)
+                    && optionMatches(other.bits, bits)
+                    && optionMatches(other.min, min)
+                    && optionMatches(other.max, max)
+                    && optionMatches(other.defaultLanguage, defaultLanguage)
+                    && optionMatches(other.languageOverride, languageOverride)
+                    && optionMatches(other.textIndexVersion, textIndexVersion)
+                    && optionMatches(other.sphereVersion, sphereVersion)
                     && Objects.equals(wildcardProjection, other.wildcardProjection)
                     && Objects.equals(storageEngine, other.storageEngine);
+        }
+
+        private static <T> boolean optionMatches(@Nullable T desired,
+                                                 @Nullable T existing) {
+            return desired == null || Objects.equals(desired, existing);
         }
 
         private static boolean collationMatches(@Nullable String existingCollation,
@@ -511,6 +603,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     + ", bits=" + bits
                     + ", min=" + min
                     + ", max=" + max
+                    + ", defaultLanguage=" + defaultLanguage
+                    + ", languageOverride=" + languageOverride
+                    + ", textIndexVersion=" + textIndexVersion
+                    + ", sphereVersion=" + sphereVersion
                     + ", wildcardProjection=" + wildcardProjection
                     + ", storageEngine=" + storageEngine
                     + ", comment=" + comment
