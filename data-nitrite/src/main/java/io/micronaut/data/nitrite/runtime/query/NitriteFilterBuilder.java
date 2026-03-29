@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.runtime.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -57,8 +58,13 @@ import java.util.UUID;
 public final class NitriteFilterBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(NitriteFilterBuilder.class);
+    
+    // Spatial filter class names (optional dependencies)
     private static final String SPATIAL_FLUENT_FILTER_CLASS = "org.dizitart.no2.spatial.SpatialFluentFilter";
-    private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
+    private static final String GEO_POINT_CLASS = "org.dizitart.no2.spatial.GeoPoint";
+    private static final String JTS_GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
+    private static final String JTS_POINT_CLASS = "org.locationtech.jts.geom.Point";
+    private static final String JTS_COORDINATE_CLASS = "org.locationtech.jts.geom.Coordinate";
 
     /**
      * A filter that matches no documents (used for empty IN clauses).
@@ -1135,59 +1141,107 @@ public final class NitriteFilterBuilder {
             Object center = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(m.get("center"), params, namedParameters)), field);
             Object distanceObj = resolveValue(m.get("distance"), params, namedParameters);
             double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
-            return createSpatialFilter(field, "near", new Class<?>[]{Object.class, double.class}, center, distance);
-        }
-        return Filter.ALL;
-    }
-
-    private Filter createSpatialFilter(String field, String method, Class<?>[] argTypes, Object... args) {
-        if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
-            try {
-                Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
-                Method whereMethod = spatialClass.getMethod("where", String.class);
-                Object spatialFluentFilter = whereMethod.invoke(null, field);
-                if ("near".equals(method) && args.length == 2) {
-                    Object center = args[0];
-                    double distance = args[1] instanceof Number n ? n.doubleValue() : 0.0;
-                    Object coordinate = null;
-                    if (center != null && ClassUtils.isPresent(GEOMETRY_CLASS, null)) {
-                        Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
-                        if (geometryClass.isInstance(center)) {
-                            Method getCoordinateMethod = geometryClass.getMethod("getCoordinate");
-                            coordinate = getCoordinateMethod.invoke(center);
+            
+            // Use reflection to create spatial filters (nitrite-spatial is optional)
+            if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
+                try {
+                    Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
+                    Method whereMethod = spatialClass.getMethod("where", String.class);
+                    Object spatialFluentFilter = whereMethod.invoke(null, field);
+                    
+                    // Handle GeoPoint (via reflection to avoid hard dependency)
+                    if (center != null && ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
+                        Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
+                        if (geoPointClass.isInstance(center)) {
+                            Object point = geoPointClass.getMethod("getPoint").invoke(center);
+                            Method nearMethod = spatialFluentFilter.getClass().getMethod("near", Class.forName(JTS_POINT_CLASS), Double.class);
+                            return (Filter) nearMethod.invoke(spatialFluentFilter, point, distance);
                         }
                     }
-                    if (coordinate != null) {
-                        Method filterMethod = spatialFluentFilter.getClass().getMethod("near", Class.forName("org.locationtech.jts.geom.Coordinate"), Double.class);
-                        return (Filter) filterMethod.invoke(spatialFluentFilter, coordinate, Double.valueOf(distance));
+                    
+                    // Handle JTS Point
+                    if (center != null && ClassUtils.isPresent(JTS_POINT_CLASS, null)) {
+                        Class<?> pointClass = Class.forName(JTS_POINT_CLASS);
+                        if (pointClass.isInstance(center)) {
+                            Method nearMethod = spatialFluentFilter.getClass().getMethod("near", pointClass, Double.class);
+                            return (Filter) nearMethod.invoke(spatialFluentFilter, center, distance);
+                        }
                     }
-                } else {
-                    Method filterMethod = spatialFluentFilter.getClass().getMethod(method, argTypes);
-                    return (Filter) filterMethod.invoke(spatialFluentFilter, args);
+                    
+                    // Handle JTS Geometry - extract coordinate
+                    if (center != null && ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
+                        Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
+                        if (geometryClass.isInstance(center)) {
+                            Method getCoordMethod = geometryClass.getMethod("getCoordinate");
+                            Object coord = getCoordMethod.invoke(center);
+                            if (coord != null) {
+                                Method nearMethod = spatialFluentFilter.getClass().getMethod("near", Class.forName(JTS_COORDINATE_CLASS), Double.class);
+                                return (Filter) nearMethod.invoke(spatialFluentFilter, coord, distance);
+                            }
+                        }
+                    }
+                    
+                    // Fallback for Coordinate
+                    if (center != null && ClassUtils.isPresent(JTS_COORDINATE_CLASS, null)) {
+                        Class<?> coordClass = Class.forName(JTS_COORDINATE_CLASS);
+                        if (coordClass.isInstance(center)) {
+                            Method nearMethod = spatialFluentFilter.getClass().getMethod("near", coordClass, Double.class);
+                            return (Filter) nearMethod.invoke(spatialFluentFilter, center, distance);
+                        }
+                    }
+
+                    if (center != null) {
+                        throw new DataAccessException("Unsupported center type for $near spatial filter: " + center.getClass().getName());
+                    }
+                } catch (DataAccessException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new DataAccessException("Failed to create $near spatial filter on field '" + field + "': " + e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to create spatial filter for method: " + method, e);
             }
         }
         return Filter.ALL;
     }
 
     private Filter createSpatialFilter(String field, Object geometry, String method) {
-        if (geometry == null || !ClassUtils.isPresent(GEOMETRY_CLASS, null)) {
+        if (geometry == null) {
             return Filter.ALL;
         }
-        try {
-            Class<?> geometryClass = Class.forName(GEOMETRY_CLASS);
-            if (geometryClass.isInstance(geometry)) {
+        
+        // Use reflection to create spatial filters (nitrite-spatial is optional)
+        if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
+            try {
                 Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
                 Method whereMethod = spatialClass.getMethod("where", String.class);
                 Object spatialFluentFilter = whereMethod.invoke(null, field);
-                Method filterMethod = spatialFluentFilter.getClass().getMethod(method, geometryClass);
-                return (Filter) filterMethod.invoke(spatialFluentFilter, geometry);
+                
+                // Handle GeoPoint for within/intersects (convert to Point via reflection)
+                if (ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
+                    Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
+                    if (geoPointClass.isInstance(geometry)) {
+                        Object point = geoPointClass.getMethod("getPoint").invoke(geometry);
+                        Method filterMethod = spatialFluentFilter.getClass().getMethod(method, Class.forName(JTS_POINT_CLASS));
+                        return (Filter) filterMethod.invoke(spatialFluentFilter, point);
+                    }
+                }
+                
+                // Handle JTS Geometry directly
+                if (ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
+                    Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
+                    if (geometryClass.isInstance(geometry)) {
+                        Method filterMethod = spatialFluentFilter.getClass().getMethod(method, geometryClass);
+                        return (Filter) filterMethod.invoke(spatialFluentFilter, geometry);
+                    }
+                }
+
+                throw new DataAccessException("Unsupported geometry type for $" + method + " spatial filter: " + geometry.getClass().getName());
+            } catch (DataAccessException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new DataAccessException("Failed to create $" + method + " spatial filter on field '" + field + "': " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create spatial filter for method: " + method, e);
         }
+
         return Filter.ALL;
     }
 

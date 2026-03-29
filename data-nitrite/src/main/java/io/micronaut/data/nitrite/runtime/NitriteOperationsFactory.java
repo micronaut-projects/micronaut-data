@@ -57,7 +57,7 @@ public final class NitriteOperationsFactory {
   private static final Logger LOG = LoggerFactory.getLogger(NitriteOperationsFactory.class);
   private static final String ROCKSDB_MODULE_CLASS = "org.dizitart.no2.rocksdb.RocksDBModule";
   private static final String SPATIAL_MODULE_CLASS = "org.dizitart.no2.spatial.SpatialModule";
-  private static final String JTS_MODULE_CLASS = "com.bedatadriven.jackson.datatype.jts.JtsModule";
+  private static final String GEOMETRY_MODULE_CLASS = "org.dizitart.no2.spatial.jackson.GeometryModule";
 
   NitriteOperationsFactory() {
   }
@@ -179,15 +179,19 @@ public final class NitriteOperationsFactory {
         }
     }
 
-    // Optional: JTS module for Geometry serialization (spatial queries)
-    if (ClassUtils.isPresent(JTS_MODULE_CLASS, null)) {
+    // Optional: GeometryModule for JTS Geometry serialization (spatial queries)
+    // Uses Nitrite's own GeometryModule for consistent serialization with nitrite-spatial
+    if (ClassUtils.isPresent(GEOMETRY_MODULE_CLASS, null)) {
         try {
-            Class<?> jtsModuleClass = Class.forName(JTS_MODULE_CLASS);
-            Object jtsModule = jtsModuleClass.getDeclaredConstructor().newInstance();
-            mapper.registerModule((Module) jtsModule);
+            Class<?> geometryModuleClass = Class.forName(GEOMETRY_MODULE_CLASS);
+            Object geometryModule = geometryModuleClass.getDeclaredConstructor().newInstance();
+            mapper.registerModule((Module) geometryModule);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("GeometryModule registered for JTS Geometry serialization");
+            }
         } catch (Exception e) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn("JTS module found but could not be registered: {}", e.getMessage());
+                LOG.warn("GeometryModule found but could not be registered: {}", e.getMessage());
             }
         }
     }

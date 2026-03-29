@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
 import java.util.Optional;
 
 /**
- * Type converters for supporting classes and interfaces in the Spring Data domain package.
+ * Type converters for supporting classes and interfaces in the {@link org.springframework.data.domain} package.
  *
  * @author graemerocher
  * @since 1.0.0
