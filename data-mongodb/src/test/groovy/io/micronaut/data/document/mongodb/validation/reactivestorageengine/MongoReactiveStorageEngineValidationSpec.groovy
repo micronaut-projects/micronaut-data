@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver
-import io.micronaut.data.mongodb.annotation.MongoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.Specification

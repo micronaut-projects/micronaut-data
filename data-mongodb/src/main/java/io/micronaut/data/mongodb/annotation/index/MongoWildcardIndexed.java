@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a simple MongoDB hashed index for a property.
+ * Declares a simple MongoDB wildcard index for a property.
  *
  * @author radovanradic
  * @since 5.0.0
@@ -32,12 +32,17 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
-public @interface MongoHashedIndexed {
+public @interface MongoWildcardIndexed {
 
     /**
      * @return The index name.
      */
     String name() default "";
+
+    /**
+     * @return The wildcard projection definition as JSON.
+     */
+    String wildcardProjection() default "";
 
     /**
      * @return Whether the index is hidden.
@@ -53,4 +58,5 @@ public @interface MongoHashedIndexed {
      * @return The storage engine options as JSON.
      */
     String storageEngine() default "";
+
 }

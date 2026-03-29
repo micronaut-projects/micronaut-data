@@ -89,7 +89,7 @@ PredicateSpecification<Book> textSearchAdvanced(String term) {
 }
 ----
 
-NOTE: MongoDB text search requires a text index on the queried collection (for example ann:data.mongodb.annotation.MongoTextIndexed[]).
+NOTE: MongoDB text search requires a text index on the queried collection (for example ann:data.mongodb.annotation.index.MongoTextIndexed[]).
 
 === Geospatial predicates
 
@@ -130,7 +130,7 @@ PredicateSpecification<Place> nearSphere(MongoGeoPoint point) {
 }
 ----
 
-NOTE: Geospatial operators require compatible geospatial indexes and data modeling (for example ann:data.mongodb.annotation.MongoGeoIndexed[]).
+NOTE: Geospatial operators require compatible geospatial indexes and data modeling (for example ann:data.mongodb.annotation.index.MongoGeoIndexed[]).
 
 === Unsupported negated operators
 

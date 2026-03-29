@@ -2,13 +2,13 @@ package io.micronaut.data.document.mongodb.validation.options
 
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.mongodb.annotation.MongoCompoundIndex
-import io.micronaut.data.mongodb.annotation.MongoCompoundIndexField
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexType
-import io.micronaut.data.mongodb.annotation.MongoIndexed
-import io.micronaut.data.mongodb.annotation.MongoTextIndexed
-import io.micronaut.data.mongodb.annotation.MongoWildcardIndex
+import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex
+import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndexField
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
+import io.micronaut.data.mongodb.annotation.index.MongoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndex
 import io.micronaut.data.mongodb.common.MongoEntityIndexes
 import org.bson.Document
 import spock.lang.Shared

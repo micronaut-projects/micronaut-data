@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed;
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed;
 import io.micronaut.data.mongodb.geo.MongoGeoMultiPoint;
 
 @MappedEntity("geo_raw_query_entities")

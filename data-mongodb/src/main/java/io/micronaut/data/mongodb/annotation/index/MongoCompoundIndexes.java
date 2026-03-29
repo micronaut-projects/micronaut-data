@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Supported MongoDB geospatial index kinds.
+ * Repeatable annotation for {@link MongoCompoundIndex}.
  *
  * @author radovanradic
  * @since 5.0.0
  */
-public enum MongoGeoIndexType {
-    GEO_2D("2d"),
-    GEO_2DSPHERE("2dsphere");
-
-    private final String key;
-
-    MongoGeoIndexType(String key) {
-        this.key = key;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+@Inherited
+public @interface MongoCompoundIndexes {
 
     /**
-     * @return The MongoDB key value.
+     * @return The indexes.
      */
-    public String getKey() {
-        return key;
-    }
+    MongoCompoundIndex[] value() default {};
 }

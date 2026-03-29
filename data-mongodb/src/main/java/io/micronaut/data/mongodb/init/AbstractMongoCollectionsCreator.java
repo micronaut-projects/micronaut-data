@@ -36,7 +36,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.mongodb.annotation.MongoClusteredIndex;
+import io.micronaut.data.mongodb.annotation.index.MongoClusteredIndex;
 import io.micronaut.data.mongodb.common.MongoEntityIndexes;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;

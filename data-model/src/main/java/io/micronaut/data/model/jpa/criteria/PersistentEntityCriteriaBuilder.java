@@ -228,17 +228,51 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      */
     Predicate arrayContains(Expression<?> x, Expression<?> y);
 
+    /**
+     * Creates a MongoDB {@code $text} predicate.
+     *
+     * @param search The full-text search expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate text(Expression<String> search);
 
+    /**
+     * Creates a MongoDB {@code $text} predicate with optional text-search options.
+     *
+     * @param search The full-text search expression
+     * @param language The optional language override expression
+     * @param caseSensitive The optional case-sensitive flag expression
+     * @param diacriticSensitive The optional diacritic-sensitive flag expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate text(Expression<String> search,
                    @Nullable Expression<String> language,
                    @Nullable Expression<Boolean> caseSensitive,
                    @Nullable Expression<Boolean> diacriticSensitive);
 
+    /**
+     * Creates a MongoDB {@code $text} predicate.
+     *
+     * @param search The full-text search term
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate text(String search) {
         return text(literal(search));
     }
 
+    /**
+     * Creates a MongoDB {@code $text} predicate with optional text-search options.
+     *
+     * @param search The full-text search term
+     * @param language The optional language override
+     * @param caseSensitive The optional case-sensitive flag
+     * @param diacriticSensitive The optional diacritic-sensitive flag
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate text(String search,
                            @Nullable String language,
                            @Nullable Boolean caseSensitive,
@@ -251,29 +285,97 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
         );
     }
 
+    /**
+     * Creates a MongoDB {@code $geoWithin} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate geoWithin(Expression<?> expression, Expression<?> geometry);
 
+    /**
+     * Creates a MongoDB {@code $geoWithin} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate geoWithin(Expression<?> expression, Object geometry) {
         return geoWithin(expression, literal(geometry));
     }
 
+    /**
+     * Creates a MongoDB {@code $geoIntersects} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate geoIntersects(Expression<?> expression, Expression<?> geometry);
 
+    /**
+     * Creates a MongoDB {@code $geoIntersects} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate geoIntersects(Expression<?> expression, Object geometry) {
         return geoIntersects(expression, literal(geometry));
     }
 
+    /**
+     * Creates a MongoDB {@code $near} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate near(Expression<?> expression, Expression<?> geometry);
 
+    /**
+     * Creates a MongoDB {@code $near} predicate with optional distance bounds.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @param minDistance The optional minimum distance expression
+     * @param maxDistance The optional maximum distance expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate near(Expression<?> expression,
                    Expression<?> geometry,
                    @Nullable Expression<? extends Number> minDistance,
                    @Nullable Expression<? extends Number> maxDistance);
 
+    /**
+     * Creates a MongoDB {@code $near} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate near(Expression<?> expression, Object geometry) {
         return near(expression, literal(geometry));
     }
 
+    /**
+     * Creates a MongoDB {@code $near} predicate with optional distance bounds.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @param minDistance The optional minimum distance
+     * @param maxDistance The optional maximum distance
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate near(Expression<?> expression,
                            Object geometry,
                            @Nullable Number minDistance,
@@ -284,17 +386,53 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
             maxDistance == null ? null : literal(maxDistance));
     }
 
+    /**
+     * Creates a MongoDB {@code $nearSphere} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate nearSphere(Expression<?> expression, Expression<?> geometry);
 
+    /**
+     * Creates a MongoDB {@code $nearSphere} predicate with optional distance bounds.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry expression
+     * @param minDistance The optional minimum distance expression
+     * @param maxDistance The optional maximum distance expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
     Predicate nearSphere(Expression<?> expression,
                          Expression<?> geometry,
                          @Nullable Expression<? extends Number> minDistance,
                          @Nullable Expression<? extends Number> maxDistance);
 
+    /**
+     * Creates a MongoDB {@code $nearSphere} predicate.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate nearSphere(Expression<?> expression, Object geometry) {
         return nearSphere(expression, literal(geometry));
     }
 
+    /**
+     * Creates a MongoDB {@code $nearSphere} predicate with optional distance bounds.
+     *
+     * @param expression The geospatial property expression
+     * @param geometry The geometry value
+     * @param minDistance The optional minimum distance
+     * @param maxDistance The optional maximum distance
+     * @return a new predicate
+     * @since 5.0.0
+     */
     default Predicate nearSphere(Expression<?> expression,
                                  Object geometry,
                                  @Nullable Number minDistance,

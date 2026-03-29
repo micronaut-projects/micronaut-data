@@ -6,12 +6,12 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexType
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
-import io.micronaut.data.mongodb.annotation.MongoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.annotation.MongoTextIndexed
-import io.micronaut.data.mongodb.annotation.MongoWildcardIndex
+import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndex
 import io.micronaut.data.repository.CrudRepository
 import org.bson.Document
 import spock.lang.Specification

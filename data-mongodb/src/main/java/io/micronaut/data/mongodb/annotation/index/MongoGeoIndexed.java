@@ -13,41 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Declares a field within a compound MongoDB index.
+ * Declares a simple MongoDB geospatial index for a property.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Documented
-public @interface MongoCompoundIndexField {
+@Inherited
+public @interface MongoGeoIndexed {
 
     /**
-     * @return The property path.
+     * @return The index name.
      */
-    String value();
+    String name() default "";
 
     /**
-     * @return The field direction.
+     * @return The geospatial index kind.
      */
-    MongoIndexDirection direction() default MongoIndexDirection.ASC;
+    MongoGeoIndexType type() default MongoGeoIndexType.GEO_2DSPHERE;
 
     /**
-     * @return The geospatial key kind when this field should use a geospatial index key inside a compound index.
+     * @return Whether the index is hidden.
      */
-    MongoGeoIndexType geoType() default MongoGeoIndexType.GEO_2DSPHERE;
+    boolean hidden() default false;
 
     /**
-     * @return Whether the field should use the geospatial key kind instead of the numeric direction.
+     * @return The index creation command comment.
      */
-    boolean geo() default false;
+    String comment() default "";
+
+    /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
+
+    /**
+     * @return The 2dsphere index version, or -1 if unset.
+     */
+    int sphereVersion() default -1;
 
     /**
      * @return The 2d index bits setting, or -1 if unset.

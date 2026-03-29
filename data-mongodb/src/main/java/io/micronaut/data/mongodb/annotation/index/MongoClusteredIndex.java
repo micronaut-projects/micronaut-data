@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -23,54 +23,29 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a simple MongoDB text index for a property.
+ * Declares MongoDB clustered collection options for an entity collection.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
-public @interface MongoTextIndexed {
+public @interface MongoClusteredIndex {
 
     /**
-     * @return The index name.
+     * @return The clustered index name.
      */
     String name() default "";
 
     /**
-     * @return The text index weight.
+     * @return Whether clustered index is unique. MongoDB requires {@code true}.
      */
-    int weight() default 1;
+    boolean unique() default true;
 
     /**
-     * @return Whether the index is hidden.
+     * @return The collection expiration in seconds for clustered TTL collections.
      */
-    boolean hidden() default false;
-
-    /**
-     * @return The index creation command comment.
-     */
-    String comment() default "";
-
-    /**
-     * @return The storage engine options as JSON.
-     */
-    String storageEngine() default "";
-
-    /**
-     * @return The text index default language.
-     */
-    String defaultLanguage() default "";
-
-    /**
-     * @return The document field that overrides language for text processing.
-     */
-    String languageOverride() default "";
-
-    /**
-     * @return The text index version, or -1 if unset.
-     */
-    int textIndexVersion() default -1;
+    int expireAfterSeconds() default -1;
 }

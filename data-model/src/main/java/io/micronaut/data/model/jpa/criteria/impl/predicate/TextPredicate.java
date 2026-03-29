@@ -47,18 +47,30 @@ public final class TextPredicate extends AbstractPredicate {
         this.diacriticSensitive = diacriticSensitive == null ? null : CriteriaUtils.requireBoolExpression(diacriticSensitive);
     }
 
+    /**
+     * @return The search expression.
+     */
     public Expression<String> getSearch() {
         return search;
     }
 
+    /**
+     * @return The optional language expression.
+     */
     public @Nullable Expression<String> getLanguage() {
         return language;
     }
 
+    /**
+     * @return The optional case-sensitive flag expression.
+     */
     public @Nullable Expression<Boolean> getCaseSensitive() {
         return caseSensitive;
     }
 
+    /**
+     * @return The optional diacritic-sensitive flag expression.
+     */
     public @Nullable Expression<Boolean> getDiacriticSensitive() {
         return diacriticSensitive;
     }

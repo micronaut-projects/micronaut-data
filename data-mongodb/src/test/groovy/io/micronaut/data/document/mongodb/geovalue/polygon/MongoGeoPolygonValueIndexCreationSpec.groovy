@@ -9,7 +9,7 @@ import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.DataType
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.mongodb.geo.MongoGeoPolygon

@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.annotation.MongoWildcardIndex
+import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndex
 import io.micronaut.data.repository.CrudRepository
 import org.bson.Document
 import spock.lang.AutoCleanup

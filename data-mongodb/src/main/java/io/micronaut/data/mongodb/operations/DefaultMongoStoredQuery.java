@@ -42,7 +42,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed;
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed;
 import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.data.mongodb.annotation.MongoProjection;
 import io.micronaut.data.mongodb.annotation.MongoSort;

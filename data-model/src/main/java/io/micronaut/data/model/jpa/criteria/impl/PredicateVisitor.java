@@ -96,14 +96,39 @@ public interface PredicateVisitor {
      */
     void visit(LikePredicate likePredicate);
 
+    /**
+     * Visit {@link TextPredicate}.
+     *
+     * @param textPredicate The text predicate
+     */
     void visit(TextPredicate textPredicate);
 
+    /**
+     * Visit {@link GeoWithinPredicate}.
+     *
+     * @param geoWithinPredicate The geo-within predicate
+     */
     void visit(GeoWithinPredicate geoWithinPredicate);
 
+    /**
+     * Visit {@link GeoIntersectsPredicate}.
+     *
+     * @param geoIntersectsPredicate The geo-intersects predicate
+     */
     void visit(GeoIntersectsPredicate geoIntersectsPredicate);
 
+    /**
+     * Visit {@link NearPredicate}.
+     *
+     * @param nearPredicate The near predicate
+     */
     void visit(NearPredicate nearPredicate);
 
+    /**
+     * Visit {@link NearSpherePredicate}.
+     *
+     * @param nearSpherePredicate The near-sphere predicate
+     */
     void visit(NearSpherePredicate nearSpherePredicate);
 
     /**

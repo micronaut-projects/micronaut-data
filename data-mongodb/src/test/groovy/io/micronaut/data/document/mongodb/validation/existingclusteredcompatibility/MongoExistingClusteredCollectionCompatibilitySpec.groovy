@@ -5,7 +5,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.mongodb.annotation.MongoClusteredIndex
+import io.micronaut.data.mongodb.annotation.index.MongoClusteredIndex
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import org.bson.Document

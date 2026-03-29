@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a simple MongoDB geospatial index for a property.
+ * Declares a simple MongoDB text index for a property.
  *
  * @author radovanradic
  * @since 5.0.0
@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
-public @interface MongoGeoIndexed {
+public @interface MongoTextIndexed {
 
     /**
      * @return The index name.
@@ -40,9 +40,9 @@ public @interface MongoGeoIndexed {
     String name() default "";
 
     /**
-     * @return The geospatial index kind.
+     * @return The text index weight.
      */
-    MongoGeoIndexType type() default MongoGeoIndexType.GEO_2DSPHERE;
+    int weight() default 1;
 
     /**
      * @return Whether the index is hidden.
@@ -60,22 +60,17 @@ public @interface MongoGeoIndexed {
     String storageEngine() default "";
 
     /**
-     * @return The 2dsphere index version, or -1 if unset.
+     * @return The text index default language.
      */
-    int sphereVersion() default -1;
+    String defaultLanguage() default "";
 
     /**
-     * @return The 2d index bits setting, or -1 if unset.
+     * @return The document field that overrides language for text processing.
      */
-    int bits() default -1;
+    String languageOverride() default "";
 
     /**
-     * @return The 2d index minimum value, or NaN if unset.
+     * @return The text index version, or -1 if unset.
      */
-    double min() default Double.NaN;
-
-    /**
-     * @return The 2d index maximum value, or NaN if unset.
-     */
-    double max() default Double.NaN;
+    int textIndexVersion() default -1;
 }

@@ -10,18 +10,18 @@ NOTE: Query-side usage for MongoDB text/geospatial operators is documented in xr
 
 Micronaut Data currently supports the following MongoDB index annotations:
 
-* ann:data.mongodb.annotation.MongoIndexed[] (single-field indexes)
-* ann:data.mongodb.annotation.MongoCompoundIndex[] / ann:data.mongodb.annotation.MongoCompoundIndexes[] (compound indexes)
-* ann:data.mongodb.annotation.MongoTextIndexed[] (text indexes, including multi-field aggregation)
-* ann:data.mongodb.annotation.MongoHashedIndexed[] (hashed indexes)
-* ann:data.mongodb.annotation.MongoGeoIndexed[] (geospatial indexes: `2d`, `2dsphere`)
-* ann:data.mongodb.annotation.MongoWildcardIndexed[] (field-level wildcard indexes)
-* ann:data.mongodb.annotation.MongoWildcardIndex[] (top-level wildcard indexes)
-* ann:data.mongodb.annotation.MongoClusteredIndex[] (clustered collection options)
+* ann:data.mongodb.annotation.index.MongoIndexed[] (single-field indexes)
+* ann:data.mongodb.annotation.index.MongoCompoundIndex[] / ann:data.mongodb.annotation.index.MongoCompoundIndexes[] (compound indexes)
+* ann:data.mongodb.annotation.index.MongoTextIndexed[] (text indexes, including multi-field aggregation)
+* ann:data.mongodb.annotation.index.MongoHashedIndexed[] (hashed indexes)
+* ann:data.mongodb.annotation.index.MongoGeoIndexed[] (geospatial indexes: `2d`, `2dsphere`)
+* ann:data.mongodb.annotation.index.MongoWildcardIndexed[] (field-level wildcard indexes)
+* ann:data.mongodb.annotation.index.MongoWildcardIndex[] (top-level wildcard indexes)
+* ann:data.mongodb.annotation.index.MongoClusteredIndex[] (clustered collection options)
 
 == Single-field indexes
 
-Use ann:data.mongodb.annotation.MongoIndexed[] to declare standard single-field indexes.
+Use ann:data.mongodb.annotation.index.MongoIndexed[] to declare standard single-field indexes.
 
 Supported options include direction, `unique`, `sparse`, `hidden`, `expireAfterSeconds` (TTL), `partialFilterExpression`, `collation`, index-build `comment`, and `storageEngine`.
 
@@ -40,7 +40,7 @@ class ProductEntity {
 
 == Compound indexes
 
-Use ann:data.mongodb.annotation.MongoCompoundIndex[] for multi-field index declarations at entity level.
+Use ann:data.mongodb.annotation.index.MongoCompoundIndex[] for multi-field index declarations at entity level.
 
 Compound declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
 
@@ -68,69 +68,69 @@ NOTE: TTL on compound indexes is rejected during startup validation because Mong
 
 == Text indexes
 
-Use ann:data.mongodb.annotation.MongoTextIndexed[] on text fields.
+Use ann:data.mongodb.annotation.index.MongoTextIndexed[] on text fields.
 
 Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.
 
 Text declarations also support `defaultLanguage`, `languageOverride`, and `textIndexVersion`.
 
-NOTE: For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating ann:data.mongodb.annotation.MongoTextIndexed[] fields; conflicting declarations fail fast during startup validation.
+NOTE: For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating ann:data.mongodb.annotation.index.MongoTextIndexed[] fields; conflicting declarations fail fast during startup validation.
 
 == Hashed indexes
 
-Use ann:data.mongodb.annotation.MongoHashedIndexed[] to create hashed indexes.
+Use ann:data.mongodb.annotation.index.MongoHashedIndexed[] to create hashed indexes.
 
 == Geospatial indexes
 
-Use ann:data.mongodb.annotation.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
+Use ann:data.mongodb.annotation.index.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
 
-For `2dsphere` indexes, ann:data.mongodb.annotation.MongoGeoIndexed[] also supports `sphereVersion`.
+For `2dsphere` indexes, ann:data.mongodb.annotation.index.MongoGeoIndexed[] also supports `sphereVersion`.
 
 NOTE: `sphereVersion` is only valid for `2dsphere` indexes; declaring it for other geospatial kinds is rejected during startup validation (fail-fast).
 
 Modeled geospatial values are supported for `MongoGeoPoint`, `MongoGeoMultiPoint`, `MongoGeoLineString`, `MongoGeoMultiLineString`, `MongoGeoPolygon`, `MongoGeoMultiPolygon`, `MongoGeoGeometryCollection`, and custom point-like modeled types.
 
-For properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[], Micronaut Data now applies `MongoGeoPointConverter` implicitly when no explicit `@MappedProperty(converter=...)` is declared.
+For properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[], Micronaut Data now applies `MongoGeoPointConverter` implicitly when no explicit `@MappedProperty(converter=...)` is declared.
 Point-like modeled types can map coordinates through numeric properties such as `x/y`, `longitude/latitude`, or `lng|lon/lat`.
 
-For polygon modeled values, Micronaut Data applies `MongoGeoPolygonConverter` implicitly for `MongoGeoPolygon` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For polygon modeled values, Micronaut Data applies `MongoGeoPolygonConverter` implicitly for `MongoGeoPolygon` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
-For line-string modeled values, Micronaut Data applies `MongoGeoLineStringConverter` implicitly for `MongoGeoLineString` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For line-string modeled values, Micronaut Data applies `MongoGeoLineStringConverter` implicitly for `MongoGeoLineString` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
-For multi-line-string modeled values, Micronaut Data applies `MongoGeoMultiLineStringConverter` implicitly for `MongoGeoMultiLineString` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For multi-line-string modeled values, Micronaut Data applies `MongoGeoMultiLineStringConverter` implicitly for `MongoGeoMultiLineString` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
-For multi-point modeled values, Micronaut Data applies `MongoGeoMultiPointConverter` implicitly for `MongoGeoMultiPoint` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For multi-point modeled values, Micronaut Data applies `MongoGeoMultiPointConverter` implicitly for `MongoGeoMultiPoint` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
-For multi-polygon modeled values, Micronaut Data applies `MongoGeoMultiPolygonConverter` implicitly for `MongoGeoMultiPolygon` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For multi-polygon modeled values, Micronaut Data applies `MongoGeoMultiPolygonConverter` implicitly for `MongoGeoMultiPolygon` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
-For geometry-collection modeled values, Micronaut Data applies `MongoGeoGeometryCollectionConverter` implicitly for `MongoGeoGeometryCollection` properties annotated with ann:data.mongodb.annotation.MongoGeoIndexed[].
+For geometry-collection modeled values, Micronaut Data applies `MongoGeoGeometryCollectionConverter` implicitly for `MongoGeoGeometryCollection` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
 
 With `MongoGeoGeometryCollection` in place, modeled support now covers all standard GeoJSON geometry kinds (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`).
 
 For raw Mongo query annotations (for example ann:data.mongodb.annotation.MongoFindQuery[]), supported modeled geospatial parameter types are also converted implicitly to GeoJSON persisted shapes (`type` + `coordinates`) when no explicit converter is specified.
 
-NOTE: ann:data.mongodb.annotation.MongoGeoIndexed[] now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
+NOTE: ann:data.mongodb.annotation.index.MongoGeoIndexed[] now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
 
 == Wildcard indexes
 
-Use ann:data.mongodb.annotation.MongoWildcardIndexed[] for field-level wildcard indexes.
+Use ann:data.mongodb.annotation.index.MongoWildcardIndexed[] for field-level wildcard indexes.
 
-Use ann:data.mongodb.annotation.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
+Use ann:data.mongodb.annotation.index.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
 
-ann:data.mongodb.annotation.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key are merged into a single managed index definition.
+ann:data.mongodb.annotation.index.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key are merged into a single managed index definition.
 
 Top-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
 
 NOTE: `storageEngine` must be valid JSON. Invalid declarations are rejected during startup validation (fail-fast).
 
 NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
-Using `wildcardProjection` on field-level ann:data.mongodb.annotation.MongoWildcardIndexed[] is rejected during startup validation (fail-fast), with an explicit error that points to ann:data.mongodb.annotation.MongoWildcardIndex[].
+Using `wildcardProjection` on field-level ann:data.mongodb.annotation.index.MongoWildcardIndexed[] is rejected during startup validation (fail-fast), with an explicit error that points to ann:data.mongodb.annotation.index.MongoWildcardIndex[].
 
 NOTE: If multiple top-level wildcard declarations define conflicting options for `$**`, startup fails fast with an explicit conflict error.
 
 == TTL indexes
 
-Use ann:data.mongodb.annotation.MongoIndexed[] with `expireAfterSeconds` to create TTL indexes:
+Use ann:data.mongodb.annotation.index.MongoIndexed[] with `expireAfterSeconds` to create TTL indexes:
 
 [source,java]
 ----
@@ -147,7 +147,7 @@ class SessionEntity {
 
 == Clustered collections
 
-Use ann:data.mongodb.annotation.MongoClusteredIndex[] on the entity to configure clustered collection options during startup collection initialization.
+Use ann:data.mongodb.annotation.index.MongoClusteredIndex[] on the entity to configure clustered collection options during startup collection initialization.
 
 [source,java]
 ----

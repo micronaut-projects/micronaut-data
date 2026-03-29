@@ -13,29 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package io.micronaut.data.mongodb.annotation.index;
 
 /**
- * Repeatable annotation for {@link MongoWildcardIndex}.
+ * MongoDB index direction.
  *
  * @author radovanradic
  * @since 5.0.0
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Documented
-@Inherited
-public @interface MongoWildcardIndexes {
-
-    /**
-     * @return The indexes.
-     */
-    MongoWildcardIndex[] value() default {};
+public enum MongoIndexDirection {
+    ASC,
+    DESC
 }

@@ -7,10 +7,10 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.mongodb.annotation.MongoCompoundIndex
-import io.micronaut.data.mongodb.annotation.MongoCompoundIndexField
-import io.micronaut.data.mongodb.annotation.MongoIndexDirection
-import io.micronaut.data.mongodb.annotation.MongoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex
+import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndexField
+import io.micronaut.data.mongodb.annotation.index.MongoIndexDirection
+import io.micronaut.data.mongodb.annotation.index.MongoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup

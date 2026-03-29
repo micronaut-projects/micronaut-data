@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.annotation.MongoTextIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared

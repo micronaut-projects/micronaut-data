@@ -13,29 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Repeatable annotation for {@link MongoCompoundIndex}.
+ * Declares a top-level MongoDB wildcard index for an entity.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
-public @interface MongoCompoundIndexes {
+@Repeatable(MongoWildcardIndexes.class)
+public @interface MongoWildcardIndex {
 
     /**
-     * @return The indexes.
+     * @return The index name.
      */
-    MongoCompoundIndex[] value() default {};
+    String name() default "";
+
+    /**
+     * @return The wildcard projection definition as JSON.
+     */
+    String wildcardProjection() default "";
+
+    /**
+     * @return Whether the index is hidden.
+     */
+    boolean hidden() default false;
+
+    /**
+     * @return The index creation command comment.
+     */
+    String comment() default "";
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
+
+    /**
+     * @return The storage engine options as JSON.
+     */
+    String storageEngine() default "";
 }

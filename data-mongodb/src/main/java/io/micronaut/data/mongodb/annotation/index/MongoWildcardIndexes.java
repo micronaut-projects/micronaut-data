@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -23,29 +23,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares MongoDB clustered collection options for an entity collection.
+ * Repeatable annotation for {@link MongoWildcardIndex}.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Target(ElementType.TYPE)
 @Documented
 @Inherited
-public @interface MongoClusteredIndex {
+public @interface MongoWildcardIndexes {
 
     /**
-     * @return The clustered index name.
+     * @return The indexes.
      */
-    String name() default "";
-
-    /**
-     * @return Whether clustered index is unique. MongoDB requires {@code true}.
-     */
-    boolean unique() default true;
-
-    /**
-     * @return The collection expiration in seconds for clustered TTL collections.
-     */
-    int expireAfterSeconds() default -1;
+    MongoWildcardIndex[] value() default {};
 }

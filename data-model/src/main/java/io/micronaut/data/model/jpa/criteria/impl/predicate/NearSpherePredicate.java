@@ -52,18 +52,30 @@ public final class NearSpherePredicate extends AbstractPredicate {
         }
     }
 
+    /**
+     * @return The geospatial property expression.
+     */
     public Expression<?> getExpression() {
         return expression;
     }
 
+    /**
+     * @return The geometry expression.
+     */
     public Expression<?> getGeometry() {
         return geometry;
     }
 
+    /**
+     * @return The optional minimum distance expression.
+     */
     public @Nullable Expression<? extends Number> getMinDistance() {
         return minDistance;
     }
 
+    /**
+     * @return The optional maximum distance expression.
+     */
     public @Nullable Expression<? extends Number> getMaxDistance() {
         return maxDistance;
     }

@@ -5,8 +5,8 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexed
-import io.micronaut.data.mongodb.annotation.MongoGeoIndexType
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.repository.CrudRepository

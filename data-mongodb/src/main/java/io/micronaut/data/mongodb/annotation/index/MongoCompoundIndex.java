@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a simple MongoDB index for a property.
+ * Declares a compound MongoDB index for an entity.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
-public @interface MongoIndexed {
+@Repeatable(MongoCompoundIndexes.class)
+public @interface MongoCompoundIndex {
 
     /**
      * @return The index name.
@@ -40,9 +42,9 @@ public @interface MongoIndexed {
     String name() default "";
 
     /**
-     * @return The index direction.
+     * @return The fields.
      */
-    MongoIndexDirection direction() default MongoIndexDirection.ASC;
+    MongoCompoundIndexField[] fields();
 
     /**
      * @return Whether the index is unique.
@@ -78,6 +80,11 @@ public @interface MongoIndexed {
      * @return The index creation command comment.
      */
     String comment() default "";
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 
     /**
      * @return The storage engine options as JSON.

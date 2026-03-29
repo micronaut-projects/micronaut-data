@@ -13,15 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 /**
- * MongoDB index direction.
+ * Supported MongoDB geospatial index kinds.
  *
  * @author radovanradic
  * @since 5.0.0
  */
-public enum MongoIndexDirection {
-    ASC,
-    DESC
+public enum MongoGeoIndexType {
+    GEO_2D("2d"),
+    GEO_2DSPHERE("2dsphere");
+
+    private final String key;
+
+    MongoGeoIndexType(String key) {
+        this.key = key;
+    }
+
+    /**
+     * @return The MongoDB key value.
+     */
+    public String getKey() {
+        return key;
+    }
 }

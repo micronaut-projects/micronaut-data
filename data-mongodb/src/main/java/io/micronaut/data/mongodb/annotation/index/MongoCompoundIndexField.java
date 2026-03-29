@@ -13,56 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mongodb.annotation;
+package io.micronaut.data.mongodb.annotation.index;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 /**
- * Declares a top-level MongoDB wildcard index for an entity.
+ * Declares a field within a compound MongoDB index.
  *
  * @author radovanradic
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
-@Inherited
-@Repeatable(MongoWildcardIndexes.class)
-public @interface MongoWildcardIndex {
+public @interface MongoCompoundIndexField {
 
     /**
-     * @return The index name.
+     * @return The property path.
      */
-    String name() default "";
+    String value();
 
     /**
-     * @return The wildcard projection definition as JSON.
+     * @return The field direction.
      */
-    String wildcardProjection() default "";
+    MongoIndexDirection direction() default MongoIndexDirection.ASC;
 
     /**
-     * @return Whether the index is hidden.
+     * @return The geospatial key kind when this field should use a geospatial index key inside a compound index.
      */
-    boolean hidden() default false;
+    MongoGeoIndexType geoType() default MongoGeoIndexType.GEO_2DSPHERE;
 
     /**
-     * @return The index creation command comment.
+     * @return Whether the field should use the geospatial key kind instead of the numeric direction.
      */
-    String comment() default "";
+    boolean geo() default false;
 
     /**
-     * @return The createIndexes commit quorum.
+     * @return The 2d index bits setting, or -1 if unset.
      */
-    String commitQuorum() default "";
+    int bits() default -1;
 
     /**
-     * @return The storage engine options as JSON.
+     * @return The 2d index minimum value, or NaN if unset.
      */
-    String storageEngine() default "";
+    double min() default Double.NaN;
+
+    /**
+     * @return The 2d index maximum value, or NaN if unset.
+     */
+    double max() default Double.NaN;
 }
