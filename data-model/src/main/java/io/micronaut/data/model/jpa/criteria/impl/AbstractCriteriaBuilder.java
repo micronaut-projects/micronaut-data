@@ -35,6 +35,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import jakarta.persistence.Tuple;
@@ -1470,6 +1471,19 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     public Predicate arrayContains(Expression<?> x, Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.ARRAY_CONTAINS);
+    }
+
+    @Override
+    public Predicate text(Expression<String> search) {
+        return text(search, null, null, null);
+    }
+
+    @Override
+    public Predicate text(Expression<String> search,
+                          @Nullable Expression<String> language,
+                          @Nullable Expression<Boolean> caseSensitive,
+                          @Nullable Expression<Boolean> diacriticSensitive) {
+        return new TextPredicate(search, language, caseSensitive, diacriticSensitive);
     }
 
     @Override

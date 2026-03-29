@@ -54,6 +54,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredica
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -119,6 +120,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
+    private static final String TEXT = "$text";
+    private static final String SEARCH = "$search";
 
     @Nullable
     @Override
@@ -1057,6 +1060,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Override
         public void visit(NegatedPredicate negate) {
             IExpression<Boolean> negated = negate.getNegated();
+            if (negated instanceof TextPredicate) {
+                throw new UnsupportedOperationException("MongoDB does not support negating a $text predicate.");
+            }
             if (negated instanceof InPredicate<?> p) {
                 visitIn(p.getExpression(), p.getValues(), true);
                 return;
@@ -1137,6 +1143,22 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 likePredicate.getExpression(),
                 likePredicate.isCaseInsensitive(), likePredicate.isNegated(), false, false,
                 pattern, true);
+        }
+
+        @Override
+        public void visit(TextPredicate textPredicate) {
+            LinkedHashMap<String, Object> textClause = new LinkedHashMap<>(4);
+            textClause.put(SEARCH, valueRepresentation(textPredicate.getSearch()));
+            if (textPredicate.getLanguage() != null) {
+                textClause.put("$language", valueRepresentation(textPredicate.getLanguage()));
+            }
+            if (textPredicate.getCaseSensitive() != null) {
+                textClause.put("$caseSensitive", valueRepresentation(textPredicate.getCaseSensitive()));
+            }
+            if (textPredicate.getDiacriticSensitive() != null) {
+                textClause.put("$diacriticSensitive", valueRepresentation(textPredicate.getDiacriticSensitive()));
+            }
+            query.put(TEXT, textClause);
         }
 
         @Override
@@ -1354,6 +1376,18 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 filterValue = regexCriteria;
             }
             query.put(getPropertyPersistName(propertyPath), filterValue);
+        }
+
+        @Nullable
+        private Object valueRepresentation(Expression<?> value) {
+            if (value instanceof LiteralExpression<?> literalExpression) {
+                return literalExpression.getValue();
+            }
+            if (value instanceof BindingParameter bindingParameter) {
+                int index = queryState.pushParameter(bindingParameter, newBindingContext(null, null));
+                return Map.of(QUERY_PARAMETER_PLACEHOLDER, index);
+            }
+            return value;
         }
 
         @Nullable

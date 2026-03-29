@@ -142,6 +142,17 @@ class MongoCriteriaSpec extends Specification {
                             def parameter = cb.literal(colors)
                             ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("colors"), parameter)
                     } as Specification,
+                    { root, query, cb ->
+                        ((PersistentEntityCriteriaBuilder) cb).text("coffee shop")
+                    } as Specification,
+                    { root, query, cb ->
+                        ((PersistentEntityCriteriaBuilder) cb).text(
+                                cb.parameter(String),
+                                cb.literal("en"),
+                                cb.literal(true),
+                                cb.literal(false)
+                        )
+                    } as Specification,
             ]
             expectedWhereQuery << [
                     '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
@@ -153,7 +164,9 @@ class MongoCriteriaSpec extends Specification {
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$nin:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
-                    '{colors:{$all:[{$mn_qp:0}]}}'
+                    '{colors:{$all:[{$mn_qp:0}]}}',
+                    '{$text:{$search:{$mn_qp:0}}}',
+                    '{$text:{$search:{$mn_qp:0},$language:{$mn_qp:1},$caseSensitive:{$mn_qp:2},$diacriticSensitive:{$mn_qp:3}}}'
             ]
     }
 
@@ -200,6 +213,19 @@ class MongoCriteriaSpec extends Specification {
                     '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
                     '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
             ]
+    }
+
+    void "test negated text predicate is unsupported"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(((PersistentEntityCriteriaBuilder) criteriaBuilder).text("coffee").not())
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(UnsupportedOperationException)
+            e.message.contains('$text')
     }
 
     @Unroll

@@ -27,6 +27,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Subquery;
@@ -198,6 +199,20 @@ public final class CriteriaUtils {
                     if (expression instanceof ParameterExpression<?> parameterExpression) {
                         parameters.add(parameterExpression);
                     }
+                }
+            }
+            case TextPredicate textPredicate -> {
+                if (textPredicate.getSearch() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (textPredicate.getLanguage() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (textPredicate.getCaseSensitive() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (textPredicate.getDiacriticSensitive() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
                 }
             }
             case ConjunctionPredicate conjunctionPredicate -> {

@@ -24,6 +24,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 
 /**
@@ -90,6 +91,8 @@ public interface PredicateVisitor {
      * @param likePredicate The like predicate
      */
     void visit(LikePredicate likePredicate);
+
+    void visit(TextPredicate textPredicate);
 
     /**
      * Visit {@link ExistsSubqueryPredicate}.

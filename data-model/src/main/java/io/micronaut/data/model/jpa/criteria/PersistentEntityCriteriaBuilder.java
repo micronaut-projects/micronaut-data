@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -226,4 +227,27 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 3.9.0
      */
     Predicate arrayContains(Expression<?> x, Expression<?> y);
+
+    Predicate text(Expression<String> search);
+
+    Predicate text(Expression<String> search,
+                   @Nullable Expression<String> language,
+                   @Nullable Expression<Boolean> caseSensitive,
+                   @Nullable Expression<Boolean> diacriticSensitive);
+
+    default Predicate text(String search) {
+        return text(literal(search));
+    }
+
+    default Predicate text(String search,
+                           @Nullable String language,
+                           @Nullable Boolean caseSensitive,
+                           @Nullable Boolean diacriticSensitive) {
+        return text(
+            literal(search),
+            language == null ? null : literal(language),
+            caseSensitive == null ? null : literal(caseSensitive),
+            diacriticSensitive == null ? null : literal(diacriticSensitive)
+        );
+    }
 }

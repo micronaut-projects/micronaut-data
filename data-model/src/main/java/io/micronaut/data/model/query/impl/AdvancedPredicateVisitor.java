@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
@@ -143,6 +144,11 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     @Override
     default void visit(InPredicate<?> inPredicate) {
         visitIn(inPredicate.getExpression(), inPredicate.getValues(), false);
+    }
+
+    @Override
+    default void visit(TextPredicate textPredicate) {
+        throw new UnsupportedOperationException("Text predicate is not supported by this implementation.");
     }
 
     void visitIn(Expression<?> expression, Collection<?> values, boolean negated);

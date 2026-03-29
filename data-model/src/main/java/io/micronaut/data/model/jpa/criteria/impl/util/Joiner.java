@@ -43,6 +43,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredica
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -271,6 +272,20 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(LikePredicate likePredicate) {
         visitPredicateExpression(likePredicate.getExpression());
+    }
+
+    @Override
+    public void visit(TextPredicate textPredicate) {
+        visitPredicateExpression(textPredicate.getSearch());
+        if (textPredicate.getLanguage() != null) {
+            visitPredicateExpression(textPredicate.getLanguage());
+        }
+        if (textPredicate.getCaseSensitive() != null) {
+            visitPredicateExpression(textPredicate.getCaseSensitive());
+        }
+        if (textPredicate.getDiacriticSensitive() != null) {
+            visitPredicateExpression(textPredicate.getDiacriticSensitive());
+        }
     }
 
     @Override
