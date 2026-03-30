@@ -31,9 +31,9 @@ import java.util.EnumSet;
  * @since 5.0.0
  */
 @Internal
-final class VectorScoringFunctionDialectSupports {
+final class VectorScoringDialectSupports {
 
-    private VectorScoringFunctionDialectSupports() {
+    private VectorScoringDialectSupports() {
     }
 
     /**

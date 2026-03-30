@@ -27,11 +27,11 @@ import java.util.EnumSet;
  * Default no-op vector scoring-function strategy used when a dialect-specific strategy is unavailable.
  */
 @Internal
-final class DefaultVectorScoringFunctionDialectSupport implements VectorScoringDialectSupport {
+final class DefaultVectorScoringDialectSupport implements VectorScoringDialectSupport {
 
-    static final DefaultVectorScoringFunctionDialectSupport INSTANCE = new DefaultVectorScoringFunctionDialectSupport();
+    static final DefaultVectorScoringDialectSupport INSTANCE = new DefaultVectorScoringDialectSupport();
 
-    private DefaultVectorScoringFunctionDialectSupport() {
+    private DefaultVectorScoringDialectSupport() {
     }
 
     @Override

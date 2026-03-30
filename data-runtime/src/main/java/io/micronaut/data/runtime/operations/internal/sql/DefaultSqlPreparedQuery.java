@@ -127,7 +127,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (resolver != null) {
             return resolver.resolve(dialect);
         }
-        return DefaultVectorScoringFunctionDialectSupport.INSTANCE;
+                return DefaultVectorScoringDialectSupport.INSTANCE;
     }
 
     private void applyAndValidateVectorScoringFunction() {

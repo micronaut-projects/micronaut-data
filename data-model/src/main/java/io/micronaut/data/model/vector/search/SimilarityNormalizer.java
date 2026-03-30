@@ -16,6 +16,7 @@
 package io.micronaut.data.model.vector.search;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.function.DoubleUnaryOperator;
  * @since 5.0.0
  */
 @Experimental
+@Internal
 public final class SimilarityNormalizer {
 
     private static final SimilarityNormalizer IDENTITY =

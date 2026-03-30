@@ -37,6 +37,21 @@ import java.util.function.Consumer;
  */
 interface VectorSimilarityDialect {
 
+    String VECTOR_LENGTH_MEMBER = "length";
+    String UNKNOWN_VECTOR_DIMENSIONS = "*";
+    String ORACLE_FLOAT32 = "FLOAT32";
+    String ORACLE_FLOAT64 = "FLOAT64";
+    String ORACLE_INT8 = "INT8";
+    String ORACLE_SPARSE = "SPARSE";
+
+    String MYSQL_DISTANCE_PREFIX = "DISTANCE(";
+    String MYSQL_EUCLIDEAN_SUFFIX = ",'EUCLIDEAN')";
+    String POSTGRES_COSINE_DISTANCE_OPERATOR = " <=> ";
+
+    String ORACLE_VECTOR_DISTANCE_PREFIX = "VECTOR_DISTANCE(";
+    String ORACLE_TO_VECTOR = "TO_VECTOR(";
+    String ORACLE_COSINE_DISTANCE_SUFFIX = ",COSINE)";
+
     /**
      * Appends a dialect-specific vector score expression.
      *
@@ -72,17 +87,17 @@ interface VectorSimilarityDialect {
         }
         PersistentPropertyPath propertyPath = propertyPathExpression.getPropertyPath();
         PersistentProperty property = propertyPath.getProperty();
-        int configuredLength = property.getAnnotationMetadata().intValue(VectorStorage.class, "length").orElse(-1);
-        String dimensions = configuredLength > 0 ? Integer.toString(configuredLength) : "*";
+        int configuredLength = property.getAnnotationMetadata().intValue(VectorStorage.class, VECTOR_LENGTH_MEMBER).orElse(-1);
+        String dimensions = configuredLength > 0 ? Integer.toString(configuredLength) : UNKNOWN_VECTOR_DIMENSIONS;
         boolean sparse = VectorStorageShapeResolver.isSparse(property.getAnnotationMetadata());
         if (property.isAssignable(FloatVector.class)) {
-            return new OracleVectorConfig(dimensions, "FLOAT32", sparse);
+            return new OracleVectorConfig(dimensions, ORACLE_FLOAT32, sparse);
         }
         if (property.isAssignable(DoubleVector.class)) {
-            return new OracleVectorConfig(dimensions, "FLOAT64", sparse);
+            return new OracleVectorConfig(dimensions, ORACLE_FLOAT64, sparse);
         }
         if (property.isAssignable(ByteVector.class)) {
-            return new OracleVectorConfig(dimensions, "INT8", sparse);
+            return new OracleVectorConfig(dimensions, ORACLE_INT8, sparse);
         }
         return null;
     }
@@ -108,11 +123,11 @@ interface VectorSimilarityDialect {
                                       Expression<?> left,
                                       Expression<?> right,
                                       Consumer<Expression<?>> appendExpression) {
-            query.append("DISTANCE(");
+            query.append(MYSQL_DISTANCE_PREFIX);
             appendExpression.accept(left);
             query.append(',');
             appendExpression.accept(right);
-            query.append(",'EUCLIDEAN')");
+            query.append(MYSQL_EUCLIDEAN_SUFFIX);
         }
     }
 
@@ -128,7 +143,7 @@ interface VectorSimilarityDialect {
                                       Expression<?> right,
                                       Consumer<Expression<?>> appendExpression) {
             appendExpression.accept(left);
-            query.append(" <=> ");
+            query.append(POSTGRES_COSINE_DISTANCE_OPERATOR);
             appendExpression.accept(right);
         }
     }
@@ -139,43 +154,41 @@ interface VectorSimilarityDialect {
     enum OracleVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 
-        private static final String TO_VECTOR = "TO_VECTOR(";
-
         @Override
         public void appendVectorScore(StringBuilder query,
                                       Expression<?> left,
                                       Expression<?> right,
                                       Consumer<Expression<?>> appendExpression) {
             OracleVectorConfig config = resolveOracleVectorConfig(left);
-            query.append("VECTOR_DISTANCE(");
+            query.append(ORACLE_VECTOR_DISTANCE_PREFIX);
             if (config == null) {
-                query.append(TO_VECTOR);
+                query.append(ORACLE_TO_VECTOR);
                 appendExpression.accept(left);
                 query.append(')');
             } else {
-                query.append(TO_VECTOR);
+                query.append(ORACLE_TO_VECTOR);
                 appendExpression.accept(left);
                 query.append(',').append(config.dimensions()).append(',').append(config.format());
                 if (config.sparse()) {
-                    query.append(",SPARSE");
+                    query.append(',').append(ORACLE_SPARSE);
                 }
                 query.append(')');
             }
             query.append(',');
             if (config == null) {
-                query.append(TO_VECTOR);
+                query.append(ORACLE_TO_VECTOR);
                 appendExpression.accept(right);
                 query.append(')');
             } else {
-                query.append(TO_VECTOR);
+                query.append(ORACLE_TO_VECTOR);
                 appendExpression.accept(right);
                 query.append(',').append(config.dimensions()).append(',').append(config.format());
                 if (config.sparse()) {
-                    query.append(",SPARSE");
+                    query.append(',').append(ORACLE_SPARSE);
                 }
                 query.append(')');
             }
-            query.append(",COSINE)");
+            query.append(ORACLE_COSINE_DISTANCE_SUFFIX);
         }
     }
 }

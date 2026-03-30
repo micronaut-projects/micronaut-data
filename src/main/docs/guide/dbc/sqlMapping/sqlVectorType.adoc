@@ -47,7 +47,7 @@ snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vec
 
 `Score` is the raw database vector score/distance value used by SQL predicates and ordering.
 
-`Similarity` can be normalized to/from raw score values via `SimilarityNormalizer` for supported scoring functions:
+`Similarity` can be normalized to/from raw score values by Micronaut Data for supported scoring functions:
 
 - `COSINE`
 - `L2_EUCLIDEAN`

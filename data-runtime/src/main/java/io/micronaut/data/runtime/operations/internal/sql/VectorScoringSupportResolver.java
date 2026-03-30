@@ -51,6 +51,6 @@ final class VectorScoringSupportResolver {
      * @return Matching strategy or a default no-op strategy when not available
      */
     VectorScoringDialectSupport resolve(Dialect dialect) {
-        return byDialect.getOrDefault(dialect, DefaultVectorScoringFunctionDialectSupport.INSTANCE);
+        return byDialect.getOrDefault(dialect, DefaultVectorScoringDialectSupport.INSTANCE);
     }
 }
