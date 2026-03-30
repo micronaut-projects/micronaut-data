@@ -1,19 +1,15 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@MicronautTest(transactional = false, rollback = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductRepositorySpec {
+public abstract class ProductRepositorySpec {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;
@@ -21,19 +17,25 @@ class ProductRepositorySpec {
 
     @BeforeAll
     void setupTest() {
-        productRepository.deleteAll();
-        manufacturerRepository.deleteAll();
-        Manufacturer apple = manufacturerRepository.save("Apple");
-        productRepository.saveAll(Arrays.asList(
-                new Product(
+        if(productRepository != null) {
+            productRepository.deleteAll();
+        }
+        if(manufacturerRepository != null) {
+            manufacturerRepository.deleteAll();
+            Manufacturer apple = manufacturerRepository.save("Apple");
+            if(productRepository != null) {
+                productRepository.saveAll(Arrays.asList(
+                    new Product(
                         "MacBook",
                         apple
-                ),
-                new Product(
+                    ),
+                    new Product(
                         "iPhone",
                         apple
-                )
-        ));
+                    )
+                ));
+            }
+        }
     }
 
     @Test
