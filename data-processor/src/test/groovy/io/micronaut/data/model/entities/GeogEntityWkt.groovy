@@ -22,19 +22,19 @@ class GeogEntityWkt {
 
     @Srid(3857)
     @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private Point point;
 
     @Index(columns = "multi_point")
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private MultiPoint multiPoint;
 
     @Srid(3857)
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private LineString lineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "GEOGRAPHY")
     private MultiLineString multiLineString;
 
     Long getId() {

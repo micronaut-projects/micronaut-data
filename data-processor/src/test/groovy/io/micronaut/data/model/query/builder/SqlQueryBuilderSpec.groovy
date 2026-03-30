@@ -730,57 +730,77 @@ interface MyRepository {
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityJson))
 
         then:
-        statements == expectedStatements
+        statements.toList() == expectedStatements
 
         where:
         dialect            | expectedStatements
         Dialect.MYSQL      | [
-                'CREATE TABLE `geom_entity_json` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+                'CREATE TABLE `geom_entity_json` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY);',
                 'CREATE SPATIAL INDEX `idx_geom_entity_json_location` ON `geom_entity_json` (`location`);',
                 'CREATE SPATIAL INDEX `idx_geom_entity_json_multi_point` ON `geom_entity_json` (`multi_point`);'
         ]
         Dialect.POSTGRES   | [
-                'CREATE TABLE "geom_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOMETRY NOT NULL,"multi_point" GEOMETRY NOT NULL,"line_string" GEOMETRY NOT NULL,"multi_line_string" GEOMETRY,"polygon" GEOMETRY,"multi_polygon" GEOMETRY,"geometry_collection" GEOMETRY);',
+                'CREATE TABLE "geom_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOMETRY NOT NULL,"multi_point" GEOMETRY NOT NULL,"line_string" GEOMETRY NOT NULL,"multi_line_string" GEOMETRY);',
                 'CREATE INDEX "idx_geom_entity_json_location" ON "geom_entity_json" USING GIST ("location");',
                 'CREATE INDEX "idx_geom_entity_json_multi_point" ON "geom_entity_json" USING GIST ("multi_point");'
         ]
         Dialect.H2         | [
-                'CREATE TABLE `geom_entity_json` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY,`polygon` GEOMETRY,`multi_polygon` GEOMETRY,`geometry_collection` GEOMETRY);',
+                'CREATE TABLE `geom_entity_json` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`location` GEOMETRY NOT NULL,`multi_point` GEOMETRY NOT NULL,`line_string` GEOMETRY NOT NULL,`multi_line_string` GEOMETRY);',
                 'CREATE SPATIAL INDEX `idx_geom_entity_json_location` ON `geom_entity_json` (`location`);',
                 'CREATE SPATIAL INDEX `idx_geom_entity_json_multi_point` ON `geom_entity_json` (`multi_point`);'
         ]
         Dialect.SQL_SERVER | [
-                'CREATE TABLE [geom_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL,[multi_point] GEOGRAPHY NOT NULL,[line_string] GEOGRAPHY NOT NULL,[multi_line_string] GEOGRAPHY,[polygon] GEOGRAPHY,[multi_polygon] GEOGRAPHY,[geometry_collection] GEOGRAPHY);',
-                'CREATE SPATIAL INDEX [idx_geom_entity_json_location] ON [geom_entity_json] ([location]);',
-                'CREATE SPATIAL INDEX [idx_geom_entity_json_multi_point] ON [geom_entity_json] ([multi_point]);'
+                'CREATE TABLE [geom_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOMETRY NOT NULL,[multi_point] GEOMETRY NOT NULL,[line_string] GEOMETRY NOT NULL,[multi_line_string] GEOMETRY);',
+                'CREATE SPATIAL INDEX [idx_geom_entity_json_location] ON [geom_entity_json] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));',
+                'CREATE SPATIAL INDEX [idx_geom_entity_json_multi_point] ON [geom_entity_json] ([multi_point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
         ]
     }
 
+    @Unroll
+    void "test build create index for geography columns on #dialect"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(dialect)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeogEntityJson))
 
+        then:
+        statements.toList() == expectedStatements
 
+        where:
+        dialect            | expectedStatements
+        Dialect.POSTGRES   | [
+                'CREATE TABLE "geog_entity_json" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOGRAPHY NOT NULL,"multi_point" GEOGRAPHY NOT NULL,"line_string" GEOGRAPHY NOT NULL,"multi_line_string" GEOGRAPHY);',
+                'CREATE INDEX "idx_geog_entity_json_location" ON "geog_entity_json" USING GIST ("location");',
+                'CREATE INDEX "idx_geog_entity_json_multi_point" ON "geog_entity_json" USING GIST ("multi_point");'
+        ]
+        Dialect.SQL_SERVER | [
+                'CREATE TABLE [geog_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL,[multi_point] GEOGRAPHY NOT NULL,[line_string] GEOGRAPHY NOT NULL,[multi_line_string] GEOGRAPHY);',
+                'CREATE SPATIAL INDEX [idx_geog_entity_json_location] ON [geog_entity_json] ([location]);',
+                'CREATE SPATIAL INDEX [idx_geog_entity_json_multi_point] ON [geog_entity_json] ([multi_point]);'
+        ]
+    }
 
+    void "test build create index for geometry entity columns on oracle"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityJson))
 
+        then:
+        statements[0] == 'CREATE TABLE "GEOM_ENTITY_JSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"LOCATION" SDO_GEOMETRY NOT NULL,"MULTI_POINT" SDO_GEOMETRY NOT NULL,"LINE_STRING" SDO_GEOMETRY NOT NULL,"MULTI_LINE_STRING" SDO_GEOMETRY)'
+        statements[1] == 'CREATE SEQUENCE "GEOM_ENTITY_JSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[2].contains("'location'")
+        statements[2].contains("3857")
+        statements[3].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[3].contains("'multi_point'")
+        statements[3].contains("4326")
+        statements[4].contains("INSERT INTO USER_SDO_GEOM_METADATA")
+        statements[4].contains("'line_string'")
+        statements[4].contains("3857")
+        statements[5] == 'CREATE INDEX "IDX_GEOM_ENTITY_JSON_LOCATION" ON "GEOM_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+        statements[6] == 'CREATE INDEX "IDX_GEOM_ENTITY_JSON_MULTI_POINT" ON "GEOM_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    void "test build create index for geospatial column on oracle"() {
+    void "test build create index for embedded geometry entity columns on oracle"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(School))
@@ -792,29 +812,8 @@ interface MyRepository {
         statements[3] == 'CREATE INDEX "IDX_SCHOOL_POINT" ON "SCHOOL" ("POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
     }
 
-    void "test build create index for geo entity columns on oracle"() {
-        when:
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.ORACLE)
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntityJson))
-
-        then:
-        statements[0] == 'CREATE TABLE "GEO_ENTITY_JSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"LOCATION" SDO_GEOMETRY NOT NULL,"MULTI_POINT" SDO_GEOMETRY NOT NULL,"LINE_STRING" SDO_GEOMETRY NOT NULL,"MULTI_LINE_STRING" SDO_GEOMETRY,"POLYGON" SDO_GEOMETRY,"MULTI_POLYGON" SDO_GEOMETRY,"GEOMETRY_COLLECTION" SDO_GEOMETRY)'
-        statements[1] == 'CREATE SEQUENCE "GEO_ENTITY_JSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
-        statements[2].contains("'location'")
-        statements[2].contains("3857")
-        statements[3].contains("INSERT INTO USER_SDO_GEOM_METADATA")
-        statements[3].contains("'multi_point'")
-        statements[3].contains("4326")
-        statements[4].contains("INSERT INTO USER_SDO_GEOM_METADATA")
-        statements[4].contains("'line_string'")
-        statements[4].contains("3857")
-        statements[5] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_LOCATION" ON "GEO_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
-        statements[6] == 'CREATE INDEX "IDX_GEO_ENTITY_JSON_MULTI_POINT" ON "GEO_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
-    }
-
     @Unroll
-    void "test build create index for geospatial column on #dialect"() {
+    void "test build create index for embedded geometry entity columns on #dialect"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder(dialect)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(School))
@@ -828,37 +827,8 @@ interface MyRepository {
         Dialect.MYSQL      | 'CREATE TABLE `school` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));'               | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
         Dialect.POSTGRES   | 'CREATE TABLE "school" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"point" GEOMETRY NOT NULL,"description" VARCHAR(255));' | 'CREATE INDEX "idx_school_point" ON "school" USING GIST ("point");'
         Dialect.H2         | 'CREATE TABLE `school` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
-        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOGRAPHY NOT NULL,[description] VARCHAR(255));'      | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
+        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOMETRY NOT NULL,[description] VARCHAR(255));'       | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
     }
-
-
-
-    void "test build create index for geo entity columns on sql server with geometry definition"() {
-        when:
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQL_SERVER)
-        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeoEntityWktGeom))
-
-        then:
-        statements == [
-            'CREATE TABLE [geo_entity_wkt_geom] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] geometry,[multi_point] geometry,[line_string] geometry,[multi_line_string] geometry,[polygon] geometry,[multi_polygon] geometry,[geometry_collection] geometry);',
-            'CREATE SPATIAL INDEX [idx_geo_entity_wkt_geom_location] ON [geo_entity_wkt_geom] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));',
-            'CREATE SPATIAL INDEX [idx_geo_entity_wkt_geom_multi_point] ON [geo_entity_wkt_geom] ([multi_point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
-        ]
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     void "test build composite id query"() {
         when:
