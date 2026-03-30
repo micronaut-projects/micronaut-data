@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository // <1>
-interface BookRepository extends CrudRepository<Book, Long> { // <2>
+public interface BookRepository extends CrudRepository<Book, Long> { // <2>
 // end::repository[]
 
     // tag::simple[]

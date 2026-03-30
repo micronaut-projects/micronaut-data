@@ -17,7 +17,7 @@ public abstract class AbstractBookRepository implements CrudRepository<Book, Lon
     }
 
     public List<Book> findByTitle(String title) {
-        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book.class)
+        return entityManager.createQuery("FROM Book book WHERE book.title = :title", Book.class)
                     .setParameter("title", title)
                     .getResultList();
     }

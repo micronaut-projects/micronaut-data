@@ -2,6 +2,8 @@ datasources:
   default:
     driverClassName: oracle.jdbc.OracleDriver
     dialect: ORACLE
-    schema-generate: CREATE
+    schema-generate: CREATE_DROP
+    maximum-pool-size: 2
+    minimum-idle: 1
 entity:
   prefix: TBL_COMMON_

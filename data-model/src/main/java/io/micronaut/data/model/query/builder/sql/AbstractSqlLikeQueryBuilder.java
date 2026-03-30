@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -697,10 +698,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            if (order.getExpression() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            Expression<?> expr = order.getExpression();
+            boolean lowerExpression = false;
+            if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+                lowerExpression = true;
+                expr = ue.getExpression();
+            }
+            if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
                 QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
                 String currentAlias = propertyPath.getTableAlias();
-                boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+                boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
+                    || lowerExpression;
                 if (ignoreCase) {
                     buff.append("LOWER(");
                 }

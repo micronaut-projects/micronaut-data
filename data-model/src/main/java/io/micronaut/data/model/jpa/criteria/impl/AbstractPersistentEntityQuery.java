@@ -28,6 +28,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -168,10 +170,14 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             return;
         }
         for (Order order : orders) {
-            if (order.getExpression() instanceof IExpression<?> expression) {
+            var expr = order.getExpression();
+            if (expr instanceof UnaryExpression<?> unaryExpression && unaryExpression.getType() == UnaryExpressionType.LOWER) {
+                expr = unaryExpression.getExpression();
+            }
+            if (expr instanceof IExpression<?> expression) {
                 expression.visitExpression(joiner);
             } else {
-                joiner.joinIfNeeded(requireProperty(order.getExpression()));
+                joiner.joinIfNeeded(requireProperty(expr));
             }
         }
     }
