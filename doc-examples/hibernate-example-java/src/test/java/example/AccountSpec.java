@@ -1,6 +1,5 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,11 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.MonthDay;
 import java.util.Base64;
 
-@MicronautTest(transactional = false)
-public class AccountSpec {
+public abstract class AccountSpec {
     private final AccountRepository accountRepository;
 
-    public AccountSpec(AccountRepository accountRepository) {
+    protected AccountSpec(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
 
