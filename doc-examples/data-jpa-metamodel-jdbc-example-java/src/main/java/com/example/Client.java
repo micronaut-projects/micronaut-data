@@ -34,9 +34,9 @@ public class Client {
     private long version;
 
     @Enumerated(EnumType.STRING)
-    private Tier tier;
+    private Tier tier = Tier.BASIC;
 
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @Embedded
     @AttributeOverrides({

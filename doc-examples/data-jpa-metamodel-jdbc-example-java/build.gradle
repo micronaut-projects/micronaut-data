@@ -12,23 +12,27 @@ dependencies {
     annotationProcessor mn.micronaut.http.validation
     annotationProcessor projects.micronautDataProcessor
     annotationProcessor projects.micronautDataJpaMetamodelProcessor
-    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    annotationProcessor mnSerde.micronaut.serde.processor
 
+    implementation libs.managed.jakarta.data.api
     implementation mnSql.jakarta.persistence.api
     implementation projects.micronautDataJdbc
-
-    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation mn.micronaut.http.client.core
+    implementation mnSerde.micronaut.serde.jackson
+    implementation mnSql.micronaut.jdbc.hikari
 
     runtimeOnly mnLogging.logback.classic
-    runtimeOnly("com.h2database:h2")
-    compileOnly("io.micronaut:micronaut-http-client")
+    runtimeOnly mnSql.h2
     testImplementation mnTest.micronaut.test.junit5
-    testImplementation("io.micronaut:micronaut-http-client")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {
     mainClass = "com.example.Application"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            "-Amicronaut.data.jpa.metamodel.enabled=true"
+    ]
 }
 

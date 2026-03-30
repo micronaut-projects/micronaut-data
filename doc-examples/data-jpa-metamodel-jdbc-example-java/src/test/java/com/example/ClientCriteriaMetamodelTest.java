@@ -56,6 +56,8 @@ public class ClientCriteriaMetamodelTest {
         c1.setName("Alice");
         c1.setTier(Client.Tier.PRO);
         c1.setCreatedAt(Instant.now());
+        c1.setBillingAddress(new Client.Address("street", "city"));
+
 
         Client c2 = new Client();
         c2.setId(2L);
@@ -76,12 +78,13 @@ public class ClientCriteriaMetamodelTest {
 
     @Test
     void canJoinListRelationship_usingStaticMetamodel() {
-        Category fiction = new Category(10L, "Fiction", null, null);
-        Category sciFi = new Category(11L, "Sci-Fi", null, null);
+        Category fiction = new Category(10L, "Fiction", null, new byte[]{});
+        Category sciFi = new Category(11L, "Sci-Fi", null, new byte[]{});
 
         Client c = new Client();
         c.setId(3L);
         c.setName("Carol");
+        c.setBillingAddress(new Client.Address("street", "city"));
 
         categoryRepository.saveAll(List.of(fiction, sciFi));
         c.setCategoriesList(List.of(fiction, sciFi));
@@ -95,11 +98,12 @@ public class ClientCriteriaMetamodelTest {
 
     @Test
     void canJoinSetRelationship_usingStaticMetamodel() {
-        Category c1 = new Category(12L, "History", null, null);
+        Category c1 = new Category(12L, "History", null, new byte[]{});
 
         Client client = new Client();
         client.setId(4L);
         client.setName("Dan");
+        client.setBillingAddress(new Client.Address("street", "city"));
 
         categoryRepository.save(c1);
         client.setCategoriesSet(new HashSet<>(Set.of(c1)));
@@ -112,14 +116,16 @@ public class ClientCriteriaMetamodelTest {
 
     @Test
     void canFilterByManyToOne_usingStaticMetamodel() {
-        Category main = new Category(20L, "Main", null, null);
+        Category main = new Category(20L, "Main", null, new byte[]{});
 
-        Client a = new Client();
-        a.setId(5L);
-        a.setName("Eve");
-        a.setMainCategory(main);
+        Client client = new Client();
+        client.setId(5L);
+        client.setName("Eve");
+        client.setMainCategory(main);
+        client.setBillingAddress(new Client.Address("street", "city"));
 
-        clientRepository.save(a);
+
+        clientRepository.save(client);
 
         List<Client> result = clientRepository.findAll(mainCategoryIdEquals(20L));
         assertEquals(1, result.size());

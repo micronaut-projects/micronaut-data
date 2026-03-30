@@ -52,7 +52,7 @@ public class BookCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel_filterByTitle() {
-        Category fiction = new Category(1L, "Fiction", null, null);
+        Category fiction = new Category(1L, "Fiction", null, new byte[]{});
 
         Book b1 = new Book(10L, "Dune", 412, fiction);
         Book b2 = new Book(11L, "1984", 328, fiction);
@@ -68,7 +68,7 @@ public class BookCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel_filterByPagesRange_andOrderBy() {
-        Category fiction = new Category(2L, "Fiction", null, null);
+        Category fiction = new Category(2L, "Fiction", null, new byte[]{});
 
         Book b1 = new Book(20L, "Short Book", 120, fiction);
         Book b2 = new Book(21L, "Medium Book", 250, fiction);
@@ -87,8 +87,8 @@ public class BookCriteriaMetamodelTest {
 
     @Test
     void canJoinManyToOneCategory_usingStaticMetamodel_andFilterOnCategoryName() {
-        Category fiction = new Category(3L, "Fiction", null, null);
-        Category nonFiction = new Category(4l, "Non-Fiction", null, null);
+        Category fiction = new Category(3L, "Fiction", null, new byte[]{});
+        Category nonFiction = new Category(4l, "Non-Fiction", null, new byte[]{});
 
         Book b1 = new Book(30L, "Novel", 300, fiction);
         Book b2 = new Book(31L, "Biography", 280, nonFiction);
@@ -106,7 +106,7 @@ public class BookCriteriaMetamodelTest {
 
     @Test
     void canUsePaginationWithCriteriaQueryBuiltFromStaticMetamodel() {
-        Category fiction = new Category(6L, "Fiction", null, null);
+        Category fiction = new Category(6L, "Fiction", null, new byte[]{});
         List<Book> books = new ArrayList<>();
         for (int i = 0; i <= 5; i++) {
             Book b = new Book(50L + i, "Book" + i, 100 + i, fiction);

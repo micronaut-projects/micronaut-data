@@ -19,13 +19,11 @@ import com.example.repository.EmbeddedOwnerRepository;
 import com.example.repository.PurchaseOrderRepository;
 import com.example.repository.specification.EmbeddedOwnerSpecification;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
 import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.sql.DataSource;
 import java.util.List;
 
 import static com.example.repository.specification.PurchaseOrderSpecification.*;
@@ -37,8 +35,6 @@ public class EmbeddableCriteriaMetamodelTest {
 
     final EmbeddedOwnerRepository embeddedOwnerRepository;
     final PurchaseOrderRepository purchaseOrderRepository;
-    @Inject
-    DataSource dataSource;
 
     public EmbeddableCriteriaMetamodelTest(EmbeddedOwnerRepository embeddedOwnerRepository,
                                            PurchaseOrderRepository purchaseOrderRepository) {
@@ -74,10 +70,12 @@ public class EmbeddableCriteriaMetamodelTest {
         PurchaseOrder p1 = new PurchaseOrder();
         p1.setId(new OrderPk("t1", 1L));
         p1.setDescription("first");
+        p1.setDetails(new EmbeddableClass("X", 10L, 1L, 1.5));
 
         PurchaseOrder p2 = new PurchaseOrder();
         p2.setId(new OrderPk("t1", 2L));
         p2.setDescription("second");
+        p2.setDetails(new EmbeddableClass("X", 10L, 1L, 1.5));
 
         purchaseOrderRepository.saveAll(List.of(p1, p2));
 

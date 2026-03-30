@@ -51,8 +51,8 @@ public class CategoryCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel() {
-        Category c1 = new Category(1L, "Fiction", new ArrayList<>(), null);
-        Category c2 = new Category(2L, null, new ArrayList<>(), null);
+        Category c1 = new Category(1L, "Fiction", new ArrayList<>(), new byte[]{});
+        Category c2 = new Category(2L, "non-Fiction", new ArrayList<>(), new byte[]{});
 
         categoryRepository.saveAll(List.of(c1, c2));
 
@@ -65,8 +65,8 @@ public class CategoryCriteriaMetamodelTest {
 
     @Test
     void canJoinBooksList_usingStaticMetamodel_andFilterByBookTitle() {
-        Category fiction = new Category(1, "Fiction", new ArrayList<>(), null);
-        Category history = new Category(2, "History", new ArrayList<>(), null);
+        Category fiction = new Category(1, "Fiction", new ArrayList<>(), new byte[]{});
+        Category history = new Category(2, "History", new ArrayList<>(), new byte[]{});
 
         Book b1 = new Book(1L, "Dune", 412, fiction);
         Book b2 = new Book(2L, "1984", 328, fiction);
@@ -82,8 +82,8 @@ public class CategoryCriteriaMetamodelTest {
 
     @Test
     void canQueryDistinctCategories_withLeftJoinBooks_usingStaticMetamodel() {
-        Category empty = new Category(20L, "Empty", new ArrayList<>(), null);
-        Category fiction = new Category(21L, "Fiction", new ArrayList<>(), null);
+        Category empty = new Category(20L, "Empty", new ArrayList<>(), new byte[]{});
+        Category fiction = new Category(21L, "Fiction", new ArrayList<>(), new byte[]{});
 
         Book b1 = new Book(200L, "Dune", 412, fiction);
         Book b2 = new Book(201L, "Dune", 412, fiction);
@@ -98,7 +98,7 @@ public class CategoryCriteriaMetamodelTest {
 
     @Test
     void joiningBooksDoesNotDuplicateCategoryRows_whenUsingDistinct() {
-        Category fiction = new Category(30L, "Fiction", new ArrayList<>(), null);
+        Category fiction = new Category(30L, "Fiction", new ArrayList<>(), new byte[]{});
 
         Book b = new Book(300L, "Dune", 412, fiction);
         Book b1 = new Book(301L, "1984", 328, fiction);

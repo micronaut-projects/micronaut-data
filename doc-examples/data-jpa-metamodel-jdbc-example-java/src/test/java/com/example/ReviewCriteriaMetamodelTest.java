@@ -56,7 +56,7 @@ public class ReviewCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel_joinToBook_andFilter() {
-        Category cat = new Category(100L, "Fiction", new ArrayList<>(), null);
+        Category cat = new Category(100L, "Fiction", new ArrayList<>(), new byte[]{});
         Book book = new Book(200L, "Dune", 412, cat);
 
         Review r1 = new Review(1L, "alice", "Great", book);
