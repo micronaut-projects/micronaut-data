@@ -137,7 +137,7 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.asList(
-            builder.buildCreateTableStatements(entities, builder.getDialect(), definitionProviders)
+            builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {

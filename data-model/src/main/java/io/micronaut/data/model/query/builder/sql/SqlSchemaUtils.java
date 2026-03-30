@@ -98,7 +98,13 @@ public final class SqlSchemaUtils {
     private SqlSchemaUtils() {
     }
 
-     /**
+    @Experimental
+    public static List<SqlTableMapping> getSqlTableMappings(PersistentEntity entity,
+                                                            Dialect dialect) {
+        return getSqlTableMappings(List.of(), entity, dialect);
+    }
+
+    /**
       * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
       * and potentially joined tables.
       *

@@ -354,6 +354,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * </ul>
      *
      * @param entity The entity
+     * @return The {@code CREATE TABLE} statements
+     */
+    @Experimental
+    public String[] buildCreateTableStatements(PersistentEntity entity) {
+        return buildCreateTableStatements(entity, List.of());
+    }
+
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity.
+     *
+     * @param entity The entity
      * @param definitionProviders The definition providers
      * @return The {@code CREATE TABLE} statements
      */
@@ -398,13 +409,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Experimental
     public final String[] buildCreateTableStatements(PersistentEntity[] entities, Dialect dialect) {
-        return buildCreateTableStatements(entities, dialect, List.of());
+        return buildCreateTableStatements(List.of(), entities, dialect);
     }
 
     @Experimental
-    public final String[] buildCreateTableStatements(PersistentEntity[] entities,
-                                                     Dialect dialect,
-                                                     List<DefinitionProvider> definitionProviders) {
+    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -625,7 +636,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'_id': {");
         }
         Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
-        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(List.of(), entity, getDialect()).getFirst().primaryKeyColumns();
+        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity, getDialect()).getFirst().primaryKeyColumns();
         if (fields.length != columnMappings.size()) {
             throw new IllegalStateException("Declared fields array length (" + fields.length + ") != table mapping primary key array length (" + columnMappings.size() + ").");
         }

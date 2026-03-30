@@ -158,7 +158,7 @@ public class SchemaGenerator {
                                 }
                                 schemaHandler.useSchema(connection, dialect, schemaName);
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap);
+                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                 } else {
                                     generate(connection, configuration, propertyPlaceholderResolver, entities);
                                 }
@@ -171,7 +171,7 @@ public class SchemaGenerator {
                                 schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                             }
                             if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap);
+                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                             } else {
                                 generate(connection, configuration, propertyPlaceholderResolver, entities);
                             }
@@ -243,7 +243,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(entities, dialect, definitionProviders);
+                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -267,10 +267,11 @@ public class SchemaGenerator {
     }
 
     @SuppressWarnings("java:S3776")
-    private void validate(Connection connection,
-                          DataJdbcConfiguration configuration,
-                          PersistentEntity[] entities,
-                          Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap) throws SQLException {
+    private static void validate(Connection connection,
+                                 DataJdbcConfiguration configuration,
+                                 PersistentEntity[] entities,
+                                 Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
+                                 List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {

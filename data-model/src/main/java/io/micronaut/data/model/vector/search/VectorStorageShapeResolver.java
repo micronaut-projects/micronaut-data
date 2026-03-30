@@ -32,12 +32,8 @@ public final class VectorStorageShapeResolver {
     }
 
     public static boolean isSparse(AnnotationMetadata annotationMetadata) {
-        VectorShape shape = annotationMetadata
+        return annotationMetadata
             .enumValue(VectorStorage.class, "shape", VectorShape.class)
-            .orElse(VectorShape.DENSE);
-        if (shape == VectorShape.SPARSE) {
-            return true;
-        }
-        return annotationMetadata.booleanValue(VectorStorage.class, "sparse").orElse(false);
+            .orElse(VectorShape.DENSE) == VectorShape.SPARSE;
     }
 }

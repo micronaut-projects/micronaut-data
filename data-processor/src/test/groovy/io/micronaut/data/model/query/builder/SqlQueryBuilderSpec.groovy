@@ -478,7 +478,7 @@ interface MyRepository {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
         QueryBuilder encoder = new SqlQueryBuilder()
-        def statements = encoder.buildCreateTableStatements(entity, List.of())
+        def statements = encoder.buildCreateTableStatements(entity)
         def result = statements.join(System.lineSeparator())
 
         expect:
@@ -536,7 +536,7 @@ interface MyRepository {
     void "test build create embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(entity, List.of())
+        def statements = encoder.buildCreateTableStatements(entity)
 
         then:
             statements.join("\n") == query

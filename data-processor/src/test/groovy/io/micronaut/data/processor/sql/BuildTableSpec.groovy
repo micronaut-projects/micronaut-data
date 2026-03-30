@@ -417,8 +417,8 @@ class Emb {
         def builder = new SqlQueryBuilder(Dialect.H2)
 
         when:"Tables are created"
-        def employeeSql = builder.buildCreateTableStatements(employeeEntity, List.of())
-        def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity, List.of())
+        def employeeSql = builder.buildCreateTableStatements(employeeEntity)
+        def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity)
         then:"No join table is created"
         employeeSql.length == 1
         employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
@@ -503,7 +503,7 @@ class Teacher {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildCreateTableStatements(entity, List.of())
+        def sql = builder.buildCreateTableStatements(entity)
 
         then:
         sql.length == 4

@@ -48,52 +48,50 @@ final class MySqlTypeConvertersFactory {
             if (!(vector instanceof FloatVector)) {
                 throw new IllegalArgumentException("MYSQL does not support " + vector.getClass().getName());
             }
-            float[] floats = vector.toFloatArray();
-            ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES).order(ByteOrder.LITTLE_ENDIAN);
-            for (float f : floats) {
-                buffer.putFloat(f);
-            }
-            return Optional.of(buffer.array());
+            return Optional.of(encodeFloatArray(vector.toFloatArray()));
         };
     }
 
     @Prototype
     DataTypeConverter<FloatVector, byte[]> floatVectorToBinary() {
         return (vector, targetType, context) -> {
-            float[] floats = vector.toFloatArray();
-            ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES).order(ByteOrder.LITTLE_ENDIAN);
-            for (float f : floats) {
-                buffer.putFloat(f);
-            }
-            return Optional.of(buffer.array());
+            return Optional.of(encodeFloatArray(vector.toFloatArray()));
         };
     }
 
     @Prototype
     DataTypeConverter<byte[], Vector> binaryToVector() {
-        return (bytes, targetType, context) -> {
-            int newFloats = bytes.length / Float.BYTES; // 8 bytes per double
-            float[] floats = new float[newFloats];
-            ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-            for (int i = 0; i < newFloats; i++) {
-                floats[i] = buffer.getFloat();
-            }
-            FloatVector vector = (FloatVector) Vector.of(floats);  // or new DoubleVector(doubles) depending on your API
-            return Optional.of(vector);
-        };
+        return (bytes, targetType, context) -> Optional.of(Vector.of(decodeFloatArray(bytes)));
     }
 
     @Prototype
     DataTypeConverter<byte[], FloatVector> binaryToFloatVector() {
-        return (bytes, targetType, context) -> {
-            int newFloats = bytes.length / Float.BYTES; // 8 bytes per double
-            float[] floats = new float[newFloats];
-            ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-            for (int i = 0; i < newFloats; i++) {
-                floats[i] = buffer.getFloat();
-            }
-            FloatVector vector = (FloatVector) Vector.of(floats);  // or new DoubleVector(doubles) depending on your API
-            return Optional.of(vector);
-        };
+        return (bytes, targetType, context) -> Optional.of(decodeFloatVector(bytes));
+    }
+
+    private static byte[] encodeFloatArray(float[] floats) {
+        ByteBuffer buffer = ByteBuffer.allocate(floats.length * Float.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        for (float f : floats) {
+            buffer.putFloat(f);
+        }
+        return buffer.array();
+    }
+
+    private static float[] decodeFloatArray(byte[] bytes) {
+        int floatCount = bytes.length / Float.BYTES;
+        float[] floats = new float[floatCount];
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i < floatCount; i++) {
+            floats[i] = buffer.getFloat();
+        }
+        return floats;
+    }
+
+    private static FloatVector decodeFloatVector(byte[] bytes) {
+        Vector vector = Vector.of(decodeFloatArray(bytes));
+        if (vector instanceof FloatVector floatVector) {
+            return floatVector;
+        }
+        throw new IllegalStateException("Expected FloatVector from float[] decoding but got " + vector.getClass().getName());
     }
 }

@@ -42,10 +42,4 @@ public @interface VectorStorage {
      * @return Vector shape.
      */
     VectorShape shape() default VectorShape.DENSE;
-
-    /**
-     * @return Whether sparse vector storage should be used.
-     */
-    @Deprecated(forRemoval = false)
-    boolean sparse() default false;
 }
