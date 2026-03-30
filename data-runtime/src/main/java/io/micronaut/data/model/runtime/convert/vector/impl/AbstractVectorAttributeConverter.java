@@ -49,7 +49,14 @@ import java.util.Map;
  * @since 5.0.0
  */
 @Internal
-abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
+sealed abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider
+    permits DefaultVectorAttributeConverter,
+            DefaultSparseFloatVectorAttributeConverter,
+            DefaultSparseDoubleVectorAttributeConverter,
+            DefaultByteVectorAttributeConverter,
+            DefaultSparseByteVectorAttributeConverter,
+            DefaultFloatVectorAttributeConverter,
+            DefaultDoubleVectorAttributeConverter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractVectorAttributeConverter.class);
 

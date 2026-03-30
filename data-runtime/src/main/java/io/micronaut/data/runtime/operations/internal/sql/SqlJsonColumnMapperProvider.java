@@ -58,10 +58,10 @@ public final class SqlJsonColumnMapperProvider<S> {
      * @param sqlJsonValueMappers  list of custom SQL JSON value mappers
      * @param vectorScoringSupportResolver the vector scoring support resolver
      */
-    public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
-                                       List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
-                                       List<SqlJsonValueMapper> sqlJsonValueMappers,
-                                       VectorScoringSupportResolver vectorScoringSupportResolver) {
+    SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
+                                List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
+                                List<SqlJsonValueMapper> sqlJsonValueMappers,
+                                VectorScoringSupportResolver vectorScoringSupportResolver) {
         this.sqlJsonColumnReaders = sqlJsonColumnReaders;
         this.sqlJsonValueMappers = sqlJsonValueMappers;
         this.vectorScoringSupportResolver = vectorScoringSupportResolver;
