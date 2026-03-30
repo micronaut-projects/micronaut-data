@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
@@ -49,6 +50,19 @@ public final class NearPredicate extends AbstractPredicate {
         this.maxDistance = maxDistance;
         if (maxDistance != null) {
             CriteriaUtils.requireNumericExpression(maxDistance);
+        }
+        validateDistanceRange(minDistance, maxDistance);
+    }
+
+    private static void validateDistanceRange(@Nullable Expression<? extends Number> minDistance,
+                                              @Nullable Expression<? extends Number> maxDistance) {
+        if (minDistance instanceof LiteralExpression<? extends Number> minLiteral
+            && maxDistance instanceof LiteralExpression<? extends Number> maxLiteral) {
+            Number minValue = minLiteral.getValue();
+            Number maxValue = maxLiteral.getValue();
+            if (minValue != null && maxValue != null && Double.compare(maxValue.doubleValue(), minValue.doubleValue()) < 0) {
+                throw new IllegalArgumentException("The maximum distance must be greater than or equal to the minimum distance");
+            }
         }
     }
 

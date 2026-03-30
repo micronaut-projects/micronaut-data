@@ -69,6 +69,66 @@ class CriteriaUtilsSpec extends Specification {
         parameters as List == [textSearch, geoWithinGeometry, geoIntersectsGeometry, nearGeometry, nearMin, nearSphereGeometry, nearSphereMax]
     }
 
+    void 'rejects near predicate when max distance is less than min distance'() {
+        given:
+        def property = Stub(DefaultPersistentPropertyPath) {
+            getProperty() >> Stub(PersistentProperty)
+        }
+        def geometry = parameter(Map, 'geometry')
+
+        when:
+        new NearPredicate(property, geometry, new LiteralExpression<>(10d), new LiteralExpression<>(5d))
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'The maximum distance must be greater than or equal to the minimum distance'
+    }
+
+    void 'allows near predicate when max distance equals min distance'() {
+        given:
+        def property = Stub(DefaultPersistentPropertyPath) {
+            getProperty() >> Stub(PersistentProperty)
+        }
+        def geometry = parameter(Map, 'geometry')
+
+        when:
+        def predicate = new NearPredicate(property, geometry, new LiteralExpression<>(10d), new LiteralExpression<>(10d))
+
+        then:
+        predicate.minDistance.value == 10d
+        predicate.maxDistance.value == 10d
+    }
+
+    void 'rejects near sphere predicate when max distance is less than min distance'() {
+        given:
+        def property = Stub(DefaultPersistentPropertyPath) {
+            getProperty() >> Stub(PersistentProperty)
+        }
+        def geometry = parameter(Map, 'geometry')
+
+        when:
+        new NearSpherePredicate(property, geometry, new LiteralExpression<>(10d), new LiteralExpression<>(5d))
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'The maximum distance must be greater than or equal to the minimum distance'
+    }
+
+    void 'allows near sphere predicate when max distance equals min distance'() {
+        given:
+        def property = Stub(DefaultPersistentPropertyPath) {
+            getProperty() >> Stub(PersistentProperty)
+        }
+        def geometry = parameter(Map, 'geometry')
+
+        when:
+        def predicate = new NearSpherePredicate(property, geometry, new LiteralExpression<>(10d), new LiteralExpression<>(10d))
+
+        then:
+        predicate.minDistance.value == 10d
+        predicate.maxDistance.value == 10d
+    }
+
     private static <T> IParameterExpression<T> parameter(Class<T> type, String name) {
         new DefaultParameterExpression<>(type, name, null)
     }
