@@ -83,6 +83,22 @@ loadScripts(document, 'script');</script>
 <li><a href="#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">endingWithStringIgnoreCase(Expression, Expression)</a></li>
 <li><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">regex(Expression, Expression)</a></li>
 <li><a href="#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">arrayContains(Expression, Expression)</a></li>
+<li><a href="#text(jakarta.persistence.criteria.Expression)" tabindex="0">text(Expression)</a></li>
+<li><a href="#text(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">text(Expression, Expression, Expression, Expression)</a></li>
+<li><a href="#text(java.lang.String)" tabindex="0">text(String)</a></li>
+<li><a href="#text(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean)" tabindex="0">text(String, String, Boolean, Boolean)</a></li>
+<li><a href="#geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">geoWithin(Expression, Expression)</a></li>
+<li><a href="#geoWithin(jakarta.persistence.criteria.Expression,java.lang.Object)" tabindex="0">geoWithin(Expression, Object)</a></li>
+<li><a href="#geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">geoIntersects(Expression, Expression)</a></li>
+<li><a href="#geoIntersects(jakarta.persistence.criteria.Expression,java.lang.Object)" tabindex="0">geoIntersects(Expression, Object)</a></li>
+<li><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">near(Expression, Expression)</a></li>
+<li><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">near(Expression, Expression, Expression, Expression)</a></li>
+<li><a href="#near(jakarta.persistence.criteria.Expression,java.lang.Object)" tabindex="0">near(Expression, Object)</a></li>
+<li><a href="#near(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)" tabindex="0">near(Expression, Object, Number, Number)</a></li>
+<li><a href="#nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">nearSphere(Expression, Expression)</a></li>
+<li><a href="#nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">nearSphere(Expression, Expression, Expression, Expression)</a></li>
+<li><a href="#nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object)" tabindex="0">nearSphere(Expression, Object)</a></li>
+<li><a href="#nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)" tabindex="0">nearSphere(Expression, Object, Number, Number)</a></li>
 </ol>
 </li>
 </ol>
@@ -208,6 +224,30 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <div class="block">Checks if the expression x equals a string y ignoring case.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">geoIntersects</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$geoIntersects</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#geoIntersects(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">geoIntersects</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$geoIntersects</code> predicate.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">geoWithin</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$geoWithin</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#geoWithin(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">geoWithin</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$geoWithin</code> predicate.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">ilike</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
@@ -228,6 +268,62 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isNotEmptyString(jakarta.persistence.criteria.Expression)" class="member-name-link">isNotEmptyString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;expression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression is not empty.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">near</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$near</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">near</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$near</code> predicate with optional distance bounds.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#near(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">near</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$near</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#near(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)" class="member-name-link">near</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;minDistance,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;maxDistance)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$near</code> predicate with optional distance bounds.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">nearSphere</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">nearSphere</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate with optional distance bounds.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object)" class="member-name-link">nearSphere</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)" class="member-name-link">nearSphere</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;minDistance,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;maxDistance)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate with optional distance bounds.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">notEqualStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
@@ -270,6 +366,32 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression x starts with the expression y ignoring case.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#text(jakarta.persistence.criteria.Expression)" class="member-name-link">text</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;search)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$text</code> predicate.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#text(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">text</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;search,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;language,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;caseSensitive,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;diacriticSensitive)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Creates a MongoDB <code>$text</code> predicate with optional text-search options.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#text(java.lang.String)" class="member-name-link">text</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;search)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$text</code> predicate.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#text(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean)" class="member-name-link">text</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;search,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;language,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;caseSensitive,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;diacriticSensitive)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Creates a MongoDB <code>$text</code> predicate with optional text-search options.</div>
 </div>
 </div>
 </div>
@@ -682,6 +804,330 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <dd>a new predicate</dd>
 <dt>Since:</dt>
 <dd>3.9.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="text(jakarta.persistence.criteria.Expression)">
+<h3>text</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">text</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;search)</span></div>
+<div class="block">Creates a MongoDB <code>$text</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>search</code> - The full-text search expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="text(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>text</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">text</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;search,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;language,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;caseSensitive,
+ @Nullable jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;diacriticSensitive)</span></div>
+<div class="block">Creates a MongoDB <code>$text</code> predicate with optional text-search options.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>search</code> - The full-text search expression</dd>
+<dd><code>language</code> - The optional language override expression</dd>
+<dd><code>caseSensitive</code> - The optional case-sensitive flag expression</dd>
+<dd><code>diacriticSensitive</code> - The optional diacritic-sensitive flag expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="text(java.lang.String)">
+<h3>text</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">text</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;search)</span></div>
+<div class="block">Creates a MongoDB <code>$text</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>search</code> - The full-text search term</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="text(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean)">
+<h3>text</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">text</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;search,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;language,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;caseSensitive,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;diacriticSensitive)</span></div>
+<div class="block">Creates a MongoDB <code>$text</code> predicate with optional text-search options.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>search</code> - The full-text search term</dd>
+<dd><code>language</code> - The optional language override</dd>
+<dd><code>caseSensitive</code> - The optional case-sensitive flag</dd>
+<dd><code>diacriticSensitive</code> - The optional diacritic-sensitive flag</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>geoWithin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoWithin</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$geoWithin</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoWithin(jakarta.persistence.criteria.Expression,java.lang.Object)">
+<h3>geoWithin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoWithin</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$geoWithin</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>geoIntersects</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoIntersects</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$geoIntersects</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoIntersects(jakarta.persistence.criteria.Expression,java.lang.Object)">
+<h3>geoIntersects</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoIntersects</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$geoIntersects</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>near</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">near</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$near</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>near</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">near</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</span></div>
+<div class="block">Creates a MongoDB <code>$near</code> predicate with optional distance bounds.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dd><code>minDistance</code> - The optional minimum distance expression</dd>
+<dd><code>maxDistance</code> - The optional maximum distance expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="near(jakarta.persistence.criteria.Expression,java.lang.Object)">
+<h3>near</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">near</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$near</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="near(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)">
+<h3>near</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">near</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;minDistance,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;maxDistance)</span></div>
+<div class="block">Creates a MongoDB <code>$near</code> predicate with optional distance bounds.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dd><code>minDistance</code> - The optional minimum distance</dd>
+<dd><code>maxDistance</code> - The optional maximum distance</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>nearSphere</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">nearSphere</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="nearSphere(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>nearSphere</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">nearSphere</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
+ @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</span></div>
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate with optional distance bounds.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry expression</dd>
+<dd><code>minDistance</code> - The optional minimum distance expression</dd>
+<dd><code>maxDistance</code> - The optional maximum distance expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object)">
+<h3>nearSphere</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">nearSphere</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry)</span></div>
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="nearSphere(jakarta.persistence.criteria.Expression,java.lang.Object,java.lang.Number,java.lang.Number)">
+<h3>nearSphere</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">nearSphere</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;geometry,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;minDistance,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;maxDistance)</span></div>
+<div class="block">Creates a MongoDB <code>$nearSphere</code> predicate with optional distance bounds.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>expression</code> - The geospatial property expression</dd>
+<dd><code>geometry</code> - The geometry value</dd>
+<dd><code>minDistance</code> - The optional minimum distance</dd>
+<dd><code>maxDistance</code> - The optional maximum distance</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
 </dl>
 </div>
 </section>
