@@ -244,8 +244,9 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         if (!unique) {
             throw new IllegalStateException("Mongo clustered index for entity [" + entity.getName() + "] must be unique=true");
         }
-        Integer expireAfterSeconds = annotation.intValue("expireAfterSeconds").isPresent() && annotation.intValue("expireAfterSeconds").getAsInt() >= 0
-                ? annotation.intValue("expireAfterSeconds").getAsInt() : null;
+        var expireAfterSecondsValue = annotation.intValue("expireAfterSeconds");
+        Integer expireAfterSeconds = expireAfterSecondsValue.isPresent() && expireAfterSecondsValue.getAsInt() >= 0
+                ? expireAfterSecondsValue.getAsInt() : null;
         if (expireAfterSeconds != null) {
             PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
             if (identity == null) {
