@@ -3040,12 +3040,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @SuppressWarnings("NullAway")
         private String getGeometryFunction(String column, String columnAlias, PersistentProperty property) {
-            String converter = property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter").orElse(null);
+            AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+            String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
             boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
             return switch (getDialect()) {
                 case ORACLE -> getOracleGeometryFunction(column, columnAlias, isWkt);
                 case SQL_SERVER ->  getSqlServerGeometryFunction(column, columnAlias);
-                case MYSQL, POSTGRES, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
+                case POSTGRES -> getPostgresGeometryFunction(column, columnAlias, isWkt, annotationMetadata);
+                case MYSQL, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
                 default -> column + AS_CLAUSE + columnAlias;
             };
         }
@@ -3059,6 +3061,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             // since sqlserver doesn't have built-in functions for conversion between
             // json and internal geospatial data type, use always Well-Known Text (WKT) functions
             return column + ".STAsText()" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
+            Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+            if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+                String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
+                return function + column + "::geometry)" + AS_CLAUSE + columnAlias;
+            }
+            return getOtherGeometryFunction(column, columnAlias, isWkt);
         }
 
         private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {

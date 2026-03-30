@@ -1481,7 +1481,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         String geoDataType;
         int defaultSrid;
-        if (optDefinition.isEmpty() || optDefinition.get().toLowerCase().contains("geography")) {
+        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
             geoDataType = "geography";
             defaultSrid = 4326;
         } else {
@@ -1512,7 +1512,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 sb.append(", ").append(optSrid.getAsInt());
             }
             sb.append(")");
-        }  else {
+        } else {
             if (optSrid.isPresent()) {
                 sb.append("ST_SetSRID(");
             }
@@ -1522,6 +1522,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (optSrid.isPresent()) {
                 sb.append(", ").append(optSrid.getAsInt()).append(')');
             }
+        }
+        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            sb.append("::geography");
         }
     }
 

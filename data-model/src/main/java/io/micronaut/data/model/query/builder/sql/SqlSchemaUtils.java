@@ -321,10 +321,11 @@ public final class SqlSchemaUtils {
             String definition = null;
             if (dialect == Dialect.ORACLE) {
                 definition = "SDO_GEOMETRY";
-            } else if (dialect == Dialect.MYSQL || dialect == Dialect.POSTGRES || dialect == Dialect.H2) {
+            } else if (dialect == Dialect.MYSQL
+                || dialect == Dialect.POSTGRES
+                || dialect == Dialect.H2
+                || dialect == Dialect.SQL_SERVER) {
                 definition = "GEOMETRY";
-            } else if (dialect == Dialect.SQL_SERVER) {
-                definition = "GEOGRAPHY";
             }
             if (definition != null) {
                 if (required) {
