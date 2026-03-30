@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
 
 /**
@@ -40,5 +41,17 @@ public enum VectorShape {
     /**
      * Sparse vectors store only non-zero dimensions with their positions.
      */
-    SPARSE
+    SPARSE;
+
+    /**
+     * Resolves sparse storage intent from {@link VectorStorage} annotation metadata.
+     *
+     * @param annotationMetadata annotation metadata to inspect
+     * @return {@code true} when vector shape resolves to {@link #SPARSE}, otherwise {@code false}
+     */
+    public static boolean isSparse(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata
+            .enumValue(VectorStorage.class, "shape", VectorShape.class)
+            .orElse(DENSE) == SPARSE;
+    }
 }

@@ -17,11 +17,11 @@ package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
-import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
@@ -89,7 +89,7 @@ interface VectorSimilarityDialect {
         PersistentProperty property = propertyPath.getProperty();
         int configuredLength = property.getAnnotationMetadata().intValue(VectorStorage.class, VECTOR_LENGTH_MEMBER).orElse(-1);
         String dimensions = configuredLength > 0 ? Integer.toString(configuredLength) : UNKNOWN_VECTOR_DIMENSIONS;
-        boolean sparse = VectorStorageShapeResolver.isSparse(property.getAnnotationMetadata());
+        boolean sparse = VectorShape.isSparse(property.getAnnotationMetadata());
         if (property.isAssignable(FloatVector.class)) {
             return new OracleVectorConfig(dimensions, ORACLE_FLOAT32, sparse);
         }

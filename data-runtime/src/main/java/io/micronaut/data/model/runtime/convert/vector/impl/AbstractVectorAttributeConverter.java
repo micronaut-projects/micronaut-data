@@ -19,6 +19,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
@@ -28,7 +29,6 @@ import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
-import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import io.micronaut.core.type.Argument;
 import jakarta.persistence.Column;
 import org.slf4j.Logger;
@@ -49,14 +49,7 @@ import java.util.Map;
  * @since 5.0.0
  */
 @Internal
-sealed abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider
-    permits DefaultVectorAttributeConverter,
-            DefaultSparseFloatVectorAttributeConverter,
-            DefaultSparseDoubleVectorAttributeConverter,
-            DefaultByteVectorAttributeConverter,
-            DefaultSparseByteVectorAttributeConverter,
-            DefaultFloatVectorAttributeConverter,
-            DefaultDoubleVectorAttributeConverter {
+abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractVectorAttributeConverter.class);
 
@@ -241,7 +234,7 @@ sealed abstract class AbstractVectorAttributeConverter<X extends Vector, Y> impl
                 .intValue(Column.class, "length")
                 .orElse(-1));
         boolean hasLen = dim > 0;
-        boolean sparse = VectorStorageShapeResolver.isSparse(argument.getAnnotationMetadata());
+        boolean sparse = VectorShape.isSparse(argument.getAnnotationMetadata());
 
         return switch (databaseType) {
             case ORACLE -> {

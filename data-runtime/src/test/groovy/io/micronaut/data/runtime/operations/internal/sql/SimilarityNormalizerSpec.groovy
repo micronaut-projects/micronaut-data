@@ -1,5 +1,6 @@
-package io.micronaut.data.model.vector.search
+package io.micronaut.data.runtime.operations.internal.sql
 
+import io.micronaut.data.model.vector.search.ScoringFunction
 import spock.lang.Specification
 
 class SimilarityNormalizerSpec extends Specification {

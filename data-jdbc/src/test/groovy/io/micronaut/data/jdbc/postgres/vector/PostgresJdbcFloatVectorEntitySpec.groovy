@@ -15,7 +15,7 @@ import io.micronaut.data.model.vector.search.Score
 import io.micronaut.data.model.vector.search.ScoringFunction
 import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.model.vector.search.Similarity
-import io.micronaut.data.model.vector.search.SimilarityNormalizer
+import io.micronaut.data.runtime.operations.internal.sql.SimilarityNormalizer
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column

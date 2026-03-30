@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.vector.search;
+package io.micronaut.data.runtime.operations.internal.sql;
 
-import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.vector.search.ScoringFunction;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -27,7 +27,6 @@ import java.util.function.DoubleUnaryOperator;
  *
  * @since 5.0.0
  */
-@Experimental
 @Internal
 public final class SimilarityNormalizer {
 
@@ -76,42 +75,19 @@ public final class SimilarityNormalizer {
         this.score = score;
     }
 
-    /**
-     * Returns identity score/similarity normalization.
-     *
-     * @return identity normalizer
-     */
     public static SimilarityNormalizer identity() {
         return IDENTITY;
     }
 
-    /**
-     * Resolves the normalizer for a scoring function.
-     *
-     * @param scoringFunction scoring function
-     * @return matching normalizer or identity when no explicit mapping exists
-     */
     public static SimilarityNormalizer forScoringFunction(ScoringFunction scoringFunction) {
         SimilarityNormalizer normalizer = NORMALIZERS.get(scoringFunction);
         return normalizer == null ? IDENTITY : normalizer;
     }
 
-    /**
-     * Converts score into normalized similarity.
-     *
-     * @param scoreValue score value
-     * @return normalized similarity value
-     */
     public double getSimilarity(double scoreValue) {
         return similarity.applyAsDouble(scoreValue);
     }
 
-    /**
-     * Converts normalized similarity into score.
-     *
-     * @param similarityValue similarity value
-     * @return score value
-     */
     public double getScore(double similarityValue) {
         return score.applyAsDouble(similarityValue);
     }

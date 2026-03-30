@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 
@@ -32,7 +33,6 @@ import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
-import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import jakarta.persistence.Column;
 import jakarta.inject.Singleton;
 
@@ -93,7 +93,7 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
     }
 
     private static boolean isSparse(ConversionContext context) {
-        if (VectorStorageShapeResolver.isSparse(context.getAnnotationMetadata())) {
+        if (VectorShape.isSparse(context.getAnnotationMetadata())) {
             return true;
         }
         return context.getAnnotationMetadata()
@@ -103,7 +103,7 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
     }
 
     private static boolean isSparse(Argument<?> argument) {
-        if (VectorStorageShapeResolver.isSparse(argument.getAnnotationMetadata())) {
+        if (VectorShape.isSparse(argument.getAnnotationMetadata())) {
             return true;
         }
         return argument.getAnnotationMetadata()
