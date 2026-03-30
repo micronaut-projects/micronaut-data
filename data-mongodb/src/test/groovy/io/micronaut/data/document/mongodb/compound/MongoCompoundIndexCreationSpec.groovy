@@ -37,11 +37,6 @@ class MongoCompoundIndexCreationSpec extends Specification implements MongoTestP
     @Shared
     MongoClient mongoClient = applicationContext.getBean(MongoClient)
 
-    def setupSpec() {
-       // mongoClient.getDatabase('test').getCollection('compound_indexed_entities').drop()
-       // mongoClient.getDatabase('test').createCollection('compound_indexed_entities')
-    }
-
     void 'creates declared compound indexes for existing collections'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)

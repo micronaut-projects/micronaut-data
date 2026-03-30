@@ -220,25 +220,16 @@ public final class CriteriaUtils {
                 }
             }
             case GeoWithinPredicate geoWithinPredicate -> {
-                if (geoWithinPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
-                    parameters.add(parameterExpression);
-                }
                 if (geoWithinPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }
             case GeoIntersectsPredicate geoIntersectsPredicate -> {
-                if (geoIntersectsPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
-                    parameters.add(parameterExpression);
-                }
                 if (geoIntersectsPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }
             case NearPredicate nearPredicate -> {
-                if (nearPredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
-                    parameters.add(parameterExpression);
-                }
                 if (nearPredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
@@ -250,9 +241,6 @@ public final class CriteriaUtils {
                 }
             }
             case NearSpherePredicate nearSpherePredicate -> {
-                if (nearSpherePredicate.getExpression() instanceof ParameterExpression<?> parameterExpression) {
-                    parameters.add(parameterExpression);
-                }
                 if (nearSpherePredicate.getGeometry() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }

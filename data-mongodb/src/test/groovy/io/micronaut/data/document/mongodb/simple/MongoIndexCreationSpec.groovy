@@ -38,8 +38,6 @@ class MongoIndexCreationSpec extends Specification implements MongoTestPropertyP
                 'micronaut.data.mongodb.create-indexes'    : 'true'
         ])
         mongoClient = applicationContext.getBean(MongoClient)
-       // mongoClient.getDatabase('test').getCollection('indexed_entities').drop()
-       // mongoClient.getDatabase('test').createCollection('indexed_entities')
     }
 
     void 'creates declared indexes for existing collections'() {

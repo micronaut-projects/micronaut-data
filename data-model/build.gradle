@@ -21,6 +21,7 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.api
 
     testCompileOnly mnSerde.micronaut.serde.processor
+    testImplementation mnSql.jakarta.persistence.api
     testImplementation mn.micronaut.inject.java.test
     testImplementation mnSerde.micronaut.serde.jackson
     testImplementation mn.micronaut.jackson.databind
