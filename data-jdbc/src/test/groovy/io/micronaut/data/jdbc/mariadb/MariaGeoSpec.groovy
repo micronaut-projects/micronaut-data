@@ -1,11 +1,11 @@
 package io.micronaut.data.jdbc.mariadb
 
 import groovy.transform.Memoized
-import io.micronaut.data.jdbc.mysql.MySqlGeoEntityJsonRepository
-import io.micronaut.data.jdbc.mysql.MySqlGeoEntityWktRepository
+import io.micronaut.data.jdbc.mysql.MySqlGeometryEntityJsonRepository
+import io.micronaut.data.jdbc.mysql.MySqlGeometryEntityWktRepository
 import io.micronaut.data.jdbc.mysql.MySqlSchoolRepository
-import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository
+import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -13,14 +13,14 @@ class MariaGeoSpec extends AbstractGeoSpec implements MariaTestPropertyProvider 
 
     @Memoized
     @Override
-    GeoEntityJsonRepository getGeoEntityJsonRepository() {
-        return context.getBean(MySqlGeoEntityJsonRepository)
+    GeometryEntityJsonRepository getGeometryEntityJsonRepository() {
+        return context.getBean(MySqlGeometryEntityJsonRepository)
     }
 
     @Memoized
     @Override
-    GeoEntityWktRepository getGeoEntityWktRepository() {
-        return context.getBean(MySqlGeoEntityWktRepository)
+    GeometryEntityWktRepository getGeometryEntityWktRepository() {
+        return context.getBean(MySqlGeometryEntityWktRepository)
     }
 
     @Memoized

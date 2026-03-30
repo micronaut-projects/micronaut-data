@@ -9,12 +9,12 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.MultiPolygon
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityJson
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWkt
+import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
+import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
-import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository
+import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -25,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertNull
 
 abstract class AbstractGeoSpec extends Specification {
 
-    abstract GeoEntityJsonRepository getGeoEntityJsonRepository()
+    abstract GeometryEntityJsonRepository getGeometryEntityJsonRepository()
 
-    abstract GeoEntityWktRepository getGeoEntityWktRepository()
+    abstract GeometryEntityWktRepository getGeometryEntityWktRepository()
 
     abstract SchoolRepository getSchoolRepository()
 
@@ -82,7 +82,7 @@ abstract class AbstractGeoSpec extends Specification {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
-        GeoEntityJson entity = new GeoEntityJson()
+        GeometryEntityJson entity = new GeometryEntityJson()
         entity.setPoint(createPoint(1))
         entity.setMultiPoint(createMultiPoint(1))
         entity.setLineString(createLineString(1))
@@ -92,13 +92,13 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeoEntityJson savedEntity = getGeoEntityJsonRepository().save(entity)
+        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().save(entity)
 
         then:
         savedEntity.id > 0
 
         when:
-        Optional<GeoEntityJson> foundEntity = getGeoEntityJsonRepository().findById(savedEntity.id)
+        Optional<GeometryEntityJson> foundEntity = getGeometryEntityJsonRepository().findById(savedEntity.id)
 
         then:
         foundEntity.isPresent()
@@ -120,8 +120,8 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setPolygon(createPolygon(2))
         entity.setMultiPolygon(createMultiPolygon(2))
         entity.setGeometryCollection(createGeometryCollection(4))
-        getGeoEntityJsonRepository().update(entity)
-        foundEntity = getGeoEntityJsonRepository().findById(savedEntity.id)
+        getGeometryEntityJsonRepository().update(entity)
+        foundEntity = getGeometryEntityJsonRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
@@ -140,7 +140,7 @@ abstract class AbstractGeoSpec extends Specification {
         assumeTrue(supportsDeletingGeometryTypes())
 
         given:
-        GeoEntityJson entity = new GeoEntityJson()
+        GeometryEntityJson entity = new GeometryEntityJson()
         entity.setPoint(createPoint(5))
         entity.setMultiPoint(createMultiPoint(5))
         entity.setLineString(createLineString(5))
@@ -150,13 +150,13 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(8))
 
         when:
-        GeoEntityJson savedEntity = getGeoEntityJsonRepository().save(entity)
+        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().save(entity)
 
         then:
         savedEntity.id > 0
 
         when:
-        Optional<GeoEntityJson> foundEntity = getGeoEntityJsonRepository().findById(savedEntity.id)
+        Optional<GeometryEntityJson> foundEntity = getGeometryEntityJsonRepository().findById(savedEntity.id)
 
         then:
         foundEntity.isPresent()
@@ -175,8 +175,8 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setPolygon(null)
         entity.setMultiPolygon(null)
         entity.setGeometryCollection(null)
-        getGeoEntityJsonRepository().update(entity)
-        foundEntity = getGeoEntityJsonRepository().findById(savedEntity.id)
+        getGeometryEntityJsonRepository().update(entity)
+        foundEntity = getGeometryEntityJsonRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
@@ -192,7 +192,7 @@ abstract class AbstractGeoSpec extends Specification {
 
     void "test crud of all geometry types when wkt conversion used"() {
         given:
-        GeoEntityWkt entity = new GeoEntityWkt()
+        GeometryEntityWkt entity = new GeometryEntityWkt()
         entity.setPoint(createPoint(1))
         entity.setMultiPoint(createMultiPoint(1))
         entity.setLineString(createLineString(1))
@@ -202,13 +202,13 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeoEntityWkt savedEntity = getGeoEntityWktRepository().save(entity)
+        GeometryEntityWkt savedEntity = getGeometryEntityWktRepository().save(entity)
 
         then:
         savedEntity.id > 0
 
         when:
-        Optional<GeoEntityWkt> foundEntity = getGeoEntityWktRepository().findById(savedEntity.id)
+        Optional<GeometryEntityWkt> foundEntity = getGeometryEntityWktRepository().findById(savedEntity.id)
 
         then:
         foundEntity.isPresent()
@@ -230,8 +230,8 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setPolygon(createPolygon(2))
         entity.setMultiPolygon(createMultiPolygon(2))
         entity.setGeometryCollection(createGeometryCollection(4))
-        getGeoEntityWktRepository().update(entity)
-        foundEntity = getGeoEntityWktRepository().findById(savedEntity.id)
+        getGeometryEntityWktRepository().update(entity)
+        foundEntity = getGeometryEntityWktRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
@@ -249,8 +249,8 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setPolygon(null)
         entity.setMultiPolygon(null)
         entity.setGeometryCollection(null)
-        getGeoEntityWktRepository().update(entity)
-        foundEntity = getGeoEntityWktRepository().findById(savedEntity.id)
+        getGeometryEntityWktRepository().update(entity)
+        foundEntity = getGeometryEntityWktRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {

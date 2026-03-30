@@ -1,8 +1,8 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository
+import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -10,14 +10,24 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
 
     @Memoized
     @Override
-    GeoEntityJsonRepository getGeoEntityJsonRepository() {
-        return context.getBean(PostgresGeoEntityJsonRepository)
+    GeometryEntityJsonRepository getGeometryEntityJsonRepository() {
+        return context.getBean(PostgresGeometryEntityJsonRepository)
     }
 
     @Memoized
     @Override
-    GeoEntityWktRepository getGeoEntityWktRepository() {
-        return context.getBean(PostgresGeoEntityWktRepository)
+    GeometryEntityWktRepository getGeometryEntityWktRepository() {
+        return context.getBean(PostgresGeometryEntityWktRepository)
+    }
+
+    @Memoized
+    PostgresGeographyEntityJsonRepository getGeographyEntityJsonRepository() {
+        return context.getBean(PostgresGeographyEntityJsonRepository)
+    }
+
+    @Memoized
+    PostgresGeographyEntityWktRepository getGeographyEntityWktRepository() {
+        return context.getBean(PostgresGeographyEntityWktRepository)
     }
 
     @Memoized

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.sqlserver;
+package io.micronaut.data.tck.jdbc.entities.geo;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -29,43 +29,35 @@ import io.micronaut.data.model.geo.MultiPoint;
 import io.micronaut.data.model.geo.MultiPolygon;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
-import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
 @MappedEntity
-public class GeoEntityWktGeog {
+public class GeometryEntityJson {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @Srid(4258)
+    @Srid(3857)
     @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
+    @MappedProperty("location")
     private Point point;
 
-    @Srid(4258)
     @Index(columns = "multi_point")
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private MultiPoint multiPoint;
 
-    @Srid(4326)
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
+    @Srid(3857)
     private LineString lineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiLineString multiLineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private Polygon polygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiPolygon multiPolygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private GeometryCollection geometryCollection;
 
     public Long getId() {

@@ -2,8 +2,8 @@ package io.micronaut.data.jdbc.postgres;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository;
+import io.micronaut.data.repository.CrudRepository;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresGeoEntityWktRepository extends GeoEntityWktRepository {
+public interface PostgresGeographyEntityJsonRepository extends CrudRepository<GeographyEntityJson, Long> {
 }

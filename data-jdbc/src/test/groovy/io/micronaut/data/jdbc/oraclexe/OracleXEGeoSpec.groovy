@@ -6,8 +6,8 @@ import io.micronaut.data.model.geo.LineString
 import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
-import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository
+import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -15,14 +15,14 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
 
     @Memoized
     @Override
-    GeoEntityJsonRepository getGeoEntityJsonRepository() {
-        return context.getBean(OracleXEGeoEntityJsonRepository)
+    GeometryEntityJsonRepository getGeometryEntityJsonRepository() {
+        return context.getBean(OracleXEGeometryEntityJsonRepository)
     }
 
     @Memoized
     @Override
-    GeoEntityWktRepository getGeoEntityWktRepository() {
-        return context.getBean(OracleXEGeoEntityWktRepository)
+    GeometryEntityWktRepository getGeometryEntityWktRepository() {
+        return context.getBean(OracleXEGeometryEntityWktRepository)
     }
 
     @Memoized

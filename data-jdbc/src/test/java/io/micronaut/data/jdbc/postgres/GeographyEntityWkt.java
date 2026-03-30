@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.jdbc.entities.geo;
+package io.micronaut.data.jdbc.postgres;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -32,7 +32,7 @@ import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
 @MappedEntity
-public class GeoEntityWkt {
+public class GeographyEntityWkt {
 
     @Id
     @GeneratedValue
@@ -40,32 +40,32 @@ public class GeoEntityWkt {
 
     @Srid(4258)
     @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
     private Point point;
 
-    @Srid(4326)
+    @Srid(4258)
     @Index(columns = "multi_point")
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private MultiPoint multiPoint;
 
-    @Srid(4258)
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @Srid(4326)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private LineString lineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiLineString multiLineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private Polygon polygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiPolygon multiPolygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private GeometryCollection geometryCollection;
 
     public Long getId() {

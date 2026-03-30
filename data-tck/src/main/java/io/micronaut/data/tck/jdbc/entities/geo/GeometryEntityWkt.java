@@ -29,35 +29,43 @@ import io.micronaut.data.model.geo.MultiPoint;
 import io.micronaut.data.model.geo.MultiPolygon;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
 @MappedEntity
-public class GeoEntityJson {
+public class GeometryEntityWkt {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @Srid(3857)
+    @Srid(4258)
     @Index(columns = "location")
-    @MappedProperty("location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
     private Point point;
 
+    @Srid(4326)
     @Index(columns = "multi_point")
+    @MappedProperty(converter = GeometryWktConverter.class)
     private MultiPoint multiPoint;
 
-    @Srid(3857)
+    @Srid(4258)
+    @MappedProperty(converter = GeometryWktConverter.class)
     private LineString lineString;
 
     @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
     private MultiLineString multiLineString;
 
     @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
     private Polygon polygon;
 
     @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
     private MultiPolygon multiPolygon;
 
     @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
     private GeometryCollection geometryCollection;
 
     public Long getId() {

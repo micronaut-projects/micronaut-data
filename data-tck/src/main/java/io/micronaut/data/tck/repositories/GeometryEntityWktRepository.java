@@ -16,7 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.jdbc.entities.geo.GeoEntityWkt;
+import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt;
 
-public interface GeoEntityWktRepository extends CrudRepository<GeoEntityWkt, Long> {
+public interface GeometryEntityWktRepository extends CrudRepository<GeometryEntityWkt, Long> {
 }

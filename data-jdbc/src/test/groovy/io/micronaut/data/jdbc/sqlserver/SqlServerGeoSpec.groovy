@@ -1,8 +1,8 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.GeoEntityJsonRepository
-import io.micronaut.data.tck.repositories.GeoEntityWktRepository
+import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
+import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -12,14 +12,14 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
 
     @Memoized
     @Override
-    GeoEntityJsonRepository getGeoEntityJsonRepository() {
-        return context.getBean(MSGeoEntityJsonRepository)
+    GeometryEntityJsonRepository getGeometryEntityJsonRepository() {
+        return context.getBean(MSGeometryEntityJsonRepository)
     }
 
     @Memoized
     @Override
-    GeoEntityWktRepository getGeoEntityWktRepository() {
-        return context.getBean(MSGeoEntityWktRepository)
+    GeometryEntityWktRepository getGeometryEntityWktRepository() {
+        return context.getBean(MSGeometryEntityWktRepository)
     }
 
     @Memoized
@@ -29,8 +29,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
     }
 
     @Memoized
-    MSGeoEntityWktGeogRepository getGeoEntityWktGeogRepository() {
-        return context.getBean(MSGeoEntityWktGeogRepository)
+    MSGeographyEntityWktRepository getGeographyEntityWktRepository() {
+        return context.getBean(MSGeographyEntityWktRepository)
     }
 
     @Override
@@ -47,7 +47,7 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
 
     void "test crud of all geometry types when wkt conversion used together with sqlserver geography type"() {
         given:
-        GeoEntityWktGeog entity = new GeoEntityWktGeog()
+        GeographyEntityWkt entity = new GeographyEntityWkt()
         entity.setPoint(createPoint(1))
         entity.setMultiPoint(createMultiPoint(1))
         entity.setLineString(createLineString(1))
@@ -57,13 +57,13 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeoEntityWktGeog savedEntity = getGeoEntityWktGeogRepository().save(entity)
+        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().save(entity)
 
         then:
         savedEntity.id > 0
 
         when:
-        Optional<GeoEntityWktGeog> foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
+        Optional<GeographyEntityWkt> foundEntity = getGeographyEntityWktRepository().findById(savedEntity.id)
 
         then:
         foundEntity.isPresent()
@@ -85,8 +85,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setPolygon(createPolygon(2))
         entity.setMultiPolygon(createMultiPolygon(2))
         entity.setGeometryCollection(createGeometryCollection(4))
-        getGeoEntityWktGeogRepository().update(entity)
-        foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
+        getGeographyEntityWktRepository().update(entity)
+        foundEntity = getGeographyEntityWktRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
@@ -104,8 +104,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setPolygon(null)
         entity.setMultiPolygon(null)
         entity.setGeometryCollection(null)
-        getGeoEntityWktGeogRepository().update(entity)
-        foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
+        getGeographyEntityWktRepository().update(entity)
+        foundEntity = getGeographyEntityWktRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
