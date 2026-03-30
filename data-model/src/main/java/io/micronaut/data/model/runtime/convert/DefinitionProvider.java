@@ -24,6 +24,6 @@ import io.micronaut.core.annotation.Internal;
  * @since 5.0.0
  */
 @Internal
-public interface DefinitionProvider {
+public sealed interface DefinitionProvider permits SqlColumnDefinitionProvider, SqlIndexDefinitionProvider {
 
 }

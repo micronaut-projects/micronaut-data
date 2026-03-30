@@ -31,6 +31,12 @@ public final class VectorStorageShapeResolver {
     private VectorStorageShapeResolver() {
     }
 
+    /**
+     * Determines whether sparse storage is requested by {@link VectorStorage} metadata.
+     *
+     * @param annotationMetadata annotation metadata to inspect
+     * @return {@code true} when vector shape resolves to {@link VectorShape#SPARSE}, otherwise {@code false}
+     */
     public static boolean isSparse(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
             .enumValue(VectorStorage.class, "shape", VectorShape.class)

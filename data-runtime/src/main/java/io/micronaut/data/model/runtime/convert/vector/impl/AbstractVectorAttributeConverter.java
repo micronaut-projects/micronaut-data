@@ -30,6 +30,7 @@ import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import io.micronaut.core.type.Argument;
+import jakarta.persistence.Column;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,14 @@ import java.util.Map;
  * @since 5.0.0
  */
 @Internal
-abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider {
+sealed abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider
+    permits DefaultVectorAttributeConverter,
+            DefaultSparseFloatVectorAttributeConverter,
+            DefaultSparseDoubleVectorAttributeConverter,
+            DefaultByteVectorAttributeConverter,
+            DefaultSparseByteVectorAttributeConverter,
+            DefaultFloatVectorAttributeConverter,
+            DefaultDoubleVectorAttributeConverter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractVectorAttributeConverter.class);
 
@@ -230,7 +238,7 @@ abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements 
         int dim = argument.getAnnotationMetadata()
             .intValue(VectorStorage.class, "length")
             .orElseGet(() -> argument.getAnnotationMetadata()
-                .intValue("jakarta.persistence.Column", "length")
+                .intValue(Column.class, "length")
                 .orElse(-1));
         boolean hasLen = dim > 0;
         boolean sparse = VectorStorageShapeResolver.isSparse(argument.getAnnotationMetadata());

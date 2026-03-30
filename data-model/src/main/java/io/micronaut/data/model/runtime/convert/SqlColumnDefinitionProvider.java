@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert;
 
+import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
 
@@ -25,7 +26,8 @@ import io.micronaut.core.type.Argument;
  *
  * @since 5.0.0
  */
-public interface SqlColumnDefinitionProvider extends DefinitionProvider {
+@Internal
+public non-sealed interface SqlColumnDefinitionProvider extends DefinitionProvider {
 
     /**
       * Return a vendor-specific SQL column definition for this attribute, or {@code null} to delegate to default mapping.

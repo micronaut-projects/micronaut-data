@@ -26,10 +26,17 @@ import org.jspecify.annotations.Nullable;
  * @param entity The matched entity
  * @param score The computed score
  * @param similarity The normalized similarity derived from score when scoring function is known
+ * @since 5.0.0
  */
 @Experimental
 public record SearchResult<T>(@NonNull T entity, @NonNull Score score, @Nullable Similarity similarity) {
 
+    /**
+     * Creates a search result without normalized similarity.
+     *
+     * @param entity matched entity
+     * @param score computed score
+     */
     public SearchResult(@NonNull T entity, @NonNull Score score) {
         this(entity, score, null);
     }

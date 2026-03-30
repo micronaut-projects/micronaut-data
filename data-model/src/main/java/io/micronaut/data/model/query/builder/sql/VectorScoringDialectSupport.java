@@ -23,10 +23,13 @@ import java.util.EnumSet;
 
 /**
  * Dialect strategy for vector scoring-function defaults, validation, and SQL adaptation.
+ *
+ * @since 5.0.0
  */
 @Internal
-public interface VectorScoringFunctionDialectSupport {
+public interface VectorScoringDialectSupport {
 
+    /** Synthetic function token used for derived vector score expressions. */
     String SCORE_FUNCTION = "mn_vector_score";
 
     /**

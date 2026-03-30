@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 
@@ -32,6 +33,7 @@ import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
+import jakarta.persistence.Column;
 import jakarta.inject.Singleton;
 
 /**
@@ -80,7 +82,7 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
             int dim = argument.getAnnotationMetadata()
                 .intValue(VectorStorage.class, "length")
                 .orElseGet(() -> argument.getAnnotationMetadata()
-                    .intValue("jakarta.persistence.Column", "length")
+                    .intValue(Column.class, "length")
                     .orElse(-1));
             if (dim > 0) {
                 return "VECTOR(%d,FLOAT32,SPARSE)".formatted(dim);
@@ -95,7 +97,7 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
             return true;
         }
         return context.getAnnotationMetadata()
-            .stringValue("io.micronaut.data.annotation.MappedProperty", "definition")
+            .stringValue(MappedProperty.class, "definition")
             .map(definition -> definition.toUpperCase(Locale.ROOT).contains("SPARSE"))
             .orElse(false);
     }
@@ -105,7 +107,7 @@ final class DefaultVectorAttributeConverter extends AbstractVectorAttributeConve
             return true;
         }
         return argument.getAnnotationMetadata()
-            .stringValue("io.micronaut.data.annotation.MappedProperty", "definition")
+            .stringValue(MappedProperty.class, "definition")
             .map(definition -> definition.toUpperCase(Locale.ROOT).contains("SPARSE"))
             .orElse(false);
     }

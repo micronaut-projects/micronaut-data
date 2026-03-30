@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import jakarta.inject.Singleton;
 
 import java.util.EnumMap;
@@ -26,19 +26,21 @@ import java.util.Map;
 
 /**
  * Resolves the vector scoring-function strategy for a SQL dialect.
+ *
+ * @since 5.0.0
  */
 @Internal
 @Singleton
 final class VectorScoringSupportResolver {
 
-    private final Map<Dialect, VectorScoringFunctionDialectSupport> byDialect;
+    private final Map<Dialect, VectorScoringDialectSupport> byDialect;
 
     /**
      * @param supports All discovered dialect strategy beans
      */
-    VectorScoringSupportResolver(List<VectorScoringFunctionDialectSupport> supports) {
-        EnumMap<Dialect, VectorScoringFunctionDialectSupport> map = new EnumMap<>(Dialect.class);
-        for (VectorScoringFunctionDialectSupport support : supports) {
+    VectorScoringSupportResolver(List<VectorScoringDialectSupport> supports) {
+        EnumMap<Dialect, VectorScoringDialectSupport> map = new EnumMap<>(Dialect.class);
+        for (VectorScoringDialectSupport support : supports) {
             map.put(support.dialect(), support);
         }
         byDialect = map;
@@ -48,7 +50,7 @@ final class VectorScoringSupportResolver {
      * @param dialect The target SQL dialect
      * @return Matching strategy or a default no-op strategy when not available
      */
-    VectorScoringFunctionDialectSupport resolve(Dialect dialect) {
+    VectorScoringDialectSupport resolve(Dialect dialect) {
         return byDialect.getOrDefault(dialect, DefaultVectorScoringFunctionDialectSupport.INSTANCE);
     }
 }

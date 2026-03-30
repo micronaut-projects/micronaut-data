@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Experimental;
  * Vector similarity value used in derived search methods.
  *
  * @param value The similarity value
+ * @since 5.0.0
  */
 @Experimental
 public record Similarity(double value) {

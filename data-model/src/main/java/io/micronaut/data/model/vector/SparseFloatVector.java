@@ -42,6 +42,12 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         SparseVector.validate(length, indices, values.length);
     }
 
+    /**
+     * Creates a sparse vector from dense float values.
+     *
+     * @param denseValues dense values
+     * @return sparse vector representation
+     */
     public static SparseFloatVector fromDense(float[] denseValues) {
         Objects.requireNonNull(denseValues, "denseValues must not be null");
         int nonZero = 0;
@@ -65,6 +71,12 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         return new SparseFloatVector(denseValues.length, sparseIndices, sparseValues);
     }
 
+    /**
+     * Creates a sparse vector from a dense {@link FloatVector}.
+     *
+     * @param denseVector dense vector
+     * @return sparse vector representation
+     */
     public static SparseFloatVector fromDense(FloatVector denseVector) {
         Objects.requireNonNull(denseVector, "denseVector must not be null");
         return fromDense(denseVector.toFloatArray());
@@ -112,6 +124,11 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         return dense;
     }
 
+    /**
+     * Converts this sparse vector into dense {@link FloatVector} form.
+     *
+     * @return dense float vector
+     */
     public FloatVector toDenseVector() {
         return new FloatVector(toFloatArray());
     }

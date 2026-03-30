@@ -22,17 +22,24 @@ import io.micronaut.core.annotation.Experimental;
  *
  * <p>Names are intentionally aligned with {@link io.micronaut.data.annotation.VectorIndexType.DistanceType}
  * to keep index-time and query-time metric selection consistent.</p>
+ *
+ * @since 5.0.0
  */
 @Experimental
 public enum ScoringFunction {
 
+    /** Cosine distance/similarity score function. */
     COSINE,
 
+    /** Dot-product (inner-product) score function. */
     DOT,
 
+    /** L1/Manhattan distance score function. */
     L1_MANHATTAN,
 
+    /** L2/Euclidean distance score function. */
     L2_EUCLIDEAN,
 
+    /** Squared L2/Euclidean distance score function. */
     L2_EUCLIDEAN_SQUARED;
 }

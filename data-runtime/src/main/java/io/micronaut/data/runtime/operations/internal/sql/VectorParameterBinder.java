@@ -30,6 +30,15 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Internal strategy for adapting vector values to SQL bind parameters.
+ *
+ * <p>The binder selects an appropriate {@link VectorTypeConverter} for the active dialect
+ * and vector shape (dense or sparse), and returns a {@link PreparedParameter} used by
+ * repository operations during statement binding.</p>
+ *
+ * @since 5.0.0
+ */
 @Internal
 sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVectorParameterBinder {
 

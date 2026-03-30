@@ -85,14 +85,29 @@ public sealed interface Vector
      */
     byte[] toByteArray();
 
+    /**
+     * Converts this vector to sparse float representation.
+     *
+     * @return sparse float vector
+     */
     default SparseFloatVector toSparseFloatVector() {
         return SparseFloatVector.fromDense(toFloatArray());
     }
 
+    /**
+     * Converts this vector to sparse double representation.
+     *
+     * @return sparse double vector
+     */
     default SparseDoubleVector toSparseDoubleVector() {
         return SparseDoubleVector.fromDense(toDoubleArray());
     }
 
+    /**
+     * Converts this vector to sparse byte representation.
+     *
+     * @return sparse byte vector
+     */
     default SparseByteVector toSparseByteVector() {
         return SparseByteVector.fromDense(toByteArray());
     }

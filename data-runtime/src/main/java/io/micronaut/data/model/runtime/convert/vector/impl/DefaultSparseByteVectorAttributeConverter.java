@@ -23,6 +23,11 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 
+/**
+ * Default converter for {@link SparseByteVector} attributes.
+ *
+ * @since 5.0.0
+ */
 @Singleton
 @Internal
 final class DefaultSparseByteVectorAttributeConverter extends AbstractVectorAttributeConverter<SparseByteVector, Object> implements SparseByteVectorAttributeConverter<Object> {

@@ -24,7 +24,7 @@ import java.util.function.DoubleUnaryOperator;
 /**
  * Converts dialect-specific vector scores into normalized similarities and back.
  *
- * @since 4.13
+ * @since 5.0.0
  */
 @Experimental
 public final class SimilarityNormalizer {
@@ -74,19 +74,42 @@ public final class SimilarityNormalizer {
         this.score = score;
     }
 
+    /**
+     * Returns identity score/similarity normalization.
+     *
+     * @return identity normalizer
+     */
     public static SimilarityNormalizer identity() {
         return IDENTITY;
     }
 
+    /**
+     * Resolves the normalizer for a scoring function.
+     *
+     * @param scoringFunction scoring function
+     * @return matching normalizer or identity when no explicit mapping exists
+     */
     public static SimilarityNormalizer forScoringFunction(ScoringFunction scoringFunction) {
         SimilarityNormalizer normalizer = NORMALIZERS.get(scoringFunction);
         return normalizer == null ? IDENTITY : normalizer;
     }
 
+    /**
+     * Converts score into normalized similarity.
+     *
+     * @param scoreValue score value
+     * @return normalized similarity value
+     */
     public double getSimilarity(double scoreValue) {
         return similarity.applyAsDouble(scoreValue);
     }
 
+    /**
+     * Converts normalized similarity into score.
+     *
+     * @param similarityValue similarity value
+     * @return score value
+     */
     public double getScore(double similarityValue) {
         return score.applyAsDouble(similarityValue);
     }

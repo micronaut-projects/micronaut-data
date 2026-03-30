@@ -20,20 +20,30 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * Canonical database types supported across SQL and NoSQL stores.
- * Converters can prefer switching on this enum instead of vendor-specific enums.
+ *
+ * <p>This abstraction is intentionally separate from SQL {@link Dialect} so conversion and definition
+ * providers can share one switch across SQL and non-SQL stores.</p>
  * <p>
  * For SQL backends, use {@link #from(Dialect)} to translate from the SQL dialect.
+ *
+ * @since 5.0.0
  */
 public enum DatabaseType {
+    /** PostgreSQL and PostgreSQL-compatible vector backends. */
     POSTGRES,
+    /** MySQL and MySQL-compatible vector backends. */
     MYSQL,
+    /** Oracle Database. */
     ORACLE,
+    /** Microsoft SQL Server. */
     SQL_SERVER,
+    /** H2 database engine. */
     H2,
-    // NoSQL/document stores supported by Micronaut Data:
+    /** MongoDB document store. */
     MONGODB,
+    /** Azure Cosmos DB. */
     AZURE_COSMOS,
-    // Fallback/unknown or unsupported mapping
+    /** Fallback for unknown or unsupported mappings. */
     OTHER;
 
     /**

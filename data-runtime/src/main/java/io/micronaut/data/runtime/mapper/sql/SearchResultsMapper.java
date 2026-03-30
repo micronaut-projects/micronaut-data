@@ -28,6 +28,17 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Internal row mapper that composes entity payloads with vector score/similarity metadata.
+ *
+ * <p>The mapper expects the SQL projection to include a score column identified by {@code scoreAlias}.
+ * When a {@link ScoringFunction} is provided, normalized similarity is derived via
+ * {@link SimilarityNormalizer}; otherwise similarity is omitted.</p>
+ *
+ * @param <RS> native row/result-set type
+ * @param <E> mapped entity type
+ * @since 5.0.0
+ */
 @Internal
 public final class SearchResultsMapper<RS, E> {
 

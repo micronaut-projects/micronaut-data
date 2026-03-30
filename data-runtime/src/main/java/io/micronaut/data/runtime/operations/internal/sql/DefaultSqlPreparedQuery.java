@@ -42,7 +42,7 @@ import io.micronaut.data.model.Sort.Order;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -83,7 +83,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     protected String query;
     @Nullable
     private ScoringFunction vectorScoringFunction;
-    private final VectorScoringFunctionDialectSupport vectorScoringSupport;
+    private final VectorScoringDialectSupport vectorScoringSupport;
     private final boolean bindPageableOrSort;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
@@ -120,7 +120,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
 
-    private static VectorScoringFunctionDialectSupport resolveVectorScoringSupport(
+    private static VectorScoringDialectSupport resolveVectorScoringSupport(
         Dialect dialect,
         @Nullable VectorScoringSupportResolver resolver
     ) {

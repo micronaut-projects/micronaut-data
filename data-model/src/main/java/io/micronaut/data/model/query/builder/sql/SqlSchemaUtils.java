@@ -51,6 +51,8 @@ import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
 import io.micronaut.data.model.vector.search.VectorStorageShapeResolver;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
@@ -82,6 +84,8 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
  */
 @Internal
 public final class SqlSchemaUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
 
     // Table and column metadata columns
     public static final String TABLE_TYPE = "TABLE";
@@ -116,15 +120,15 @@ public final class SqlSchemaUtils {
     }
 
     /**
-      * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
-      * and potentially joined tables.
-      *
-      * @param definitionProviders the list of DefinitionProvider (column/index DDL providers)
-      * @param entity The entity
-      * @param dialect The SQL dialect used to render vendor-specific definitions.
-      * @return The SQL table definitions for the given entity
-      * @since 4.13.0
-      */
+     * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
+     * and potentially joined tables.
+     *
+     * @param definitionProviders the list of DefinitionProvider (column/index DDL providers)
+     * @param entity The entity
+     * @param dialect The SQL dialect used to render vendor-specific definitions.
+     * @return The SQL table definitions for the given entity
+     * @since 5.0.0
+     */
     @Experimental
     @SuppressWarnings("java:S3776")
     public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
@@ -292,8 +296,11 @@ public final class SqlSchemaUtils {
                             break;
                         }
                     }
-                } catch (Exception ignored) {
-                    // be resilient: ignore provider errors during discovery
+                } catch (Exception e) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Ignoring SqlColumnDefinitionProvider [{}] failure while resolving definition for property [{}]",
+                            provider.getClass().getName(), prop.getName(), e);
+                    }
                 }
             }
         }
@@ -510,8 +517,11 @@ public final class SqlSchemaUtils {
                             provider = sqlIndexDefinitionProvider;
                             break;
                         }
-                    } catch (Exception ignored) {
-                        // be resilient during discovery
+                    } catch (Exception e) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Ignoring SqlIndexDefinitionProvider [{}] failure while resolving index for property [{}]",
+                                sqlIndexDefinitionProvider.getClass().getName(), prop.getName(), e);
+                        }
                     }
                 }
                 indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta));

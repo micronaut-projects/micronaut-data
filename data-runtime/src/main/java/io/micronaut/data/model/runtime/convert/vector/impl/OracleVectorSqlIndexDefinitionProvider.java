@@ -41,7 +41,7 @@ import java.util.function.Function;
  */
 @Singleton
 @Internal
-public final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinitionProvider {
+final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinitionProvider {
 
     @Override
     public boolean supports(Argument<?> argument, Dialect dialect) {

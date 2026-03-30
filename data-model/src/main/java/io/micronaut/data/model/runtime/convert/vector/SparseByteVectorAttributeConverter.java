@@ -20,6 +20,12 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.vector.SparseByteVector;
 
+/**
+ * Converter contract for mapping {@link SparseByteVector} attributes to vendor-specific persisted values.
+ *
+ * @param <X> persisted database/driver type
+ * @since 5.0.0
+ */
 @Indexed(SparseByteVectorAttributeConverter.class)
 public interface SparseByteVectorAttributeConverter<X> extends AttributeConverter<SparseByteVector, X>, SqlColumnDefinitionProvider {
 }

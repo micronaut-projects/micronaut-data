@@ -22,14 +22,30 @@ package io.micronaut.data.model.vector;
  */
 public sealed interface SparseVector extends Vector permits SparseDoubleVector, SparseFloatVector, SparseByteVector {
 
+    /**
+     * @return dense vector length (number of dimensions)
+     */
     int length();
 
+    /**
+     * @return sorted non-zero indices
+     */
     int[] indices();
 
+    /**
+     * @return number of stored non-zero entries
+     */
     default int size() {
         return indices().length;
     }
 
+    /**
+     * Validates sparse vector shape constraints.
+     *
+     * @param length dense vector length
+     * @param indices sorted non-zero indices
+     * @param valuesLength non-zero values length
+     */
     static void validate(int length, int[] indices, int valuesLength) {
         if (length < 0) {
             throw new IllegalArgumentException("Sparse vector length must be >= 0");

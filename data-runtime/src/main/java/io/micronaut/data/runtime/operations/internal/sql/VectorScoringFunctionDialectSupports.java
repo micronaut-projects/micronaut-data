@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import org.jspecify.annotations.Nullable;
 import jakarta.inject.Named;
@@ -27,6 +27,8 @@ import java.util.EnumSet;
 
 /**
  * Runtime Micronaut bean implementations of dialect-specific vector scoring-function strategies.
+ *
+ * @since 5.0.0
  */
 @Internal
 final class VectorScoringFunctionDialectSupports {
@@ -39,7 +41,7 @@ final class VectorScoringFunctionDialectSupports {
      */
     @Singleton
     @Named("POSTGRES")
-    static final class Postgres implements VectorScoringFunctionDialectSupport {
+    static final class Postgres implements VectorScoringDialectSupport {
 
         @Override
         public Dialect dialect() {
@@ -77,7 +79,7 @@ final class VectorScoringFunctionDialectSupports {
      */
     @Singleton
     @Named("ORACLE")
-    static final class Oracle implements VectorScoringFunctionDialectSupport {
+    static final class Oracle implements VectorScoringDialectSupport {
 
         @Override
         public Dialect dialect() {
@@ -119,7 +121,7 @@ final class VectorScoringFunctionDialectSupports {
      */
     @Singleton
     @Named("MYSQL")
-    static final class MySql implements VectorScoringFunctionDialectSupport {
+    static final class MySql implements VectorScoringDialectSupport {
 
         @Override
         public Dialect dialect() {

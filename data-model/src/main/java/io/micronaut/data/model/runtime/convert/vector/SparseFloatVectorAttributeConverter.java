@@ -20,6 +20,12 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.vector.SparseFloatVector;
 
+/**
+ * Converter contract for mapping {@link SparseFloatVector} attributes to vendor-specific persisted values.
+ *
+ * @param <X> persisted database/driver type
+ * @since 5.0.0
+ */
 @Indexed(SparseFloatVectorAttributeConverter.class)
 public interface SparseFloatVectorAttributeConverter<X> extends AttributeConverter<SparseFloatVector, X>, SqlColumnDefinitionProvider {
 }

@@ -22,6 +22,8 @@ package io.micronaut.data.model.runtime.convert;
  * @since 5.0.0
  */
 public enum DefinitionType {
+    /** Column-definition provider category. */
     COLUMN,
+    /** Index-definition provider category. */
     INDEX,
 }

@@ -27,13 +27,35 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
 
+/**
+ * Internal SQL rendering strategy for vector-score expressions.
+ *
+ * <p>This contract converts the logical score function ({@code mn_vector_score}) used by
+ * criteria/query generation into dialect-specific SQL fragments.</p>
+ *
+ * @since 5.0.0
+ */
 interface VectorSimilarityDialect {
 
+    /**
+     * Appends a dialect-specific vector score expression.
+     *
+     * @param query target SQL buffer
+     * @param left left vector expression (usually persisted column)
+     * @param right right vector expression (usually query vector parameter)
+     * @param appendExpression callback to render child expressions
+     */
     void appendVectorScore(StringBuilder query,
                            Expression<?> left,
                            Expression<?> right,
                            Consumer<Expression<?>> appendExpression);
 
+    /**
+     * Resolves the vector similarity dialect strategy for a SQL dialect.
+     *
+     * @param dialect the SQL dialect
+     * @return matching vector similarity strategy, or {@code null} when unsupported
+     */
     static @Nullable VectorSimilarityDialect forDialect(Dialect dialect) {
         return switch (dialect) {
             case POSTGRES -> PostgresVectorSimilarityDialect.INSTANCE;
@@ -65,9 +87,19 @@ interface VectorSimilarityDialect {
         return null;
     }
 
+    /**
+     * Oracle VECTOR rendering configuration extracted from property metadata.
+     *
+     * @param dimensions vector dimensions or {@code *}
+     * @param format Oracle vector element format (for example {@code FLOAT32})
+     * @param sparse whether sparse vector notation should be used
+     */
     record OracleVectorConfig(String dimensions, String format, boolean sparse) {
     }
 
+    /**
+     * MySQL vector score SQL renderer.
+     */
     enum MySqlVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 
@@ -84,6 +116,9 @@ interface VectorSimilarityDialect {
         }
     }
 
+    /**
+     * PostgreSQL/pgvector score SQL renderer.
+     */
     enum PostgresVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 
@@ -98,6 +133,9 @@ interface VectorSimilarityDialect {
         }
     }
 
+    /**
+     * Oracle VECTOR_DISTANCE score SQL renderer.
+     */
     enum OracleVectorSimilarityDialect implements VectorSimilarityDialect {
         INSTANCE;
 

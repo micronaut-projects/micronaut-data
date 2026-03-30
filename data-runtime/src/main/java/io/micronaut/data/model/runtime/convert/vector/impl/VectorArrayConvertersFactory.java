@@ -37,16 +37,25 @@ import java.util.Optional;
 @Internal
 final class VectorArrayConvertersFactory {
 
+    /**
+     * @return converter from {@link DoubleVector} to {@code double[]}
+     */
     @Prototype
     DataTypeConverter<DoubleVector, double[]> fromVectorDoubleToArray() {
         return (vector, targetType, context) -> Optional.of(vector.toDoubleArray());
     }
 
+    /**
+     * @return converter from {@link FloatVector} to {@code float[]}
+     */
     @Prototype
     DataTypeConverter<FloatVector, float[]> fromVectorFloatToArray() {
         return (vector, targetType, context) -> Optional.of(vector.toFloatArray());
     }
 
+    /**
+     * @return converter from {@link ByteVector} to {@code byte[]}
+     */
     @Prototype
     DataTypeConverter<ByteVector, byte[]> fromVectorByteToArray() {
         return (vector, targetType, context) -> Optional.of(vector.toByteArray());

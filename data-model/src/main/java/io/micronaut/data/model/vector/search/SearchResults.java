@@ -25,10 +25,14 @@ import java.util.List;
  *
  * @param <T> The entity type
  * @param results The matched results with scores
+ * @since 5.0.0
  */
 @Experimental
 public record SearchResults<T>(List<SearchResult<T>> results) implements Iterable<SearchResult<T>> {
 
+    /**
+     * Returns an iterator over mapped search results.
+     */
     @Override
     public Iterator<SearchResult<T>> iterator() {
         return results.iterator();

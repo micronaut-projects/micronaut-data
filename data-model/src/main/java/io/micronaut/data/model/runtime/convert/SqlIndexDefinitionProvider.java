@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime.convert;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
@@ -31,7 +32,8 @@ import java.util.function.Function;
  * @since 5.0.0
  */
 @Experimental
-public interface SqlIndexDefinitionProvider extends DefinitionProvider {
+@Internal
+public non-sealed interface SqlIndexDefinitionProvider extends DefinitionProvider {
 
     /**
      * Whether this provider supports the given property for the specified dialect.

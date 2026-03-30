@@ -40,7 +40,7 @@ import java.util.function.Function;
  */
 @Singleton
 @Internal
-public final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefinitionProvider {
+final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefinitionProvider {
 
     @Override
     public boolean supports(Argument<?> argument, Dialect dialect) {

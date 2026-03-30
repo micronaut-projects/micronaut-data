@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.VectorScoringFunctionDialectSupport;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import org.jspecify.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.util.EnumSet;
  * Default no-op vector scoring-function strategy used when a dialect-specific strategy is unavailable.
  */
 @Internal
-final class DefaultVectorScoringFunctionDialectSupport implements VectorScoringFunctionDialectSupport {
+final class DefaultVectorScoringFunctionDialectSupport implements VectorScoringDialectSupport {
 
     static final DefaultVectorScoringFunctionDialectSupport INSTANCE = new DefaultVectorScoringFunctionDialectSupport();
 

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Experimental;
  * Vector distance score value.
  *
  * @param value The score value
+ * @since 5.0.0
  */
 @Experimental
 public record Score(double value) {

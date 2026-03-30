@@ -25,6 +25,8 @@ import java.util.Optional;
  * This class intentionally avoids any dependency on Oracle driver or Micronaut runtime types.
  *
  * Methods are protected static so vendor-specific factories can reuse them.
+ * This type is intentionally non-sealed because concrete Oracle converter factories live in
+ * JDBC and R2DBC modules.
  *
  * @author Nemanja Mikic
  * @since 5.0.0
@@ -36,6 +38,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
     // Adapter-based array extraction helpers
     // ----------------------
 
+    /**
+     * Converts adapter payload to {@code double[]}.
+     */
     protected static Optional<double[]> vectorToDoubleArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
             case FLOAT64 -> Optional.of(adapter.toDoubleArray());
@@ -44,6 +49,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         };
     }
 
+    /**
+     * Converts adapter payload to {@code float[]}.
+     */
     protected static Optional<float[]> vectorToFloatArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
             case FLOAT32 -> Optional.of(adapter.toFloatArray());
@@ -52,6 +60,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         };
     }
 
+    /**
+     * Converts adapter payload to {@code byte[]}.
+     */
     protected static Optional<byte[]> vectorToByteArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
             case BINARY, INT8 -> Optional.of(adapter.toByteArray());
@@ -64,6 +75,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
     // Adapter to Vector helper
     // ----------------------
 
+    /**
+     * Converts adapter payload to neutral {@link Vector}.
+     */
     protected static Vector toVector(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
             case FLOAT32 -> Vector.of(adapter.toFloatArray());
@@ -76,6 +90,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
     // Array conversion helpers
     // ----------------------
 
+    /**
+     * Converts float array to double array.
+     */
     protected static double[] toDouble(float[] f) {
         double[] out = new double[f.length];
         for (int i = 0; i < f.length; i++) {
@@ -84,6 +101,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
+    /**
+     * Converts byte array to double array.
+     */
     protected static double[] toDouble(byte[] b) {
         double[] out = new double[b.length];
         for (int i = 0; i < b.length; i++) {
@@ -92,6 +112,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
+    /**
+     * Converts double array to float array.
+     */
     protected static float[] toFloat(double[] d) {
         float[] out = new float[d.length];
         for (int i = 0; i < d.length; i++) {
@@ -100,6 +123,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
+    /**
+     * Converts byte array to float array.
+     */
     protected static float[] toFloat(byte[] b) {
         float[] out = new float[b.length];
         for (int i = 0; i < b.length; i++) {
@@ -108,6 +134,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
+    /**
+     * Converts float array to byte array.
+     */
     protected static byte[] toByte(float[] f) {
         byte[] out = new byte[f.length];
         for (int i = 0; i < f.length; i++) {
@@ -116,6 +145,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return out;
     }
 
+    /**
+     * Converts double array to byte array.
+     */
     protected static byte[] toByte(double[] d) {
         byte[] out = new byte[d.length];
         for (int i = 0; i < d.length; i++) {
@@ -132,6 +164,7 @@ public abstract class AbstractOracleTypeConvertersFactory {
      * Neutral adapter for Oracle VECTOR to avoid driver dependencies in shared helpers.
      */
     public enum OracleVectorKind {
+        /** 32-bit floating point vector elements. */
         FLOAT32, FLOAT64, INT8, BINARY
     }
 
@@ -139,12 +172,24 @@ public abstract class AbstractOracleTypeConvertersFactory {
      * Adapter API that concrete factories use to map oracle.sql.VECTOR to a neutral shape.
      */
     public interface OracleVectorAdapter {
+        /**
+         * @return vector payload kind
+         */
         OracleVectorKind getKind();
 
+        /**
+         * @return vector payload as float array
+         */
         float[] toFloatArray();
 
+        /**
+         * @return vector payload as double array
+         */
         double[] toDoubleArray();
 
+        /**
+         * @return vector payload as byte array
+         */
         byte[] toByteArray();
     }
 }
