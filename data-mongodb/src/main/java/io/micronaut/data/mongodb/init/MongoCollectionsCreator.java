@@ -18,11 +18,6 @@ package io.micronaut.data.mongodb.init;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.CollationStrength;
-import com.mongodb.client.model.ClusteredIndexOptions;
-import com.mongodb.client.model.CreateCollectionOptions;
-import com.mongodb.client.model.IndexOptions;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
@@ -46,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * MongoDB's collections creator.
@@ -95,16 +89,7 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                         database.createCollection(collection);
                         return;
                     }
-                    CreateCollectionOptions collectionOptions = new CreateCollectionOptions();
-                    ClusteredIndexOptions clusteredIndexOptions = new ClusteredIndexOptions(new Document("_id", 1), options.clusteredIndexUnique());
-                    if (options.clusteredIndexName() != null) {
-                        clusteredIndexOptions.name(options.clusteredIndexName());
-                    }
-                    collectionOptions.clusteredIndexOptions(clusteredIndexOptions);
-                    if (options.expireAfterSeconds() != null) {
-                        collectionOptions.expireAfter(options.expireAfterSeconds().longValue(), TimeUnit.SECONDS);
-                    }
-                    database.createCollection(collection, collectionOptions);
+                    database.createCollection(collection, toCreateCollectionOptions(options));
                 }
 
                 @Override
@@ -113,19 +98,7 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                         if (!collection.equals(collectionDocument.getString("name"))) {
                             continue;
                         }
-                        Document options = collectionDocument.get("options", Document.class);
-                        if (options == null) {
-                            return null;
-                        }
-                        Document clustered = options.get("clusteredIndex", Document.class);
-                        if (clustered == null) {
-                            return null;
-                        }
-                        return new MongoResolvedCollectionOptions(
-                                clustered.getString("name"),
-                                clustered.getBoolean("unique", true),
-                                options.getInteger("expireAfterSeconds")
-                        );
+                        return toResolvedCollectionOptions(collectionDocument);
                     }
                     return null;
                 }
@@ -135,61 +108,10 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                     MongoCollection<Document> mongoCollection = database.getCollection(collection);
                     List<MongoResolvedIndex> indexes = new ArrayList<>();
                     for (Document indexDocument : mongoCollection.listIndexes()) {
-                        Document keyDocument = indexDocument.get("key", Document.class);
-                        if (keyDocument == null || (keyDocument.size() == 1 && keyDocument.getInteger("_id", 0) == 1)) {
-                            continue;
+                        MongoResolvedIndex resolvedIndex = toResolvedIndex(indexDocument);
+                        if (resolvedIndex != null) {
+                            indexes.add(resolvedIndex);
                         }
-                        List<MongoResolvedIndexField> fields;
-                        if ("text".equals(keyDocument.getString("_fts"))) {
-                            Document weights = indexDocument.get("weights", Document.class);
-                            if (weights != null && !weights.isEmpty()) {
-                                fields = new ArrayList<>(weights.size());
-                                for (Map.Entry<String, Object> entry : weights.entrySet()) {
-                                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, toInteger(entry.getValue()), "text", null, null));
-                                }
-                            } else {
-                                fields = new ArrayList<>(keyDocument.size());
-                                for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
-                                    Object value = entry.getValue();
-                                    if (value instanceof Number number) {
-                                        fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
-                                    } else {
-                                        fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
-                                    }
-                                }
-                            }
-                        } else {
-                            fields = new ArrayList<>(keyDocument.size());
-                            for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
-                                Object value = entry.getValue();
-                                if (value instanceof Number number) {
-                                    fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
-                                } else {
-                                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
-                                }
-                            }
-                        }
-                        indexes.add(new MongoResolvedIndex(
-                                indexDocument.getString("name"),
-                                List.copyOf(fields),
-                                indexDocument.getBoolean("unique", false),
-                                indexDocument.getBoolean("sparse", false),
-                                indexDocument.getBoolean("hidden", false),
-                                indexDocument.getInteger("expireAfterSeconds"),
-                                normalizeJsonValue(indexDocument.get("partialFilterExpression")),
-                                normalizeJsonValue(indexDocument.get("collation")),
-                                toInteger(indexDocument.get("bits")),
-                                toDouble(indexDocument.get("min")),
-                                toDouble(indexDocument.get("max")),
-                                indexDocument.getString("default_language"),
-                                indexDocument.getString("language_override"),
-                                toInteger(indexDocument.get("textIndexVersion")),
-                                toInteger(indexDocument.get("2dsphereIndexVersion")),
-                                normalizeJsonValue(indexDocument.get("wildcardProjection")),
-                                normalizeJsonValue(indexDocument.get("storageEngine")),
-                                null,
-                                null
-                        ));
                     }
                     return indexes;
                 }
@@ -198,142 +120,12 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 public void createIndex(MongoDatabase database, String collection, MongoResolvedIndex index) {
                     MongoCollection<Document> mongoCollection = database.getCollection(collection);
                     if (index.comment() != null || index.commitQuorum() != null) {
-                        Document command = new Document("createIndexes", collection)
-                                .append("indexes", List.of(toIndexCommandDocument(index)));
-                        if (index.comment() != null) {
-                            command.append("comment", index.comment());
-                        }
-                        if (index.commitQuorum() != null) {
-                            command.append("commitQuorum", toCommitQuorumValue(index.commitQuorum()));
-                        }
-                        database.runCommand(command);
+                        database.runCommand(toCreateIndexesCommandDocument(collection, index));
                         return;
                     }
-                    IndexOptions indexOptions = new IndexOptions().unique(index.unique()).sparse(index.sparse());
-                    if (index.hidden()) {
-                        indexOptions.hidden(true);
-                    }
-                    if (index.name() != null) {
-                        indexOptions.name(index.name());
-                    }
-                    if (index.expireAfterSeconds() != null) {
-                        indexOptions.expireAfter((long) index.expireAfterSeconds(), java.util.concurrent.TimeUnit.SECONDS);
-                    }
-                    if (index.partialFilterExpression() != null) {
-                        indexOptions.partialFilterExpression(Document.parse(index.partialFilterExpression()));
-                    }
-                    if (index.collation() != null) {
-                        indexOptions.collation(toCollation(Document.parse(index.collation())));
-                    }
-                    if (index.bits() != null) {
-                        indexOptions.bits(index.bits());
-                    }
-                    if (index.min() != null) {
-                        indexOptions.min(index.min());
-                    }
-                    if (index.max() != null) {
-                        indexOptions.max(index.max());
-                    }
-                    if (index.defaultLanguage() != null) {
-                        indexOptions.defaultLanguage(index.defaultLanguage());
-                    }
-                    if (index.languageOverride() != null) {
-                        indexOptions.languageOverride(index.languageOverride());
-                    }
-                    if (index.textIndexVersion() != null) {
-                        indexOptions.textVersion(index.textIndexVersion());
-                    }
-                    if (index.sphereVersion() != null) {
-                        indexOptions.sphereVersion(index.sphereVersion());
-                    }
-                    if (index.wildcardProjection() != null) {
-                        indexOptions.wildcardProjection(Document.parse(index.wildcardProjection()));
-                    }
-                    if (index.storageEngine() != null) {
-                        indexOptions.storageEngine(Document.parse(index.storageEngine()));
-                    }
-                    mongoCollection.createIndex(index.keysDocument(), indexOptions);
+                    mongoCollection.createIndex(index.keysDocument(), toIndexOptions(index));
                 }
             };
         }, mongoCollectionNameProvider);
     }
-
-    private Document toIndexCommandDocument(MongoResolvedIndex index) {
-        Document indexDocument = new Document("key", index.keysDocument());
-        if (index.name() != null) {
-            indexDocument.append("name", index.name());
-        }
-        if (index.unique()) {
-            indexDocument.append("unique", true);
-        }
-        if (index.sparse()) {
-            indexDocument.append("sparse", true);
-        }
-        if (index.hidden()) {
-            indexDocument.append("hidden", true);
-        }
-        if (index.expireAfterSeconds() != null) {
-            indexDocument.append("expireAfterSeconds", index.expireAfterSeconds());
-        }
-        if (index.partialFilterExpression() != null) {
-            indexDocument.append("partialFilterExpression", Document.parse(index.partialFilterExpression()));
-        }
-        if (index.collation() != null) {
-            indexDocument.append("collation", Document.parse(index.collation()));
-        }
-        if (index.bits() != null) {
-            indexDocument.append("bits", index.bits());
-        }
-        if (index.min() != null) {
-            indexDocument.append("min", index.min());
-        }
-        if (index.max() != null) {
-            indexDocument.append("max", index.max());
-        }
-        if (index.defaultLanguage() != null) {
-            indexDocument.append("default_language", index.defaultLanguage());
-        }
-        if (index.languageOverride() != null) {
-            indexDocument.append("language_override", index.languageOverride());
-        }
-        if (index.textIndexVersion() != null) {
-            indexDocument.append("textIndexVersion", index.textIndexVersion());
-        }
-        if (index.sphereVersion() != null) {
-            indexDocument.append("2dsphereIndexVersion", index.sphereVersion());
-        }
-        if (index.wildcardProjection() != null) {
-            indexDocument.append("wildcardProjection", Document.parse(index.wildcardProjection()));
-        }
-        if (index.storageEngine() != null) {
-            indexDocument.append("storageEngine", Document.parse(index.storageEngine()));
-        }
-        return indexDocument;
-    }
-
-    private Object toCommitQuorumValue(String commitQuorum) {
-        try {
-            return Integer.parseInt(commitQuorum);
-        } catch (NumberFormatException ignored) {
-            return commitQuorum;
-        }
-    }
-
-    private Collation toCollation(Document document) {
-        Collation.Builder builder = Collation.builder();
-        String locale = document.getString("locale");
-        if (locale != null) {
-            builder.locale(locale);
-        }
-        Integer strength = document.getInteger("strength");
-        if (strength != null) {
-            builder.collationStrength(CollationStrength.fromInt(strength));
-        }
-        Boolean caseLevel = document.getBoolean("caseLevel");
-        if (caseLevel != null) {
-            builder.caseLevel(caseLevel);
-        }
-        return builder.build();
-    }
-
 }

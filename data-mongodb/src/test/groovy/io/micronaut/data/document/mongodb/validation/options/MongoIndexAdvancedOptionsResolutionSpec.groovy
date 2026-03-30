@@ -1,6 +1,8 @@
 package io.micronaut.data.document.mongodb.validation.options
 
+import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndexField
@@ -92,6 +94,29 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         then:
         def e = thrown(IllegalStateException)
         e.message.contains('must use the same defaultLanguage option')
+    }
+
+    void 'resolves embedded field simple index path'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(EmbeddedFieldIndexedEntity)).indexes
+        def index = indexes.find { it.name() == 'embedded_state_idx' }
+
+        then:
+        index != null
+        index.fields().size() == 1
+        index.fields()[0].path() == 'location.state'
+        index.fields()[0].order() == 1
+    }
+
+    void 'resolves embedded field text index path'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(EmbeddedTextIndexedEntity)).indexes
+        def index = indexes.find { it.name() == 'embedded_text_idx' }
+
+        then:
+        index != null
+        index.fields()*.path().contains('details.city')
+        index.fields().find { it.path() == 'details.city' }.weight() == 3
     }
 
     void 'resolves 2dsphere sphereVersion'() {
@@ -202,4 +227,32 @@ class GeoSphereVersionEntity {
 class InvalidGeoSphereVersionOn2dEntity {
     @MongoGeoIndexed(name = 'invalid_geo_sphere_version_idx', type = MongoGeoIndexType.GEO_2D, sphereVersion = 3)
     Map<String, Object> location
+}
+
+@MappedEntity('embedded_field_indexed_entity')
+class EmbeddedFieldIndexedEntity {
+    @Relation(Relation.Kind.EMBEDDED)
+    EmbeddedFieldIndexedLocation location
+}
+
+@Embeddable
+class EmbeddedFieldIndexedLocation {
+    @MongoIndexed(name = 'embedded_state_idx')
+    String state
+
+    String city
+}
+
+@MappedEntity('embedded_text_indexed_entity')
+class EmbeddedTextIndexedEntity {
+    @Relation(Relation.Kind.EMBEDDED)
+    EmbeddedTextIndexedDetails details
+}
+
+@Embeddable
+class EmbeddedTextIndexedDetails {
+    String title
+
+    @MongoTextIndexed(name = 'embedded_text_idx', weight = 3)
+    String city
 }

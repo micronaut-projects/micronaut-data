@@ -17,8 +17,6 @@ package io.micronaut.data.mongodb.common;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex;
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndexField;
 import io.micronaut.data.mongodb.annotation.index.MongoIndexDirection;
@@ -32,6 +30,8 @@ import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndexed;
 import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntityUtils;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.bson.Document;
@@ -164,17 +164,17 @@ public final class MongoEntityIndexes {
 
     private static List<ResolvedIndex> resolveFieldIndexes(RuntimePersistentEntity<?> entity) {
         List<ResolvedIndex> indexes = new ArrayList<>();
-        BeanIntrospection<?> introspection = entity.getIntrospection();
-        for (BeanProperty<?, Object> beanProperty : introspection.getBeanProperties()) {
-            RuntimePersistentProperty<?> property = entity.getPropertyByName(beanProperty.getName());
-            if (property == null || property instanceof Association) {
-                continue;
+        PersistentEntityUtils.traversePersistentProperties(entity, false, false, (associations, property) -> {
+            if (!(property instanceof RuntimePersistentProperty<?> runtimeProperty) || containsNonEmbeddedAssociation(associations)) {
+                return;
             }
-            var annotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoIndexed.class);
+            String persistedPath = toPersistedPath(associations, property);
+            var annotationMetadata = property.getAnnotationMetadata();
+            var annotation = annotationMetadata.getAnnotation(MongoIndexed.class);
             if (annotation != null) {
                 indexes.add(new ResolvedIndex(
                         annotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
-                        List.of(new ResolvedIndexField(property.getPersistedName(), annotation.enumValue("direction", MongoIndexDirection.class).orElse(MongoIndexDirection.ASC) == MongoIndexDirection.DESC ? -1 : 1, null, null, null, null)),
+                        List.of(new ResolvedIndexField(persistedPath, annotation.enumValue("direction", MongoIndexDirection.class).orElse(MongoIndexDirection.ASC) == MongoIndexDirection.DESC ? -1 : 1, null, null, null, null)),
                         annotation.booleanValue("unique").orElse(false),
                         annotation.booleanValue("sparse").orElse(false),
                         annotation.booleanValue("hidden").orElse(false),
@@ -193,17 +193,17 @@ public final class MongoEntityIndexes {
                         annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
-                continue;
+                return;
             }
-            var textAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoTextIndexed.class);
+            var textAnnotation = annotationMetadata.getAnnotation(MongoTextIndexed.class);
             if (textAnnotation != null) {
-                continue;
+                return;
             }
-            var hashedAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoHashedIndexed.class);
+            var hashedAnnotation = annotationMetadata.getAnnotation(MongoHashedIndexed.class);
             if (hashedAnnotation != null) {
                 indexes.add(new ResolvedIndex(
                         hashedAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
-                        List.of(new ResolvedIndexField(property.getPersistedName(), null, null, "hashed", null, null)),
+                        List.of(new ResolvedIndexField(persistedPath, null, null, "hashed", null, null)),
                         false,
                         false,
                         hashedAnnotation.booleanValue("hidden").orElse(false),
@@ -222,11 +222,11 @@ public final class MongoEntityIndexes {
                         hashedAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
-                continue;
+                return;
             }
-            var geoAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoGeoIndexed.class);
+            var geoAnnotation = annotationMetadata.getAnnotation(MongoGeoIndexed.class);
             if (geoAnnotation != null) {
-                validateGeoIndexedType(entity, property);
+                validateGeoIndexedType(entity, runtimeProperty);
                 MongoGeoIndexType type = geoAnnotation.enumValue("type", MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
                 Integer sphereVersion = geoAnnotation.intValue("sphereVersion").isPresent() && geoAnnotation.intValue("sphereVersion").getAsInt() >= 0 ? geoAnnotation.intValue("sphereVersion").getAsInt() : null;
                 Integer bits = geoAnnotation.intValue("bits").isPresent() && geoAnnotation.intValue("bits").getAsInt() >= 0 ? geoAnnotation.intValue("bits").getAsInt() : null;
@@ -240,7 +240,7 @@ public final class MongoEntityIndexes {
                 }
                 indexes.add(new ResolvedIndex(
                         geoAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
-                        List.of(new ResolvedIndexField(property.getPersistedName(), null, null, type.getKey(), min, max)),
+                        List.of(new ResolvedIndexField(persistedPath, null, null, type.getKey(), min, max)),
                         false,
                         false,
                         geoAnnotation.booleanValue("hidden").orElse(false),
@@ -259,9 +259,9 @@ public final class MongoEntityIndexes {
                         geoAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                         null
                 ));
-                continue;
+                return;
             }
-            var wildcardAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoWildcardIndexed.class);
+            var wildcardAnnotation = annotationMetadata.getAnnotation(MongoWildcardIndexed.class);
             if (wildcardAnnotation != null) {
                 String wildcardProjection = wildcardAnnotation.stringValue("wildcardProjection").filter(s -> !s.isEmpty()).orElse(null);
                 if (wildcardProjection != null) {
@@ -269,7 +269,7 @@ public final class MongoEntityIndexes {
                 }
                 indexes.add(new ResolvedIndex(
                         wildcardAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
-                        List.of(new ResolvedIndexField(property.getPersistedName() + ".$**", 1, null, null, null, null)),
+                        List.of(new ResolvedIndexField(persistedPath + ".$**", 1, null, null, null, null)),
                         false,
                         false,
                         wildcardAnnotation.booleanValue("hidden").orElse(false),
@@ -289,7 +289,7 @@ public final class MongoEntityIndexes {
                         null
                 ));
             }
-        }
+        });
         return indexes;
     }
 
@@ -307,79 +307,71 @@ public final class MongoEntityIndexes {
     }
 
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {
-        List<ResolvedIndexField> fields = new ArrayList<>();
-        String name = null;
-        Boolean hidden = null;
-        String storageEngine = null;
-        String comment = null;
-        String defaultLanguage = null;
-        String languageOverride = null;
-        Integer textIndexVersion = null;
-        BeanIntrospection<?> introspection = entity.getIntrospection();
-        for (BeanProperty<?, Object> beanProperty : introspection.getBeanProperties()) {
-            RuntimePersistentProperty<?> property = entity.getPropertyByName(beanProperty.getName());
-            if (property == null || property instanceof Association) {
-                continue;
+        TextIndexState state = new TextIndexState();
+        PersistentEntityUtils.traversePersistentProperties(entity, false, false, (associations, property) -> {
+            if (!(property instanceof RuntimePersistentProperty<?>) || containsNonEmbeddedAssociation(associations)) {
+                return;
             }
-            var textAnnotation = beanProperty.getAnnotationMetadata().getAnnotation(MongoTextIndexed.class);
-            if (textAnnotation != null) {
-                int weight = textAnnotation.intValue("weight").orElse(1);
-                if (weight <= 0) {
-                    throw new IllegalStateException("Mongo text index weight must be greater than zero for entity [" + entity.getName() + "]");
-                }
-                String declaredName = textAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null);
-                if (name == null) {
-                    name = declaredName;
-                } else if (declaredName != null && !declaredName.equals(name)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same index name");
-                }
-                boolean declaredHidden = textAnnotation.booleanValue("hidden").orElse(false);
-                if (hidden == null) {
-                    hidden = declaredHidden;
-                } else if (!hidden.equals(declaredHidden)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same hidden option");
-                }
-                String declaredComment = textAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null);
-                if (comment == null) {
-                    comment = declaredComment;
-                } else if (!Objects.equals(comment, declaredComment)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same comment option");
-                }
-                String declaredStorageEngine = parseJsonOption(textAnnotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName());
-                if (storageEngine == null) {
-                    storageEngine = declaredStorageEngine;
-                } else if (!Objects.equals(storageEngine, declaredStorageEngine)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same storageEngine option");
-                }
-                String declaredDefaultLanguage = textAnnotation.stringValue("defaultLanguage").filter(s -> !s.isEmpty()).orElse(null);
-                if (defaultLanguage == null) {
-                    defaultLanguage = declaredDefaultLanguage;
-                } else if (!Objects.equals(defaultLanguage, declaredDefaultLanguage)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same defaultLanguage option");
-                }
-                String declaredLanguageOverride = textAnnotation.stringValue("languageOverride").filter(s -> !s.isEmpty()).orElse(null);
-                if (languageOverride == null) {
-                    languageOverride = declaredLanguageOverride;
-                } else if (!Objects.equals(languageOverride, declaredLanguageOverride)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same languageOverride option");
-                }
-                Integer declaredTextIndexVersion = textAnnotation.intValue("textIndexVersion").isPresent() && textAnnotation.intValue("textIndexVersion").getAsInt() >= 0
-                        ? textAnnotation.intValue("textIndexVersion").getAsInt() : null;
-                if (declaredTextIndexVersion != null && declaredTextIndexVersion <= 0) {
-                    throw new IllegalStateException("Mongo text index version must be greater than zero for entity [" + entity.getName() + "]");
-                }
-                if (textIndexVersion == null) {
-                    textIndexVersion = declaredTextIndexVersion;
-                } else if (!Objects.equals(textIndexVersion, declaredTextIndexVersion)) {
-                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
-                }
-                fields.add(new ResolvedIndexField(property.getPersistedName(), null, weight, "text", null, null));
+            var textAnnotation = property.getAnnotationMetadata().getAnnotation(MongoTextIndexed.class);
+            if (textAnnotation == null) {
+                return;
             }
-        }
-        if (fields.isEmpty()) {
+            int weight = textAnnotation.intValue("weight").orElse(1);
+            if (weight <= 0) {
+                throw new IllegalStateException("Mongo text index weight must be greater than zero for entity [" + entity.getName() + "]");
+            }
+            String declaredName = textAnnotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null);
+            if (state.name == null) {
+                state.name = declaredName;
+            } else if (declaredName != null && !declaredName.equals(state.name)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same index name");
+            }
+            boolean declaredHidden = textAnnotation.booleanValue("hidden").orElse(false);
+            if (state.hidden == null) {
+                state.hidden = declaredHidden;
+            } else if (!state.hidden.equals(declaredHidden)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same hidden option");
+            }
+            String declaredComment = textAnnotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null);
+            if (state.comment == null) {
+                state.comment = declaredComment;
+            } else if (!Objects.equals(state.comment, declaredComment)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same comment option");
+            }
+            String declaredStorageEngine = parseJsonOption(textAnnotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName());
+            if (state.storageEngine == null) {
+                state.storageEngine = declaredStorageEngine;
+            } else if (!Objects.equals(state.storageEngine, declaredStorageEngine)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same storageEngine option");
+            }
+            String declaredDefaultLanguage = textAnnotation.stringValue("defaultLanguage").filter(s -> !s.isEmpty()).orElse(null);
+            if (state.defaultLanguage == null) {
+                state.defaultLanguage = declaredDefaultLanguage;
+            } else if (!Objects.equals(state.defaultLanguage, declaredDefaultLanguage)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same defaultLanguage option");
+            }
+            String declaredLanguageOverride = textAnnotation.stringValue("languageOverride").filter(s -> !s.isEmpty()).orElse(null);
+            if (state.languageOverride == null) {
+                state.languageOverride = declaredLanguageOverride;
+            } else if (!Objects.equals(state.languageOverride, declaredLanguageOverride)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same languageOverride option");
+            }
+            Integer declaredTextIndexVersion = textAnnotation.intValue("textIndexVersion").isPresent() && textAnnotation.intValue("textIndexVersion").getAsInt() >= 0
+                    ? textAnnotation.intValue("textIndexVersion").getAsInt() : null;
+            if (declaredTextIndexVersion != null && declaredTextIndexVersion <= 0) {
+                throw new IllegalStateException("Mongo text index version must be greater than zero for entity [" + entity.getName() + "]");
+            }
+            if (state.textIndexVersion == null) {
+                state.textIndexVersion = declaredTextIndexVersion;
+            } else if (!Objects.equals(state.textIndexVersion, declaredTextIndexVersion)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
+            }
+            state.fields.add(new ResolvedIndexField(toPersistedPath(associations, property), null, weight, "text", null, null));
+        });
+        if (state.fields.isEmpty()) {
             return List.of();
         }
-        return List.of(new ResolvedIndex(name, List.copyOf(fields), false, false, hidden != null && hidden, null, null, null, null, null, null, defaultLanguage, languageOverride, textIndexVersion, null, null, storageEngine, comment, null));
+        return List.of(new ResolvedIndex(state.name, List.copyOf(state.fields), false, false, state.hidden != null && state.hidden, null, null, null, null, null, null, state.defaultLanguage, state.languageOverride, state.textIndexVersion, null, null, state.storageEngine, state.comment, null));
     }
 
     private static List<ResolvedIndex> resolveCompoundIndexes(RuntimePersistentEntity<?> entity) {
@@ -399,18 +391,7 @@ public final class MongoEntityIndexes {
                             if (propertyPath == null) {
                                 throw new IllegalStateException("Invalid Mongo index path [" + path + "] for entity [" + entity.getName() + "]");
                             }
-                            StringBuilder resolved = new StringBuilder();
-                            for (Association association : propertyPath.getAssociations()) {
-                                if (!resolved.isEmpty()) {
-                                    resolved.append('.');
-                                }
-                                resolved.append(association.getPersistedName());
-                            }
-                            if (!resolved.isEmpty()) {
-                                resolved.append('.');
-                            }
-                            resolved.append(propertyPath.getProperty().getPersistedName());
-                            return resolved.toString();
+                            return toPersistedPath(propertyPath);
                         })
                         .orElseThrow(() -> new IllegalStateException("Invalid Mongo index path [" + path + "] for entity [" + entity.getName() + "]"));
                 if (!seenPaths.add(persistedPath)) {
@@ -493,6 +474,34 @@ public final class MongoEntityIndexes {
         return indexes;
     }
 
+    private static boolean containsNonEmbeddedAssociation(List<Association> associations) {
+        for (Association association : associations) {
+            if (!(association instanceof io.micronaut.data.model.Embedded)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String toPersistedPath(List<Association> associations, PersistentProperty property) {
+        StringBuilder resolved = new StringBuilder();
+        for (Association association : associations) {
+            if (!resolved.isEmpty()) {
+                resolved.append('.');
+            }
+            resolved.append(association.getPersistedName());
+        }
+        if (!resolved.isEmpty()) {
+            resolved.append('.');
+        }
+        resolved.append(property.getPersistedName());
+        return resolved.toString();
+    }
+
+    private static String toPersistedPath(PersistentPropertyPath propertyPath) {
+        return toPersistedPath(propertyPath.getAssociations(), propertyPath.getProperty());
+    }
+
     private static @Nullable String parseJsonOption(@Nullable String json,
                                                     String option,
                                                     String entityName) {
@@ -504,6 +513,17 @@ public final class MongoEntityIndexes {
         } catch (RuntimeException e) {
             throw new IllegalStateException("Mongo " + option + " for entity [" + entityName + "] must be valid JSON", e);
         }
+    }
+
+    private static final class TextIndexState {
+        private final List<ResolvedIndexField> fields = new ArrayList<>();
+        private @Nullable String name;
+        private @Nullable Boolean hidden;
+        private @Nullable String storageEngine;
+        private @Nullable String comment;
+        private @Nullable String defaultLanguage;
+        private @Nullable String languageOverride;
+        private @Nullable Integer textIndexVersion;
     }
 
     /**
