@@ -79,19 +79,27 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         reloadedMany.size() == 2
 
         when:
+        savedBook.title = "Reactive Derived It Updated"
+        def updatedBook = repository.updateReturning(savedBook).block()
+
+        then:
+        updatedBook.id == savedBook.id
+        updatedBook.title == "Reactive Derived It Updated"
+
+        when:
         def updatedByQuery = repository.customUpdateReturning(replacementAuthor.id, [savedBook.id] + savedBooks*.id).collectList().block()
 
         then:
-        updatedByQuery*.id == [savedBook.id] + savedBooks*.id
+        updatedByQuery*.id.toSet() == ([savedBook.id] + savedBooks*.id).toSet()
         updatedByQuery*.author*.id.every { it == replacementAuthor.id }
 
         when:
-        def deletedBook = repository.deleteReturning(savedBook).block()
+        def deletedBook = repository.deleteReturning(updatedBook).block()
         def deletedBooks = repository.deleteReturning(savedBooks).collectList().block()
 
         then:
         deletedBook.id == savedBook.id
-        deletedBook.title == "Reactive Derived It"
+        deletedBook.title == "Reactive Derived It Updated"
         deletedBooks*.id == savedBooks*.id
         deletedBooks*.title == savedBooks*.title
     }

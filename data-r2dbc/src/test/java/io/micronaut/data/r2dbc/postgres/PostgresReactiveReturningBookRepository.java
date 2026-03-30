@@ -29,6 +29,8 @@ public interface PostgresReactiveReturningBookRepository {
 
     Flux<Book> saveReturningMany(Iterable<Book> books);
 
+    Mono<Book> updateReturning(Book book);
+
     Mono<Book> deleteReturning(Book book);
 
     Flux<Book> deleteReturning(Iterable<Book> books);
