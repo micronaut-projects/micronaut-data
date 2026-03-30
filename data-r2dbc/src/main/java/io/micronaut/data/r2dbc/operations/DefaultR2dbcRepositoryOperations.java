@@ -673,12 +673,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         @NonNull
         public <E, R> Mono<R> deleteReturning(@NonNull DeleteReturningOperation<E, R> operation) {
-            return executeWriteMono(operation, status -> {
+            return executeWriteMono(operation, connection -> {
                 final SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
-                final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                R2dbcEntityOperations<E> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
-                op.delete();
-                return op.getEntity().map(entity -> (R) entity);
+                final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
+                Statement statement = connection.createStatement(storedQuery.getQuery());
+                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, storedQuery), ctx.invocationContext, operation.getEntity(), null);
+                SqlTypeMapper<Row, R> mapper = createMapper(storedQuery, Row.class);
+                Flux<R> results;
+                if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
+                    results = executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect));
+                } else {
+                    results = executeAndMapEachRowNullable(statement, row -> mapper.map(row, storedQuery.getResultType())).onErrorResume(errorHandler(ctx.dialect));
+                }
+                return results.as(DefaultR2dbcRepositoryOperations::toSingleResult);
             });
         }
 
@@ -687,19 +694,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <E, R> Flux<R> deleteAllReturning(@NonNull DeleteReturningBatchOperation<E, R> operation) {
             return executeWriteFlux(operation, connection -> {
                 final SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
-                RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
-                if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                    R2dbcEntitiesOperations<E> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
-                    op.delete();
-                    return op.getEntities().map(entity -> (R) entity);
-                }
+                SqlTypeMapper<Row, R> mapper = createMapper(storedQuery, Row.class);
                 return concatMono(
                     operation.split().stream()
                         .map(deleteOp -> {
-                            R2dbcEntityOperations<E> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
-                            op.delete();
-                            return op.getEntity().map(entity -> (R) entity);
+                            Statement statement = connection.createStatement(storedQuery.getQuery());
+                            storedQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, storedQuery), ctx.invocationContext, deleteOp.getEntity(), null);
+                            if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
+                                return executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+                            }
+                            return executeAndMapEachRowNullable(statement, row -> mapper.map(row, storedQuery.getResultType())).onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
                         })
                 );
             });

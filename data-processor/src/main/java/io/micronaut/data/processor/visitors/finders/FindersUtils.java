@@ -60,9 +60,15 @@ import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindCursoredAsyncPageInterceptor;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
+import io.micronaut.data.intercept.async.DeleteReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.DeleteReturningOneAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
+import io.micronaut.data.intercept.async.UpdateReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.UpdateReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor;
@@ -236,9 +242,9 @@ public interface FindersUtils {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
             ClassElement asyncType = getAsyncType(matchContext, returnType);
             if (isContainer(asyncType, Iterable.class)) {
-                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), UpdateReturningManyInterceptor.class);
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), UpdateReturningManyAsyncInterceptor.class);
             }
-            return typeAndInterceptorEntry(matchContext, asyncType, UpdateReturningOneInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, asyncType, UpdateReturningOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
             if (isReactiveSingleResult(returnType)) {
@@ -257,9 +263,9 @@ public interface FindersUtils {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
             ClassElement asyncType = getAsyncType(matchContext, returnType);
             if (isContainer(asyncType, Iterable.class)) {
-                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), DeleteReturningManyInterceptor.class);
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), DeleteReturningManyAsyncInterceptor.class);
             }
-            return typeAndInterceptorEntry(matchContext, asyncType, DeleteReturningOneInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, asyncType, DeleteReturningOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
             if (isReactiveSingleResult(returnType)) {
@@ -278,9 +284,9 @@ public interface FindersUtils {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
             ClassElement asyncType = getAsyncType(matchContext, returnType);
             if (isContainer(asyncType, Iterable.class)) {
-                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), InsertReturningManyInterceptor.class);
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), InsertReturningManyAsyncInterceptor.class);
             }
-            return typeAndInterceptorEntry(matchContext, asyncType, InsertReturningOneInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, asyncType, InsertReturningOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
             if (isReactiveSingleResult(returnType)) {

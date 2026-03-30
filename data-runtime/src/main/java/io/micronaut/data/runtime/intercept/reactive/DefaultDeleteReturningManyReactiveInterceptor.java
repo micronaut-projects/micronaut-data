@@ -41,15 +41,20 @@ public final class DefaultDeleteReturningManyReactiveInterceptor extends Abstrac
 
     @Override
     protected Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        if (deleteEntity.isPresent()) {
-            return reactiveOperations.deleteReturning(getDeleteReturningOperation(context, deleteEntity.get()));
-        }
-        Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
-        if (deleteEntities.isPresent()) {
-            return reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()));
-        }
         PreparedQuery<?, Object> preparedQuery = prepareQuery(methodKey, context);
+        Class<?> rootEntityType = preparedQuery.getRootEntity();
+        Class<?> resultType = preparedQuery.getResultType();
+
+        if (resultType == rootEntityType) {
+            Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
+            if (deleteEntity.isPresent()) {
+                return reactiveOperations.deleteReturning(getDeleteReturningOperation(context, deleteEntity.get()));
+            }
+            Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
+            if (deleteEntities.isPresent()) {
+                return reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()));
+            }
+        }
         return reactiveOperations.execute(preparedQuery);
     }
 }
