@@ -29,8 +29,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
     }
 
     @Memoized
-    MSGeoEntityWktGeomRepository getGeoEntityWktGeomRepository() {
-        return context.getBean(MSGeoEntityWktGeomRepository)
+    MSGeoEntityWktGeogRepository getGeoEntityWktGeogRepository() {
+        return context.getBean(MSGeoEntityWktGeogRepository)
     }
 
     @Override
@@ -45,9 +45,9 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         return false
     }
 
-    void "test crud of all geometry types when wkt conversion used together with sqlserver geometry type"() {
+    void "test crud of all geometry types when wkt conversion used together with sqlserver geography type"() {
         given:
-        GeoEntityWktGeom entity = new GeoEntityWktGeom()
+        GeoEntityWktGeog entity = new GeoEntityWktGeog()
         entity.setPoint(createPoint(1))
         entity.setMultiPoint(createMultiPoint(1))
         entity.setLineString(createLineString(1))
@@ -57,13 +57,13 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeoEntityWktGeom savedEntity = getGeoEntityWktGeomRepository().save(entity)
+        GeoEntityWktGeog savedEntity = getGeoEntityWktGeogRepository().save(entity)
 
         then:
         savedEntity.id > 0
 
         when:
-        Optional<GeoEntityWktGeom> foundEntity = getGeoEntityWktGeomRepository().findById(savedEntity.id)
+        Optional<GeoEntityWktGeog> foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
 
         then:
         foundEntity.isPresent()
@@ -85,8 +85,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setPolygon(createPolygon(2))
         entity.setMultiPolygon(createMultiPolygon(2))
         entity.setGeometryCollection(createGeometryCollection(4))
-        getGeoEntityWktGeomRepository().update(entity)
-        foundEntity = getGeoEntityWktGeomRepository().findById(savedEntity.id)
+        getGeoEntityWktGeogRepository().update(entity)
+        foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {
@@ -104,8 +104,8 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setPolygon(null)
         entity.setMultiPolygon(null)
         entity.setGeometryCollection(null)
-        getGeoEntityWktGeomRepository().update(entity)
-        foundEntity = getGeoEntityWktGeomRepository().findById(savedEntity.id)
+        getGeoEntityWktGeogRepository().update(entity)
+        foundEntity = getGeoEntityWktGeogRepository().findById(savedEntity.id)
 
         then:
         with (foundEntity.get()) {

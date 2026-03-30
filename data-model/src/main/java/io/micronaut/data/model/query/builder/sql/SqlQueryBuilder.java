@@ -1525,6 +1525,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
         if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            // convert result of ST_GeomFromText and ST_GeomFromGeoJSON to geography
             sb.append("::geography");
         }
     }

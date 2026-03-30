@@ -32,40 +32,40 @@ import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
 @MappedEntity
-public class GeoEntityWktGeom {
+public class GeoEntityWktGeog {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @Srid(3857)
+    @Srid(4258)
     @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
     private Point point;
 
-    @Srid(3857)
+    @Srid(4258)
     @Index(columns = "multi_point")
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private MultiPoint multiPoint;
 
-    @Srid(3857)
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @Srid(4326)
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private LineString lineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiLineString multiLineString;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private Polygon polygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiPolygon multiPolygon;
 
     @Nullable
-    @MappedProperty(converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private GeometryCollection geometryCollection;
 
     public Long getId() {
