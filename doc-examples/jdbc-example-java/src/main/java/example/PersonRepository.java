@@ -1,6 +1,7 @@
 
 package example;
 
+import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Page;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 // tag::repository[]
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpecificationExecutor<Person> {
 // end::repository[]
 

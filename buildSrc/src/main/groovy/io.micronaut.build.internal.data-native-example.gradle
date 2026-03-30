@@ -1,3 +1,5 @@
+import groovy.yaml.YamlSlurper
+
 plugins {
     id "java"
     id "io.micronaut.application"
@@ -7,6 +9,59 @@ plugins {
 
 tasks.register("testExamples") {
     dependsOn "test"
+}
+
+tasks.register("testOracleTestPilot") {
+    dependsOn "test"
+}
+
+tasks.named("test", Test) {
+    if (System.getenv("TESTPILOT_USERNAME") != null) {
+        description = "Runs a subset of tests specifically for Oracle Test Pilot"
+        group = "verification"
+
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+
+        // include all tests under example.oracle package, only!
+        include "example/oracle/**"
+
+        // and forces the environment
+        getEnvironment().put("MICRONAUT_ENVIRONMENTS", "oracle")
+    }
+}
+
+processResources {
+    outputs.upToDateWhen { false }
+    doLast {
+        if (System.getenv("TESTPILOT_USERNAME") != null) {
+            // We need to replace the default (using H2)
+            def targetFile = new File(destinationDir, "application.yml")
+
+            if(targetFile.exists()) {
+                def yaml = new YamlSlurper().parse(targetFile)
+                // change it if it's not already compliant with ORACLE dialect
+                if (yaml?.datasources?.default?.dialect != null && !yaml.datasources.default.dialect.contains("ORACLE")) {
+                    println "[oracle-test-pilot] ======================================="
+                    println "[oracle-test-pilot] Initializing project resources..."
+
+                    // replacing with a template file
+                    def newTargetFileSource = new File(destinationDir, "application-oracle.yml")
+                    if(newTargetFileSource.exists()) {
+                        targetFile.text = newTargetFileSource.text
+                        println "[oracle-test-pilot] - JDBC configuration updated!"
+                        if (logging.level == LogLevel.DEBUG) {
+                            println targetFile.text
+                        }
+                    } else {
+                        targetFile.delete()
+                        println "[oracle-test-pilot] - Wrong JDBC configuration deleted!"
+                    }
+                    println "[oracle-test-pilot] ======================================="
+                }
+            }
+        }
+    }
 }
 
 tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {

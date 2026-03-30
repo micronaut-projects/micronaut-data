@@ -51,6 +51,7 @@ shadow-gradle-plugin = "9.4.0"
 errorprone-gradle-plugin = "5.1.0"
 nullaway = "0.13.1"
 error_prone_core = "2.48.0"
+groovy_yaml = "5.0.4"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
@@ -124,6 +125,7 @@ junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suit
 
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error_prone_core" }
+groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
 
 # Benchmark
 
