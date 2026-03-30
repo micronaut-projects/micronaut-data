@@ -35,7 +35,7 @@ abstract class AbstractGeoSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    void "test creating, reading and updating of embedded geometry"() {
+    void "test creating, reading and updating when json conversion used on embedded geometry type"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -78,7 +78,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test creating, reading and updating of all geometry types when json conversion used"() {
+    void "test creating, reading and updating when json conversion used on geometry type"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -135,7 +135,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test deleting of nullable geometry types when json conversion used"() {
+    void "test delete when json conversion used on geometry type"() {
         assumeTrue(supportsGeometryJsonConversion())
         assumeTrue(supportsDeletingGeometryTypes())
 
@@ -190,7 +190,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test crud of all geometry types when wkt conversion used"() {
+    void "test crud when wkt conversion used on geometry type"() {
         given:
         GeometryEntityWkt entity = new GeometryEntityWkt()
         entity.setPoint(createPoint(1))

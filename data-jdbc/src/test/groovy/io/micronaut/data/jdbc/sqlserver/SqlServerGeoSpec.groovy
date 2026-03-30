@@ -45,7 +45,7 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         return false
     }
 
-    void "test crud of all geometry types when wkt conversion used together with sqlserver geography type"() {
+    void "test crud when wkt conversion used on geography type"() {
         given:
         GeographyEntityWkt entity = new GeographyEntityWkt()
         entity.setPoint(createPoint(1))
