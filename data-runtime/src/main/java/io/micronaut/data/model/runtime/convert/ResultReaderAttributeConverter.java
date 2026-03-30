@@ -16,7 +16,7 @@
 package io.micronaut.data.model.runtime.convert;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Experimental;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -40,7 +40,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
  * @since 5.0.0
  */
 @Indexed(ResultReaderAttributeConverter.class)
-@Internal
+@Experimental
 public interface ResultReaderAttributeConverter<X, Y> extends AttributeConverter<X, Y> {
     /**
      * Read a column value from a native result set via the provided converter-aware reader.

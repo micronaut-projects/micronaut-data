@@ -236,22 +236,67 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
         when:
         def cosineOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
-        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
-        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
-        def innerProductAliasOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
-        def taxicabOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN)
+        def euclideanSquaredOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
+        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT)
+        def manhattanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L1_MANHATTAN)
 
         then:
         cosineOk.results().size() == nearByDouble.results().size()
         euclideanOk.results().size() >= 1
+        euclideanSquaredOk.results().size() >= 1
         dotOk.results().size() >= 1
-        innerProductAliasOk.results().size() == dotOk.results().size()
-        taxicabOk.results().size() >= 1
+        manhattanOk.results().size() >= 1
         assertScoringResults(cosineOk, ScoringFunction.COSINE)
-        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
-        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
-        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
-        assertScoringResults(taxicabOk, ScoringFunction.TAXICAB)
+        assertScoringResults(euclideanOk, ScoringFunction.L2_EUCLIDEAN)
+        assertScoringResults(euclideanSquaredOk, ScoringFunction.L2_EUCLIDEAN_SQUARED)
+        assertScoringResults(dotOk, ScoringFunction.DOT)
+        assertScoringResults(manhattanOk, ScoringFunction.L1_MANHATTAN)
+    }
+
+    void "test Oracle L2 euclidean squared search over 15 vectors returns expected ordering and normalized similarity"() {
+        given:
+        vectorRepository.deleteAll()
+        def vectors = [
+            [1.0f, 0.0f, 0.0f],
+            [0.95f, 0.05f, 0.0f],
+            [0.90f, 0.10f, 0.0f],
+            [0.85f, 0.15f, 0.0f],
+            [0.80f, 0.20f, 0.0f],
+            [0.75f, 0.25f, 0.0f],
+            [0.70f, 0.30f, 0.0f],
+            [0.65f, 0.35f, 0.0f],
+            [0.60f, 0.40f, 0.0f],
+            [0.55f, 0.45f, 0.0f],
+            [0.50f, 0.50f, 0.0f],
+            [0.40f, 0.60f, 0.0f],
+            [0.30f, 0.70f, 0.0f],
+            [0.20f, 0.80f, 0.0f],
+            [0.0f, 1.0f, 0.0f]
+        ]
+        vectors.each { v -> vectorRepository.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        FloatVector query = Vector.of([1.0f, 0.0f, 0.0f] as float[])
+        def queryValues = query.toFloatArray()
+        def expectedOrder = vectors.toList().sort { left, right ->
+            squaredEuclideanDistance(queryValues, left as float[]) <=> squaredEuclideanDistance(queryValues, right as float[])
+        }.findAll { it.toList() != queryValues.toList() }
+
+        when:
+        SearchResults<VectorFloatDoc> results = vectorRepository.searchByEmbeddingNear(query, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
+
+        then:
+        results != null
+        results.results() != null
+        results.results().size() == expectedOrder.size()
+        results.results()*.entity()*.embedding*.toFloatArray()*.toList() == expectedOrder.collect { it.toList() }
+        results.results().every { it.similarity() != null }
+        assertScoringResults(results, ScoringFunction.L2_EUCLIDEAN_SQUARED)
+
+        and:
+        def topResult = results.results().first()
+        topResult.entity().embedding.toFloatArray().toList() == [0.95f, 0.05f, 0.0f]
+        Math.abs(topResult.score().value() - 0.005d) < 1.0e-6d
+        Math.abs(topResult.similarity().value() - (1.0d / 1.005d)) < 1.0e-6d
     }
 
     void "test derived top+order vector queries for near and within"() {
@@ -311,6 +356,15 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
             try { st?.close() } catch (ignored) {}
             try { c?.close() } catch (ignored) {}
         }
+    }
+
+    private static double squaredEuclideanDistance(float[] left, float[] right) {
+        double sum = 0d
+        for (int i = 0; i < left.length; i++) {
+            double diff = left[i] - right[i]
+            sum += diff * diff
+        }
+        return sum
     }
 
     private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {

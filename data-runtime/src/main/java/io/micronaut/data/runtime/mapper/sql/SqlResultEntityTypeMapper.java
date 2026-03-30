@@ -38,7 +38,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
-import io.micronaut.data.runtime.convert.ConversionContextFactory;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
@@ -76,7 +76,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final SqlJsonColumnReader<RS> jsonColumnReader;
     private final DataConversionService conversionService;
     @Nullable
-    private final ConversionContextFactory conversionContextFactory;
+    private final DatabaseConversionContextFactory conversionContextFactory;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
     private boolean callNext = true;
@@ -131,7 +131,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService, ConversionContextFactory conversionContextFactory) {
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService, DatabaseConversionContextFactory conversionContextFactory) {
         this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, conversionContextFactory);
     }
 
@@ -154,7 +154,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
             DataConversionService conversionService,
             @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener,
-            @Nullable ConversionContextFactory conversionContextFactory) {
+            @Nullable DatabaseConversionContextFactory conversionContextFactory) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);

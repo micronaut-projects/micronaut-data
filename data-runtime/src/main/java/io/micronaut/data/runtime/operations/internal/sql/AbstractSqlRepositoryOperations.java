@@ -58,7 +58,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
-import io.micronaut.data.runtime.convert.ConversionContextFactory;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -130,13 +130,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final PropertyPlaceholderResolver propertyPlaceholderResolver;
-    protected final VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver;
+    protected final VectorScoringSupportResolver vectorScoringSupportResolver;
     protected final VectorParameterBinder vectorParameterBinder;
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
-    private final ConversionContextFactory conversionContextFactory;
+    private final DatabaseConversionContextFactory conversionContextFactory;
 
     /**
      * Default constructor.
@@ -167,7 +167,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         @Nullable
         JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
-        ConversionContextFactory conversionContextFactory) {
+        DatabaseConversionContextFactory conversionContextFactory) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -176,8 +176,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
         this.conversionContextFactory = conversionContextFactory;
-        this.vectorScoringSupportResolver = beanContext.findBean(VectorScoringFunctionDialectSupportResolver.class)
-            .orElseThrow(() -> new IllegalStateException("Missing VectorScoringFunctionDialectSupportResolver bean"));
+        this.vectorScoringSupportResolver = beanContext.findBean(VectorScoringSupportResolver.class)
+            .orElseThrow(() -> new IllegalStateException("Missing VectorScoringSupportResolver bean"));
         @SuppressWarnings({"unchecked", "rawtypes"})
         Collection<VectorTypeConverter<?>> vectorTypeConverters = (Collection) beanContext.getBeansOfType(VectorTypeConverter.class);
         this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters);

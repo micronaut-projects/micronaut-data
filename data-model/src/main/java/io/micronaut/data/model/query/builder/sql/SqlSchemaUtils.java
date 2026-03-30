@@ -98,6 +98,17 @@ public final class SqlSchemaUtils {
     private SqlSchemaUtils() {
     }
 
+    /**
+     * Returns SQL table mappings for an entity using no external definition providers.
+     *
+     * <p>This convenience overload is intended for callers that don't need custom
+     * column/index DDL provider extensions.</p>
+     *
+     * @param entity The entity
+     * @param dialect The SQL dialect used to render vendor-specific definitions
+     * @return The SQL table definitions for the given entity
+     * @since 5.0.0
+     */
     @Experimental
     public static List<SqlTableMapping> getSqlTableMappings(PersistentEntity entity,
                                                             Dialect dialect) {

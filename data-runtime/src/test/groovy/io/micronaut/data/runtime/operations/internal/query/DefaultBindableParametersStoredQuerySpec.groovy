@@ -210,7 +210,7 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
 
         and:
         def invocationContext = Mock(MethodInvocationContext) {
-            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.TAXICAB] as Object[])
+            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.L1_MANHATTAN] as Object[])
             getArguments() >> ([Argument.of(Similarity), Argument.of(ScoringFunction)] as Argument[])
         }
 
@@ -234,7 +234,7 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
 
         and:
         def invocationContext = Mock(MethodInvocationContext) {
-            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.COSINE, ScoringFunction.EUCLIDEAN] as Object[])
+            getParameterValues() >> ([new Similarity(0.5d), ScoringFunction.COSINE, ScoringFunction.L2_EUCLIDEAN] as Object[])
             getArguments() >> ([Argument.of(Similarity), Argument.of(ScoringFunction), Argument.of(ScoringFunction)] as Argument[])
         }
 

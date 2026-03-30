@@ -16,7 +16,7 @@ class SimilarityNormalizerSpec extends Specification {
 
     def "euclidean conversion is reversible"() {
         given:
-        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.EUCLIDEAN)
+        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.L2_EUCLIDEAN)
 
         expect:
         normalizer.getSimilarity(0d) == 1d
@@ -24,9 +24,9 @@ class SimilarityNormalizerSpec extends Specification {
         normalizer.getScore(0.5d) == 1d
     }
 
-    def "dot product conversion is reversible"() {
+    def "dot conversion is reversible"() {
         given:
-        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.DOT_PRODUCT)
+        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.DOT)
 
         expect:
         normalizer.getSimilarity(1d) == 0d
@@ -34,18 +34,22 @@ class SimilarityNormalizerSpec extends Specification {
         normalizer.getScore(0.5d) == 0d
     }
 
-    def "inner product uses dot product normalization"() {
-        expect:
-        SimilarityNormalizer.forScoringFunction(ScoringFunction.INNER_PRODUCT).getScore(0.25d) ==
-            SimilarityNormalizer.forScoringFunction(ScoringFunction.DOT_PRODUCT).getScore(0.25d)
-    }
-
-    def "taxicab uses identity normalization"() {
+    def "l1 manhattan uses identity normalization"() {
         given:
-        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.TAXICAB)
+        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.L1_MANHATTAN)
 
         expect:
         normalizer.getSimilarity(0.42d) == 0.42d
         normalizer.getScore(0.42d) == 0.42d
+    }
+
+    def "l2 euclidean squared conversion is reversible"() {
+        given:
+        def normalizer = SimilarityNormalizer.forScoringFunction(ScoringFunction.L2_EUCLIDEAN_SQUARED)
+
+        expect:
+        normalizer.getSimilarity(0d) == 1d
+        normalizer.getScore(1d) == 0d
+        normalizer.getScore(0.5d) == 1d
     }
 }

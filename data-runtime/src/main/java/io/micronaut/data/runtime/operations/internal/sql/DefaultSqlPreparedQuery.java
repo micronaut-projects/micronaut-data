@@ -96,7 +96,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery,
                                    SqlStoredQuery<E, R> sqlStoredQuery,
-                                   @Nullable VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver) {
+                                   @Nullable VectorScoringSupportResolver vectorScoringSupportResolver) {
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
@@ -111,7 +111,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery,
-                                   @Nullable VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver) {
+                                   @Nullable VectorScoringSupportResolver vectorScoringSupportResolver) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
@@ -122,7 +122,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     private static VectorScoringFunctionDialectSupport resolveVectorScoringSupport(
         Dialect dialect,
-        @Nullable VectorScoringFunctionDialectSupportResolver resolver
+        @Nullable VectorScoringSupportResolver resolver
     ) {
         if (resolver != null) {
             return resolver.resolve(dialect);
@@ -147,7 +147,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (scoringFunctions.size() > 1) {
             throw new IllegalArgumentException("Only one ScoringFunction parameter is allowed for vector derived search queries");
         }
-        ScoringFunction selected = normalizeScoringFunction(scoringFunctions.get(0));
+        ScoringFunction selected = scoringFunctions.get(0);
         var supported = vectorScoringSupport.supportedScoringFunctions();
         if (!supported.contains(selected)) {
             throw new IllegalArgumentException("Scoring function " + selected + " is not supported for dialect " + getDialect() +
@@ -163,13 +163,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Nullable
     public ScoringFunction getVectorScoringFunction() {
         return vectorScoringFunction;
-    }
-
-    private static ScoringFunction normalizeScoringFunction(ScoringFunction selected) {
-        if (selected == ScoringFunction.INNER_PRODUCT) {
-            return ScoringFunction.DOT_PRODUCT;
-        }
-        return selected;
     }
 
     @Override

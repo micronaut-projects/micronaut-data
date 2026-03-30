@@ -244,27 +244,24 @@ class PostgresJdbcFloatVectorEntitySpec extends Specification implements Postgre
 
         when:
         def cosineOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
-        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
-        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
-        def innerProductAliasOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
+        def euclideanOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN)
+        def dotOk = vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT)
 
         then:
         cosineOk.results().size() == nearByDouble.results().size()
         euclideanOk.results().size() >= 1
         dotOk.results().size() >= 1
-        innerProductAliasOk.results().size() == dotOk.results().size()
         assertScoringResults(cosineOk, ScoringFunction.COSINE)
-        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
-        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
-        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
+        assertScoringResults(euclideanOk, ScoringFunction.L2_EUCLIDEAN)
+        assertScoringResults(dotOk, ScoringFunction.DOT)
 
         when:
-        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L1_MANHATTAN)
 
         then:
-        def taxicabEx = thrown(IllegalArgumentException)
-        taxicabEx.message.contains("not supported")
-        taxicabEx.message.contains("POSTGRES")
+        def manhattanEx = thrown(IllegalArgumentException)
+        manhattanEx.message.contains("not supported")
+        manhattanEx.message.contains("POSTGRES")
     }
 
     private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {

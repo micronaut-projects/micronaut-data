@@ -50,8 +50,8 @@ final class VectorScoringFunctionDialectSupports {
         public EnumSet<ScoringFunction> supportedScoringFunctions() {
             return EnumSet.of(
                 ScoringFunction.COSINE,
-                ScoringFunction.EUCLIDEAN,
-                ScoringFunction.DOT_PRODUCT
+                ScoringFunction.L2_EUCLIDEAN,
+                ScoringFunction.DOT
             );
         }
 
@@ -64,8 +64,8 @@ final class VectorScoringFunctionDialectSupports {
         public String adaptQueryForScoringFunction(String query, ScoringFunction selected) {
             String operator = switch (selected) {
                 case COSINE -> "<=>";
-                case EUCLIDEAN -> "<->";
-                case DOT_PRODUCT -> "<#>";
+                case L2_EUCLIDEAN -> "<->";
+                case DOT -> "<#>";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for PostgreSQL");
             };
             return query.replace("<=>", operator);
@@ -88,9 +88,10 @@ final class VectorScoringFunctionDialectSupports {
         public EnumSet<ScoringFunction> supportedScoringFunctions() {
             return EnumSet.of(
                 ScoringFunction.COSINE,
-                ScoringFunction.EUCLIDEAN,
-                ScoringFunction.DOT_PRODUCT,
-                ScoringFunction.TAXICAB
+                ScoringFunction.L2_EUCLIDEAN,
+                ScoringFunction.L2_EUCLIDEAN_SQUARED,
+                ScoringFunction.DOT,
+                ScoringFunction.L1_MANHATTAN
             );
         }
 
@@ -103,9 +104,10 @@ final class VectorScoringFunctionDialectSupports {
         public String adaptQueryForScoringFunction(String query, ScoringFunction selected) {
             String metric = switch (selected) {
                 case COSINE -> "COSINE";
-                case EUCLIDEAN -> "EUCLIDEAN";
-                case DOT_PRODUCT -> "DOT";
-                case TAXICAB -> "MANHATTAN";
+                case L2_EUCLIDEAN -> "EUCLIDEAN";
+                case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN_SQUARED";
+                case DOT -> "DOT";
+                case L1_MANHATTAN -> "MANHATTAN";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for Oracle");
             };
             return query.replace(",COSINE)", "," + metric + ")");
@@ -128,22 +130,22 @@ final class VectorScoringFunctionDialectSupports {
         public EnumSet<ScoringFunction> supportedScoringFunctions() {
             return EnumSet.of(
                 ScoringFunction.COSINE,
-                ScoringFunction.EUCLIDEAN,
-                ScoringFunction.DOT_PRODUCT
+                ScoringFunction.L2_EUCLIDEAN,
+                ScoringFunction.DOT
             );
         }
 
         @Override
         public @Nullable ScoringFunction defaultScoringFunction() {
-            return ScoringFunction.EUCLIDEAN;
+            return ScoringFunction.L2_EUCLIDEAN;
         }
 
         @Override
         public String adaptQueryForScoringFunction(String query, ScoringFunction selected) {
             String metric = switch (selected) {
                 case COSINE -> "COSINE";
-                case EUCLIDEAN -> "EUCLIDEAN";
-                case DOT_PRODUCT -> "DOT";
+                case L2_EUCLIDEAN -> "EUCLIDEAN";
+                case DOT -> "DOT";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for MySQL");
             };
             return query.replace(",'EUCLIDEAN')", ",'" + metric + "')");

@@ -19,17 +19,20 @@ import io.micronaut.core.annotation.Experimental;
 
 /**
  * Supported vector similarity scoring functions.
+ *
+ * <p>Names are intentionally aligned with {@link io.micronaut.data.annotation.VectorIndexType.DistanceType}
+ * to keep index-time and query-time metric selection consistent.</p>
  */
 @Experimental
 public enum ScoringFunction {
 
     COSINE,
 
-    EUCLIDEAN,
+    DOT,
 
-    DOT_PRODUCT,
+    L1_MANHATTAN,
 
-    TAXICAB,
+    L2_EUCLIDEAN,
 
-    INNER_PRODUCT;
+    L2_EUCLIDEAN_SQUARED;
 }

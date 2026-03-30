@@ -213,6 +213,10 @@ public enum Dialect {
         return supportsDeleteReturning;
     }
 
+    /**
+     * @return Stable string value for this dialect enum constant.
+     * @since 5.0.0
+     */
     public String value() {
         return name;
     }

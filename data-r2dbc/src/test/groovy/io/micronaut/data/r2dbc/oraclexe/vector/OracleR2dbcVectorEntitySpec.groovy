@@ -245,22 +245,75 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
         when:
         def cosineOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.COSINE)
-        def euclideanOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
-        def dotOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
-        def innerProductAliasOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
-        def taxicabOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+        def euclideanOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN)
+        def euclideanSquaredOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
+        def dotOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT)
+        def manhattanOk = repo.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L1_MANHATTAN)
 
         then:
         cosineOk.results().size() == nearByDouble.results().size()
         euclideanOk.results().size() > 0
+        euclideanSquaredOk.results().size() > 0
         dotOk.results().size() > 0
-        innerProductAliasOk.results().size() == dotOk.results().size()
-        taxicabOk.results().size() > 0
+        manhattanOk.results().size() > 0
         assertScoringResults(cosineOk, ScoringFunction.COSINE)
-        assertScoringResults(euclideanOk, ScoringFunction.EUCLIDEAN)
-        assertScoringResults(dotOk, ScoringFunction.DOT_PRODUCT)
-        assertScoringResults(innerProductAliasOk, ScoringFunction.INNER_PRODUCT)
-        assertScoringResults(taxicabOk, ScoringFunction.TAXICAB)
+        assertScoringResults(euclideanOk, ScoringFunction.L2_EUCLIDEAN)
+        assertScoringResults(euclideanSquaredOk, ScoringFunction.L2_EUCLIDEAN_SQUARED)
+        assertScoringResults(dotOk, ScoringFunction.DOT)
+        assertScoringResults(manhattanOk, ScoringFunction.L1_MANHATTAN)
+    }
+
+    void "R2DBC Oracle L2 euclidean squared search over 15 vectors returns expected ordering and normalized similarity"() {
+        given:
+        def repo = vectorFloatDocRepository
+        repo.deleteAll()
+        def vectors = [
+            [1.0f, 0.0f, 0.0f],
+            [0.95f, 0.05f, 0.0f],
+            [0.90f, 0.10f, 0.0f],
+            [0.85f, 0.15f, 0.0f],
+            [0.80f, 0.20f, 0.0f],
+            [0.75f, 0.25f, 0.0f],
+            [0.70f, 0.30f, 0.0f],
+            [0.65f, 0.35f, 0.0f],
+            [0.60f, 0.40f, 0.0f],
+            [0.55f, 0.45f, 0.0f],
+            [0.50f, 0.50f, 0.0f],
+            [0.40f, 0.60f, 0.0f],
+            [0.30f, 0.70f, 0.0f],
+            [0.20f, 0.80f, 0.0f],
+            [0.0f, 1.0f, 0.0f]
+        ]
+        vectors.each { v -> repo.save(new VectorFloatDoc(embedding: Vector.of(v as float[]))) }
+        FloatVector query = Vector.of([1.0f, 0.0f, 0.0f] as float[])
+        def queryValues = query.toFloatArray()
+        def expectedOrder = vectors.toList().sort { left, right ->
+            squaredEuclideanDistance(queryValues, left as float[]) <=> squaredEuclideanDistance(queryValues, right as float[])
+        }
+        def expectedByVector = expectedOrder.collectEntries { vector ->
+            [(vector.toList()): squaredEuclideanDistance(queryValues, vector as float[])]
+        }
+
+        when:
+        SearchResults<VectorFloatDoc> results = repo.searchByEmbeddingNear(query, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
+
+        then:
+        results != null
+        results.results() != null
+        results.results().size() == expectedOrder.size()
+        results.results()*.entity()*.embedding*.toFloatArray()*.toList() as Set == expectedOrder.collect { it.toList() } as Set
+        results.results().every { it.similarity() != null }
+        results.results().every { result ->
+            def embedding = result.entity().embedding.toFloatArray().toList()
+            Math.abs(result.score().value() - expectedByVector.get(embedding)) < 1.0e-6d
+        }
+        assertScoringResults(results, ScoringFunction.L2_EUCLIDEAN_SQUARED)
+
+        and:
+        def exactMatch = results.results().find { it.entity().embedding.toFloatArray().toList() == queryValues.toList() }
+        exactMatch != null
+        Math.abs(exactMatch.score().value()) < 1.0e-9d
+        Math.abs(exactMatch.similarity().value() - 1.0d) < 1.0e-9d
     }
 
     private static void assertScoringResults(SearchResults<VectorFloatDoc> results, ScoringFunction function) {
@@ -274,6 +327,15 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
             double similarity = r.similarity().value()
             assert Math.abs(similarity - normalizer.getSimilarity(score)) < 1.0e-9d
         }
+    }
+
+    private static double squaredEuclideanDistance(float[] left, float[] right) {
+        double sum = 0d
+        for (int i = 0; i < left.length; i++) {
+            double diff = left[i] - right[i]
+            sum += diff * diff
+        }
+        return sum
     }
 
     void "R2DBC Oracle FloatVector - derived top+order vector queries"() {

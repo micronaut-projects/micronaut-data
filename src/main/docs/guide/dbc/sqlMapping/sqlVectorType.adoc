@@ -50,8 +50,9 @@ snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vec
 `Similarity` can be normalized to/from raw score values via `SimilarityNormalizer` for supported scoring functions:
 
 - `COSINE`
-- `EUCLIDEAN`
-- `DOT_PRODUCT` (and `INNER_PRODUCT` alias)
+- `L2_EUCLIDEAN`
+- `L2_EUCLIDEAN_SQUARED`
+- `DOT`
 
 When a repository method includes both `Similarity` arguments and an explicit `ScoringFunction` parameter,
 Micronaut Data converts `Similarity` values to raw SQL score values before binding.
@@ -60,10 +61,10 @@ If no scoring function is provided, Micronaut Data uses dialect defaults for SQL
 
 - PostgreSQL: `COSINE`
 - Oracle: `COSINE`
-- MySQL: `EUCLIDEAN`
+- MySQL: `L2_EUCLIDEAN`
 
 If no dialect default is available, Micronaut Data uses identity conversion.
-`TAXICAB` currently uses explicit identity normalization.
+`L1_MANHATTAN` currently uses explicit identity normalization.
 
 For `SearchResults<T>` return types, Micronaut Data always returns raw `Score` and additionally populates `SearchResult.similarity()` when scoring function context is available.
 If no rows match, Micronaut Data returns an empty `SearchResults` (not `null`).
@@ -96,13 +97,11 @@ snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vec
 
 Only one `ScoringFunction` parameter is allowed for vector derived search methods.
 
-`INNER_PRODUCT` is treated as alias of `DOT_PRODUCT`.
-
 Current derived-search scoring function support by dialect:
 
-- PostgreSQL: `COSINE`, `EUCLIDEAN`, `DOT_PRODUCT` (`INNER_PRODUCT` alias)
-- Oracle: `COSINE`, `EUCLIDEAN`, `DOT_PRODUCT` (`INNER_PRODUCT` alias), `TAXICAB`
-- MySQL: `COSINE`, `EUCLIDEAN`, `DOT_PRODUCT` (`INNER_PRODUCT` alias)
+- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
+- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`
+- MySQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
 
 If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an `IllegalArgumentException`.
 

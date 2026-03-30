@@ -29,7 +29,7 @@ import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
  * @author Nemanja Mikic
  * @since 5.0.0
  */
-public interface ConversionContextFactory {
+public interface DatabaseConversionContextFactory {
 
     /**
      * Create a conversion context for a Micronaut {@link Argument}.

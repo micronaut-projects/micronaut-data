@@ -299,7 +299,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (scoringFunctions.size() > 1) {
             throw new IllegalArgumentException("Only one ScoringFunction parameter is allowed for vector derived search queries");
         }
-        return normalizeScoringFunction(scoringFunctions.getFirst());
+        return scoringFunctions.getFirst();
     }
 
     @Nullable
@@ -309,16 +309,9 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         }
         return switch (sqlStoredQuery.getDialect()) {
             case POSTGRES, ORACLE -> ScoringFunction.COSINE;
-            case MYSQL -> ScoringFunction.EUCLIDEAN;
+            case MYSQL -> ScoringFunction.L2_EUCLIDEAN;
             default -> null;
         };
-    }
-
-    private static ScoringFunction normalizeScoringFunction(ScoringFunction scoringFunction) {
-        if (scoringFunction == ScoringFunction.INNER_PRODUCT) {
-            return ScoringFunction.DOT_PRODUCT;
-        }
-        return scoringFunction;
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {

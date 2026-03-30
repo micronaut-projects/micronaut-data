@@ -51,7 +51,7 @@ class SearchResultsMapperSpec extends Specification {
         given:
         def entityMapper = Mock(SqlTypeMapper<Map, String>)
         def resultReader = Mock(ResultReader<Map, String>)
-        def mapper = new SearchResultsMapper<Map, String>(entityMapper, resultReader, "mn_score", ScoringFunction.EUCLIDEAN)
+        def mapper = new SearchResultsMapper<Map, String>(entityMapper, resultReader, "mn_score", ScoringFunction.L2_EUCLIDEAN)
 
         and:
         entityMapper.hasNext(_ as Map) >>> [true, false]

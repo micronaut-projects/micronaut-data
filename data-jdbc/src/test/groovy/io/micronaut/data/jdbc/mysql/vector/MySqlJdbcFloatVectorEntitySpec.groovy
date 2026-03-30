@@ -161,33 +161,34 @@ class MySqlJdbcFloatVectorEntitySpec extends Specification implements MySqlVecto
         assertDistanceFunctionMissing(cosineUnsupported)
 
         when:
-        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT_PRODUCT)
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.DOT)
 
         then:
         def dotUnsupported = thrown(DataAccessException)
         assertDistanceFunctionMissing(dotUnsupported)
 
         when:
-        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.INNER_PRODUCT)
-
-        then:
-        def innerUnsupported = thrown(DataAccessException)
-        assertDistanceFunctionMissing(innerUnsupported)
-
-        when:
-        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.EUCLIDEAN)
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN)
 
         then:
         def euclideanUnsupported = thrown(DataAccessException)
         assertDistanceFunctionMissing(euclideanUnsupported)
 
         when:
-        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.TAXICAB)
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
 
         then:
-        def taxicabEx = thrown(IllegalArgumentException)
-        taxicabEx.message.contains("not supported")
-        taxicabEx.message.contains("MYSQL")
+        def euclideanSquaredUnsupported = thrown(IllegalArgumentException)
+        euclideanSquaredUnsupported.message.contains("not supported")
+        euclideanSquaredUnsupported.message.contains("MYSQL")
+
+        when:
+        vectorRepository.searchByEmbeddingNear(q, new Score(2d), ScoringFunction.L1_MANHATTAN)
+
+        then:
+        def manhattanEx = thrown(IllegalArgumentException)
+        manhattanEx.message.contains("not supported")
+        manhattanEx.message.contains("MYSQL")
     }
 
     private static void assertDistanceFunctionMissing(DataAccessException exception) {

@@ -29,14 +29,14 @@ import java.util.Map;
  */
 @Internal
 @Singleton
-final class VectorScoringFunctionDialectSupportResolver {
+final class VectorScoringSupportResolver {
 
     private final Map<Dialect, VectorScoringFunctionDialectSupport> byDialect;
 
     /**
      * @param supports All discovered dialect strategy beans
      */
-    VectorScoringFunctionDialectSupportResolver(List<VectorScoringFunctionDialectSupport> supports) {
+    VectorScoringSupportResolver(List<VectorScoringFunctionDialectSupport> supports) {
         EnumMap<Dialect, VectorScoringFunctionDialectSupport> map = new EnumMap<>(Dialect.class);
         for (VectorScoringFunctionDialectSupport support : supports) {
             map.put(support.dialect(), support);

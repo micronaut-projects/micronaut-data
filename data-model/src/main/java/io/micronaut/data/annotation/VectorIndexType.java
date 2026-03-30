@@ -22,7 +22,13 @@ package io.micronaut.data.annotation;
  * @since 5.0.0
  */
 public enum VectorIndexType {
+    /**
+     * Inverted file index. Best for faster approximate search with list/probe-style tuning.
+     */
     IVF,
+    /**
+     * Hierarchical Navigable Small World graph index. Best for high-recall approximate nearest-neighbor search.
+     */
     HNSW;
 
     /**
@@ -31,10 +37,25 @@ public enum VectorIndexType {
      * @since 5.0.0
      */
     public enum DistanceType {
+        /**
+         * Cosine distance/similarity metric.
+         */
         COSINE,
+        /**
+         * Dot-product (inner product) metric.
+         */
         DOT,
+        /**
+         * Manhattan (L1) distance metric.
+         */
         L1_MANHATTAN,
+        /**
+         * Squared Euclidean (L2) distance metric.
+         */
         L2_EUCLIDEAN_SQUARED,
+        /**
+         * Euclidean (L2) distance metric.
+         */
         L2_EUCLIDEAN,
     }
 }

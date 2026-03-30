@@ -37,12 +37,23 @@ public final class SearchResultsMapper<RS, E> {
     @Nullable
     private final ScoringFunction scoringFunction;
 
+    /**
+     * @param entityMapper Entity mapper used to map each row entity payload
+     * @param resultReader Reader used to extract score alias values
+     * @param scoreAlias Result column alias containing the score value
+     */
     public SearchResultsMapper(SqlTypeMapper<RS, E> entityMapper,
                                ResultReader<RS, String> resultReader,
                                String scoreAlias) {
         this(entityMapper, resultReader, scoreAlias, null);
     }
 
+    /**
+     * @param entityMapper Entity mapper used to map each row entity payload
+     * @param resultReader Reader used to extract score alias values
+     * @param scoreAlias Result column alias containing the score value
+     * @param scoringFunction Optional scoring function used to compute normalized similarity
+     */
     public SearchResultsMapper(SqlTypeMapper<RS, E> entityMapper,
                                ResultReader<RS, String> resultReader,
                                String scoreAlias,
@@ -53,6 +64,13 @@ public final class SearchResultsMapper<RS, E> {
         this.scoringFunction = scoringFunction;
     }
 
+    /**
+     * Maps all rows from the provided result set into {@link SearchResults}.
+     *
+     * @param rs Result set/row stream handle
+     * @param entityType Entity type to map
+     * @return Mapped search results
+     */
     public SearchResults<E> mapAll(RS rs, Class<E> entityType) {
         List<SearchResult<E>> out = new ArrayList<>();
         while (hasNext(rs)) {
@@ -64,10 +82,21 @@ public final class SearchResultsMapper<RS, E> {
         return new SearchResults<>(out);
     }
 
+    /**
+     * @param rs Result set/row stream handle
+     * @return Whether another row is available
+     */
     public boolean hasNext(RS rs) {
         return entityMapper.hasNext(rs);
     }
 
+    /**
+     * Maps the current row into a {@link SearchResult}.
+     *
+     * @param rs Result set/row stream handle
+     * @param entityType Entity type to map
+     * @return mapped result or {@code null} when entity mapping yields no row data
+     */
     public @Nullable SearchResult<E> mapOne(RS rs, Class<E> entityType) {
         E entity = entityMapper.map(rs, entityType);
         if (entity == null) {

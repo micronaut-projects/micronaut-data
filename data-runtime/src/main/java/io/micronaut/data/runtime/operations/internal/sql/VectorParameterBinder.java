@@ -31,17 +31,37 @@ import java.util.List;
 import java.util.Map;
 
 @Internal
-interface VectorParameterBinder {
+sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVectorParameterBinder {
 
+    /**
+     * Adapts vector-typed values into bindable statement parameters for a specific dialect.
+     *
+     * @param dialect The active SQL dialect
+     * @param dataType The Micronaut Data type before vector adaptation
+     * @param value The runtime value to bind
+     * @return Prepared parameter containing final bind data type and value
+     */
     PreparedParameter bind(Dialect dialect, DataType dataType, @Nullable Object value);
 
+    /**
+     * Creates the default vector binder using discovered vector type converters.
+     *
+     * @param vectorTypeConverters available vector type converters
+     * @return vector parameter binder
+     */
     static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters) {
         return new DefaultVectorParameterBinder(vectorTypeConverters);
     }
 
+    /**
+     * Final prepared parameter descriptor used by statement binding.
+     */
     record PreparedParameter(DataType dataType, @Nullable Object value) {
     }
 
+    /**
+     * Default vector binder implementation.
+     */
     final class DefaultVectorParameterBinder implements VectorParameterBinder {
 
         private final Map<DatabaseType, List<VectorTypeConverter<?>>> converterByDatabaseType = new EnumMap<>(DatabaseType.class);

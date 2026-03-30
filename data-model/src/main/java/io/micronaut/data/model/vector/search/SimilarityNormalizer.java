@@ -32,10 +32,16 @@ public final class SimilarityNormalizer {
     private static final SimilarityNormalizer IDENTITY =
         new SimilarityNormalizer(DoubleUnaryOperator.identity(), DoubleUnaryOperator.identity());
 
-    private static final SimilarityNormalizer EUCLIDEAN =
+    private static final SimilarityNormalizer L2_EUCLIDEAN =
         new SimilarityNormalizer(
             score -> 1d / (1d + Math.pow(score, 2d)),
             similarity -> similarity == 0d ? Double.MAX_VALUE : Math.sqrt((1d / similarity) - 1d)
+        );
+
+    private static final SimilarityNormalizer L2_EUCLIDEAN_SQUARED =
+        new SimilarityNormalizer(
+            score -> 1d / (1d + score),
+            similarity -> similarity == 0d ? Double.MAX_VALUE : (1d / similarity) - 1d
         );
 
     private static final SimilarityNormalizer COSINE =
@@ -53,11 +59,11 @@ public final class SimilarityNormalizer {
     private static final Map<ScoringFunction, SimilarityNormalizer> NORMALIZERS = new EnumMap<>(ScoringFunction.class);
 
     static {
-        NORMALIZERS.put(ScoringFunction.EUCLIDEAN, EUCLIDEAN);
+        NORMALIZERS.put(ScoringFunction.L2_EUCLIDEAN, L2_EUCLIDEAN);
+        NORMALIZERS.put(ScoringFunction.L2_EUCLIDEAN_SQUARED, L2_EUCLIDEAN_SQUARED);
         NORMALIZERS.put(ScoringFunction.COSINE, COSINE);
-        NORMALIZERS.put(ScoringFunction.DOT_PRODUCT, DOT_PRODUCT);
-        NORMALIZERS.put(ScoringFunction.INNER_PRODUCT, DOT_PRODUCT);
-        NORMALIZERS.put(ScoringFunction.TAXICAB, IDENTITY);
+        NORMALIZERS.put(ScoringFunction.DOT, DOT_PRODUCT);
+        NORMALIZERS.put(ScoringFunction.L1_MANHATTAN, IDENTITY);
     }
 
     private final DoubleUnaryOperator similarity;

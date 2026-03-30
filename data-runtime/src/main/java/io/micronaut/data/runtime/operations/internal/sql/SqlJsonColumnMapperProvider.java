@@ -48,7 +48,7 @@ public final class SqlJsonColumnMapperProvider<S> {
     private final SqlJsonColumnReader<S> defaultSqlJsonColumnReader;
     @Nullable
     private final SqlJsonValueMapper defaultSqlJsonValueMapper;
-    private final VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver;
+    private final VectorScoringSupportResolver vectorScoringSupportResolver;
 
     /**
      * Default constructor.
@@ -61,7 +61,7 @@ public final class SqlJsonColumnMapperProvider<S> {
     public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
                                        List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
                                        List<SqlJsonValueMapper> sqlJsonValueMappers,
-                                       VectorScoringFunctionDialectSupportResolver vectorScoringSupportResolver) {
+                                       VectorScoringSupportResolver vectorScoringSupportResolver) {
         this.sqlJsonColumnReaders = sqlJsonColumnReaders;
         this.sqlJsonValueMappers = sqlJsonValueMappers;
         this.vectorScoringSupportResolver = vectorScoringSupportResolver;
