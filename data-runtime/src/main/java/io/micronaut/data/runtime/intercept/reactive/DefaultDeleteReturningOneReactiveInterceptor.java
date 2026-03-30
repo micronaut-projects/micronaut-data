@@ -26,6 +26,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 /**
  * Default implementation of {@link DeleteReturningOneReactiveInterceptor}.
  *
@@ -42,6 +44,19 @@ public final class DefaultDeleteReturningOneReactiveInterceptor extends Abstract
     @Override
     protected Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<?, Object> preparedQuery = prepareQuery(methodKey, context);
+        Class<?> rootEntityType = preparedQuery.getRootEntity();
+        Class<?> resultType = preparedQuery.getResultType();
+
+        if (resultType == rootEntityType) {
+            Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
+            if (deleteEntity.isPresent()) {
+                return reactiveOperations.deleteReturning(getDeleteReturningOperation(context, deleteEntity.get()));
+            }
+            Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
+            if (deleteEntities.isPresent()) {
+                return Flux.from(reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()))).next();
+            }
+        }
         return Flux.from(reactiveOperations.execute(preparedQuery)).collectList().flatMap(results -> {
             if (results.isEmpty()) {
                 return Mono.empty();
