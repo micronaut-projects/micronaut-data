@@ -26,8 +26,8 @@ public class GeometryRepositorySpec {
     @Test
     void testCrudWhenJsonConversionUsed() {
         GeometryEntityJson entity = new GeometryEntityJson();
-        entity.setPoint(new Point(1, 2));
-        entity.setMultiPoint(new MultiPoint(List.of(new Point(10, 20), new Point(11, 21))));
+        entity.setPoint(new Point(10, 11));
+        entity.setMultiPoint(new MultiPoint(List.of(new Point(21, 22), new Point(23, 24))));
 
         GeometryEntityJson savedEntity = geometryEntityJsonRepository.save(entity);
         assertNotNull(savedEntity.getId());
@@ -37,8 +37,8 @@ public class GeometryRepositorySpec {
         assertEquals(entity.getPoint(), foundEntity.get().getPoint());
         assertEquals(entity.getMultiPoint(), foundEntity.get().getMultiPoint());
 
-        entity.setPoint(new Point(10, 20));
-        entity.setMultiPoint(new MultiPoint(List.of(new Point(100, 200), new Point(101, 201))));
+        entity.setPoint(new Point(31, 32));
+        entity.setMultiPoint(new MultiPoint(List.of(new Point(41, 42), new Point(43, 44))));
 
         GeometryEntityJson updatedEntity = geometryEntityJsonRepository.update(entity);
         foundEntity = geometryEntityJsonRepository.findById(updatedEntity.getId());
@@ -57,8 +57,8 @@ public class GeometryRepositorySpec {
     @Test
     void testCrudWhenWktConversionUsed() {
         GeometryEntityWkt entity = new GeometryEntityWkt();
-        entity.setPoint(new Point(1, 2));
-        entity.setMultiPoint(new MultiPoint(List.of(new Point(10, 20), new Point(11, 21))));
+        entity.setPoint(new Point(10, 11));
+        entity.setMultiPoint(new MultiPoint(List.of(new Point(21, 22), new Point(23, 24))));
 
         GeometryEntityWkt savedEntity = geometryEntityWktRepository.save(entity);
         assertNotNull(savedEntity.getId());
@@ -68,8 +68,8 @@ public class GeometryRepositorySpec {
         assertEquals(entity.getPoint(), foundEntity.get().getPoint());
         assertEquals(entity.getMultiPoint(), foundEntity.get().getMultiPoint());
 
-        entity.setPoint(new Point(10, 20));
-        entity.setMultiPoint(new MultiPoint(List.of(new Point(100, 200), new Point(101, 201))));
+        entity.setPoint(new Point(31, 32));
+        entity.setMultiPoint(new MultiPoint(List.of(new Point(41, 42), new Point(43, 44))));
 
         GeometryEntityWkt updatedEntity = geometryEntityWktRepository.update(entity);
         foundEntity = geometryEntityWktRepository.findById(updatedEntity.getId());
