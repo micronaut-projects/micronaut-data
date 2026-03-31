@@ -14,7 +14,7 @@ import io.micronaut.data.tck.tests.AbstractGeoSpec
 class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
 
     private static final String H2_INIT = 'CREATE%20ALIAS%20IF%20NOT%20EXISTS%20H2GIS_SPATIAL%20FOR%20%22org.h2gis.functions.factory.H2GISFunctions.load%22%5C%3BCALL%20H2GIS_SPATIAL%28%29'
-    private static final String H2_URL_PROPERTIES = 'LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;INIT=' + H2_INIT
+    private static final String H2_URL_PROPERTIES = 'LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=10;INIT=' + H2_INIT
 
     @Memoized
     @Override
