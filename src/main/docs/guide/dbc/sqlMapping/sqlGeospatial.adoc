@@ -8,66 +8,41 @@ Micronaut Data supports geospatial persistence for SQL repositories through the 
 * api:data.model.geo.MultiPolygon[]
 * api:data.model.geo.GeometryCollection[]
 
-The implementation is database-aware. Micronaut Data uses attribute converters in the Java model, and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.
+The implementation is database-aware. Micronaut Data uses attribute converters in the Java model,
+and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.
 
 === JSON and WKT converters
 
 The geometry model types in `io.micronaut.data.model.geo` are declared with `@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)`, so GeoJSON is the default mapping.
 
-`GeometryJsonConverter` converts between Micronaut Data geometry objects and GeoJSON strings. `GeometryWktConverter` converts the same model types to and from Well-Known Text (WKT).
+api:data.model.runtime.convert.GeometryJsonConverter[] converts between Micronaut Data geometry objects and GeoJSON strings.
+api:data.model.runtime.convert.GeometryWktConverter[] converts the same model types to and from Well-Known Text (WKT).
 
 Use the default GeoJSON mapping when you want Micronaut Data to serialize geometry values as JSON:
 
-[source,java]
-----
-@MappedEntity
-class GeoEntityJson {
-
-    @Srid(3857)
-    @Index(columns = "location")
-    @MappedProperty("location")
-    private Point point;
-
-    private MultiPoint multiPoint;
-}
-----
+snippet::example.GeometryEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 Use `@MappedProperty(converter = GeometryWktConverter.class)` when you want WKT conversion instead:
 
-[source,java]
-----
-@MappedEntity
-class GeoEntityWkt {
+snippet::example.GeometryEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
-    @Srid(3857)
-    @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
-    private Point point;
+SQL Server and PostgreSQL have a `geography` type in addition to the `geometry` type. To use the `geography` type,
+you must explicitly set it, for example, with `definition = "geography"` or `definition = "geography not null"`:
 
-    @MappedProperty(converter = GeometryWktConverter.class)
-    private Polygon polygon;
-}
-----
+snippet::example.GeographyEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
-SQL Server and PostgreSQL have a geography type in addition to the geometry type. To use the geography type, you must explicitly set it, for example, with `definition = "geography"` or `definition = "geography not null"`:
+WARNING: SQL Server doesn't have built-in functions for conversion between json and internal geospatial data types
+so it requires usage of api:data.model.runtime.convert.GeometryWktConverter[].
 
-[source,java]
-----
-@MappedEntity
-class GeoEntityWktGeom {
+snippet::example.GeographyEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
-    @Srid(3857)
-    @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
-    private Point point;
-}
-----
-
-NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions and native spatial column definitions when the dialect supports them.
+NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
+and native spatial column definitions when the dialect supports them.
 
 === Database vendor details
 
-Each supported SQL dialect uses its own built-in spatial functions for read and write conversion, generates its own spatial column definitions, and emits its own index DDL.
+Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
+generates its own spatial column definitions, and emits its own index DDL.
 
 ==== Oracle
 
@@ -95,7 +70,10 @@ Spatial indexes are created as Oracle spatial indexes:
 CREATE INDEX ... INDEXTYPE IS MDSYS.SPATIAL_INDEX
 ----
 
-Oracle also requires rows in `USER_SDO_GEOM_METADATA` for spatial columns. Micronaut Data generates those metadata statements automatically during schema creation. The generated metadata depends on the SRID. `@Srid(4326)` uses WGS 84 bounds, `@Srid(3857)` uses Web Mercator bounds, and if no `@Srid` is present but the property is spatially indexed, Micronaut Data defaults metadata generation to SRID `4326`.
+Oracle also requires rows in `USER_SDO_GEOM_METADATA` for spatial columns. Micronaut Data generates those metadata statements
+automatically during schema creation. The generated metadata depends on the SRID. `@Srid(4326)` uses WGS 84 bounds,
+`@Srid(3857)` uses Web Mercator bounds, and if no `@Srid` is present but the property is spatially indexed,
+Micronaut Data defaults metadata generation to SRID `4326`.
 
 Oracle has an additional GeoJSON nuance visible in the geo specs: `SDO_UTIL.FROM_GEOJSON` does not accept `NULL`, and Oracle geometry collections are practically handled as flat collections of primitive elements during GeoJSON conversion rather than nested multi-collection structures.
 

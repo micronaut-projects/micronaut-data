@@ -26,12 +26,15 @@ import io.micronaut.data.model.geo.MultiPoint;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
+//tag::get[]
 @MappedEntity
 public class GeometryEntityWkt {
+    //end::get[]
 
     @Id
     @GeneratedValue
     private Long id;
+    //tag::get[]
 
     @Srid(3857)
     @Index(columns = "location")
@@ -41,6 +44,7 @@ public class GeometryEntityWkt {
     @Nullable
     @MappedProperty(converter = GeometryWktConverter.class)
     private MultiPoint multiPoint;
+    //end::get[]
 
     public Long getId() {
         return id;
@@ -65,4 +69,6 @@ public class GeometryEntityWkt {
     public void setMultiPoint(MultiPoint multiPoint) {
         this.multiPoint = multiPoint;
     }
+    //tag::get[]
 }
+//end::get[]

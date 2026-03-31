@@ -25,17 +25,21 @@ import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.model.geo.MultiPoint;
 import io.micronaut.data.model.geo.Point;
 
+//tag::get[]
 @MappedEntity
 public class GeographyEntityJson {
+    //end::get[]
 
     @Id
     @GeneratedValue
     private Long id;
+    //tag::get[]
 
     @Srid(4258)
     @Index(columns = "location")
     @MappedProperty(value = "location", definition = "geography not null")
     private Point point;
+    //end::get[]
 
     @Nullable
     private MultiPoint multiPoint;
@@ -63,4 +67,6 @@ public class GeographyEntityJson {
     public void setMultiPoint(MultiPoint multiPoint) {
         this.multiPoint = multiPoint;
     }
+    //tag::get[]
 }
+//end::get[]
