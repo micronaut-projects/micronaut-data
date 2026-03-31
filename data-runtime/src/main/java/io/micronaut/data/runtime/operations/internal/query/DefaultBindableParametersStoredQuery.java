@@ -32,6 +32,7 @@ import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.vector.search.Similarity;
@@ -307,11 +308,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (!(storedQuery instanceof SqlStoredQuery<?, ?> sqlStoredQuery)) {
             return null;
         }
-        return switch (sqlStoredQuery.getDialect()) {
-            case POSTGRES, ORACLE -> ScoringFunction.COSINE;
-            case MYSQL -> ScoringFunction.L2_EUCLIDEAN;
-            default -> null;
-        };
+        return VectorScoringDialectSupport.defaultScoringFunctionForDialect(sqlStoredQuery.getDialect());
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {

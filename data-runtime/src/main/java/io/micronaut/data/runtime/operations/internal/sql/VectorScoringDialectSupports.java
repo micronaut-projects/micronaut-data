@@ -59,7 +59,7 @@ final class VectorScoringDialectSupports {
 
         @Override
         public @Nullable ScoringFunction defaultScoringFunction() {
-            return ScoringFunction.COSINE;
+            return VectorScoringDialectSupport.defaultScoringFunctionForDialect(dialect());
         }
 
         @Override
@@ -99,7 +99,7 @@ final class VectorScoringDialectSupports {
 
         @Override
         public @Nullable ScoringFunction defaultScoringFunction() {
-            return ScoringFunction.COSINE;
+            return VectorScoringDialectSupport.defaultScoringFunctionForDialect(dialect());
         }
 
         @Override
@@ -139,7 +139,7 @@ final class VectorScoringDialectSupports {
 
         @Override
         public @Nullable ScoringFunction defaultScoringFunction() {
-            return ScoringFunction.L2_EUCLIDEAN;
+            return VectorScoringDialectSupport.defaultScoringFunctionForDialect(dialect());
         }
 
         @Override

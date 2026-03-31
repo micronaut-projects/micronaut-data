@@ -50,6 +50,20 @@ public interface VectorScoringDialectSupport {
     ScoringFunction defaultScoringFunction();
 
     /**
+     * Resolves the default scoring function for a SQL dialect.
+     *
+     * @param dialect The SQL dialect
+     * @return The dialect default scoring function, or {@code null} if none applies
+     */
+    static @Nullable ScoringFunction defaultScoringFunctionForDialect(Dialect dialect) {
+        return switch (dialect) {
+            case POSTGRES, ORACLE -> ScoringFunction.COSINE;
+            case MYSQL -> ScoringFunction.L2_EUCLIDEAN;
+            default -> null;
+        };
+    }
+
+    /**
      * Adapts a derived vector-search query for the selected scoring function.
      *
      * @param query The original query SQL

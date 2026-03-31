@@ -71,7 +71,4 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
         return null;
     }
 
-    @Nullable Parameter toTypedVectorParameter(@Nullable Object value) {
-        return toTypedVectorParameter(value, null);
-    }
 }

@@ -18,7 +18,7 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
         conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat64Values([1d, 2d] as double[]))
 
         when:
-        def parameter = bindSupport.toTypedVectorParameter(Vector.of(1d, 2d))
+        def parameter = bindSupport.toTypedVectorParameter(Vector.of(1d, 2d), null)
 
         then:
         parameter != null
@@ -75,7 +75,7 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
         conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat64Values([1d, 2d, 3d] as double[]))
 
         when:
-        def parameter = bindSupport.toTypedVectorParameter(Vector.of(1d, 2d, 3d))
+        def parameter = bindSupport.toTypedVectorParameter(Vector.of(1d, 2d, 3d), null)
 
         then:
         parameter != null
@@ -85,7 +85,7 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
 
     def "fails fast when value is string"() {
         when:
-        bindSupport.toTypedVectorParameter('not-a-vector')
+        bindSupport.toTypedVectorParameter('not-a-vector', null)
 
         then:
         def ex = thrown(IllegalArgumentException)
@@ -94,7 +94,7 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
 
     def "returns null for unsupported raw primitive arrays"() {
         when:
-        def parameter = bindSupport.toTypedVectorParameter([1d, 2d] as double[])
+        def parameter = bindSupport.toTypedVectorParameter([1d, 2d] as double[], null)
 
         then:
         parameter == null
@@ -105,7 +105,7 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
         conversionService.convert(_ as Vector, VECTOR) >> Optional.empty()
 
         when:
-        bindSupport.toTypedVectorParameter(Vector.of(1d, 2d))
+        bindSupport.toTypedVectorParameter(Vector.of(1d, 2d), null)
 
         then:
         def ex = thrown(IllegalArgumentException)
