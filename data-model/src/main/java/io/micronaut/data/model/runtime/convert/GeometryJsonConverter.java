@@ -29,9 +29,7 @@ import io.micronaut.data.model.geo.MultiPolygon;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.serde.ObjectMapper;
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -53,8 +51,8 @@ public final class GeometryJsonConverter implements AttributeConverter<Geometry,
 
     private final JsonMapper jsonMapper;
 
-    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable @Named("oracleJdbcJsonText") ObjectMapper oracleJsonMapper) {
-        this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper;
+    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable OracleJsonMapper oracleJsonMapper) {
+        this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper.getJsonMapper();
     }
 
     @Override
