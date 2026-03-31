@@ -14,24 +14,22 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "book")
-public class Book {
+public class EmbeddedOwner {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
-    private int pages;
 
-    @ManyToOne
-    private Category category;
+    private String ownerName;
+
+    @Embedded
+    private EmbeddableClass embedded;
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
@@ -44,32 +42,22 @@ public class Book {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getTitle() {
-        return title;
+    public String getOwnerName() {
+        return ownerName;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setTitle(String title) {
-        this.title = title;
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public int getPages() {
-        return pages;
+    public EmbeddableClass getEmbedded() {
+        return embedded;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setPages(int pages) {
-        this.pages = pages;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Category getCategory() {
-        return category;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setCategory(Category category) {
-        this.category = category;
+    public void setEmbedded(EmbeddableClass embedded) {
+        this.embedded = embedded;
     }
 }

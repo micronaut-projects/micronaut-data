@@ -14,13 +14,15 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import io.micronaut.runtime.Micronaut;
+import jakarta.persistence.Embeddable;
 
-public class Application {
-
-    public static void main(String[] args) {
-        Micronaut.run(Application.class);
-    }
+@Embeddable
+public record EmbeddableClass(
+    String embeddedName,
+    Long number,
+    long n,
+    double d
+) {
 }

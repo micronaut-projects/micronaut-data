@@ -14,25 +14,27 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
 import jakarta.persistence.*;
 
-@Access(AccessType.PROPERTY)
 @Entity
-public class EmployeePropertyAccess {
-    private Long id;
+public class EmployeeMixedAccessEmbeddedId {
+    private EmployeeId id;
     private String name;
     private double salary;
+    private String fieldWithoutAccessors;
+    @Access(AccessType.FIELD)
+    private String fieldAnnotated;
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long getId() {
+    @SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
+    @EmbeddedId
+    public EmployeeId getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setId(EmployeeId id) {
         this.id = id;
     }
 
@@ -53,7 +55,35 @@ public class EmployeePropertyAccess {
         return salary;
     }
 
+    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setSalary(double salary) {
         this.salary = salary;
+    }
+
+    @SuppressWarnings("checkstyle:FinalClass")
+    @Embeddable
+    public static class EmployeeId {
+        private Long id;
+        private String number;
+
+        @SuppressWarnings("checkstyle:DesignForExtension")
+        public Long getId() {
+            return id;
+        }
+
+        @SuppressWarnings("checkstyle:DesignForExtension")
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        @SuppressWarnings("checkstyle:DesignForExtension")
+        public String getNumber() {
+            return number;
+        }
+
+        @SuppressWarnings("checkstyle:DesignForExtension")
+        public void setNumber(String number) {
+            this.number = number;
+        }
     }
 }

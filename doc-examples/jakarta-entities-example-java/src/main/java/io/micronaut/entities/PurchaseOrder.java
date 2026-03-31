@@ -14,65 +14,51 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-public class Category {
+public class PurchaseOrder {
 
-    @Id
-    private Long id;
+    @EmbeddedId
+    private OrderPk id;
 
-    private String name;
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<Book> books = new ArrayList<>();
-    private byte[] bytes = {};
+    private String description;
+
+    @Embedded
+    private EmbeddableClass details;
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getId() {
+    public OrderPk getId() {
         return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setId(Long id) {
+    public void setId(OrderPk id) {
         this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getName() {
-        return name;
+    public String getDescription() {
+        return description;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setName(String name) {
-        this.name = name;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public List<Book> getBooks() {
-        return books;
+    public EmbeddableClass getDetails() {
+        return details;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setBooks(List<Book> books) {
-        this.books = books;
+    public void setDetails(EmbeddableClass details) {
+        this.details = details;
     }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setBytes(byte[] bytes) {
-        this.bytes = bytes;
-    }
-
 }
+

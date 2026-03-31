@@ -14,44 +14,55 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
 import jakarta.persistence.*;
 
+@Access(AccessType.PROPERTY)
 @Entity
-public class EmbeddedOwner {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class EmployeePropertyAccess {
     private Long id;
+    private String name;
+    private double salary;
 
-    private String ownerName;
+    public EmployeePropertyAccess(Long id, String name, double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
 
-    @Embedded
-    private EmbeddableClass embedded;
+    public EmployeePropertyAccess() {
+    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getOwnerName() {
-        return ownerName;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    @Column(name = "name")
+    public String getName() {
+        return name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getEmbedded() {
-        return embedded;
+    public void setName(String name) {
+        this.name = name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setEmbedded(EmbeddableClass embedded) {
-        this.embedded = embedded;
+    @Column(name = "salary")
+    public double getSalary() {
+        return salary;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
     }
 }

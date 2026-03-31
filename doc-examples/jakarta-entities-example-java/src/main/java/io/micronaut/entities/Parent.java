@@ -14,24 +14,28 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 
-@Entity
-public class EmployeeMixedAccess {
-    private Long id;
-    private String name;
-    private double salary;
-    private String fieldWithoutAccessors;
-    @Access(AccessType.FIELD)
-    private String fieldAnnotated;
-
-    @SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
+@MappedSuperclass
+public class Parent {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+    String name;
+
+    public Parent() {
+    }
+
+    public Parent(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
-        return id;
+        return this.id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
@@ -40,24 +44,12 @@ public class EmployeeMixedAccess {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    @Column(name = "name")
     public String getName() {
-        return name;
+        return this.name;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    @Column(name = "salary")
-    public double getSalary() {
-        return salary;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setSalary(double salary) {
-        this.salary = salary;
     }
 }

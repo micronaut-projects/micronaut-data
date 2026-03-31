@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
 import io.micronaut.core.annotation.Introspected;
 

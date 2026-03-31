@@ -14,30 +14,15 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.Embeddable;
 
-@SuppressWarnings("checkstyle:FinalClass")
-@Entity
-public class Child extends Parent {
-    Long age;
+import java.io.Serializable;
 
-    public Child() {
-    }
-
-    private Child(Long id, String name, Long age) {
-        super(id, name);
-        this.age = age;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getAge() {
-        return this.age;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setAge(Long age) {
-        this.age = age;
-    }
+@Embeddable
+public record OrderPk(
+    String tenantId,
+    Long orderNo
+) implements Serializable {
 }

@@ -14,25 +14,31 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
 import jakarta.persistence.*;
 
-@Access(AccessType.FIELD)
 @Entity
-public class EmployeeFieldAccess {
+public class EmployeeMixedAccess {
+    private Long id;
+    private String name;
+    private double salary;
+    private String fieldWithoutAccessors;
+    @Access(AccessType.FIELD)
+    private String fieldAnnotated;
 
+    public EmployeeMixedAccess(Long id, String name, double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
+
+    public EmployeeMixedAccess() {
+    }
+
+    @SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "salary")
-    private double salary;
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
         return id;
     }
@@ -43,6 +49,7 @@ public class EmployeeFieldAccess {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
+    @Column(name = "name")
     public String getName() {
         return name;
     }
@@ -53,6 +60,7 @@ public class EmployeeFieldAccess {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
+    @Column(name = "salary")
     public double getSalary() {
         return salary;
     }

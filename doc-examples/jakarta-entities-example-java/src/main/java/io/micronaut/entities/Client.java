@@ -14,15 +14,12 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class Client {
@@ -36,49 +33,46 @@ public class Client {
     private long version;
 
     @Enumerated(EnumType.STRING)
-    private Tier tier;
+    private Tier tier = Tier.BASIC;
 
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @Embedded
-    @AttributeOverrides({
-        @AttributeOverride(name = "street", column = @Column(name = "billing_street")),
-        @AttributeOverride(name = "city", column = @Column(name = "billing_city"))
-    })
     private Address billingAddress;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "client_categories_collection",
         joinColumns = @JoinColumn(name = "client_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private Collection<Category> categoriesCollection;
+    private Collection<Category> categoriesCollection = new ArrayList<>();
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "client_categories_list",
         joinColumns = @JoinColumn(name = "client_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private List<Category> categoriesList;
+    private List<Category> categoriesList = new ArrayList<>();
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "client_categories_set",
         joinColumns = @JoinColumn(name = "client_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private Set<Category> categoriesSet;
+    private Set<Category> categoriesSet = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Category mainCategory;
 
-    @ElementCollection
-    @CollectionTable(name = "client_properties", joinColumns = @JoinColumn(name = "client_id"))
-    @MapKeyColumn(name = "prop_key")
-    @Column(name = "prop_value")
-    private Map<String, String> properties;
+    // It seems that This approach is not supported in JDBC , or am i missing something.
+//    @ElementCollection
+//    @CollectionTable(name = "client_properties", joinColumns = @JoinColumn(name = "client_id"))
+//    @MapKeyColumn(name = "prop_key")
+//    @Column(name = "prop_value")
+//    private Map<String, String> properties = new HashMap<>();
 
     @Transient
     private String nonPersistent;
@@ -182,16 +176,16 @@ public class Client {
     public void setMainCategory(Category mainCategory) {
         this.mainCategory = mainCategory;
     }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Map<String, String> getProperties() {
-        return properties;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setProperties(Map<String, String> properties) {
-        this.properties = properties;
-    }
+//
+//    @SuppressWarnings("checkstyle:DesignForExtension")
+//    public Map<String, String> getProperties() {
+//        return properties;
+//    }
+//
+//    @SuppressWarnings("checkstyle:DesignForExtension")
+//    public void setProperties(Map<String, String> properties) {
+//        this.properties = properties;
+//    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
     public String getNonPersistent() {
@@ -211,6 +205,14 @@ public class Client {
     public static class Address {
         private String street;
         private String city;
+
+        public Address(String street, String city) {
+            this.street = street;
+            this.city = city;
+        }
+
+        public Address() {
+        }
 
         @SuppressWarnings("checkstyle:DesignForExtension")
         public String getStreet() {

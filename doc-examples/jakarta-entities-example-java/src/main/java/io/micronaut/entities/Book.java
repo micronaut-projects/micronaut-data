@@ -14,51 +14,69 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.Embedded;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 
 @Entity
-public class PurchaseOrder {
+@Table(name = "book")
+public class Book {
 
-    @EmbeddedId
-    private OrderPk id;
+    @Id
+    private Long id;
+    private String title;
+    private int pages;
 
-    private String description;
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Category category;
 
-    @Embedded
-    private EmbeddableClass details;
+    public Book() {
+    }
+
+    public Book(Long id, String title, int pages, Category category) {
+        this.id = id;
+        this.title = title;
+        this.pages = pages;
+        this.category = category;
+    }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public OrderPk getId() {
+    public Long getId() {
         return id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setId(OrderPk id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getDescription() {
-        return description;
+    public String getTitle() {
+        return title;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setDescription(String description) {
-        this.description = description;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public EmbeddableClass getDetails() {
-        return details;
+    public int getPages() {
+        return pages;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setDetails(EmbeddableClass details) {
-        this.details = details;
+    public void setPages(int pages) {
+        this.pages = pages;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public Category getCategory() {
+        return category;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }
-

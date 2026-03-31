@@ -138,6 +138,7 @@ include 'doc-examples:jdbc-spring-template-example-groovy'
 include 'doc-examples:jdbc-spring-template-example-kotlin'
 include 'doc-examples:data-jpa-metamodel-hibernate-example-java'
 include 'doc-examples:data-jpa-metamodel-jdbc-example-java'
+include 'doc-examples:jakarta-entities-example-java'
 
 include 'doc-examples:jooq-r2dbc-postgres'
 

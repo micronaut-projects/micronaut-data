@@ -14,42 +14,30 @@
  *   limitations under the License.
  */
 
-package com.example;
+package io.micronaut.entities;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Entity;
 
-@MappedSuperclass
-public class Parent {
-    @Id
-    Long id;
-    String name;
+@SuppressWarnings("checkstyle:FinalClass")
+@Entity
+public class Child extends Parent {
+    Long age;
 
-    public Parent() {
+    public Child() {
     }
 
-    public Parent(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public Long getId() {
-        return this.id;
+    public Child(Long id, String name, Long age) {
+        super(id, name);
+        this.age = age;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setId(Long id) {
-        this.id = id;
+    public Long getAge() {
+        return this.age;
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    public String getName() {
-        return this.name;
-    }
-
-    @SuppressWarnings("checkstyle:DesignForExtension")
-    public void setName(String name) {
-        this.name = name;
+    public void setAge(Long age) {
+        this.age = age;
     }
 }
