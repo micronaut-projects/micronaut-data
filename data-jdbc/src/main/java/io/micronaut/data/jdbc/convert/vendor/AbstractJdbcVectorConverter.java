@@ -23,17 +23,26 @@ import io.micronaut.data.model.vector.Vector;
 /**
  * Shared JDBC base for dialect-specific {@link VectorTypeConverter} implementations.
  *
- * @param <T> persisted driver type
+ * @param <T> The persisted JDBC/driver value type.
  */
 @Internal
 abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> {
 
     private final ConversionService conversionService;
 
+    /**
+     * @param conversionService Conversion service used for vector type adaptation.
+     */
     protected AbstractJdbcVectorConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 
+    /**
+     * Converts a vector entity value to the dialect persisted representation.
+     *
+     * @param vector Vector value.
+     * @return Persisted representation.
+     */
     @Override
     public T convert(Vector vector) {
         if (supportedVectorTypes().stream().anyMatch(x -> x.isAssignableFrom(vector.getClass()))) {
@@ -43,6 +52,13 @@ abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> 
         throw new IllegalArgumentException(databaseType() + " does not support " + vector.getClass().getName());
     }
 
+    /**
+     * Converts a persisted value to a requested vector subtype.
+     *
+     * @param object Persisted value.
+     * @param targetType Requested vector subtype.
+     * @return Converted vector instance.
+     */
     @Override
     public Vector convert(T object, Class<Vector> targetType) {
         if (supportedVectorTypes().stream().anyMatch(targetType::isAssignableFrom)) {

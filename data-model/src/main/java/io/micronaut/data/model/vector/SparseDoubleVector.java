@@ -34,6 +34,13 @@ import java.util.Objects;
 @TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public record SparseDoubleVector(int length, int[] indices, double[] values) implements SparseVector {
 
+    /**
+     * Creates a sparse double vector.
+     *
+     * @param length dense vector length
+     * @param indices sorted non-zero indices
+     * @param values non-zero values aligned with indices
+     */
     public SparseDoubleVector {
         Objects.requireNonNull(indices, "indices must not be null");
         Objects.requireNonNull(values, "values must not be null");
@@ -42,6 +49,12 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
         SparseVector.validate(length, indices, values.length);
     }
 
+    /**
+     * Creates a sparse vector from dense double values.
+     *
+     * @param denseValues dense values
+     * @return sparse vector representation
+     */
     public static SparseDoubleVector fromDense(double[] denseValues) {
         Objects.requireNonNull(denseValues, "denseValues must not be null");
         int nonZero = 0;
@@ -65,26 +78,44 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
         return new SparseDoubleVector(denseValues.length, sparseIndices, sparseValues);
     }
 
+    /**
+     * Creates a sparse vector from a dense {@link DoubleVector}.
+     *
+     * @param denseVector dense vector
+     * @return sparse vector representation
+     */
     public static SparseDoubleVector fromDense(DoubleVector denseVector) {
         Objects.requireNonNull(denseVector, "denseVector must not be null");
         return fromDense(denseVector.toDoubleArray());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int[] indices() {
         return Arrays.copyOf(indices, indices.length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double[] values() {
         return Arrays.copyOf(values, values.length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @NonNull Class<? extends Number> getType() {
         return Double.TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] toFloatArray() {
         float[] dense = new float[length];
@@ -94,6 +125,9 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
         return dense;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double[] toDoubleArray() {
         double[] dense = new double[length];
@@ -103,6 +137,9 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
         return dense;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] toByteArray() {
         byte[] dense = new byte[length];
@@ -112,6 +149,11 @@ public record SparseDoubleVector(int length, int[] indices, double[] values) imp
         return dense;
     }
 
+    /**
+     * Converts this sparse vector into dense {@link DoubleVector} form.
+     *
+     * @return dense double vector
+     */
     public DoubleVector toDenseVector() {
         return new DoubleVector(toDoubleArray());
     }

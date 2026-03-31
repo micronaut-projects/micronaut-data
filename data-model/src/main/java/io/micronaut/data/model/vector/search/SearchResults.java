@@ -45,6 +45,11 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
         return new DefaultSearchResults<>(results);
     }
 
+    /**
+     * Returns an iterator over the matched search results.
+     *
+     * @return result iterator
+     */
     @Override
     default Iterator<SearchResult<T>> iterator() {
         return results().iterator();

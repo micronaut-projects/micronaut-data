@@ -34,6 +34,13 @@ import java.util.Objects;
 @TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
 public record SparseFloatVector(int length, int[] indices, float[] values) implements SparseVector {
 
+    /**
+     * Creates a sparse float vector.
+     *
+     * @param length dense vector length
+     * @param indices sorted non-zero indices
+     * @param values non-zero values aligned with indices
+     */
     public SparseFloatVector {
         Objects.requireNonNull(indices, "indices must not be null");
         Objects.requireNonNull(values, "values must not be null");
@@ -82,21 +89,33 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         return fromDense(denseVector.toFloatArray());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int[] indices() {
         return Arrays.copyOf(indices, indices.length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] values() {
         return Arrays.copyOf(values, values.length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @NonNull Class<? extends Number> getType() {
         return Float.TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] toFloatArray() {
         float[] dense = new float[length];
@@ -106,6 +125,9 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         return dense;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double[] toDoubleArray() {
         double[] dense = new double[length];
@@ -115,6 +137,9 @@ public record SparseFloatVector(int length, int[] indices, float[] values) imple
         return dense;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] toByteArray() {
         byte[] dense = new byte[length];

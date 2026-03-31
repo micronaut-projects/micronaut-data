@@ -35,15 +35,26 @@ import java.util.Objects;
 public record ByteVector(byte[] data) implements Vector {
 
 
+    /**
+     * Creates a byte vector.
+     *
+     * @param data the backing values
+     */
     public ByteVector {
         Objects.requireNonNull(data, "ByteVector data must not be null");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @NonNull Class<? extends Number> getType() {
         return Byte.TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] toFloatArray() {
         float[] out = new float[data.length];
@@ -53,6 +64,9 @@ public record ByteVector(byte[] data) implements Vector {
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double[] toDoubleArray() {
         double[] out = new double[data.length];
@@ -62,6 +76,9 @@ public record ByteVector(byte[] data) implements Vector {
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] toByteArray() {
         return Arrays.copyOf(data, data.length);

@@ -35,15 +35,26 @@ import java.util.Objects;
 public record DoubleVector(double[] data) implements Vector {
 
 
+    /**
+     * Creates a double vector.
+     *
+     * @param data the backing values
+     */
     public DoubleVector {
         Objects.requireNonNull(data, "DoubleVector data must not be null");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @NonNull Class<? extends Number> getType() {
         return Double.TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] toFloatArray() {
         float[] out = new float[data.length];
@@ -53,11 +64,17 @@ public record DoubleVector(double[] data) implements Vector {
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double[] toDoubleArray() {
         return Arrays.copyOf(data, data.length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] toByteArray() {
         byte[] out = new byte[data.length];
