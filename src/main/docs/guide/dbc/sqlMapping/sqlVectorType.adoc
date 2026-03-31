@@ -15,7 +15,11 @@ For sparse payloads, Micronaut Data now also provides:
 For cross-dialect sparse usage, prefer `SparseFloatVector` as the default choice.
 
 You can also use the sealed interface `Vector` if you need a type-agnostic parameter. For derived vector search methods, Micronaut Data also accepts concrete subtypes (`FloatVector`, `DoubleVector`, `ByteVector`) as parameters.
-When you use `Vector`, Micronaut Data chooses the optimal database-specific representation for the configured dialect/driver.
+When you use `Vector`, Micronaut Data selects the configured dialect-specific vector binding and conversion path for the active driver.
+
+=== Conversion helpers
+
+All vectors expose dense/sparse conversion helpers through the `Vector` API (`toSparseFloatVector()`, `toSparseDoubleVector()`, `toSparseByteVector()`).
 
 === Binding policy (recommended path)
 
@@ -114,6 +118,14 @@ When the property type is generic `Vector` (not `FloatVector`/`DoubleVector`/`By
 Micronaut Data defaults Oracle sparse DDL to `FLOAT32` and coerces sparse values through a float-compatible conversion path.
 This gives a consistent default for sparse `Vector` usage across Oracle and PostgreSQL JDBC.
 
+For sparse vector subtypes, Oracle infers the element type from the Java subtype in the same way as dense vectors:
+
+- `SparseDoubleVector` -> `VECTOR(N, FLOAT64, SPARSE)`
+- `SparseFloatVector`  -> `VECTOR(N, FLOAT32, SPARSE)`
+- `SparseByteVector`   -> `VECTOR(N, INT8, SPARSE)`
+
+For sparse columns declared as generic `Vector`, Oracle defaults to `VECTOR(N, FLOAT32, SPARSE)`.
+
 Example:
 
 snippet::example.SparseDocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
@@ -121,7 +133,6 @@ snippet::example.SparseDocumentEmbedding[project-base="doc-examples/jdbc-vector-
 This generates Oracle DDL like `VECTOR(5, FLOAT32, SPARSE)` when the field type is generic `Vector`.
 
 Oracle R2DBC supports sparse derived search/query binding using native typed Oracle VECTOR binding for sparse paths.
-Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses only the dense pgvector codec API.
 
 Sparse storage describes the database representation, while the Java response type is driven by your mapped property / repository method signature:
 
@@ -153,7 +164,7 @@ If the dialect does not support vectors, Micronaut Data falls back to `VARCHAR(2
 === PostgreSQL (pgvector)
 
 - Column type: `vector` / `vector(N)` (dense) or `sparsevec` / `sparsevec(N)` when `@VectorStorage(shape = VectorShape.SPARSE)` is used
-- Only `FloatVector` is supported.
+- PostgreSQL vector storage is float32-based. Dense mappings use `FloatVector` semantics, and sparse mappings use `SparseFloatVector` semantics; generic `Vector` values are coerced through those float-based paths.
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
 - PostgreSQL JDBC supports dense and sparse conversion paths.
@@ -219,4 +230,3 @@ CREATE TABLE document_embedding (
   embedding VECTOR(1536)
 );
 ----
-All vectors expose dense/sparse conversion helpers through the `Vector` API (`toSparseFloatVector()`, `toSparseDoubleVector()`, `toSparseByteVector()`).
