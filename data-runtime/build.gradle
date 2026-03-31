@@ -5,14 +5,6 @@ plugins {
 }
 
 dependencies {
-	// Explicitly add JSpecify annotations to the KAPT / annotation processor classpath.
-	// Some KAPT + Micronaut annotation processing combinations fail to resolve it transitively,
-	// leading to: "The argument does not represent an annotation type: Nullable".
-	kapt "org.jspecify:jspecify"
-	annotationProcessor "org.jspecify:jspecify"
-	kaptTest "org.jspecify:jspecify"
-	testAnnotationProcessor "org.jspecify:jspecify"
-
 	kapt mn.micronaut.inject.java
 	kapt libs.micronaut.docs
 	annotationProcessor mn.micronaut.inject.java

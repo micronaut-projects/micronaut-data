@@ -77,18 +77,27 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
             this.argument = (Argument<Object>) argument;
         }
 
+        /**
+         * @return resolved database type
+         */
         @Override
         @NonNull
         public DatabaseType getDatabaseType() {
             return databaseType;
         }
 
+        /**
+         * @return conversion argument metadata
+         */
         @Override
         @NonNull
         public Argument<Object> getArgument() {
             return argument;
         }
 
+        /**
+         * @return argument type parameters
+         */
         @Override
         public Argument<?> @NonNull [] getTypeParameters() {
             return argument.getTypeParameters();

@@ -74,11 +74,17 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
             this.argument = (Argument<Object>) argument;
         }
 
+        /**
+         * @return resolved database type
+         */
         @Override
         public DatabaseType getDatabaseType() {
             return databaseType;
         }
 
+        /**
+         * @return conversion argument metadata
+         */
         @Override
         public Argument<Object> getArgument() {
             return argument;

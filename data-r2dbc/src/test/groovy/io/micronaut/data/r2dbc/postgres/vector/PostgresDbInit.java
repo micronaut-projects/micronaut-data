@@ -24,11 +24,13 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
         ConnectionFactoryOptions configuration = event.getBean();
 
         final Properties info = new Properties();
-        info.put("user", configuration.getValue(Option.valueOf("user")));
-        info.put("password", configuration.getValue(Option.valueOf("password")));
-        String host = (String) configuration.getValue(Option.valueOf("host"));
-        Integer port = (Integer) configuration.getValue(Option.valueOf("port"));
-        String database = (String) configuration.getValue(Option.valueOf("database"));
+        String user = requireOption(configuration, "user", String.class);
+        String password = requireOption(configuration, "password", String.class);
+        String host = requireOption(configuration, "host", String.class);
+        Integer port = requireOption(configuration, "port", Integer.class);
+        String database = requireOption(configuration, "database", String.class);
+        info.put("user", user);
+        info.put("password", password);
 
         String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
 
@@ -58,5 +60,16 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
             throw new RuntimeException(last);
         }
         return configuration;
+    }
+
+    private static <T> T requireOption(ConnectionFactoryOptions configuration, String optionName, Class<T> type) {
+        Object value = configuration.getValue(Option.valueOf(optionName));
+        if (value == null) {
+            throw new IllegalStateException("Missing required R2DBC option: " + optionName);
+        }
+        if (!type.isInstance(value)) {
+            throw new IllegalStateException("Invalid R2DBC option type for " + optionName + ": " + value.getClass().getName());
+        }
+        return type.cast(value);
     }
 }
