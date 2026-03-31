@@ -18,6 +18,7 @@ package io.micronaut.data.mongodb.geo;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -36,13 +37,27 @@ import java.util.Objects;
 @Singleton
 public final class MongoGeoGeometryCollectionConverter implements AttributeConverter<Object, Map<String, Object>> {
 
-    private static final MongoGeoPointConverter POINT_CONVERTER = new MongoGeoPointConverter();
-    private static final MongoGeoMultiPointConverter MULTI_POINT_CONVERTER = new MongoGeoMultiPointConverter();
-    private static final MongoGeoLineStringConverter LINE_STRING_CONVERTER = new MongoGeoLineStringConverter();
-    private static final MongoGeoMultiLineStringConverter MULTI_LINE_STRING_CONVERTER = new MongoGeoMultiLineStringConverter();
-    private static final MongoGeoPolygonConverter POLYGON_CONVERTER = new MongoGeoPolygonConverter();
-    private static final MongoGeoMultiPolygonConverter MULTI_POLYGON_CONVERTER = new MongoGeoMultiPolygonConverter();
-    private static final MongoGeoGeometryCollectionConverter GEOMETRY_COLLECTION_CONVERTER = new MongoGeoGeometryCollectionConverter();
+    private final MongoGeoPointConverter pointConverter;
+    private final MongoGeoMultiPointConverter multiPointConverter;
+    private final MongoGeoLineStringConverter lineStringConverter;
+    private final MongoGeoMultiLineStringConverter multiLineStringConverter;
+    private final MongoGeoPolygonConverter polygonConverter;
+    private final MongoGeoMultiPolygonConverter multiPolygonConverter;
+
+    @Inject
+    public MongoGeoGeometryCollectionConverter(MongoGeoPointConverter pointConverter,
+                                              MongoGeoMultiPointConverter multiPointConverter,
+                                              MongoGeoLineStringConverter lineStringConverter,
+                                              MongoGeoMultiLineStringConverter multiLineStringConverter,
+                                              MongoGeoPolygonConverter polygonConverter,
+                                              MongoGeoMultiPolygonConverter multiPolygonConverter) {
+        this.pointConverter = pointConverter;
+        this.multiPointConverter = multiPointConverter;
+        this.lineStringConverter = lineStringConverter;
+        this.multiLineStringConverter = multiLineStringConverter;
+        this.polygonConverter = polygonConverter;
+        this.multiPolygonConverter = multiPolygonConverter;
+    }
 
     @Override
     public @Nullable Map<String, Object> convertToPersistedValue(@Nullable Object entityValue,
@@ -96,44 +111,44 @@ public final class MongoGeoGeometryCollectionConverter implements AttributeConve
         return type == MongoGeoGeometryCollection.class || type.isAssignableFrom(MongoGeoGeometryCollection.class);
     }
 
-    private static Map<String, Object> convertGeometryToMap(MongoGeoGeometry geometry) {
+    private Map<String, Object> convertGeometryToMap(MongoGeoGeometry geometry) {
         if (geometry instanceof MongoGeoPoint point) {
-            return Objects.requireNonNull(POINT_CONVERTER.convertToPersistedValue(point, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(pointConverter.convertToPersistedValue(point, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoMultiPoint multiPoint) {
-            return Objects.requireNonNull(MULTI_POINT_CONVERTER.convertToPersistedValue(multiPoint, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(multiPointConverter.convertToPersistedValue(multiPoint, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoLineString lineString) {
-            return Objects.requireNonNull(LINE_STRING_CONVERTER.convertToPersistedValue(lineString, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(lineStringConverter.convertToPersistedValue(lineString, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoMultiLineString multiLineString) {
-            return Objects.requireNonNull(MULTI_LINE_STRING_CONVERTER.convertToPersistedValue(multiLineString, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(multiLineStringConverter.convertToPersistedValue(multiLineString, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoPolygon polygon) {
-            return Objects.requireNonNull(POLYGON_CONVERTER.convertToPersistedValue(polygon, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(polygonConverter.convertToPersistedValue(polygon, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoMultiPolygon multiPolygon) {
-            return Objects.requireNonNull(MULTI_POLYGON_CONVERTER.convertToPersistedValue(multiPolygon, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(multiPolygonConverter.convertToPersistedValue(multiPolygon, ConversionContext.DEFAULT));
         }
         if (geometry instanceof MongoGeoGeometryCollection geometryCollection) {
-            return Objects.requireNonNull(GEOMETRY_COLLECTION_CONVERTER.convertToPersistedValue(geometryCollection, ConversionContext.DEFAULT));
+            return Objects.requireNonNull(convertToPersistedValue(geometryCollection, ConversionContext.DEFAULT));
         }
         throw new IllegalArgumentException("Unsupported geometry collection entry type: " + geometry.getClass().getName());
     }
 
-    private static MongoGeoGeometry convertMapToGeometry(Map<String, Object> geometryMap) {
+    private MongoGeoGeometry convertMapToGeometry(Map<String, Object> geometryMap) {
         Object type = geometryMap.get("type");
         if (!(type instanceof String geometryType)) {
             throw new IllegalArgumentException("Invalid GeoJSON geometry entry type: " + geometryMap);
         }
         return switch (geometryType) {
-            case "Point" -> (MongoGeoGeometry) Objects.requireNonNull(POINT_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "MultiPoint" -> (MongoGeoGeometry) Objects.requireNonNull(MULTI_POINT_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "LineString" -> (MongoGeoGeometry) Objects.requireNonNull(LINE_STRING_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "MultiLineString" -> (MongoGeoGeometry) Objects.requireNonNull(MULTI_LINE_STRING_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "Polygon" -> (MongoGeoGeometry) Objects.requireNonNull(POLYGON_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "MultiPolygon" -> (MongoGeoGeometry) Objects.requireNonNull(MULTI_POLYGON_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
-            case "GeometryCollection" -> (MongoGeoGeometry) Objects.requireNonNull(GEOMETRY_COLLECTION_CONVERTER.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "Point" -> (MongoGeoGeometry) Objects.requireNonNull(pointConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "MultiPoint" -> (MongoGeoGeometry) Objects.requireNonNull(multiPointConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "LineString" -> (MongoGeoGeometry) Objects.requireNonNull(lineStringConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "MultiLineString" -> (MongoGeoGeometry) Objects.requireNonNull(multiLineStringConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "Polygon" -> (MongoGeoGeometry) Objects.requireNonNull(polygonConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "MultiPolygon" -> (MongoGeoGeometry) Objects.requireNonNull(multiPolygonConverter.convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
+            case "GeometryCollection" -> (MongoGeoGeometry) Objects.requireNonNull(convertToEntityValue(geometryMap, ConversionContext.DEFAULT));
             default -> throw new IllegalArgumentException("Unsupported GeoJSON geometry collection entry type: " + geometryType);
         };
     }
