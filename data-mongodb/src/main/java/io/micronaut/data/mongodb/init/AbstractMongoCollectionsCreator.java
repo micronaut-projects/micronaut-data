@@ -299,7 +299,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     @Nullable
     private MongoResolvedIndex findMatchingIndex(List<MongoResolvedIndex> existingIndexes, MongoResolvedIndex desiredIndex) {
         for (MongoResolvedIndex existingIndex : existingIndexes) {
-            if (existingIndex.hasSameKey(desiredIndex)) {
+            if (existingIndex.hasSameIdentity(desiredIndex)) {
                 return existingIndex;
             }
         }
@@ -795,8 +795,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                               @Nullable String comment,
                               @Nullable String commitQuorum) {
 
-        boolean hasSameKey(MongoResolvedIndex other) {
-            return fields.equals(other.fields);
+        boolean hasSameIdentity(MongoResolvedIndex other) {
+            return fields.equals(other.fields) && Objects.equals(wildcardProjection, other.wildcardProjection);
         }
 
         boolean matchesManagedOptions(MongoResolvedIndex other) {

@@ -48,9 +48,32 @@ class MongoTopLevelWildcardMultipleDeclarationsIndexCreationSpec extends Specifi
         applicationContext.containsBean(expectedCollectionsCreatorBeanType())
         conditions.eventually {
             def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'top_level_wildcard_multiple_indexed_entities')
-            def wildcardIndexes = indexes.findAll { it.fields.size() == 1 && it.fields[0].path() == '$**' }
+            def wildcardIndexes = indexes.findAll {
+                it.fields.size() == 1 && it.fields[0].path() == '$**' && it.wildcardProjection == null
+            }
             assert wildcardIndexes.size() == 1
             assert wildcardIndexes[0].name == 'top_level_wildcard_multiple_idx'
+        }
+    }
+
+    void 'creates multiple top-level wildcard indexes when wildcardProjection differs'() {
+        given:
+        def conditions = new PollingConditions(timeout: 10, delay: 0.25)
+
+        expect:
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
+        conditions.eventually {
+            def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'top_level_wildcard_multiple_indexed_entities')
+            def wildcardIndexes = indexes.findAll { it.fields.size() == 1 && it.fields[0].path() == '$**' }
+            assert wildcardIndexes.size() == 3
+            assert wildcardIndexes*.name.contains('top_level_wildcard_multiple_idx')
+            assert wildcardIndexes*.name.contains('top_level_wildcard_projection_secret_idx')
+            assert wildcardIndexes*.name.contains('top_level_wildcard_projection_internal_idx')
+
+            def secretIndex = wildcardIndexes.find { it.name == 'top_level_wildcard_projection_secret_idx' }
+            def internalIndex = wildcardIndexes.find { it.name == 'top_level_wildcard_projection_internal_idx' }
+            assert secretIndex.wildcardProjection.getInteger('metadata.secret') == 0
+            assert internalIndex.wildcardProjection.getInteger('metadata.internal') == 0
         }
     }
 }
@@ -61,6 +84,8 @@ interface TopLevelWildcardMultipleIndexedEntityRepository extends CrudRepository
 
 @MongoWildcardIndex(name = 'top_level_wildcard_multiple_idx')
 @MongoWildcardIndex(name = 'top_level_wildcard_multiple_idx')
+@MongoWildcardIndex(name = 'top_level_wildcard_projection_secret_idx', wildcardProjection = '{ "metadata.secret": 0 }')
+@MongoWildcardIndex(name = 'top_level_wildcard_projection_internal_idx', wildcardProjection = '{ "metadata.internal": 0 }')
 @MappedEntity('top_level_wildcard_multiple_indexed_entities')
 class TopLevelWildcardMultipleIndexedEntity {
     @Id

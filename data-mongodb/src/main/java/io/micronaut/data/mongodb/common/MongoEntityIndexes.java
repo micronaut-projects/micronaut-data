@@ -37,7 +37,9 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -82,9 +84,9 @@ public final class MongoEntityIndexes {
     }
 
     private static List<ResolvedIndex> resolveTopLevelWildcardIndexes(RuntimePersistentEntity<?> entity) {
-        List<ResolvedIndex> indexes = new ArrayList<>();
+        Map<WildcardIndexSignature, List<ResolvedIndex>> groupedIndexes = new LinkedHashMap<>();
         for (var annotation : entity.getAnnotationMetadata().getAnnotationValuesByType(MongoWildcardIndex.class)) {
-            indexes.add(new ResolvedIndex(
+            ResolvedIndex index = new ResolvedIndex(
                     annotation.stringValue("name").filter(s -> !s.isEmpty()).orElse(null),
                     List.of(new ResolvedIndexField("$**", 1, null, null, null, null)),
                     false,
@@ -104,70 +106,56 @@ public final class MongoEntityIndexes {
                     parseJsonOption(annotation.stringValue("storageEngine").filter(s -> !s.isEmpty()).orElse(null), "storageEngine", entity.getName()),
                     annotation.stringValue("comment").filter(s -> !s.isEmpty()).orElse(null),
                     annotation.stringValue("commitQuorum").filter(s -> !s.isEmpty()).orElse(null)
+            );
+            groupedIndexes.computeIfAbsent(new WildcardIndexSignature(index), ignored -> new ArrayList<>()).add(index);
+        }
+        if (groupedIndexes.isEmpty()) {
+            return List.of();
+        }
+        List<ResolvedIndex> resolvedIndexes = new ArrayList<>(groupedIndexes.size());
+        for (List<ResolvedIndex> indexes : groupedIndexes.values()) {
+            ResolvedIndex first = indexes.getFirst();
+            String mergedName = first.name();
+            for (int i = 1; i < indexes.size(); i++) {
+                ResolvedIndex candidate = indexes.get(i);
+                if (mergedName == null) {
+                    mergedName = candidate.name();
+                } else if (candidate.name() != null && !mergedName.equals(candidate.name())) {
+                    throw new IllegalStateException("Mongo top-level wildcard indexes on entity [" + entity.getName() + "] must use the same index name when declaring equivalent key [$**]");
+                }
+            }
+            resolvedIndexes.add(new ResolvedIndex(
+                    mergedName,
+                    first.fields(),
+                    first.unique(),
+                    first.sparse(),
+                    first.hidden(),
+                    first.expireAfterSeconds(),
+                    first.partialFilterExpression(),
+                    first.collation(),
+                    first.bits(),
+                    first.min(),
+                    first.max(),
+                    first.defaultLanguage(),
+                    first.languageOverride(),
+                    first.textIndexVersion(),
+                    first.sphereVersion(),
+                    first.wildcardProjection(),
+                    first.storageEngine(),
+                    first.comment(),
+                    first.commitQuorum()
             ));
         }
-        if (indexes.size() <= 1) {
-            return indexes;
-        }
-        ResolvedIndex first = indexes.getFirst();
-        String mergedName = first.name();
-        for (int i = 1; i < indexes.size(); i++) {
-            ResolvedIndex candidate = indexes.get(i);
-            if (!Objects.equals(first.fields(), candidate.fields())
-                    || first.unique() != candidate.unique()
-                    || first.sparse() != candidate.sparse()
-                    || first.hidden() != candidate.hidden()
-                    || !Objects.equals(first.expireAfterSeconds(), candidate.expireAfterSeconds())
-                    || !Objects.equals(first.partialFilterExpression(), candidate.partialFilterExpression())
-                    || !Objects.equals(first.collation(), candidate.collation())
-                    || !Objects.equals(first.bits(), candidate.bits())
-                    || !Objects.equals(first.min(), candidate.min())
-                    || !Objects.equals(first.max(), candidate.max())
-                    || !Objects.equals(first.defaultLanguage(), candidate.defaultLanguage())
-                    || !Objects.equals(first.languageOverride(), candidate.languageOverride())
-                    || !Objects.equals(first.textIndexVersion(), candidate.textIndexVersion())
-                    || !Objects.equals(first.sphereVersion(), candidate.sphereVersion())
-                    || !Objects.equals(first.wildcardProjection(), candidate.wildcardProjection())
-                    || !Objects.equals(first.storageEngine(), candidate.storageEngine())
-                    || !Objects.equals(first.comment(), candidate.comment())
-                    || !Objects.equals(first.commitQuorum(), candidate.commitQuorum())) {
-                throw new IllegalStateException("Mongo top-level wildcard indexes on entity [" + entity.getName() + "] declare conflicting options for key [$**]");
-            }
-            if (mergedName == null) {
-                mergedName = candidate.name();
-            } else if (candidate.name() != null && !mergedName.equals(candidate.name())) {
-                throw new IllegalStateException("Mongo top-level wildcard indexes on entity [" + entity.getName() + "] must use the same index name when declaring equivalent key [$**]");
-            }
-        }
-        return List.of(new ResolvedIndex(
-                mergedName,
-                first.fields(),
-                first.unique(),
-                first.sparse(),
-                first.hidden(),
-                first.expireAfterSeconds(),
-                first.partialFilterExpression(),
-                first.collation(),
-                first.bits(),
-                first.min(),
-                first.max(),
-                first.defaultLanguage(),
-                first.languageOverride(),
-                first.textIndexVersion(),
-                first.sphereVersion(),
-                first.wildcardProjection(),
-                first.storageEngine(),
-                first.comment(),
-                first.commitQuorum()
-        ));
+        return List.copyOf(resolvedIndexes);
     }
 
     private static List<ResolvedIndex> resolveFieldIndexes(RuntimePersistentEntity<?> entity) {
         List<ResolvedIndex> indexes = new ArrayList<>();
         PersistentEntityUtils.traversePersistentProperties(entity, false, false, (associations, property) -> {
-            if (!(property instanceof RuntimePersistentProperty<?> runtimeProperty) || containsNonEmbeddedAssociation(associations)) {
+            if (!isIndexableField(property, associations)) {
                 return;
             }
+            RuntimePersistentProperty<?> runtimeProperty = (RuntimePersistentProperty<?>) property;
             String persistedPath = toPersistedPath(associations, property);
             var annotationMetadata = property.getAnnotationMetadata();
             var annotation = annotationMetadata.getAnnotation(MongoIndexed.class);
@@ -309,7 +297,7 @@ public final class MongoEntityIndexes {
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {
         TextIndexState state = new TextIndexState();
         PersistentEntityUtils.traversePersistentProperties(entity, false, false, (associations, property) -> {
-            if (!(property instanceof RuntimePersistentProperty<?>) || containsNonEmbeddedAssociation(associations)) {
+            if (!isIndexableField(property, associations)) {
                 return;
             }
             var textAnnotation = property.getAnnotationMetadata().getAnnotation(MongoTextIndexed.class);
@@ -474,6 +462,10 @@ public final class MongoEntityIndexes {
         return indexes;
     }
 
+    private static boolean isIndexableField(PersistentProperty property, List<Association> associations) {
+        return property instanceof RuntimePersistentProperty<?> && !containsNonEmbeddedAssociation(associations);
+    }
+
     private static boolean containsNonEmbeddedAssociation(List<Association> associations) {
         for (Association association : associations) {
             if (!(association instanceof io.micronaut.data.model.Embedded)) {
@@ -524,6 +516,47 @@ public final class MongoEntityIndexes {
         private @Nullable String defaultLanguage;
         private @Nullable String languageOverride;
         private @Nullable Integer textIndexVersion;
+    }
+
+    private record WildcardIndexSignature(List<ResolvedIndexField> fields,
+                                          boolean unique,
+                                          boolean sparse,
+                                          boolean hidden,
+                                          @Nullable Integer expireAfterSeconds,
+                                          @Nullable String partialFilterExpression,
+                                          @Nullable String collation,
+                                          @Nullable Integer bits,
+                                          @Nullable Double min,
+                                          @Nullable Double max,
+                                          @Nullable String defaultLanguage,
+                                          @Nullable String languageOverride,
+                                          @Nullable Integer textIndexVersion,
+                                          @Nullable Integer sphereVersion,
+                                          @Nullable String wildcardProjection,
+                                          @Nullable String storageEngine,
+                                          @Nullable String comment,
+                                          @Nullable String commitQuorum) {
+
+        private WildcardIndexSignature(ResolvedIndex index) {
+            this(index.fields(),
+                    index.unique(),
+                    index.sparse(),
+                    index.hidden(),
+                    index.expireAfterSeconds(),
+                    index.partialFilterExpression(),
+                    index.collation(),
+                    index.bits(),
+                    index.min(),
+                    index.max(),
+                    index.defaultLanguage(),
+                    index.languageOverride(),
+                    index.textIndexVersion(),
+                    index.sphereVersion(),
+                    index.wildcardProjection(),
+                    index.storageEngine(),
+                    index.comment(),
+                    index.commitQuorum());
+        }
     }
 
     /**

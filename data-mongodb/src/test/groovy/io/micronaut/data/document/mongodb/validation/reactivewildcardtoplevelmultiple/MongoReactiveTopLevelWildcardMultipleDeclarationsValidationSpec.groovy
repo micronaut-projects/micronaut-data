@@ -17,16 +17,18 @@ class MongoReactiveTopLevelWildcardMultipleDeclarationsValidationSpec extends Sp
         ['io.micronaut.data.document.mongodb.validation.reactivewildcardtoplevelmultiple']
     }
 
-    void 'fails fast when reactive multiple top-level wildcard declarations conflict on options'() {
+    void 'allows reactive multiple top-level wildcard declarations when wildcardProjection differs'() {
         when:
-        ApplicationContext.run(getProperties() + [
+        def context = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
                 'micronaut.data.mongodb.create-indexes'    : 'true'
         ])
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('declare conflicting options for key [$**]')
+        noExceptionThrown()
+
+        cleanup:
+        context?.close()
     }
 }
 
@@ -35,7 +37,7 @@ interface InvalidReactiveTopLevelWildcardMultipleEntityRepository extends CrudRe
 }
 
 @MongoWildcardIndex(name = 'invalid_reactive_top_level_wildcard_multiple_idx', wildcardProjection = '{ "metadata.secret": 0 }')
-@MongoWildcardIndex(name = 'invalid_reactive_top_level_wildcard_multiple_idx', wildcardProjection = '{ "metadata.internal": 0 }')
+@MongoWildcardIndex(name = 'invalid_reactive_top_level_wildcard_multiple_other_idx', wildcardProjection = '{ "metadata.internal": 0 }')
 @MappedEntity('invalid_reactive_top_level_wildcard_multiple_entities')
 class InvalidReactiveTopLevelWildcardMultipleEntity {
     @Id

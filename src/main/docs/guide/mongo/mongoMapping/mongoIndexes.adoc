@@ -167,7 +167,9 @@ Use ann:data.mongodb.annotation.index.MongoWildcardIndexed[] for field-level wil
 
 Use ann:data.mongodb.annotation.index.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
 
-ann:data.mongodb.annotation.index.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key are merged into a single managed index definition.
+ann:data.mongodb.annotation.index.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key and `wildcardProjection` signature are merged into a single managed index definition.
+
+MongoDB 5.0+ allows multiple top-level `{ "$**": 1 }` indexes on the same collection when `wildcardProjection` differs. Micronaut Data preserves those as separate managed index definitions.
 
 Top-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
 
@@ -176,7 +178,7 @@ NOTE: `storageEngine` must be valid JSON. Invalid declarations are rejected duri
 NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
 Using `wildcardProjection` on field-level ann:data.mongodb.annotation.index.MongoWildcardIndexed[] is rejected during startup validation (fail-fast), with an explicit error that points to ann:data.mongodb.annotation.index.MongoWildcardIndex[].
 
-NOTE: If multiple top-level wildcard declarations define conflicting options for `$**`, startup fails fast with an explicit conflict error.
+NOTE: Equivalent repeated top-level wildcard declarations must still agree on managed options and explicit index name. Distinct `wildcardProjection` signatures are allowed to coexist.
 
 == TTL indexes
 
