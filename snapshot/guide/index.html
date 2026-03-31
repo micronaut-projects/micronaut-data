@@ -253,13 +253,15 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-mappedPropertyAlias"><a href="#mappedPropertyAlias"><strong>6.5.10</strong><span>Using @MappedProperty alias</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.11</strong><span>JSON Column Support</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlGeospatial"><a href="#sqlGeospatial"><strong>6.5.11</strong><span>Geospatial Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.12</strong><span>JSON View</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.12</strong><span>JSON Column Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.13</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.13</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.14</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.14</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.15</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -285,19 +287,17 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAnnotations"><a href="#mongoAnnotations"><strong>7.3.1</strong><span>Mapping Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoIndexes"><a href="#mongoIndexes"><strong>7.3.2</strong><span>MongoDB Indexes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoIdGenerator"><a href="#mongoIdGenerator"><strong>7.3.2</strong><span>ID Generation</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoIdGenerator"><a href="#mongoIdGenerator"><strong>7.3.3</strong><span>ID Generation</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCompositeId"><a href="#mongoCompositeId"><strong>7.3.3</strong><span>Composite Primary Keys</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoCompositeId"><a href="#mongoCompositeId"><strong>7.3.4</strong><span>Composite Primary Keys</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoConstructorArguments"><a href="#mongoConstructorArguments"><strong>7.3.4</strong><span>Constructor Arguments</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoConstructorArguments"><a href="#mongoConstructorArguments"><strong>7.3.5</strong><span>Constructor Arguments</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoNaming"><a href="#mongoNaming"><strong>7.3.5</strong><span>Naming Strategies</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoNaming"><a href="#mongoNaming"><strong>7.3.6</strong><span>Naming Strategies</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationMapping"><a href="#mongoAssociationMapping"><strong>7.3.6</strong><span>Association Mapping</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationMapping"><a href="#mongoAssociationMapping"><strong>7.3.7</strong><span>Association Mapping</span></a></div>
-        
-        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationFetching"><a href="#mongoAssociationFetching"><strong>7.3.8</strong><span>Association Fetching</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-mongoAssociationFetching"><a href="#mongoAssociationFetching"><strong>7.3.7</strong><span>Association Fetching</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-mongoJoinQueries"><a href="#mongoJoinQueries"><strong>7.4</strong><span>Join Queries</span></a></div>
         
@@ -359,7 +359,7 @@
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/introduction.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/introduction.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -435,7 +435,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
-public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -498,7 +498,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 BeanContext beanContext;
 
 @Test
-protected void testAnnotationMetadata() {
+void testAnnotationMetadata() {
     String query = beanContext.getBeanDefinition(BookRepository.class) // <b class="conum">(1)</b>
             .getRequiredMethod("find", String.class) // <b class="conum">(2)</b>
             .getAnnotationMetadata().stringValue(Query.class) // <b class="conum">(3)</b>
@@ -574,7 +574,7 @@ void "test annotation metadata"() {
 <h2 id="repository"><a class="anchor" href="#repository"></a>1.1 Repository</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/repository.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/repository.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -590,7 +590,7 @@ void "test annotation metadata"() {
 <h2 id="whatsNew"><a class="anchor" href="#whatsNew"></a>1.2 What's New?</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/whatsNew.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/whatsNew.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -795,7 +795,7 @@ void "test annotation metadata"() {
 <h2 id="breaks"><a class="anchor" href="#breaks"></a>1.3 Breaking Changes</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/breaks.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/breaks.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1221,7 +1221,7 @@ The new implementation has a newly added connection management, allowing to shar
 <h2 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>1.4 Release History</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/introduction/releaseHistory.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/introduction/releaseHistory.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1237,7 +1237,7 @@ The new implementation has a newly added connection management, allowing to shar
 <h1 id="buildConfig"><a class="anchor" href="#buildConfig"></a>2 Build Configuration</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/buildConfig.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/buildConfig.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1371,7 +1371,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <h1 id="shared"><a class="anchor" href="#shared"></a>3 Shared Concepts</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1403,7 +1403,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <h2 id="repositories"><a class="anchor" href="#repositories"></a>3.1 Repository Interfaces</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/repositories.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/repositories.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1515,7 +1515,7 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
     }
 
     public List&lt;Book&gt; findByTitle(String title) {
-        return entityManager.createQuery("FROM Book book WHERE book.title = :title", Book.class)
+        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book.class)
                     .setParameter("title", title)
                     .getResultList();
     }
@@ -1575,7 +1575,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 <h2 id="validation"><a class="anchor" href="#validation"></a>3.2 Validation</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/validation.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/validation.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1627,7 +1627,7 @@ interface AccountRepository extends CrudRepository&lt;@jakarta.validation.Valid 
 <h2 id="querying"><a class="anchor" href="#querying"></a>3.3 Writing Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -1889,7 +1889,7 @@ Book find(String title)</code></pre>
 <h2 id="criteria"><a class="anchor" href="#criteria"></a>3.3.1 Query Criteria</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/criteria.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/criteria.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2087,7 +2087,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 <h2 id="pagination"><a class="anchor" href="#pagination"></a>3.3.2 Pagination</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/pagination.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/pagination.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2203,7 +2203,7 @@ Page&lt;Book&gt; page = bookRepository.findByTitleLike("The%", Pageable.from(0, 
 <h2 id="cursored-pagination"><a class="anchor" href="#cursored-pagination"></a>3.3.3 Cursored Pagination</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/cursored-pagination.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/cursored-pagination.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2350,7 +2350,7 @@ The cursor of pagination is based on the supplied sorting. If the supplied <a hr
 <h2 id="ordering"><a class="anchor" href="#ordering"></a>3.3.4 Ordering</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/ordering.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/ordering.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2387,7 +2387,7 @@ List&lt;Book&gt; listOrderByTitleDesc()</code></pre>
 <h2 id="projections"><a class="anchor" href="#projections"></a>3.3.5 Query Projections</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/projections.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/projections.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2510,7 +2510,7 @@ If the projected property type and the return generic type do not match up then 
 <h2 id="dto"><a class="anchor" href="#dto"></a>3.3.6 DTO Projections</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/dto.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/dto.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2618,7 +2618,7 @@ You can use <a href="../api/io/micronaut/data/annotation/NamingStrategy.html">@N
 <h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>3.3.7 Explicit Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/explicitQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/explicitQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2667,7 +2667,7 @@ Currently, Micronaut Data does not parse the JPA-QL AST and perform any further 
 <h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>3.3.8 Modifying Queries with @Where</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/whereAnnotation.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/whereAnnotation.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -2686,7 +2686,7 @@ Currently, Micronaut Data does not parse the JPA-QL AST and perform any further 
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity(value = "users", namingStrategy = NamingStrategies.Raw.class)
+@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 @Where("@.userEnabled = true") // <b class="conum">(1)</b>
 public class User {
     @GeneratedValue
@@ -2788,7 +2788,6 @@ class User {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -2798,14 +2797,13 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.H2)
-@Requires(notEnv="oracle")
 public interface UserRepository extends CrudRepository&lt;User, Long&gt; { // <b class="conum">(1)</b>
 
     @Override
-    @Query("UPDATE users SET userEnabled = false WHERE id = :id") // <b class="conum">(2)</b>
+    @Query("UPDATE user SET userEnabled = false WHERE id = :id") // <b class="conum">(2)</b>
     void deleteById(@NonNull @NotNull Long id);
 
-    @Query("SELECT * FROM users WHERE userEnabled = false") // <b class="conum">(3)</b>
+    @Query("SELECT * FROM user WHERE userEnabled = false") // <b class="conum">(3)</b>
     List&lt;User&gt; findDisabled();
 }</code></pre>
 </div>
@@ -2929,7 +2927,7 @@ interface UserRepositoryWithWhere {
 <h2 id="async"><a class="anchor" href="#async"></a>3.3.9 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/async.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/async.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3031,7 +3029,7 @@ In the case of JPA each operation will run with its own transaction and session,
 <h2 id="reactive"><a class="anchor" href="#reactive"></a>3.3.10 Reactive Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/querying/reactive.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/querying/reactive.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3128,7 +3126,7 @@ total == 2</code></pre>
 <h2 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>3.4 Accessing data</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3154,7 +3152,7 @@ total == 2</code></pre>
 <h2 id="inserts"><a class="anchor" href="#inserts"></a>3.4.1 Inserting</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates/inserts.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates/inserts.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3260,7 +3258,7 @@ It is not possible to use the entity as the return type in partial updates becau
 <h2 id="updates"><a class="anchor" href="#updates"></a>3.4.2 Updating</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates/updates.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates/updates.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3364,7 +3362,7 @@ void updateMany(Iterable&lt;Book&gt; books)</code></pre>
 <h2 id="deletes"><a class="anchor" href="#deletes"></a>3.4.3 Deleting</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates/deletes.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates/deletes.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3471,7 +3469,7 @@ void deleteMany(Iterable&lt;Book&gt; books)</code></pre>
 <h2 id="timestamps"><a class="anchor" href="#timestamps"></a>3.4.4 Entity Timestamps</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates/timestamps.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates/timestamps.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3551,7 +3549,7 @@ This can be provided by ensuring one of</p>
 <h2 id="entityEvents"><a class="anchor" href="#entityEvents"></a>3.4.5 Entity Events</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/dataUpdates/entityEvents.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/dataUpdates/entityEvents.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -3949,7 +3947,7 @@ class BookListeners {
 <h2 id="jakartaData"><a class="anchor" href="#jakartaData"></a>3.5 Jakarta Data</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/jakartaData.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/jakartaData.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -4350,7 +4348,7 @@ Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
 <h2 id="criteriaSpecifications"><a class="anchor" href="#criteriaSpecifications"></a>3.6 Repositories with Jakarta Criteria API</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -4365,7 +4363,6 @@ Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
-@Requires(notEnv="oracle")
 public interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
@@ -4391,7 +4388,7 @@ interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, JpaSpecif
 <h2 id="criteriaExecuteQuery"><a class="anchor" href="#criteriaExecuteQuery"></a>3.6.1 Querying</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteQuery.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteQuery.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -4686,7 +4683,7 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 <h2 id="criteriaExecuteUpdate"><a class="anchor" href="#criteriaExecuteUpdate"></a>3.6.2 Updating</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteUpdate.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteUpdate.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -4888,7 +4885,7 @@ public interface UpdateSpecification&lt;T&gt; {
 <h2 id="criteriaExecuteDelete"><a class="anchor" href="#criteriaExecuteDelete"></a>3.6.3 Deleting</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteDelete.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications/criteriaExecuteDelete.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5037,7 +5034,7 @@ public interface DeleteSpecification&lt;T&gt; {
 <h2 id="otherRepositoryVariations"><a class="anchor" href="#otherRepositoryVariations"></a>3.6.4 Different repository variations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications/otherRepositoryVariations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications/otherRepositoryVariations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5124,7 +5121,7 @@ public interface DeleteSpecification&lt;T&gt; {
 <h2 id="typeSafeJava"><a class="anchor" href="#typeSafeJava"></a>3.6.5 Type-Safe Java queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/criteriaSpecifications/typeSafeJava.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/criteriaSpecifications/typeSafeJava.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5291,7 +5288,7 @@ More information about the static metamodel can be found in the <a href="https:/
 <h2 id="transactions"><a class="anchor" href="#transactions"></a>3.7 Transactions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/transactions.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/transactions.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5331,7 +5328,7 @@ If you prefer Spring-managed transactions for Hibernate or JDBC you can add the 
 <h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>3.7.1 Programmatic Transactions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/transactions/programmaticTransactions.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/transactions/programmaticTransactions.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5739,7 +5736,7 @@ For Kotlin suspended methods use <a href="../api/io/micronaut/transaction/kotlin
 <h2 id="transactionalEvents"><a class="anchor" href="#transactionalEvents"></a>3.7.2 Transactional Events</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/transactions/transactionalEvents.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/transactions/transactionalEvents.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -5906,7 +5903,7 @@ Using <a href="../api/io/micronaut/transaction/annotation/TransactionalEventList
 <h2 id="kotlinCriteria"><a class="anchor" href="#kotlinCriteria"></a>3.8 Kotlin Criteria API extensions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/kotlinCriteria.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/kotlinCriteria.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6029,7 +6026,7 @@ personRepository.updateAll(updateQuery)</code></pre>
 <h2 id="multitenancy"><a class="anchor" href="#multitenancy"></a>3.9 Multi-tenancy</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/multitenancy.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/multitenancy.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6069,7 +6066,7 @@ personRepository.updateAll(updateQuery)</code></pre>
 <h2 id="discriminatormode"><a class="anchor" href="#discriminatormode"></a>3.9.1 Discriminator Mode</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/multitenancy/discriminatormode.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/multitenancy/discriminatormode.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6281,7 +6278,7 @@ The tenancy annotations are only supported for the discriminator multitenancy
 <h2 id="datasourcemode"><a class="anchor" href="#datasourcemode"></a>3.9.2 DataSource Mode</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/multitenancy/datasourcemode.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/multitenancy/datasourcemode.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6501,7 +6498,7 @@ interface BarBookClient extends BookClient {
 <h2 id="schemamode"><a class="anchor" href="#schemamode"></a>3.9.3 Schema Mode</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/shared/multitenancy/schemamode.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/shared/multitenancy/schemamode.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6684,7 +6681,7 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 <h1 id="hibernate"><a class="anchor" href="#hibernate"></a>4 Micronaut Data JPA Hibernate</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6697,7 +6694,7 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 <h2 id="hibernateJpaAnnotations"><a class="anchor" href="#hibernateJpaAnnotations"></a>4.1 JPA Annotations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateJpaAnnotations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateJpaAnnotations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6713,7 +6710,7 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 <h2 id="hibernateQuickStart"><a class="anchor" href="#hibernateQuickStart"></a>4.2 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7076,7 +7073,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
-public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -7273,7 +7270,7 @@ void updatePages(@Id Long id, @Parameter("pages") int pages)</code></pre>
 <h2 id="hibernateLogging"><a class="anchor" href="#hibernateLogging"></a>4.3 Logging SQL with Micronaut Data JPA Hibernate</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateLogging.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateLogging.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7286,7 +7283,7 @@ void updatePages(@Id Long id, @Parameter("pages") int pages)</code></pre>
 <h2 id="hibernateJoinQueries"><a class="anchor" href="#hibernateJoinQueries"></a>4.4 Join queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateJoinQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateJoinQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7555,7 +7552,7 @@ abstract List&lt;Product&gt; findAll()</code></pre>
 <h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.5 Explicit queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateExplicitQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateExplicitQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7592,7 +7589,7 @@ List&lt;Book&gt; listBooks(String t)</code></pre>
 <h2 id="hibernateNativeQueries"><a class="anchor" href="#hibernateNativeQueries"></a>4.6 Native queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateNativeQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateNativeQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7640,7 +7637,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <h2 id="hibernateStreaming"><a class="anchor" href="#hibernateStreaming"></a>4.7 Streaming Large Result Sets</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateStreaming.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateStreaming.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -7889,7 +7886,7 @@ It also shows how to periodically clear the session which might not be required 
 <h2 id="hibernateProcedures"><a class="anchor" href="#hibernateProcedures"></a>4.8 Procedures</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernate/hibernateProcedures.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernate/hibernateProcedures.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -8015,7 +8012,7 @@ The output parameter, if present, is defined as the last output parameter of the
 <h1 id="hibernateReactive"><a class="anchor" href="#hibernateReactive"></a>5 Micronaut Data Hibernate Reactive</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/hibernateReactive.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/hibernateReactive.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -8549,7 +8546,7 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-hib
 <h1 id="dbc"><a class="anchor" href="#dbc"></a>6 Micronaut Data JDBC and R2DBC</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -8599,7 +8596,7 @@ Micronaut Data JDBC / R2DBC is useful for implementing the majority of the simpl
 <h2 id="jdbc"><a class="anchor" href="#jdbc"></a>6.1 JDBC</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/jdbc.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/jdbc.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -8615,7 +8612,7 @@ Micronaut Data JDBC / R2DBC is useful for implementing the majority of the simpl
 <h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>6.1.1 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/jdbc/jdbcQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/jdbc/jdbcQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -8953,7 +8950,7 @@ import java.util.Set;
 @Entity
 public class Book {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
     private String title;
     private int pages;
@@ -9069,7 +9066,6 @@ class Book {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -9081,8 +9077,7 @@ import java.util.List;
 
 
 @JdbcRepository(dialect = Dialect.H2)        // <b class="conum">(1)</b>
-@Requires(notEnv="oracle")
-public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -9290,7 +9285,7 @@ void update(@Id Long id, String title);</code></pre>
 <h2 id="jdbcConfiguration"><a class="anchor" href="#jdbcConfiguration"></a>6.1.2 Configuration</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/jdbc/jdbcConfiguration.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/jdbc/jdbcConfiguration.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -9573,7 +9568,7 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-jdb
 <h2 id="r2dbc"><a class="anchor" href="#r2dbc"></a>6.2 R2DBC</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -9589,7 +9584,7 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-jdb
 <h2 id="r2dbcQuickStart"><a class="anchor" href="#r2dbcQuickStart"></a>6.2.1 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc/r2dbcQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc/r2dbcQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10112,7 +10107,7 @@ class AuthorController {
 <h2 id="r2dbcConfiguration"><a class="anchor" href="#r2dbcConfiguration"></a>6.2.2 Configuration</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc/r2dbcConfiguration.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc/r2dbcConfiguration.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10390,7 +10385,7 @@ The dialect setting in configuration does <strong>not</strong> replace the need 
 <h2 id="r2querying"><a class="anchor" href="#r2querying"></a>6.2.3 Reactive repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc/r2querying.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc/r2querying.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10432,7 +10427,7 @@ The dialect setting in configuration does <strong>not</strong> replace the need 
 <h2 id="r2transactionManagement"><a class="anchor" href="#r2transactionManagement"></a>6.2.4 Transactions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc/r2transactionManagement.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc/r2transactionManagement.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10711,7 +10706,7 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 <h2 id="r2entityEvents"><a class="anchor" href="#r2entityEvents"></a>6.2.5 Reactive Entity Events</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/r2dbc/r2entityEvents.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/r2dbc/r2entityEvents.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10739,7 +10734,7 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-r2d
 <h2 id="dbcRepositories"><a class="anchor" href="#dbcRepositories"></a>6.3 Repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcRepositories.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcRepositories.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -10806,7 +10801,6 @@ It is recommended you test against your target dialect. The <a href="https://www
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -10818,10 +10812,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JdbcRepository(dialect = Dialect.H2)
-@Requires(notEnv="oracle")
 public abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt; {
 
-    protected final JdbcOperations jdbcOperations;
+    private final JdbcOperations jdbcOperations;
 
     public AbstractBookRepository(JdbcOperations jdbcOperations) {
         this.jdbcOperations = jdbcOperations;
@@ -11081,7 +11074,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, 
 <h2 id="sqlInserts"><a class="anchor" href="#sqlInserts"></a>6.3.1 Accessing data</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcRepositories/sqlInserts.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcRepositories/sqlInserts.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11127,7 +11120,7 @@ void update(@Id Long id, String title);</code></pre>
 <h2 id="optimisticLocking"><a class="anchor" href="#optimisticLocking"></a>6.3.2 Optimistic locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcRepositories/optimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcRepositories/optimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11236,7 +11229,7 @@ interface StudentRepository extends CrudRepository&lt;Student, Long&gt; {
 <h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>6.3.3 Pessimistic Locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcRepositories/pessimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcRepositories/pessimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11317,7 +11310,7 @@ The semantics of the <code>FOR UPDATE</code> clause may vary depending on the da
 <h2 id="dbcCriteriaSpecifications"><a class="anchor" href="#dbcCriteriaSpecifications"></a>6.4 Repositories with Criteria API</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcCriteriaSpecifications.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcCriteriaSpecifications.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11375,7 +11368,7 @@ The semantics of the <code>FOR UPDATE</code> clause may vary depending on the da
 <h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>6.5 Mapping Entities</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11462,7 +11455,7 @@ public class Country {
 <h2 id="sqlAnnotations"><a class="anchor" href="#sqlAnnotations"></a>6.5.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlAnnotations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlAnnotations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11585,7 +11578,7 @@ Micronaut Data supports both <code>javax.persistence</code> and <code>jakarta.pe
 <h2 id="sqlExpandableQueries"><a class="anchor" href="#sqlExpandableQueries"></a>6.5.2 Expandable queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlExpandableQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlExpandableQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11616,7 +11609,7 @@ It&#8217;s better to use the array type if your targeted database supports it. F
 <h2 id="sqlIdGenerator"><a class="anchor" href="#sqlIdGenerator"></a>6.5.3 ID Generation</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlIdGenerator.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlIdGenerator.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11638,7 +11631,7 @@ It&#8217;s better to use the array type if your targeted database supports it. F
 <h2 id="sqlCompositeId"><a class="anchor" href="#sqlCompositeId"></a>6.5.4 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlCompositeId.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlCompositeId.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11824,7 +11817,7 @@ To alter the column mappings for the ID, you may use the <code>@Column</code> an
 <h2 id="sqlConstructorArguments"><a class="anchor" href="#sqlConstructorArguments"></a>6.5.5 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlConstructorArguments.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlConstructorArguments.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11915,7 +11908,7 @@ class Manufacturer {
 <h2 id="sqlNaming"><a class="anchor" href="#sqlNaming"></a>6.5.6 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlNaming.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlNaming.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -11977,7 +11970,7 @@ public class CountryRegion {
 <h2 id="sqlAssociationMapping"><a class="anchor" href="#sqlAssociationMapping"></a>6.5.7 Association Mapping</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlAssociationMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlAssociationMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12067,7 +12060,7 @@ You can use JPA&#8217;s equivalent annotations <a href="../api/io/micronaut/data
 <h2 id="sqlAssociationFetching"><a class="anchor" href="#sqlAssociationFetching"></a>6.5.8 Association Fetching</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlAssociationFetching.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlAssociationFetching.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12092,7 +12085,7 @@ import jakarta.persistence.*;
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
     private String name;
     @ManyToOne
@@ -12182,7 +12175,7 @@ class Product {
 <h2 id="columnTransformer"><a class="anchor" href="#columnTransformer"></a>6.5.9 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/columnTransformer.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/columnTransformer.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12230,7 +12223,7 @@ private String name;</code></pre>
 <h2 id="mappedPropertyAlias"><a class="anchor" href="#mappedPropertyAlias"></a>6.5.10 Using @MappedProperty alias</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/mappedPropertyAlias.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/mappedPropertyAlias.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12399,10 +12392,519 @@ When <code>alias</code> property is set then be careful when writing custom or n
 <p>Setting <code>alias</code> in MappedProperty on assocations does not have an effect as it makes sense only on fields/columns mappings.</p>
 </div>
 
-<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>6.5.11 JSON Column Support</h2>
+<h2 id="sqlGeospatial"><a class="anchor" href="#sqlGeospatial"></a>6.5.11 Geospatial Support</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlJsonType.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlGeospatial.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports geospatial persistence for SQL repositories through the <code>io.micronaut.data.model.geo</code> model types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/Point.html">Point</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiPoint.html">MultiPoint</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/LineString.html">LineString</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiLineString.html">MultiLineString</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/Polygon.html">Polygon</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiPolygon.html">MultiPolygon</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/GeometryCollection.html">GeometryCollection</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The implementation is database-aware. Micronaut Data uses JSON and WKT converters in the Java model,
+and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.</p>
+</div>
+<div class="sect2">
+<h3 id="_json_and_wkt_converters">JSON and WKT converters</h3>
+<div class="paragraph">
+<p>The model types in <code>io.micronaut.data.model.geo</code> are declared with <code>@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)</code>,
+so GeoJSON is the default mapping.</p>
+</div>
+<div class="paragraph">
+<p><a href="../api/io/micronaut/data/model/runtime/convert/GeometryJsonConverter.html">GeometryJsonConverter</a> converts between Micronaut Data geospatial objects and GeoJSON strings.
+<a href="../api/io/micronaut/data/model/runtime/convert/GeometryWktConverter.html">GeometryWktConverter</a> converts the same model types to and from Well-Known Text (WKT).</p>
+</div>
+<div class="paragraph">
+<p>Use the default GeoJSON mapping when you want Micronaut Data to serialize geospatial values as JSON:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeometryEntityJson {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty("location")
+    private Point point;
+
+    @Nullable
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use <code>@MappedProperty(converter = GeometryWktConverter.class)</code> when you want WKT conversion instead:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeometryEntityWkt {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
+and native spatial column definitions when the dialect supports them.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_database_vendor_details">Database vendor details</h3>
+<div class="paragraph">
+<p>Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
+generates its own spatial column definitions, and emits its own index DDL.</p>
+</div>
+<div class="sect3">
+<h4 id="_oracle">Oracle</h4>
+<div class="paragraph">
+<p>Oracle stores spatial values in <code>SDO_GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.TO_GEOJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_GEOJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_GEOJSON(?, NULL, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.TO_WKTGEOMETRY(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?))</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Oracle <code>SDO_UTIL.FROM_GEOJSON</code> currently does not accept <code>NULL</code>. The bug has been reported and the fix will be released soon.
+Until the bug fix gets released, you can use GeoJSON conversion only for geospatial columns that are required.
+Otherwise you can use WKT conversion.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The Oracle database requires rows in <code>USER_SDO_GEOM_METADATA</code> for spatial columns that are indexed. Micronaut Data generates
+those metadata statements automatically if you use Micronaut Data&#8217;s internal schema-generation tooling, which is intended
+for tests rather than production schema management. In that case, the generated metadata depends on the SRID.
+The internal schema-generation tooling currently supports the following SRIDs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>4326 - WGS 84 - World Geodetic System 1984</p>
+</li>
+<li>
+<p>3857 - Web Mercator</p>
+</li>
+<li>
+<p>4258 - ETRS89 - Geodetic coordinate system for Europe</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling and another SRID, a new row will not be inserted into the <code>USER_SDO_GEOM_METADATA</code> table.</p>
+</div>
+<div class="paragraph">
+<p>In production you will insert those metadata rows using a SQL migration tool such as
+<a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or
+<a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX ... INDEXTYPE IS MDSYS.SPATIAL_INDEX</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_postgresql">PostgreSQL</h4>
+<div class="paragraph">
+<p>PostgreSQL geospatial support requires the PostGIS extension because the spatial types, functions, and indexes used by
+Micronaut Data come from PostGIS.</p>
+</div>
+<div class="paragraph">
+<p>PostGIS stores spatial values in <code>GEOMETRY</code> or <code>GEOGRAPHY</code> columns. Micronaut Data uses the <code>GEOMETRY</code> column type
+by default. To change the column type to <code>GEOGRAPHY</code>, set <code>@MappedProperty(definition = "geography")</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityJson {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For WKT conversion, use:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityWkt {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>For <code>GEOGRAPHY</code> data type Micronaut Data still uses the same <code>ST_GeomFromGeoJSON</code>, <code>ST_GeomFromText</code>, <code>ST_AsGeoJSON</code>,
+and <code>ST_AsText</code> functions, but casts through <code>::geography</code> on writes and <code>::geometry</code> on reads because
+the PostGIS JSON and text conversion functions operate on geometry values.</p>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX ... USING GIST (...)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_mysql">MySQL</h4>
+<div class="paragraph">
+<p>MySQL stores spatial values in <code>GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?, 1, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX ...</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_mariadb">MariaDB</h4>
+<div class="paragraph">
+<p>MariaDB uses the same converter model as MySQL in Micronaut Data. The generated SQL and function handling
+follow the same MySQL-style <code>GEOMETRY</code> storage model, <code>ST_AsGeoJSON</code> and <code>ST_AsText</code> read conversion,
+<code>ST_GeomFromGeoJSON</code> and <code>ST_GeomFromText</code> write conversion, and <code>CREATE SPATIAL INDEX &#8230;&#8203;</code> DDL.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?, 1, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
+spatial-function behavior.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_h2">H2</h4>
+<div class="paragraph">
+<p>H2 geospatial support requires the H2GIS extension because the spatial types, functions, and indexes used by Micronaut
+Data come from H2GIS.</p>
+</div>
+<div class="paragraph">
+<p>H2GIS stores spatial values in <code>GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX ...</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_sql_server">SQL Server</h4>
+<div class="paragraph">
+<p>SQL Server stores spatial values in <code>GEOMETRY</code> or <code>GEOGRAPHY</code> columns. Micronaut Data uses the <code>GEOMETRY</code> column type
+by default. To change the column type to <code>GEOGRAPHY</code>, set <code>@MappedProperty(definition = "geography")</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityWkt {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+SQL Server doesn&#8217;t have built-in functions for conversion between JSON and internal geospatial data types
+so Micronaut Data will use WKT conversion.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>column.STAsText()</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>geometry::STGeomFromText(?, srid)</code> or <code>geography::STGeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the indexed column definition contains <code>geometry</code>, the internal schema-generation tooling also appends the geometry grid bounding box clause:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That clause is generated for <code>geometry</code> SQL Server mappings and is not used for the <code>geography</code> mapping.</p>
+</div>
+</div>
+</div>
+
+<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>6.5.12 JSON Column Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlJsonType.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12433,10 +12935,10 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.12 JSON View</h2>
+<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.13 JSON View</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12690,10 +13192,10 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.13 Support for Java 16 Records</h2>
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.14 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/javaRecords.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/javaRecords.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12713,8 +13215,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 import java.util.Date;
 
-@MappedEntity
-public// <b class="conum">(1)</b>
+@MappedEntity // <b class="conum">(1)</b>
 record Book(
         @Id @GeneratedValue @Nullable Long id, // <b class="conum">(2)</b>
         @DateCreated @Nullable Date dateCreated,
@@ -12738,14 +13239,20 @@ record Book(
 <div class="paragraph">
 <p>Since records are immutable constructor arguments that are generated values need to be marked as <code>@Nullable</code> and you should pass <code>null</code> for those arguments. The following presents an example:</p>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book(null,null, "The Stand", 1000);
+book = bookRepository.save(book);</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.14 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.15 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/kotlinData.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/kotlinData.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12795,7 +13302,7 @@ Generated values and relations that cannot be created during the entity initiali
 <h2 id="dbcDataTypes"><a class="anchor" href="#dbcDataTypes"></a>6.6 Data Types</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcDataTypes.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcDataTypes.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -12852,7 +13359,7 @@ Generated values and relations that cannot be created during the entity initiali
 <h2 id="dbcAttributeConverter"><a class="anchor" href="#dbcAttributeConverter"></a>6.7 Using Attribute Converter</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcAttributeConverter.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcAttributeConverter.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -13128,7 +13635,7 @@ It&#8217;s possible to define the converter using <a href="../api/io/micronaut/d
 <h2 id="dbcJoinQueries"><a class="anchor" href="#dbcJoinQueries"></a>6.8 Join Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcJoinQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcJoinQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -13221,7 +13728,6 @@ class Manufacturer {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
-@Requires(notEnv="oracle")
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
@@ -13279,7 +13785,7 @@ Some databases like Oracle limit the length of alias names in SQL queries so ano
 <h2 id="dbcNativeQueries"><a class="anchor" href="#dbcNativeQueries"></a>6.9 Explicit Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcNativeQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcNativeQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -13425,7 +13931,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <h2 id="dbcProcedures"><a class="anchor" href="#dbcProcedures"></a>6.10 Procedures</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dbc/dbcProcedures.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dbc/dbcProcedures.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -13458,7 +13964,7 @@ Long calculateSum(@NonNull Long bookId);</code></pre>
 <h1 id="mongo"><a class="anchor" href="#mongo"></a>7 Micronaut Data MongoDB</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -13499,7 +14005,7 @@ Long calculateSum(@NonNull Long bookId);</code></pre>
 <h2 id="mongoQuickStart"><a class="anchor" href="#mongoQuickStart"></a>7.1 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14102,7 +14608,7 @@ Micronaut Data MongoDB supports creating collections by setting property <code>m
 <h2 id="mongoRepositories"><a class="anchor" href="#mongoRepositories"></a>7.2 Repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoRepositories.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoRepositories.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14245,7 +14751,7 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 <h2 id="mongoInsertsAndUpdates"><a class="anchor" href="#mongoInsertsAndUpdates"></a>7.2.1 Accessing data</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoRepositories/mongoInsertsAndUpdates.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoRepositories/mongoInsertsAndUpdates.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14288,7 +14794,7 @@ void update(@Id ObjectId id, String title);</code></pre>
 <h2 id="mongoCustomQueries"><a class="anchor" href="#mongoCustomQueries"></a>7.2.2 Custom Queries and Options</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoRepositories/mongoCustomQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoRepositories/mongoCustomQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14452,7 +14958,7 @@ interface SaleRepository extends CrudRepository&lt;Sale, ObjectId&gt; {</code></
 <h2 id="mongoMapping"><a class="anchor" href="#mongoMapping"></a>7.3 Mapping Entities</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14540,7 +15046,7 @@ class Country {
 <h2 id="mongoAnnotations"><a class="anchor" href="#mongoAnnotations"></a>7.3.1 Mapping Annotations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoAnnotations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoAnnotations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -14634,463 +15140,10 @@ Micronaut Data MongoDB doesn&#8217;t support JPA annotations
 </table>
 </div>
 
-<h2 id="mongoIndexes"><a class="anchor" href="#mongoIndexes"></a>7.3.2 MongoDB Indexes</h2>
+<h2 id="mongoIdGenerator"><a class="anchor" href="#mongoIdGenerator"></a>7.3.2 ID Generation</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoIndexes.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>Micronaut Data MongoDB supports declaration-based index creation for mapped entities.</p>
-</div>
-<div class="paragraph">
-<p>To enable startup index creation, set <code>micronaut.data.mongodb.create-indexes=true</code>.</p>
-</div>
-<div class="paragraph">
-<p>Use <code>micronaut.data.mongodb.create-indexes-failure-policy</code> to control startup behavior when index initialization fails:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>FAIL_FAST</code> (default): fail startup immediately</p>
-</li>
-<li>
-<p><code>WARN_AND_CONTINUE</code>: log the failure and continue startup</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Index creation is opt-in and runs during startup collection initialization.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>When <code>micronaut.data.mongodb.create-indexes=true</code> and <code>micronaut.data.mongodb.create-collections=false</code>, Micronaut Data still performs index reconciliation/creation for collections that already exist.
-If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Query-side usage for MongoDB text/geospatial operators is documented in <a href="mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.html">Mongo criteria execute query</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="sect1">
-<h2 id="_supported_index_annotations">Supported index annotations</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Micronaut Data currently supports the following MongoDB index annotations:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> (single-field indexes)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndex.html">@MongoCompoundIndex</a> / <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndexes.html">@MongoCompoundIndexes</a> (compound indexes)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> (text indexes, including multi-field aggregation)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoHashedIndexed.html">@MongoHashedIndexed</a> (hashed indexes)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> (geospatial indexes: <code>2d</code>, <code>2dsphere</code>)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> (field-level wildcard indexes)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> (top-level wildcard indexes)</p>
-</li>
-<li>
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoClusteredIndex.html">@MongoClusteredIndex</a> (clustered collection options)</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_single_field_indexes">Single-field indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> to declare standard single-field indexes.</p>
-</div>
-<div class="paragraph">
-<p>Supported options include direction, <code>unique</code>, <code>sparse</code>, <code>hidden</code>, <code>expireAfterSeconds</code> (TTL), <code>partialFilterExpression</code>, <code>collation</code>, index-build <code>comment</code>, and <code>storageEngine</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity("products")
-class ProductEntity {
-    @Id
-    @GeneratedValue
-    String id;
-
-    @MongoIndexed(name = "product_sku_idx", unique = true)
-    String sku;
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_compound_indexes">Compound indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoCompoundIndex.html">@MongoCompoundIndex</a> for multi-field index declarations at entity level.</p>
-</div>
-<div class="paragraph">
-<p>Compound declarations also support index-build <code>comment</code>, create-index command <code>commitQuorum</code>, and <code>storageEngine</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoCompoundIndex(
-    name = "order_customer_created_idx",
-    fields = {
-        @MongoCompoundIndexField(value = "customerId", direction = MongoIndexDirection.ASC),
-        @MongoCompoundIndexField(value = "createdAt", direction = MongoIndexDirection.DESC)
-    }
-)
-@MappedEntity("orders")
-class OrderEntity {
-    @Id
-    @GeneratedValue
-    String id;
-
-    String customerId;
-    Instant createdAt;
-}</code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-TTL on compound indexes is rejected during startup validation because MongoDB TTL semantics are single-field oriented. This is fail-fast validation: the application startup fails immediately with a clear error instead of silently creating a non-expiring index definition.
-</td>
-</tr>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_compound_path_examples">Compound path examples</h3>
-<div class="paragraph">
-<p>Embedded dot-notation path:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoCompoundIndex(
-    name = "location_state_idx",
-    fields = {
-        @MongoCompoundIndexField(value = "location.state", direction = MongoIndexDirection.ASC)
-    }
-)
-@MappedEntity("addresses")
-class AddressEntity {
-    @Id
-    @GeneratedValue
-    String id;
-
-    AddressLocation location;
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Collection/array field (multikey) path:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoCompoundIndex(
-    name = "tags_idx",
-    fields = {
-        @MongoCompoundIndexField(value = "tags", direction = MongoIndexDirection.ASC)
-    }
-)
-@MappedEntity("articles")
-class ArticleEntity {
-    @Id
-    @GeneratedValue
-    String id;
-
-    List&lt;String&gt; tags;
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_text_indexes">Text indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> on text fields.</p>
-</div>
-<div class="paragraph">
-<p>Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.</p>
-</div>
-<div class="paragraph">
-<p>Text declarations also support <code>defaultLanguage</code>, <code>languageOverride</code>, and <code>textIndexVersion</code>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a> fields; conflicting declarations fail fast during startup validation.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hashed_indexes">Hashed indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoHashedIndexed.html">@MongoHashedIndexed</a> to create hashed indexes.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_geospatial_indexes">Geospatial indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> for geospatial indexing (<code>2d</code> and <code>2dsphere</code>).</p>
-</div>
-<div class="paragraph">
-<p>For <code>2dsphere</code> indexes, <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> also supports <code>sphereVersion</code>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<code>sphereVersion</code> is only valid for <code>2dsphere</code> indexes; declaring it for other geospatial kinds is rejected during startup validation (fail-fast).
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Modeled geospatial values are supported for <code>MongoGeoPoint</code>, <code>MongoGeoMultiPoint</code>, <code>MongoGeoLineString</code>, <code>MongoGeoMultiLineString</code>, <code>MongoGeoPolygon</code>, <code>MongoGeoMultiPolygon</code>, <code>MongoGeoGeometryCollection</code>, and custom point-like modeled types.</p>
-</div>
-<div class="paragraph">
-<p>For properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>, Micronaut Data now applies <code>MongoGeoPointConverter</code> implicitly when no explicit <code>@MappedProperty(converter=&#8230;&#8203;)</code> is declared.
-Point-like modeled types can map coordinates through numeric properties such as <code>x/y</code>, <code>longitude/latitude</code>, or <code>lng|lon/lat</code>.</p>
-</div>
-<div class="paragraph">
-<p>For polygon modeled values, Micronaut Data applies <code>MongoGeoPolygonConverter</code> implicitly for <code>MongoGeoPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For line-string modeled values, Micronaut Data applies <code>MongoGeoLineStringConverter</code> implicitly for <code>MongoGeoLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-line-string modeled values, Micronaut Data applies <code>MongoGeoMultiLineStringConverter</code> implicitly for <code>MongoGeoMultiLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-point modeled values, Micronaut Data applies <code>MongoGeoMultiPointConverter</code> implicitly for <code>MongoGeoMultiPoint</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-polygon modeled values, Micronaut Data applies <code>MongoGeoMultiPolygonConverter</code> implicitly for <code>MongoGeoMultiPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For geometry-collection modeled values, Micronaut Data applies <code>MongoGeoGeometryCollectionConverter</code> implicitly for <code>MongoGeoGeometryCollection</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>With <code>MongoGeoGeometryCollection</code> in place, modeled support now covers all standard GeoJSON geometry kinds (<code>Point</code>, <code>MultiPoint</code>, <code>LineString</code>, <code>MultiLineString</code>, <code>Polygon</code>, <code>MultiPolygon</code>, <code>GeometryCollection</code>).</p>
-</div>
-<div class="paragraph">
-<p>For raw Mongo query annotations (for example <a href="../api/io/micronaut/data/mongodb/annotation/MongoFindQuery.html">@MongoFindQuery</a>), supported modeled geospatial parameter types are also converted implicitly to GeoJSON persisted shapes (<code>type</code> + <code>coordinates</code>) when no explicit converter is specified.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_wildcard_indexes">Wildcard indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> for field-level wildcard indexes.</p>
-</div>
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> for top-level wildcard indexes and <code>wildcardProjection</code>.</p>
-</div>
-<div class="paragraph">
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> is repeatable. Multiple equivalent top-level declarations for the same <code>$**</code> key and <code>wildcardProjection</code> signature are merged into a single managed index definition.</p>
-</div>
-<div class="paragraph">
-<p>MongoDB 5.0+ allows multiple top-level <code>{ "$**": 1 }</code> indexes on the same collection when <code>wildcardProjection</code> differs. Micronaut Data preserves those as separate managed index definitions.</p>
-</div>
-<div class="paragraph">
-<p>Top-level wildcard declarations also support index-build <code>comment</code>, create-index command <code>commitQuorum</code>, and <code>storageEngine</code>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<code>storageEngine</code> must be valid JSON. Invalid declarations are rejected during startup validation (fail-fast).
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-MongoDB allows <code>wildcardProjection</code> only for top-level wildcard indexes (<code>{"$**": 1}</code>).
-Using <code>wildcardProjection</code> on field-level <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndexed.html">@MongoWildcardIndexed</a> is rejected during startup validation (fail-fast), with an explicit error that points to <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Equivalent repeated top-level wildcard declarations must still agree on managed options and explicit index name. Distinct <code>wildcardProjection</code> signatures are allowed to coexist.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_ttl_indexes">TTL indexes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoIndexed.html">@MongoIndexed</a> with <code>expireAfterSeconds</code> to create TTL indexes:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity("sessions")
-class SessionEntity {
-    @Id
-    @GeneratedValue
-    String id;
-
-    @MongoIndexed(name = "expires_at_ttl_idx", expireAfterSeconds = 60)
-    Instant expiresAt;
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_clustered_collections">Clustered collections</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoClusteredIndex.html">@MongoClusteredIndex</a> on the entity to configure clustered collection options during startup collection initialization.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoClusteredIndex(name = "events_clustered_idx", unique = true, expireAfterSeconds = 3600)
-@MappedEntity("events")
-class EventEntity {
-    @Id
-    Instant id;
-
-    String payload;
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Clustered collection support follows MongoDB collection-level rules:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>clustered options are applied through collection creation, not ordinary index creation</p>
-</li>
-<li>
-<p><code>unique</code> must remain <code>true</code></p>
-</li>
-<li>
-<p>when <code>expireAfterSeconds</code> is set, the identity type must be a date/time type (<code>Date</code>, <code>Instant</code>, <code>LocalDateTime</code>, <code>OffsetDateTime</code>)</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_existing_collections_and_conflicts">Existing collections and conflicts</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>When <code>create-indexes</code> is enabled, Micronaut Data checks existing collection indexes before creating new ones.
-If an index with the same key exists but managed options differ, startup fails fast with an explicit conflict message.</p>
-</div>
-<div class="paragraph">
-<p>Managed reconciliation is key-first and option-aware:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>existing indexes with matching key + managed options are accepted (startup continues)</p>
-</li>
-<li>
-<p>if a desired explicit name differs from an existing same-key index name, startup fails fast with an explicit name-conflict message</p>
-</li>
-<li>
-<p>if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Managed option matching includes: uniqueness/sparse/hidden, TTL, partial filter, collation, geospatial/text-specific options, wildcard projection, and storage engine.</p>
-</div>
-<div class="paragraph">
-<p><code>comment</code> and <code>commitQuorum</code> are treated as index-creation command options and are not part of existing-index managed option reconciliation.</p>
-</div>
-<div class="paragraph">
-<p>For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.</p>
-</div>
-</div>
-</div>
-
-<h2 id="mongoIdGenerator"><a class="anchor" href="#mongoIdGenerator"></a>7.3.3 ID Generation</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoIdGenerator.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoIdGenerator.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15106,10 +15159,10 @@ If an index with the same key exists but managed options differ, startup fails f
 <p>Automatically assigned UUIDs are also supported by adding a property annotated with <code>@Id</code> and <code>@AutoPopulated</code>.</p>
 </div>
 
-<h2 id="mongoCompositeId"><a class="anchor" href="#mongoCompositeId"></a>7.3.4 Composite Primary Keys</h2>
+<h2 id="mongoCompositeId"><a class="anchor" href="#mongoCompositeId"></a>7.3.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoCompositeId.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoCompositeId.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15287,10 +15340,10 @@ To alter the collection&#8217;s attribute mappings for the ID, you may use the <
 </table>
 </div>
 
-<h2 id="mongoConstructorArguments"><a class="anchor" href="#mongoConstructorArguments"></a>7.3.5 Constructor Arguments</h2>
+<h2 id="mongoConstructorArguments"><a class="anchor" href="#mongoConstructorArguments"></a>7.3.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoConstructorArguments.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoConstructorArguments.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15384,10 +15437,10 @@ class Manufacturer {
 <p>As you can see from the example above, the <code>ID</code> of the object should however include a setter since this has to be assigned from the database generated value.</p>
 </div>
 
-<h2 id="mongoNaming"><a class="anchor" href="#mongoNaming"></a>7.3.6 Naming Strategies</h2>
+<h2 id="mongoNaming"><a class="anchor" href="#mongoNaming"></a>7.3.5 Naming Strategies</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoNaming.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoNaming.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15415,10 +15468,10 @@ public class CountryRegion {
 <p>In addition, if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
 </div>
 
-<h2 id="mongoAssociationMapping"><a class="anchor" href="#mongoAssociationMapping"></a>7.3.7 Association Mapping</h2>
+<h2 id="mongoAssociationMapping"><a class="anchor" href="#mongoAssociationMapping"></a>7.3.6 Association Mapping</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoAssociationMapping.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoAssociationMapping.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15493,10 +15546,10 @@ public class CountryRegion {
 </tbody>
 </table>
 
-<h2 id="mongoAssociationFetching"><a class="anchor" href="#mongoAssociationFetching"></a>7.3.8 Association Fetching</h2>
+<h2 id="mongoAssociationFetching"><a class="anchor" href="#mongoAssociationFetching"></a>7.3.7 Association Fetching</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoMapping/mongoAssociationFetching.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoMapping/mongoAssociationFetching.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15627,7 +15680,7 @@ class Product {
 <h2 id="mongoJoinQueries"><a class="anchor" href="#mongoJoinQueries"></a>7.4 Join Queries</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoJoinQueries.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoJoinQueries.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -15803,7 +15856,7 @@ Micronaut Data MongoDB doesn&#8217;t support different join types or a custom al
 <h2 id="mongoAttributeConverter"><a class="anchor" href="#mongoAttributeConverter"></a>7.5 Using Attribute Converter</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoAttributeConverter.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoAttributeConverter.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -16074,7 +16127,7 @@ It&#8217;s possible to define the converter result type using <a href="../api/io
 <h2 id="mongoCriteriaSpecifications"><a class="anchor" href="#mongoCriteriaSpecifications"></a>7.6 Repositories with Criteria API</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoCriteriaSpecifications.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoCriteriaSpecifications.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -16131,34 +16184,6 @@ interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSp
 <p>Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.</p>
 </div>
 <div class="paragraph">
-<p>For MongoDB-specific criteria queries, Micronaut Data also supports:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>text search predicates (<code>$text</code>)</p>
-</li>
-<li>
-<p>geospatial predicates (<code>$geoWithin</code>, <code>$geoIntersects</code>, <code>$near</code>, <code>$nearSphere</code>)</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>See query usage details and examples in <a href="mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.html">Mongo criteria execute query</a>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Negated <code>$text</code>, <code>$near</code>, and <code>$nearSphere</code> predicates are not supported.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
 <p>Currently, not supported JPA Criteria API features:</p>
 </div>
 <div class="ulist">
@@ -16190,7 +16215,7 @@ Negated <code>$text</code>, <code>$near</code>, and <code>$nearSphere</code> pre
 <h2 id="mongoCriteriaExecuteQuery"><a class="anchor" href="#mongoCriteriaExecuteQuery"></a>7.6.1 Querying</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -16478,123 +16503,11 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 </tr>
 </table>
 </div>
-<div class="sect1">
-<h2 id="_mongodb_specific_query_operators">MongoDB-specific query operators</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>When using MongoDB criteria runtime queries, you can use MongoDB-specific operators through <a href="../api/io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html">PersistentEntityCriteriaBuilder</a>.</p>
-</div>
-<div class="sect2">
-<h3 id="_text_search">Text search</h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
-
-PredicateSpecification&lt;Book&gt; textSearch(String term) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).text(term);
-}
-
-PredicateSpecification&lt;Book&gt; textSearchAdvanced(String term) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).text(
-        cb.literal(term),
-        cb.literal("en"),
-        cb.literal(false),
-        cb.literal(false)
-    );
-}</code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-MongoDB text search requires a text index on the queried collection (for example <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoTextIndexed.html">@MongoTextIndexed</a>).
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_geospatial_predicates">Geospatial predicates</h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
-import io.micronaut.data.mongodb.geo.MongoGeoPoint;
-import io.micronaut.data.mongodb.geo.MongoGeoPolygon;
-
-PredicateSpecification&lt;Place&gt; inArea(MongoGeoPolygon polygon) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).geoWithin(
-        root.get("location"),
-        cb.literal(polygon)
-    );
-}
-
-PredicateSpecification&lt;Place&gt; intersects(MongoGeoPoint point) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).geoIntersects(
-        root.get("location"),
-        cb.literal(point)
-    );
-}
-
-PredicateSpecification&lt;Place&gt; near(MongoGeoPoint point, double minDistance, double maxDistance) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).near(
-        root.get("location"),
-        cb.literal(point),
-        cb.literal(minDistance),
-        cb.literal(maxDistance)
-    );
-}
-
-PredicateSpecification&lt;Place&gt; nearSphere(MongoGeoPoint point) {
-    return (root, cb) -&gt; ((PersistentEntityCriteriaBuilder) cb).nearSphere(
-        root.get("location"),
-        cb.literal(point)
-    );
-}</code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Geospatial operators require compatible geospatial indexes and data modeling (for example <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>).
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_unsupported_negated_operators">Unsupported negated operators</h3>
-<div class="paragraph">
-<p>Negated MongoDB-specific predicates below are intentionally rejected at query build time:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>negated <code>$text</code></p>
-</li>
-<li>
-<p>negated <code>$near</code></p>
-</li>
-<li>
-<p>negated <code>$nearSphere</code></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
 
 <h2 id="mongoCriteriaExecuteUpdate"><a class="anchor" href="#mongoCriteriaExecuteUpdate"></a>7.6.2 Updating</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteUpdate.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteUpdate.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -16810,7 +16723,7 @@ public interface UpdateSpecification&lt;T&gt; {
 <h2 id="mongoCriteriaExecuteDelete"><a class="anchor" href="#mongoCriteriaExecuteDelete"></a>7.6.3 Deleting</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteDelete.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteDelete.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -16969,7 +16882,7 @@ val recordsDeleted = personRepository.deleteAll(where {
 <h2 id="mongoOtherRepositoryVariations"><a class="anchor" href="#mongoOtherRepositoryVariations"></a>7.6.4 Other repository variations</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoOtherRepositoryVariations.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoCriteriaSpecifications/mongoOtherRepositoryVariations.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17015,7 +16928,7 @@ val recordsDeleted = personRepository.deleteAll(where {
 <h2 id="mongoOptimisticLocking"><a class="anchor" href="#mongoOptimisticLocking"></a>7.7 Optimistic locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/mongo/mongoOptimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/mongo/mongoOptimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17136,7 +17049,7 @@ See the guides for <a href="https://guides.micronaut.io/latest/micronaut-data-mo
 <h1 id="azureCosmos"><a class="anchor" href="#azureCosmos"></a>8 Micronaut Data Azure Cosmos</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17168,7 +17081,7 @@ See the guides for <a href="https://guides.micronaut.io/latest/micronaut-data-mo
 <h2 id="azureCosmosQuickStart"><a class="anchor" href="#azureCosmosQuickStart"></a>8.1 Quick Start</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosQuickStart.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosQuickStart.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17643,7 +17556,7 @@ void update(@Id String id, String title)</code></pre>
 <h2 id="azureCosmosConfiguration"><a class="anchor" href="#azureCosmosConfiguration"></a>8.2 Configuration</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosConfiguration.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosConfiguration.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17911,7 +17824,7 @@ azure {
 <h2 id="azureCosmosRepositories"><a class="anchor" href="#azureCosmosRepositories"></a>8.3 Repositories</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosRepositories.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosRepositories.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -17999,7 +17912,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, String&
 <h2 id="azureCosmosCriteriaSpecifications"><a class="anchor" href="#azureCosmosCriteriaSpecifications"></a>8.4 Repositories with Criteria API</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -18087,7 +18000,7 @@ interface PersonRepository extends CrudRepository&lt;Person, String&gt;, JpaSpec
 <h2 id="azureCosmosCriteriaExecuteQuery"><a class="anchor" href="#azureCosmosCriteriaExecuteQuery"></a>8.4.1 Querying</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteQuery.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteQuery.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -18484,7 +18397,7 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 <h2 id="azureCosmosCriteriaExecuteUpdate"><a class="anchor" href="#azureCosmosCriteriaExecuteUpdate"></a>8.4.2 Updating</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteUpdate.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteUpdate.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -18686,7 +18599,7 @@ public interface UpdateSpecification&lt;T&gt; {
 <h2 id="azureCosmosCriteriaExecuteDelete"><a class="anchor" href="#azureCosmosCriteriaExecuteDelete"></a>8.4.3 Deleting</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteDelete.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosCriteriaSpecifications/azureCosmosCriteriaExecuteDelete.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -18850,7 +18763,7 @@ val recordsDeleted = personRepository.deleteAll(where {
 <h2 id="azureCosmosSpecifics"><a class="anchor" href="#azureCosmosSpecifics"></a>8.5 Azure Cosmos Specifics</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosSpecifics.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosSpecifics.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19031,7 +18944,7 @@ String DELETE_ITEM = "DeleteItem";</code></pre>
 <h2 id="azureCosmosAttributeConverter"><a class="anchor" href="#azureCosmosAttributeConverter"></a>8.6 Using Attribute Converter</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosAttributeConverter.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosAttributeConverter.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19264,7 +19177,7 @@ It&#8217;s possible to define the converter result type using <a href="../api/io
 <h2 id="azureCosmosOptimisticLocking"><a class="anchor" href="#azureCosmosOptimisticLocking"></a>8.7 Optimistic locking</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/azureCosmos/azureCosmosOptimisticLocking.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/azureCosmos/azureCosmosOptimisticLocking.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19301,7 +19214,7 @@ private String documentVersion</code></pre>
 <h1 id="howItWorks"><a class="anchor" href="#howItWorks"></a>9 How Micronaut Data Works</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/howItWorks.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/howItWorks.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19363,7 +19276,7 @@ You can add additional method candidates by creating a library that depends on <
 <h1 id="graal"><a class="anchor" href="#graal"></a>10 Going Native with GraalVM</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/graal.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/graal.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19404,7 +19317,7 @@ You can add additional method candidates by creating a library that depends on <
 <h1 id="spring"><a class="anchor" href="#spring"></a>11 Spring Data Support</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/spring.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/spring.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -19555,7 +19468,7 @@ You can add additional method candidates by creating a library that depends on <
 <h1 id="dataGuides"><a class="anchor" href="#dataGuides"></a>12 Guides</h1>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/radovanradic/mongodb-indexes/src/main/docs/guide/dataGuides.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/geospatial-data-impl-2/src/main/docs/guide/dataGuides.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>

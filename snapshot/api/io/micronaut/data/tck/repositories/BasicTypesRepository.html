@@ -59,7 +59,6 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#update(java.lang.Long,byte%5B%5D)" tabindex="0">update(Long, byte[])</a></li>
 <li><a href="#findByByteArray(byte%5B%5D)" tabindex="0">findByByteArray(byte[])</a></li>
-<li><a href="#findByteArrayById(java.lang.Long)" tabindex="0">findByteArrayById(Long)</a></li>
 <li><a href="#queryById(java.lang.Long)" tabindex="0">queryById(Long)</a></li>
 <li><a href="#findAllById(java.lang.Long)" tabindex="0">findAllById(Long)</a></li>
 <li><a href="#somethingThatMightSometimesReturnNull()" tabindex="0">somethingThatMightSometimesReturnNull()</a></li>
@@ -102,19 +101,16 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../entities/BasicTypes.html" title="class in io.micronaut.data.tck.entities">BasicTypes</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByByteArray(byte%5B%5D)" class="member-name-link">findByByteArray</a><wbr>(byte[]&nbsp;byteArray)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;byte[]&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByteArrayById(java.lang.Long)" class="member-name-link">findByteArrayById</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../entities/BasicTypesProjection.html" title="class in io.micronaut.data.tck.entities">BasicTypesProjection</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#queryById(java.lang.Long)" class="member-name-link">queryById</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../entities/BasicTypesProjection.html" title="class in io.micronaut.data.tck.entities">BasicTypesProjection</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#queryById(java.lang.Long)" class="member-name-link">queryById</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#somethingThatMightSometimesReturnNull()" class="member-name-link">somethingThatMightSometimesReturnNull</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#somethingThatMightSometimesReturnNull()" class="member-name-link">somethingThatMightSometimesReturnNull</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#update(java.lang.Long,byte%5B%5D)" class="member-name-link">update</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#update(java.lang.Long,byte%5B%5D)" class="member-name-link">update</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  byte[]&nbsp;byteArray)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -149,15 +145,6 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="../entities/BasicTypes.html" title="class in io.micronaut.data.tck.entities">BasicTypes</a></span>&nbsp;<span class="element-name">findByByteArray</span><wbr><span class="parameters">(@Parameter("byteArray")
  byte[]&nbsp;byteArray)</span></div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="findByteArrayById(java.lang.Long)">
-<h3>findByteArrayById</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations"><a href="../../annotation/Query.html" title="annotation interface in io.micronaut.data.annotation">@Query</a>("select byte_array from basic_types where my_id = :id")
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;byte[]&gt;</span>&nbsp;<span class="element-name">findByteArrayById</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</span></div>
 </div>
 </section>
 </li>
