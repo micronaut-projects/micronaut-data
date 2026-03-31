@@ -33,6 +33,11 @@ import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -51,7 +56,10 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -126,16 +134,18 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
 
         for (AbstractMongoConfiguration mongoConfiguration : mongoConfigurations) {
             List<String> packageNames = environment.getProperty("mongodb.package-names", List.class).orElseGet(List::of);
-            List<Class<?>> entityTypes;
-            if (!packageNames.isEmpty()) {
-                entityTypes = environment.scan(MappedEntity.class, packageNames.toArray(new String[0])).toList();
+            Collection<BeanIntrospection<Object>> introspections;
+            if (CollectionUtils.isNotEmpty(packageNames)) {
+                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packageNames.toArray(new String[0]));
             } else {
-                entityTypes = environment.scan(MappedEntity.class).toList();
+                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
             }
-            PersistentEntity[] entities = entityTypes.stream()
-                    .filter(type -> !type.getName().contains("$"))
-                    .filter(type -> !type.isSynthetic())
-                    .map(runtimeEntityRegistry::getEntity)
+            PersistentEntity[] entities = introspections.stream()
+                    .filter(i -> !i.getBeanType().getName().contains("$"))
+                    .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
+                    .filter(i -> !i.hasAnnotation(JsonSubView.class))
+                    .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
+                    .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                     .toArray(PersistentEntity[]::new);
 
             DatabaseOperations<Dtbs> databaseOperations = databaseOperationsProvider.get(mongoConfiguration);
