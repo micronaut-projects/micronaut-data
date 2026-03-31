@@ -435,7 +435,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
-interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -498,7 +498,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 BeanContext beanContext;
 
 @Test
-void testAnnotationMetadata() {
+protected void testAnnotationMetadata() {
     String query = beanContext.getBeanDefinition(BookRepository.class) // <b class="conum">(1)</b>
             .getRequiredMethod("find", String.class) // <b class="conum">(2)</b>
             .getAnnotationMetadata().stringValue(Query.class) // <b class="conum">(3)</b>
@@ -1515,7 +1515,7 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
     }
 
     public List&lt;Book&gt; findByTitle(String title) {
-        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book.class)
+        return entityManager.createQuery("FROM Book book WHERE book.title = :title", Book.class)
                     .setParameter("title", title)
                     .getResultList();
     }
@@ -2686,7 +2686,7 @@ Currently, Micronaut Data does not parse the JPA-QL AST and perform any further 
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
+@MappedEntity(value = "users", namingStrategy = NamingStrategies.Raw.class)
 @Where("@.userEnabled = true") // <b class="conum">(1)</b>
 public class User {
     @GeneratedValue
@@ -2788,6 +2788,7 @@ class User {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -2797,13 +2798,14 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface UserRepository extends CrudRepository&lt;User, Long&gt; { // <b class="conum">(1)</b>
 
     @Override
-    @Query("UPDATE user SET userEnabled = false WHERE id = :id") // <b class="conum">(2)</b>
+    @Query("UPDATE users SET userEnabled = false WHERE id = :id") // <b class="conum">(2)</b>
     void deleteById(@NonNull @NotNull Long id);
 
-    @Query("SELECT * FROM user WHERE userEnabled = false") // <b class="conum">(3)</b>
+    @Query("SELECT * FROM users WHERE userEnabled = false") // <b class="conum">(3)</b>
     List&lt;User&gt; findDisabled();
 }</code></pre>
 </div>
@@ -4363,6 +4365,7 @@ Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
@@ -7073,7 +7076,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository // <b class="conum">(1)</b>
-interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -8950,7 +8953,7 @@ import java.util.Set;
 @Entity
 public class Book {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
     private int pages;
@@ -9066,6 +9069,7 @@ class Book {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -9077,7 +9081,8 @@ import java.util.List;
 
 
 @JdbcRepository(dialect = Dialect.H2)        // <b class="conum">(1)</b>
-interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+@Requires(notEnv="oracle")
+public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
 </div>
@@ -10801,6 +10806,7 @@ It is recommended you test against your target dialect. The <a href="https://www
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -10812,9 +10818,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt; {
 
-    private final JdbcOperations jdbcOperations;
+    protected final JdbcOperations jdbcOperations;
 
     public AbstractBookRepository(JdbcOperations jdbcOperations) {
         this.jdbcOperations = jdbcOperations;
@@ -12085,7 +12092,7 @@ import jakarta.persistence.*;
 public class Product {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     @ManyToOne
@@ -12706,7 +12713,8 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 import java.util.Date;
 
-@MappedEntity // <b class="conum">(1)</b>
+@MappedEntity
+public// <b class="conum">(1)</b>
 record Book(
         @Id @GeneratedValue @Nullable Long id, // <b class="conum">(2)</b>
         @DateCreated @Nullable Date dateCreated,
@@ -12729,12 +12737,6 @@ record Book(
 </div>
 <div class="paragraph">
 <p>Since records are immutable constructor arguments that are generated values need to be marked as <code>@Nullable</code> and you should pass <code>null</code> for those arguments. The following presents an example:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book(null,null, "The Stand", 1000);
-book = bookRepository.save(book);</code></pre>
-</div>
 </div>
 <div class="paragraph">
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
@@ -13219,6 +13221,7 @@ class Manufacturer {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
@@ -14945,7 +14948,10 @@ Point-like modeled types can map coordinates through numeric properties such as 
 <p>Use <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> for top-level wildcard indexes and <code>wildcardProjection</code>.</p>
 </div>
 <div class="paragraph">
-<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> is repeatable. Multiple equivalent top-level declarations for the same <code>$**</code> key are merged into a single managed index definition.</p>
+<p><a href="../api/io/micronaut/data/mongodb/annotation/index/MongoWildcardIndex.html">@MongoWildcardIndex</a> is repeatable. Multiple equivalent top-level declarations for the same <code>$**</code> key and <code>wildcardProjection</code> signature are merged into a single managed index definition.</p>
+</div>
+<div class="paragraph">
+<p>MongoDB 5.0+ allows multiple top-level <code>{ "$**": 1 }</code> indexes on the same collection when <code>wildcardProjection</code> differs. Micronaut Data preserves those as separate managed index definitions.</p>
 </div>
 <div class="paragraph">
 <p>Top-level wildcard declarations also support index-build <code>comment</code>, create-index command <code>commitQuorum</code>, and <code>storageEngine</code>.</p>
@@ -14982,7 +14988,7 @@ Using <code>wildcardProjection</code> on field-level <a href="../api/io/micronau
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-If multiple top-level wildcard declarations define conflicting options for <code>$**</code>, startup fails fast with an explicit conflict error.
+Equivalent repeated top-level wildcard declarations must still agree on managed options and explicit index name. Distinct <code>wildcardProjection</code> signatures are allowed to coexist.
 </td>
 </tr>
 </table>
