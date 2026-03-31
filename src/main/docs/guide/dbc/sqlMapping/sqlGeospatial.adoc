@@ -1,12 +1,12 @@
 Micronaut Data supports geospatial persistence for SQL repositories through the `io.micronaut.data.model.geo` model types:
 
-* `Point`
-* `MultiPoint`
-* `LineString`
-* `MultiLineString`
-* `Polygon`
-* `MultiPolygon`
-* `GeometryCollection`
+* api:data.model.geo.Point[]
+* api:data.model.geo.MultiPoint[]
+* api:data.model.geo.LineString[]
+* api:data.model.geo.MultiLineString[]
+* api:data.model.geo.Polygon[]
+* api:data.model.geo.MultiPolygon[]
+* api:data.model.geo.GeometryCollection[]
 
 The implementation is database-aware. Micronaut Data uses attribute converters in the Java model, and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.
 
@@ -39,7 +39,7 @@ Use `@MappedProperty(converter = GeometryWktConverter.class)` when you want WKT 
 @MappedEntity
 class GeoEntityWkt {
 
-    @Srid(4258)
+    @Srid(3857)
     @Index(columns = "location")
     @MappedProperty(value = "location", converter = GeometryWktConverter.class)
     private Point point;
@@ -49,7 +49,7 @@ class GeoEntityWkt {
 }
 ----
 
-On SQL Server you can also override the generated spatial column type explicitly, for example with `definition = "geometry"`:
+SQL Server and PostgreSQL have a geography type in addition to the geometry type. To use the geography type, you must explicitly set it, for example, with `definition = "geography"` or `definition = "geography not null"`:
 
 [source,java]
 ----
@@ -58,7 +58,7 @@ class GeoEntityWktGeom {
 
     @Srid(3857)
     @Index(columns = "location")
-    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geometry")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
     private Point point;
 }
 ----

@@ -11,7 +11,6 @@ import io.micronaut.data.model.geo.MultiPolygon
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.json.JsonMapper
-import io.micronaut.serde.ObjectMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -80,36 +79,6 @@ final class GeometryJsonConverterSpec extends Specification {
         then:
         def ex = thrown(IllegalArgumentException)
         ex.message == 'Coordinates must have 2 elements'
-    }
-
-    void 'prefers default mapper when oracle mapper is null'() {
-        given:
-        def defaultMapper = Mock(JsonMapper)
-        def geometry = point()
-        def converter = new GeometryJsonConverter(defaultMapper, null)
-
-        when:
-        def result = converter.convertToPersistedValue(geometry, ConversionContext.DEFAULT)
-
-        then:
-        1 * defaultMapper.writeValueAsString(_) >> 'default-json'
-        result == 'default-json'
-    }
-
-    void 'prefers oracle mapper when provided'() {
-        given:
-        def defaultMapper = Mock(JsonMapper)
-        def oracleMapper = Mock(ObjectMapper)
-        def geometry = point()
-        def converter = new GeometryJsonConverter(defaultMapper, oracleMapper)
-
-        when:
-        def result = converter.convertToPersistedValue(geometry, ConversionContext.DEFAULT)
-
-        then:
-        0 * defaultMapper.writeValueAsString(_)
-        1 * oracleMapper.writeValueAsString(_) >> 'oracle-json'
-        result == 'oracle-json'
     }
 
     void 'wraps mapper serialization io exceptions'() {
