@@ -75,19 +75,42 @@ public final class SimilarityNormalizer {
         this.score = score;
     }
 
+    /**
+     * Returns identity score/similarity normalization.
+     *
+     * @return identity normalizer
+     */
     public static SimilarityNormalizer identity() {
         return IDENTITY;
     }
 
+    /**
+     * Resolves normalizer for a scoring function.
+     *
+     * @param scoringFunction scoring function
+     * @return matching normalizer or identity when no explicit mapping exists
+     */
     public static SimilarityNormalizer forScoringFunction(ScoringFunction scoringFunction) {
         SimilarityNormalizer normalizer = NORMALIZERS.get(scoringFunction);
         return normalizer == null ? IDENTITY : normalizer;
     }
 
+    /**
+     * Converts score into normalized similarity.
+     *
+     * @param scoreValue raw score value
+     * @return normalized similarity value
+     */
     public double getSimilarity(double scoreValue) {
         return similarity.applyAsDouble(scoreValue);
     }
 
+    /**
+     * Converts normalized similarity into score.
+     *
+     * @param similarityValue normalized similarity value
+     * @return raw score value
+     */
     public double getScore(double similarityValue) {
         return score.applyAsDouble(similarityValue);
     }

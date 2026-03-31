@@ -20,6 +20,11 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
+/**
+ * Shared JDBC base for dialect-specific {@link VectorTypeConverter} implementations.
+ *
+ * @param <T> persisted driver type
+ */
 @Internal
 abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> {
 

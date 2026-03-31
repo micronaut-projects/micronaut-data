@@ -15,12 +15,15 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.Experimental;
+
 /**
  * Vector index algorithm type used by supported databases.
  * Implementations may map these values to vendor-specific algorithms.
  *
  * @since 5.0.0
  */
+@Experimental
 public enum VectorIndexType {
     /**
      * Inverted file index. Best for faster approximate search with list/probe-style tuning.

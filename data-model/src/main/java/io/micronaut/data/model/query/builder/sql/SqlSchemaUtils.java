@@ -85,8 +85,6 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 @Internal
 public final class SqlSchemaUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
-
     // Table and column metadata columns
     public static final String TABLE_TYPE = "TABLE";
     public static final String TABLE_CATALOG_COLUMN = "TABLE_CAT";
@@ -98,6 +96,8 @@ public final class SqlSchemaUtils {
     public static final String COLUMN_SIZE_COLUMN = "COLUMN_SIZE";
     public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
     public static final String NULLABLE_COLUMN = "NULLABLE";
+
+    private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
 
     private SqlSchemaUtils() {
     }

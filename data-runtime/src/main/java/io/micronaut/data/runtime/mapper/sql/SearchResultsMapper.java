@@ -90,7 +90,7 @@ public final class SearchResultsMapper<RS, E> {
                 out.add(searchResult);
             }
         }
-        return new SearchResults<>(out);
+        return SearchResults.of(out);
     }
 
     /**

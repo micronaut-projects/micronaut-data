@@ -30,7 +30,7 @@ import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 import oracle.sql.VECTOR;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Oracle-specific {@link VectorTypeConverter} that maps {@link Vector} to JDBC {@link VECTOR}
@@ -54,8 +54,8 @@ final class OracleJdbcVectorConverter extends AbstractJdbcVectorConverter<VECTOR
     }
 
     @Override
-    public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(
+    public Set<Class<? extends Vector>> supportedVectorTypes() {
+        return Set.of(
             Vector.class,
             DoubleVector.class,
             FloatVector.class,

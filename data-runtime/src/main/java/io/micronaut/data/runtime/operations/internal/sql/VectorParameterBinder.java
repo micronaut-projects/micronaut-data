@@ -64,6 +64,9 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
 
     /**
      * Final prepared parameter descriptor used by statement binding.
+     *
+     * @param dataType final bind data type
+     * @param value final bind value
      */
     record PreparedParameter(DataType dataType, @Nullable Object value) {
     }

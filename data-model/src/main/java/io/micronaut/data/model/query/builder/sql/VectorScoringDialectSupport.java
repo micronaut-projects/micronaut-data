@@ -23,6 +23,7 @@ import java.util.EnumSet;
 
 /**
  * Dialect strategy for vector scoring-function defaults, validation, and SQL adaptation.
+ * This is an internal runtime/processor contract and is not intended for user implementation.
  *
  * @since 5.0.0
  */

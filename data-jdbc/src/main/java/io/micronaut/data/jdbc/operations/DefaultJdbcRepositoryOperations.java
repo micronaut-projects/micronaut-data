@@ -79,6 +79,7 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -190,6 +191,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param schemaHandler               The schema handler
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param conversionContextFactory    The conversion context factory
      * @param sqlExceptionMapperList The SQL exception mapper list
      */
     @Internal
@@ -209,6 +211,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
+                                    @Parameter DatabaseConversionContextFactory conversionContextFactory,
                                     List<SqlExceptionMapper> sqlExceptionMapperList) {
 
         super(
@@ -223,7 +226,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             attributeConverterRegistry,
             jsonMapper,
             sqlJsonColumnMapperProvider,
-            argument -> new ArgumentJdbcCC(null, DatabaseType.from(jdbcConfiguration.getDialect()), argument));
+            conversionContextFactory);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -393,10 +396,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                 } else {
-                    result = isSearchResults ? (R) new SearchResults<>(List.of()) : null;
+                    result = isSearchResults ? (R) SearchResults.of(List.of()) : null;
                 }
                 if (isSearchResults && result == null) {
-                    result = (R) new SearchResults<>(List.of());
+                    result = (R) SearchResults.of(List.of());
                 }
                 if (result != null && preparedQuery.hasResultConsumer()) {
                     R finalResult = result;
@@ -1461,11 +1464,23 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
+    /**
+     * Internal argument-based JDBC conversion context used by repository operations.
+     *
+     * <p>This type is exposed only to share the current {@link Connection}, database type, and
+     * {@link Argument} metadata with converter infrastructure. It is not intended for user code.</p>
+     */
+    @Internal
     public static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        public ArgumentJdbcCC(@Nullable Connection connection, DatabaseType databaseType, Argument<?> argument) {
+        /**
+         * @param connection the current JDBC connection
+         * @param databaseType the canonical database type
+         * @param argument the conversion argument metadata
+         */
+        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
@@ -1479,21 +1494,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     static class JdbcConversionContextImpl extends AbstractConversionContext
         implements JdbcConversionContext {
 
-        private final @Nullable Connection connection;
+        private final Connection connection;
         private final DatabaseType databaseType;
 
-        public JdbcConversionContextImpl(@Nullable Connection connection, DatabaseType databaseType) {
+        public JdbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
             this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public JdbcConversionContextImpl(ConversionContext conversionContext, @Nullable Connection connection, DatabaseType databaseType) {
+        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
             this.databaseType = databaseType;
         }
 
         @Override
-        public @Nullable Connection getConnection() {
+        public Connection getConnection() {
             return connection;
         }
 

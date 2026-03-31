@@ -49,7 +49,7 @@ import java.util.Map;
  * @since 5.0.0
  */
 @Internal
-sealed abstract class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider
+abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> implements ResultReaderAttributeConverter<X, Y>, SqlColumnDefinitionProvider
     permits DefaultVectorAttributeConverter,
             DefaultSparseFloatVectorAttributeConverter,
             DefaultSparseDoubleVectorAttributeConverter,

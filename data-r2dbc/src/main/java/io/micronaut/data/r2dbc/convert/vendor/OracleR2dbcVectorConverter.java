@@ -29,7 +29,7 @@ import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 import oracle.sql.VECTOR;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * VectorTypeConverter for Oracle R2DBC.
@@ -48,8 +48,8 @@ final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<VECT
     }
 
     @Override
-    public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(
+    public Set<Class<? extends Vector>> supportedVectorTypes() {
+        return Set.of(
             Vector.class,
             DoubleVector.class,
             FloatVector.class,

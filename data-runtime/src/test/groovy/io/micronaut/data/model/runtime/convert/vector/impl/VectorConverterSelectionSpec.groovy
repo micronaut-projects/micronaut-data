@@ -117,8 +117,8 @@ class VectorConverterSelectionSpec extends Specification {
         }
 
         @Override
-        List<Class<? extends Vector>> supportedVectorTypes() {
-            return [FloatVector]
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [FloatVector] as Set
         }
 
         @Override
@@ -147,8 +147,8 @@ class VectorConverterSelectionSpec extends Specification {
         }
 
         @Override
-        List<Class<? extends Vector>> supportedVectorTypes() {
-            return [Vector, FloatVector]
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [Vector, FloatVector] as Set
         }
 
         @Override
@@ -169,8 +169,8 @@ class VectorConverterSelectionSpec extends Specification {
         }
 
         @Override
-        List<Class<? extends Vector>> supportedVectorTypes() {
-            return [Vector, SparseFloatVector]
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [Vector, SparseFloatVector] as Set
         }
 
         @Override

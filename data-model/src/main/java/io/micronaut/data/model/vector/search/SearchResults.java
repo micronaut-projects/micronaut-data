@@ -24,17 +24,29 @@ import java.util.List;
  * Iterable wrapper of vector search results with entity and score.
  *
  * @param <T> The entity type
- * @param results The matched results with scores
  * @since 5.0.0
  */
 @Experimental
-public record SearchResults<T>(List<SearchResult<T>> results) implements Iterable<SearchResult<T>> {
+public interface SearchResults<T> extends Iterable<SearchResult<T>> {
 
     /**
-     * Returns an iterator over mapped search results.
+     * @return The matched results with scores
      */
+    List<SearchResult<T>> results();
+
+    /**
+     * Creates an immutable results wrapper.
+     *
+     * @param results The matched results
+     * @param <T> The entity type
+     * @return Search results wrapper
+     */
+    static <T> SearchResults<T> of(List<SearchResult<T>> results) {
+        return new DefaultSearchResults<>(results);
+    }
+
     @Override
-    public Iterator<SearchResult<T>> iterator() {
-        return results.iterator();
+    default Iterator<SearchResult<T>> iterator() {
+        return results().iterator();
     }
 }

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.runtime.convert;
 
-import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -25,13 +24,14 @@ import java.util.function.Function;
 
 /**
  * Extension interface to generate vendor-specific SQL index definitions for schema generation.
- * Implementations are standard Micronaut beans consulted by the schema generator.
+ *
+ * <p>Implementations are internal Micronaut beans consulted by the schema generator and are not
+ * intended as a stable user extension point.</p>
  *
  * This mirrors {@link SqlColumnDefinitionProvider} but for index DDL.
  *
  * @since 5.0.0
  */
-@Experimental
 @Internal
 public non-sealed interface SqlIndexDefinitionProvider extends DefinitionProvider {
 
@@ -42,7 +42,7 @@ public non-sealed interface SqlIndexDefinitionProvider extends DefinitionProvide
      * @param dialect The SQL dialect
      * @return true if supported
      */
-     boolean supports(Argument<?> argument, Dialect dialect);
+    boolean supports(Argument<?> argument, Dialect dialect);
 
     /**
      * Produce the index DDL string for the provided mapping and context.

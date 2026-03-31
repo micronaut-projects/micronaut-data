@@ -19,7 +19,7 @@ import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Dialect-specific converter for vector values to and from the persisted database type (JDBC/R2DBC).
@@ -49,7 +49,6 @@ public interface VectorTypeConverter<T> {
      *
      * @param vector the vector value from the entity side (non-null)
      * @return the persisted value to bind to JDBC/R2DBC (non-null)
-     * @since 5.0.0
      */
     T convert(Vector vector);
 
@@ -64,17 +63,16 @@ public interface VectorTypeConverter<T> {
       * @param object the persisted value (type returned by {@link #getPersistedType()}, non-null)
       * @param targetType the target entity type (typically {@code Vector.class} or a concrete subtype)
       * @return the entity-side vector value (non-null)
-      * @since 5.0.0
       */
      Vector convert(T object, Class<Vector> targetType);
 
     /**
      * The exact vector subtypes supported by this converter for the declared database type.
-     * Keep this list minimal to avoid ambiguity (e.g. prefer a single, precise subtype, or {@code Vector.class} if generic).
+     * Keep this set minimal to avoid ambiguity (e.g. prefer a single, precise subtype, or {@code Vector.class} if generic).
      *
-     * @return the list of supported vector types (non-empty)
+     * @return the set of supported vector types (non-empty)
      */
-    List<Class<? extends Vector>> supportedVectorTypes();
+    Set<Class<? extends Vector>> supportedVectorTypes();
 
     /**
      * The database type (dialect family) this converter targets.

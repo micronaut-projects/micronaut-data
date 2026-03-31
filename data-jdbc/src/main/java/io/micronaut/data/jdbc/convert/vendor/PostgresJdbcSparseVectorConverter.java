@@ -26,7 +26,7 @@ import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * PostgreSQL-specific sparse {@link VectorTypeConverter} that maps sparse vectors to {@link PGsparsevec}
@@ -50,8 +50,8 @@ final class PostgresJdbcSparseVectorConverter extends AbstractJdbcVectorConverte
     }
 
     @Override
-    public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(SparseFloatVector.class, Vector.class, FloatVector.class);
+    public Set<Class<? extends Vector>> supportedVectorTypes() {
+        return Set.of(SparseFloatVector.class, Vector.class, FloatVector.class);
     }
 
     @Override

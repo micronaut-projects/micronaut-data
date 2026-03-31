@@ -107,8 +107,8 @@ class VectorParameterBinderSpec extends Specification {
         }
 
         @Override
-        List<Class<? extends Vector>> supportedVectorTypes() {
-            return [Vector]
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [Vector] as Set
         }
 
         @Override
@@ -138,8 +138,8 @@ class VectorParameterBinderSpec extends Specification {
         }
 
         @Override
-        List<Class<? extends Vector>> supportedVectorTypes() {
-            return [Vector]
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [Vector] as Set
         }
 
         @Override

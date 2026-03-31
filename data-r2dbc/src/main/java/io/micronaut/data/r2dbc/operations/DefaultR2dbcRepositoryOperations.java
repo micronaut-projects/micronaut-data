@@ -76,6 +76,7 @@ import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -188,6 +189,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param r2dbcExceptionMapperList    The R2dbc exception mapper list
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
+     * @param conversionContextFactory    The conversion context factory
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -208,7 +210,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         List<VectorBindSupport> vectorBindSupports,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
-        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations,
+        @Parameter DatabaseConversionContextFactory conversionContextFactory) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -221,7 +224,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             attributeConverterRegistry,
             jsonMapper,
             sqlJsonColumnMapperProvider,
-            argument -> new ArgumentR2dbcCC(null, DatabaseType.from(configuration.getDialect()), argument));
+            conversionContextFactory);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -587,7 +590,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return null;
                 }
                 return searchResult;
-            }).collectList().map(results -> (R) new SearchResults<>(results));
+            }).collectList().map(results -> (R) SearchResults.of(results));
         }
 
         @NonNull
@@ -1286,11 +1289,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-     static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
+    static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(@Nullable Connection connection, DatabaseType databaseType, Argument<?> argument) {
+        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
             super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
@@ -1304,21 +1307,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private static class R2dbcConversionContextImpl extends AbstractConversionContext
         implements R2dbcConversionContext {
 
-        private final @Nullable Connection connection;
+        private final Connection connection;
         private final DatabaseType databaseType;
 
         public R2dbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
             this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public R2dbcConversionContextImpl(ConversionContext conversionContext, @Nullable Connection connection, DatabaseType databaseType) {
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
             this.databaseType = databaseType;
         }
 
         @Override
-        public @Nullable Connection getConnection() {
+        public Connection getConnection() {
             return connection;
         }
 

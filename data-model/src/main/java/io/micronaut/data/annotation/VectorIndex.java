@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.Experimental;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -33,6 +35,7 @@ import java.lang.annotation.Target;
 @Documented
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Inherited
+@Experimental
 public @interface VectorIndex {
 
     /**

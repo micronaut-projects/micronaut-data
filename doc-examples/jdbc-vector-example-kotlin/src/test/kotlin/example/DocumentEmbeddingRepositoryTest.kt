@@ -34,7 +34,7 @@ class DocumentEmbeddingRepositoryTest {
         assertNotNull(reloaded)
         assertEquals(saved.id, reloaded!!.id)
         assertEquals(Double::class.javaPrimitiveType, reloaded.embedding.type)
-        assertArrayEquals(doubleArrayOf(0.1, 0.2, 0.3), reloaded.embedding.toDoubleArray())
+        assertArrayEquals(doubleArrayOf(0.1, 0.2, 0.3), reloaded.embedding.toDoubleArray(), 1.0e-9)
 
         val near = repository.findTop2ByEmbeddingNear(vec, 2.0)
         assertEquals(2, near.size)

@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Internal;
 
 /**
  * Internal extension interface for SQL schema definition providers.
- * Implementations are standard Micronaut beans.
+ * Implementations are standard Micronaut beans and are not intended for direct user implementation.
  *
  * @since 5.0.0
  */

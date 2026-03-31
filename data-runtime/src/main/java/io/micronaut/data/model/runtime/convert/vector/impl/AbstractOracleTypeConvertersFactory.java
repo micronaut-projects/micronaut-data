@@ -40,6 +40,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts adapter payload to {@code double[]}.
+     *
+     * @param adapter oracle vector adapter
+     * @return converted array when supported by kind
      */
     protected static Optional<double[]> vectorToDoubleArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
@@ -51,6 +54,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts adapter payload to {@code float[]}.
+     *
+     * @param adapter oracle vector adapter
+     * @return converted array when supported by kind
      */
     protected static Optional<float[]> vectorToFloatArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
@@ -62,6 +68,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts adapter payload to {@code byte[]}.
+     *
+     * @param adapter oracle vector adapter
+     * @return converted array when supported by kind
      */
     protected static Optional<byte[]> vectorToByteArray(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
@@ -77,6 +86,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts adapter payload to neutral {@link Vector}.
+     *
+     * @param adapter oracle vector adapter
+     * @return neutral vector representation
      */
     protected static Vector toVector(OracleVectorAdapter adapter) {
         return switch (adapter.getKind()) {
@@ -92,6 +104,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts float array to double array.
+     *
+     * @param f source array
+     * @return converted array
      */
     protected static double[] toDouble(float[] f) {
         double[] out = new double[f.length];
@@ -103,6 +118,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts byte array to double array.
+     *
+     * @param b source array
+     * @return converted array
      */
     protected static double[] toDouble(byte[] b) {
         double[] out = new double[b.length];
@@ -114,6 +132,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts double array to float array.
+     *
+     * @param d source array
+     * @return converted array
      */
     protected static float[] toFloat(double[] d) {
         float[] out = new float[d.length];
@@ -125,6 +146,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts byte array to float array.
+     *
+     * @param b source array
+     * @return converted array
      */
     protected static float[] toFloat(byte[] b) {
         float[] out = new float[b.length];
@@ -136,6 +160,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts float array to byte array.
+     *
+     * @param f source array
+     * @return converted array
      */
     protected static byte[] toByte(float[] f) {
         byte[] out = new byte[f.length];
@@ -147,6 +174,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
 
     /**
      * Converts double array to byte array.
+     *
+     * @param d source array
+     * @return converted array
      */
     protected static byte[] toByte(double[] d) {
         byte[] out = new byte[d.length];

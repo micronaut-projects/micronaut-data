@@ -24,7 +24,7 @@ import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
 
-import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -53,8 +53,8 @@ final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]>
     }
 
     @Override
-    public List<Class<? extends Vector>> supportedVectorTypes() {
-        return List.of(Vector.class, FloatVector.class);
+    public Set<Class<? extends Vector>> supportedVectorTypes() {
+        return Set.of(Vector.class, FloatVector.class);
     }
 
     @Override

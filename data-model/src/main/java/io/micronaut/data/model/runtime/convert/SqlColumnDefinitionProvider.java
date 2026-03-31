@@ -22,7 +22,8 @@ import io.micronaut.core.type.Argument;
 /**
  * Extension interface to provide vendor-specific SQL column definitions during schema generation.
  *
- * Implementations are standard Micronaut beans discovered by the schema utilities.
+ * <p>Implementations are internal Micronaut beans discovered by schema utilities and are not
+ * intended as a stable user extension point.</p>
  *
  * @since 5.0.0
  */
@@ -30,18 +31,18 @@ import io.micronaut.core.type.Argument;
 public non-sealed interface SqlColumnDefinitionProvider extends DefinitionProvider {
 
     /**
-      * Return a vendor-specific SQL column definition for this attribute, or {@code null} to delegate to default mapping.
-      *
-      * Implementations should inspect the provided {@link Argument} to extract length/precision/scale and relevant
-      * annotations (e.g. {@code @jakarta.persistence.Column}, {@code @jakarta.validation.constraints.Size}) and
-      * produce a dialect-specific column type.
-      *
-      * @param argument the Micronaut {@link Argument} describing the attribute (type + annotations)
-      * @param databaseType The canonical database type for which a definition should be produced
-      * @return the SQL column definition string, or {@code null} to allow default resolution
-      */
-     @Nullable
-     String getColumnDefinition(Argument<?> argument, DatabaseType databaseType);
+     * Return a vendor-specific SQL column definition for this attribute, or {@code null} to delegate to default mapping.
+     *
+     * <p>Implementations should inspect the provided {@link Argument} to extract length/precision/scale and relevant
+     * annotations (e.g. {@code @jakarta.persistence.Column}, {@code @jakarta.validation.constraints.Size}) and
+     * produce a dialect-specific column type.</p>
+     *
+     * @param argument the Micronaut {@link Argument} describing the attribute (type + annotations)
+     * @param databaseType the canonical database type for which a definition should be produced
+     * @return the SQL column definition string, or {@code null} to allow default resolution
+     */
+    @Nullable
+    String getColumnDefinition(Argument<?> argument, DatabaseType databaseType);
 
     /**
      * Whether this provider can handle the given attribute.
