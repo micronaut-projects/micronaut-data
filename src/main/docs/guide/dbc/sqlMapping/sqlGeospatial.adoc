@@ -71,11 +71,20 @@ CREATE INDEX ... INDEXTYPE IS MDSYS.SPATIAL_INDEX
 ----
 
 Oracle also requires rows in `USER_SDO_GEOM_METADATA` for spatial columns. Micronaut Data generates those metadata statements
-automatically during schema creation. The generated metadata depends on the SRID. `@Srid(4326)` uses WGS 84 bounds,
-`@Srid(3857)` uses Web Mercator bounds, and if no `@Srid` is present but the property is spatially indexed,
-Micronaut Data defaults metadata generation to SRID `4326`.
+automatically if you use Micronaut Data's internal schema-generation tooling, which is intended for tests rather than
+production schema management. In that case, the generated metadata depends on the SRID. The internal schema-generation tooling
+currently supports the following SRIDs:
 
-Oracle has an additional GeoJSON nuance visible in the geo specs: `SDO_UTIL.FROM_GEOJSON` does not accept `NULL`, and Oracle geometry collections are practically handled as flat collections of primitive elements during GeoJSON conversion rather than nested multi-collection structures.
+* 4326 - WGS 84 - World Geodetic System 1984
+* 3857 - Web Mercator
+* 4258 - ETRS89 - Geodetic coordinate system for Europe
+
+If using the internal schema-generation tooling and another SRID, a new row will not be inserted to `USER_SDO_GEOM_METADATA` table.
+
+Oracle has an additional GeoJSON nuance visible in the geo specs: Oracle geometry collections are practically handled as flat collections of primitive elements during GeoJSON conversion rather than nested multi-collection structures.
+
+WARNING: Oracle `SDO_UTIL.FROM_GEOJSON` currently does not accept `NULL`. The bug has been reported and the fix will be released soon.
+Until the bug fix gets released, you can use GeoJSON conversion only for geospatial columns that are required. Otherwise you can use WKT conversion.
 
 ==== PostgreSQL
 
@@ -103,7 +112,9 @@ Spatial indexes are created with GiST:
 CREATE INDEX ... USING GIST (...)
 ----
 
-PostgreSQL also supports `geography` mappings in the SQL tests. In that case Micronaut Data still uses the same `ST_GeomFromGeoJSON`, `ST_GeomFromText`, `ST_AsGeoJSON`, and `ST_AsText` functions, but casts through `::geography` on writes and `::geometry` on reads because the PostGIS JSON and text conversion functions operate on geometry values.
+PostgreSQL also supports `GEOGRAPHY` data type. In that case Micronaut Data still uses the same `ST_GeomFromGeoJSON`,
+`ST_GeomFromText`, `ST_AsGeoJSON`, and `ST_AsText` functions, but casts through `::geography` on writes
+and `::geometry` on reads because the PostGIS JSON and text conversion functions operate on geometry values.
 
 ==== MySQL
 

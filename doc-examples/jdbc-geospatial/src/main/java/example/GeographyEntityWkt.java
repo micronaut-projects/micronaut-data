@@ -40,10 +40,11 @@ public class GeographyEntityWkt {
     @Index(columns = "location")
     @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
     private Point point;
-    //end::get[]
 
     @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
     private MultiPoint multiPoint;
+    //end::get[]
 
     public Long getId() {
         return id;

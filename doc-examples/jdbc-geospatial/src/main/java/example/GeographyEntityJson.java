@@ -39,10 +39,11 @@ public class GeographyEntityJson {
     @Index(columns = "location")
     @MappedProperty(value = "location", definition = "geography not null")
     private Point point;
-    //end::get[]
 
     @Nullable
+    @MappedProperty(definition = "geography")
     private MultiPoint multiPoint;
+    //end::get[]
 
     public Long getId() {
         return id;
