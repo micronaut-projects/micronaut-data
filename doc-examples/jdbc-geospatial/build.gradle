@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+    implementation projects.micronautDataJdbc
+    implementation mnValidation.micronaut.validation
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnLogging.logback.classic
+}
