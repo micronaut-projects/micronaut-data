@@ -14678,18 +14678,6 @@ Index creation is opt-in and runs during startup collection initialization.
 <p>When <code>micronaut.data.mongodb.create-indexes=true</code> and <code>micronaut.data.mongodb.create-collections=false</code>, Micronaut Data still performs index reconciliation/creation for collections that already exist.
 If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.</p>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Query-side usage for MongoDB text/geospatial operators is documented in <a href="mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.html">Mongo criteria execute query</a>.
-</td>
-</tr>
-</table>
-</div>
 <div class="sect1">
 <h2 id="_supported_index_annotations">Supported index annotations</h2>
 <div class="sectionbody">
@@ -14894,35 +14882,10 @@ For aggregated multi-field text indexes, these text-specific options must be dec
 </table>
 </div>
 <div class="paragraph">
-<p>Modeled geospatial values are supported for <code>MongoGeoPoint</code>, <code>MongoGeoMultiPoint</code>, <code>MongoGeoLineString</code>, <code>MongoGeoMultiLineString</code>, <code>MongoGeoPolygon</code>, <code>MongoGeoMultiPolygon</code>, <code>MongoGeoGeometryCollection</code>, and custom point-like modeled types.</p>
+<p>For <code>2dsphere</code> indexes, the supported implicit property model is MongoDB Java driver GeoJSON types such as <code>Point</code>, <code>MultiPoint</code>, <code>LineString</code>, <code>MultiLineString</code>, <code>Polygon</code>, <code>MultiPolygon</code>, and <code>GeometryCollection</code>.</p>
 </div>
 <div class="paragraph">
-<p>For properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>, Micronaut Data now applies <code>MongoGeoPointConverter</code> implicitly when no explicit <code>@MappedProperty(converter=&#8230;&#8203;)</code> is declared.
-Point-like modeled types can map coordinates through numeric properties such as <code>x/y</code>, <code>longitude/latitude</code>, or <code>lng|lon/lat</code>.</p>
-</div>
-<div class="paragraph">
-<p>For polygon modeled values, Micronaut Data applies <code>MongoGeoPolygonConverter</code> implicitly for <code>MongoGeoPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For line-string modeled values, Micronaut Data applies <code>MongoGeoLineStringConverter</code> implicitly for <code>MongoGeoLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-line-string modeled values, Micronaut Data applies <code>MongoGeoMultiLineStringConverter</code> implicitly for <code>MongoGeoMultiLineString</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-point modeled values, Micronaut Data applies <code>MongoGeoMultiPointConverter</code> implicitly for <code>MongoGeoMultiPoint</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For multi-polygon modeled values, Micronaut Data applies <code>MongoGeoMultiPolygonConverter</code> implicitly for <code>MongoGeoMultiPolygon</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>For geometry-collection modeled values, Micronaut Data applies <code>MongoGeoGeometryCollectionConverter</code> implicitly for <code>MongoGeoGeometryCollection</code> properties annotated with <a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a>.</p>
-</div>
-<div class="paragraph">
-<p>With <code>MongoGeoGeometryCollection</code> in place, modeled support now covers all standard GeoJSON geometry kinds (<code>Point</code>, <code>MultiPoint</code>, <code>LineString</code>, <code>MultiLineString</code>, <code>Polygon</code>, <code>MultiPolygon</code>, <code>GeometryCollection</code>).</p>
-</div>
-<div class="paragraph">
-<p>For raw Mongo query annotations (for example <a href="../api/io/micronaut/data/mongodb/annotation/MongoFindQuery.html">@MongoFindQuery</a>), supported modeled geospatial parameter types are also converted implicitly to GeoJSON persisted shapes (<code>type</code> + <code>coordinates</code>) when no explicit converter is specified.</p>
+<p>For <code>2d</code> indexes, Micronaut Data continues to allow legacy map-backed coordinate values.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -14931,7 +14894,7 @@ Point-like modeled types can map coordinates through numeric properties such as 
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
+<a href="../api/io/micronaut/data/mongodb/annotation/index/MongoGeoIndexed.html">@MongoGeoIndexed</a> validates property type compatibility during startup and fails fast for unsupported property types.
 </td>
 </tr>
 </table>
