@@ -1,3 +1,4 @@
 micronaut:
   application:
     name: example
+  propagation: thread_local

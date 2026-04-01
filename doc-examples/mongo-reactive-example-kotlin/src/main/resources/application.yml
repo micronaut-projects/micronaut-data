@@ -2,6 +2,7 @@
 micronaut:
   application:
     name: example
+  propagation: thread_local
   data:
     mongodb:
       create-collections: true
