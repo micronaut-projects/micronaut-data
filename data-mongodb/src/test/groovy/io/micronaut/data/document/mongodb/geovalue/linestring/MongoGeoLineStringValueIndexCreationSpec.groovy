@@ -1,6 +1,8 @@
 package io.micronaut.data.document.mongodb.geovalue.linestring
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.LineString
+import com.mongodb.client.model.geojson.Position
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -11,8 +13,6 @@ import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoLineString
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -48,7 +48,7 @@ class MongoGeoLineStringValueIndexCreationSpec extends Specification implements 
         repository = applicationContext.getBean(GeoLineStringValueIndexedEntityRepository)
     }
 
-    void 'creates geospatial index on a MongoGeoLineString modeled value'() {
+    void 'creates geospatial index on a MongoDB LineString value'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
@@ -64,12 +64,12 @@ class MongoGeoLineStringValueIndexCreationSpec extends Specification implements 
         }
     }
 
-    void 'persists and reads MongoGeoLineString modeled value'() {
+    void 'persists and reads MongoDB LineString value'() {
         given:
-        def lineString = new MongoGeoLineString([
-                new MongoGeoPoint(-73.99d, 40.75d),
-                new MongoGeoPoint(-73.98d, 40.74d),
-                new MongoGeoPoint(-73.97d, 40.73d)
+        def lineString = new LineString([
+                new Position(-73.99d, 40.75d),
+                new Position(-73.98d, 40.74d),
+                new Position(-73.97d, 40.73d)
         ])
 
         when:
@@ -77,11 +77,11 @@ class MongoGeoLineStringValueIndexCreationSpec extends Specification implements 
         def loaded = repository.findById(saved.id).orElseThrow()
 
         then:
-        loaded.route.coordinates().size() == 3
-        loaded.route.coordinates()[0].x() == -73.99d
-        loaded.route.coordinates()[0].y() == 40.75d
-        loaded.route.coordinates()[2].x() == -73.97d
-        loaded.route.coordinates()[2].y() == 40.73d
+        loaded.route.coordinates.size() == 3
+        loaded.route.coordinates[0].values[0] == -73.99d
+        loaded.route.coordinates[0].values[1] == 40.75d
+        loaded.route.coordinates[2].values[0] == -73.97d
+        loaded.route.coordinates[2].values[1] == 40.73d
     }
 }
 
@@ -97,5 +97,5 @@ class GeoLineStringValueIndexedEntity {
 
     @TypeDef(type = DataType.OBJECT)
     @MongoGeoIndexed(name = 'geo_linestring_location_idx')
-    MongoGeoLineString route
+    LineString route
 }

@@ -1,6 +1,8 @@
 package io.micronaut.data.document.mongodb.geovalue.multipoint
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.MultiPoint
+import com.mongodb.client.model.geojson.Position
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -11,8 +13,6 @@ import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoMultiPoint
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -48,7 +48,7 @@ class MongoGeoMultiPointValueIndexCreationSpec extends Specification implements 
         repository = applicationContext.getBean(GeoMultiPointValueIndexedEntityRepository)
     }
 
-    void 'creates geospatial index on a MongoGeoMultiPoint modeled value'() {
+    void 'creates geospatial index on a MongoDB MultiPoint value'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
@@ -64,12 +64,12 @@ class MongoGeoMultiPointValueIndexCreationSpec extends Specification implements 
         }
     }
 
-    void 'persists and reads MongoGeoMultiPoint modeled value'() {
+    void 'persists and reads MongoDB MultiPoint value'() {
         given:
-        def multiPoint = new MongoGeoMultiPoint([
-                new MongoGeoPoint(-73.99d, 40.75d),
-                new MongoGeoPoint(-73.98d, 40.74d),
-                new MongoGeoPoint(-73.97d, 40.73d)
+        def multiPoint = new MultiPoint([
+                new Position(-73.99d, 40.75d),
+                new Position(-73.98d, 40.74d),
+                new Position(-73.97d, 40.73d)
         ])
 
         when:
@@ -77,11 +77,11 @@ class MongoGeoMultiPointValueIndexCreationSpec extends Specification implements 
         def loaded = repository.findById(saved.id).orElseThrow()
 
         then:
-        loaded.locations.coordinates().size() == 3
-        loaded.locations.coordinates()[0].x() == -73.99d
-        loaded.locations.coordinates()[0].y() == 40.75d
-        loaded.locations.coordinates()[2].x() == -73.97d
-        loaded.locations.coordinates()[2].y() == 40.73d
+        loaded.locations.coordinates.size() == 3
+        loaded.locations.coordinates[0].values[0] == -73.99d
+        loaded.locations.coordinates[0].values[1] == 40.75d
+        loaded.locations.coordinates[2].values[0] == -73.97d
+        loaded.locations.coordinates[2].values[1] == 40.73d
     }
 }
 
@@ -97,5 +97,5 @@ class GeoMultiPointValueIndexedEntity {
 
     @TypeDef(type = DataType.OBJECT)
     @MongoGeoIndexed(name = 'geo_multipoint_location_idx')
-    MongoGeoMultiPoint locations
+    MultiPoint locations
 }

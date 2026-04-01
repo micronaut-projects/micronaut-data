@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb.validation.existingindexadvancedconflict
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -301,7 +302,7 @@ class ExistingSphereConflictIndexEntity {
     String id
 
     @MongoGeoIndexed(name = 'existing_sphere_conflict_idx', sphereVersion = 3)
-    Map<String, Object> location
+    Point location
 }
 
 @MongoRepository

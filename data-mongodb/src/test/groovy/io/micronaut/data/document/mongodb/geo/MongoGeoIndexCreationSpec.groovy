@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb.geo
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -70,5 +71,5 @@ class GeoIndexedEntity {
     String id
 
     @MongoGeoIndexed(name = 'geo_location_idx', sphereVersion = 3)
-    Map<String, Object> location
+    Point location
 }

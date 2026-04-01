@@ -1,5 +1,6 @@
 package io.micronaut.data.document.mongodb.validation.options
 
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
@@ -220,7 +221,7 @@ class InvalidTextDefaultLanguageEntity {
 @MappedEntity('geo_sphere_version_entity')
 class GeoSphereVersionEntity {
     @MongoGeoIndexed(name = 'geo_sphere_version_idx', sphereVersion = 3)
-    Map<String, Object> location
+    Point location
 }
 
 @MappedEntity('invalid_geo_sphere_version_on_2d_entity')

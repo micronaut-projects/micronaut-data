@@ -1,5 +1,6 @@
 package io.micronaut.data.document.mongodb.validation.georules
 
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -8,7 +9,6 @@ import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.Specification
 
@@ -43,5 +43,5 @@ class InvalidGeoIndexedEntity {
     String id
 
     @MongoGeoIndexed(name = 'invalid_geo_idx', type = MongoGeoIndexType.GEO_2DSPHERE, bits = 26)
-    MongoGeoPoint location
+    Point location
 }

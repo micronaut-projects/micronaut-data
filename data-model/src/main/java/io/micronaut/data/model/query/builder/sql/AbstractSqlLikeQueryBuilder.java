@@ -68,14 +68,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -2118,31 +2113,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 query.append(" ESCAPE ");
                 appendExpression(escapeChar);
             }
-        }
-
-        @Override
-        public void visit(TextPredicate textPredicate) {
-            throw new UnsupportedOperationException("Text predicate is not supported by SQL query builder.");
-        }
-
-        @Override
-        public void visit(GeoWithinPredicate geoWithinPredicate) {
-            throw new UnsupportedOperationException("GeoWithin predicate is not supported by SQL query builder.");
-        }
-
-        @Override
-        public void visit(GeoIntersectsPredicate geoIntersectsPredicate) {
-            throw new UnsupportedOperationException("GeoIntersects predicate is not supported by SQL query builder.");
-        }
-
-        @Override
-        public void visit(NearPredicate nearPredicate) {
-            throw new UnsupportedOperationException("Near predicate is not supported by SQL query builder.");
-        }
-
-        @Override
-        public void visit(NearSpherePredicate nearSpherePredicate) {
-            throw new UnsupportedOperationException("NearSphere predicate is not supported by SQL query builder.");
         }
 
         @Override

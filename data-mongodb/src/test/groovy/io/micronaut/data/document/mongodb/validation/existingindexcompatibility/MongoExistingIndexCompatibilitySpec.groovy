@@ -1,6 +1,7 @@
 package io.micronaut.data.document.mongodb.validation.existingindexcompatibility
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -106,10 +107,6 @@ class MongoExistingIndexCompatibilitySpec extends Specification implements Mongo
     }
 }
 
-@MongoRepository
-interface ExistingSimpleIndexEntityRepository extends CrudRepository<ExistingSimpleIndexEntity, String> {
-}
-
 @MappedEntity('existing_simple_index_entities')
 class ExistingSimpleIndexEntity {
     @Id
@@ -154,5 +151,5 @@ class ExistingGeoIndexEntity {
     String id
 
     @MongoGeoIndexed(name = 'existing_geo_location_idx', sphereVersion = 3)
-    Map<String, Object> location
+    Point location
 }

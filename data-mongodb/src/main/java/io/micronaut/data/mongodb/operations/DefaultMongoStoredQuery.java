@@ -28,7 +28,6 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -42,8 +41,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
-import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed;
-import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.data.mongodb.annotation.MongoProjection;
 import io.micronaut.data.mongodb.annotation.MongoSort;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
@@ -397,10 +394,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     if (converter != null) {
                         return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
                     }
-                    if (shouldUseImplicitGeoConverter(property)) {
-                        AttributeConverter<Object, Object> implicitConverter = attributeConverterRegistry.getConverter(resolveImplicitGeoConverterClass(property));
-                        return implicitConverter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-                    }
                 }
                 return value;
             }
@@ -409,16 +402,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             @Override
             public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
                 if (converterClass == null || converterClass == Object.class) {
-                    if (value == null) {
-                        return value;
-                    }
-                    Class<?> geoType = argument != null ? argument.getType() : value.getClass();
-                    if (!MongoGeoConverters.supportsImplicitGeoType(geoType)) {
-                        return value;
-                    }
-                    AttributeConverter<Object, Object> implicitConverter = attributeConverterRegistry.getConverter(MongoGeoConverters.resolveImplicitGeoConverterClass(geoType));
-                    ConversionContext conversionContext = argument != null ? ConversionContext.of(argument) : ConversionContext.of(Argument.of(geoType));
-                    return implicitConverter.convertToPersistedValue(value, conversionContext);
+                    return value;
                 }
                 AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                 ConversionContext conversionContext = createTypeConversionContext(null, argument);
@@ -447,18 +431,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
         }, invocationContext, entity, null, queryParameterBinding);
         return (Map.Entry<QueryParameterBinding, Object>) holder[0];
-    }
-
-    private boolean shouldUseImplicitGeoConverter(RuntimePersistentProperty<?> property) {
-        if (!property.getAnnotationMetadata().isAnnotationPresent(MongoGeoIndexed.class)) {
-            return false;
-        }
-        Class<?> converterClass = property.getAnnotationMetadata().classValue(MappedProperty.class, "converter").orElse(null);
-        return (converterClass == null || converterClass == Object.class) && MongoGeoConverters.supportsImplicitGeoType(property.getType());
-    }
-
-    private Class<?> resolveImplicitGeoConverterClass(RuntimePersistentProperty<?> property) {
-        return MongoGeoConverters.resolveImplicitGeoConverterClass(property.getType());
     }
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {

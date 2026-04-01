@@ -26,8 +26,9 @@ class MongoGeoTypeValidationSpec extends Specification implements MongoTestPrope
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('requires a supported type')
+        e.message.contains('requires a supported MongoDB GeoJSON type')
     }
+
 }
 
 @MongoRepository

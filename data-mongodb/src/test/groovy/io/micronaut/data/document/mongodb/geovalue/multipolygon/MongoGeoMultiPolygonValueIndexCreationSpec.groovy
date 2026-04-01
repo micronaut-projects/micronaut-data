@@ -1,6 +1,9 @@
 package io.micronaut.data.document.mongodb.geovalue.multipolygon
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.MultiPolygon
+import com.mongodb.client.model.geojson.PolygonCoordinates
+import com.mongodb.client.model.geojson.Position
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -11,8 +14,6 @@ import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoMultiPolygon
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -48,7 +49,7 @@ class MongoGeoMultiPolygonValueIndexCreationSpec extends Specification implement
         repository = applicationContext.getBean(GeoMultiPolygonValueIndexedEntityRepository)
     }
 
-    void 'creates geospatial index on a MongoGeoMultiPolygon modeled value'() {
+    void 'creates geospatial index on a MongoDB MultiPolygon value'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
@@ -64,27 +65,23 @@ class MongoGeoMultiPolygonValueIndexCreationSpec extends Specification implement
         }
     }
 
-    void 'persists and reads MongoGeoMultiPolygon modeled value'() {
+    void 'persists and reads MongoDB MultiPolygon value'() {
         given:
-        def multiPolygon = new MongoGeoMultiPolygon([
-                [
-                        [
-                                new MongoGeoPoint(-73.99d, 40.75d),
-                                new MongoGeoPoint(-73.98d, 40.75d),
-                                new MongoGeoPoint(-73.98d, 40.74d),
-                                new MongoGeoPoint(-73.99d, 40.74d),
-                                new MongoGeoPoint(-73.99d, 40.75d)
-                        ]
-                ],
-                [
-                        [
-                                new MongoGeoPoint(-74.01d, 40.73d),
-                                new MongoGeoPoint(-74.00d, 40.73d),
-                                new MongoGeoPoint(-74.00d, 40.72d),
-                                new MongoGeoPoint(-74.01d, 40.72d),
-                                new MongoGeoPoint(-74.01d, 40.73d)
-                        ]
-                ]
+        def multiPolygon = new MultiPolygon([
+                new PolygonCoordinates([
+                        new Position(-73.99d, 40.75d),
+                        new Position(-73.98d, 40.75d),
+                        new Position(-73.98d, 40.74d),
+                        new Position(-73.99d, 40.74d),
+                        new Position(-73.99d, 40.75d)
+                ]),
+                new PolygonCoordinates([
+                        new Position(-74.01d, 40.73d),
+                        new Position(-74.00d, 40.73d),
+                        new Position(-74.00d, 40.72d),
+                        new Position(-74.01d, 40.72d),
+                        new Position(-74.01d, 40.73d)
+                ])
         ])
 
         when:
@@ -92,13 +89,12 @@ class MongoGeoMultiPolygonValueIndexCreationSpec extends Specification implement
         def loaded = repository.findById(saved.id).orElseThrow()
 
         then:
-        loaded.areas.coordinates().size() == 2
-        loaded.areas.coordinates()[0].size() == 1
-        loaded.areas.coordinates()[0][0].size() == 5
-        loaded.areas.coordinates()[0][0][0].x() == -73.99d
-        loaded.areas.coordinates()[0][0][0].y() == 40.75d
-        loaded.areas.coordinates()[1][0][0].x() == -74.01d
-        loaded.areas.coordinates()[1][0][0].y() == 40.73d
+        loaded.areas.coordinates.size() == 2
+        loaded.areas.coordinates[0].exterior.size() == 5
+        loaded.areas.coordinates[0].exterior[0].values[0] == -73.99d
+        loaded.areas.coordinates[0].exterior[0].values[1] == 40.75d
+        loaded.areas.coordinates[1].exterior[0].values[0] == -74.01d
+        loaded.areas.coordinates[1].exterior[0].values[1] == 40.73d
     }
 }
 
@@ -114,5 +110,5 @@ class GeoMultiPolygonValueIndexedEntity {
 
     @TypeDef(type = DataType.OBJECT)
     @MongoGeoIndexed(name = 'geo_multipolygon_location_idx')
-    MongoGeoMultiPolygon areas
+    MultiPolygon areas
 }

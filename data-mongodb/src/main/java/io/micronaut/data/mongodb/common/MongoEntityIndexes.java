@@ -15,6 +15,14 @@
  */
 package io.micronaut.data.mongodb.common;
 
+import com.mongodb.client.model.geojson.Geometry;
+import com.mongodb.client.model.geojson.GeometryCollection;
+import com.mongodb.client.model.geojson.LineString;
+import com.mongodb.client.model.geojson.MultiLineString;
+import com.mongodb.client.model.geojson.MultiPoint;
+import com.mongodb.client.model.geojson.MultiPolygon;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Polygon;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex;
@@ -27,7 +35,6 @@ import io.micronaut.data.mongodb.annotation.index.MongoIndexed;
 import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed;
 import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndex;
 import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndexed;
-import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -283,15 +290,29 @@ public final class MongoEntityIndexes {
 
     private static void validateGeoIndexedType(RuntimePersistentEntity<?> entity,
                                                RuntimePersistentProperty<?> property) {
+        MongoGeoIndexType indexType = property.getAnnotationMetadata().enumValue(MongoGeoIndexed.class, "type", MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
         Class<?> propertyType = property.getType();
-        if (MongoGeoConverters.supportsGeoIndexedPropertyType(propertyType)) {
+        if ((indexType == MongoGeoIndexType.GEO_2D && Map.class.isAssignableFrom(propertyType))
+                || isSupportedGeoIndexedType(propertyType)) {
             return;
         }
         throw new IllegalStateException("Mongo geospatial index on entity ["
                 + entity.getName()
                 + "] property ["
                 + property.getName()
-                + "] requires a supported type (MongoGeoPoint, MongoGeoPointLike, point-like bean shape, MongoGeoMultiPoint, MongoGeoLineString, MongoGeoMultiLineString, MongoGeoPolygon, MongoGeoMultiPolygon, or MongoGeoGeometryCollection)");
+                + "] requires a supported MongoDB GeoJSON type (Geometry, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, or GeometryCollection)"
+                + (indexType == MongoGeoIndexType.GEO_2D ? " or a Map-backed legacy 2d coordinate value" : ""));
+    }
+
+    private static boolean isSupportedGeoIndexedType(Class<?> propertyType) {
+        return Geometry.class.isAssignableFrom(propertyType)
+                || Point.class.isAssignableFrom(propertyType)
+                || MultiPoint.class.isAssignableFrom(propertyType)
+                || LineString.class.isAssignableFrom(propertyType)
+                || MultiLineString.class.isAssignableFrom(propertyType)
+                || Polygon.class.isAssignableFrom(propertyType)
+                || MultiPolygon.class.isAssignableFrom(propertyType)
+                || GeometryCollection.class.isAssignableFrom(propertyType);
     }
 
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {

@@ -27,9 +27,7 @@ import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import io.micronaut.data.document.serde.OneRelationDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
-import io.micronaut.data.mongodb.geo.MongoGeoConverters;
 import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.LimitingStream;
@@ -47,7 +45,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link Deserializer.DecoderContext}.
@@ -180,22 +177,6 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     @Override
     public <T> Deserializer<? extends T> findDeserializer(Argument<? extends T> type) throws SerdeException {
-        if (shouldUseImplicitGeoConverter(type)) {
-            Argument<Map> mapArgument = Argument.of(Map.class);
-            Deserializer<?> deserializer = findDeserializer(mapArgument).createSpecific(this, mapArgument);
-            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(resolveImplicitGeoConverterClass(type));
-            return (Deserializer<? extends T>) new Deserializer<>() {
-                @Override
-                @Nullable
-                public Object deserialize(Decoder decoder, DecoderContext context, Argument<? super Object> argument) throws IOException {
-                    if (decoder.decodeNull()) {
-                        return null;
-                    }
-                    Object deserialized = ((Deserializer<Object>) (Deserializer<?>) deserializer).deserialize(decoder, context, Argument.OBJECT_ARGUMENT);
-                    return converter.convertToEntityValue(deserialized, ConversionContext.of(type));
-                }
-            };
-        }
         Codec<? extends T> codec = codecRegistry.get(type.getType(), codecRegistry);
         if (codec instanceof MappedCodec<? extends T> mappedCodec) {
             return mappedCodec.deserializer;
@@ -204,18 +185,6 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);
-    }
-
-    private boolean shouldUseImplicitGeoConverter(Argument<?> type) {
-        if (!type.isAnnotationPresent(MongoGeoIndexed.class)) {
-            return false;
-        }
-        Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter").orElse(null);
-        return (converterClass == null || converterClass == Object.class) && MongoGeoConverters.supportsImplicitGeoType(type.getType());
-    }
-
-    private Class<?> resolveImplicitGeoConverterClass(Argument<?> type) {
-        return MongoGeoConverters.resolveImplicitGeoConverterClass(type.getType());
     }
 
     @Override

@@ -1,19 +1,17 @@
 package io.micronaut.data.document.mongodb.geovalue
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Point
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
-import io.micronaut.data.mongodb.geo.MongoGeoPointConverter
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -45,7 +43,7 @@ class MongoGeoPointValueIndexCreationSpec extends Specification implements Mongo
         mongoClient = applicationContext.getBean(MongoClient)
     }
 
-    void 'creates geospatial index on a MongoGeoPoint modeled value'() {
+    void 'creates geospatial index on a MongoDB Point value'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
@@ -73,7 +71,6 @@ class GeoPointValueIndexedEntity {
     String id
 
     @TypeDef(type = DataType.OBJECT)
-    @MappedProperty(converter = MongoGeoPointConverter, converterPersistedType = java.util.Map)
     @MongoGeoIndexed(name = 'geo_point_location_idx')
-    MongoGeoPoint location
+    Point location
 }

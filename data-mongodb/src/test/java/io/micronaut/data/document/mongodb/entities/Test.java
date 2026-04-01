@@ -1,10 +1,10 @@
 package io.micronaut.data.document.mongodb.entities;
 
+import com.mongodb.client.model.geojson.MultiPoint;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.mongodb.geo.MongoGeoMultiPoint;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,7 +31,7 @@ class Test {
     private OtherEntity manyToOneOther;
 
     private List<String> colors;
-    private MongoGeoMultiPoint locations;
+    private MultiPoint locations;
 
     public Test(String name) {
         this.name = name;
@@ -121,11 +121,11 @@ class Test {
         this.colors = colors;
     }
 
-    public MongoGeoMultiPoint getLocations() {
+    public MultiPoint getLocations() {
         return locations;
     }
 
-    public void setLocations(MongoGeoMultiPoint locations) {
+    public void setLocations(MultiPoint locations) {
         this.locations = locations;
     }
 }

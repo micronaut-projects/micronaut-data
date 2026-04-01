@@ -51,14 +51,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -124,15 +119,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
-    private static final String TEXT = "$text";
-    private static final String SEARCH = "$search";
-    private static final String GEO_WITHIN = "$geoWithin";
-    private static final String GEO_INTERSECTS = "$geoIntersects";
-    private static final String GEO_NEAR = "$near";
-    private static final String GEO_NEAR_SPHERE = "$nearSphere";
-    private static final String GEOMETRY = "$geometry";
-    private static final String MIN_DISTANCE = "$minDistance";
-    private static final String MAX_DISTANCE = "$maxDistance";
 
     @Nullable
     @Override
@@ -1071,12 +1057,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Override
         public void visit(NegatedPredicate negate) {
             IExpression<Boolean> negated = negate.getNegated();
-            if (negated instanceof TextPredicate) {
-                throw new UnsupportedOperationException("MongoDB does not support negating a $text predicate.");
-            }
-            if (negated instanceof NearPredicate || negated instanceof NearSpherePredicate) {
-                throw new UnsupportedOperationException("MongoDB does not support negating $near/$nearSphere predicates.");
-            }
             if (negated instanceof InPredicate<?> p) {
                 visitIn(p.getExpression(), p.getValues(), true);
                 return;
@@ -1157,68 +1137,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 likePredicate.getExpression(),
                 likePredicate.isCaseInsensitive(), likePredicate.isNegated(), false, false,
                 pattern, true);
-        }
-
-        @Override
-        public void visit(TextPredicate textPredicate) {
-            LinkedHashMap<String, Object> textClause = new LinkedHashMap<>(4);
-            textClause.put(SEARCH, valueRepresentation(textPredicate.getSearch()));
-            if (textPredicate.getLanguage() != null) {
-                textClause.put("$language", valueRepresentation(textPredicate.getLanguage()));
-            }
-            if (textPredicate.getCaseSensitive() != null) {
-                textClause.put("$caseSensitive", valueRepresentation(textPredicate.getCaseSensitive()));
-            }
-            if (textPredicate.getDiacriticSensitive() != null) {
-                textClause.put("$diacriticSensitive", valueRepresentation(textPredicate.getDiacriticSensitive()));
-            }
-            query.put(TEXT, textClause);
-        }
-
-        @Override
-        public void visit(GeoWithinPredicate geoWithinPredicate) {
-            PersistentPropertyPath propertyPath = requireProperty(geoWithinPredicate.getExpression()).getPropertyPath();
-            query.put(getPropertyPersistName(propertyPath),
-                Map.of(GEO_WITHIN,
-                    Map.of(GEOMETRY, valueRepresentation(queryState, propertyPath, geoWithinPredicate.getGeometry()))));
-        }
-
-        @Override
-        public void visit(GeoIntersectsPredicate geoIntersectsPredicate) {
-            PersistentPropertyPath propertyPath = requireProperty(geoIntersectsPredicate.getExpression()).getPropertyPath();
-            query.put(getPropertyPersistName(propertyPath),
-                Map.of(GEO_INTERSECTS,
-                    Map.of(GEOMETRY, valueRepresentation(queryState, propertyPath, geoIntersectsPredicate.getGeometry()))));
-        }
-
-        @Override
-        public void visit(NearPredicate nearPredicate) {
-            PersistentPropertyPath propertyPath = requireProperty(nearPredicate.getExpression()).getPropertyPath();
-            query.put(getPropertyPersistName(propertyPath),
-                Map.of(GEO_NEAR, buildNearClause(propertyPath, nearPredicate.getGeometry(), nearPredicate.getMinDistance(), nearPredicate.getMaxDistance())));
-        }
-
-        @Override
-        public void visit(NearSpherePredicate nearSpherePredicate) {
-            PersistentPropertyPath propertyPath = requireProperty(nearSpherePredicate.getExpression()).getPropertyPath();
-            query.put(getPropertyPersistName(propertyPath),
-                Map.of(GEO_NEAR_SPHERE,
-                    buildNearClause(propertyPath, nearSpherePredicate.getGeometry(), nearSpherePredicate.getMinDistance(), nearSpherePredicate.getMaxDistance())));
-        }
-
-        private Map<String, Object> buildNearClause(PersistentPropertyPath propertyPath,
-                                                    Expression<?> geometry,
-                                                    @Nullable Expression<? extends Number> minDistance,
-                                                    @Nullable Expression<? extends Number> maxDistance) {
-            LinkedHashMap<String, Object> clause = new LinkedHashMap<>(3);
-            clause.put(GEOMETRY, valueRepresentation(queryState, propertyPath, geometry));
-            if (minDistance != null) {
-                clause.put(MIN_DISTANCE, valueRepresentation(queryState, propertyPath, minDistance));
-            }
-            if (maxDistance != null) {
-                clause.put(MAX_DISTANCE, valueRepresentation(queryState, propertyPath, maxDistance));
-            }
-            return clause;
         }
 
         @Override

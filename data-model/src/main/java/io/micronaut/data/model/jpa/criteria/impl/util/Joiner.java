@@ -40,14 +40,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -276,56 +271,6 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(LikePredicate likePredicate) {
         visitPredicateExpression(likePredicate.getExpression());
-    }
-
-    @Override
-    public void visit(TextPredicate textPredicate) {
-        visitPredicateExpression(textPredicate.getSearch());
-        if (textPredicate.getLanguage() != null) {
-            visitPredicateExpression(textPredicate.getLanguage());
-        }
-        if (textPredicate.getCaseSensitive() != null) {
-            visitPredicateExpression(textPredicate.getCaseSensitive());
-        }
-        if (textPredicate.getDiacriticSensitive() != null) {
-            visitPredicateExpression(textPredicate.getDiacriticSensitive());
-        }
-    }
-
-    @Override
-    public void visit(GeoWithinPredicate geoWithinPredicate) {
-        visitPredicateExpression(geoWithinPredicate.getExpression());
-        visitPredicateExpression(geoWithinPredicate.getGeometry());
-    }
-
-    @Override
-    public void visit(GeoIntersectsPredicate geoIntersectsPredicate) {
-        visitPredicateExpression(geoIntersectsPredicate.getExpression());
-        visitPredicateExpression(geoIntersectsPredicate.getGeometry());
-    }
-
-    @Override
-    public void visit(NearPredicate nearPredicate) {
-        visitPredicateExpression(nearPredicate.getExpression());
-        visitPredicateExpression(nearPredicate.getGeometry());
-        if (nearPredicate.getMinDistance() != null) {
-            visitPredicateExpression(nearPredicate.getMinDistance());
-        }
-        if (nearPredicate.getMaxDistance() != null) {
-            visitPredicateExpression(nearPredicate.getMaxDistance());
-        }
-    }
-
-    @Override
-    public void visit(NearSpherePredicate nearSpherePredicate) {
-        visitPredicateExpression(nearSpherePredicate.getExpression());
-        visitPredicateExpression(nearSpherePredicate.getGeometry());
-        if (nearSpherePredicate.getMinDistance() != null) {
-            visitPredicateExpression(nearSpherePredicate.getMinDistance());
-        }
-        if (nearSpherePredicate.getMaxDistance() != null) {
-            visitPredicateExpression(nearSpherePredicate.getMaxDistance());
-        }
     }
 
     @Override

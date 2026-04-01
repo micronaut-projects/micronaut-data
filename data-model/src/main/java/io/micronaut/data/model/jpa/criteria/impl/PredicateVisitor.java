@@ -19,16 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoIntersectsPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoWithinPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NearSpherePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.TextPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 
 /**
@@ -95,41 +90,6 @@ public interface PredicateVisitor {
      * @param likePredicate The like predicate
      */
     void visit(LikePredicate likePredicate);
-
-    /**
-     * Visit {@link TextPredicate}.
-     *
-     * @param textPredicate The text predicate
-     */
-    void visit(TextPredicate textPredicate);
-
-    /**
-     * Visit {@link GeoWithinPredicate}.
-     *
-     * @param geoWithinPredicate The geo-within predicate
-     */
-    void visit(GeoWithinPredicate geoWithinPredicate);
-
-    /**
-     * Visit {@link GeoIntersectsPredicate}.
-     *
-     * @param geoIntersectsPredicate The geo-intersects predicate
-     */
-    void visit(GeoIntersectsPredicate geoIntersectsPredicate);
-
-    /**
-     * Visit {@link NearPredicate}.
-     *
-     * @param nearPredicate The near predicate
-     */
-    void visit(NearPredicate nearPredicate);
-
-    /**
-     * Visit {@link NearSpherePredicate}.
-     *
-     * @param nearSpherePredicate The near-sphere predicate
-     */
-    void visit(NearSpherePredicate nearSpherePredicate);
 
     /**
      * Visit {@link ExistsSubqueryPredicate}.

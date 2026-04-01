@@ -22,8 +22,6 @@ import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
 import io.micronaut.data.document.mongodb.entities.Test
 import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
-import io.micronaut.data.mongodb.geo.MongoGeoPolygon
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
@@ -143,53 +141,7 @@ class MongoCriteriaSpec extends Specification {
                             def colors = Arrays.asList("red", "white")
                             def parameter = cb.literal(colors)
                             ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("colors"), parameter)
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).text("coffee shop")
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).text(
-                                cb.parameter(String),
-                                cb.literal("en"),
-                                cb.literal(true),
-                                cb.literal(false)
-                        )
-                    } as Specification,
-                    { root, query, cb ->
-                        def polygon = new MongoGeoPolygon([[
-                                new MongoGeoPoint(-74.0d, 40.0d),
-                                new MongoGeoPoint(-74.0d, 41.0d),
-                                new MongoGeoPoint(-73.0d, 41.0d),
-                                new MongoGeoPoint(-73.0d, 40.0d),
-                                new MongoGeoPoint(-74.0d, 40.0d)
-                        ]])
-                        ((PersistentEntityCriteriaBuilder) cb).geoWithin(root.get("locations"), cb.literal(polygon))
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).geoIntersects(root.get("locations"), cb.literal(new MongoGeoPoint(-73.99d, 40.75d)))
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).near(
-                                root.get("locations"),
-                                cb.literal(new MongoGeoPoint(-73.98d, 40.74d)),
-                                cb.literal(10d),
-                                cb.literal(100d)
-                        )
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).near(root.get("locations"), cb.literal(new MongoGeoPoint(-73.97d, 40.73d)))
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).nearSphere(root.get("locations"), cb.parameter(MongoGeoPoint))
-                    } as Specification,
-                    { root, query, cb ->
-                        ((PersistentEntityCriteriaBuilder) cb).nearSphere(
-                                root.get("locations"),
-                                cb.literal(new MongoGeoPoint(-73.96d, 40.72d)),
-                                cb.literal(5d),
-                                cb.literal(50d)
-                        )
-                    } as Specification,
+                    } as Specification
             ]
             expectedWhereQuery << [
                     '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
@@ -201,15 +153,7 @@ class MongoCriteriaSpec extends Specification {
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$nin:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
-                    '{colors:{$all:[{$mn_qp:0}]}}',
-                    '{$text:{$search:{$mn_qp:0}}}',
-                    '{$text:{$search:{$mn_qp:0},$language:{$mn_qp:1},$caseSensitive:{$mn_qp:2},$diacriticSensitive:{$mn_qp:3}}}',
-                    '{locations:{$geoWithin:{$geometry:{$mn_qp:0}}}}',
-                    '{locations:{$geoIntersects:{$geometry:{$mn_qp:0}}}}',
-                    '{locations:{$near:{$geometry:{$mn_qp:0},$minDistance:{$mn_qp:1},$maxDistance:{$mn_qp:2}}}}',
-                    '{locations:{$near:{$geometry:{$mn_qp:0}}}}',
-                    '{locations:{$nearSphere:{$geometry:{$mn_qp:0}}}}',
-                    '{locations:{$nearSphere:{$geometry:{$mn_qp:0},$minDistance:{$mn_qp:1},$maxDistance:{$mn_qp:2}}}}'
+                    '{colors:{$all:[{$mn_qp:0}]}}'
             ]
     }
 
@@ -256,47 +200,6 @@ class MongoCriteriaSpec extends Specification {
                     '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
                     '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
             ]
-    }
-
-    void "test negated text predicate is unsupported"() {
-        given:
-            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(((PersistentEntityCriteriaBuilder) criteriaBuilder).text("coffee").not())
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(UnsupportedOperationException)
-            e.message.contains('$text')
-    }
-
-    void "test negated near predicate is unsupported"() {
-        given:
-            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(((PersistentEntityCriteriaBuilder) criteriaBuilder)
-                    .near(entityRoot.get("locations"), new MongoGeoPoint(-73.98d, 40.74d)).not())
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(UnsupportedOperationException)
-            e.message.contains('$near/$nearSphere')
-    }
-
-    void "test negated nearSphere predicate is unsupported"() {
-        given:
-            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            criteriaQuery.where(((PersistentEntityCriteriaBuilder) criteriaBuilder)
-                    .nearSphere(entityRoot.get("locations"), new MongoGeoPoint(-73.98d, 40.74d)).not())
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(UnsupportedOperationException)
-            e.message.contains('$near/$nearSphere')
     }
 
     @Unroll

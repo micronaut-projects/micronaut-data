@@ -1,6 +1,8 @@
 package io.micronaut.data.document.mongodb.geovalue.polygon
 
 import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Polygon
+import com.mongodb.client.model.geojson.Position
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -11,8 +13,6 @@ import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.mongodb.geo.MongoGeoPoint
-import io.micronaut.data.mongodb.geo.MongoGeoPolygon
 import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -48,7 +48,7 @@ class MongoGeoPolygonValueIndexCreationSpec extends Specification implements Mon
         repository = applicationContext.getBean(GeoPolygonValueIndexedEntityRepository)
     }
 
-    void 'creates geospatial index on a MongoGeoPolygon modeled value'() {
+    void 'creates geospatial index on a MongoDB Polygon value'() {
         given:
         def conditions = new PollingConditions(timeout: 10, delay: 0.25)
 
@@ -64,16 +64,14 @@ class MongoGeoPolygonValueIndexCreationSpec extends Specification implements Mon
         }
     }
 
-    void 'persists and reads MongoGeoPolygon modeled value'() {
+    void 'persists and reads MongoDB Polygon value'() {
         given:
-        def polygon = new MongoGeoPolygon([
-                [
-                        new MongoGeoPoint(-73.99d, 40.75d),
-                        new MongoGeoPoint(-73.98d, 40.75d),
-                        new MongoGeoPoint(-73.98d, 40.74d),
-                        new MongoGeoPoint(-73.99d, 40.74d),
-                        new MongoGeoPoint(-73.99d, 40.75d)
-                ]
+        def polygon = new Polygon([
+                new Position(-73.99d, 40.75d),
+                new Position(-73.98d, 40.75d),
+                new Position(-73.98d, 40.74d),
+                new Position(-73.99d, 40.74d),
+                new Position(-73.99d, 40.75d)
         ])
 
         when:
@@ -81,10 +79,9 @@ class MongoGeoPolygonValueIndexCreationSpec extends Specification implements Mon
         def loaded = repository.findById(saved.id).orElseThrow()
 
         then:
-        loaded.area.coordinates().size() == 1
-        loaded.area.coordinates()[0].size() == 5
-        loaded.area.coordinates()[0][0].x() == -73.99d
-        loaded.area.coordinates()[0][0].y() == 40.75d
+        loaded.area.coordinates.exterior.size() == 5
+        loaded.area.coordinates.exterior[0].values[0] == -73.99d
+        loaded.area.coordinates.exterior[0].values[1] == 40.75d
     }
 }
 
@@ -100,5 +97,5 @@ class GeoPolygonValueIndexedEntity {
 
     @TypeDef(type = DataType.OBJECT)
     @MongoGeoIndexed(name = 'geo_polygon_location_idx')
-    MongoGeoPolygon area
+    Polygon area
 }
