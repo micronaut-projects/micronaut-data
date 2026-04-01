@@ -15,10 +15,10 @@ import java.util.stream.Stream;
 public interface UserRepository extends CrudRepository<User, Long> {
 
     @Override
-    @Query("UPDATE User SET enabled = false WHERE id = :id")
+    @Query("UPDATE Users SET enabled = false WHERE id = :id")
     void deleteById(@NonNull @NotNull Long id);
 
-    @Query("FROM User user WHERE enabled = false")
+    @Query("FROM Users WHERE enabled = false")
     List<User> findDisabled();
 
     // tag::fetch_size_streaming[]

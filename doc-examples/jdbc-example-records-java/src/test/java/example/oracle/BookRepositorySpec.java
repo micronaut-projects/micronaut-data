@@ -1,5 +1,8 @@
-package example;
+package example.oracle;
 
+import example.Book;
+import example.BookDTO;
+import example.BookRepository;
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
@@ -21,7 +24,8 @@ import java.util.List;
 class BookRepositorySpec {
 
     // tag::inject[]
-    @Inject BookRepository bookRepository;
+    @Inject
+    BookRepository bookRepository;
     // end::inject[]
 
     // tag::metadata[]

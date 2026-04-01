@@ -12,13 +12,8 @@ dependencies {
     api (projects.micronautDataHibernateJpa) {
         exclude group: 'org.hibernate.orm'
     }
-    // TODO: Temporary version change forcing until Hibernate Reactive is aligned with Hibernate Core
     api (mnSql.micronaut.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
-        exclude group: 'org.hibernate.orm', module: 'hibernate-core'
-    }
-    api(libs.hibernate.core.reactive.compat) {
-        because("Hibernate Reactive 4.2.x not compatible with Hibernate Core 7.3.x")
     }
 
     implementation mnReactor.micronaut.reactor

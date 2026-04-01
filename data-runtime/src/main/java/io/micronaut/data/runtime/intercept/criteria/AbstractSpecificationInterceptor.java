@@ -527,7 +527,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 while (orderIterator.hasNext()) {
                     path = path.get(orderIterator.next());
                 }
-                selection.add(path);
+                selection.add(getSelectionForOrder(order, path));
             }
         }
         for (Sort.Order order : orders) {
@@ -536,9 +536,20 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
                 path = path.get(orderPath);
             }
-            selection.add(path);
+            selection.add(getSelectionForOrder(order, path));
         }
         return selection;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Selection<?> getSelectionForOrder(Sort.Order order, Path<?> path) {
+        if (order.isIgnoreCase()) {
+            // Keep the DISTINCT tuple selection aligned with the generated ORDER BY expression.
+            // Some dialects reject DISTINCT pagination if ORDER BY LOWER(path) is used but only
+            // the raw path is projected in the internal id-selection query.
+            return criteriaBuilder.lower((Expression<String>) path);
+        }
+        return path;
     }
 
     /**

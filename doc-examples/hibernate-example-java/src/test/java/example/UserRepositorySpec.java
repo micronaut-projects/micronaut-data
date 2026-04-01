@@ -1,13 +1,10 @@
 package example;
 
-import io.micronaut.context.annotation.Property;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.query.MutationQuery;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,12 +16,10 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@MicronautTest
-@Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
-class UserRepositorySpec {
+public abstract class UserRepositorySpec {
 
     @Inject UserRepository userRepository;
-    @Inject TransactionOperations<Session> transactionOperations;
+    @Inject protected TransactionOperations<Session> transactionOperations;
 
     @BeforeEach
     void setup() {
@@ -105,7 +100,7 @@ class UserRepositorySpec {
         Assertions.assertEquals(total, entityCount);
     }
 
-    void seedUsers(long count) {
+    protected void seedUsers(long count) {
         String sql = """
             INSERT INTO user(id, name, enabled)
                    SELECT x, 'Name ' || x, true

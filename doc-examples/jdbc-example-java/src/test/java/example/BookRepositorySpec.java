@@ -15,7 +15,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
 import jakarta.inject.Inject;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-@MicronautTest
-class BookRepositorySpec {
+public abstract class BookRepositorySpec {
 
     // tag::inject[]
 	@Inject BookRepository bookRepository;
@@ -34,7 +32,7 @@ class BookRepositorySpec {
 
 	// tag::metadata[]
 	@Inject
-	BeanContext beanContext;
+	protected BeanContext beanContext;
 
     @AfterEach
     public void cleanup() {
@@ -42,7 +40,7 @@ class BookRepositorySpec {
     }
 
 	@Test
-	void testAnnotationMetadata() {
+	protected void testAnnotationMetadata() {
 		String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
 								.getRequiredMethod("find", String.class) // <2>
 							    .getAnnotationMetadata()

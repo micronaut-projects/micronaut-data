@@ -8,9 +8,9 @@ micronaut-testresources = "4.0.0-M1"
 micronaut-azure = "5.13.0"
 micronaut-reactor = "4.0.0-M1"
 micronaut-rxjava2 = "2.9.0"
-micronaut-r2dbc = "7.0.0-M3"
-micronaut-sql = "7.0.0-M8"
-micronaut-serde = "3.0.0-M2"
+micronaut-r2dbc = "7.0.1-M1"
+micronaut-sql = "7.0.1-M1"
+micronaut-serde = "3.0.0-M4"
 micronaut-spring = "5.12.1"
 micronaut-test = "5.0.0-M4"
 micronaut-mongo = "6.0.1-M1"
@@ -46,22 +46,19 @@ h2gis = "2.2.5"
 ksp-gradle-plugin = "2.3.6"
 kotlin-gradle-plugin = "2.3.20"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "4.0.4"
+spring-boot-gradle-plugin = "4.0.5"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.4.0"
 errorprone-gradle-plugin = "5.1.0"
 nullaway = "0.13.1"
 error_prone_core = "2.48.0"
+groovy_yaml = "5.0.4"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
 kotlin-coroutines = "1.10.2"
 
 antlr = "4.13.2"
-
-# TODO: Temporary version workaround until Hibernate Reactive is aligned with Hibernate Core
-hibernate-core-reactive-compat = "7.2.7.Final"
-
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -104,11 +101,6 @@ managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data-stateful',
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
 
-# Hibernate
-
-# TODO: Temporary version workaround until Hibernate Reactive is aligned with Hibernate Core
-hibernate-core-reactive-compat = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate-core-reactive-compat" }
-
 # Lombok
 
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
@@ -134,6 +126,7 @@ junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suit
 
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error_prone_core" }
+groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
 
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
 
