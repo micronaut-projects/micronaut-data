@@ -141,7 +141,7 @@ class MongoCriteriaSpec extends Specification {
                             def colors = Arrays.asList("red", "white")
                             def parameter = cb.literal(colors)
                             ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("colors"), parameter)
-                    } as Specification
+                    } as Specification,
             ]
             expectedWhereQuery << [
                     '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',

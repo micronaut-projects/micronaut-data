@@ -125,7 +125,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                     Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
                             .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
-                    Serializer<? super Object> serializer = findSerializer(convertedType).createSpecific(encoderContext, convertedType);
+                    Serializer<? super Object> serializer = findSerializer(convertedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                     return new Serializer<>() {
 

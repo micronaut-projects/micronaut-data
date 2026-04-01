@@ -401,7 +401,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             @Nullable
             @Override
             public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
-                if (converterClass == null || converterClass == Object.class) {
+                if (converterClass == null) {
                     return value;
                 }
                 AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);

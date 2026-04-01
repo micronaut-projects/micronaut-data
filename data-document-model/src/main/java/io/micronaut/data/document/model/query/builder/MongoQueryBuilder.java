@@ -1357,18 +1357,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Nullable
-        private Object valueRepresentation(Expression<?> value) {
-            if (value instanceof LiteralExpression<?> literalExpression) {
-                return literalExpression.getValue();
-            }
-            if (value instanceof BindingParameter bindingParameter) {
-                int index = queryState.pushParameter(bindingParameter, newBindingContext(null, null));
-                return Map.of(QUERY_PARAMETER_PLACEHOLDER, index);
-            }
-            return value;
-        }
-
-        @Nullable
         private Object valueRepresentation(PropertyParameterCreator parameterCreator, Expression<?> leftExpression, @Nullable Object value) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);

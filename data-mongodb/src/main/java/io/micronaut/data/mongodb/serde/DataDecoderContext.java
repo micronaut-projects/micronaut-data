@@ -151,7 +151,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                             .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    Deserializer<?> deserializer = findDeserializer(convertedType).createSpecific(decoderContext, convertedType);
+                    Deserializer<?> deserializer = findDeserializer(convertedType);
                     return new Deserializer<>() {
                         @Override
                         @Nullable
@@ -160,7 +160,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                                 return null;
                             }
                             Object deserialized = deserializer.deserialize(decoder, decoderContext, convertedType);
-                            return converter.convertToEntityValue(deserialized, ConversionContext.of(type));
+                            return converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
                         }
                     };
                 }
