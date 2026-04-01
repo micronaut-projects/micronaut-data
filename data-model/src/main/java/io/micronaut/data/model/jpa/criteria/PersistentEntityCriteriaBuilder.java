@@ -53,7 +53,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return The insert criteria
      * @since 5.0
      */
-
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity);
 
     /**
@@ -64,7 +63,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param ignoreCase If ignore case should be used
      * @return ascending ordering corresponding to the expression
      */
-
     Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
@@ -226,5 +224,4 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 3.9.0
      */
     Predicate arrayContains(Expression<?> x, Expression<?> y);
-
 }
