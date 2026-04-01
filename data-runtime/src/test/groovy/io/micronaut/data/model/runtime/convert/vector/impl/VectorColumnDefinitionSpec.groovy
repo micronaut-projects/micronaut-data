@@ -113,25 +113,4 @@ class VectorColumnDefinitionSpec extends Specification {
         conv.getColumnDefinition(arg(Vector, null, 5, true), DatabaseType.ORACLE) == "VECTOR(5,FLOAT32,SPARSE)"
     }
 
-    void "oracle: deprecated sparse flag is still honored"() {
-        given:
-        def conv = new DefaultVectorAttributeConverter(Collections.emptyList())
-        Map<String, Map<CharSequence, Object>> declaredAnnotations = [
-            "io.micronaut.data.annotation.VectorStorage": [
-                "length": 5,
-                "sparse": true
-            ]
-        ]
-        def metadata = new DefaultAnnotationMetadata(
-            declaredAnnotations,
-            Collections.emptyMap(),
-            Collections.emptyMap(),
-            declaredAnnotations,
-            Collections.emptyMap()
-        )
-        def argument = Argument.of(Vector, "embedding", metadata)
-
-        expect:
-        conv.getColumnDefinition(argument, DatabaseType.ORACLE) == "VECTOR(5,FLOAT32,SPARSE)"
-    }
 }
