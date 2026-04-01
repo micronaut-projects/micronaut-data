@@ -24,6 +24,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import org.jspecify.annotations.NonNull;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -53,10 +54,15 @@ public final class DefaultDeleteReturningOneReactiveInterceptor extends Abstract
             }
             Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
             if (deleteEntities.isPresent()) {
-                return Flux.from(reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()))).singleOrEmpty();
+                return Flux.from(reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()))).next();
             }
         }
-        return Flux.from(reactiveOperations.execute(preparedQuery)).singleOrEmpty();
+        return Flux.from(reactiveOperations.execute(preparedQuery)).collectList().flatMap(results -> {
+            if (results.isEmpty()) {
+                return Mono.empty();
+            }
+            return Mono.just(results.get(0));
+        });
     }
 
 }
