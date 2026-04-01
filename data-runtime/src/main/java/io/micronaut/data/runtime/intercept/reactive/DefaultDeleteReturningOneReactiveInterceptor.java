@@ -58,6 +58,5 @@ public final class DefaultDeleteReturningOneReactiveInterceptor extends Abstract
         }
         return Flux.from(reactiveOperations.execute(preparedQuery)).singleOrEmpty();
     }
-}
 
 }
