@@ -74,11 +74,12 @@ In production you will insert those metadata rows using a SQL migration tool suc
 https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or
 https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
-If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with `@Index`:
+If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties
+are annotated with `@Index`:
 
 [source,sql]
 ----
-CREATE INDEX ... INDEXTYPE IS MDSYS.SPATIAL_INDEX
+CREATE INDEX "IDX_GEOMETRY_ENTITY_JSON_LOCATION" ON "GEOMETRY_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX
 ----
 
 ==== PostgreSQL
@@ -115,11 +116,12 @@ For `GEOGRAPHY` data type Micronaut Data still uses the same `ST_GeomFromGeoJSON
 and `ST_AsText` functions, but casts through `::geography` on writes and `::geometry` on reads because
 the PostGIS JSON and text conversion functions operate on geometry values.
 
-If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with `@Index`:
+If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with `@Index`:
 
 [source,sql]
 ----
-CREATE INDEX ... USING GIST (...)
+CREATE INDEX "idx_geography_entity_json_location" ON "geography_entity_json" USING GIST ("location");
 ----
 
 ==== MySQL
@@ -142,11 +144,12 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
-If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with `@Index`:
+If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with `@Index`:
 
 [source,sql]
 ----
-CREATE SPATIAL INDEX ...
+CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
 
 ==== MariaDB
@@ -196,11 +199,12 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
-If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with `@Index`:
+If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with `@Index`:
 
 [source,sql]
 ----
-CREATE SPATIAL INDEX ...
+CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
 
 ==== SQL Server
@@ -223,18 +227,21 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `geometry::STGeomFromText(?, srid)` or `geography::STGeomFromText(?, srid)`
 |===
 
-If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are annotated with `@Index`:
+If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with `@Index`:
 
 [source,sql]
 ----
-CREATE SPATIAL INDEX ...
+CREATE SPATIAL INDEX [idx_geography_entity_wkt_location] ON [geography_entity_wkt] ([location]);
 ----
 
-When the indexed column definition contains `geometry`, the internal schema-generation tooling also appends the geometry grid bounding box clause:
+When the indexed column definition contains `geometry`, the internal schema-generation tooling also appends the geometry
+grid bounding box clause using default coordinates for SRID = 3857 - Web Mercator:
 
 [source,sql]
 ----
-USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))
+CREATE SPATIAL INDEX [idx_geometry_entity_wkt_location] ON [geometry_entity_wkt] ([location])
+USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));
 ----
 
 That clause is generated for `geometry` SQL Server mappings and is not used for the `geography` mapping.
