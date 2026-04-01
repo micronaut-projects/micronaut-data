@@ -79,6 +79,25 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         reloadedMany.size() == 2
 
         when:
+        def insertedBook = repository.insertReturningBook(author.id, null, "Reactive Query Coraline", 404, null, lastUpdated).block()
+        def insertedBooks = repository.insertReturningBooks(author.id, null, "Reactive Query Neverwhere", 405, null, lastUpdated).collectList().block()
+        def reloadedInsertedBook = bookRepository.findByTitle("Reactive Query Coraline")
+        def reloadedInsertedBooks = [
+                bookRepository.findByTitle("Reactive Query Neverwhere")
+        ]
+
+        then:
+        insertedBook.id != null
+        insertedBook.title == "Reactive Query Coraline"
+        insertedBooks.size() == 1
+        insertedBooks[0].id != null
+        insertedBooks[0].title == "Reactive Query Neverwhere"
+        reloadedInsertedBook.id == insertedBook.id
+        reloadedInsertedBook.title == insertedBook.title
+        reloadedInsertedBooks*.id == insertedBooks*.id
+        reloadedInsertedBooks*.title == insertedBooks*.title
+
+        when:
         savedBook.title = "Reactive Derived It Updated"
         def updatedBook = repository.updateReturning(savedBook).block()
 

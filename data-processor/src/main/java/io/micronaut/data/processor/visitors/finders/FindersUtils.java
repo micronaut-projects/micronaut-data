@@ -184,11 +184,10 @@ public interface FindersUtils {
             case UPDATE_RETURNING -> {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch updateEntry;
-                boolean reactiveOrFuture = isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType);
                 if (hasMultipleEntityParameter && returnsEntity) {
                     updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
                 } else if (hasEntityParameter && returnsEntity) {
-                    if (reactiveOrFuture) {
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
                         updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
                     } else {
                         updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
@@ -220,8 +219,7 @@ public interface FindersUtils {
             case INSERT_RETURNING -> {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch saveEntry;
-                boolean reactiveOrFuture = isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType);
-                if (hasEntityParameter && returnsEntity && !reactiveOrFuture) {
+                if (hasEntityParameter && returnsEntity) {
                     saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
                 } else if (hasMultipleEntityParameter && returnsEntity) {
                     saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);

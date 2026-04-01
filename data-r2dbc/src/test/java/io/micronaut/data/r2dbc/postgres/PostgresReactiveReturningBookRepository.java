@@ -19,8 +19,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Book;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresReactiveReturningBookRepository {
@@ -28,6 +31,30 @@ public interface PostgresReactiveReturningBookRepository {
     Mono<Book> saveReturning(Book book);
 
     Flux<Book> saveReturningMany(Iterable<Book> books);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING *
+        """)
+    Mono<Book> insertReturningBook(@Nullable Long authorId,
+                                   @Nullable Long genreId,
+                                   String title,
+                                   int totalPages,
+                                   @Nullable Long publisherId,
+                                   LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING *
+        """)
+    Flux<Book> insertReturningBooks(@Nullable Long authorId,
+                                    @Nullable Long genreId,
+                                    String title,
+                                    int totalPages,
+                                    @Nullable Long publisherId,
+                                    LocalDateTime lastUpdated);
 
     Mono<Book> updateReturning(Book book);
 

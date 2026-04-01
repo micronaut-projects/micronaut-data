@@ -71,7 +71,7 @@ $returnType $method($arguments);
         "save"         | "Completable"           | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Long>"          | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
-        "saveReturning"| "Single<Person>"        | "Person person"                | InsertReturningOneReactiveInterceptor
+        "saveReturning"| "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
         "saveReturningAll" | "Flowable<Person>"   | "List<Person> entities"        | SaveAllReactiveInterceptor
