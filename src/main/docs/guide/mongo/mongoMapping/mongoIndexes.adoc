@@ -12,8 +12,6 @@ NOTE: Index creation is opt-in and runs during startup collection initialization
 When `micronaut.data.mongodb.create-indexes=true` and `micronaut.data.mongodb.create-collections=false`, Micronaut Data still performs index reconciliation/creation for collections that already exist.
 If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.
 
-NOTE: Query-side usage for MongoDB text/geospatial operators is documented in xref:mongo/mongoCriteriaSpecifications/mongoCriteriaExecuteQuery.adoc[Mongo criteria execute query].
-
 == Supported index annotations
 
 Micronaut Data currently supports the following MongoDB index annotations:
@@ -138,28 +136,11 @@ For `2dsphere` indexes, ann:data.mongodb.annotation.index.MongoGeoIndexed[] also
 
 NOTE: `sphereVersion` is only valid for `2dsphere` indexes; declaring it for other geospatial kinds is rejected during startup validation (fail-fast).
 
-Modeled geospatial values are supported for `MongoGeoPoint`, `MongoGeoMultiPoint`, `MongoGeoLineString`, `MongoGeoMultiLineString`, `MongoGeoPolygon`, `MongoGeoMultiPolygon`, `MongoGeoGeometryCollection`, and custom point-like modeled types.
+For `2dsphere` indexes, the supported implicit property model is MongoDB Java driver GeoJSON types such as `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, and `GeometryCollection`.
 
-For properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[], Micronaut Data now applies `MongoGeoPointConverter` implicitly when no explicit `@MappedProperty(converter=...)` is declared.
-Point-like modeled types can map coordinates through numeric properties such as `x/y`, `longitude/latitude`, or `lng|lon/lat`.
+For `2d` indexes, Micronaut Data continues to allow legacy map-backed coordinate values.
 
-For polygon modeled values, Micronaut Data applies `MongoGeoPolygonConverter` implicitly for `MongoGeoPolygon` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-For line-string modeled values, Micronaut Data applies `MongoGeoLineStringConverter` implicitly for `MongoGeoLineString` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-For multi-line-string modeled values, Micronaut Data applies `MongoGeoMultiLineStringConverter` implicitly for `MongoGeoMultiLineString` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-For multi-point modeled values, Micronaut Data applies `MongoGeoMultiPointConverter` implicitly for `MongoGeoMultiPoint` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-For multi-polygon modeled values, Micronaut Data applies `MongoGeoMultiPolygonConverter` implicitly for `MongoGeoMultiPolygon` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-For geometry-collection modeled values, Micronaut Data applies `MongoGeoGeometryCollectionConverter` implicitly for `MongoGeoGeometryCollection` properties annotated with ann:data.mongodb.annotation.index.MongoGeoIndexed[].
-
-With `MongoGeoGeometryCollection` in place, modeled support now covers all standard GeoJSON geometry kinds (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`).
-
-For raw Mongo query annotations (for example ann:data.mongodb.annotation.MongoFindQuery[]), supported modeled geospatial parameter types are also converted implicitly to GeoJSON persisted shapes (`type` + `coordinates`) when no explicit converter is specified.
-
-NOTE: ann:data.mongodb.annotation.index.MongoGeoIndexed[] now validates property type compatibility during startup and fails fast for unsupported non-geospatial property types.
+NOTE: ann:data.mongodb.annotation.index.MongoGeoIndexed[] validates property type compatibility during startup and fails fast for unsupported property types.
 
 == Wildcard indexes
 

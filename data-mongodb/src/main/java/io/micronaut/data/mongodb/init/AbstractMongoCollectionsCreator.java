@@ -151,11 +151,11 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             DatabaseOperations<Dtbs> databaseOperations = databaseOperationsProvider.get(mongoConfiguration);
             int indexProcessedCount = 0;
             int indexFailureCount = 0;
-            String telemetryDatabaseName = "<unknown>";
+            String databaseName = "<unknown>";
 
             for (PersistentEntity entity : entities) {
                 Dtbs database = databaseOperations.find(entity);
-                telemetryDatabaseName = databaseOperations.getDatabaseName(database);
+                databaseName = databaseOperations.getDatabaseName(database);
                 Set<String> collections = databaseOperations.listCollectionNames(database);
                 String persistedName = mongoCollectionNameProvider.provide(entity);
                 MongoResolvedCollectionOptions desiredCollectionOptions = resolveCollectionOptions(entity);
@@ -206,13 +206,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             if (createIndexes) {
                 if (indexFailureCount > 0 && indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
                     LOG.warn("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
-                            telemetryDatabaseName,
+                        databaseName,
                             indexProcessedCount,
                             indexFailureCount,
                             indexCreationFailurePolicy);
                 } else if (LOG.isInfoEnabled()) {
                     LOG.info("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
-                            telemetryDatabaseName,
+                        databaseName,
                             indexProcessedCount,
                             indexFailureCount,
                             indexCreationFailurePolicy);
