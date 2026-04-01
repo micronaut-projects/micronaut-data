@@ -1,4 +1,4 @@
-Micronaut Data supports geospatial persistence for SQL repositories through the `io.micronaut.data.model.geo` model types:
+Micronaut Data supports geospatial persistence through Micronaut repositories using the `io.micronaut.data.model.geo` model types:
 
 * api:data.model.geo.Point[]
 * api:data.model.geo.MultiPoint[]
