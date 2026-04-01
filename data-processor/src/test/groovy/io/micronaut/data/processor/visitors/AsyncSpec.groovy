@@ -159,6 +159,12 @@ class FullNameDto {
         "updateCustom"     | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false
         "update"           | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false
         "update"           | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false
+        "saveReturning"    | "CompletionStage<Person>"            | "Person person"                | SaveEntityAsyncInterceptor | Person.name        | false
+        "saveReturningAll" | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | Person.name        | false
+        "deleteReturning"  | "CompletionStage<Person>"            | "Person person"                | DeleteReturningOneAsyncInterceptor | Person.name  | false
+        "deleteReturning"  | "CompletionStage<List<Person>>"      | "List<Person> entities"        | DeleteReturningManyAsyncInterceptor | Person.name | false
+        "updateReturning"  | "CompletionStage<Person>"            | "Person person"                | UpdateReturningOneAsyncInterceptor | Person.name  | false
+        "updateReturning"  | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateReturningManyAsyncInterceptor | Person.name | false
     }
 
     @Unroll

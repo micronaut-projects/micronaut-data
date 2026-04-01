@@ -650,8 +650,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
                         return executeAndMapEachRow(statement, row -> {
                             rowsMapper.processRow(row);
-                            return "";
-                        }).collectList().flatMapIterable(ignore -> rowsMapper.getResult()).onErrorResume(errorHandler(preparedQuery.getDialect()));
+                            return Boolean.TRUE;
+                        }).thenMany(Flux.defer(() -> Flux.fromIterable(Objects.requireNonNullElse(rowsMapper.getResult(), List.of())))).onErrorResume(errorHandler(preparedQuery.getDialect()));
                     }
                     return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType())).onErrorResume(errorHandler(preparedQuery.getDialect()));
                 }
