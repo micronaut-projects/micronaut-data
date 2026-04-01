@@ -54,14 +54,11 @@ public final class DefaultDeleteReturningOneReactiveInterceptor extends Abstract
             }
             Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
             if (deleteEntities.isPresent()) {
-                return Flux.from(reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()))).next();
+                return Flux.from(reactiveOperations.deleteAllReturning(getDeleteReturningBatchOperation(context, deleteEntities.get()))).singleOrEmpty();
             }
         }
-        return Flux.from(reactiveOperations.execute(preparedQuery)).collectList().flatMap(results -> {
-            if (results.isEmpty()) {
-                return Mono.empty();
-            }
-            return Mono.just(results.get(0));
-        });
+        return Flux.from(reactiveOperations.execute(preparedQuery)).singleOrEmpty();
     }
+}
+
 }
