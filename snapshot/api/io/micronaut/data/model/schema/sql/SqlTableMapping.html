@@ -61,7 +61,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List)" tabindex="0">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List)</a></li>
 <li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)" tabindex="0">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List)</a></li>
-<li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" tabindex="0">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List, List, List)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List)" tabindex="0">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List, List)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -77,7 +77,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#columns()" tabindex="0">columns()</a></li>
 <li><a href="#sequences()" tabindex="0">sequences()</a></li>
 <li><a href="#indexes()" tabindex="0">indexes()</a></li>
-<li><a href="#auxiliaryStatements()" tabindex="0">auxiliaryStatements()</a></li>
 </ol>
 </li>
 </ol>
@@ -103,12 +102,11 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-columns">columns</span></code> - The list of columns. See <a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlColumnMapping</code></a></dd>
 <dd><code><span id="param-sequences">sequences</span></code> - The list of table sequences, can be null or empty. See <a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlSequenceMapping</code></a></dd>
 <dd><code><span id="param-indexes">indexes</span></code> - The list of table indexes, can be null or empty. See <a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlIndexMapping</code></a></dd>
-<dd><code><span id="param-auxiliaryStatements">auxiliaryStatements</span></code> - Optional additional statements associated with this table, emitted after table creation and before indexes</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlTableMapping</span>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, boolean&nbsp;escape, <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;auxiliaryStatements)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlTableMapping</span>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, boolean&nbsp;escape, <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">The SQL table mapping information extracted from the <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a>.</div>
 <dl class="notes">
@@ -161,15 +159,14 @@ loadScripts(document, 'script');</script>
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  boolean&nbsp;escape,
  <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;auxiliaryStatements)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>SqlTableMapping</code> record class.</div>
 </div>
@@ -187,64 +184,59 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#auxiliaryStatements()" class="member-name-link">auxiliaryStatements</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columns()" class="member-name-link">columns</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-auxiliaryStatements"><code>auxiliaryStatements</code></a> record component.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columns()" class="member-name-link">columns</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-columns"><code>columns</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#escape()" class="member-name-link">escape</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#escape()" class="member-name-link">escape</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-escape"><code>escape</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#indexes()" class="member-name-link">indexes</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#indexes()" class="member-name-link">indexes</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-indexes"><code>indexes</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#name()" class="member-name-link">name</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#name()" class="member-name-link">name</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-name"><code>name</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#primaryKeyColumns()" class="member-name-link">primaryKeyColumns</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#primaryKeyColumns()" class="member-name-link">primaryKeyColumns</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-primaryKeyColumns"><code>primaryKeyColumns</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#schema()" class="member-name-link">schema</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#schema()" class="member-name-link">schema</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-schema"><code>schema</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sequences()" class="member-name-link">sequences</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sequences()" class="member-name-link">sequences</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-sequences"><code>sequences</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type()" class="member-name-link">type</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type()" class="member-name-link">type</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-type"><code>type</code></a> record component.</div>
 </div>
 </div>
@@ -292,7 +284,7 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List)">
 <h3>SqlTableMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMapping</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
@@ -302,8 +294,7 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;auxiliaryStatements)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)</span></div>
 <div class="block">Creates an instance of a <code>SqlTableMapping</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -315,7 +306,6 @@ loadScripts(document, 'script');</script>
 <dd><code>columns</code> - the value for the <a href="#param-columns"><code>columns</code></a> record component</dd>
 <dd><code>sequences</code> - the value for the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
 <dd><code>indexes</code> - the value for the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
-<dd><code>auxiliaryStatements</code> - the value for the <a href="#param-auxiliaryStatements"><code>auxiliaryStatements</code></a> record component</dd>
 </dl>
 </div>
 </section>
@@ -475,19 +465,6 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="auxiliaryStatements()">
-<h3>auxiliaryStatements</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">auxiliaryStatements</span>()</div>
-<div class="block">Returns the value of the <a href="#param-auxiliaryStatements"><code>auxiliaryStatements</code></a> record component.</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the value of the <a href="#param-auxiliaryStatements"><code>auxiliaryStatements</code></a> record component</dd>
 </dl>
 </div>
 </section>

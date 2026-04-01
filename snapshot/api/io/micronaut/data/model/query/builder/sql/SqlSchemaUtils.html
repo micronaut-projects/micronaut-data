@@ -72,7 +72,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(PersistentEntity, Dialect)</a></li>
+<li><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity)" tabindex="0">getSqlTableMappings(PersistentEntity)</a></li>
 </ol>
 </li>
 </ol>
@@ -156,8 +156,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">getSqlTableMappings</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getSqlTableMappings</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity.</div>
 </div>
@@ -347,17 +346,15 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)">
+<section class="detail" id="getSqlTableMappings(io.micronaut.data.model.PersistentEntity)">
 <h3>getSqlTableMappings</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</span>&nbsp;<span class="element-name">getSqlTableMappings</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</span>&nbsp;<span class="element-name">getSqlTableMappings</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity. It will contain main entity table
 and potentially joined tables.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>entity</code> - The entity</dd>
-<dd><code>dialect</code> - The dialect</dd>
 <dt>Returns:</dt>
 <dd>The SQL table definitions for the given entity</dd>
 <dt>Since:</dt>

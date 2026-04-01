@@ -56,7 +56,6 @@ io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
 io.micronaut.data.jpa.repository.intercept
 io.micronaut.data.model
-io.micronaut.data.model.geo
 io.micronaut.data.model.jd
 io.micronaut.data.model.jpa.criteria
 io.micronaut.data.model.jpa.criteria.impl
@@ -153,7 +152,6 @@ io.micronaut.data.tck.entities
 io.micronaut.data.tck.entities.embedded
 io.micronaut.data.tck.entities.schema
 io.micronaut.data.tck.jdbc.entities
-io.micronaut.data.tck.jdbc.entities.geo
 io.micronaut.data.tck.repositories
 io.micronaut.data.tck.repositories.embedded
 io.micronaut.data.tck.services
