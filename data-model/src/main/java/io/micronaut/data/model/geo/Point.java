@@ -61,6 +61,9 @@ public record Point(double x, double y) implements Geometry {
         if (coords.size() != 2) {
             throw new IllegalArgumentException("Coordinates must have 2 elements");
         }
+        if (coords.contains(null)) {
+            throw new IllegalArgumentException("Coordinates cannot contain null values");
+        }
         return new Point(coords.get(0), coords.get(1));
     }
 }

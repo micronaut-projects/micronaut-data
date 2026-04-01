@@ -64,6 +64,15 @@ final class LineStringSpec extends Specification {
         ex.message == 'Coordinates must have 2 elements'
     }
 
+    void 'fromCoords rejects null coordinate pair'() {
+        when:
+        LineString.fromCoords([[1d, 2.5d], null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'Coordinates cannot contain null values'
+    }
+
     private static Point point() {
         new Point(1d, 2.5d)
     }

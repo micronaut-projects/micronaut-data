@@ -71,6 +71,15 @@ final class MultiPolygonSpec extends Specification {
         ex.message == 'Ring at index 0 must have at least 4 points (got 3)'
     }
 
+    void 'fromCoords rejects null polygon coordinates'() {
+        when:
+        MultiPolygon.fromCoords([null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'Coordinates cannot contain null values'
+    }
+
     private static Polygon polygon() {
         new Polygon([
             new LineString([

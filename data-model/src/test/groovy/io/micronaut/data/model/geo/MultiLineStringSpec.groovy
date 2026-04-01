@@ -61,6 +61,15 @@ final class MultiLineStringSpec extends Specification {
         ex.message == 'LineString requires at least two Points'
     }
 
+    void 'fromCoords rejects null line coordinates'() {
+        when:
+        MultiLineString.fromCoords([[[1d, 2.5d], [3d, 4d]], null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'Coordinates cannot contain null values'
+    }
+
     private static LineString lineString() {
         new LineString([new Point(1d, 2.5d), new Point(3d, 4d)])
     }

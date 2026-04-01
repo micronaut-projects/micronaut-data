@@ -41,5 +41,6 @@ final class PointSpec extends Specification {
         []              || 'Coordinates cannot be empty'
         [1d]            || 'Coordinates must have 2 elements'
         [1d, 2d, 3d]    || 'Coordinates must have 2 elements'
+        [1d, null]      || 'Coordinates cannot contain null values'
     }
 }

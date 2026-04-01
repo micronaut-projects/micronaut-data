@@ -76,6 +76,9 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
+        if (coords.contains(null)) {
+            throw new IllegalArgumentException("Coordinates cannot contain null values");
+        }
         return new Polygon(coords.stream().map(LineString::fromCoords).toList());
     }
 }

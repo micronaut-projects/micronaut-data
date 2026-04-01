@@ -88,6 +88,15 @@ final class PolygonSpec extends Specification {
         ex.message == 'Ring at index 0 must have at least 4 points (got 3)'
     }
 
+    void 'fromCoords rejects null ring coordinates'() {
+        when:
+        Polygon.fromCoords([null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'Coordinates cannot contain null values'
+    }
+
     private static LineString outerRing() {
         new LineString([
             new Point(0d, 0d),

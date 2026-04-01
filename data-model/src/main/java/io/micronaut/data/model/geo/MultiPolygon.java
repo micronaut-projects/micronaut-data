@@ -64,6 +64,9 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
+        if (coords.contains(null)) {
+            throw new IllegalArgumentException("Coordinates cannot contain null values");
+        }
         return new MultiPolygon(coords.stream().map(Polygon::fromCoords).toList());
     }
 }

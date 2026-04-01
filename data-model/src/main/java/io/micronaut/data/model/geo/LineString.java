@@ -64,6 +64,9 @@ public record LineString(List<Point> points) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
+        if (coords.contains(null)) {
+            throw new IllegalArgumentException("Coordinates cannot contain null values");
+        }
         return new LineString(coords.stream().map(Point::fromCoords).toList());
     }
 }
