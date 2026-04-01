@@ -64,7 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getMongoFactory(java.lang.Class,io.micronaut.context.BeanLocator,io.micronaut.configuration.mongo.core.AbstractMongoConfiguration)" tabindex="0">getMongoFactory(Class, BeanLocator, AbstractMongoConfiguration)</a></li>
-<li><a href="#initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,java.util.List,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)" tabindex="0">initialize(RuntimeEntityRegistry, List, AbstractMongoCollectionsCreator.DatabaseOperationsProvider, MongoCollectionNameProvider)</a></li>
+<li><a href="#initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.env.Environment,java.util.List,io.micronaut.data.mongodb.conf.MongoDataConfiguration,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)" tabindex="0">initialize(RuntimeEntityRegistry, Environment, List, MongoDataConfiguration, AbstractMongoCollectionsCreator.DatabaseOperationsProvider, MongoCollectionNameProvider)</a></li>
 </ol>
 </li>
 </ol>
@@ -135,8 +135,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Get MongoDB database factory.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,java.util.List,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)" class="member-name-link">initialize</a><wbr>(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.env.Environment,java.util.List,io.micronaut.data.mongodb.conf.MongoDataConfiguration,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)" class="member-name-link">initialize</a><wbr>(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+ io.micronaut.context.env.Environment&nbsp;environment,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.configuration.mongo.core.AbstractMongoConfiguration&gt;&nbsp;mongoConfigurations,
+ <a href="../conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a>&nbsp;mongoDataConfiguration,
  io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider&lt;<a href="#type-param-Dtbs" title="type parameter in AbstractMongoCollectionsCreator">Dtbs</a>&gt;&nbsp;databaseOperationsProvider,
  <a href="../operations/MongoCollectionNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoCollectionNameProvider</a>&nbsp;mongoCollectionNameProvider)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -197,18 +199,22 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,java.util.List,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)">
+<section class="detail" id="initialize(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.context.env.Environment,java.util.List,io.micronaut.data.mongodb.conf.MongoDataConfiguration,io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider,io.micronaut.data.mongodb.operations.MongoCollectionNameProvider)">
 <h3>initialize</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">initialize</span><wbr><span class="parameters">(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+ io.micronaut.context.env.Environment&nbsp;environment,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.configuration.mongo.core.AbstractMongoConfiguration&gt;&nbsp;mongoConfigurations,
+ <a href="../conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a>&nbsp;mongoDataConfiguration,
  io.micronaut.data.mongodb.init.AbstractMongoCollectionsCreator.DatabaseOperationsProvider&lt;<a href="#type-param-Dtbs" title="type parameter in AbstractMongoCollectionsCreator">Dtbs</a>&gt;&nbsp;databaseOperationsProvider,
  <a href="../operations/MongoCollectionNameProvider.html" title="interface in io.micronaut.data.mongodb.operations">MongoCollectionNameProvider</a>&nbsp;mongoCollectionNameProvider)</span></div>
 <div class="block">Initialize the collections.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>runtimeEntityRegistry</code> - The entity registry</dd>
+<dd><code>environment</code> - The environment</dd>
 <dd><code>mongoConfigurations</code> - The configuration</dd>
+<dd><code>mongoDataConfiguration</code> - The Mongo data configuration</dd>
 <dd><code>databaseOperationsProvider</code> - The database provider</dd>
 <dd><code>mongoCollectionNameProvider</code> - The Mongo collection name provider</dd>
 </dl>
