@@ -9,12 +9,15 @@ First method is expecting api:data.repository.criteria.PredicateSpecification[] 
 [source,java]
 ----
 import static jakarta.persistence.criteria.*;
+
 public interface PredicateSpecification<T> {
+
     // <1>
     @Nullable
     Predicate toPredicate(@NonNull Root<T> root, // <2>
                           @NonNull CriteriaBuilder criteriaBuilder // <3>
     );
+
 }
 ----
 
@@ -29,13 +32,16 @@ The second interface is intended only for query criteria because it includes `ja
 [source,java]
 ----
 import static jakarta.persistence.criteria.*;
+
 public interface QuerySpecification<T> {
+
     // <1>
     @Nullable
     Predicate toPredicate(@NonNull Root<T> root, // <2>
                           @NonNull CriteriaQuery<?> query, // <3>
                           @NonNull CriteriaBuilder criteriaBuilder // <4>
     );
+
 }
 ----
 
@@ -58,5 +64,4 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/mongo-example",
 
 NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
 It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
-
 
