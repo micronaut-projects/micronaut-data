@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a geometry composed of one or more {@link Point} values.
@@ -40,7 +41,7 @@ public record MultiPoint(List<Point> points) implements Geometry {
         if (CollectionUtils.isEmpty(points)) {
             throw new IllegalArgumentException("MultiPoint requires at least one Point");
         }
-        if (points.contains(null)) {
+        if (points.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("MultiPoint cannot contain null values");
         }
     }
@@ -67,7 +68,7 @@ public record MultiPoint(List<Point> points) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
-        if (coords.contains(null)) {
+        if (coords.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Coordinates cannot contain null values");
         }
         return new MultiPoint(coords.stream().map(Point::fromCoords).toList());

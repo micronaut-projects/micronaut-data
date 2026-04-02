@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a geometry composed of one or more {@link LineString} values.
@@ -40,7 +41,7 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
         if (CollectionUtils.isEmpty(lineStrings)) {
             throw new IllegalArgumentException("MultiLineString requires at least one LineString");
         }
-        if (lineStrings.contains(null)) {
+        if (lineStrings.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("MultiLineString cannot contain null values");
         }
     }
@@ -67,7 +68,7 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
-        if (coords.contains(null)) {
+        if (coords.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Coordinates cannot contain null values");
         }
         return new MultiLineString(coords.stream().map(LineString::fromCoords).toList());

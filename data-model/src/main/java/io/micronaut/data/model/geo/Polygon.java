@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a polygon defined by one or more closed {@link LineString} rings.
@@ -40,7 +41,7 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
         if (CollectionUtils.isEmpty(lineStrings)) {
             throw new IllegalArgumentException("Polygon requires at least one ring (outer boundary)");
         }
-        if (lineStrings.contains(null)) {
+        if (lineStrings.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Polygon cannot contain null values");
         }
         for (int i = 0; i < lineStrings.size(); i++) {
@@ -78,7 +79,7 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
-        if (coords.contains(null)) {
+        if (coords.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Coordinates cannot contain null values");
         }
         return new Polygon(coords.stream().map(LineString::fromCoords).toList());

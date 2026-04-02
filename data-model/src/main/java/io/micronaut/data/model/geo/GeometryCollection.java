@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a heterogeneous collection of {@link Geometry} values.
@@ -40,7 +41,7 @@ public record GeometryCollection(List<Geometry> geometries) implements Geometry 
         if (CollectionUtils.isEmpty(geometries)) {
             throw new IllegalArgumentException("GeometryCollection requires at least one Geometry");
         }
-        if (geometries.contains(null)) {
+        if (geometries.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("GeometryCollection cannot contain null values");
         }
     }

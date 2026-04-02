@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a geometry composed of one or more {@link Polygon} values.
@@ -40,7 +41,7 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
         if (CollectionUtils.isEmpty(polygons)) {
             throw new IllegalArgumentException("MultiPolygon requires at least one Polygon");
         }
-        if (polygons.contains(null)) {
+        if (polygons.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("MultiPolygon cannot contain null values");
         }
     }
@@ -67,7 +68,7 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
         if (CollectionUtils.isEmpty(coords)) {
             throw new IllegalArgumentException("Coordinates cannot be empty");
         }
-        if (coords.contains(null)) {
+        if (coords.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Coordinates cannot contain null values");
         }
         return new MultiPolygon(coords.stream().map(Polygon::fromCoords).toList());

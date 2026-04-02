@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A record that represents a two-dimensional point with {@code x} and {@code y} coordinates.
@@ -61,7 +62,7 @@ public record Point(double x, double y) implements Geometry {
         if (coords.size() != 2) {
             throw new IllegalArgumentException("Coordinates must have 2 elements");
         }
-        if (coords.contains(null)) {
+        if (coords.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Coordinates cannot contain null values");
         }
         return new Point(coords.get(0), coords.get(1));
