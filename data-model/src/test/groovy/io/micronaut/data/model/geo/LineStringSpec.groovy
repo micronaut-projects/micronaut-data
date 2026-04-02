@@ -30,7 +30,7 @@ final class LineStringSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'LineString cannot contain null values'
+        ex.message == 'LineString cannot contain null Points'
     }
 
     void 'asCoords returns point coordinates in order'() {
@@ -50,7 +50,7 @@ final class LineStringSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot be empty'
+        ex.message == 'List of Point coordinates cannot be null nor empty'
 
         where:
         coords << [null, []]
@@ -71,16 +71,14 @@ final class LineStringSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates must have 2 elements'
-    }
+        ex.message == 'List of coordinates must have two values'
 
-    void 'fromCoords rejects null coordinate pair'() {
         when:
         LineString.fromCoords([[1d, 2.5d], null])
 
         then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot contain null values'
+        ex = thrown(IllegalArgumentException)
+        ex.message == 'List of coordinates cannot be null nor empty'
     }
 
     private static Point point() {

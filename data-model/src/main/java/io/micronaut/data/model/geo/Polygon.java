@@ -42,7 +42,7 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
             throw new IllegalArgumentException("Polygon requires at least one ring (outer boundary)");
         }
         if (lineStrings.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Polygon cannot contain null values");
+            throw new IllegalArgumentException("Polygon cannot contain null LineStrings");
         }
         for (int i = 0; i < lineStrings.size(); i++) {
             LineString ring = lineStrings.get(i);
@@ -77,10 +77,7 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
      */
     public static Polygon fromCoords(List<List<List<Double>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
-        }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+            throw new IllegalArgumentException("List of LineString coordinates cannot be null nor empty");
         }
         return new Polygon(coords.stream().map(LineString::fromCoords).toList());
     }

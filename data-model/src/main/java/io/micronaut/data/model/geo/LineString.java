@@ -42,7 +42,7 @@ public record LineString(List<Point> points) implements Geometry {
             throw new IllegalArgumentException("LineString requires at least two Points");
         }
         if (points.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("LineString cannot contain null values");
+            throw new IllegalArgumentException("LineString cannot contain null Points");
         }
     }
 
@@ -66,10 +66,7 @@ public record LineString(List<Point> points) implements Geometry {
      */
     public static LineString fromCoords(List<List<Double>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
-        }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+            throw new IllegalArgumentException("List of Point coordinates cannot be null nor empty");
         }
         return new LineString(coords.stream().map(Point::fromCoords).toList());
     }

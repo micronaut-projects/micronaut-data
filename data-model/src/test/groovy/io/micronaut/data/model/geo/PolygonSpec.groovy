@@ -57,7 +57,7 @@ final class PolygonSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Polygon cannot contain null values'
+        ex.message == 'Polygon cannot contain null LineStrings'
     }
 
     void 'asCoords returns ring coordinates'() {
@@ -83,7 +83,7 @@ final class PolygonSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot be empty'
+        ex.message == 'List of LineString coordinates cannot be null nor empty'
 
         where:
         coords << [null, []]
@@ -96,15 +96,13 @@ final class PolygonSpec extends Specification {
         then:
         def ex = thrown(IllegalArgumentException)
         ex.message == 'Ring at index 0 must have at least 4 points (got 3)'
-    }
 
-    void 'fromCoords rejects null ring coordinates'() {
         when:
         Polygon.fromCoords([null])
 
         then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot contain null values'
+        ex = thrown(IllegalArgumentException)
+        ex.message == 'List of Point coordinates cannot be null nor empty'
     }
 
     private static LineString outerRing() {

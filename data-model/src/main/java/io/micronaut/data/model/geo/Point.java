@@ -22,7 +22,6 @@ import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A record that represents a two-dimensional point with {@code x} and {@code y} coordinates.
@@ -57,13 +56,13 @@ public record Point(double x, double y) implements Geometry {
      */
     public static Point fromCoords(List<Double> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
+            throw new IllegalArgumentException("List of coordinates cannot be null nor empty");
         }
         if (coords.size() != 2) {
-            throw new IllegalArgumentException("Coordinates must have 2 elements");
+            throw new IllegalArgumentException("List of coordinates must have two values");
         }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+        if (coords.get(0) == null || coords.get(1) == null) {
+            throw new IllegalArgumentException("List of coordinates cannot contain null values");
         }
         return new Point(coords.get(0), coords.get(1));
     }

@@ -42,7 +42,7 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
             throw new IllegalArgumentException("MultiLineString requires at least one LineString");
         }
         if (lineStrings.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("MultiLineString cannot contain null values");
+            throw new IllegalArgumentException("MultiLineString cannot contain null LineStrings");
         }
     }
 
@@ -66,10 +66,7 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
      */
     public static MultiLineString fromCoords(List<List<List<Double>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
-        }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+            throw new IllegalArgumentException("List of LineString coordinates cannot be null nor empty");
         }
         return new MultiLineString(coords.stream().map(LineString::fromCoords).toList());
     }

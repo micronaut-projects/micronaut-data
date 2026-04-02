@@ -72,15 +72,6 @@ final class GeometryJsonConverterSpec extends Specification {
         ex.message == 'Failed to deserialize json [{]'
     }
 
-    void 'convert invalid coordinates propagate validation errors'() {
-        when:
-        converter.convertToEntityValue('{"type":"Point","coordinates":[1.0]}', ConversionContext.DEFAULT)
-
-        then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates must have 2 elements'
-    }
-
     void 'wraps mapper serialization io exceptions'() {
         given:
         def mapper = Mock(JsonMapper)

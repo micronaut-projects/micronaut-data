@@ -30,7 +30,7 @@ final class MultiLineStringSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'MultiLineString cannot contain null values'
+        ex.message == 'MultiLineString cannot contain null LineStrings'
     }
 
     void 'asCoords returns nested line coordinates'() {
@@ -56,7 +56,7 @@ final class MultiLineStringSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot be empty'
+        ex.message == 'List of LineString coordinates cannot be null nor empty'
 
         where:
         coords << [null, []]
@@ -69,15 +69,13 @@ final class MultiLineStringSpec extends Specification {
         then:
         def ex = thrown(IllegalArgumentException)
         ex.message == 'LineString requires at least two Points'
-    }
 
-    void 'fromCoords rejects null line coordinates'() {
         when:
         MultiLineString.fromCoords([[[1d, 2.5d], [3d, 4d]], null])
 
         then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot contain null values'
+        ex = thrown(IllegalArgumentException)
+        ex.message == 'List of Point coordinates cannot be null nor empty'
     }
 
     private static LineString lineString() {

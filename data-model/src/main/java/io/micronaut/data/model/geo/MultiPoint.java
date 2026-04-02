@@ -42,7 +42,7 @@ public record MultiPoint(List<Point> points) implements Geometry {
             throw new IllegalArgumentException("MultiPoint requires at least one Point");
         }
         if (points.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("MultiPoint cannot contain null values");
+            throw new IllegalArgumentException("MultiPoint cannot contain null Points");
         }
     }
 
@@ -66,10 +66,7 @@ public record MultiPoint(List<Point> points) implements Geometry {
      */
     public static MultiPoint fromCoords(List<List<Double>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
-        }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+            throw new IllegalArgumentException("List of Point coordinates cannot be null nor empty");
         }
         return new MultiPoint(coords.stream().map(Point::fromCoords).toList());
     }

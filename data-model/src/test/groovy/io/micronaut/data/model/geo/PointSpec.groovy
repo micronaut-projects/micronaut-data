@@ -37,10 +37,10 @@ final class PointSpec extends Specification {
 
         where:
         coords          || message
-        null            || 'Coordinates cannot be empty'
-        []              || 'Coordinates cannot be empty'
-        [1d]            || 'Coordinates must have 2 elements'
-        [1d, 2d, 3d]    || 'Coordinates must have 2 elements'
-        [1d, null]      || 'Coordinates cannot contain null values'
+        null            || 'List of coordinates cannot be null nor empty'
+        []              || 'List of coordinates cannot be null nor empty'
+        [1d]            || 'List of coordinates must have two values'
+        [1d, 2d, 3d]    || 'List of coordinates must have two values'
+        [1d, null]      || 'List of coordinates cannot contain null values'
     }
 }

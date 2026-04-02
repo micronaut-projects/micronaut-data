@@ -42,7 +42,7 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
             throw new IllegalArgumentException("MultiPolygon requires at least one Polygon");
         }
         if (polygons.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("MultiPolygon cannot contain null values");
+            throw new IllegalArgumentException("MultiPolygon cannot contain null Polygons");
         }
     }
 
@@ -66,10 +66,7 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
      */
     public static MultiPolygon fromCoords(List<List<List<List<Double>>>> coords) {
         if (CollectionUtils.isEmpty(coords)) {
-            throw new IllegalArgumentException("Coordinates cannot be empty");
-        }
-        if (coords.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Coordinates cannot contain null values");
+            throw new IllegalArgumentException("List of Polygon coordinates cannot be null nor empty");
         }
         return new MultiPolygon(coords.stream().map(Polygon::fromCoords).toList());
     }

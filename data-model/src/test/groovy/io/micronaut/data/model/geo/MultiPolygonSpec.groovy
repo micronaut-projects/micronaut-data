@@ -23,14 +23,13 @@ final class MultiPolygonSpec extends Specification {
         polygons << [null, []]
     }
 
-
     void 'constructor rejects null polygon element'() {
         when:
         new MultiPolygon([polygon(), null])
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'MultiPolygon cannot contain null values'
+        ex.message == 'MultiPolygon cannot contain null Polygons'
     }
 
     void 'asCoords returns polygon coordinates'() {
@@ -66,7 +65,7 @@ final class MultiPolygonSpec extends Specification {
 
         then:
         def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot be empty'
+        ex.message == 'List of Polygon coordinates cannot be null nor empty'
 
         where:
         coords << [null, []]
@@ -79,15 +78,13 @@ final class MultiPolygonSpec extends Specification {
         then:
         def ex = thrown(IllegalArgumentException)
         ex.message == 'Ring at index 0 must have at least 4 points (got 3)'
-    }
 
-    void 'fromCoords rejects null polygon coordinates'() {
         when:
         MultiPolygon.fromCoords([null])
 
         then:
-        def ex = thrown(IllegalArgumentException)
-        ex.message == 'Coordinates cannot contain null values'
+        ex = thrown(IllegalArgumentException)
+        ex.message == 'List of LineString coordinates cannot be null nor empty'
     }
 
     private static Polygon polygon() {
