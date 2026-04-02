@@ -165,7 +165,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="MongoGeoIndexType.html" title="enum class in io.micronaut.data.mongodb.annotation.index">MongoGeoIndexType</a></span>&nbsp;<span class="element-name">type</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The geospatial index kind.</dd>
+<dd>The geospatial index kind. Defaults to <a href="MongoGeoIndexType.html#GEO_2DSPHERE"><code>MongoGeoIndexType.GEO_2DSPHERE</code></a>.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>
@@ -229,7 +229,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type">int</span>&nbsp;<span class="element-name">sphereVersion</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The 2dsphere index version, or -1 if unset.</dd>
+<dd>The 2dsphere index version, or <code>-1</code> if unset. Only valid for
+<a href="MongoGeoIndexType.html#GEO_2DSPHERE"><code>MongoGeoIndexType.GEO_2DSPHERE</code></a>.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>
@@ -245,7 +246,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type">int</span>&nbsp;<span class="element-name">bits</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The 2d index bits setting, or -1 if unset.</dd>
+<dd>The 2d index bits setting, or <code>-1</code> if unset. Only valid for
+<a href="MongoGeoIndexType.html#GEO_2D"><code>MongoGeoIndexType.GEO_2D</code></a>. Valid range is 1..32 inclusive. MongoDB default is 26.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>
@@ -261,7 +263,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type">double</span>&nbsp;<span class="element-name">min</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The 2d index minimum value, or NaN if unset.</dd>
+<dd>The 2d index minimum value, or <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html#NaN" title="class or interface in java.lang" class="external-link"><code>Double.NaN</code></a> if unset. Only valid for
+<a href="MongoGeoIndexType.html#GEO_2D"><code>MongoGeoIndexType.GEO_2D</code></a>. Represents the lower inclusive boundary. MongoDB default is -180.0.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>
@@ -277,7 +280,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type">double</span>&nbsp;<span class="element-name">max</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The 2d index maximum value, or NaN if unset.</dd>
+<dd>The 2d index maximum value, or <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html#NaN" title="class or interface in java.lang" class="external-link"><code>Double.NaN</code></a> if unset. Only valid for
+<a href="MongoGeoIndexType.html#GEO_2D"><code>MongoGeoIndexType.GEO_2D</code></a>. Represents the upper inclusive boundary. MongoDB default is 180.0.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>
