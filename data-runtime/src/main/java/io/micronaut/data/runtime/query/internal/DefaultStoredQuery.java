@@ -353,7 +353,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
 
     @Override
     public List<QueryOutParameterBinding> getOutParameterBindings() {
-        return outParameterBindings == null ? List.of() : outParameterBindings;
+        return outParameterBindings;
     }
 
     @Override

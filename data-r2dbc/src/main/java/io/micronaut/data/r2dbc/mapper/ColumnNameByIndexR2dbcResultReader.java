@@ -27,9 +27,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.Map;
 
@@ -43,18 +40,18 @@ import java.util.Map;
 @Experimental
 public final class ColumnNameByIndexR2dbcResultReader implements ResultReader<Readable, String> {
 
-    private final ConversionService conversionService;
+    private final ColumnIndexReadableResultReader delegate;
     private final Map<String, Integer> columnIndexesByName;
 
     public ColumnNameByIndexR2dbcResultReader(ConversionService conversionService,
                                               Map<String, Integer> columnIndexesByName) {
-        this.conversionService = conversionService;
+        this.delegate = new ColumnIndexReadableResultReader(conversionService);
         this.columnIndexesByName = columnIndexesByName;
     }
 
     @Override
     public ConversionService getConversionService() {
-        return conversionService;
+        return delegate.getConversionService();
     }
 
     @Override
@@ -73,134 +70,92 @@ public final class ColumnNameByIndexR2dbcResultReader implements ResultReader<Re
     @Nullable
     @Override
     public Object readDynamic(@NonNull Readable readable, @NonNull String name, @NonNull DataType dataType) {
-        int index = getIndex(name);
-        return switch (dataType) {
-            case UUID -> readable.get(index, java.util.UUID.class);
-            case STRING, JSON -> readable.get(index, String.class);
-            case LONG -> readable.get(index, Long.class);
-            case INTEGER -> readable.get(index, Integer.class);
-            case BOOLEAN -> readable.get(index, Boolean.class);
-            case BYTE -> readable.get(index, Byte.class);
-            case TIME -> readable.get(index, java.time.LocalTime.class);
-            case TIMESTAMP -> readable.get(index, LocalDateTime.class);
-            case DATE -> readable.get(index, LocalDate.class);
-            case CHARACTER -> readable.get(index, Character.class);
-            case FLOAT -> readable.get(index, Float.class);
-            case SHORT -> readable.get(index, Short.class);
-            case DOUBLE -> readable.get(index, Double.class);
-            case BYTE_ARRAY -> readable.get(index, byte[].class);
-            case BIGDECIMAL -> readable.get(index, BigDecimal.class);
-            default -> getRequiredValue(readable, name, Object.class);
-        };
+        return delegate.readDynamic(readable, getIndex(name), dataType);
     }
 
     @Override
     public <T> T convertRequired(@NonNull Object value, Class<T> type) {
-        return conversionService.convertRequired(value, type);
+        return delegate.convertRequired(value, type);
     }
 
     @Override
     @Nullable
     public Date readTimestamp(Readable readable, String name) {
-        LocalDateTime localDateTime = readable.get(getIndex(name), LocalDateTime.class);
-        if (localDateTime != null) {
-            return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
+        return delegate.readTimestamp(readable, getIndex(name));
     }
 
     @Nullable
     @Override
     public Time readTime(Readable readable, String name) {
-        java.time.LocalTime localTime = readable.get(getIndex(name), java.time.LocalTime.class);
-        if (localTime != null) {
-            return Time.valueOf(localTime);
-        }
-        return null;
+        return delegate.readTime(readable, getIndex(name));
     }
 
     @Override
     public long readLong(Readable readable, String name) {
-        Long value = readable.get(getIndex(name), Long.class);
-        return value == null ? 0 : value;
+        return delegate.readLong(readable, getIndex(name));
     }
 
     @Override
     public char readChar(Readable readable, String name) {
-        Character value = readable.get(getIndex(name), Character.class);
-        return value == null ? 0 : value;
+        return delegate.readChar(readable, getIndex(name));
     }
 
     @Override
     @Nullable
     public Date readDate(Readable readable, String name) {
-        LocalDate localDate = readable.get(getIndex(name), LocalDate.class);
-        if (localDate != null) {
-            return java.sql.Date.valueOf(localDate);
-        }
-        return null;
+        return delegate.readDate(readable, getIndex(name));
     }
 
     @Nullable
     @Override
     public String readString(Readable readable, String name) {
-        return readable.get(getIndex(name), String.class);
+        return delegate.readString(readable, getIndex(name));
     }
 
     @Override
     public int readInt(Readable readable, String name) {
-        Integer value = readable.get(getIndex(name), Integer.class);
-        return value == null ? 0 : value;
+        return delegate.readInt(readable, getIndex(name));
     }
 
     @Override
     public boolean readBoolean(Readable readable, String name) {
-        Boolean value = readable.get(getIndex(name), Boolean.class);
-        return value != null && value;
+        return delegate.readBoolean(readable, getIndex(name));
     }
 
     @Override
     public float readFloat(Readable readable, String name) {
-        Float value = readable.get(getIndex(name), Float.class);
-        return value == null ? 0 : value;
+        return delegate.readFloat(readable, getIndex(name));
     }
 
     @Override
     public byte readByte(Readable readable, String name) {
-        Byte value = readable.get(getIndex(name), Byte.class);
-        return value == null ? 0 : value;
+        return delegate.readByte(readable, getIndex(name));
     }
 
     @Override
     public short readShort(Readable readable, String name) {
-        Short value = readable.get(getIndex(name), Short.class);
-        return value == null ? 0 : value;
+        return delegate.readShort(readable, getIndex(name));
     }
 
     @Override
     public double readDouble(Readable readable, String name) {
-        Double value = readable.get(getIndex(name), Double.class);
-        return value == null ? 0 : value;
+        return delegate.readDouble(readable, getIndex(name));
     }
 
     @Override
     @Nullable
     public BigDecimal readBigDecimal(Readable readable, String name) {
-        return readable.get(getIndex(name), BigDecimal.class);
+        return delegate.readBigDecimal(readable, getIndex(name));
     }
 
     @Override
     public byte[] readBytes(Readable readable, String name) {
-        byte[] bytes = readable.get(getIndex(name), byte[].class);
-        if (bytes == null) {
-            throw new DataAccessException("Null value for non-null bytes column: " + name);
-        }
-        return bytes;
+        return delegate.readBytes(readable, getIndex(name));
     }
 
     @Override
     @Nullable
     public <T> T getRequiredValue(Readable readable, String name, Class<T> type) throws DataAccessException {
-        return readable.get(getIndex(name), type);
+        return delegate.getRequiredValue(readable, getIndex(name), type);
     }
 }

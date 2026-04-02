@@ -513,7 +513,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private <R> R mapOracleReturningReadable(Readable readable, SqlPreparedQuery<?, R> preparedQuery, SqlTypeMapper<Row, R> mapper) {
+    private <R> R mapOracleReturningReadable(Readable readable, SqlPreparedQuery<?, R> preparedQuery) {
         List<QueryOutParameterBinding> outParameterBindings = preparedQuery.getOutParameterBindings();
         if (outParameterBindings.size() == 1) {
             QueryOutParameterBinding out = outParameterBindings.get(0);
@@ -537,7 +537,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 .flux()
                 .onErrorResume(errorHandler(preparedQuery.getDialect()));
         }
-        return executeAndMapOracleReturningSingle(oracleStatement, preparedQuery.getDialect(), readable -> mapOracleReturningReadable(readable, preparedQuery, mapper))
+        return executeAndMapOracleReturningSingle(oracleStatement, preparedQuery.getDialect(), readable -> mapOracleReturningReadable(readable, preparedQuery))
             .flux()
             .onErrorResume(errorHandler(preparedQuery.getDialect()));
     }
@@ -584,7 +584,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             case BYTE_ARRAY -> R2dbcType.VARBINARY;
             case DATE -> R2dbcType.DATE;
             case TIME -> R2dbcType.TIME;
-            case TIMESTAMP, OBJECT -> R2dbcType.TIMESTAMP;
+            case TIMESTAMP -> R2dbcType.TIMESTAMP;
+            case CHARACTER -> R2dbcType.CHAR;
+            case BOOLEAN_ARRAY, CHARACTER_ARRAY, DOUBLE_ARRAY,
+                 FLOAT_ARRAY, INTEGER_ARRAY, LONG_ARRAY, SHORT_ARRAY,
+                 STRING_ARRAY -> R2dbcType.COLLECTION;
             default -> R2dbcType.VARCHAR;
         };
     }

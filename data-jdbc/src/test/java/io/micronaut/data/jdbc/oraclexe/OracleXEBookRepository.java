@@ -82,11 +82,11 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Query("""
         INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated)
-        VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
         RETURNING *
         """)
     public abstract List<Book> customInsertReturningBooks(Long authorId,
-                                                          @Nullable Long genderId,
+                                                          @Nullable Long genreId,
                                                           String title,
                                                           int totalPages,
                                                           @Nullable Long publisherId,
