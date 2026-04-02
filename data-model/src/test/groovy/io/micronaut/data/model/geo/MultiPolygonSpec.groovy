@@ -23,6 +23,16 @@ final class MultiPolygonSpec extends Specification {
         polygons << [null, []]
     }
 
+
+    void 'constructor rejects null polygon element'() {
+        when:
+        new MultiPolygon([polygon(), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'MultiPolygon cannot contain null values'
+    }
+
     void 'asCoords returns polygon coordinates'() {
         expect:
         new MultiPolygon([polygon(), anotherPolygon()]).asCoords() == [

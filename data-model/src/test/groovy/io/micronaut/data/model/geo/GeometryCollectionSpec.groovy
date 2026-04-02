@@ -37,6 +37,16 @@ final class GeometryCollectionSpec extends Specification {
         geometries << [null, []]
     }
 
+
+    void 'constructor rejects null geometry element'() {
+        when:
+        new GeometryCollection([new Point(1d, 2d), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'GeometryCollection cannot contain null values'
+    }
+
     private static LineString lineString() {
         new LineString([new Point(1d, 2d), new Point(3d, 4d)])
     }

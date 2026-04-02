@@ -23,6 +23,16 @@ final class LineStringSpec extends Specification {
         points << [null, [], [point()]]
     }
 
+
+    void 'constructor rejects null point element'() {
+        when:
+        new LineString([point(), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'LineString cannot contain null values'
+    }
+
     void 'asCoords returns point coordinates in order'() {
         expect:
         new LineString([point(), new Point(3d, 4d), new Point(5.75d, 6d)]).asCoords() == [[1d, 2.5d], [3d, 4d], [5.75d, 6d]]

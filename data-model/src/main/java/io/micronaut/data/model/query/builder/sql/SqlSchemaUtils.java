@@ -442,9 +442,9 @@ public final class SqlSchemaUtils {
                     }
                     String columnName = namingStrategy.mappedName(associations, persistentProperty);
                     if (srid == SRID_WGS_84 || srid == SRID_ETRS_89) {
-                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, -180, 180, "0.005", -90, 90, "0.005", srid));
+                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-180", "180", "0.005", "-90", "90", "0.005", srid));
                     } else if (srid == SRID_WEB_MERCATOR) {
-                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, 0, 0, "0.00005", 0, 0, "0.00005", srid));
+                        statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-20037508.3427892", "20037508.3427892", "0.001", "-20037508.3427892", "20037508.3427892", "0.001", srid));
                     }
                 }
             });

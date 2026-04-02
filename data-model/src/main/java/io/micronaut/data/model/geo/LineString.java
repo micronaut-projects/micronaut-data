@@ -40,6 +40,9 @@ public record LineString(List<Point> points) implements Geometry {
         if (CollectionUtils.isEmpty(points) || points.size() < 2) {
             throw new IllegalArgumentException("LineString requires at least two Points");
         }
+        if (points.contains(null)) {
+            throw new IllegalArgumentException("LineString cannot contain null values");
+        }
     }
 
     /**

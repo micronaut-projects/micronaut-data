@@ -40,11 +40,13 @@ public record Polygon(List<LineString> lineStrings) implements Geometry {
         if (CollectionUtils.isEmpty(lineStrings)) {
             throw new IllegalArgumentException("Polygon requires at least one ring (outer boundary)");
         }
+        if (lineStrings.contains(null)) {
+            throw new IllegalArgumentException("Polygon cannot contain null values");
+        }
         for (int i = 0; i < lineStrings.size(); i++) {
             LineString ring = lineStrings.get(i);
-            if (ring.points() == null || ring.points().size() < 4) {
-                throw new IllegalArgumentException(
-                    String.format("Ring at index %d must have at least 4 points (got %d)", i, ring.points() == null ? 0 : ring.points().size()));
+            if (ring.points().size() < 4) {
+                throw new IllegalArgumentException(String.format("Ring at index %d must have at least 4 points (got %d)", i, ring.points().size()));
             }
             Point first = ring.points().getFirst();
             Point last = ring.points().getLast();

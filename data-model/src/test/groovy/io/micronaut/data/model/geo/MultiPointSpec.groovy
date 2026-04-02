@@ -23,6 +23,16 @@ final class MultiPointSpec extends Specification {
         points << [null, []]
     }
 
+
+    void 'constructor rejects null point element'() {
+        when:
+        new MultiPoint([point(), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'MultiPoint cannot contain null values'
+    }
+
     void 'asCoords returns point coordinates'() {
         expect:
         new MultiPoint([point(), new Point(3d, 4d)]).asCoords() == [[1d, 2.5d], [3d, 4d]]

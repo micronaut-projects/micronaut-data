@@ -23,6 +23,16 @@ final class MultiLineStringSpec extends Specification {
         lineStrings << [null, []]
     }
 
+
+    void 'constructor rejects null line string element'() {
+        when:
+        new MultiLineString([lineString(), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'MultiLineString cannot contain null values'
+    }
+
     void 'asCoords returns nested line coordinates'() {
         expect:
         new MultiLineString([lineString(), anotherLineString()]).asCoords() == [

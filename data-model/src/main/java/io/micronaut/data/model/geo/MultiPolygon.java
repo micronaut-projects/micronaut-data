@@ -40,6 +40,9 @@ public record MultiPolygon(List<Polygon> polygons) implements Geometry {
         if (CollectionUtils.isEmpty(polygons)) {
             throw new IllegalArgumentException("MultiPolygon requires at least one Polygon");
         }
+        if (polygons.contains(null)) {
+            throw new IllegalArgumentException("MultiPolygon cannot contain null values");
+        }
     }
 
     /**

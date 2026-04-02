@@ -50,6 +50,16 @@ final class PolygonSpec extends Specification {
         ex.message == 'Ring at index 0 is not closed: the first point is not equal to the last point'
     }
 
+
+    void 'constructor rejects null ring element'() {
+        when:
+        new Polygon([outerRing(), null])
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message == 'Polygon cannot contain null values'
+    }
+
     void 'asCoords returns ring coordinates'() {
         expect:
         new Polygon([outerRing(), innerRing()]).asCoords() == [

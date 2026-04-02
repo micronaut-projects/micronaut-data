@@ -40,5 +40,8 @@ public record GeometryCollection(List<Geometry> geometries) implements Geometry 
         if (CollectionUtils.isEmpty(geometries)) {
             throw new IllegalArgumentException("GeometryCollection requires at least one Geometry");
         }
+        if (geometries.contains(null)) {
+            throw new IllegalArgumentException("GeometryCollection cannot contain null values");
+        }
     }
 }

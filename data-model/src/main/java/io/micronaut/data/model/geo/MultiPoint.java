@@ -40,6 +40,9 @@ public record MultiPoint(List<Point> points) implements Geometry {
         if (CollectionUtils.isEmpty(points)) {
             throw new IllegalArgumentException("MultiPoint requires at least one Point");
         }
+        if (points.contains(null)) {
+            throw new IllegalArgumentException("MultiPoint cannot contain null values");
+        }
     }
 
     /**

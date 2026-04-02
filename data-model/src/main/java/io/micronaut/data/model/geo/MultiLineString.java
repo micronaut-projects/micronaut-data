@@ -40,6 +40,9 @@ public record MultiLineString(List<LineString> lineStrings) implements Geometry 
         if (CollectionUtils.isEmpty(lineStrings)) {
             throw new IllegalArgumentException("MultiLineString requires at least one LineString");
         }
+        if (lineStrings.contains(null)) {
+            throw new IllegalArgumentException("MultiLineString cannot contain null values");
+        }
     }
 
     /**
