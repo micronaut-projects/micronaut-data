@@ -30,6 +30,19 @@ class MongoGeoIndexValidationSpec extends Specification implements MongoTestProp
         def e = thrown(RuntimeException)
         e.message.contains('2d-specific geospatial options are only supported for Mongo 2d indexes')
     }
+
+    void 'fails fast when 2d bits is outside supported Mongo range'() {
+        when:
+        ApplicationContext.run(getProperties() + [
+                'micronaut.data.mongodb.create-collections': 'true',
+                'micronaut.data.mongodb.create-indexes'    : 'true'
+        ])
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Mongo 2d geospatial option 'bits'")
+        e.message.contains('must be between 1 and 32 inclusive')
+    }
 }
 
 @MongoRepository
@@ -44,4 +57,18 @@ class InvalidGeoIndexedEntity {
 
     @MongoGeoIndexed(name = 'invalid_geo_idx', type = MongoGeoIndexType.GEO_2DSPHERE, bits = 26)
     Point location
+}
+
+@MongoRepository
+interface InvalidGeoBitsEntityRepository extends CrudRepository<InvalidGeoBitsEntity, String> {
+}
+
+@MappedEntity('invalid_geo_bits_entities')
+class InvalidGeoBitsEntity {
+    @Id
+    @GeneratedValue
+    String id
+
+    @MongoGeoIndexed(name = 'invalid_geo_bits_idx', type = MongoGeoIndexType.GEO_2D, bits = 33)
+    Map<String, Object> location
 }

@@ -40,7 +40,7 @@ public @interface MongoGeoIndexed {
     String name() default "";
 
     /**
-     * @return The geospatial index kind.
+     * @return The geospatial index kind. Defaults to {@link MongoGeoIndexType#GEO_2DSPHERE}.
      */
     MongoGeoIndexType type() default MongoGeoIndexType.GEO_2DSPHERE;
 
@@ -60,22 +60,26 @@ public @interface MongoGeoIndexed {
     String storageEngine() default "";
 
     /**
-     * @return The 2dsphere index version, or -1 if unset.
+     * @return The 2dsphere index version, or {@code -1} if unset. Only valid for
+     * {@link MongoGeoIndexType#GEO_2DSPHERE}.
      */
     int sphereVersion() default -1;
 
     /**
-     * @return The 2d index bits setting, or -1 if unset.
+     * @return The 2d index bits setting, or {@code -1} if unset. Only valid for
+     * {@link MongoGeoIndexType#GEO_2D}. Valid range is 1..32 inclusive. MongoDB default is 26.
      */
     int bits() default -1;
 
     /**
-     * @return The 2d index minimum value, or NaN if unset.
+     * @return The 2d index minimum value, or {@link Double#NaN} if unset. Only valid for
+     * {@link MongoGeoIndexType#GEO_2D}. Represents the lower inclusive boundary. MongoDB default is -180.0.
      */
     double min() default Double.NaN;
 
     /**
-     * @return The 2d index maximum value, or NaN if unset.
+     * @return The 2d index maximum value, or {@link Double#NaN} if unset. Only valid for
+     * {@link MongoGeoIndexType#GEO_2D}. Represents the upper inclusive boundary. MongoDB default is 180.0.
      */
     double max() default Double.NaN;
 }

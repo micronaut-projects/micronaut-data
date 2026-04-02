@@ -230,6 +230,9 @@ public final class MongoEntityIndexes {
                 if (type != MongoGeoIndexType.GEO_2D && (bits != null || min != null || max != null)) {
                     throw new IllegalStateException("2d-specific geospatial options are only supported for Mongo 2d indexes on entity [" + entity.getName() + "]");
                 }
+                if (bits != null && (bits < 1 || bits > 32)) {
+                    throw new IllegalStateException("Mongo 2d geospatial option 'bits' on entity [" + entity.getName() + "] must be between 1 and 32 inclusive");
+                }
                 if (type != MongoGeoIndexType.GEO_2DSPHERE && sphereVersion != null) {
                     throw new IllegalStateException("2dsphere-specific geospatial options are only supported for Mongo 2dsphere indexes on entity [" + entity.getName() + "]");
                 }
