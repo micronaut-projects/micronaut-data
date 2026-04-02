@@ -57,7 +57,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
                 (prefix + '.statementTimeout')                 : Duration.ofMinutes(1).toString(),
                 (prefix + '.lockTimeout')                      : Duration.ofMinutes(1).toString(),
                 "test-resources.containers.postgres.image-name": "postgis/postgis",
-                "test-resources.containers.postgres.image-tag" : "latest"
+                "test-resources.containers.postgres.image-tag" : "17-3.5"
         ] as Map<String, String>
     }
 

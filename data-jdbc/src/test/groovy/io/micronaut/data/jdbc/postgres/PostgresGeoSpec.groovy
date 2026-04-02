@@ -53,7 +53,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.enabled')                        : dataSourceEnabled(dataSourceName),
                 "test-resources.containers.postgres.image-name": "postgis/postgis",
-                "test-resources.containers.postgres.image-tag" : "latest"
+                "test-resources.containers.postgres.image-tag" : "17-3.5"
         ] as Map<String, String>
     }
 
