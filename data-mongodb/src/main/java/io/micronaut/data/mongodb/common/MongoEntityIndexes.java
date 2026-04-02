@@ -55,6 +55,7 @@ import java.util.Objects;
  * @author radovanradic
  * @since 5.0.0
  */
+@SuppressWarnings("java:S6541")
 @Internal
 public final class MongoEntityIndexes {
 

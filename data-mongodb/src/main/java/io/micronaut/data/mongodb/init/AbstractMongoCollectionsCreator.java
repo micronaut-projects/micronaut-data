@@ -36,8 +36,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.JsonSubView;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -59,7 +57,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -143,8 +140,6 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             PersistentEntity[] entities = introspections.stream()
                     .filter(i -> !i.getBeanType().getName().contains("$"))
                     .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                    .filter(i -> !i.hasAnnotation(JsonSubView.class))
-                    .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                     .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                     .toArray(PersistentEntity[]::new);
 
@@ -205,13 +200,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             }
             if (createIndexes) {
                 if (indexFailureCount > 0 && indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
-                    LOG.warn("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
+                    LOG.warn("MongoDB index initialization for database: {} -> processed={}, failures={}, policy={}",
                         databaseName,
                             indexProcessedCount,
                             indexFailureCount,
                             indexCreationFailurePolicy);
                 } else if (LOG.isInfoEnabled()) {
-                    LOG.info("MongoDB index initialization telemetry for database: {} -> processed={}, failures={}, policy={}",
+                    LOG.info("MongoDB index initialization for database: {} -> processed={}, failures={}, policy={}",
                         databaseName,
                             indexProcessedCount,
                             indexFailureCount,
@@ -566,19 +561,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     }
 
     static @Nullable String normalizeJsonValue(@Nullable Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Document document) {
-            return document.toJson();
-        }
-        if (value instanceof org.bson.BsonDocument bsonDocument) {
-            return bsonDocument.toJson();
-        }
-        if (value instanceof String stringValue) {
-            return normalizeJsonString(stringValue);
-        }
-        return value.toString();
+        return switch (value) {
+            case null -> null;
+            case Document document -> document.toJson();
+            case org.bson.BsonDocument bsonDocument -> bsonDocument.toJson();
+            case String stringValue -> normalizeJsonString(stringValue);
+            default -> value.toString();
+        };
     }
 
     static @Nullable String normalizeJsonString(@Nullable String value) {
@@ -629,7 +618,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 + ", mongoErrorCode="
                 + mongoIndexConflict.errorCode()
                 + ", mongoMessage="
-                + String.valueOf(mongoIndexConflict.message()), e);
+                + mongoIndexConflict.message(), e);
     }
 
     private @Nullable MongoIndexConflict findMongoIndexConflict(Throwable throwable) {
@@ -673,7 +662,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
      *
      * @param <Dtbs> The database type
      */
-    interface DatabaseOperationsProvider<Dtbs> {
+    @Internal
+    public interface DatabaseOperationsProvider<Dtbs> {
 
         /**
          * Gets {@link DatabaseOperations} for given configuration.

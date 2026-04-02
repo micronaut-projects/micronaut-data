@@ -7,8 +7,10 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
+import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
+import io.micronaut.data.repository.CrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -21,6 +23,9 @@ class MongoGeo2dIndexCreationSpec extends Specification implements MongoTestProp
 
     @Shared
     MongoClient mongoClient
+
+    @Shared
+    Geo2dIndexedEntityRepository repository
 
     @Override
     List<String> getPackageNames() {
@@ -37,6 +42,7 @@ class MongoGeo2dIndexCreationSpec extends Specification implements MongoTestProp
                 'micronaut.data.mongodb.create-indexes'    : 'true'
         ])
         mongoClient = applicationContext.getBean(MongoClient)
+        repository = applicationContext.getBean(Geo2dIndexedEntityRepository)
     }
 
     void 'creates field 2d index'() {
@@ -55,6 +61,22 @@ class MongoGeo2dIndexCreationSpec extends Specification implements MongoTestProp
             assert index.fields[0].kind() == '2d'
         }
     }
+
+    void 'saves and loads map-backed 2d location via repository'() {
+        given:
+        def entity = new Geo2dIndexedEntity(location: [x: -73.99d, y: 40.75d])
+
+        when:
+        def saved = repository.save(entity)
+        def loaded = repository.findById(saved.id).orElseThrow()
+
+        then:
+        loaded.location == [x: -73.99d, y: 40.75d]
+    }
+}
+
+@MongoRepository
+interface Geo2dIndexedEntityRepository extends CrudRepository<Geo2dIndexedEntity, String> {
 }
 
 @MappedEntity('geo2d_indexed_entities')
