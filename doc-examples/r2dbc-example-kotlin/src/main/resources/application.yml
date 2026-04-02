@@ -6,12 +6,13 @@ micronaut:
 r2dbc:
   datasources:
     default:
-      db-type: mariadb
-      dialect: mysql
+      db-type: postgres
+      dialect: postgres
+
 datasources:
   default:
-    db-type: mariadb
-    dialect: mysql
+    db-type: postgres
+    dialect: postgres
 
 test-resources:
   containers:
