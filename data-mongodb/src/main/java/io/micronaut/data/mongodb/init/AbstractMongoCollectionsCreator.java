@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Modifier;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -261,7 +262,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             boolean supportedTtlIdType = idType.equals(Date.class.getName())
                     || idType.equals(Instant.class.getName())
                     || idType.equals(LocalDateTime.class.getName())
-                    || idType.equals(OffsetDateTime.class.getName());
+                    || idType.equals(OffsetDateTime.class.getName())
+                    || idType.equals(ZonedDateTime.class.getName());
             if (!supportedTtlIdType) {
                 throw new IllegalStateException("Mongo clustered TTL collection for entity [" + entity.getName() + "] requires a date/time identity type, but found [" + idType + "]");
             }
