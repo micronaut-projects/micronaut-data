@@ -55,6 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Modifier;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,6 +86,16 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     private static final int INDEX_OPTIONS_CONFLICT_CODE = 85;
     private static final int INDEX_KEY_SPECS_CONFLICT_CODE = 86;
     private static final String INDEX_OPTIONS_CONFLICT_CODE_NAME = "IndexOptionsConflict";
+    private static final Set<String> SUPPORTED_CLUSTERED_TTL_ID_TYPES = Set.of(
+            Date.class.getName(),
+            java.sql.Date.class.getName(),
+            Timestamp.class.getName(),
+            Instant.class.getName(),
+            LocalDate.class.getName(),
+            LocalDateTime.class.getName(),
+            OffsetDateTime.class.getName(),
+            ZonedDateTime.class.getName()
+    );
     private static final String INDEX_KEY_SPECS_CONFLICT_CODE_NAME = "IndexKeySpecsConflict";
 
     /**
@@ -259,11 +271,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 throw new IllegalStateException("Mongo clustered TTL collection for entity [" + entity.getName() + "] requires an identity property");
             }
             String idType = identity.getTypeName();
-            boolean supportedTtlIdType = idType.equals(Date.class.getName())
-                    || idType.equals(Instant.class.getName())
-                    || idType.equals(LocalDateTime.class.getName())
-                    || idType.equals(OffsetDateTime.class.getName())
-                    || idType.equals(ZonedDateTime.class.getName());
+            boolean supportedTtlIdType = SUPPORTED_CLUSTERED_TTL_ID_TYPES.contains(idType);
             if (!supportedTtlIdType) {
                 throw new IllegalStateException("Mongo clustered TTL collection for entity [" + entity.getName() + "] requires a date/time identity type, but found [" + idType + "]");
             }

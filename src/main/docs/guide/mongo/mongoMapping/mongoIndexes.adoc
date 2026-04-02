@@ -198,21 +198,22 @@ Clustered collection support follows MongoDB collection-level rules:
 
 * clustered options are applied through collection creation, not ordinary index creation
 * `unique` must remain `true`
-* when `expireAfterSeconds` is set, the identity type must be a date/time type (`Date`, `Instant`, `LocalDateTime`, `OffsetDateTime`)
+* when `expireAfterSeconds` is set, the identity type must be one of the supported date/time types (`Date`, `java.sql.Date`, `java.sql.Timestamp`, `LocalDate`, `Instant`, `LocalDateTime`, `OffsetDateTime`, `ZonedDateTime`)
 
 == Existing collections and conflicts
 
 When `create-indexes` is enabled, Micronaut Data checks existing collection indexes before creating new ones.
-If an index with the same key exists but managed options differ, startup fails fast with an explicit conflict message.
+If an index with the same key exists but managed options differ, index initialization reports an explicit conflict.
+With `micronaut.data.mongodb.create-indexes-failure-policy=FAIL_FAST`, startup fails immediately. With `WARN_AND_CONTINUE`, the conflict is logged and startup continues.
 
 Managed reconciliation is key-first and option-aware:
 
 * existing indexes with matching key + managed options are accepted (startup continues)
-* if a desired explicit name differs from an existing same-key index name, startup fails fast with an explicit name-conflict message
+* if a desired explicit name differs from an existing same-key index name, index initialization reports an explicit name-conflict message and then either fails fast or logs-and-continues according to `micronaut.data.mongodb.create-indexes-failure-policy`
 * if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)
 
 Managed option matching includes: uniqueness/sparse/hidden, TTL, partial filter, collation, geospatial/text-specific options, wildcard projection, and storage engine.
 
 `comment` and `commitQuorum` are treated as index-creation command options and are not part of existing-index managed option reconciliation.
 
-For clustered declarations, existing collection options are also compared, and conflicting clustered options fail fast.
+For clustered declarations, existing collection options are also compared. Conflicts are then handled according to `micronaut.data.mongodb.create-indexes-failure-policy`.

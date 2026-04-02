@@ -67,6 +67,5 @@ class AggregatedTextIndexedEntity {
     @MongoTextIndexed(name = 'aggregated_text_idx', weight = 2, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
     String title
 
-    @MongoTextIndexed(name = 'aggregated_text_idx', weight = 5, defaultLanguage = 'french', languageOverride = 'lang', textIndexVersion = 3)
-    String description
+
 }

@@ -1,6 +1,4 @@
-package io.micronaut.data.mongodb.index.validation.reactiveindexbootstrap
-
-import io.micronaut.data.mongodb.index.validation.indexbootstrap.MongoIndexBootstrapWithoutCollectionsSpec
+package io.micronaut.data.mongodb.index.validation.indexbootstrap
 
 class MongoReactiveIndexBootstrapWithoutCollectionsSpec extends MongoIndexBootstrapWithoutCollectionsSpec {
 

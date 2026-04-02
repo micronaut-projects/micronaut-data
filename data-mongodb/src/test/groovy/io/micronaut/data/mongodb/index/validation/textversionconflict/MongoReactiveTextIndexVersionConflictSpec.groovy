@@ -1,6 +1,4 @@
-package io.micronaut.data.mongodb.index.validation.reactivetextversionconflict
-
-import io.micronaut.data.mongodb.index.validation.textversionconflict.MongoTextIndexVersionConflictSpec
+package io.micronaut.data.mongodb.index.validation.textversionconflict
 
 class MongoReactiveTextIndexVersionConflictSpec extends MongoTextIndexVersionConflictSpec {
 

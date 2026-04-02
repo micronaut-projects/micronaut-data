@@ -7,10 +7,8 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.document.mongodb.MongoIndexInspector
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
-import io.micronaut.data.model.DataType
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
@@ -103,7 +101,6 @@ class GeoMultiLineStringValueIndexedEntity {
     @GeneratedValue
     String id
 
-    @TypeDef(type = DataType.OBJECT)
     @MongoGeoIndexed(name = 'geo_multilinestring_location_idx')
     MultiLineString paths
 }

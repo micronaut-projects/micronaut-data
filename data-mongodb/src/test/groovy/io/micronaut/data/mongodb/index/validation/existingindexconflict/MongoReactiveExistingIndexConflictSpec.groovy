@@ -1,6 +1,4 @@
-package io.micronaut.data.mongodb.index.validation.reactiveexistingindexconflict
-
-import io.micronaut.data.mongodb.index.validation.existingindexconflict.MongoExistingIndexConflictSpec
+package io.micronaut.data.mongodb.index.validation.existingindexconflict
 
 class MongoReactiveExistingIndexConflictSpec extends MongoExistingIndexConflictSpec {
 
