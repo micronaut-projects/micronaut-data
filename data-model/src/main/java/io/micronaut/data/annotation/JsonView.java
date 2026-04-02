@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * {@code
  * @JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
  * public class ContactView {
- *     \@Id
+ *     {@literal @Id}
  *     @GeneratedValue(GeneratedValue.Type.IDENTITY)
  *     private Long id;
  *     private String name;

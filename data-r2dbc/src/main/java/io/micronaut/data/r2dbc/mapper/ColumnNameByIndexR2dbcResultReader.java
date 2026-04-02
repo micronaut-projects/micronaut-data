@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Readable;
 import org.jspecify.annotations.NonNull;
@@ -43,7 +44,7 @@ public final class ColumnNameByIndexR2dbcResultReader implements ResultReader<Re
     private final ColumnIndexReadableResultReader delegate;
     private final Map<String, Integer> columnIndexesByName;
 
-    public ColumnNameByIndexR2dbcResultReader(ConversionService conversionService,
+    public ColumnNameByIndexR2dbcResultReader(DataConversionService conversionService,
                                               Map<String, Integer> columnIndexesByName) {
         this.delegate = new ColumnIndexReadableResultReader(conversionService);
         this.columnIndexesByName = columnIndexesByName;
@@ -75,7 +76,7 @@ public final class ColumnNameByIndexR2dbcResultReader implements ResultReader<Re
 
     @Override
     public <T> T convertRequired(@NonNull Object value, Class<T> type) {
-        return delegate.convertRequired(value, type);
+        return (T) delegate.convertRequired(value, type);
     }
 
     @Override
@@ -149,13 +150,13 @@ public final class ColumnNameByIndexR2dbcResultReader implements ResultReader<Re
     }
 
     @Override
-    public byte[] readBytes(Readable readable, String name) {
+    public byte @Nullable [] readBytes(Readable readable, String name) {
         return delegate.readBytes(readable, getIndex(name));
     }
 
     @Override
     @Nullable
     public <T> T getRequiredValue(Readable readable, String name, Class<T> type) throws DataAccessException {
-        return delegate.getRequiredValue(readable, getIndex(name), type);
+        return (T) delegate.getRequiredValue(readable, getIndex(name), type);
     }
 }
