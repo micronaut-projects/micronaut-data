@@ -125,6 +125,25 @@ public final class MongoEntityIndexes {
             String mergedName = first.name();
             for (int i = 1; i < indexes.size(); i++) {
                 ResolvedIndex candidate = indexes.get(i);
+                if (!Objects.equals(first.fields(), candidate.fields())
+                        || first.unique() != candidate.unique()
+                        || first.sparse() != candidate.sparse()
+                        || first.hidden() != candidate.hidden()
+                        || !Objects.equals(first.expireAfterSeconds(), candidate.expireAfterSeconds())
+                        || !Objects.equals(first.partialFilterExpression(), candidate.partialFilterExpression())
+                        || !Objects.equals(first.collation(), candidate.collation())
+                        || !Objects.equals(first.bits(), candidate.bits())
+                        || !Objects.equals(first.min(), candidate.min())
+                        || !Objects.equals(first.max(), candidate.max())
+                        || !Objects.equals(first.defaultLanguage(), candidate.defaultLanguage())
+                        || !Objects.equals(first.languageOverride(), candidate.languageOverride())
+                        || !Objects.equals(first.textIndexVersion(), candidate.textIndexVersion())
+                        || !Objects.equals(first.sphereVersion(), candidate.sphereVersion())
+                        || !Objects.equals(first.storageEngine(), candidate.storageEngine())
+                        || !Objects.equals(first.comment(), candidate.comment())
+                        || !Objects.equals(first.commitQuorum(), candidate.commitQuorum())) {
+                    throw new IllegalStateException("Mongo top-level wildcard indexes on entity [" + entity.getName() + "] declare conflicting options for wildcard signature [$**]");
+                }
                 if (mergedName == null) {
                     mergedName = candidate.name();
                 } else if (candidate.name() != null && !mergedName.equals(candidate.name())) {
@@ -543,43 +562,11 @@ public final class MongoEntityIndexes {
     }
 
     private record WildcardIndexSignature(List<ResolvedIndexField> fields,
-                                          boolean unique,
-                                          boolean sparse,
-                                          boolean hidden,
-                                          @Nullable Integer expireAfterSeconds,
-                                          @Nullable String partialFilterExpression,
-                                          @Nullable String collation,
-                                          @Nullable Integer bits,
-                                          @Nullable Double min,
-                                          @Nullable Double max,
-                                          @Nullable String defaultLanguage,
-                                          @Nullable String languageOverride,
-                                          @Nullable Integer textIndexVersion,
-                                          @Nullable Integer sphereVersion,
-                                          @Nullable String wildcardProjection,
-                                          @Nullable String storageEngine,
-                                          @Nullable String comment,
-                                          @Nullable String commitQuorum) {
+                                          @Nullable String wildcardProjection) {
 
         private WildcardIndexSignature(ResolvedIndex index) {
             this(index.fields(),
-                    index.unique(),
-                    index.sparse(),
-                    index.hidden(),
-                    index.expireAfterSeconds(),
-                    index.partialFilterExpression(),
-                    index.collation(),
-                    index.bits(),
-                    index.min(),
-                    index.max(),
-                    index.defaultLanguage(),
-                    index.languageOverride(),
-                    index.textIndexVersion(),
-                    index.sphereVersion(),
-                    index.wildcardProjection(),
-                    index.storageEngine(),
-                    index.comment(),
-                    index.commitQuorum());
+                    index.wildcardProjection());
         }
     }
 
