@@ -19,7 +19,7 @@ class MongoEmbeddedFieldIndexCreationSpec extends Specification implements Mongo
 
     @Override
     List<String> getPackageNames() {
-        ['io.micronaut.data.document.mongodb.simple.index.embedded']
+        ['io.micronaut.data.mongodb.index.simple.embedded']
     }
 
     Class<?> expectedCollectionsCreatorBeanType() {

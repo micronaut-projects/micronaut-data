@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
 public @interface MongoCompoundIndexes {

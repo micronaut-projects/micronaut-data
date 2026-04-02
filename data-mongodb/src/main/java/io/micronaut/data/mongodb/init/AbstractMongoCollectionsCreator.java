@@ -468,6 +468,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         if (index.textIndexVersion() != null) {
             indexOptions.textVersion(index.textIndexVersion());
         }
+        Document weights = new Document();
+        for (MongoResolvedIndexField field : index.fields()) {
+            if (field.weight() != null) {
+                weights.append(field.path(), field.weight());
+            }
+        }
+        if (!weights.isEmpty()) {
+            indexOptions.weights(weights);
+        }
         if (index.sphereVersion() != null) {
             indexOptions.sphereVersion(index.sphereVersion());
         }

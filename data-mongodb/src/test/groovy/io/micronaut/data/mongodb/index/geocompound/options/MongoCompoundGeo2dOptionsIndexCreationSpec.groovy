@@ -26,7 +26,7 @@ class MongoCompoundGeo2dOptionsIndexCreationSpec extends Specification implement
 
     @Override
     List<String> getPackageNames() {
-        ['io.micronaut.data.document.mongodb.geocompound.index.options']
+        ['io.micronaut.data.mongodb.index.geocompound.options']
     }
 
     Class<?> expectedCollectionsCreatorBeanType() {
