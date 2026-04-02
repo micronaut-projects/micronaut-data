@@ -71,11 +71,20 @@ $returnType $method($arguments);
         "save"         | "Completable"           | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Long>"          | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
+        "saveReturning"| "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "saveReturningAll" | "Flowable<Person>"   | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "deleteReturning"  | "Single<Person>"     | "Person person"                | DeleteReturningOneReactiveInterceptor
+        "deleteReturning"  | "Flowable<Person>"   | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor
+        "deleteReturning"  | "Flux<Person>"       | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor
         "updateByName" | "Single<Number>"        | "String name, int age"         | UpdateReactiveInterceptor
         "update"       | "Completable"           | "@Id Long id, int age"         | UpdateReactiveInterceptor
         "update"       | "Single<Number>"        | "@Id Long id, int age"         | UpdateReactiveInterceptor
+        "updateReturning" | "Single<Person>"      | "Person person"                | UpdateReturningOneReactiveInterceptor
+        "updateReturning" | "Mono<Person>"        | "Person person"                | UpdateReturningOneReactiveInterceptor
+        "updateReturning" | "Flowable<Person>"    | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
+        "updateReturning" | "Flux<Person>"        | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateAll"    | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateAll"    | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateCustom" | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
