@@ -34,6 +34,7 @@ import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.MapJoin;
+import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.CollectionAttribute;
 import jakarta.persistence.metamodel.ListAttribute;
 import jakarta.persistence.metamodel.MapAttribute;
@@ -218,6 +219,26 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
 
     @Override
     public <K, V> MapJoin<E, K, V> join(MapAttribute<? super E, K, V> map, JoinType jt) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <Y> Join<E, Y> join(EntityType<Y> entity) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <Y> Join<E, Y> join(EntityType<Y> entity, JoinType joinType) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <Y> Join<E, Y> join(Class<Y> entityClass) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <Y> Join<E, Y> join(Class<Y> entityClass, JoinType joinType) {
         throw notSupportedOperation();
     }
 

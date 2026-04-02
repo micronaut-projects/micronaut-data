@@ -1,19 +1,18 @@
-package example;
+package example.oracle;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @MicronautTest
-@Property(name = "spec.name", value = "ManufacturerRepositorySpec")
-public class ManufacturerRepositorySpec {
-
-    private final ManufacturerRepository manufacturerRepository;
-
-    public ManufacturerRepositorySpec(ManufacturerRepository manufacturerRepository) {
-        this.manufacturerRepository = manufacturerRepository;
-    }
+@Property(name = "spec.name", value = "example.oracle.ManufacturerRepositorySpec")
+@Requires(env="oracle")
+class ManufacturerRepositorySpec {
+    @Inject
+    ManufacturerRepository manufacturerRepository;
 
     @Test
     void testMockRepo() {

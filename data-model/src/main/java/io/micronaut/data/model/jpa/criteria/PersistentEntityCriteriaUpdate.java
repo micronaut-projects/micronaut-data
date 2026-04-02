@@ -76,6 +76,7 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
 
     PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions);
 
+    @Override
     Set<ParameterExpression<?>> getParameters();
 
     /**

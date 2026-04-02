@@ -1,5 +1,8 @@
-package example;
+package example.oracle;
 
+import example.Cart;
+import example.CartItem;
+import example.CartRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
