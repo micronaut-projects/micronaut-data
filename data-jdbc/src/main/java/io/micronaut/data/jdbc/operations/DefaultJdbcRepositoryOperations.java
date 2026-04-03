@@ -1180,8 +1180,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
         int pos = inCount;
         List<String> columnNames = new ArrayList<>(outParams.size());
+        Dialect dialect = jdbcConfiguration.getDialect();
         for (QueryOutParameterBinding outParam : outParams) {
-            int sqlType = JdbcQueryStatement.findSqlType(outParam.dataType(), jdbcConfiguration.getDialect());
+            DataType dataType = dialect.getDataType(outParam.dataType());
+            int sqlType = JdbcQueryStatement.findSqlType(dataType, jdbcConfiguration.getDialect());
+            if (sqlType == -1) {
+                sqlType = Types.VARCHAR;
+                if (QUERY_LOG.isDebugEnabled()) {
+                    QUERY_LOG.debug("Binding Oracle out parameter of data type: {} as sql type: {}", dataType, sqlType);
+                }
+            }
             cs.registerOutParameter(++pos, sqlType);
             columnNames.add(outParam.name());
         }
