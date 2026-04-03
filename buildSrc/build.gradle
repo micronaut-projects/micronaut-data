@@ -22,4 +22,5 @@ dependencies {
     implementation libs.gradle.spring.dependencies
     implementation libs.gradle.shadow
     implementation libs.gradle.errorprone
+    implementation libs.groovy.yaml
 }

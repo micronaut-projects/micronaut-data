@@ -674,7 +674,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
                 path = path.get(property);
             }
-            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.as(String.class)) : path;
             orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);
