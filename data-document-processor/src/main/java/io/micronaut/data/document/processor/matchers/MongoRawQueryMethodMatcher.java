@@ -123,7 +123,11 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     if (futureType != null && futureType.isAssignable(Iterable.class)) {
                         throw new MatchFailedException("MongoDB update returning supports only a single result. Use CompletionStage<T>.");
                     }
-                } else if (TypeUtils.isReactiveOrFuture(returnType) || methodElement.isSuspend()) {
+                } else if (TypeUtils.isReactiveType(returnType)) {
+                    if (producedType.isAssignable(Iterable.class) || !TypeUtils.isReactiveSingleResult(returnType)) {
+                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
+                    }
+                } else if (methodElement.isSuspend()) {
                     if (producedType.isAssignable(Iterable.class)) {
                         throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
                     }
