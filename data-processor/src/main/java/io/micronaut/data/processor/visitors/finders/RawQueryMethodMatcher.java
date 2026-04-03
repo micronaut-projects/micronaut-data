@@ -322,7 +322,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
                 String finalQueryLower = finalQueryString.toLowerCase(Locale.ENGLISH);
                 int returningIdx = finalQueryLower.lastIndexOf("returning");
-                String afterReturning = finalQueryString.substring(returningIdx + "returning".length()).trim();
+                String afterReturning = stripTrailingSemicolon(finalQueryString.substring(returningIdx + "returning".length()).trim()).trim();
                 int intoPos = indexOfIntoIgnoreCase(afterReturning);
                 if (intoPos > -1) {
                     String intoClause = afterReturning.substring(intoPos).trim();
