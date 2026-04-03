@@ -63,7 +63,7 @@ Book incrementTotalPagesAfter(String id);
 ----
 
 NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`).
-Update-returning methods must use a single blocking result type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
+Update-returning methods must use a single-result return type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[] (including supported single-item reactive/future types such as `Mono<T>` and `CompletionStage<T>`).
 Collection/iterable and `void` return types are rejected for ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
 If you use a scalar return type (for example `String`), configure a matching projection with `project`.
 If your filter can match multiple documents, use `sort` to control which document is selected by `findOneAndUpdate`.
