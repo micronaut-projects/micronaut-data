@@ -76,8 +76,6 @@ io.micronaut.data.model.schema.sql
 io.micronaut.data.model.schema.sql.metadata
 io.micronaut.data.mongodb.advice
 io.micronaut.data.mongodb.annotation
-io.micronaut.data.mongodb.annotation.index
-io.micronaut.data.mongodb.common
 io.micronaut.data.mongodb.conf
 io.micronaut.data.mongodb.init
 io.micronaut.data.mongodb.operations
