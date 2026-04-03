@@ -66,4 +66,22 @@ class SearchResultsMapperSpec extends Specification {
         results.results().first().similarity() != null
         results.results().first().similarity().value() == 1d
     }
+
+    def "returns empty SearchResults when result set has no rows"() {
+        given:
+        def entityMapper = Mock(SqlTypeMapper<Map, String>)
+        def resultReader = Mock(ResultReader<Map, String>)
+        def mapper = new SearchResultsMapper<Map, String>(entityMapper, resultReader, "mn_score", ScoringFunction.COSINE)
+
+        and:
+        entityMapper.hasNext(_ as Map) >> false
+
+        when:
+        def results = mapper.mapAll([:] as Map, String)
+
+        then:
+        results.results().isEmpty()
+        0 * entityMapper.map(_, _)
+        0 * resultReader._
+    }
 }
