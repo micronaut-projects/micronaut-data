@@ -49,6 +49,20 @@ jobs:
          sudo apt-get clean
          df -h
 
+      - name: "🗑 Free more disk space"
+        run: |
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /opt/az
+          sudo rm -rf /usr/lib/jvm/msopenjdk-*
+          sudo rm -rf /usr/lib/jvm/temurin-*-jdk-amd64 || true
+          sudo rm -rf /usr/lib/jvm/adoptopenjdk-* || true
+          sudo docker system prune -af || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          df -h
+
       - name: "📥 Checkout repository"
         uses: actions/checkout@v6
         with:

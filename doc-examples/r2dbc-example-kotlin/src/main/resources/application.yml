@@ -8,7 +8,6 @@ r2dbc:
     default:
       db-type: postgres
       dialect: postgres
-
 datasources:
   default:
     db-type: postgres
