@@ -781,7 +781,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (isOracleReturningQuery(storedQuery)) {
                         @SuppressWarnings("unchecked")
                         SqlResultEntityTypeMapper<Readable, R> oracleEntityTypeMapper = (SqlResultEntityTypeMapper<Readable, R>) getOracleReturningEntityMapper(storedQuery.getPersistentEntity(), storedQuery);
-                        results = executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity).flux().onErrorResume(errorHandler(ctx.dialect));
+                        results = executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity).flux();
                     } else {
                         results = executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect));
                     }
@@ -811,7 +811,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 if (isOracleReturningQuery(storedQuery)) {
                                     @SuppressWarnings("unchecked")
                                     SqlResultEntityTypeMapper<Readable, R> oracleEntityTypeMapper = (SqlResultEntityTypeMapper<Readable, R>) getOracleReturningEntityMapper(storedQuery.getPersistentEntity(), storedQuery);
-                                    return executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity).flux().onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+                                    return executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity);
                                 }
                                 return executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
                             }

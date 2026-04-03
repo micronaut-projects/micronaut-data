@@ -515,9 +515,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return QueryResult.of(finalQueryString, queryParts, parameterBindings);
     }
 
+    private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
+
     private static int indexOfIntoIgnoreCase(String s) {
-        String lower = s.toLowerCase(Locale.ENGLISH);
-        return lower.indexOf(" into ");
+        Matcher matcher = INTO_PATTERN.matcher(s);
+        return matcher.find() ? matcher.start() : -1;
     }
 
     private static String stripTrailingSemicolon(String s) {

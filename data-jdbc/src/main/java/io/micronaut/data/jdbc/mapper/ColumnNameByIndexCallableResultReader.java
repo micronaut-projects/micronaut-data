@@ -154,7 +154,7 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     @Override
-    public byte[] readBytes(CallableStatement cs, String name) {
+    public byte @Nullable [] readBytes(CallableStatement cs, String name) {
         return delegate.readBytes(cs, getIndex(name));
     }
 
