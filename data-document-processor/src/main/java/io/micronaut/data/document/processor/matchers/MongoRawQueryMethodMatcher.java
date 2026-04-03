@@ -87,7 +87,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             return methodMatchByFilterQuery(DataMethod.OperationType.UPDATE);
         }
         if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)) {
-            return methodMatchByFilterQuery(DataMethod.OperationType.UPDATE_RETURNING);
+            return methodMatchByUpdateReturningQuery();
         }
         if (annotationMetadata.stringValue(Query.class).isPresent()) {
             throw new MatchFailedException("`@Query` annotations is not supported for MongoDB repositories. Use one of the annotations from `io.micronaut.data.mongodb.annotation` for a custom query.");
@@ -107,6 +107,38 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
     }
 
+    private MethodMatch methodMatchByUpdateReturningQuery() {
+        return new MethodMatch() {
+
+            @Override
+            public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                MethodElement methodElement = matchContext.getMethodElement();
+                ClassElement returnType = matchContext.getReturnType();
+                ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
+                if (producedType == null || TypeUtils.isVoid(producedType)) {
+                    throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
+                }
+                if (TypeUtils.isFutureType(returnType)) {
+                    ClassElement futureType = returnType.getFirstTypeArgument().orElse(null);
+                    if (futureType != null && futureType.isAssignable(Iterable.class)) {
+                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use CompletionStage<T>.");
+                    }
+                } else if (TypeUtils.isReactiveOrFuture(returnType) || methodElement.isSuspend()) {
+                    if (producedType.isAssignable(Iterable.class)) {
+                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
+                    }
+                } else if (returnType.isAssignable(Iterable.class)) {
+                    throw new MatchFailedException("MongoDB update returning supports only a single result");
+                }
+                MethodMatchInfo matchInfo = methodMatchByFilterQuery(DataMethod.OperationType.UPDATE_RETURNING).buildMatchInfo(matchContext);
+                if (matchInfo == null) {
+                    throw new MatchFailedException("MongoDB update returning match info could not be created");
+                }
+                return matchInfo;
+            }
+        };
+    }
+
     private MethodMatch methodMatchByFilterQuery(DataMethod.OperationType operationType) {
         return new MethodMatch() {
 
@@ -118,9 +150,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
                     if (producedType == null || TypeUtils.isVoid(producedType)) {
                         throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
-                    }
-                    if (TypeUtils.isReactiveOrFuture(returnType) || methodElement.isSuspend()) {
-                        throw new MatchFailedException("MongoDB update returning currently supports only blocking single-result return types");
                     }
                     if (returnType.isAssignable(Iterable.class)) {
                         throw new MatchFailedException("MongoDB update returning supports only a single result");
