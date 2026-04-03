@@ -878,4 +878,29 @@ interface BookRepository extends GenericRepository<Book, Long> {
         customUpdateOutBindingParameters.length == 7
     }
 
+    void "ORACLE raw @Query update returning into is rejected"() {
+        when:
+        buildRepository('test.BookRepository', '''
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("UPDATE \\\"BOOK\\\" SET \\\"TITLE\\\"=:title,\\\"TOTAL_PAGES\\\"=:totalPages,\\\"LAST_UPDATED\\\"=:lastUpdated WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\" INTO :out")
+    String customUpdateReturningInto(Long bookId, String title, int totalPages, LocalDateTime lastUpdated, String out);
+}
+''')
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Oracle raw queries with RETURNING ... INTO are not supported')
+        e.message.contains('Omit the INTO clause and let Micronaut Data generate the OUT bindings.')
+    }
+
+
 }

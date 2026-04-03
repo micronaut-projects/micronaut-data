@@ -324,7 +324,14 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 int returningIdx = finalQueryLower.lastIndexOf("returning");
                 String afterReturning = finalQueryString.substring(returningIdx + "returning".length()).trim();
                 int intoPos = indexOfIntoIgnoreCase(afterReturning);
-                String selection = intoPos > -1 ? afterReturning.substring(0, intoPos).trim() : afterReturning;
+                if (intoPos > -1) {
+                    String intoClause = afterReturning.substring(intoPos).trim();
+                    throw new MatchFailedException(
+                        "Oracle raw queries with RETURNING ... INTO are not supported: `" + intoClause
+                            + "`. Omit the INTO clause and let Micronaut Data generate the OUT bindings."
+                    );
+                }
+                String selection = afterReturning;
 
                 List<QueryOutParameterBinding> outBindings = new ArrayList<>();
                 List<String> outColumns = new ArrayList<>();

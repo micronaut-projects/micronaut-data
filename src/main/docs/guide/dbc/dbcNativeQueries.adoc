@@ -4,6 +4,8 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source
 
 The above example will execute the raw SQL against the database.
 
+NOTE: For Oracle raw `@Query` statements that use `RETURNING`, omit the `INTO` clause. Micronaut Data generates the Oracle `INTO` bindings automatically. Writing `RETURNING ... INTO ...` directly in the query is not supported.
+
 NOTE: For <<pagination, Pagination>> queries that return a api:data.model.Page[] you also need to specify a native `countQuery`.
 
 === Explicit Queries and Joins
