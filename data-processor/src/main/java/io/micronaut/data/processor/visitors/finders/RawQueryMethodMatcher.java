@@ -370,7 +370,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private boolean isOracleAnonymousBlock(String query) {
         String trimmed = query.trim().toLowerCase(Locale.ENGLISH);
-        return (trimmed.startsWith("begin") || trimmed.startsWith("declare")) && trimmed.endsWith("end;");
+        return trimmed.startsWith("begin") && trimmed.endsWith("end;");
     }
 
     private QueryResult buildGeneratedOracleReturningQueryResult(String finalQueryString,
