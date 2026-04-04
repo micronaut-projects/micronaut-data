@@ -606,11 +606,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     }
 
     private String normalizeReturnedColumn(String column) {
-        String col = column;
-        if ((col.startsWith("\"") && col.endsWith("\"")) || (col.startsWith("`") && col.endsWith("`"))) {
-            col = col.substring(1, col.length() - 1);
+        if (column.length() < 2) {
+            return column;
         }
-        return col;
+        char quote = column.charAt(0);
+        if ((quote == '"' || quote == '`') && column.charAt(column.length() - 1) == quote) {
+            String unquoted = column.substring(1, column.length() - 1);
+            if (unquoted.indexOf('.') == -1 && unquoted.indexOf(quote) == -1) {
+                return unquoted;
+            }
+        }
+        return column;
     }
 
     private QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
