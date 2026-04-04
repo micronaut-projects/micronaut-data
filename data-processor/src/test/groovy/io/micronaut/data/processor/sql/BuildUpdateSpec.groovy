@@ -829,7 +829,11 @@ import java.time.LocalDateTime;
 interface BookRepository extends GenericRepository<Book, Long> {
     Book updateReturning(Book book);
     String updateReturningTitle(Book book);
-    @Query("UPDATE \\"BOOK\\" SET \\"TITLE\\"=:title,\\"TOTAL_PAGES\\"=:totalPages,\\"LAST_UPDATED\\"=:lastUpdated WHERE \\"ID\\"=:bookId RETURNING *")
+    @Query(\"""
+        UPDATE "BOOK" SET "TITLE"=:title,"TOTAL_PAGES"=:totalPages,"LAST_UPDATED"=:lastUpdated
+        WHERE "ID"=:bookId
+        RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?
+        \""")
     Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
 
 }
@@ -851,7 +855,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         getParameterPropertyPaths(updateReturningTitleMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
         getDataInterceptor(updateReturningTitleMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
 
-        getRawQuery(customUpdateReturningMethod) == 'BEGIN UPDATE "BOOK" SET "TITLE"=?,"TOTAL_PAGES"=?,"LAST_UPDATED"=? WHERE "ID"=? RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+        getRawQuery(customUpdateReturningMethod).replace('\n', ' ') == 'BEGIN UPDATE "BOOK" SET "TITLE"=?,"TOTAL_PAGES"=?,"LAST_UPDATED"=? WHERE "ID"=? RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,? ; END;'
         getDataResultType(customUpdateReturningMethod) == "io.micronaut.data.tck.entities.Book"
         getDataInterceptor(customUpdateReturningMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
 
@@ -876,9 +880,23 @@ interface BookRepository extends GenericRepository<Book, Long> {
         updateTitleOutBindingParameters[0].dataType == DataType.STRING
 
         customUpdateOutBindingParameters.length == 7
+        customUpdateOutBindingParameters[0].name == "author_id"
+        customUpdateOutBindingParameters[0].dataType == DataType.LONG
+        customUpdateOutBindingParameters[1].name == "genre_id"
+        customUpdateOutBindingParameters[1].dataType == DataType.LONG
+        customUpdateOutBindingParameters[2].name == "title"
+        customUpdateOutBindingParameters[2].dataType == DataType.STRING
+        customUpdateOutBindingParameters[3].name == "total_pages"
+        customUpdateOutBindingParameters[3].dataType == DataType.INTEGER
+        customUpdateOutBindingParameters[4].name == "publisher_id"
+        customUpdateOutBindingParameters[4].dataType == DataType.LONG
+        customUpdateOutBindingParameters[5].name == "last_updated"
+        customUpdateOutBindingParameters[5].dataType == DataType.TIMESTAMP
+        customUpdateOutBindingParameters[6].name == "id"
+        customUpdateOutBindingParameters[6].dataType == DataType.LONG
     }
 
-    void "ORACLE raw @Query update returning into is rejected"() {
+    void "ORACLE raw @Query update returning INTO requires positional placeholders"() {
         when:
         buildRepository('test.BookRepository', '''
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -898,8 +916,30 @@ interface BookRepository extends GenericRepository<Book, Long> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('Oracle raw queries with RETURNING ... INTO are not supported')
-        e.message.contains('Omit the INTO clause and let Micronaut Data generate the OUT bindings.')
+        e.message.contains("must use positional '?' placeholders")
+    }
+
+    void "ORACLE raw @Query update returning INTO rejects multi-column scalar returns"() {
+        when:
+        buildRepository('test.BookRepository', '''
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("UPDATE \\\"BOOK\\\" SET \\\"TITLE\\\"=:title,\\\"TOTAL_PAGES\\\"=:totalPages,\\\"LAST_UPDATED\\\"=:lastUpdated WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\", \\\"ID\\\" INTO ?, ?")
+    String customUpdateReturningInto(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
+}
+''')
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("multiple columns require an entity return type")
     }
 
 

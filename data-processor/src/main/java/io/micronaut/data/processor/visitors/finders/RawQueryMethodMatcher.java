@@ -30,6 +30,7 @@ import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -42,6 +43,7 @@ import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
@@ -77,6 +79,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
     private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
+    private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
     private static final String COLON = ":";
@@ -246,10 +249,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
-        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
             .orElse(null);
-        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         boolean encodeEntityParameters;
         if (implicitQueries) {
             encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
@@ -270,7 +273,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        @Nullable
                                        ParameterElement entityParam,
                                        @Nullable
-                                       SourcePersistentEntity persistentEntity) {
+                                       SourcePersistentEntity persistentEntity,
+                                       @Nullable
+                                       TypedElement resultType) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
@@ -319,195 +324,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
                 .orElse(Dialect.ANSI);
             if (dialect == Dialect.ORACLE) {
-                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
-                String finalQueryLower = finalQueryString.toLowerCase(Locale.ENGLISH);
-                int returningIdx = finalQueryLower.lastIndexOf("returning");
-                String afterReturning = stripTrailingSemicolon(finalQueryString.substring(returningIdx + "returning".length()).trim()).trim();
-                int intoPos = indexOfIntoIgnoreCase(afterReturning);
-                if (intoPos > -1) {
-                    String intoClause = afterReturning.substring(intoPos).trim();
-                    throw new MatchFailedException(
-                        "Oracle raw queries with RETURNING ... INTO are not supported: `" + intoClause
-                            + "`. Omit the INTO clause and let Micronaut Data generate the OUT bindings."
-                    );
-                }
-                String selection = afterReturning;
-
-                List<QueryOutParameterBinding> outBindings = new ArrayList<>();
-                List<String> outColumns = new ArrayList<>();
-                if (selection.equals("*")) {
-                    if (entity == null) {
-                        throw new MatchFailedException("RETURNING * requires a repository root entity to resolve columns");
-                    }
-                    entity.getPersistentProperties().forEach(pp -> {
-                        if (pp instanceof Association assoc) {
-                            switch (assoc.getKind()) {
-                                case ONE_TO_MANY, MANY_TO_MANY -> {
-                                }
-                                default -> {
-                                    String colName = pp.getPersistedName();
-                                    DataType dt = DataType.STRING;
-                                    try {
-                                        var ae = assoc.getAssociatedEntity();
-                                        if (ae != null && ae.hasIdentity()) {
-                                            dt = ae.getIdentity().getDataType();
-                                        }
-                                    } catch (Exception ignored) {
-                                    }
-                                    outColumns.add(colName);
-                                    DataType finalDt = dt;
-                                    outBindings.add(new QueryOutParameterBinding() {
-                                        @Override
-                                        public String getName() {
-                                            return colName;
-                                        }
-
-                                        @Override
-                                        public DataType getDataType() {
-                                            return finalDt;
-                                        }
-                                    });
-                                }
-                            }
-                        } else {
-                            String colName = pp.getPersistedName();
-                            DataType dt = pp.getDataType();
-                            outColumns.add(colName);
-                            DataType finalDt = dt;
-                            outBindings.add(new QueryOutParameterBinding() {
-                                @Override
-                                public String getName() {
-                                    return colName;
-                                }
-
-                                @Override
-                                public DataType getDataType() {
-                                    return finalDt;
-                                }
-                            });
-                        }
-                    });
-                    // Ensure id column is included last if not already present
-                    if (entity.hasIdentity() && outColumns.stream().noneMatch(c -> c.equals(entity.getIdentity().getPersistedName()))) {
-                        var id = entity.getIdentity();
-                        outColumns.add(id.getPersistedName());
-                        DataType dt = id.getDataType();
-                        outBindings.add(new QueryOutParameterBinding() {
-                            @Override
-                            public String getName() {
-                                return id.getPersistedName();
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return dt;
-                            }
-                        });
-                    }
-                } else {
-                    List<String> parts = splitByComma(selection).stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
-                    if (parts.size() > 1) {
-                        throw new MatchFailedException("Non-custom returning methods support only entity (*) or a single property; multiple columns in RETURNING are not supported in custom @Query for Oracle");
-                    }
-                    for (String part : parts) {
-                        String col = part;
-                        if ((col.startsWith("\"") && col.endsWith("\"")) || (col.startsWith("`") && col.endsWith("`"))) {
-                            col = col.substring(1, col.length() - 1);
-                        }
-                        outColumns.add(col);
-                        DataType dt = DataType.STRING;
-                        if (entity != null) {
-                            var prop = entity.getPropertyByNameIgnoreCase(col);
-                            if (prop == null) {
-                                for (var p : entity.getPersistentProperties()) {
-                                    if (p.getPersistedName().equalsIgnoreCase(col)) {
-                                        prop = p;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (prop != null) {
-                                if (prop instanceof Association assocProp) {
-                                    try {
-                                        var ae = assocProp.getAssociatedEntity();
-                                        if (ae != null && ae.hasIdentity()) {
-                                            dt = ae.getIdentity().getDataType();
-                                        }
-                                    } catch (Exception ignored) {
-                                        dt = DataType.STRING;
-                                    }
-                                } else if (prop.getDataType() != null) {
-                                    dt = prop.getDataType();
-                                }
-                            }
-                        }
-                        DataType finalDt = dt;
-                        String finalCol = col;
-                        outBindings.add(new QueryOutParameterBinding() {
-                            @Override
-                            public String getName() {
-                                return finalCol;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return finalDt;
-                            }
-                        });
-                    }
-                }
-                if (outBindings.isEmpty()) {
-                    throw new MatchFailedException("RETURNING clause must contain at least one column for Oracle");
-                }
-                int outCount = outBindings.size();
-                String intoPlaceholders = String.join(",", Collections.nCopies(outCount, "?"));
-
-                List<String> quotedColumns = outColumns.stream().map(RawQueryMethodMatcher::quoteOracleIdentifier).toList();
-                // Adjust query parts to produce final positional SQL via RepositoryTypeElementVisitor
-                if (!parameterBindings.isEmpty()) {
-                    // Prefix BEGIN to the first literal part
-                    if (!queryParts.isEmpty()) {
-                        queryParts.set(0, "BEGIN " + queryParts.get(0));
-                    } else {
-                        queryParts.add("BEGIN ");
-                    }
-                    // Replace the tail (after last param) to enforce RETURNING ... INTO ...; END;
-                    int last = queryParts.size() - 1;
-                    String tail = last >= 0 ? queryParts.get(last) : "";
-                    int idx = tail.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
-                    String newTail;
-                    if (idx >= 0) {
-                        newTail = tail.substring(0, idx) + "RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
-                    } else {
-                        newTail = tail + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
-                    }
-                    if (last >= 0) {
-                        queryParts.set(last, newTail);
-                    } else {
-                        queryParts.add(newTail);
-                    }
-                } else {
-                    // No parameters: construct single-part final SQL with positional markers only for OUT
-                    String withoutSemi = stripTrailingSemicolon(finalQueryString);
-                    int retIdx = withoutSemi.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
-                    String beforeReturning = withoutSemi.substring(0, retIdx);
-                    String finalSql = "BEGIN " + beforeReturning + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
-                    queryParts = new ArrayList<>();
-                    queryParts.add(finalSql);
-                }
-                // Build the assembled SQL from queryParts: parts represent SQL fragments between
-                // positional IN-parameter placeholders (SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).
-                String assembledSql;
-                if (queryParts.size() == 1) {
-                    assembledSql = queryParts.get(0);
-                } else {
-                    var sqlBuilder = new StringBuilder(queryParts.get(0));
-                    for (int i = 1; i < queryParts.size(); i++) {
-                        sqlBuilder.append(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).append(queryParts.get(i));
-                    }
-                    assembledSql = sqlBuilder.toString();
-                }
-                return QueryResult.of(assembledSql, queryParts, parameterBindings, outBindings, Map.of());
+                return buildOracleReturningQueryResult(matchContext, finalQueryString, queryParts, parameterBindings, persistentEntity, resultType);
             }
         }
 
@@ -515,11 +332,295 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return QueryResult.of(finalQueryString, queryParts, parameterBindings);
     }
 
-    private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
-
     private static int indexOfIntoIgnoreCase(String s) {
         Matcher matcher = INTO_PATTERN.matcher(s);
         return matcher.find() ? matcher.start() : -1;
+    }
+
+    private QueryResult buildOracleReturningQueryResult(MethodMatchContext matchContext,
+                                                        String finalQueryString,
+                                                        List<String> queryParts,
+                                                        List<QueryParameterBinding> parameterBindings,
+                                                        @Nullable SourcePersistentEntity persistentEntity,
+                                                        @Nullable TypedElement resultType) {
+        SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+        OracleReturningClause returningClause = parseOracleReturningClause(finalQueryString);
+        OracleReturningBindings returningBindings = resolveOracleReturningBindings(entity, returningClause.selection(), resultType);
+        if (returningClause.intoClause() != null) {
+            validateOracleIntoClause(returningClause.intoClause(), returningBindings.outBindings().size());
+            return buildExplicitOracleReturningQueryResult(finalQueryString, queryParts, parameterBindings, returningBindings.outBindings());
+        }
+        return buildGeneratedOracleReturningQueryResult(finalQueryString, queryParts, parameterBindings, returningBindings);
+    }
+
+    private QueryResult buildExplicitOracleReturningQueryResult(String finalQueryString,
+                                                                List<String> queryParts,
+                                                                List<QueryParameterBinding> parameterBindings,
+                                                                List<QueryOutParameterBinding> outBindings) {
+        if (isOracleAnonymousBlock(finalQueryString)) {
+            return QueryResult.of(finalQueryString, queryParts, parameterBindings, outBindings, Map.of());
+        }
+        if (!parameterBindings.isEmpty()) {
+            wrapQueryPartsInOracleBlock(queryParts);
+            return QueryResult.of(assembleSqlFromQueryParts(queryParts), queryParts, parameterBindings, outBindings, Map.of());
+        }
+        String wrappedSql = wrapSqlInOracleBlock(finalQueryString);
+        return QueryResult.of(wrappedSql, List.of(wrappedSql), parameterBindings, outBindings, Map.of());
+    }
+
+    private boolean isOracleAnonymousBlock(String query) {
+        String trimmed = query.trim().toLowerCase(Locale.ENGLISH);
+        return (trimmed.startsWith("begin") || trimmed.startsWith("declare")) && trimmed.endsWith("end;");
+    }
+
+    private QueryResult buildGeneratedOracleReturningQueryResult(String finalQueryString,
+                                                                 List<String> queryParts,
+                                                                 List<QueryParameterBinding> parameterBindings,
+                                                                 OracleReturningBindings returningBindings) {
+        int outCount = returningBindings.outBindings().size();
+        String intoPlaceholders = String.join(",", Collections.nCopies(outCount, "?"));
+
+        List<String> quotedColumns = returningBindings.outColumns().stream().map(RawQueryMethodMatcher::quoteOracleIdentifier).toList();
+        if (!parameterBindings.isEmpty()) {
+            if (!queryParts.isEmpty()) {
+                queryParts.set(0, "BEGIN " + queryParts.get(0));
+            } else {
+                queryParts.add("BEGIN ");
+            }
+            int last = queryParts.size() - 1;
+            String tail = last >= 0 ? queryParts.get(last) : "";
+            int idx = tail.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
+            String newTail;
+            if (idx >= 0) {
+                newTail = tail.substring(0, idx) + "RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+            } else {
+                newTail = tail + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+            }
+            if (last >= 0) {
+                queryParts.set(last, newTail);
+            } else {
+                queryParts.add(newTail);
+            }
+        } else {
+            String withoutSemi = stripTrailingSemicolon(finalQueryString);
+            int retIdx = withoutSemi.toLowerCase(Locale.ENGLISH).lastIndexOf("returning");
+            String beforeReturning = withoutSemi.substring(0, retIdx);
+            String finalSql = "BEGIN " + beforeReturning + " RETURNING " + String.join(",", quotedColumns) + " INTO " + intoPlaceholders + "; END;";
+            queryParts = new ArrayList<>();
+            queryParts.add(finalSql);
+        }
+        return QueryResult.of(assembleSqlFromQueryParts(queryParts), queryParts, parameterBindings, returningBindings.outBindings(), Map.of());
+    }
+
+    private OracleReturningClause parseOracleReturningClause(String finalQueryString) {
+        String withoutSemicolon = stripTrailingSemicolon(finalQueryString).trim();
+        String lower = withoutSemicolon.toLowerCase(Locale.ENGLISH);
+        int returningIdx = lower.lastIndexOf("returning");
+        if (returningIdx < 0) {
+            throw new MatchFailedException("Oracle RETURNING clause was not found in query: " + finalQueryString);
+        }
+        String afterReturning = withoutSemicolon.substring(returningIdx + "returning".length()).trim();
+        int intoIdx = indexOfIntoIgnoreCase(afterReturning);
+        String selection;
+        String intoClause = null;
+        if (intoIdx > -1) {
+            selection = afterReturning.substring(0, intoIdx).trim();
+            intoClause = afterReturning.substring(intoIdx + "into".length()).trim();
+            intoClause = stripOracleAnonymousBlockSuffix(intoClause);
+        } else {
+            selection = afterReturning;
+        }
+        return new OracleReturningClause(selection, intoClause);
+    }
+
+    private String stripOracleAnonymousBlockSuffix(String intoClause) {
+        String trimmed = stripTrailingSemicolon(intoClause).trim();
+        return trimmed.replaceFirst("(?is)\\s*end\\s*$", "").trim();
+    }
+
+    private void wrapQueryPartsInOracleBlock(List<String> queryParts) {
+        if (!queryParts.isEmpty()) {
+            queryParts.set(0, "BEGIN " + queryParts.get(0));
+        } else {
+            queryParts.add("BEGIN ");
+        }
+        int last = queryParts.size() - 1;
+        String tail = last >= 0 ? queryParts.get(last) : "";
+        if (last >= 0) {
+            queryParts.set(last, stripTrailingSemicolon(tail) + "; END;");
+        } else {
+            queryParts.add(stripTrailingSemicolon(tail) + "; END;");
+        }
+    }
+
+    private String wrapSqlInOracleBlock(String sql) {
+        return "BEGIN " + stripTrailingSemicolon(sql) + "; END;";
+    }
+
+    private String assembleSqlFromQueryParts(List<String> queryParts) {
+        if (queryParts.size() == 1) {
+            return queryParts.get(0);
+        }
+        var sqlBuilder = new StringBuilder(queryParts.get(0));
+        for (int i = 1; i < queryParts.size(); i++) {
+            sqlBuilder.append(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).append(queryParts.get(i));
+        }
+        return sqlBuilder.toString();
+    }
+
+    private OracleReturningBindings resolveOracleReturningBindings(@Nullable SourcePersistentEntity entity,
+                                                                  String selection,
+                                                                  @Nullable TypedElement resultType) {
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>();
+        List<String> outColumns = new ArrayList<>();
+        if (selection.equals("*")) {
+            if (entity == null) {
+                throw new MatchFailedException("RETURNING * requires a repository root entity to resolve columns");
+            }
+            entity.getPersistentProperties().forEach(pp -> {
+                if (pp instanceof Association assoc) {
+                    switch (assoc.getKind()) {
+                        case ONE_TO_MANY, MANY_TO_MANY -> {
+                        }
+                        default -> {
+                            String colName = pp.getPersistedName();
+                            DataType dt = DataType.STRING;
+                            try {
+                                var ae = assoc.getAssociatedEntity();
+                                if (ae != null && ae.hasIdentity()) {
+                                    dt = ae.getIdentity().getDataType();
+                                }
+                            } catch (Exception ignored) {
+                            }
+                            outColumns.add(colName);
+                            outBindings.add(createOutBinding(colName, dt));
+                        }
+                    }
+                } else {
+                    String colName = pp.getPersistedName();
+                    DataType dt = pp.getDataType();
+                    outColumns.add(colName);
+                    outBindings.add(createOutBinding(colName, dt));
+                }
+            });
+            if (entity.hasIdentity() && outColumns.stream().noneMatch(c -> c.equals(entity.getIdentity().getPersistedName()))) {
+                var id = entity.getIdentity();
+                outColumns.add(id.getPersistedName());
+                outBindings.add(createOutBinding(id.getPersistedName(), id.getDataType()));
+            }
+        } else {
+            List<String> parts = splitByComma(selection).stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+            validateReturningColumnCount(parts, resultType);
+            for (String part : parts) {
+                String col = canonicalizeReturningColumn(entity, normalizeReturnedColumn(part));
+                outColumns.add(col);
+                outBindings.add(createOutBinding(col, resolveReturningDataType(entity, col)));
+            }
+        }
+        if (outBindings.isEmpty()) {
+            throw new MatchFailedException("RETURNING clause must contain at least one column for Oracle");
+        }
+        return new OracleReturningBindings(outColumns, outBindings);
+    }
+
+    private void validateReturningColumnCount(List<String> parts, @Nullable TypedElement resultType) {
+        if (parts.size() > 1 && !supportsMultiColumnReturning(resultType)) {
+            throw new MatchFailedException("Oracle raw queries returning multiple columns require an entity return type");
+        }
+    }
+
+    private boolean supportsMultiColumnReturning(@Nullable TypedElement resultType) {
+        if (resultType == null) {
+            return false;
+        }
+        if (resultType instanceof ClassElement classElement && TypeUtils.isEntity(classElement)) {
+            return true;
+        }
+        if (resultType instanceof ClassElement classElement && TypeUtils.isIterableOfEntity(classElement)) {
+            return true;
+        }
+        return false;
+    }
+
+    private void validateOracleIntoClause(String intoClause, int expectedCount) {
+        List<String> intoParts = splitByComma(intoClause).stream().map(String::trim).filter(s -> !s.isEmpty()).map(RawQueryMethodMatcher::stripTrailingSemicolon).toList();
+        if (intoParts.size() != expectedCount) {
+            throw new MatchFailedException("Oracle RETURNING ... INTO placeholder count must match returned column count: " + expectedCount + " columns, " + intoParts.size() + " INTO target(s)");
+        }
+        for (String intoPart : intoParts) {
+            if (!"?".equals(intoPart)) {
+                throw new MatchFailedException("Oracle raw queries with RETURNING ... INTO must use positional '?' placeholders in the INTO clause: " + intoPart);
+            }
+        }
+    }
+
+    private DataType resolveReturningDataType(@Nullable SourcePersistentEntity entity, String col) {
+        DataType dt = DataType.STRING;
+        if (entity != null) {
+            var prop = resolveReturningProperty(entity, col);
+            if (prop != null) {
+                if (prop instanceof Association assocProp) {
+                    try {
+                        var ae = assocProp.getAssociatedEntity();
+                        if (ae != null && ae.hasIdentity()) {
+                            dt = ae.getIdentity().getDataType();
+                        }
+                    } catch (Exception ignored) {
+                        dt = DataType.STRING;
+                    }
+                } else if (prop.getDataType() != null) {
+                    dt = prop.getDataType();
+                }
+            }
+        }
+        return dt;
+    }
+
+    private String canonicalizeReturningColumn(@Nullable SourcePersistentEntity entity, String col) {
+        if (entity == null) {
+            return col;
+        }
+        var prop = resolveReturningProperty(entity, col);
+        if (prop != null) {
+            return prop.getPersistedName();
+        }
+        return col;
+    }
+
+    @Nullable
+    private SourcePersistentProperty resolveReturningProperty(SourcePersistentEntity entity, String col) {
+        var prop = entity.getPropertyByNameIgnoreCase(col);
+        if (prop == null) {
+            for (var p : entity.getPersistentProperties()) {
+                if (p.getPersistedName().equalsIgnoreCase(col)) {
+                    prop = p;
+                    break;
+                }
+            }
+        }
+        return prop;
+    }
+
+    private String normalizeReturnedColumn(String column) {
+        String col = column;
+        if ((col.startsWith("\"") && col.endsWith("\"")) || (col.startsWith("`") && col.endsWith("`"))) {
+            col = col.substring(1, col.length() - 1);
+        }
+        return col;
+    }
+
+    private QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
+        return new QueryOutParameterBinding() {
+            @Override
+            public String getName() {
+                return column;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return dataType;
+            }
+        };
     }
 
     private static String stripTrailingSemicolon(String s) {
@@ -656,4 +757,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext()));
     }
 
+    private record OracleReturningClause(String selection, @Nullable String intoClause) {
+    }
+
+    private record OracleReturningBindings(List<String> outColumns, List<QueryOutParameterBinding> outBindings) {
+    }
 }

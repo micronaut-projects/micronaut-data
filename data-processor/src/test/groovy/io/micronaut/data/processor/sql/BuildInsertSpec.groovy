@@ -657,7 +657,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         outBindingParameters[6].dataType == DataType.LONG
     }
 
-    void "ORACLE custom @Query insert returning multiple columns should fail"() {
+    void "ORACLE custom @Query insert returning multiple columns should fail for scalar return"() {
         when:
         buildRepository('test.BookRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -669,13 +669,13 @@ import io.micronaut.data.annotation.Query;
 @JdbcRepository(dialect= Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
-    @Query("INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated) VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING id, title")
+    @Query("INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated) VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING id, title INTO ?, ?")
     String brokenInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, java.time.LocalDateTime lastUpdated);
 }
 """)
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("multiple columns in RETURNING are not supported")
+        ex.message.contains("multiple columns require an entity return type")
     }
 
     void "ORACLE custom @Query insert returning produces valid SQL"() {
@@ -691,10 +691,18 @@ import java.time.LocalDateTime;
 @JdbcRepository(dialect= Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
-    @Query("INSERT INTO \\"BOOK\\" (\\"AUTHOR_ID\\",\\"GENRE_ID\\",\\"TITLE\\",\\"TOTAL_PAGES\\",\\"PUBLISHER_ID\\",\\"LAST_UPDATED\\") VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING *")
+    @Query(\"""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?
+        \""")
     Book customInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
 
-    @Query("INSERT INTO \\"BOOK\\" (\\"AUTHOR_ID\\",\\"GENRE_ID\\",\\"TITLE\\",\\"TOTAL_PAGES\\",\\"PUBLISHER_ID\\",\\"LAST_UPDATED\\") VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated) RETURNING \\"TITLE\\"")
+    @Query(\"""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING "TITLE" INTO ?
+        \""")
     String customInsertReturningTitle(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
 }
 """)
@@ -704,16 +712,106 @@ interface BookRepository extends GenericRepository<Book, Long> {
         def customInsertReturningTitleMethod = repository.findPossibleMethods("customInsertReturningTitle").findFirst().get()
         def outBindingTitleParameters = getOutBindingParameters(customInsertReturningTitleMethod)
         then:
-        getRawQuery(customInsertReturningMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END;'
+        getRawQuery(customInsertReturningMethod).replace('\n', ' ') == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,? ; END;'
         getDataResultType(customInsertReturningMethod) == "io.micronaut.data.tck.entities.Book"
         getDataInterceptor(customInsertReturningMethod) == "io.micronaut.data.intercept.InsertReturningOneInterceptor"
+        getResultDataType(customInsertReturningMethod) == DataType.ENTITY
         getOperationType(customInsertReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
         outBindingEntityParameters.length == 7
+        outBindingEntityParameters[0].name == "author_id"
+        outBindingEntityParameters[0].dataType == DataType.LONG
+        outBindingEntityParameters[1].name == "genre_id"
+        outBindingEntityParameters[1].dataType == DataType.LONG
+        outBindingEntityParameters[2].name == "title"
+        outBindingEntityParameters[2].dataType == DataType.STRING
+        outBindingEntityParameters[3].name == "total_pages"
+        outBindingEntityParameters[3].dataType == DataType.INTEGER
+        outBindingEntityParameters[4].name == "publisher_id"
+        outBindingEntityParameters[4].dataType == DataType.LONG
+        outBindingEntityParameters[5].name == "last_updated"
+        outBindingEntityParameters[5].dataType == DataType.TIMESTAMP
+        outBindingEntityParameters[6].name == "id"
+        outBindingEntityParameters[6].dataType == DataType.LONG
 
-        getRawQuery(customInsertReturningTitleMethod) == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "TITLE" INTO ?; END;'
+        getRawQuery(customInsertReturningTitleMethod).replace('\n', ' ') == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "TITLE" INTO ? ; END;'
+        outBindingTitleParameters[0].name == "title"
+        outBindingTitleParameters[0].dataType == DataType.STRING
         getDataResultType(customInsertReturningTitleMethod) == "java.lang.String"
         getDataInterceptor(customInsertReturningTitleMethod) == "io.micronaut.data.intercept.InsertReturningOneInterceptor"
         getOperationType(customInsertReturningTitleMethod) == DataMethod.OperationType.INSERT_RETURNING
         outBindingTitleParameters.length == 1
     }
+
+    void "ORACLE custom @Query insert returning Restaurant validates embedded out bindings"() {
+        given:
+        def repository = buildRepository('test.RestaurantRepository', '''
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import io.micronaut.data.annotation.Query;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+    @Query("""
+        INSERT INTO "RESTAURANT" ("NAME","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code")
+        VALUES (:name,:addressStreet,:addressZipCode,:hqAddressStreet,:hqAddressZipCode)
+        RETURNING "NAME","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code","ID" INTO ?,?,?,?,?,?
+        """)
+    Restaurant customInsertReturning(String name, String addressStreet, String addressZipCode, String hqAddressStreet, String hqAddressZipCode);
+}
+''')
+        when:
+        def method = repository.findPossibleMethods("customInsertReturning").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+        then:
+        getRawQuery(method).replace('\n', ' ') == 'BEGIN INSERT INTO "RESTAURANT" ("NAME","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?) RETURNING "NAME","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code","ID" INTO ?,?,?,?,?,? ; END;'
+        getDataResultType(method) == "io.micronaut.data.tck.entities.Restaurant"
+        getResultDataType(method) == DataType.ENTITY
+        getOperationType(method) == DataMethod.OperationType.INSERT_RETURNING
+        outBindingParameters.length == 6
+        outBindingParameters[0].name == "name"
+        outBindingParameters[0].dataType == DataType.STRING
+        outBindingParameters[1].name == "address_street"
+        outBindingParameters[1].dataType == DataType.STRING
+        outBindingParameters[2].name == "address_zip_code"
+        outBindingParameters[2].dataType == DataType.STRING
+        outBindingParameters[3].name == "hqaddress_street"
+        outBindingParameters[3].dataType == DataType.STRING
+        outBindingParameters[4].name == "hqaddress_zip_code"
+        outBindingParameters[4].dataType == DataType.STRING
+        outBindingParameters[5].name == "id"
+        outBindingParameters[5].dataType == DataType.LONG
+    }
+
+    void "ORACLE custom @Query insert returning preserves existing BEGIN END block"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query(\"""
+        BEGIN
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?;
+        END;
+        \""")
+    Book customInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+}
+""")
+        when:
+        def method = repository.findPossibleMethods("customInsertReturning").findFirst().get()
+        then:
+        getRawQuery(method).replace('\n', ' ') == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END; '
+    }
+
 }

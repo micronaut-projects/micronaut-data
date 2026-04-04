@@ -29,28 +29,28 @@ public interface OracleReactiveBookRepository extends BookReactiveRepository {
     @Query("""
         INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING *
+        RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?
         """)
     Mono<Book> customInsertReturningBook(Long authorId, Long genreId, String title, int totalPages, Long publisherId, java.time.LocalDateTime lastUpdated);
 
     @Query("""
         INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING *
+        RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?
         """)
     Flux<Book> customInsertReturningBooks(Long authorId, Long genreId, String title, int totalPages, Long publisherId, java.time.LocalDateTime lastUpdated);
 
     @Query("""
         INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING "TITLE"
+        RETURNING "TITLE" INTO ?
         """)
     Mono<String> customInsertReturningTitle(Long authorId, Long genreId, String title, int totalPages, Long publisherId, java.time.LocalDateTime lastUpdated);
 
-    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING *")
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?")
     Mono<Book> customUpdateReturning(Long bookId, String title, int totalPages, java.time.LocalDateTime lastUpdated);
 
-    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\"")
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\" INTO ?")
     Mono<String> customDeleteReturningTitle(Long bookId);
 
     Flux<Book> deleteReturning(Iterable<Book> books);

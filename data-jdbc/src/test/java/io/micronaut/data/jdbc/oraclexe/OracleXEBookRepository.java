@@ -83,7 +83,7 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Query("""
         INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated)
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING *
+        RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?
         """)
     public abstract List<Book> customInsertReturningBooks(Long authorId,
                                                           @Nullable Long genreId,
@@ -95,7 +95,7 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Query("""
         INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING *
+        RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?
         """)
     public abstract Book customInsertReturningBook(Long authorId,
                                                    @Nullable Long genreId,
@@ -107,7 +107,7 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Query("""
         INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
         VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
-        RETURNING "TITLE"
+        RETURNING "TITLE" INTO ?
         """)
     public abstract String customInsertReturningTitle(Long authorId,
                                                       @Nullable Long genreId,
@@ -116,10 +116,10 @@ public abstract class OracleXEBookRepository extends BookRepository {
                                                       @Nullable Long publisherId,
                                                       LocalDateTime lastUpdated);
 
-    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING *")
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?")
     public abstract Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
 
-    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\"")
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\" INTO ?")
     public abstract String customDeleteReturningTitle(Long bookId);
 
 }
