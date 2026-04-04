@@ -513,13 +513,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private <R> R mapOracleReturningReadable(Readable readable, SqlPreparedQuery<?, R> preparedQuery) {
+    private <R> @Nullable R mapOracleReturningReadable(Readable readable, SqlPreparedQuery<?, R> preparedQuery) {
         List<QueryOutParameterBinding> outParameterBindings = preparedQuery.getOutParameterBindings();
         if (outParameterBindings.size() == 1) {
             QueryOutParameterBinding out = outParameterBindings.get(0);
             Object value = new ColumnNameByIndexR2dbcResultReader(conversionService, Map.of(out.name(), 0))
                 .readDynamic(readable, out.name(), out.dataType());
-            return conversionService.convertRequired(value, preparedQuery.getResultType());
+            if (value == null) {
+                return null;
+            }
+            return conversionService.convert(value, preparedQuery.getResultType()).orElse(null);
         }
         throw new DataAccessException("Expected single OUT parameter for scalar Oracle RETURNING query: " + preparedQuery.getQuery());
     }
@@ -537,7 +540,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 .flux()
                 .onErrorResume(errorHandler(preparedQuery.getDialect()));
         }
-        return executeAndMapOracleReturningSingle(oracleStatement, preparedQuery.getDialect(), readable -> mapOracleReturningReadable(readable, preparedQuery))
+        return executeAndMapOracleReturningSingleNullable(oracleStatement, preparedQuery.getDialect(), readable -> mapOracleReturningReadable(readable, preparedQuery))
             .flux()
             .onErrorResume(errorHandler(preparedQuery.getDialect()));
     }
@@ -596,6 +599,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private <R> Mono<R> executeAndMapOracleReturningSingle(Statement statement, Dialect dialect, Function<Readable, R> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map(mapper)))
+            .onErrorResume(errorHandler(dialect))
+            .as(DefaultR2dbcRepositoryOperations::toSingleResult);
+    }
+
+    private <R> Mono<R> executeAndMapOracleReturningSingleNullable(Statement statement, Dialect dialect, Function<Readable, @Nullable R> mapper) {
+        return Flux.from(statement.execute())
+            .flatMap(result -> Flux.from(result.map(readable -> Mono.justOrEmpty(mapper.apply(readable)))).flatMap(t -> t))
             .onErrorResume(errorHandler(dialect))
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }

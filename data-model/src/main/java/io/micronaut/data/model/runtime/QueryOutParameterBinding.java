@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
 import org.jspecify.annotations.NonNull;
 
@@ -28,7 +27,6 @@ import org.jspecify.annotations.NonNull;
  * @since 5.0
  */
 @Experimental
-@Internal
 public interface QueryOutParameterBinding {
 
     /**
