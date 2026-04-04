@@ -426,16 +426,20 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         if (intoIdx > -1) {
             selection = afterReturning.substring(0, intoIdx).trim();
             intoClause = afterReturning.substring(intoIdx + "into".length()).trim();
-            intoClause = stripOracleAnonymousBlockSuffix(intoClause);
+            intoClause = normalizeIntoClauseForValidation(intoClause);
         } else {
             selection = afterReturning;
         }
         return new OracleReturningClause(selection, intoClause);
     }
 
-    private String stripOracleAnonymousBlockSuffix(String intoClause) {
+    private String normalizeIntoClauseForValidation(String intoClause) {
         String trimmed = stripTrailingSemicolon(intoClause).trim();
-        return trimmed.replaceFirst("(?is)\\s*end\\s*$", "").trim();
+        int lastPlaceholder = trimmed.lastIndexOf('?');
+        if (lastPlaceholder == -1) {
+            return trimmed;
+        }
+        return trimmed.substring(0, lastPlaceholder + 1).trim();
     }
 
     private void wrapQueryPartsInOracleBlock(List<String> queryParts) {
