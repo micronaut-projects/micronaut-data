@@ -60,9 +60,6 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
         if (value instanceof CharSequence) {
             throw new IllegalArgumentException("String VECTOR literals are not supported for Oracle binding");
         }
-        if (value instanceof VECTOR oracleVector) {
-            return Parameters.in(ORACLE_VECTOR_TYPE, oracleVector);
-        }
         if (value instanceof Vector vector) {
             VECTOR oracleVector = conversionService.convert(vector, VECTOR.class)
                 .orElseThrow(() -> new IllegalArgumentException("Cannot convert " + vector.getClass().getName() + " to oracle.sql.VECTOR"));
