@@ -18,17 +18,18 @@ package com.example;
 import com.example.repository.BookRepository;
 import com.example.repository.CategoryRepository;
 import com.example.repository.ReviewRepository;
+import com.example.repository.specification.ReviewSpecification;
+import io.micronaut.entities.Book;
+import io.micronaut.entities.Category;
+import io.micronaut.entities.Review;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.repository.specification.ReviewSpecification.withBookTitleEquals;
-import static com.example.repository.specification.ReviewSpecification.withReviewerEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -64,29 +65,14 @@ public class ReviewCriteriaMetamodelTest {
 
         reviewRepository.saveAll(List.of(r1, r2));
 
-        List<Review> result = reviewRepository.findAll(withBookTitleEquals("Dune").and(withReviewerEqual("alice")));
+        List<Review> result = reviewRepository.findAll(ReviewSpecification.withBookTitleEquals("Dune").and(ReviewSpecification.withReviewerEqual("alice")));
 
         assertEquals(1, result.size());
-        assertNotNull(result.getFirst().id());
-        assertEquals("alice", result.getFirst().reviewer());
-        assertEquals("Great", result.getFirst().content());
-        assertNotNull(result.getFirst().book());
-        assertEquals("Dune", result.getFirst().book().getTitle());
+        assertNotNull(result.getFirst().getId());
+        Assertions.assertEquals("alice", result.getFirst().getReviewer());
+        Assertions.assertEquals("Great", result.getFirst().getContent());
+        assertNotNull(result.getFirst().getBook());
+        Assertions.assertEquals("Dune", result.getFirst().getBook().getTitle());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields() throws Exception {
-        assertNotNull(Review_.class.getDeclaredField("id"));
-        assertNotNull(Review_.class.getDeclaredField("reviewer"));
-        assertNotNull(Review_.class.getDeclaredField("content"));
-        assertNotNull(Review_.class.getDeclaredField("book"));
-
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("reviewer").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("content").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("book").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Review_.class, EntityType.class, Review.class);
-
-    }
 }

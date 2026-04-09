@@ -17,20 +17,19 @@
 package com.example;
 
 import com.example.repository.CategoryRepository;
+import io.micronaut.entities.Category;
+import io.micronaut.entities.Category_;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.ListAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
 public class CategoryCriteriaMetamodelTest {
@@ -45,14 +44,10 @@ public class CategoryCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel() {
-        Category c1 = new Category();
-        c1.setId(1L);
-        c1.setName("Fiction");
-        Category c2 = new Category();
-        c2.setId(2L);
+        Category c1 = new Category(1L, "Fiction", new ArrayList<>(), new byte[]{});
+        Category c2 = new Category(2L, null, new ArrayList<>(), new byte[]{});
 
-        categoryRepository.save(c1);
-        categoryRepository.save(c2);
+        categoryRepository.saveAll(List.of(c1, c2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Category> cq = cb.createQuery(Category.class);
@@ -63,21 +58,8 @@ public class CategoryCriteriaMetamodelTest {
 
         List<Category> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getId());
-        assertEquals("Fiction", result.get(0).getName());
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields() throws Exception {
-        assertNotNull(Category_.class.getDeclaredField("id"));
-        assertNotNull(Category_.class.getDeclaredField("name"));
-        assertNotNull(Category_.class.getDeclaredField("books"));
-
-        assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("name").getType().getName());
-        assertEquals(ListAttribute.class.getName(), Category_.class.getDeclaredField("books").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Category_.class, EntityType.class, Category.class);
+        assertEquals(1L, result.getFirst().getId());
+        assertEquals("Fiction", result.getFirst().getName());
     }
 
 }

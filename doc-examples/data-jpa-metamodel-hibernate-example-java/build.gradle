@@ -1,4 +1,5 @@
 plugins {
+    id "java-library"
     id "io.micronaut.build.internal.data-example"
 }
 
@@ -9,28 +10,29 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor mn.micronaut.http.validation
-    annotationProcessor projects.micronautDataProcessor
-    annotationProcessor projects.micronautDataJpaMetamodelProcessor
-    annotationProcessor mnSerde.micronaut.serde.processor
+    testImplementation projects.micronautDocExamples.micronautDataJpaMetamodelEntitiesExampleJava
 
-    implementation libs.managed.jakarta.data.api
-    implementation mnSql.jakarta.persistence.api
-    implementation mnSql.hibernate.core
-    implementation mnSql.micronaut.hibernate.jpa
-    implementation mnSql.micronaut.jdbc.hikari
-    implementation projects.micronautDataHibernateJpa
-    implementation mn.micronaut.http.client.core
-    implementation mnSerde.micronaut.serde.jackson
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataProcessor
+    testAnnotationProcessor projects.micronautDataJpaMetamodelProcessor
 
-    runtimeOnly mnLogging.logback.classic
-    runtimeOnly mnSql.h2
-
+    testImplementation projects.micronautDataHibernateJpa
+    testImplementation projects.micronautDataProcessor
+    testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mnValidation.micronaut.validation
+    testImplementation mnSql.hibernate.core
+    testImplementation mnSql.micronaut.hibernate.jpa
     testImplementation mnTest.micronaut.test.junit5
-}
 
-application {
-    mainClass = "com.example.Application"
+    testImplementation mnSerde.micronaut.serde.jackson
+    testImplementation mn.micronaut.http.client.core
+
+    testRuntimeOnly mnTest.junit.jupiter.engine
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mn.snakeyaml
+
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -38,39 +40,3 @@ tasks.withType(JavaCompile).configureEach {
             "-Amicronaut.data.jpa.metamodel.enabled=true"
     ]
 }
-// To test the metamodel generation when micronaut.data.jpa.metamodel.enabled=false
-def disabledGenDir = layout.buildDirectory.dir("generated/metamodel-disabled")
-def disabledClassesDir = layout.buildDirectory.dir("classes/metamodel-disabled")
-
-tasks.register("compileMetamodelDisabled", JavaCompile) {
-    doFirst {
-        delete(disabledGenDir)
-        delete(disabledClassesDir)
-    }
-
-    source = sourceSets.main.java
-    classpath = sourceSets.main.compileClasspath
-    destinationDirectory = disabledClassesDir
-
-    options.annotationProcessorPath = configurations.annotationProcessor
-    options.compilerArgs += [
-            "-proc:only",
-            "-s", disabledGenDir.get().asFile.absolutePath,
-            "-Amicronaut.data.jpa.metamodel.enabled=false"
-    ]
-}
-
-tasks.register("verifyMetamodelDisabled") {
-    dependsOn("compileMetamodelDisabled")
-    doLast {
-        def generated = fileTree(disabledGenDir).matching { include "**/*_.java" }.files
-        if (!generated.isEmpty()) {
-            throw new GradleException("Expected no metamodel files when disabled; found: $generated")
-        }
-    }
-}
-
-tasks.named("test") {
-    dependsOn("verifyMetamodelDisabled")
-}
-

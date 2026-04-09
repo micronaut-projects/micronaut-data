@@ -17,19 +17,17 @@ package com.example;
 
 import com.example.repository.EmbeddedOwnerRepository;
 import com.example.repository.PurchaseOrderRepository;
+import io.micronaut.entities.*;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.metamodel.EmbeddableType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
 public class EmbeddableCriteriaMetamodelTest {
@@ -71,8 +69,8 @@ public class EmbeddableCriteriaMetamodelTest {
 
         List<EmbeddedOwner> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("B", result.get(0).getOwnerName());
-        assertEquals("Y", result.get(0).getEmbedded().getEmbeddedName());
+        assertEquals("B", result.getFirst().getOwnerName());
+        assertEquals("Y", result.getFirst().getEmbedded().embeddedName());
     }
 
     @Test
@@ -102,9 +100,9 @@ public class EmbeddableCriteriaMetamodelTest {
 
         List<PurchaseOrder> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("second", result.get(0).getDescription());
-        assertEquals("t1", result.get(0).getId().getTenantId());
-        assertEquals(2L, result.get(0).getId().getOrderNo());
+        assertEquals("second", result.getFirst().getDescription());
+        assertEquals("t1", result.getFirst().getId().tenantId());
+        assertEquals(2L, result.getFirst().getId().orderNo());
     }
 
     @Test
@@ -130,42 +128,4 @@ public class EmbeddableCriteriaMetamodelTest {
         assertEquals(List.of(10L), orderNos);
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields_embeddedOwner_and_purchaseOrder() throws Exception {
-        assertNotNull(EmbeddedOwner_.class.getDeclaredField("id"));
-        assertNotNull(EmbeddedOwner_.class.getDeclaredField("ownerName"));
-        assertNotNull(EmbeddedOwner_.class.getDeclaredField("embedded"));
-
-        assertEquals(SingularAttribute.class.getName(), EmbeddedOwner_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), EmbeddedOwner_.class.getDeclaredField("ownerName").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), EmbeddedOwner_.class.getDeclaredField("embedded").getType().getName());
-
-        assertNotNull(PurchaseOrder_.class.getDeclaredField("id"));
-        assertNotNull(PurchaseOrder_.class.getDeclaredField("description"));
-        assertNotNull(PurchaseOrder_.class.getDeclaredField("details"));
-
-        assertEquals(SingularAttribute.class.getName(), PurchaseOrder_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), PurchaseOrder_.class.getDeclaredField("description").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), PurchaseOrder_.class.getDeclaredField("details").getType().getName());
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_embeddables_optionalIfYouGenerateThem() throws Exception {
-        assertNotNull(EmbeddableClass_.class.getDeclaredField("embeddedName"));
-        assertNotNull(EmbeddableClass_.class.getDeclaredField("number"));
-        assertNotNull(EmbeddableClass_.class.getDeclaredField("n"));
-        assertNotNull(EmbeddableClass_.class.getDeclaredField("d"));
-
-        assertEquals(SingularAttribute.class.getName(), EmbeddableClass_.class.getDeclaredField("embeddedName").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), EmbeddableClass_.class.getDeclaredField("number").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), EmbeddableClass_.class.getDeclaredField("n").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), EmbeddableClass_.class.getDeclaredField("d").getType().getName());
-
-        assertNotNull(OrderPk_.class.getDeclaredField("tenantId"));
-        assertNotNull(OrderPk_.class.getDeclaredField("orderNo"));
-        assertEquals(SingularAttribute.class.getName(), OrderPk_.class.getDeclaredField("tenantId").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), OrderPk_.class.getDeclaredField("orderNo").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(EmbeddableClass_.class, EmbeddableType.class, EmbeddableClass.class);
-    }
 }

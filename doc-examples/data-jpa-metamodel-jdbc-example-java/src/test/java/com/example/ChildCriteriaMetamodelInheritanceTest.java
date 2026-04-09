@@ -15,19 +15,19 @@
  */
 package com.example;
 
+
 import com.example.repository.ChildRepository;
 import io.micronaut.data.model.Sort;
+import io.micronaut.entities.Child;
+import io.micronaut.entities.Child_;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.MappedSuperclassType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.example.repository.specification.ChildSpecification.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
 public class ChildCriteriaMetamodelInheritanceTest {
@@ -73,35 +73,4 @@ public class ChildCriteriaMetamodelInheritanceTest {
         assertEquals(30L, result.getFirst().getAge());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields_includingInheritedFromMappedSuperclass() throws Exception {
-
-        assertNotNull(Child_.class.getField("id"));
-        assertNotNull(Child_.class.getField("name"));
-        assertNotNull(Child_.class.getDeclaredField("age"));
-
-        assertEquals(SingularAttribute.class.getName(), Child_.class.getField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Child_.class.getField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Child_.class.getDeclaredField("age").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Child_.class, EntityType.class, Child.class);
-    }
-
-    @Test
-    void mappedSuperclassMetamodel_optional() throws Exception {
-        Class<?> parentMetamodel = Class.forName("com.example.Parent_");
-
-        assertNotNull(parentMetamodel.getDeclaredField("id"));
-        assertNotNull(parentMetamodel.getDeclaredField("name"));
-
-        assertEquals(SingularAttribute.class.getName(),
-            parentMetamodel.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            parentMetamodel.getDeclaredField("name").getType().getName());
-
-        assertThrows(NoSuchFieldException.class, () -> Parent_.class.getDeclaredField("age"));
-        MetamodelAssertions.assertClassFieldIsEntityType(Parent_.class, MappedSuperclassType.class, Parent.class);
-
-
-    }
 }

@@ -19,18 +19,20 @@ import com.example.repository.EmployeeFieldAccessRepository;
 import com.example.repository.EmployeeMixedAccessEmbeddedIdRepository;
 import com.example.repository.EmployeeMixedAccessRepository;
 import com.example.repository.EmployeePropertyAccessRepository;
-import com.example.repository.specification.EmployeeMixedAccessSpecification;
+import com.example.repository.specification.EmployeeFieldAccessSpecification;
 import com.example.repository.specification.EmployeePropertyAccessSpecification;
+import io.micronaut.entities.EmployeeFieldAccess;
+import io.micronaut.entities.EmployeeMixedAccess;
+import io.micronaut.entities.EmployeePropertyAccess;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.example.repository.specification.EmployeeFieldAccessSpecification.salaryBiggerThan;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.example.repository.specification.EmployeeMixedAccessSpecification.nameEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
 public class AccessTypeCriteriaMetamodelTest {
@@ -65,11 +67,11 @@ public class AccessTypeCriteriaMetamodelTest {
 
         employeeFieldAccessRepository.saveAll(List.of(e1, e2));
 
-        List<EmployeeFieldAccess> result = employeeFieldAccessRepository.findAll(salaryBiggerThan(80_000d));
+        List<EmployeeFieldAccess> result = employeeFieldAccessRepository.findAll(EmployeeFieldAccessSpecification.salaryBiggerThan(80_000d));
 
         assertEquals(1, result.size());
         assertEquals("Alice", result.getFirst().getName());
-        assertTrue(result.getFirst().getId() != null);
+        assertNotNull(result.getFirst().getId());
     }
 
     @Test
@@ -93,88 +95,10 @@ public class AccessTypeCriteriaMetamodelTest {
 
         employeeMixedAccessRepository.save(e);
 
-        List<EmployeeMixedAccess> result = employeeMixedAccessRepository.findAll(EmployeeMixedAccessSpecification.nameEquals("Eve"));
+        List<EmployeeMixedAccess> result = employeeMixedAccessRepository.findAll(nameEquals("Eve"));
         assertEquals(1, result.size());
         assertEquals("Eve", result.getFirst().getName());
         assertNotNull(result.getFirst().getId());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields_fieldAccess() throws Exception {
-        assertNotNull(EmployeeFieldAccess_.class.getDeclaredField("id"));
-        assertNotNull(EmployeeFieldAccess_.class.getDeclaredField("name"));
-        assertNotNull(EmployeeFieldAccess_.class.getDeclaredField("salary"));
-        assertNotNull(EmployeeFieldAccess_.class.getDeclaredField("class_"));
-
-
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeFieldAccess_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeFieldAccess_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeFieldAccess_.class.getDeclaredField("salary").getType().getName());
-        MetamodelAssertions.assertClassFieldIsEntityType(EmployeeFieldAccess_.class, EntityType.class, EmployeeFieldAccess.class);
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_propertyAccess() throws Exception {
-        assertNotNull(EmployeePropertyAccess_.class.getDeclaredField("id"));
-        assertNotNull(EmployeePropertyAccess_.class.getDeclaredField("name"));
-        assertNotNull(EmployeePropertyAccess_.class.getDeclaredField("salary"));
-
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeePropertyAccess_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeePropertyAccess_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeePropertyAccess_.class.getDeclaredField("salary").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(EmployeePropertyAccess_.class, EntityType.class, EmployeePropertyAccess.class);
-
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_mixedAccess_andDoesNotContainUnmappedField() throws Exception {
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("id"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("name"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("salary"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("fieldAnnotated"));
-
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("salary").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("fieldAnnotated").getType().getName());
-
-        assertThrows(NoSuchFieldException.class,
-            () -> EmployeeMixedAccess_.class.getDeclaredField("fieldWithoutAccessors"));
-
-        MetamodelAssertions.assertClassFieldIsEntityType(EmployeeMixedAccess_.class, EntityType.class, EmployeeMixedAccess.class);
-
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_mixedAccessEmbeddableId_andDoesNotContainUnmappedField() throws Exception {
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("id"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("name"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("salary"));
-        assertNotNull(EmployeeMixedAccess_.class.getDeclaredField("fieldAnnotated"));
-
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("salary").getType().getName());
-        assertEquals(SingularAttribute.class.getName(),
-            EmployeeMixedAccess_.class.getDeclaredField("fieldAnnotated").getType().getName());
-
-        assertThrows(NoSuchFieldException.class,
-            () -> EmployeeMixedAccess_.class.getDeclaredField("fieldWithoutAccessors"));
-
-        MetamodelAssertions.assertClassFieldIsEntityType(EmployeeMixedAccessEmbeddedId_.class, EntityType.class, EmployeeMixedAccessEmbeddedId.class);
-    }
 }

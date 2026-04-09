@@ -1,4 +1,5 @@
 plugins {
+    id "java-library"
     id "io.micronaut.build.internal.data-example"
 }
 
@@ -9,25 +10,28 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor mn.micronaut.http.validation
-    annotationProcessor projects.micronautDataProcessor
-    annotationProcessor projects.micronautDataJpaMetamodelProcessor
-    annotationProcessor mnSerde.micronaut.serde.processor
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataProcessor
+    testAnnotationProcessor projects.micronautDataJpaMetamodelProcessor
 
-    implementation libs.managed.jakarta.data.api
-    implementation mnSql.jakarta.persistence.api
-    implementation projects.micronautDataJdbc
-    implementation mn.micronaut.http.client.core
-    implementation mnSerde.micronaut.serde.jackson
-    implementation mnSql.micronaut.jdbc.hikari
-
-    runtimeOnly mnLogging.logback.classic
-    runtimeOnly mnSql.h2
+    testImplementation libs.managed.jakarta.data.api
+    testImplementation mnSql.jakarta.persistence.api
+    testImplementation projects.micronautDocExamples.micronautDataJpaMetamodelEntitiesExampleJava
     testImplementation mnTest.micronaut.test.junit5
-}
+    testImplementation mnSerde.micronaut.serde.jackson
+    testImplementation mn.micronaut.http.client.core
 
-application {
-    mainClass = "com.example.Application"
+    testImplementation projects.micronautDataJdbc
+    testImplementation projects.micronautDataProcessor
+    testImplementation projects.micronautDataJdbc
+    testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mnValidation.micronaut.validation
+
+    testRuntimeOnly mnTest.junit.jupiter.engine
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mnSql.h2
+
 }
 
 tasks.withType(JavaCompile).configureEach {

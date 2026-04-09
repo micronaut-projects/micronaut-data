@@ -18,11 +18,10 @@ package com.example;
 
 import com.example.repository.BookRepository;
 import com.example.repository.CategoryRepository;
-import com.example.repository.specification.CatgorySpecification;
+import io.micronaut.entities.Book;
+import io.micronaut.entities.Category;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.ListAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.repository.specification.CatgorySpecification.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @MicronautTest
 public class CategoryCriteriaMetamodelTest {
@@ -59,14 +59,14 @@ public class CategoryCriteriaMetamodelTest {
         List<Category> result = categoryRepository.findAll(nameEquals("Fiction"));
 
         assertEquals(1, result.size());
-        assertEquals(1L, result.getFirst().getId());
-        assertEquals("Fiction", result.getFirst().getName());
+        Assertions.assertEquals(1L, result.getFirst().getId());
+        Assertions.assertEquals("Fiction", result.getFirst().getName());
     }
 
     @Test
     void canJoinBooksList_usingStaticMetamodel_andFilterByBookTitle() {
-        Category fiction = new Category(1, "Fiction", new ArrayList<>(), new byte[]{});
-        Category history = new Category(2, "History", new ArrayList<>(), new byte[]{});
+        Category fiction = new Category(1L, "Fiction", new ArrayList<>(), new byte[]{});
+        Category history = new Category(2L, "History", new ArrayList<>(), new byte[]{});
 
         Book b1 = new Book(1L, "Dune", 412, fiction);
         Book b2 = new Book(2L, "1984", 328, fiction);
@@ -74,10 +74,10 @@ public class CategoryCriteriaMetamodelTest {
 
         bookRepository.saveAll(List.of(b1, b2, b3));
 
-        List<Category> result = categoryRepository.findAll(CatgorySpecification.withBooksTitleEquals("Dune"));
+        List<Category> result = categoryRepository.findAll(withBooksTitleEquals("Dune"));
 
         assertEquals(1, result.size());
-        assertEquals("Fiction", result.getFirst().getName());
+        Assertions.assertEquals("Fiction", result.getFirst().getName());
     }
 
     @Test
@@ -108,8 +108,8 @@ public class CategoryCriteriaMetamodelTest {
 
         List<Category> result = categoryRepository.findAll(withBooks().and(idEquals(30L)));
         assertEquals(1, result.size(), "Without distinct(), a join on a collection usually duplicates root rows");
-        assertEquals(30L, result.getFirst().getId());
-        assertEquals(3, result.getFirst().getBooks().size());
+        Assertions.assertEquals(30L, result.getFirst().getId());
+        Assertions.assertEquals(3, result.getFirst().getBooks().size());
     }
 
     @Test
@@ -121,20 +121,6 @@ public class CategoryCriteriaMetamodelTest {
 
         List<Category> result = categoryRepository.findAll(bytesNotNull());
         assertFalse(result.isEmpty());
-    }
-
-
-    @Test
-    void generatedMetamodelHasExpectedFields() throws Exception {
-        assertNotNull(Category_.class.getDeclaredField("id"));
-        assertNotNull(Category_.class.getDeclaredField("name"));
-        assertNotNull(Category_.class.getDeclaredField("books"));
-
-        assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Category_.class.getDeclaredField("name").getType().getName());
-        assertEquals(ListAttribute.class.getName(), Category_.class.getDeclaredField("books").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Category_.class, EntityType.class, Category.class);
     }
 
 }

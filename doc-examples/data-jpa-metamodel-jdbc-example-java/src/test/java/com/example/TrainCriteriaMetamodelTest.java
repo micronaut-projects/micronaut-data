@@ -17,9 +17,9 @@ package com.example;
 
 import com.example.repository.TrainRepository;
 import io.micronaut.data.model.Sort;
+import io.micronaut.entities.Train;
+import io.micronaut.entities.Train_;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +30,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import static com.example.repository.specification.TrainSpecification.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
 public class TrainCriteriaMetamodelTest {
@@ -176,33 +176,4 @@ public class TrainCriteriaMetamodelTest {
         assertEquals("Evening", result.get(0).getName());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields_andDoesNotContainTransient() throws Exception {
-        assertNotNull(Train_.class.getDeclaredField("id"));
-        assertNotNull(Train_.class.getDeclaredField("name"));
-        assertNotNull(Train_.class.getDeclaredField("model"));
-        assertNotNull(Train_.class.getDeclaredField("capacity"));
-        assertNotNull(Train_.class.getDeclaredField("speed"));
-        assertNotNull(Train_.class.getDeclaredField("electric"));
-        assertNotNull(Train_.class.getDeclaredField("departureTime"));
-        assertNotNull(Train_.class.getDeclaredField("createdAt"));
-        assertNotNull(Train_.class.getDeclaredField("departureDate"));
-        assertNotNull(Train_.class.getDeclaredField("departureTimeOnly"));
-
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("model").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("capacity").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("speed").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("electric").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureTime").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("createdAt").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureDate").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureTimeOnly").getType().getName());
-
-        assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("transientField"));
-        assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("FINAL_STATIC_FIELD"));
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Train_.class, EntityType.class, Train.class);
-    }
 }

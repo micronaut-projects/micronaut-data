@@ -18,13 +18,13 @@ package com.example;
 import com.example.repository.BookRepository;
 import com.example.repository.CategoryRepository;
 import com.example.repository.ReviewRepository;
+import io.micronaut.entities.*;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,22 +50,15 @@ public class ReviewCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel_joinToBook_andFilter() {
-        Category cat = new Category();
-        cat.setId(100L);
-        cat.setName("Fiction");
-        categoryRepository.save(cat);
+        Category cat = new Category(100L, "Fiction", new ArrayList<>(), new byte[]{});
+        Book book = new Book(200L, "Dune", 412, cat);
 
-        Book book = new Book();
-        book.setId(200L);
-        book.setTitle("Dune");
-        book.setPages(412);
-        book.setCategory(cat);
         bookRepository.save(book);
 
         Review r1 = new Review(1L, "alice", "Great", book);
         Review r2 = new Review(2L, "bob", "Okay", book);
-        reviewRepository.save(r1);
-        reviewRepository.save(r2);
+
+        reviewRepository.saveAll(List.of(r1, r2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Review> cq = cb.createQuery(Review.class);
@@ -81,26 +74,11 @@ public class ReviewCriteriaMetamodelTest {
 
         List<Review> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertNotNull(result.get(0).id());
-        assertEquals("alice", result.get(0).reviewer());
-        assertEquals("Great", result.get(0).content());
-        assertNotNull(result.get(0).book());
-        assertEquals("Dune", result.get(0).book().getTitle());
+        assertNotNull(result.getFirst().getId());
+        assertEquals("alice", result.getFirst().getReviewer());
+        assertEquals("Great", result.getFirst().getContent());
+        assertNotNull(result.getFirst().getBook());
+        assertEquals("Dune", result.getFirst().getBook().getTitle());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields() throws Exception {
-        assertNotNull(Review_.class.getDeclaredField("id"));
-        assertNotNull(Review_.class.getDeclaredField("reviewer"));
-        assertNotNull(Review_.class.getDeclaredField("content"));
-        assertNotNull(Review_.class.getDeclaredField("book"));
-
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("reviewer").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("content").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Review_.class.getDeclaredField("book").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Review_.class, EntityType.class, Review.class);
-
-    }
 }

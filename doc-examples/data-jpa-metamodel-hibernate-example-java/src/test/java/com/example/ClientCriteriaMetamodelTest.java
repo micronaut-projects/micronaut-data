@@ -18,19 +18,23 @@ package com.example;
 
 import com.example.repository.CategoryRepository;
 import com.example.repository.ClientRepository;
+import io.micronaut.entities.Category;
+import io.micronaut.entities.Category_;
+import io.micronaut.entities.Client;
+import io.micronaut.entities.Client_;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
-import jakarta.persistence.metamodel.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @MicronautTest
 public class ClientCriteriaMetamodelTest {
@@ -61,8 +65,7 @@ public class ClientCriteriaMetamodelTest {
         c2.setTier(Client.Tier.BASIC);
         c2.setCreatedAt(Instant.now());
 
-        clientRepository.save(c1);
-        clientRepository.save(c2);
+        clientRepository.saveAll(List.of(c1, c2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Client> cq = cb.createQuery(Client.class);
@@ -114,10 +117,7 @@ public class ClientCriteriaMetamodelTest {
 
     @Test
     void canJoinSetRelationship_usingStaticMetamodel() {
-        Category c1 = new Category();
-        c1.setId(12L);
-        c1.setName("History");
-        categoryRepository.save(c1);
+        Category c1 = new Category(12L, "History", new ArrayList<>(), new byte[]{});
 
         Client client = new Client();
         client.setId(4L);
@@ -139,10 +139,7 @@ public class ClientCriteriaMetamodelTest {
 
     @Test
     void canFilterByManyToOne_usingStaticMetamodel() {
-        Category main = new Category();
-        main.setId(20L);
-        main.setName("Main");
-        categoryRepository.save(main);
+        Category main = new Category(20L, "Main", new ArrayList<>(), new byte[]{});
 
         Client a = new Client();
         a.setId(5L);
@@ -161,66 +158,4 @@ public class ClientCriteriaMetamodelTest {
         assertEquals(5L, result.getFirst().getId());
     }
 
-    @Test
-    void canJoinMapElementCollection_usingStaticMetamodel() {
-        Client c = new Client();
-        c.setId(6L);
-        c.setName("Frank");
-
-        HashMap<String, String> props = new HashMap<>();
-        props.put("region", "EMEA");
-        props.put("segment", "ENT");
-        c.setProperties(props);
-
-        clientRepository.save(c);
-
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
-        Root<Client> root = cq.from(Client.class);
-
-        MapJoin<Client, String, String> propsJoin = root.join(Client_.properties);
-
-        cq.select(root.get(Client_.id))
-            .where(cb.and(
-                cb.equal(propsJoin.key(), "region"),
-                cb.equal(propsJoin.value(), "EMEA")
-            ))
-            .distinct(true);
-
-        List<Long> ids = entityManager.createQuery(cq).getResultList();
-        assertEquals(List.of(6L), ids);
-    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_andTypes() throws Exception {
-        assertNotNull(Client_.class.getDeclaredField("id"));
-        assertNotNull(Client_.class.getDeclaredField("name"));
-        assertNotNull(Client_.class.getDeclaredField("version"));
-        assertNotNull(Client_.class.getDeclaredField("tier"));
-        assertNotNull(Client_.class.getDeclaredField("createdAt"));
-        assertNotNull(Client_.class.getDeclaredField("billingAddress"));
-
-        assertNotNull(Client_.class.getDeclaredField("categoriesCollection"));
-        assertNotNull(Client_.class.getDeclaredField("categoriesList"));
-        assertNotNull(Client_.class.getDeclaredField("categoriesSet"));
-        assertNotNull(Client_.class.getDeclaredField("mainCategory"));
-        assertNotNull(Client_.class.getDeclaredField("properties"));
-
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("version").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("tier").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("createdAt").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("billingAddress").getType().getName());
-
-        assertEquals(CollectionAttribute.class.getName(), Client_.class.getDeclaredField("categoriesCollection").getType().getName());
-        assertEquals(ListAttribute.class.getName(), Client_.class.getDeclaredField("categoriesList").getType().getName());
-        assertEquals(SetAttribute.class.getName(), Client_.class.getDeclaredField("categoriesSet").getType().getName());
-
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("mainCategory").getType().getName());
-        assertEquals(MapAttribute.class.getName(), Client_.class.getDeclaredField("properties").getType().getName());
-
-        assertThrows(NoSuchFieldException.class, () -> Client_.class.getDeclaredField("nonPersistent"));
-        MetamodelAssertions.assertClassFieldIsEntityType(Client_.class, EntityType.class, Client.class);
-    }
 }

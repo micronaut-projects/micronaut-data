@@ -16,13 +16,13 @@
 package com.example;
 
 import com.example.repository.TrainRepository;
+import io.micronaut.entities.Train;
+import io.micronaut.entities.Train_;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
 public class TrainCriteriaMetamodelTest {
@@ -69,8 +69,7 @@ public class TrainCriteriaMetamodelTest {
             LocalDate.of(2026, 1, 11),
             LocalTime.of(9, 0));
 
-        trainRepository.save(t1);
-        trainRepository.save(t2);
+        trainRepository.saveAll(List.of(t1, t2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Train> cq = cb.createQuery(Train.class);
@@ -85,8 +84,8 @@ public class TrainCriteriaMetamodelTest {
         List<Train> result = entityManager.createQuery(cq).getResultList();
 
         assertEquals(1, result.size());
-        assertEquals("Night Express", result.get(0).getName());
-        assertEquals(Integer.valueOf(500), result.get(0).getCapacity());
+        assertEquals("Night Express", result.getFirst().getName());
+        assertEquals(Integer.valueOf(500), result.getFirst().getCapacity());
     }
 
     @Test
@@ -106,8 +105,7 @@ public class TrainCriteriaMetamodelTest {
             LocalTime.of(8, 0)
         );
 
-        trainRepository.save(t1);
-        trainRepository.save(t2);
+        trainRepository.saveAll(List.of(t1, t2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Train> cq = cb.createQuery(Train.class);
@@ -121,7 +119,7 @@ public class TrainCriteriaMetamodelTest {
 
         List<Train> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("M1", result.get(0).getModel());
+        assertEquals("M1", result.getFirst().getModel());
     }
 
     @Test
@@ -141,8 +139,7 @@ public class TrainCriteriaMetamodelTest {
             LocalTime.of(18, 45)
         );
 
-        trainRepository.save(early);
-        trainRepository.save(late);
+        trainRepository.saveAll(List.of(early, late));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Train> cq = cb.createQuery(Train.class);
@@ -154,7 +151,7 @@ public class TrainCriteriaMetamodelTest {
 
         List<Train> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("Late", result.get(0).getName());
+        assertEquals("Late", result.getFirst().getName());
     }
 
     @Test
@@ -174,8 +171,7 @@ public class TrainCriteriaMetamodelTest {
             LocalTime.of(10, 0)
         );
 
-        trainRepository.save(t1);
-        trainRepository.save(t2);
+        trainRepository.saveAll(List.of(t1, t2));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Train> cq = cb.createQuery(Train.class);
@@ -186,7 +182,7 @@ public class TrainCriteriaMetamodelTest {
 
         List<Train> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("I2", result.get(0).getModel());
+        assertEquals("I2", result.getFirst().getModel());
     }
 
     @Test
@@ -206,8 +202,7 @@ public class TrainCriteriaMetamodelTest {
             LocalTime.of(18, 0)
         );
 
-        trainRepository.save(morning);
-        trainRepository.save(evening);
+        trainRepository.saveAll(List.of(morning, evening));
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Train> cq = cb.createQuery(Train.class);
@@ -221,36 +216,7 @@ public class TrainCriteriaMetamodelTest {
 
         List<Train> result = entityManager.createQuery(cq).getResultList();
         assertEquals(1, result.size());
-        assertEquals("Evening", result.get(0).getName());
+        assertEquals("Evening", result.getFirst().getName());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields_andDoesNotContainTransient() throws Exception {
-        assertNotNull(Train_.class.getDeclaredField("id"));
-        assertNotNull(Train_.class.getDeclaredField("name"));
-        assertNotNull(Train_.class.getDeclaredField("model"));
-        assertNotNull(Train_.class.getDeclaredField("capacity"));
-        assertNotNull(Train_.class.getDeclaredField("speed"));
-        assertNotNull(Train_.class.getDeclaredField("electric"));
-        assertNotNull(Train_.class.getDeclaredField("departureTime"));
-        assertNotNull(Train_.class.getDeclaredField("createdAt"));
-        assertNotNull(Train_.class.getDeclaredField("departureDate"));
-        assertNotNull(Train_.class.getDeclaredField("departureTimeOnly"));
-
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("model").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("capacity").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("speed").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("electric").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureTime").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("createdAt").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureDate").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Train_.class.getDeclaredField("departureTimeOnly").getType().getName());
-
-        assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("transientField"));
-        assertThrows(NoSuchFieldException.class, () -> Train_.class.getDeclaredField("FINAL_STATIC_FIELD"));
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Train_.class, EntityType.class, Train.class);
-    }
 }

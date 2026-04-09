@@ -16,7 +16,6 @@
 
 package io.micronaut.data.processor.jpa.metamodel
 
-
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.naming.NameUtils
 
@@ -462,5 +461,98 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         embeddableClassMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.EmbeddableClass'
     }
 
+    void "test metaModel Generation with mixed access"() {
+        given:
 
+        def classLoader = buildClassLoader("test.EmployeeMixedAccessEmbeddedId", """
+        package test;
+
+import jakarta.persistence.*;
+
+@Entity
+public class EmployeeMixedAccessEmbeddedId {
+    private EmployeeId id;
+    private String name;
+    private double salary;
+    private String fieldWithoutAccessors;
+    @Access(AccessType.FIELD)
+    private String fieldAnnotated;
+
+    @EmbeddedId
+    public EmployeeId getId() {
+        return id;
+    }
+
+    public void setId(EmployeeId id) {
+        this.id = id;
+    }
+
+    @Column(name = "name")
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Column(name = "salary")
+    public double getSalary() {
+        return salary;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
+    }
+
+    @Embeddable
+    public static class EmployeeId {
+        private Long id;
+        private String number;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getNumber() {
+            return number;
+        }
+
+        public void setNumber(String number) {
+            this.number = number;
+        }
+    }
+}
+                """)
+        def employeeMixedAccessEmbaddedId = classLoader.loadClass("test.EmployeeMixedAccessEmbeddedId_")
+
+        def constantProps = [ID             : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: "test.EmployeeMixedAccessEmbeddedId\$EmployeeId", declaringType: "test.EmployeeMixedAccessEmbeddedId"],
+                             NAME           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"],
+                             SALARY         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"],
+                             FIELD_ANNOTATED: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"]]
+        expect:
+
+        constantProps.keySet().stream().anyMatch { o -> employeeMixedAccessEmbaddedId.getField(o) != null && employeeMixedAccessEmbaddedId.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+
+        for (var entrySet : constantProps.entrySet()) {
+            def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
+            assert employeeMixedAccessEmbaddedId.getField(field).getType().getName() == entrySet.getValue().attributeType
+            assert employeeMixedAccessEmbaddedId.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
+            assert employeeMixedAccessEmbaddedId.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
+        }
+
+        employeeMixedAccessEmbaddedId.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
+        employeeMixedAccessEmbaddedId.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.EmployeeMixedAccessEmbeddedId'
+
+        try {
+            employeeMixedAccessEmbaddedId.getField('fieldWithoutAccessors')
+            throw new RuntimeException("fieldWithoutAccessors shouldn't exists in the metamodel generated class")
+        } catch (NoSuchFieldException ignored) {
+        }
+
+    }
 }

@@ -252,7 +252,7 @@ public final class JpaMetamodelProcessor {
     private static JakartaAccessType resolveAccessType(@NonNull ClassElement element, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
         if (jakartaAccessAnnotation == null &&
             element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID) ||
-                element.hasAnnotation(JAKARTA_EMBEDDED_ID))) {
+                o.hasAnnotation(JAKARTA_EMBEDDED_ID))) {
             return JakartaAccessType.PROPERTY;
         }
         if (jakartaAccessAnnotation == null) {

@@ -18,8 +18,11 @@ package com.example;
 
 import com.example.repository.CategoryRepository;
 import com.example.repository.ClientRepository;
+import com.example.repository.specification.ClientSpecification;
+import io.micronaut.entities.Category;
+import io.micronaut.entities.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.*;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +31,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.example.repository.specification.ClientSpecification.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @MicronautTest
 public class ClientCriteriaMetamodelTest {
@@ -68,12 +71,12 @@ public class ClientCriteriaMetamodelTest {
 
         clientRepository.saveAll(List.of(c1, c2));
 
-        List<Client> result = clientRepository.findAll(tierEquals(Client.Tier.PRO).and(nameEquals("Alice")));
+        List<Client> result = clientRepository.findAll(ClientSpecification.tierEquals(Client.Tier.PRO).and(ClientSpecification.nameEquals("Alice")));
 
         assertEquals(1, result.size());
-        assertEquals(1L, result.getFirst().getId());
-        assertEquals("Alice", result.getFirst().getName());
-        assertEquals(Client.Tier.PRO, result.getFirst().getTier());
+        Assertions.assertEquals(1L, result.getFirst().getId());
+        Assertions.assertEquals("Alice", result.getFirst().getName());
+        Assertions.assertEquals(Client.Tier.PRO, result.getFirst().getTier());
     }
 
     @Test
@@ -91,7 +94,7 @@ public class ClientCriteriaMetamodelTest {
 
         clientRepository.save(c);
 
-        List<Long> result = clientRepository.findAll(withCategoryListName("Sci-Fi"))
+        List<Long> result = clientRepository.findAll(ClientSpecification.withCategoryListName("Sci-Fi"))
             .stream().map(Client::getId).toList();
         assertEquals(List.of(3L), result);
     }
@@ -110,7 +113,7 @@ public class ClientCriteriaMetamodelTest {
 
         clientRepository.save(client);
 
-        List<Client> result = clientRepository.findAll(withCategorySetName("History"));
+        List<Client> result = clientRepository.findAll(ClientSpecification.withCategorySetName("History"));
         assertFalse(result.isEmpty());
     }
 
@@ -127,59 +130,9 @@ public class ClientCriteriaMetamodelTest {
 
         clientRepository.save(client);
 
-        List<Client> result = clientRepository.findAll(mainCategoryIdEquals(20L));
+        List<Client> result = clientRepository.findAll(ClientSpecification.mainCategoryIdEquals(20L));
         assertEquals(1, result.size());
-        assertEquals(5L, result.getFirst().getId());
+        Assertions.assertEquals(5L, result.getFirst().getId());
     }
 
-//    @Test
-//    void canJoinMapElementCollection_usingStaticMetamodel() {
-//        Client c = new Client();
-//        c.setId(6L);
-//        c.setName("Frank");
-//        Client c2 = new Client();
-//        c2.setId(7L);
-//        c2.setName("Franklin");
-//
-//        c.setProperties(Map.of("region", "EMEA", "segment", "ENT"));
-//        c2.setProperties(Map.of("region", "US", "segment", "CAL"));
-//
-//        clientRepository.saveAll(List.of(c, c2));
-//
-//        List<Client> clients = clientRepository.findAll(com.example.repository.specification.ClientSpecification.withEntryEquals(Map.entry("region", "EMEA")));
-//        assertEquals(6L, clients.getFirst().getId());
-//    }
-
-    @Test
-    void generatedMetamodelHasExpectedFields_andTypes() throws Exception {
-        assertNotNull(Client_.class.getDeclaredField("id"));
-        assertNotNull(Client_.class.getDeclaredField("name"));
-        assertNotNull(Client_.class.getDeclaredField("version"));
-        assertNotNull(Client_.class.getDeclaredField("tier"));
-        assertNotNull(Client_.class.getDeclaredField("createdAt"));
-        assertNotNull(Client_.class.getDeclaredField("billingAddress"));
-
-        assertNotNull(Client_.class.getDeclaredField("categoriesCollection"));
-        assertNotNull(Client_.class.getDeclaredField("categoriesList"));
-        assertNotNull(Client_.class.getDeclaredField("categoriesSet"));
-        assertNotNull(Client_.class.getDeclaredField("mainCategory"));
-//        assertNotNull(Client_.class.getDeclaredField("properties"));
-
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("name").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("version").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("tier").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("createdAt").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("billingAddress").getType().getName());
-
-        assertEquals(CollectionAttribute.class.getName(), Client_.class.getDeclaredField("categoriesCollection").getType().getName());
-        assertEquals(ListAttribute.class.getName(), Client_.class.getDeclaredField("categoriesList").getType().getName());
-        assertEquals(SetAttribute.class.getName(), Client_.class.getDeclaredField("categoriesSet").getType().getName());
-
-        assertEquals(SingularAttribute.class.getName(), Client_.class.getDeclaredField("mainCategory").getType().getName());
-//        assertEquals(MapAttribute.class.getName(), Client_.class.getDeclaredField("properties").getType().getName());
-
-        assertThrows(NoSuchFieldException.class, () -> Client_.class.getDeclaredField("nonPersistent"));
-        MetamodelAssertions.assertClassFieldIsEntityType(Client_.class, EntityType.class, Client.class);
-    }
 }

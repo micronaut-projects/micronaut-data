@@ -19,9 +19,11 @@ import com.example.repository.BookRepository;
 import com.example.repository.CategoryRepository;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.entities.Book;
+import io.micronaut.entities.Book_;
+import io.micronaut.entities.Category;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.SingularAttribute;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +54,7 @@ public class BookCriteriaMetamodelTest {
 
     @Test
     void canBuildCriteriaQueryUsingGeneratedStaticMetamodel_filterByTitle() {
-        Category fiction = new Category(1L, "Fiction", null, new byte[]{});
+        Category fiction = new Category(1L, "Fiction", new ArrayList<>(), new byte[]{});
 
         Book b1 = new Book(10L, "Dune", 412, fiction);
         Book b2 = new Book(11L, "1984", 328, fiction);
@@ -60,10 +62,11 @@ public class BookCriteriaMetamodelTest {
         bookRepository.saveAll(List.of(b1, b2));
 
         List<Book> books = bookRepository.findAll(titleEquals("Dune"));
+
         assertEquals(1, books.size());
-        assertEquals(10L, books.getFirst().getId());
-        assertEquals("Dune", books.getFirst().getTitle());
-        assertEquals(412, books.getFirst().getPages());
+        Assertions.assertEquals(10L, books.getFirst().getId());
+        Assertions.assertEquals("Dune", books.getFirst().getTitle());
+        Assertions.assertEquals(412, books.getFirst().getPages());
     }
 
     @Test
@@ -81,8 +84,8 @@ public class BookCriteriaMetamodelTest {
             Sort.of(Sort.Order.asc(Book_.PAGES)));
 
         assertEquals(2, result.size());
-        assertEquals("Medium Book", result.getFirst().getTitle());
-        assertEquals(250, result.getFirst().getPages());
+        Assertions.assertEquals("Medium Book", result.getFirst().getTitle());
+        Assertions.assertEquals(250, result.getFirst().getPages());
     }
 
     @Test
@@ -98,10 +101,10 @@ public class BookCriteriaMetamodelTest {
         List<Book> result = bookRepository.findAll(withCategoryName("Fiction"));
 
         assertEquals(1, result.size());
-        assertEquals("Novel", result.getFirst().getTitle());
-        assertEquals(300, result.getFirst().getPages());
+        Assertions.assertEquals("Novel", result.getFirst().getTitle());
+        Assertions.assertEquals(300, result.getFirst().getPages());
         assertNotNull(result.getFirst().getCategory());
-        assertEquals("Fiction", result.getFirst().getCategory().getName());
+        Assertions.assertEquals("Fiction", result.getFirst().getCategory().getName());
     }
 
     @Test
@@ -119,22 +122,8 @@ public class BookCriteriaMetamodelTest {
             Pageable.from(1, 2, Sort.of(Sort.Order.asc(Book_.ID)))).getContent();
 
         assertEquals(2, page.size());
-        assertEquals(52L, page.get(0).getId());
-        assertEquals(53L, page.get(1).getId());
+        Assertions.assertEquals(52L, page.get(0).getId());
+        Assertions.assertEquals(53L, page.get(1).getId());
     }
 
-    @Test
-    void generatedMetamodelHasExpectedFields() throws Exception {
-        assertNotNull(Book_.class.getDeclaredField("id"));
-        assertNotNull(Book_.class.getDeclaredField("title"));
-        assertNotNull(Book_.class.getDeclaredField("pages"));
-        assertNotNull(Book_.class.getDeclaredField("category"));
-
-        assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("id").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("title").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("pages").getType().getName());
-        assertEquals(SingularAttribute.class.getName(), Book_.class.getDeclaredField("category").getType().getName());
-
-        MetamodelAssertions.assertClassFieldIsEntityType(Book_.class, EntityType.class, Book.class);
-    }
 }
