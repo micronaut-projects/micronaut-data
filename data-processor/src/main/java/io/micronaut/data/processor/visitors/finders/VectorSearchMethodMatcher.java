@@ -18,14 +18,19 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Matcher for repository methods that start with {@code search...}.
+ * Matcher for vector-search repository methods that start with {@code search...} and return
+ * {@link SearchResults}. Methods that start with {@code search...} but do not return
+ * {@link SearchResults} are handled by {@link FindMethodMatcher} instead.
  */
 @Internal
 public final class VectorSearchMethodMatcher extends AbstractMethodMatcher {
@@ -40,7 +45,15 @@ public final class VectorSearchMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(returnType);
+        }
+        if (!returnType.getName().equals(SearchResults.class.getName())) {
+            return null;
+        }
         return new QueryCriteriaMethodMatch(matches) {
             @Override
             protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
