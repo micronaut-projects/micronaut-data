@@ -47,6 +47,7 @@ import jakarta.data.spi.expression.function.CurrentDate;
 import jakarta.data.spi.expression.function.CurrentDateTime;
 import jakarta.data.spi.expression.function.CurrentTime;
 import jakarta.data.spi.expression.function.FunctionExpression;
+import jakarta.data.spi.expression.function.NumericCast;
 import jakarta.data.spi.expression.function.NumericFunctionExpression;
 import jakarta.data.spi.expression.function.NumericOperatorExpression;
 import jakarta.data.spi.expression.function.TextFunctionExpression;
@@ -210,17 +211,11 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
                 (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.literal(
                     dateTimeProvider.getNow().toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
                 );
-            case TextFunctionExpression<?> textFunctionExpression ->
+            case FunctionExpression<?, ?> textFunctionExpression ->
                 (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.function(
                     textFunctionExpression.name(),
-                    String.class,
+                    textFunctionExpression.type(),
                     asExpressions(root, criteriaBuilder, textFunctionExpression)
-                );
-            case NumericFunctionExpression<?, ?> numericFunctionExpression ->
-                (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.function(
-                    numericFunctionExpression.name(),
-                    Number.class,
-                    asExpressions(root, criteriaBuilder, numericFunctionExpression)
                 );
             case NumericOperatorExpression<?, ?> numericOperatorExpression -> {
                 jakarta.persistence.criteria.Expression left = asExpression(root, criteriaBuilder, numericOperatorExpression.left());
@@ -232,9 +227,17 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
                     case DIVIDE -> criteriaBuilder.quot(left, right);
                 };
             }
+            case NumericCast numericCast -> numericCast(root, criteriaBuilder, numericCast);
             case null, default ->
                 throw new IllegalStateException("Unknown Expression: " + expression + " of type: " + expression.getClass());
         };
+    }
+
+    private <T, N extends Number & Comparable<N>> jakarta.persistence.criteria.Expression<N> numericCast(Root<?> root,
+                                                                                                         CriteriaBuilder criteriaBuilder,
+                                                                                                         NumericCast<T, N> numericCast) {
+        jakarta.persistence.criteria.Expression<?> exp = asExpression(root, criteriaBuilder, numericCast.expression());
+        return exp.cast(numericCast.type());
     }
 
     private jakarta.persistence.criteria.Expression<?>[] asExpressions(Root<?> root, CriteriaBuilder criteriaBuilder, FunctionExpression<?, ?> textFunctionExpression) {
