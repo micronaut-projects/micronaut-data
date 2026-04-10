@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.Expression;
 
 /**

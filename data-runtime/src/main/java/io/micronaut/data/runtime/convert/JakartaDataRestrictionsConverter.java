@@ -48,9 +48,7 @@ import jakarta.data.spi.expression.function.CurrentDateTime;
 import jakarta.data.spi.expression.function.CurrentTime;
 import jakarta.data.spi.expression.function.FunctionExpression;
 import jakarta.data.spi.expression.function.NumericCast;
-import jakarta.data.spi.expression.function.NumericFunctionExpression;
 import jakarta.data.spi.expression.function.NumericOperatorExpression;
-import jakarta.data.spi.expression.function.TextFunctionExpression;
 import jakarta.data.spi.expression.literal.Literal;
 import jakarta.data.spi.expression.path.NavigablePath;
 import jakarta.data.spi.expression.path.Path;
@@ -61,7 +59,6 @@ import jakarta.persistence.criteria.Root;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,7 +98,11 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
         );
     }
 
-    private <R> Predicate toPredicate(Root<T> root, CriteriaBuilder criteriaBuilder, Restriction<R> restriction) {
+    private Predicate toPredicate(Root<T> root, CriteriaBuilder criteriaBuilder, Restriction<?> restriction) {
+        return toPredicateInternal(root, criteriaBuilder, restriction);
+    }
+
+    private <R> Predicate toPredicateInternal(Root<T> root, CriteriaBuilder criteriaBuilder, Restriction<R> restriction) {
         return switch (restriction) {
             case CompositeRestriction<R> compositeRestriction ->
                 predicateFromCompositeRestriction(root, criteriaBuilder, compositeRestriction);
@@ -147,7 +148,7 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
                 criteriaBuilder.notEqual(expression, asExpression(root, criteriaBuilder, notEqualTo.expression()));
             case GreaterThan<?> greaterThan ->
                 criteriaBuilder.greaterThan((jakarta.persistence.criteria.Expression<? extends Comparable>) expression,
-                    (jakarta.persistence.criteria.Expression<? extends Comparable>) asExpression(root, criteriaBuilder, greaterThan.bound()));
+                    (jakarta.persistence.criteria.Expression<? extends Comparable>) this.asExpression(root, criteriaBuilder, greaterThan.bound()));
             case LessThan<?> lessThan ->
                 criteriaBuilder.lessThan((jakarta.persistence.criteria.Expression<? extends Comparable>) expression,
                     (jakarta.persistence.criteria.Expression<? extends Comparable>) asExpression(root, criteriaBuilder, lessThan.bound()));
@@ -186,19 +187,26 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
         };
     }
 
-    private <V> Collection<?> asExpressionList(Root<T> root, CriteriaBuilder criteriaBuilder, List<Expression<?, V>> expressions) {
-        List<jakarta.persistence.criteria.Expression<?>> result = new ArrayList<>(expressions.size());
+    private <V> List<jakarta.persistence.criteria.Expression<V>> asExpressionList(Root<T> root,
+                                                                                 CriteriaBuilder criteriaBuilder,
+                                                                                 List<Expression<?, V>> expressions) {
+        List<jakarta.persistence.criteria.Expression<V>> result = new ArrayList<>(expressions.size());
         for (Expression<?, V> expression : expressions) {
             result.add(asExpression(root, criteriaBuilder, expression));
         }
         return result;
     }
 
-    private <V> jakarta.persistence.criteria.Expression<V> asExpression(Root<?> root, CriteriaBuilder criteriaBuilder, Expression<?, V> expression) {
+    private <V> jakarta.persistence.criteria.Expression<V> asExpression(Root<?> root,
+                                                                        CriteriaBuilder criteriaBuilder,
+                                                                        Expression<?, V> expression) {
         return switch (expression) {
             case Attribute<?> attribute -> root.get(attribute.name());
             case Literal<?> literal -> criteriaBuilder.literal(((Literal<V>) literal).value());
-            case Path<?, ?> path -> asPath(root, path).get(path.attribute().name());
+            case Path<?, ?> path -> {
+                jakarta.persistence.criteria.Path<?> path1 = asPath(root, path);
+                yield path1.get(path.attribute().name());
+            }
             case CurrentDateTime<?> ignore ->
                 (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.literal(
                     dateTimeProvider.getNow().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
@@ -211,21 +219,17 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
                 (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.literal(
                     dateTimeProvider.getNow().toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
                 );
-            case FunctionExpression<?, ?> textFunctionExpression ->
+            case FunctionExpression<?, ?> functionExpression ->
                 (jakarta.persistence.criteria.Expression<V>) criteriaBuilder.function(
-                    textFunctionExpression.name(),
-                    textFunctionExpression.type(),
-                    asExpressions(root, criteriaBuilder, textFunctionExpression)
+                    functionExpression.name(),
+                    functionExpression.type(),
+                    asExpressions(root, criteriaBuilder, functionExpression)
                 );
             case NumericOperatorExpression<?, ?> numericOperatorExpression -> {
-                jakarta.persistence.criteria.Expression left = asExpression(root, criteriaBuilder, numericOperatorExpression.left());
-                jakarta.persistence.criteria.Expression right = asExpression(root, criteriaBuilder, numericOperatorExpression.right());
-                yield switch (numericOperatorExpression.operator()) {
-                    case PLUS -> criteriaBuilder.sum(left, right);
-                    case MINUS -> criteriaBuilder.diff(left, right);
-                    case TIMES -> criteriaBuilder.prod(left, right);
-                    case DIVIDE -> criteriaBuilder.quot(left, right);
-                };
+                jakarta.persistence.criteria.Expression<?> numericExpression = applyNumericOperator(root, criteriaBuilder, numericOperatorExpression);
+                @SuppressWarnings("unchecked")
+                jakarta.persistence.criteria.Expression<V> cast = (jakarta.persistence.criteria.Expression<V>) numericExpression;
+                yield cast;
             }
             case NumericCast numericCast -> numericCast(root, criteriaBuilder, numericCast);
             case null, default ->
@@ -240,8 +244,10 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
         return exp.cast(numericCast.type());
     }
 
-    private jakarta.persistence.criteria.Expression<?>[] asExpressions(Root<?> root, CriteriaBuilder criteriaBuilder, FunctionExpression<?, ?> textFunctionExpression) {
-        List<? extends Expression<?, ?>> arguments = textFunctionExpression.arguments();
+    private jakarta.persistence.criteria.Expression<?>[] asExpressions(Root<?> root,
+                                                                       CriteriaBuilder criteriaBuilder,
+                                                                       FunctionExpression<?, ?> functionExpression) {
+        List<? extends Expression<?, ?>> arguments = functionExpression.arguments();
         List<jakarta.persistence.criteria.Expression<?>> list = new ArrayList<>(arguments.size());
         for (Expression<?, ?> a : arguments) {
             jakarta.persistence.criteria.Expression<?> expression = asExpression(root, criteriaBuilder, a);
@@ -252,11 +258,24 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
 
     private <V> jakarta.persistence.criteria.Path<V> asPath(jakarta.persistence.criteria.Path<?> criteriaPath, Path<?, ?> path) {
         return switch (path.expression()) {
-            case NavigableAttribute<?, ?> navigableAttribute ->
-                criteriaPath.get(navigableAttribute.name());
+            case NavigableAttribute<?, ?> navigableAttribute -> criteriaPath.get(navigableAttribute.name());
             case NavigablePath<?, ?, ?> navigablePath -> asPath(criteriaPath, navigablePath);
             case null, default ->
                 throw new IllegalStateException("Unknown Path: " + path + " of type: " + path.getClass());
+        };
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private jakarta.persistence.criteria.Expression<?> applyNumericOperator(Root<?> root,
+                                                                            CriteriaBuilder criteriaBuilder,
+                                                                            NumericOperatorExpression<?, ?> numericOperatorExpression) {
+        jakarta.persistence.criteria.Expression<?> left = asExpression(root, criteriaBuilder, numericOperatorExpression.left());
+        jakarta.persistence.criteria.Expression<?> right = asExpression(root, criteriaBuilder, numericOperatorExpression.right());
+        return switch (numericOperatorExpression.operator()) {
+            case PLUS -> criteriaBuilder.sum((jakarta.persistence.criteria.Expression) left, (jakarta.persistence.criteria.Expression) right);
+            case MINUS -> criteriaBuilder.diff((jakarta.persistence.criteria.Expression) left, (jakarta.persistence.criteria.Expression) right);
+            case TIMES -> criteriaBuilder.prod((jakarta.persistence.criteria.Expression) left, (jakarta.persistence.criteria.Expression) right);
+            case DIVIDE -> criteriaBuilder.quot((jakarta.persistence.criteria.Expression) left, (jakarta.persistence.criteria.Expression) right);
         };
     }
 }
