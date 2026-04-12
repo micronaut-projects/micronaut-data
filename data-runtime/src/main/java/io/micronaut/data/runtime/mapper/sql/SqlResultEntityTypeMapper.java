@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.MissingPropertyValueException;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
@@ -503,11 +504,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
+                String firstNullFieldName = null;
                 for (int i = 0; i < len; i++) {
                     RuntimePersistentProperty<K> prop = constructorArguments[i];
                     if (prop instanceof RuntimeAssociation<K> entityAssociation) {
                         if (prop instanceof Embedded embedded) {
-                            args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                            try {
+                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                            } catch (MissingPropertyValueException e) {
+                                String propertyPath = prop.getName() + "." +  e.getPath();
+                                throw new MissingPropertyValueException(propertyPath, persistentEntity.getName(), e);
+                            }
                         } else {
                             final Relation.Kind kind = entityAssociation.getKind();
                             final boolean isInverse = parent != null && ctx.association != null && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -550,7 +557,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             if (!prop.isOptional() && !nullableEmbedded) {
                                 AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
                                 if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
-                                    return null;
+                                    if (firstNullFieldName == null) {
+                                        firstNullFieldName = prop.getName();
+                                    }
+                                    args[i] = null;
+                                    continue;
                                 }
                                 throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
                             } else {
@@ -561,7 +572,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         args[i] = convert(prop, v);
                     }
                 }
-                if (nullableEmbedded && args.length > 0 && isAllNulls(args)) {
+                boolean isAllNulls = isAllNulls(args);
+                if (firstNullFieldName != null) {
+                    if (isAllNulls) {
+                        return null;
+                    } else {
+                        throw new MissingPropertyValueException(firstNullFieldName, persistentEntity.getName());
+                    }
+                }
+                if (nullableEmbedded && args.length > 0 && isAllNulls) {
                     return null;
                 } else {
                     entity = introspection.instantiate(args);
@@ -605,8 +624,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 BeanProperty<K, Object> property = rpp.getProperty();
                 if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
                     if (rpp instanceof Embedded embedded) {
-                        Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
-                        entity = setProperty(property, entity, value);
+                        try {
+                            Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
+                            entity = setProperty(property, entity, value);
+                        } catch (MissingPropertyValueException e) {
+                            String propertyPath = rpp.getName() + "." + e.getPath();
+                            throw new MissingPropertyValueException(propertyPath, persistentEntity.getName(), e);
+                        }
+
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && ctx.association != null && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
                         // Before setting property value, check if mappedBy is not different from the property name
