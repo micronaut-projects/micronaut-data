@@ -190,8 +190,36 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 }
 
                 """
+        def childCls2 = """
+                   package test;
+                import io.micronaut.core.annotation.Nullable;
+                import jakarta.persistence.*;
+                import java.time.Instant;
+                import java.time.LocalDate;
+                import java.time.LocalDateTime;
+                import java.time.LocalTime;
+                import java.util.*;
+                import io.micronaut.data.annotation.MappedEntity;
+                @MappedEntity
+                public class Child2 extends Parent {
+                    Long age;
+                    private Child2 () {}
+                    private Child2 (Long id, String name, Long age) {
+                        super(id, name);
+                        this.age = age;
+                    }
+                    public Long getAge(){
+                        return this.age;
+                    }
+                    public void setAge(Long age) {
+                        this.age = age;
+                    }
+                }
+
+                """
         files.add("test.Parent", parentCls)
         files.add("test.Child", childCls)
+        files.add("test.Child2", childCls2)
 
         def context = buildContext(files, true)
         def classLoader = context.getClassLoader()
@@ -448,7 +476,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                              ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.EmbeddableClass"]]
         expect:
 
-        constantProps.keySet().stream().anyMatch { o -> embeddableClassMetaModelClass.getField(o) != null && embeddableClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+        assert constantProps.keySet().stream().allMatch { o -> embeddableClassMetaModelClass.getField(o) != null && embeddableClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
 
         for (var entrySet : constantProps.entrySet()) {
             def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
@@ -467,66 +495,66 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         def classLoader = buildClassLoader("test.EmployeeMixedAccessEmbeddedId", """
         package test;
 
-import jakarta.persistence.*;
+        import jakarta.persistence.*;
 
-@Entity
-public class EmployeeMixedAccessEmbeddedId {
-    private EmployeeId id;
-    private String name;
-    private double salary;
-    private String fieldWithoutAccessors;
-    @Access(AccessType.FIELD)
-    private String fieldAnnotated;
+        @Entity
+        public class EmployeeMixedAccessEmbeddedId {
+            private EmployeeId id;
+            private String name;
+            private double salary;
+            private String fieldWithoutAccessors;
+            @Access(AccessType.FIELD)
+            private String fieldAnnotated;
 
-    @EmbeddedId
-    public EmployeeId getId() {
-        return id;
-    }
+            @EmbeddedId
+            public EmployeeId getId() {
+                return id;
+            }
 
-    public void setId(EmployeeId id) {
-        this.id = id;
-    }
+            public void setId(EmployeeId id) {
+                this.id = id;
+            }
 
-    @Column(name = "name")
-    public String getName() {
-        return name;
-    }
+            @Column(name = "name")
+            public String getName() {
+                return name;
+            }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+            public void setName(String name) {
+                this.name = name;
+            }
 
-    @Column(name = "salary")
-    public double getSalary() {
-        return salary;
-    }
+            @Column(name = "salary")
+            public double getSalary() {
+                return salary;
+            }
 
-    public void setSalary(double salary) {
-        this.salary = salary;
-    }
+            public void setSalary(double salary) {
+                this.salary = salary;
+            }
 
-    @Embeddable
-    public static class EmployeeId {
-        private Long id;
-        private String number;
+            @Embeddable
+            public static class EmployeeId {
+                private Long id;
+                private String number;
 
-        public Long getId() {
-            return id;
+                public Long getId() {
+                    return id;
+                }
+
+                public void setId(Long id) {
+                    this.id = id;
+                }
+
+                public String getNumber() {
+                    return number;
+                }
+
+                public void setNumber(String number) {
+                    this.number = number;
+                }
+            }
         }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
-
-        public String getNumber() {
-            return number;
-        }
-
-        public void setNumber(String number) {
-            this.number = number;
-        }
-    }
-}
                 """)
         def employeeMixedAccessEmbaddedId = classLoader.loadClass("test.EmployeeMixedAccessEmbeddedId_")
 
@@ -536,7 +564,7 @@ public class EmployeeMixedAccessEmbeddedId {
                              FIELD_ANNOTATED: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"]]
         expect:
 
-        constantProps.keySet().stream().anyMatch { o -> employeeMixedAccessEmbaddedId.getField(o) != null && employeeMixedAccessEmbaddedId.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+        assert constantProps.keySet().stream().allMatch { o -> employeeMixedAccessEmbaddedId.getField(o) != null && employeeMixedAccessEmbaddedId.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
 
         for (var entrySet : constantProps.entrySet()) {
             def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
@@ -555,4 +583,65 @@ public class EmployeeMixedAccessEmbeddedId {
         }
 
     }
+
+    void "test metaModel Generation with MappedEntity annotation"() {
+        given:
+
+        def classLoader = buildClassLoader("test.MappedEntityTest", """
+                   package test;
+                import io.micronaut.core.annotation.Nullable;
+                import io.micronaut.data.annotation.MappedEntity;
+                import jakarta.persistence.*;
+                import java.time.Instant;
+                import java.time.LocalDate;
+                import java.time.LocalDateTime;
+                import java.time.LocalTime;
+                import java.util.*;
+                @MappedEntity
+                public class MappedEntityTest {
+                    @Id
+                    Long id;
+                    boolean active;
+                    String name;
+
+                    public Long getId(){
+                        return this.id;
+                    }
+                    public void setId(Long id) {
+                        this.id = id;
+                    }
+                    public String getName(){
+                        return this.name;
+                    }
+                    public void setName(String name) {
+                        this.name = name;
+                    }
+                    public boolean isActive() {
+                        return this.active;
+                    }
+                    public void setActive(boolean active) {
+                        this.active = active;
+                    }
+                }
+                """)
+        def embeddableClassMetaModelClass = classLoader.loadClass("test.MappedEntityTest_")
+
+        def constantProps = [ID    : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.MappedEntityTest"],
+                             NAME  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.MappedEntityTest"],
+                             ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.MappedEntityTest"]]
+        expect:
+
+        assert constantProps.keySet().stream().allMatch { o -> embeddableClassMetaModelClass.getField(o) != null && embeddableClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
+
+        for (var entrySet : constantProps.entrySet()) {
+            def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
+            assert embeddableClassMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
+            assert embeddableClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].name == entrySet.getValue().declaringType
+            assert embeddableClassMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].name == entrySet.getValue().fieldtype
+        }
+
+        embeddableClassMetaModelClass.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
+        embeddableClassMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.MappedEntityTest'
+    }
+
 }

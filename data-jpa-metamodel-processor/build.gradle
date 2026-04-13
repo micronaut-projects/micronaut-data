@@ -19,8 +19,14 @@ plugins {
 }
 
 dependencies {
+    api projects.micronautDataModel
+    api projects.micronautDataProcessor
     compileOnly mn.micronaut.core.processor
+    compileOnly mn.micronaut.inject.java
+
+    compileOnly projects.micronautDataProcessor
     compileOnly mn.micronaut.sourcegen.model
+
     implementation mn.micronaut.sourcegen.generator
     implementation mn.micronaut.sourcegen.generator.java
 

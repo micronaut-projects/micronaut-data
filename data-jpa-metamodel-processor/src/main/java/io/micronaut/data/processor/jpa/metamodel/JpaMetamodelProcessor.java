@@ -136,6 +136,11 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
+     * Micronaut data MappedEntity annotation name.
+     */
+    public static final String MICRONAUT_DATA_MAPPED_ENTITY = "io.micronaut.data.annotation.MappedEntity";
+
+    /**
      * Java util Collection class name.
      */
     public static final String JAVA_UTIL_COLLECTION = Collection.class.getName();
@@ -156,11 +161,12 @@ public final class JpaMetamodelProcessor {
     public static final String JAVA_UTIL_MAP = Map.class.getName();
 
     /**
-     * Supported Jakarta annotations for generating Static meta model classes.
+     * Supported annotations for generating Jakarta Static metamodel classes.
      */
-    public static final Set<String> SUPPORTED_JAKARTA_ANNOTATIONS = new HashSet<>(Arrays.asList(JAKARTA_ENTITY,
+    public static final Set<String> SUPPORTED_ANNOTATIONS = new HashSet<>(Arrays.asList(JAKARTA_ENTITY,
         JAKARTA_MAPPED_SUPER_CLASS,
-        JAKARTA_EMBEDDABLE));
+        JAKARTA_EMBEDDABLE,
+        MICRONAUT_DATA_MAPPED_ENTITY));
 
     /**
      * Default constructor.
@@ -283,7 +289,7 @@ public final class JpaMetamodelProcessor {
      * @return boolean
      */
     public static boolean supportedClass(ClassElement classElement) {
-        return !classElement.isInner() && classElement.getAnnotationNames().stream().anyMatch(SUPPORTED_JAKARTA_ANNOTATIONS::contains);
+        return !classElement.isInner() && classElement.getAnnotationNames().stream().anyMatch(SUPPORTED_ANNOTATIONS::contains);
     }
 
     /**

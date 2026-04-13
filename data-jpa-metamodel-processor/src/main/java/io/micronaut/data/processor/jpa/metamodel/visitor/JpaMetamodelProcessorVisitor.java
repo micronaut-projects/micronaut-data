@@ -47,7 +47,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
      */
     @Override
     public Set<String> getSupportedAnnotationNames() {
-        return SUPPORTED_JAKARTA_ANNOTATIONS;
+        return SUPPORTED_ANNOTATIONS;
     }
 
     /**
