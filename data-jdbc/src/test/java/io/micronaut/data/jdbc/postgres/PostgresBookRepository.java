@@ -82,6 +82,14 @@ public abstract class PostgresBookRepository extends BookRepository {
     public abstract Book customUpdateReturningBook(Long authorId);
 
     @Query("""
+        UPDATE "book"
+        SET "title" = :newTitle
+        WHERE "title" = :existingTitle
+        RETURNING "id"
+        """)
+    public abstract Optional<Long> customUpdateReturningIdIfTitleMatches(String existingTitle, String newTitle);
+
+    @Query("""
         INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
         VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
          RETURNING *
@@ -143,4 +151,11 @@ public abstract class PostgresBookRepository extends BookRepository {
         DELETE FROM "book" WHERE "id" = :id RETURNING *
         """)
     public abstract Book customDeleteOne(Long id);
+
+    @Query("""
+        DELETE FROM "book"
+        WHERE "title" = :title
+        RETURNING "id"
+        """)
+    public abstract Optional<Long> customDeleteReturningIdByTitle(String title);
 }
