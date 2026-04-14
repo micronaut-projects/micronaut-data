@@ -231,7 +231,7 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
                 jakarta.persistence.criteria.Expression<V> cast = (jakarta.persistence.criteria.Expression<V>) numericExpression;
                 yield cast;
             }
-            case NumericCast numericCast -> numericCast(root, criteriaBuilder, numericCast);
+            case NumericCast<?, ?> numericCast -> numericCast(root, criteriaBuilder, numericCast);
             case null, default ->
                 throw new IllegalStateException("Unknown Expression: " + expression + " of type: " + expression.getClass());
         };
