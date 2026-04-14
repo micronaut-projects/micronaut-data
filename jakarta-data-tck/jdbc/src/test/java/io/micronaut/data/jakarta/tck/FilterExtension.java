@@ -1,6 +1,5 @@
 package io.micronaut.data.jakarta.tck;
 
-import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
 import ee.jakarta.tck.data.standalone.entity.ExpressionTests;
 import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
