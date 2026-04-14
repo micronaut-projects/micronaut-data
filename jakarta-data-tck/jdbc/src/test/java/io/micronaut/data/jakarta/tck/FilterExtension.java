@@ -46,7 +46,9 @@ public class FilterExtension implements ExecutionCondition {
         if (testClass == ExpressionTests.class) {
             switch (testMethodName) {
                 case "testPrependExpression" -> {
-                    return DISABLED; // TODO
+                    return ConditionEvaluationResult.disabled(
+                        "Disabled until JDBC support for prepend expressions used by ExpressionTests.testPrependExpression is implemented"
+                    );
                 }
 
             }
