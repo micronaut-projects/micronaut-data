@@ -394,6 +394,32 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             bookRepository.findByTitle("My book")
     }
 
+    void "test custom insert returning optional id when no row produced"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def firstInsert = bookRepository.customInsertReturningIdIfTitleNotExists(
+                    book.getAuthor().getId(),
+                    null,
+                    "My unique book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+            def secondInsert = bookRepository.customInsertReturningIdIfTitleNotExists(
+                    book.getAuthor().getId(),
+                    null,
+                    "My unique book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+        then:
+            firstInsert.present
+            secondInsert.empty
+    }
+
     void "test update returning book title"() {
         given:
             setupBooks()

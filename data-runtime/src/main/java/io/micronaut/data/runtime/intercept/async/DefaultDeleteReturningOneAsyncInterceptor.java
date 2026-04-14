@@ -47,11 +47,7 @@ public final class DefaultDeleteReturningOneAsyncInterceptor<T, R> extends Abstr
     @Override
     public CompletionStage<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<R>> context) {
         PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
-        return asyncDatastoreOperations.execute(preparedQuery).thenApply(ts -> {
-            if (ts.isEmpty()) {
-                return null;
-            }
-            return ts.iterator().next();
-        });
+        return asyncDatastoreOperations.execute(preparedQuery)
+            .thenApply(ts -> ts.isEmpty() ? (R) convertOne(context, (Object) null) : ts.iterator().next());
     }
 }

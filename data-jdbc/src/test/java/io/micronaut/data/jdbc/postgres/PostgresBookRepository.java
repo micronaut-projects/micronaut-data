@@ -30,6 +30,7 @@ import io.micronaut.data.tck.repositories.BookRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public abstract class PostgresBookRepository extends BookRepository {
@@ -103,6 +104,19 @@ public abstract class PostgresBookRepository extends BookRepository {
                                                    int totalPages,
                                                    @Nullable @io.micronaut.core.annotation.Nullable Long publisherId,
                                                    LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        SELECT :authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated
+        WHERE NOT EXISTS (SELECT 1 FROM "book" WHERE "title" = :title)
+         RETURNING "id"
+        """)
+    public abstract Optional<Long> customInsertReturningIdIfTitleNotExists(Long authorId,
+                                                                            @Nullable Long genderId,
+                                                                            String title,
+                                                                            int totalPages,
+                                                                            @Nullable Long publisherId,
+                                                                            LocalDateTime lastUpdated);
 
     public abstract Book saveReturning(Book book);
 
