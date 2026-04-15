@@ -83,27 +83,27 @@ public final class Train {
         this.model = model;
     }
 
-    public Integer getCapacity() {
+    public int getCapacity() {
         return capacity;
     }
 
-    public void setCapacity(Integer capacity) {
+    public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
 
-    public Double getSpeed() {
+    public double getSpeed() {
         return speed;
     }
 
-    public void setSpeed(Double speed) {
+    public void setSpeed(double speed) {
         this.speed = speed;
     }
 
-    public Boolean getElectric() {
+    public boolean getElectric() {
         return electric;
     }
 
-    public void setElectric(Boolean electric) {
+    public void setElectric(boolean electric) {
         this.electric = electric;
     }
 
