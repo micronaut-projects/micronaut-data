@@ -298,11 +298,11 @@ public final class JpaMetamodelProcessor {
      * @return FieldDef
      */
     private static FieldDef createJakartaManagedEntityTypeField(ClassTypeDef elementType, Set<String> classAnnotations) {
-        String jakartaManegedType = resolveJakartaManegedType(classAnnotations);
+        String jakartaManagedType = resolveJakartaManagedType(classAnnotations);
 
         return FieldDef.builder("class_")
             .addModifiers(Modifier.PUBLIC, Modifier.VOLATILE, Modifier.STATIC)
-            .ofType(TypeDef.parameterized(ClassTypeDef.of(jakartaManegedType), elementType)).build();
+            .ofType(TypeDef.parameterized(ClassTypeDef.of(jakartaManagedType), elementType)).build();
     }
 
     /**
@@ -310,7 +310,7 @@ public final class JpaMetamodelProcessor {
      * @param classAnnotations set of annotation names found on the class element.
      * @return jakarta managed type name.
      */
-    private static String resolveJakartaManegedType(Set<String> classAnnotations) {
+    private static String resolveJakartaManagedType(Set<String> classAnnotations) {
         if (classAnnotations.contains(JAKARTA_MAPPED_SUPER_CLASS)) {
             return JAKARTA_METAMODEL_MAPPED_SUPER_CLASS_TYPE;
         } else if (classAnnotations.contains(JAKARTA_EMBEDDABLE)) {
