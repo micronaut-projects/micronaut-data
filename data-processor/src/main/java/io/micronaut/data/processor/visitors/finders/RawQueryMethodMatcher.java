@@ -25,7 +25,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -473,32 +472,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return sqlBuilder.toString();
     }
 
-    private void addOracleReturningAllBindings(SourcePersistentEntity entity,
-                                               List<String> outColumns,
-                                               List<QueryOutParameterBinding> outBindings) {
-        PersistentEntityUtils.traversePersistentProperties(entity, propertyPath -> {
-            if (isUnsupportedReturningPath(propertyPath)) {
-                return;
-            }
-            String colName = propertyPath.getPersistedName();
-            if (outColumns.contains(colName)) {
-                return;
-            }
-            outColumns.add(colName);
-            outBindings.add(createOutBinding(colName, propertyPath.getProperty().getDataType()));
-        });
-    }
-
-    private boolean isUnsupportedReturningPath(PersistentPropertyPath propertyPath) {
-        if (!(propertyPath.getProperty() instanceof Association association)) {
-            return false;
-        }
-        return switch (association.getKind()) {
-            case ONE_TO_MANY, MANY_TO_MANY -> true;
-            default -> false;
-        };
-    }
-
     private OracleReturningBindings resolveOracleReturningBindings(@Nullable SourcePersistentEntity entity,
                                                                   String selection,
                                                                   @Nullable TypedElement resultType) {
@@ -508,7 +481,37 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             if (entity == null) {
                 throw new MatchFailedException("RETURNING * requires a repository root entity to resolve columns");
             }
-            addOracleReturningAllBindings(entity, outColumns, outBindings);
+            entity.getPersistentProperties().forEach(pp -> {
+                if (pp instanceof Association assoc) {
+                    switch (assoc.getKind()) {
+                        case ONE_TO_MANY, MANY_TO_MANY -> {
+                        }
+                        default -> {
+                            String colName = pp.getPersistedName();
+                            DataType dt = DataType.STRING;
+                            try {
+                                var ae = assoc.getAssociatedEntity();
+                                if (ae != null && ae.hasIdentity()) {
+                                    dt = ae.getIdentity().getDataType();
+                                }
+                            } catch (Exception ignored) {
+                            }
+                            outColumns.add(colName);
+                            outBindings.add(createOutBinding(colName, dt));
+                        }
+                    }
+                } else {
+                    String colName = pp.getPersistedName();
+                    DataType dt = pp.getDataType();
+                    outColumns.add(colName);
+                    outBindings.add(createOutBinding(colName, dt));
+                }
+            });
+            if (entity.hasIdentity() && outColumns.stream().noneMatch(c -> c.equals(entity.getIdentity().getPersistedName()))) {
+                var id = entity.getIdentity();
+                outColumns.add(id.getPersistedName());
+                outBindings.add(createOutBinding(id.getPersistedName(), id.getDataType()));
+            }
         } else {
             List<String> parts = splitByComma(selection).stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
             validateReturningColumnCount(parts, resultType);
@@ -664,61 +667,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     }
 
     private static String quoteOracleIdentifier(String identifier) {
-        String trimmed = identifier.trim();
-        if (trimmed.isEmpty()) {
-            throw new MatchFailedException("Invalid Oracle RETURNING selection: empty identifier");
-        }
-        List<String> parts = splitQualifiedIdentifier(trimmed);
-        if (parts.isEmpty()) {
-            throw new MatchFailedException("Invalid Oracle RETURNING selection: " + identifier);
-        }
-        return parts.stream()
-            .map(RawQueryMethodMatcher::quoteOracleIdentifierPart)
-            .collect(Collectors.joining("."));
-    }
-
-    private static String quoteOracleIdentifierPart(String identifierPart) {
-        String trimmed = identifierPart.trim();
-        if (trimmed.isEmpty()) {
-            throw new MatchFailedException("Invalid Oracle RETURNING selection: empty identifier part");
-        }
-        if (trimmed.startsWith("\"")) {
-            if (trimmed.length() < 2 || !trimmed.endsWith("\"")) {
-                throw new MatchFailedException("Invalid Oracle RETURNING selection: malformed quoted identifier `" + identifierPart + "`");
-            }
-            String inner = trimmed.substring(1, trimmed.length() - 1);
-            if (inner.indexOf('"') != -1) {
-                throw new MatchFailedException("Invalid Oracle RETURNING selection: unsupported quoted identifier `" + identifierPart + "`");
-            }
-            return trimmed;
-        }
-        if (!trimmed.matches("[A-Za-z_][A-Za-z0-9_$#]*")) {
-            throw new MatchFailedException("Invalid Oracle RETURNING selection `" + identifierPart + "`: expected a simple column identifier or qualified identifier");
-        }
-        return '"' + trimmed.toUpperCase(Locale.ENGLISH) + '"';
-    }
-
-    private static List<String> splitQualifiedIdentifier(String identifier) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < identifier.length(); i++) {
-            char c = identifier.charAt(i);
-            if (c == '"') {
-                inQuotes = !inQuotes;
-                current.append(c);
-            } else if (c == '.' && !inQuotes) {
-                parts.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-        if (inQuotes) {
-            throw new MatchFailedException("Invalid Oracle RETURNING selection: malformed quoted identifier `" + identifier + "`");
-        }
-        parts.add(current.toString());
-        return parts;
+        return '"' + identifier.toUpperCase(Locale.ENGLISH) + '"';
     }
 
     public static QueryParameterBinding addBinding(MethodMatchContext matchContext,

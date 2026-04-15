@@ -1539,8 +1539,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         for (int i = 0; i < outCount; i++) {
             placeholders.add(formatParameter(inCount + 1 + i).name());
         }
-        final String returningClause = " INTO " + String.join(",", placeholders) + "; END;";
-        final String finalSql = "BEGIN " + queryState.getFinalQuery() + returningClause;
+        final String finalSql = "BEGIN " + queryState.getFinalQuery() + " INTO " + String.join(",", placeholders) + "; END;";
         final List<QueryOutParameterBinding> outBindings = new ArrayList<>(outCount);
         for (int i = 0; i < outCount; i++) {
             final String col = visitor.getUnescapedColumns().get(i);
@@ -1557,15 +1556,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             });
         }
-        final List<String> queryParts = new ArrayList<>(queryState.getQueryParts());
-        if (queryParts.isEmpty()) {
-            queryParts.add(finalSql);
-        } else {
-            queryParts.set(0, "BEGIN " + queryParts.get(0));
-            int lastIndex = queryParts.size() - 1;
-            queryParts.set(lastIndex, queryParts.get(lastIndex) + returningClause);
-        }
-        return QueryResult.of(finalSql, queryParts, queryState.getParameterBindings(), outBindings, Map.of());
+        return QueryResult.of(finalSql, List.of(), queryState.getParameterBindings(), outBindings, Map.of());
     }
 
     protected record QueryBuilder(AtomicInteger position,
