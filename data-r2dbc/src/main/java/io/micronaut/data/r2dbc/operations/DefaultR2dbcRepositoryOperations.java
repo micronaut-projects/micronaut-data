@@ -733,6 +733,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return statement;
     }
 
+    private int getOracleOutParameterStartIndex(SqlStoredQuery<?, ?> storedQuery) {
+        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
+        if (CollectionUtils.isEmpty(outParameterBindings)) {
+            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
+        }
+        return countQueryPlaceholders(storedQuery.getQuery()) - outParameterBindings.size();
+    }
+
+    private int getJsonGeneratedIdOutParameterIndex(SqlStoredQuery<?, ?> storedQuery) {
+        return countQueryPlaceholders(storedQuery.getQuery()) - 1;
+    }
+
+    private int countQueryPlaceholders(String query) {
+        int placeholders = 0;
+        for (int i = 0; i < query.length(); i++) {
+            if (query.charAt(i) == '?') {
+                placeholders++;
+            }
+        }
+        return placeholders;
+    }
+
     private R2dbcType findR2dbcType(DataType dataType) {
         return switch (dataType) {
             case BOOLEAN -> R2dbcType.BOOLEAN;
@@ -1362,8 +1384,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
                             bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
-                        } else if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
-                            stmt.bind(binder.currentIndex(), Parameters.out(R2dbcType.NUMERIC));
+                        } else if (hasGeneratedId && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                            stmt.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
                         }
                         return Mono.just(d);
                     });
@@ -1541,7 +1563,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (hasGeneratedId) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
-                    statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
+                    statement.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
                 } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
                     statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
                 }
