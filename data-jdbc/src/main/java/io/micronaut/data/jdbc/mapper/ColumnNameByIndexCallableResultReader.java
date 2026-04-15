@@ -61,8 +61,9 @@ public final class ColumnNameByIndexCallableResultReader implements ResultReader
     }
 
     private Integer getIndex(String columnName) {
-        if (columnIndexesByName.containsKey(columnName)) {
-            return columnIndexesByName.get(columnName);
+        Integer index = columnIndexesByName.get(columnName);
+        if (index != null) {
+            return index;
         }
         throw new DataAccessException("Column name not found: " + columnName);
     }

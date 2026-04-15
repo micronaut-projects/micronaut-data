@@ -2451,7 +2451,7 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
-    void "test oracle raw query ignores returning in string literal"() {
+    void "test oracle raw query ignores lowercase returning in string literal"() {
         given:
         def repository = buildRepository('test.ProductRepository', """
 import io.micronaut.data.annotation.Query;

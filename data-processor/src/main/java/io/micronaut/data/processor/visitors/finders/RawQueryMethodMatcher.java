@@ -53,7 +53,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
@@ -78,7 +77,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
     private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("\\breturning\\b");
+    private static final Pattern RETURNING_PATTERN = Pattern.compile("\\breturning\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
     private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
 

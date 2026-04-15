@@ -24,7 +24,7 @@ import io.micronaut.data.model.DataType;
  * Describes an OUT parameter binding for a SQL query (for example Oracle RETURNING ... INTO ...).
  *
  * This metadata is attached to {@link QueryResult} and can be propagated into the runtime
- * to register CallableStatement OUT parameters with correct ordering and types.
+ * to register or bind OUT parameters in the correct order and data type.
  *
  * @since 5.0
  */
