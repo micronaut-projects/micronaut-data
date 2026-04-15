@@ -77,6 +77,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)" tabindex="0">visit(UnaryExpression)</a></li>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression)" tabindex="0">visit(BinaryExpression)</a></li>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)" tabindex="0">visit(FunctionExpression)</a></li>
+<li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression)" tabindex="0">visit(CastExpression)</a></li>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate)" tabindex="0">visit(ConjunctionPredicate)</a></li>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate)" tabindex="0">visit(DisjunctionPredicate)</a></li>
 <li><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate)" tabindex="0">visit(NegatedPredicate)</a></li>
@@ -177,98 +178,103 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <div class="block">Visit <a href="../expression/BinaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>BinaryExpression</code></a>.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">FunctionExpression</a>&lt;?&gt;&nbsp;functionExpression)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/CastExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">CastExpression</a>&lt;?&gt;&nbsp;castExpression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit <a href="../expression/CastExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>CastExpression</code></a>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">FunctionExpression</a>&lt;?&gt;&nbsp;functionExpression)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>FunctionExpression</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>IdExpression</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>LiteralExpression</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpression</a>&lt;?&gt;&nbsp;unaryExpression)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpression</a>&lt;?&gt;&nbsp;unaryExpression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>UnaryExpression</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/BetweenPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BetweenPredicate</a>&nbsp;propertyBetweenPredicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/BetweenPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BetweenPredicate</a>&nbsp;propertyBetweenPredicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/BetweenPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>BetweenPredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/BinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BinaryPredicate</a>&nbsp;binaryPredicate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/BinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BinaryPredicate</a>&nbsp;binaryPredicate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/BinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>BinaryPredicate</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a>&nbsp;conjunction)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a>&nbsp;conjunction)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>ConjunctionPredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a>&nbsp;disjunction)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a>&nbsp;disjunction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>DisjunctionPredicate</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ExistsSubqueryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExistsSubqueryPredicate</a>&nbsp;existsSubqueryPredicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ExistsSubqueryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExistsSubqueryPredicate</a>&nbsp;existsSubqueryPredicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/ExistsSubqueryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>ExistsSubqueryPredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/InPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">InPredicate</a>&lt;?&gt;&nbsp;inPredicate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/InPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">InPredicate</a>&lt;?&gt;&nbsp;inPredicate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/InPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>InPredicate</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a>&nbsp;likePredicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a>&nbsp;likePredicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>LikePredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a>&nbsp;negate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a>&nbsp;negate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>NegatedPredicate</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/UnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">UnaryPredicate</a>&nbsp;propertyOp)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/UnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">UnaryPredicate</a>&nbsp;propertyOp)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/UnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>UnaryPredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection)" class="member-name-link">visit</a><wbr>(<a href="../selection/AliasedSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AliasedSelection</a>&lt;?&gt;&nbsp;aliasedSelection)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection)" class="member-name-link">visit</a><wbr>(<a href="../selection/AliasedSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AliasedSelection</a>&lt;?&gt;&nbsp;aliasedSelection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../selection/AliasedSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection"><code>AliasedSelection</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection)" class="member-name-link">visit</a><wbr>(<a href="../selection/CompoundSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">CompoundSelection</a>&lt;?&gt;&nbsp;compoundSelection)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection)" class="member-name-link">visit</a><wbr>(<a href="../selection/CompoundSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">CompoundSelection</a>&lt;?&gt;&nbsp;compoundSelection)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../selection/CompoundSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection"><code>CompoundSelection</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityRoot</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;?&gt;&nbsp;subquery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;?&gt;&nbsp;subquery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntitySubquery</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&nbsp;persistentPropertyPath)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)" class="member-name-link">visit</a><wbr>(<a href="../../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&nbsp;persistentPropertyPath)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentPropertyPath</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(jakarta.persistence.criteria.Predicate)" class="member-name-link">visit</a><wbr>(jakarta.persistence.criteria.Predicate&nbsp;predicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(jakarta.persistence.criteria.Predicate)" class="member-name-link">visit</a><wbr>(jakarta.persistence.criteria.Predicate&nbsp;predicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <code>Predicate</code>.</div>
 </div>
 </div>
@@ -505,6 +511,22 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>functionExpression</code> - The function expression</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression)">
+<h3>visit</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/CastExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">CastExpression</a>&lt;?&gt;&nbsp;castExpression)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/CastExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>CastExpression</code></a>.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>castExpression</code> - The cast expression</dd>
 </dl>
 </div>
 </section>
