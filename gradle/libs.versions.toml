@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.0.0-M19"
+micronaut = "5.0.0-M22"
 micronaut-platform = "4.10.1"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "4.6.2"
@@ -25,7 +25,7 @@ micronaut-coherence = "6.0.0-M1"
 groovy = "5.0.5"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-data = "1.1.0-M2"
+managed-jakarta-data = "1.1.0-M3"
 
 spring-data = "4.0.4"
 
