@@ -678,7 +678,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         ex.message.contains("multiple columns require an entity return type")
     }
 
-    void "ORACLE custom @Query insert returning produces valid SQL"() {
+    void "ORACLE custom @Query insert returning with explicit INTO produces valid SQL"() {
         given:
         def repository = buildRepository('test.BookRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -812,6 +812,58 @@ interface BookRepository extends GenericRepository<Book, Long> {
         def method = repository.findPossibleMethods("customInsertReturning").findFirst().get()
         then:
         getRawQuery(method).replace('\n', ' ') == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END; '
+    }
+
+    void "ORACLE raw @Query insert returning without INTO is rejected"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query(\"""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING "TITLE"
+        \""")
+    String brokenInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+}
+""")
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("must declare explicit returned columns and an INTO clause")
+    }
+
+    void "ORACLE raw @Query insert returning star is rejected"() {
+        when:
+        buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query(\"""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING * INTO ?
+        \""")
+    Book brokenInsertReturning(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+}
+""")
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("must declare explicit returned columns instead of RETURNING *")
     }
 
 }

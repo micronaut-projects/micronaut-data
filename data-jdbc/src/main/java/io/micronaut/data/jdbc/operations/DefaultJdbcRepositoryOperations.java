@@ -419,7 +419,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (resultType.isInstance(value)) {
             return resultType.cast(value);
         }
-        return io.micronaut.core.convert.ConversionService.SHARED.convert(value, resultType)
+        return conversionService.convert(value, resultType)
             .orElseThrow(() -> new DataAccessException(
                 "Error converting Oracle SQL RETURNING value of type " + value.getClass().getName() +
                     " to result type " + resultType.getName()

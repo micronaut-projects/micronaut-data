@@ -197,7 +197,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         for (io.micronaut.data.model.query.builder.QueryOutParameterBinding b : bindings) {
             out.add(new QueryResultOutParameterBinding(b));
         }
-        return out;
+        return Collections.unmodifiableList(out);
     }
 
     private record QueryResultOutParameterBinding(

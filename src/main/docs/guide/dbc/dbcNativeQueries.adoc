@@ -6,7 +6,7 @@ The above example will execute the raw SQL against the database.
 
 NOTE: For <<pagination, Pagination>> queries that return a api:data.model.Page[] you also need to specify a native `countQuery`.
 
-For Oracle raw `@Query` methods with a `RETURNING` clause, you can write either `RETURNING id, name` or the full Oracle form `RETURNING id, name INTO ?, ?`. If `INTO` is omitted, Micronaut Data generates the Oracle `INTO` placeholders automatically; if `INTO` is present, it must use positional `?` placeholders.
+For Oracle raw `@Query` methods with a `RETURNING` clause, write the returned columns and `INTO` placeholders explicitly, for example `RETURNING id, name INTO ?, ?`. The `INTO` clause must use positional `?` placeholders. You can also provide the full `BEGIN ... END;` block yourself.
 
 === Explicit Queries and Joins
 
