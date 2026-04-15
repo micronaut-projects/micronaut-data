@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@MicronautTest(transactional = false)
+@MicronautTest(transactional = false, environments = "multitenancy")
 class BookJdbcDatasourceMultiTenancySpec {
 
     @Inject

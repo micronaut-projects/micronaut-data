@@ -27,7 +27,7 @@ dependencies {
     implementation(mnSql.jakarta.persistence.api)
     implementation(mnSql.jakarta.transaction.api)
 
-    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    implementation mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.h2
     runtimeOnly mnLogging.logback.classic
 }

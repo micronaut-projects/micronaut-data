@@ -1,0 +1,8 @@
+example:
+  runtime-routing:
+    enabled: true
+
+datasources:
+  default:
+    enabled: false
+    dialect: H2

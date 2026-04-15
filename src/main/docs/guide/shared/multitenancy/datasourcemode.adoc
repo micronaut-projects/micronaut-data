@@ -4,7 +4,7 @@ In the below example, the tenant resolver is set to use a http header. See https
 .Example of the configuration with two data sources to be chosen based on the tenancy
 [configuration]
 ----
-include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application-multitenancy.yml[]
 ----
 
 The following HTTP clients will access a different tenant datasource:
@@ -13,3 +13,78 @@ The following HTTP clients will access a different tenant datasource:
 ----
 include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/example/BookJdbcSchemaMultiTenancySpec.java[tags="clients"]
 ----
+
+== Runtime Routing
+
+For applications that need to provision or resolve tenant-specific datasources at runtime after startup,
+Micronaut Data JDBC also provides api:data.jdbc.runtime.multitenancy.TenantRoutingDataSource[] and
+api:data.jdbc.runtime.multitenancy.TenantDataSourceResolver[].
+This allows a single Micronaut-managed datasource bean to delegate connection access to a datasource
+resolved for the current tenant, while custom code owns the provisioning and caching strategy.
+This runtime-routing pattern is separate from Micronaut Data's built-in `DATASOURCE` mode, which maps
+repository operations directly to configured datasource names.
+The routing itself happens inside a single named datasource bean, and tenant resolution is delegated to
+your application code. If an application already enables Micronaut Data `DATASOURCE` mode for some other
+repositories, this runtime-routing pattern should use a different repository setup and should not share
+that `DATASOURCE` mode mapping for the same repository.
+
+A typical application-side integration uses:
+
+- a tenant resolver, either from the micronaut-multitenancy module or a custom bean
+- a dedicated datasource bean backed by api:data.jdbc.runtime.multitenancy.TenantRoutingDataSource[]
+- a repository bound to that datasource bean
+- a custom api:data.jdbc.runtime.multitenancy.TenantDataSourceResolver[] implementation that caches tenant datasources
+
+.Example custom tenant resolver
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/java/example/RuntimeRoutingTenantResolver.java[tags="tenant-resolver"]
+----
+
+.Example repository bound to a routing datasource
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/java/example/RuntimeRoutingBookRepository.java[tags="repository"]
+----
+
+.Example factory that exposes the routing datasource bean
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/java/example/RuntimeRoutingDataSourceFactory.java[tags="factory"]
+----
+
+In the example, the factory creates the fallback datasource directly and asks the custom resolver to provide
+tenant-specific datasources only when a tenant id is present.
+
+If the repository targets a named datasource, that name also needs matching JDBC configuration.
+When the datasource itself comes from a custom factory bean, you can still define the JDBC settings under `datasources.<name>`
+and disable standard datasource creation for that name:
+
+[configuration]
+----
+datasources:
+  default:
+    enabled: false
+    dialect: H2
+----
+
+This is useful beyond the runtime routing example itself because it shows how a repository can target a
+custom named datasource bean while still reusing Micronaut Data's normal JDBC repository infrastructure
+for dialect selection and repository operations creation.
+
+That also means the repository-facing datasource name does not need to be the same datasource that you use
+as the router's default fallback. In this example, the custom datasource bean exposed to the repository is
+named `default`, and the factory creates the router's fallback datasource directly.
+
+.Example resolver that creates and caches tenant datasources
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/java/example/RuntimeRoutingTenantDataSourceResolver.java[tags="resolver"]
+----
+
+The example uses Tomcat JDBC pool.
+The same routing pattern also works with other JDBC pools such as HikariCP or Oracle UCP.
+
+The resolver is expected to cache datasources when resolution or provisioning is expensive.
+api:data.jdbc.runtime.multitenancy.TenantRoutingDataSource[] resolves the current tenant datasource
+for each delegated datasource call and intentionally does not maintain its own tenant datasource cache.
