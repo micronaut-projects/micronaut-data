@@ -78,7 +78,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
     private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
+    private static final Pattern RETURNING_PATTERN = Pattern.compile("\\breturning\\b");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
     private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
 
@@ -195,17 +195,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
 
         if (DELETE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
         } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
             }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
@@ -320,7 +320,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
 
         String cleanLower = SQL_COMMENT_PATTERN.matcher(finalQueryString).replaceAll("").trim().toLowerCase(Locale.ENGLISH);
-        boolean hasReturning = RETURNING_PATTERN.matcher(cleanLower).find();
+        boolean hasReturning = containsReturningClause(cleanLower);
         if (hasReturning) {
             Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
                 .orElse(Dialect.ANSI);
@@ -336,6 +336,45 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static int indexOfIntoIgnoreCase(String s) {
         Matcher matcher = INTO_PATTERN.matcher(s);
         return matcher.find() ? matcher.start() : -1;
+    }
+
+    private static boolean containsReturningClause(String query) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        StringBuilder visible = new StringBuilder(query.length());
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= query.length() || query.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                    i++;
+                }
+                visible.append(' ');
+                continue;
+            }
+            if (inDoubleQuote) {
+                if (c == '"' && (i + 1 >= query.length() || query.charAt(i + 1) != '"')) {
+                    inDoubleQuote = false;
+                } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
+                    i++;
+                }
+                visible.append(' ');
+                continue;
+            }
+            if (c == '\'') {
+                inSingleQuote = true;
+                visible.append(' ');
+                continue;
+            }
+            if (c == '"') {
+                inDoubleQuote = true;
+                visible.append(' ');
+                continue;
+            }
+            visible.append(c);
+        }
+        return RETURNING_PATTERN.matcher(visible).find();
     }
 
     private QueryResult buildOracleReturningQueryResult(MethodMatchContext matchContext,

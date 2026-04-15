@@ -1362,8 +1362,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
                             bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
-                        }
-                        if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                        } else if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                             stmt.bind(binder.currentIndex(), Parameters.out(R2dbcType.NUMERIC));
                         }
                         return Mono.just(d);

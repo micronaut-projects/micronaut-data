@@ -2451,6 +2451,29 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
+    void "test oracle raw query ignores returning in string literal"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT 'user returning later' AS msg FROM dual")
+    String message();
+}
+""")
+        def method = repository.getRequiredMethod("message")
+
+        expect:
+        getRawQuery(method) == "SELECT 'user returning later' AS msg FROM dual"
+        method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
     void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """
