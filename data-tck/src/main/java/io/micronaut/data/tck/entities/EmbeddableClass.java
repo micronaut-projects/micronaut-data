@@ -14,14 +14,15 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.EmbeddedOwner;
+import jakarta.persistence.Embeddable;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface EmbeddedOwnerRepository extends CrudRepository<EmbeddedOwner, Long>, JpaSpecificationExecutor<EmbeddedOwner> {
+@Embeddable
+public record EmbeddableClass(
+    String embeddedName,
+    Long number,
+    long n,
+    double d
+) {
 }

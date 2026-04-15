@@ -24,58 +24,18 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
-import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
-import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
-import io.micronaut.data.repository.jpa.criteria.QuerySpecification
-import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import io.micronaut.data.tck.entities.Author
-import io.micronaut.data.tck.entities.AuthorBooksDto
-import io.micronaut.data.tck.entities.AuthorDtoWithBookDtos
-import io.micronaut.data.tck.entities.BasicTypes
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.BookDto
-import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.entities.Chapter
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.Company
-import io.micronaut.data.tck.entities.Country
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.CountryRegionCity
-import io.micronaut.data.tck.entities.EntityIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass2
-import io.micronaut.data.tck.entities.ExampleEntity
-import io.micronaut.data.tck.entities.Face
-import io.micronaut.data.tck.entities.Food
-import io.micronaut.data.tck.entities.Genre
-import io.micronaut.data.tck.entities.Meal
-import io.micronaut.data.tck.entities.Nose
-import io.micronaut.data.tck.entities.Page
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.entities.PersonDto
-import io.micronaut.data.tck.entities.PersonDto2
-import io.micronaut.data.tck.entities.Student
-import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.repository.jpa.criteria.*
+import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.tests.BookDto
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
-import jakarta.persistence.criteria.CriteriaBuilder
-import jakarta.persistence.criteria.CriteriaQuery
-import jakarta.persistence.criteria.CriteriaUpdate
-import jakarta.persistence.criteria.JoinType
-import jakarta.persistence.criteria.Predicate
-import jakarta.persistence.criteria.Root
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Issue
-import spock.lang.Shared
-import spock.lang.Specification
-import spock.lang.Unroll
+import jakarta.persistence.criteria.*
+import spock.lang.*
 
 import java.sql.Connection
 import java.time.Duration
@@ -87,18 +47,9 @@ import java.util.concurrent.TimeUnit
 
 import static io.micronaut.data.tck.repositories.AuthorRepository.Specifications.authorIdEquals
 import static io.micronaut.data.tck.repositories.AuthorRepository.Specifications.authorNameEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleAndTotalPagesEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleAndTotalPagesEqualsUsingConjunction
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
-import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
+import static io.micronaut.data.tck.repositories.BookSpecifications.*
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.*
+import static io.micronaut.data.tck.repositories.PersonRepository.SpecificationsWithMetamodel
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -128,7 +79,6 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
     abstract ExampleEntityRepository getExampleEntityRepository()
     abstract IntervalRepository getIntervalRepository()
-
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
@@ -2520,180 +2470,356 @@ abstract class AbstractRepositorySpec extends Specification {
             book.author.id == book.author.id
     }
 
-    void "test criteria" () {
+    void "test criteria"() {
         when:
-            savePersons(["Jeff", "James"])
+        savePersons(["Jeff", "James"])
         then:
-            personRepository.findOne(nameEquals("Jeff")).isPresent()
-            !personRepository.findOne(nameEquals("Denis")).isPresent()
-            personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
-            !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
+        personRepository.findOne(nameEquals("Jeff")).isPresent()
+        !personRepository.findOne(nameEquals("Denis")).isPresent()
+        personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
+        !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
         then:
-            personRepository.findAll(nameEquals("Jeff")).size() == 1
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(nameEquals("Denis")).size() == 0
-            personRepository.findAll(null as QuerySpecification).size() == 2
-            personRepository.findAll(null as PredicateSpecification).size() == 2
-            personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
-            personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
-            personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).size() == 1
-            personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
-            personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
-            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
+        personRepository.findAll(nameEquals("Jeff")).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(nameEquals("Denis")).size() == 0
+        personRepository.findAll(null as QuerySpecification).size() == 2
+        personRepository.findAll(null as PredicateSpecification).size() == 2
+        personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
+        personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
+        personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).size() == 1
+        personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
+        personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
         when:
-            def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
-            def pred2 = pred1.or(nameEquals("Abc"))
-            def andPred = nameEquals("Jeff").and(pred2)
+        def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
+        def pred2 = pred1.or(nameEquals("Abc"))
+        def andPred = nameEquals("Jeff").and(pred2)
         then:
-            personRepository.findAll(andPred).size() == 1
+        personRepository.findAll(andPred).size() == 1
         when:
-            def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
+        def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
         then:
-            unpaged.content.size() == 2
-            unpaged.totalSize == 2
+        unpaged.content.size() == 2
+        unpaged.totalSize == 2
         when:
-            def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
-            def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
+        def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
+        def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
         then:
-            unpagedSortedDesc.content.size() == 2
-            unpagedSortedDesc.content[1].name == "James"
-            unpagedSortedAsc.content.size() == 2
-            unpagedSortedAsc.content[1].name == "Jeff"
+        unpagedSortedDesc.content.size() == 2
+        unpagedSortedDesc.content[1].name == "James"
+        unpagedSortedAsc.content.size() == 2
+        unpagedSortedAsc.content[1].name == "Jeff"
         when:
-            def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
+        def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
         then:
-            paged.content.size() == 1
-            paged.pageNumber == 0
-            paged.totalPages == 2
-            paged.totalSize == 2
+        paged.content.size() == 1
+        paged.pageNumber == 0
+        paged.totalPages == 2
+        paged.totalSize == 2
         when:
-            def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
+        def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
         then:
-            pagedSortedDesc.content.size() == 1
-            pagedSortedDesc.content[0].name == "Jeff"
-            pagedSortedDesc.pageNumber == 0
-            pagedSortedDesc.totalPages == 2
-            pagedSortedDesc.totalSize == 2
+        pagedSortedDesc.content.size() == 1
+        pagedSortedDesc.content[0].name == "Jeff"
+        pagedSortedDesc.pageNumber == 0
+        pagedSortedDesc.totalPages == 2
+        pagedSortedDesc.totalSize == 2
         when:
-            def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+        def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
         then:
-            pagedSortedAsc.content.size() == 1
-            pagedSortedAsc.content[0].name == "James"
-            pagedSortedAsc.pageNumber == 0
-            pagedSortedAsc.totalPages == 2
-            pagedSortedAsc.totalSize == 2
+        pagedSortedAsc.content.size() == 1
+        pagedSortedAsc.content[0].name == "James"
+        pagedSortedAsc.pageNumber == 0
+        pagedSortedAsc.totalPages == 2
+        pagedSortedAsc.totalSize == 2
         when:
-            def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James")))
+        def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James")))
         then:
-            countAllByPredicateSpec == 2
+        countAllByPredicateSpec == 2
         when:
-            def countOneByPredicateSpec = personRepository.count(nameEquals("Jeff"))
+        def countOneByPredicateSpec = personRepository.count(nameEquals("Jeff"))
         then:
-            countOneByPredicateSpec == 1
+        countOneByPredicateSpec == 1
         when:
-            def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
+        def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
         then:
-            countAllByQuerySpec == 2
+        countAllByQuerySpec == 2
         when:
-            def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
+        def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
         then:
-            countOneByQuerySpec == 1
+        countOneByQuerySpec == 1
         when:
-            def countAppByNullByPredicateSpec = personRepository.count(null as PredicateSpecification)
-            def countAppByNullByQuerySpec = personRepository.count(null as QuerySpecification)
+        def countAppByNullByPredicateSpec = personRepository.count(null as PredicateSpecification)
+        def countAppByNullByQuerySpec = personRepository.count(null as QuerySpecification)
         then:
-            countAppByNullByPredicateSpec == 2
-            countAppByNullByQuerySpec == 2
+        countAppByNullByPredicateSpec == 2
+        countAppByNullByQuerySpec == 2
         when:
-            def ids = personRepository.findAll().collect { p -> p.getId() }
-            long count = ids.size()
-            def countByIds = count == 0 ? 0 : personRepository.count(idsIn(ids.toArray(new Long[0])))
+        def ids = personRepository.findAll().collect { p -> p.getId() }
+        long count = ids.size()
+        def countByIds = count == 0 ? 0 : personRepository.count(idsIn(ids.toArray(new Long[0])))
         then:
-            countByIds == count
+        countByIds == count
         when:
-            def jeffPerson = personRepository.findOne(nameEquals("Jeff")).get();
-            def foundByIdPerson = personRepository.findOne(idsIn(jeffPerson.getId())).get()
+        def jeffPerson = personRepository.findOne(nameEquals("Jeff")).get();
+        def foundByIdPerson = personRepository.findOne(idsIn(jeffPerson.getId())).get()
         then:
-            jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
+        jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
         when:
-            def deleted = personRepository.deleteAll(nameEquals("Jeff"))
-            def all = personRepository.findAll()
+        def deleted = personRepository.deleteAll(nameEquals("Jeff"))
+        def all = personRepository.findAll()
         then:
-            deleted == 1
-            all.size() == 1
-            all[0].name == "James"
+        deleted == 1
+        all.size() == 1
+        all[0].name == "James"
         when:
-            deleted = personRepository.deleteAll(null as DeleteSpecification)
-            all = personRepository.findAll()
+        deleted = personRepository.deleteAll(null as DeleteSpecification)
+        all = personRepository.findAll()
         then:
-            deleted == 1
-            all.size() == 0
+        deleted == 1
+        all.size() == 0
         when:
-            savePersons(["Jeff", "James"])
-            def updated = personRepository.updateAll(new UpdateSpecification<Person>() {
-                @Override
-                Predicate toPredicate(Root<Person> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
-                    query.set("name", "Xyz")
-                    return criteriaBuilder.equal(root.get("name"), "Jeff")
-                }
-            })
+        savePersons(["Jeff", "James"])
+        def updated = personRepository.updateAll(new UpdateSpecification<Person>() {
+            @Override
+            Predicate toPredicate(Root<Person> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                query.set("name", "Xyz")
+                return criteriaBuilder.equal(root.get("name"), "Jeff")
+            }
+        })
         then:
-            updated == 1
-            personRepository.count(nameEquals("Xyz")) == 1
-            personRepository.count(nameEquals("Jeff")) == 0
+        updated == 1
+        personRepository.count(nameEquals("Xyz")) == 1
+        personRepository.count(nameEquals("Jeff")) == 0
         when:
-            personRepository.updateAll(setIncome(1000).where(nameEquals("James")))
-            def jamesPerson = personRepository.findByName("James")
+        personRepository.updateAll(setIncome(1000).where(nameEquals("James")))
+        def jamesPerson = personRepository.findByName("James")
         then:
-            jamesPerson.income == 1000
-        when:"Income set to null using criteria"
-            personRepository.updateAll(setIncome(null).where(nameEquals("James")))
-            jamesPerson = personRepository.findByName("James")
-        then:"Field is updated to null"
-            jamesPerson.income == null
-        when:"Update name to null using criteria"
-            personRepository.updateAll(setName(null).where(nameEquals("James")))
-        then:"Exception is thrown because name is not nullable"
-            def ex = thrown(IllegalStateException)
-            ex.message == 'Field [name] does not allow null value.'
+        jamesPerson.income == 1000
+        when: "Income set to null using criteria"
+        personRepository.updateAll(setIncome(null).where(nameEquals("James")))
+        jamesPerson = personRepository.findByName("James")
+        then: "Field is updated to null"
+        jamesPerson.income == null
+        when: "Update name to null using criteria"
+        personRepository.updateAll(setName(null).where(nameEquals("James")))
+        then: "Exception is thrown because name is not nullable"
+        def ex = thrown(IllegalStateException)
+        ex.message == 'Field [name] does not allow null value.'
         when:
-            deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz")))
+        deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz")))
         then:
-            deleted == 1
-            personRepository.count(nameEquals("Xyz")) == 0
+        deleted == 1
+        personRepository.count(nameEquals("Xyz")) == 0
 
         when:
-            def meal = mealRepository.save(new Meal(10))
-            def food = new Food("food", 80, 200, meal)
-            food.setLongName("long name")
-            food = foodRepository.save(food)
+        def meal = mealRepository.save(new Meal(10))
+        def food = new Food("food", 80, 200, meal)
+        food.setLongName("long name")
+        food = foodRepository.save(food)
         then:
-            // Verify order by works on alias mapped property
-            def foods = foodRepository.findAllByKeyOrderByLongName(food.key);
-            foods.size() == 1
-            foods[0].key == food.key
-            foods[0].longName == food.longName
+        // Verify order by works on alias mapped property
+        def foods = foodRepository.findAllByKeyOrderByLongName(food.key);
+        foods.size() == 1
+        foods[0].key == food.key
+        foods[0].longName == food.longName
 
-            def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
-            loadedFood.key == food.key
-            loadedFood.longName == food.longName
+        def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
+        loadedFood.key == food.key
+        loadedFood.longName == food.longName
         when:
-            savePersons(["Jeff"])
-            def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
-            def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
-            def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff")))
+        savePersons(["Jeff"])
+        def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
+        def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
+        def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff")))
         def existsNotQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("NotJeff")))
         then:
-            existsPredicateSpec
-            !existsNotPredicateSpec
-            existsQuerySpec
-            !existsNotQuerySpec
+        existsPredicateSpec
+        !existsNotPredicateSpec
+        existsQuerySpec
+        !existsNotQuerySpec
+    }
+
+    void "test criteria" () {
+        when:
+        savePersons(["Jeff", "James"])
+        then:
+        personRepository.findOne(nameEquals("Jeff")).isPresent()
+        !personRepository.findOne(nameEquals("Denis")).isPresent()
+        personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
+        !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
+        then:
+        personRepository.findAll(nameEquals("Jeff")).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(nameEquals("Denis")).size() == 0
+        personRepository.findAll(null as QuerySpecification).size() == 2
+        personRepository.findAll(null as PredicateSpecification).size() == 2
+        personRepository.findAll(null as QuerySpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
+        personRepository.findAll(null as PredicateSpecification, Pageable.from(Sort.of(Sort.Order.desc("name")))).size() == 2
+        personRepository.findAll(nameEquals("Jeff").or(nameEquals("Denis"))).size() == 1
+        personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
+        personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
+        personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
+        when:
+        def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
+        def pred2 = pred1.or(nameEquals("Abc"))
+        def andPred = nameEquals("Jeff").and(pred2)
+        then:
+        personRepository.findAll(andPred).size() == 1
+        when:
+        def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
+        then:
+        unpaged.content.size() == 2
+        unpaged.totalSize == 2
+        when:
+        def unpagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.desc("name")))
+        def unpagedSortedAsc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED.order(Sort.Order.asc("name")))
+        then:
+        unpagedSortedDesc.content.size() == 2
+        unpagedSortedDesc.content[1].name == "James"
+        unpagedSortedAsc.content.size() == 2
+        unpagedSortedAsc.content[1].name == "Jeff"
+        when:
+        def paged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1))
+        then:
+        paged.content.size() == 1
+        paged.pageNumber == 0
+        paged.totalPages == 2
+        paged.totalSize == 2
+        when:
+        def pagedSortedDesc = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.desc("name")))
+        then:
+        pagedSortedDesc.content.size() == 1
+        pagedSortedDesc.content[0].name == "Jeff"
+        pagedSortedDesc.pageNumber == 0
+        pagedSortedDesc.totalPages == 2
+        pagedSortedDesc.totalSize == 2
+        when:
+        def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+        then:
+        pagedSortedAsc.content.size() == 1
+        pagedSortedAsc.content[0].name == "James"
+        pagedSortedAsc.pageNumber == 0
+        pagedSortedAsc.totalPages == 2
+        pagedSortedAsc.totalSize == 2
+        when:
+        def countAllByPredicateSpec = personRepository.count(nameEquals("Jeff").or(nameEquals("James")))
+        then:
+        countAllByPredicateSpec == 2
+        when:
+        def countOneByPredicateSpec = personRepository.count(nameEquals("Jeff"))
+        then:
+        countOneByPredicateSpec == 1
+        when:
+        def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
+        then:
+        countAllByQuerySpec == 2
+        when:
+        def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
+        then:
+        countOneByQuerySpec == 1
+        when:
+        def countAppByNullByPredicateSpec = personRepository.count(null as PredicateSpecification)
+        def countAppByNullByQuerySpec = personRepository.count(null as QuerySpecification)
+        then:
+        countAppByNullByPredicateSpec == 2
+        countAppByNullByQuerySpec == 2
+        when:
+        def ids = personRepository.findAll().collect { p -> p.getId() }
+        long count = ids.size()
+        def countByIds = count == 0 ? 0 : personRepository.count(idsIn(ids.toArray(new Long[0])))
+        then:
+        countByIds == count
+        when:
+        def jeffPerson = personRepository.findOne(nameEquals("Jeff")).get();
+        def foundByIdPerson = personRepository.findOne(idsIn(jeffPerson.getId())).get()
+        then:
+        jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
+        when:
+        def deleted = personRepository.deleteAll(nameEquals("Jeff"))
+        def all = personRepository.findAll()
+        then:
+        deleted == 1
+        all.size() == 1
+        all[0].name == "James"
+        when:
+        deleted = personRepository.deleteAll(null as DeleteSpecification)
+        all = personRepository.findAll()
+        then:
+        deleted == 1
+        all.size() == 0
+        when:
+        savePersons(["Jeff", "James"])
+        def updated = personRepository.updateAll(new UpdateSpecification<Person>() {
+            @Override
+            Predicate toPredicate(Root<Person> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                query.set("name", "Xyz")
+                return criteriaBuilder.equal(root.get("name"), "Jeff")
+            }
+        })
+        then:
+        updated == 1
+        personRepository.count(nameEquals("Xyz")) == 1
+        personRepository.count(nameEquals("Jeff")) == 0
+        when:
+        personRepository.updateAll(setIncome(1000).where(nameEquals("James")))
+        def jamesPerson = personRepository.findByName("James")
+        then:
+        jamesPerson.income == 1000
+        when:"Income set to null using criteria"
+        personRepository.updateAll(setIncome(null).where(nameEquals("James")))
+        jamesPerson = personRepository.findByName("James")
+        then:"Field is updated to null"
+        jamesPerson.income == null
+        when:"Update name to null using criteria"
+        personRepository.updateAll(setName(null).where(nameEquals("James")))
+        then:"Exception is thrown because name is not nullable"
+        def ex = thrown(IllegalStateException)
+        ex.message == 'Field [name] does not allow null value.'
+        when:
+        deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz")))
+        then:
+        deleted == 1
+        personRepository.count(nameEquals("Xyz")) == 0
+
+        when:
+        def meal = mealRepository.save(new Meal(10))
+        def food = new Food("food", 80, 200, meal)
+        food.setLongName("long name")
+        food = foodRepository.save(food)
+        then:
+        // Verify order by works on alias mapped property
+        def foods = foodRepository.findAllByKeyOrderByLongName(food.key);
+        foods.size() == 1
+        foods[0].key == food.key
+        foods[0].longName == food.longName
+
+        def loadedFood = foodRepository.findOne(FoodRepository.Specifications.keyEquals(food.key)).get()
+        loadedFood.key == food.key
+        loadedFood.longName == food.longName
+        when:
+        savePersons(["Jeff"])
+        def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
+        def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
+        def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff")))
+        def existsNotQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("NotJeff")))
+        then:
+        existsPredicateSpec
+        !existsNotPredicateSpec
+        existsQuerySpec
+        !existsNotQuerySpec
     }
 
     void "test criteria select" () {
@@ -2707,6 +2833,19 @@ abstract class AbstractRepositorySpec extends Specification {
             person.age == 123
             !person.income
             person.enabled
+    }
+
+    void "test criteria select with Metamodel"() {
+        when:
+        personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
+        def person = personRepository.findOne(SpecificationsWithMetamodel.personWithOnlyNameAndAgeByName("Denis")).get()
+        then:
+        person.id == null
+        person.income == null
+        person.name == "Denis"
+        person.age == 123
+        !person.income
+        person.enabled
     }
 
     void "test criteria DTO projection"() {
@@ -2728,6 +2867,25 @@ abstract class AbstractRepositorySpec extends Specification {
             dto.age == 50
     }
 
+    void "test criteria DTO projection with Metamodel"() {
+        when:
+        personRepository.deleteAll()
+        personRepository.save(new Person(name: "Fred1", age: 50))
+        personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+        def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto>() {
+            @Override
+            CriteriaQuery<PersonDto> build(CriteriaBuilder criteriaBuilder) {
+                def query = criteriaBuilder.createQuery(PersonDto)
+                def root = query.from(Person)
+                query.multiselect(root.get(Person_.age))
+                query.where(criteriaBuilder.equal(root.get(Person_.name), "Fred1"))
+                return query
+            }
+        })
+        dto.age == 50
+    }
+
     void "test criteria DTO projection 2"() {
         when:
             personRepository.deleteAll()
@@ -2746,6 +2904,26 @@ abstract class AbstractRepositorySpec extends Specification {
             })
             dto.name() == "Fred1"
             dto.age() == 50
+    }
+
+    void "test criteria DTO projection 2 with Metamodel"() {
+        when:
+        personRepository.deleteAll()
+        personRepository.save(new Person(name: "Fred1", age: 50))
+        personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+        def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto2>() {
+            @Override
+            CriteriaQuery<PersonDto2> build(CriteriaBuilder criteriaBuilder) {
+                def query = criteriaBuilder.createQuery(PersonDto2)
+                def root = query.from(Person)
+                query.multiselect(root.get(Person_.name), root.get(Person_.age))
+                query.where(criteriaBuilder.equal(root.get(Person_.name), "Fred1"))
+                return query
+            }
+        })
+        dto.name() == "Fred1"
+        dto.age() == 50
     }
 
     void "test join/fetch"() {
@@ -2782,6 +2960,72 @@ abstract class AbstractRepositorySpec extends Specification {
         def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
         def booksLoadedByTitleAndTotalPagesUsingSimpleCriteria = bookRepository.findAll ( titleAndTotalPagesEquals("1984", 360))
         def booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate = bookRepository.findAll ( titleAndTotalPagesEqualsUsingConjunction("1984", 360))
+
+        then:
+        bookLoadedUsingFindAllByGenre.genre.genreName != null
+        bookLoadedUsingFindOneWithCriteriaApi != null
+        bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
+        bookNotFoundUsingFindOneWithCriteriaApi.present == false
+        bookLoadedUsingFindAllWithCriteriaApi != null
+        bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin != null
+        bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin.genre.genreName != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins != null
+        bookLoadedUsingFindAllWithCriteriaApiAndJoins.genre.genreName != null
+        bookLoadedUsingJoinCriteriaByChapterTitle.present
+        bookLoadedUsingJoinCriteriaByChapterTitle.get().id == book.id
+        !bookNotLoadedUsingJoinCriteriaByChapterTitle.present
+        booksLoadedByChapterTitleQuery.size() > 0
+        booksLoadedByChapterTitleQuery[0].id == book.id
+        // Chapters not loaded
+        CollectionUtils.isEmpty(booksLoadedByChapterTitleQuery[0].chapters)
+        // Loaded book and also expected chapters to be loaded
+        booksLoadedByChapterTitleAndBookTitleQuery.size() > 0
+        booksLoadedByChapterTitleAndBookTitleQuery[0].id == book.id
+        // Chapters not loaded
+        !CollectionUtils.isEmpty(booksLoadedByChapterTitleAndBookTitleQuery[0].chapters)
+        booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate.size() == 1
+        booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate[0].title == "1984"
+        booksLoadedByTitleAndTotalPagesUsingSimpleCriteria.size() == 1
+        booksLoadedByTitleAndTotalPagesUsingSimpleCriteria[0].title == "1984"
+    }
+
+    void "test join/fetch with Metamodel"() {
+        given:
+        def genre = new Genre()
+        genre.setGenreName("Dystopia")
+        genreRepository.save(genre)
+
+        def book = new Book()
+        book.setTitle("1984")
+        book.setTotalPages(360)
+        book.setGenre(genre)
+        def ch1 = new Chapter()
+        ch1.setTitle("Ch1")
+        ch1.setPages(10)
+        book.getChapters().add(ch1)
+        def ch2 = new Chapter()
+        ch2.setTitle("Ch2")
+        ch2.setPages(5)
+        book.getChapters().add(ch2)
+        bookRepository.save(book)
+
+        when:
+        def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
+        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(WithMetamodel.titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(WithMetamodel.titleContains(book.title)).orElse(null)
+        def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(WithMetamodel.titleEquals("non_existing_book_" + System.currentTimeMillis()))
+        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(WithMetamodel.titleEquals(book.title)).get(0)
+        def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(WithMetamodel.hasChapter("Ch1"))
+        def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(WithMetamodel.hasChapter("Ch32"))
+        def booksLoadedByChapterTitleQuery = bookRepository.findAllByChaptersTitle("Ch1")
+        def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
+        def booksLoadedByTitleAndTotalPagesUsingSimpleCriteria = bookRepository.findAll(WithMetamodel.titleAndTotalPagesEquals("1984", 360))
+        def booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate = bookRepository.findAll(WithMetamodel.titleAndTotalPagesEqualsUsingConjunction("1984", 360))
 
         then:
         bookLoadedUsingFindAllByGenre.genre.genreName != null

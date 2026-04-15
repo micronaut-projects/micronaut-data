@@ -14,14 +14,30 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.Child;
+import jakarta.persistence.Entity;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface ChildRepository extends CrudRepository<Child, Long>, JpaSpecificationExecutor<Child> {
+@SuppressWarnings("checkstyle:FinalClass")
+@Entity
+public class Child extends Parent {
+    Long age;
+
+    public Child() {
+    }
+
+    public Child(Long id, String name, Long age) {
+        super(id, name);
+        this.age = age;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public Long getAge() {
+        return this.age;
+    }
+
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    public void setAge(Long age) {
+        this.age = age;
+    }
 }

@@ -14,14 +14,15 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.Book;
+import jakarta.persistence.Embeddable;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface BookRepository extends CrudRepository<Book, Long>, JpaSpecificationExecutor<Book> {
+import java.io.Serializable;
+
+@Embeddable
+public record OrderPk(
+    String tenantId,
+    Long orderNo
+) implements Serializable {
 }

@@ -17,37 +17,25 @@ package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.tck.entities.Train;
-import io.micronaut.data.tck.entities.TrainCZ;
-import io.micronaut.data.tck.entities.TrainCZProjection;
-import io.micronaut.data.tck.entities.TrainNameCapacityDto;
-import io.micronaut.data.tck.entities.TrainNameModelDto;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.tck.entities.*;
 import jakarta.data.Order;
 import jakarta.data.Sort;
-import jakarta.data.constraint.AtLeast;
-import jakarta.data.constraint.AtMost;
-import jakarta.data.constraint.EqualTo;
-import jakarta.data.constraint.GreaterThan;
-import jakarta.data.constraint.In;
-import jakarta.data.constraint.LessThan;
-import jakarta.data.constraint.Like;
-import jakarta.data.constraint.NotEqualTo;
-import jakarta.data.constraint.NotIn;
-import jakarta.data.constraint.NotLike;
+import jakarta.data.constraint.*;
 import jakarta.data.page.CursoredPage;
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
-import jakarta.data.repository.CrudRepository;
-import jakarta.data.repository.Find;
-import jakarta.data.repository.First;
-import jakarta.data.repository.Is;
-import jakarta.data.repository.OrderBy;
-import jakarta.data.repository.Select;
+import jakarta.data.repository.*;
 import jakarta.data.restrict.Restriction;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
-public interface TrainRepository extends CrudRepository<Train, Long> {
+public interface TrainRepository extends CrudRepository<Train, Long>, JpaSpecificationExecutor<Train> {
 
     void deleteAll();
 
@@ -248,4 +236,38 @@ public interface TrainRepository extends CrudRepository<Train, Long> {
     @OrderBy("name")
     @First(4)
     List<Train> findFirst4TrainsOrderedByName();
+
+    class Specification {
+        public static PredicateSpecification<Train> trainModelEqual(String model) {
+            return (root, cb) -> cb.equal(root.get(Train_.model), model);
+        }
+
+        public static PredicateSpecification<Train> capacityBiggerThan(int capacity) {
+            return (root, cb) -> cb.greaterThan(root.get(Train_.capacity), capacity);
+        }
+
+        public static PredicateSpecification<Train> isElectric() {
+            return (root, cb) -> cb.isTrue(root.get(Train_.electric));
+        }
+
+        public static PredicateSpecification<Train> speedLessThan(double speed) {
+            return (root, cb) -> cb.lessThan(root.get(Train_.speed), speed);
+        }
+
+        public static PredicateSpecification<Train> departureTimeGreaterThan(LocalDateTime t) {
+            return (root, cb) -> cb.greaterThan(root.get(Train_.departureTime), t);
+        }
+
+        public static PredicateSpecification<Train> createdAtGreaterThan(Instant t) {
+            return (root, cb) -> cb.greaterThan(root.get(Train_.createdAt), t);
+        }
+
+        public static PredicateSpecification<Train> departureDateEqual(LocalDate d) {
+            return (root, cb) -> cb.equal(root.get(Train_.departureDate), d);
+        }
+
+        public static PredicateSpecification<Train> departureTimeOnlyGreaterThan(LocalTime t) {
+            return (root, cb) -> cb.greaterThan(root.get(Train_.departureTimeOnly), t);
+        }
+    }
 }

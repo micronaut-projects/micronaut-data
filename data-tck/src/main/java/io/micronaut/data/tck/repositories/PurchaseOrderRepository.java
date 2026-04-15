@@ -14,15 +14,30 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.OrderPk;
-import io.micronaut.entities.PurchaseOrder;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.tck.entities.*;
 
 @JdbcRepository(dialect = Dialect.H2)
 public interface PurchaseOrderRepository extends CrudRepository<PurchaseOrder, OrderPk>, JpaSpecificationExecutor<PurchaseOrder> {
+    class Specification {
+
+        public static PredicateSpecification<PurchaseOrder> tenantIdEquals(String tenantId) {
+            return (root, cb) -> cb.equal(root.get(PurchaseOrder_.id).get(OrderPk_.tenantId), tenantId);
+        }
+
+        public static PredicateSpecification<PurchaseOrder> orderNoEquals(Long orderNo) {
+            return (root, cb) -> cb.equal(root.get(PurchaseOrder_.id).get(OrderPk_.orderNo), orderNo);
+        }
+
+        public static PredicateSpecification<PurchaseOrder> withEmbeddedName(String name) {
+            return (root, cb) -> cb.equal(root.get(PurchaseOrder_.details).get(EmbeddableClass_.embeddedName), name);
+        }
+    }
+
 }

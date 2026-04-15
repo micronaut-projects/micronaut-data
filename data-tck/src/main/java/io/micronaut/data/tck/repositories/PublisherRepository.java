@@ -15,27 +15,11 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.data.tck.entities.BasicTypes;
-import io.micronaut.data.tck.entities.BasicTypesProjection;
+import io.micronaut.data.tck.entities.Publisher;
 
-import java.util.Collection;
-import java.util.Optional;
-
-public interface BasicTypesRepository extends CrudRepository<BasicTypes, Long>, JpaSpecificationExecutor<BasicTypes> {
-
-    void update(@Id Long id, @Parameter("byteArray") byte[] byteArray);
-
-    BasicTypes findByByteArray(@Parameter("byteArray") byte[] byteArray);
-
-    BasicTypesProjection queryById(Long id);
-
-    Collection<BasicTypesProjection> findAllById(Long id);
-
-    @Query("select null")
-    Optional<String> somethingThatMightSometimesReturnNull();
+public interface PublisherRepository extends CrudRepository<Publisher, Long>, JpaSpecificationExecutor<Publisher> {
+    class Specification {
+    }
 }

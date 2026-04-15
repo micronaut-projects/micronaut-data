@@ -14,14 +14,24 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.repositories;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.EmployeePropertyAccess;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.tck.entities.EmployeePropertyAccess;
+import io.micronaut.data.tck.entities.EmployeePropertyAccess_;
 
-@JdbcRepository(dialect = Dialect.H2)
 public interface EmployeePropertyAccessRepository extends CrudRepository<EmployeePropertyAccess, Long>, JpaSpecificationExecutor<EmployeePropertyAccess> {
+
+    class Specification {
+
+        public static PredicateSpecification<EmployeePropertyAccess> nameEquals(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(EmployeePropertyAccess_.name), name);
+        }
+
+        public static PredicateSpecification<EmployeePropertyAccess> salaryBiggerThan(Double salary) {
+            return (root, criteriaBuilder) -> criteriaBuilder.greaterThan(root.get(EmployeePropertyAccess_.salary), salary);
+        }
+    }
 }

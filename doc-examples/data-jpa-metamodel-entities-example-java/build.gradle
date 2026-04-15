@@ -10,10 +10,12 @@ micronaut {
 }
 
 dependencies {
+    annotationProcessor mn.micronaut.inject.java
     annotationProcessor projects.micronautDataJpaMetamodelProcessor
     annotationProcessor projects.micronautDataProcessor
 
     implementation mnSql.jakarta.persistence.api
+    implementation projects.micronautDataModel
 
     testImplementation mnTest.micronaut.test.junit5
 }

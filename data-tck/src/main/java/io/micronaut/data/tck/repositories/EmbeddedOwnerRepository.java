@@ -14,14 +14,21 @@
  *   limitations under the License.
  */
 
-package com.example.repository;
+package io.micronaut.data.tck.repositories;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.entities.EmployeeFieldAccess;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.tck.entities.EmbeddableClass_;
+import io.micronaut.data.tck.entities.EmbeddedOwner;
+import io.micronaut.data.tck.entities.EmbeddedOwner_;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface EmployeeFieldAccessRepository extends CrudRepository<EmployeeFieldAccess, Long>, JpaSpecificationExecutor<EmployeeFieldAccess> {
+public interface EmbeddedOwnerRepository extends CrudRepository<EmbeddedOwner, Long>, JpaSpecificationExecutor<EmbeddedOwner> {
+
+    class Specification {
+        public static PredicateSpecification<EmbeddedOwner> withEmbeddedName(String name) {
+            return (root, cb) -> cb.equal(root.get(EmbeddedOwner_.embedded).get(EmbeddableClass_.embeddedName), name);
+        }
+    }
+
 }
