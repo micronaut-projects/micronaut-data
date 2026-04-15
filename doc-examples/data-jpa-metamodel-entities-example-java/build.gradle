@@ -16,7 +16,7 @@ dependencies {
 
     implementation mnSql.jakarta.persistence.api
     implementation projects.micronautDataModel
-
+    implementation mnTest.micronaut.test.junit5
     testImplementation mnTest.micronaut.test.junit5
 }
 

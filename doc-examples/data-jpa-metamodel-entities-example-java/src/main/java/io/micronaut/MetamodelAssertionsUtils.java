@@ -21,6 +21,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public final class MetamodelAssertionsUtils {
 
     /**
@@ -34,14 +36,16 @@ public final class MetamodelAssertionsUtils {
     public static void assertClassFieldIsEntityType(Class<?> metamodelClass, Class<?> managedJakartaType, Class<?> entityClass) throws Exception {
         Field f = metamodelClass.getDeclaredField("class_");
 
-        assert managedJakartaType == f.getType();
+        assertEquals(managedJakartaType, f.getType());
 
         Type gt = f.getGenericType();
-        assert gt instanceof ParameterizedType;
+        if (gt instanceof ParameterizedType pt) {
+            assertEquals(managedJakartaType, pt.getRawType());
+            assertEquals(entityClass, pt.getActualTypeArguments()[0]);
+        } else {
+            throw new Exception();
+        }
 
-        ParameterizedType pt = (ParameterizedType) gt;
-        assert managedJakartaType == pt.getRawType();
-        assert entityClass == pt.getActualTypeArguments()[0];
     }
 
     public static void assertMetaModelClassIsAnnotatedCorrectly(Class<?> metamodelClass_, Class<?> clazz) throws Exception {
