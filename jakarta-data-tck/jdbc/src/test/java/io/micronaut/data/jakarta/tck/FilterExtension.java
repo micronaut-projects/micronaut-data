@@ -1,7 +1,7 @@
 package io.micronaut.data.jakarta.tck;
 
-import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
+import ee.jakarta.tck.data.standalone.entity.ExpressionTests;
 import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
 import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
 import ee.jakarta.tck.data.web.validation.ValidationTests;
@@ -43,10 +43,12 @@ public class FilterExtension implements ExecutionCondition {
 
             }
         }
-        if (testClass == ConstraintTests.class) {
+        if (testClass == ExpressionTests.class) {
             switch (testMethodName) {
-                case "testGreaterThanConstraint",  "testNotLikeConstraintCustomWildcardsAndEscape" -> {
-                    return DISABLED; // https://github.com/jakartaee/data/issues/1364
+                case "testPrependExpression" -> {
+                    return ConditionEvaluationResult.disabled(
+                        "Disabled until JDBC support for prepend expressions used by ExpressionTests.testPrependExpression is implemented"
+                    );
                 }
 
             }
