@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.BookReactiveRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -49,6 +50,15 @@ public interface OracleReactiveBookRepository extends BookReactiveRepository {
 
     @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?")
     Mono<Book> customUpdateReturning(Long bookId, String title, int totalPages, java.time.LocalDateTime lastUpdated);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    Mono<BookDto> customUpdateReturningDto(Long bookId, String title, int totalPages);
+
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    Mono<Object[]> customDeleteReturningTitleAndPages(Long bookId);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:newTitle WHERE \"ID\" = :bookId AND \"ID\" IN (:bookIds) RETURNING \"TITLE\" INTO ?")
+    Mono<String> customUpdateReturningTitleWithExpandedIds(Long bookId, String newTitle, java.util.List<Long> bookIds);
 
     @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\" INTO ?")
     Mono<String> customDeleteReturningTitle(Long bookId);

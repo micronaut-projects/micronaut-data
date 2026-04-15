@@ -20,6 +20,9 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.jdbc.mapper.ColumnNameByIndexCallableResultReader;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
@@ -29,11 +32,13 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.annotation.Fetch;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -43,8 +48,10 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
+import io.micronaut.data.jdbc.mapper.CallableStatementTupleMapper;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.JdbcTupleMapper;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -58,6 +65,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
@@ -104,6 +112,8 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
+import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
@@ -426,27 +436,193 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             ));
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <E, R> SqlTypeMapper<CallableStatement, R> createOracleReturningMapper(SqlStoredQuery<E, R> query,
+                                                                                   OutParameterContext outCtx) {
+        ResultReader<CallableStatement, String> resultReader = new ColumnNameByIndexCallableResultReader(
+            columnIndexCallableResultReader,
+            outCtx.columnIndexesByName()
+        );
+        if (query.getResultType().equals(Tuple.class)) {
+            return (SqlTypeMapper<CallableStatement, R>) new CallableStatementTupleMapper(conversionService, outCtx.columnIndexesByName());
+        }
+        if (query.getResultType().equals(Object[].class)) {
+            SqlTypeMapper<CallableStatement, Tuple> tupleMapper = new CallableStatementTupleMapper(conversionService, outCtx.columnIndexesByName());
+            return new SqlTypeMapper<>() {
+                @Override
+                public boolean hasNext(CallableStatement resultSet) {
+                    throw new IllegalStateException("Not supported!");
+                }
+
+                @Override
+                public @Nullable R map(CallableStatement object, Class<R> type) throws DataAccessException {
+                    Tuple tuple = tupleMapper.map(object, Tuple.class);
+                    return tuple == null ? null : (R) tuple.toArray();
+                }
+
+                @Override
+                public @Nullable Object read(CallableStatement object, String name) {
+                    return tupleMapper.read(object, name);
+                }
+            };
+        }
+        RuntimePersistentEntity<E> persistentEntity = query.getPersistentEntity();
+        boolean isEntityResult = query.getResultDataType() == DataType.ENTITY;
+        if (isEntityResult) {
+            return new SqlResultEntityTypeMapper<>(
+                getEntity(query.getResultType()),
+                resultReader,
+                query.getJoinPaths(),
+                null,
+                (loadedEntity, entity) -> {
+                    if (loadedEntity.hasPostLoadEventListeners()) {
+                        return triggerPostLoad(entity, loadedEntity, query.getAnnotationMetadata());
+                    }
+                    return entity;
+                },
+                conversionService
+            );
+        }
+        if (isDtoProjection(query)) {
+            ResultReader<CallableStatement, String> dtoResultReader = new ColumnNameExistenceAwareCallableResultReader(
+                columnIndexCallableResultReader,
+                outCtx.columnIndexesByName()
+            );
+            RuntimePersistentEntity<R> resultPersistentEntity = getEntity(query.getResultType());
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(query, persistentEntity, resultPersistentEntity);
+            return new SqlResultEntityTypeMapper<>(
+                dtoPersistentEntity,
+                dtoResultReader,
+                query.getJoinPaths(),
+                null,
+                null,
+                conversionService
+            );
+        }
+        return new SqlTypeMapper<>() {
+            @Override
+            public boolean hasNext(CallableStatement resultSet) {
+                throw new IllegalStateException("Not supported!");
+            }
+
+            @Override
+            public @Nullable R map(CallableStatement object, Class<R> type) throws DataAccessException {
+                try {
+                    return readOracleReturningScalarResult(object, (SqlPreparedQuery<?, R>) query, outCtx.firstOutIndex());
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error reading Oracle SQL RETURNING value: " + e.getMessage(), e);
+                }
+            }
+
+            @Override
+            public @Nullable Object read(CallableStatement object, String name) {
+                throw new IllegalStateException("Not supported!");
+            }
+        };
+    }
+
+    private <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> query) {
+        if (query.isDtoProjection()) {
+            return true;
+        }
+        if (query.getResultDataType() == DataType.ENTITY) {
+            return false;
+        }
+        Class<R> resultType = query.getResultType();
+        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
+            return false;
+        }
+        if (resultType.equals(String.class)
+            || Number.class.isAssignableFrom(resultType)
+            || CharSequence.class.isAssignableFrom(resultType)
+            || java.util.Date.class.isAssignableFrom(resultType)
+            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
+            || resultType.equals(Boolean.class)
+            || resultType.equals(Character.class)
+            || resultType.equals(Object.class)) {
+            return false;
+        }
+        try {
+            BeanIntrospection.getIntrospection(resultType);
+            return true;
+        } catch (IntrospectionException e) {
+            return false;
+        }
+    }
+
+    private <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(SqlStoredQuery<E, R> query,
+                                                                         RuntimePersistentEntity<E> persistentEntity,
+                                                                         RuntimePersistentEntity<R> resultPersistentEntity) {
+        List<AnnotationValue<Projection>> projections = query.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
+        if (projections != null && !projections.isEmpty()) {
+            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
+                throw new IllegalStateException("Number of projections does not match persistent entity properties");
+            }
+            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
+            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
+            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
+            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
+                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
+                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
+                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
+                if (propertyByName == null) {
+                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
+                }
+                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
+                MutableAnnotationMetadata annotationMetadata = new MutableAnnotationMetadata();
+                annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                properties.add(new BeanPropertyWithAnnotationMetadata<>(
+                    dtoProp.getName(),
+                    dtoProp.getProperty(),
+                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
+                ));
+            }
+            return new RuntimePersistentEntity<>(
+                resultPersistentEntity.getIntrospection(),
+                properties
+            );
+        }
+        return new RuntimePersistentEntity<>(
+            resultPersistentEntity.getIntrospection(),
+            getOracleReturningDtoProperties(resultPersistentEntity, persistentEntity)
+        );
+    }
+
+    private <E, R> List<BeanProperty<R, Object>> getOracleReturningDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                                  RuntimePersistentEntity<E> persistentEntity) {
+        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
+            if (p.hasAnnotation(io.micronaut.data.annotation.MappedProperty.class)) {
+                return p;
+            }
+            String name = p.getName();
+            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
+            if (projection != null) {
+                name = projection.stringValue().orElse(name);
+            }
+            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
+            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                return p;
+            }
+            return new BeanPropertyWithAnnotationMetadata<>(
+                p,
+                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+            );
+        }).toList();
+    }
+
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
         if (preparedQuery.getDialect() == Dialect.ORACLE && (
             preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
             preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
             preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
+            preparedQuery.prepare(null);
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
-                preparedQuery.bindParameters(new JdbcParameterBinder(connection, cs, preparedQuery));
-                OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery);
-                int inCount = outCtx.inCount();
-                List<String> columnNames = outCtx.columnNames();
+                JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
+                preparedQuery.bindParameters(parameterBinder);
+                OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery, parameterBinder.currentIndex() - 1);
                 cs.execute();
-                boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
-                if (isEntityResult) {
-                    SqlResultEntityTypeMapper mapper = getSqlResultEntityTypeMapper(preparedQuery.getPersistentEntity(), columnNames, inCount);
-                    T entity = (T) mapper.readEntity(cs);
-                    entity = triggerPostLoad(entity, (RuntimePersistentEntity<T>) preparedQuery.getPersistentEntity(), preparedQuery.getAnnotationMetadata());
-                    return List.of((R) entity);
-                }
-                // Otherwise single field
                 List<R> result = new ArrayList<>();
-                result.add(readOracleReturningScalarResult(cs, preparedQuery, inCount + 1));
+                result.add(createOracleReturningMapper(preparedQuery, outCtx).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
@@ -1186,14 +1362,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return fallbackMapper.apply(sqlException);
     }
 
-    private OutParameterContext registerOracleReturningOutParameters(CallableStatement cs, SqlStoredQuery<?, ?> query) throws SQLException {
-        int inCount = query.getQueryBindings().size();
+    private OutParameterContext registerOracleReturningOutParameters(CallableStatement cs,
+                                                                     SqlStoredQuery<?, ?> query,
+                                                                     int inCount) throws SQLException {
         List<QueryOutParameterBinding> outParams = query.getOutParameterBindings();
         if (CollectionUtils.isEmpty(outParams)) {
             throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
         }
         int pos = inCount;
         List<String> columnNames = new ArrayList<>(outParams.size());
+        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParams.size());
         Dialect dialect = jdbcConfiguration.getDialect();
         for (QueryOutParameterBinding outParam : outParams) {
             DataType dataType = dialect.getDataType(outParam.dataType());
@@ -1204,10 +1382,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     QUERY_LOG.debug("Binding Oracle out parameter of data type: {} as sql type: {}", dataType, sqlType);
                 }
             }
-            cs.registerOutParameter(++pos, sqlType);
+            int columnIndex = ++pos;
+            cs.registerOutParameter(columnIndex, sqlType);
             columnNames.add(outParam.name());
+            columnIndexesByName.put(outParam.name(), columnIndex);
         }
-        return new OutParameterContext(inCount, columnNames);
+        return new OutParameterContext(inCount, columnNames, columnIndexesByName);
     }
 
     @Override
@@ -1215,7 +1395,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private record OutParameterContext(int inCount, List<String> columnNames) {
+    private record OutParameterContext(int inCount, List<String> columnNames, Map<String, Integer> columnIndexesByName) {
+        private int firstOutIndex() {
+            return inCount + 1;
+        }
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
@@ -1374,9 +1557,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             // Use CallableStatement and OUT parameter to capture the generated id and out field parameters.
             if (ctx.dialect == Dialect.ORACLE) {
                 try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
-                    storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, cs, storedQuery),
+                    JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
+                    storedQuery.bindParameters(parameterBinder,
                         ctx.invocationContext, entity, previousValues);
-                    OutParameterContext outCtx = registerOracleReturningOutParameters(cs, storedQuery);
+                    OutParameterContext outCtx = registerOracleReturningOutParameters(cs, storedQuery, parameterBinder.currentIndex() - 1);
                     int inCount = outCtx.inCount();
                     List<String> columnNames = outCtx.columnNames();
                     rowsUpdated = cs.executeUpdate();

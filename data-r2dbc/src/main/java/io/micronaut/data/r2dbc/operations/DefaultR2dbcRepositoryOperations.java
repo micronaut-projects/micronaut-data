@@ -20,18 +20,23 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -44,6 +49,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
@@ -73,8 +79,10 @@ import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
+import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareReadableR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareR2dbcResultSetReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
+import io.micronaut.data.r2dbc.mapper.ReadableTupleMapper;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
@@ -99,6 +107,8 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
+import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
@@ -513,34 +523,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private <R> @Nullable R mapOracleReturningReadable(Readable readable, SqlPreparedQuery<?, R> preparedQuery) {
-        List<QueryOutParameterBinding> outParameterBindings = preparedQuery.getOutParameterBindings();
-        if (outParameterBindings.size() == 1) {
-            QueryOutParameterBinding out = outParameterBindings.get(0);
-            Object value = new ColumnNameByIndexR2dbcResultReader(conversionService, Map.of(out.name(), 0))
-                .readDynamic(readable, out.name(), out.dataType());
-            if (value == null) {
-                return null;
-            }
-            return conversionService.convert(value, preparedQuery.getResultType()).orElse(null);
+    private Map<String, Integer> getOracleReturningColumnIndexes(SqlStoredQuery<?, ?> storedQuery) {
+        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
+        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
+        for (int i = 0; i < outParameterBindings.size(); i++) {
+            columnIndexesByName.put(outParameterBindings.get(i).name(), i);
         }
-        throw new DataAccessException("Expected single OUT parameter for scalar Oracle RETURNING query: " + preparedQuery.getQuery());
+        return columnIndexesByName;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private <R> Flux<R> executeOracleReturningPreparedQuery(Statement statement, SqlPreparedQuery<?, R> preparedQuery) {
-        Statement oracleStatement = bindOracleReturningOutParameters(statement, preparedQuery);
-        SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
-        if (mapper instanceof SqlResultEntityTypeMapper<Row, R>) {
-            SqlResultEntityTypeMapper<Readable, ?> oracleEntityTypeMapper = getOracleReturningEntityMapper(
-                (RuntimePersistentEntity) preparedQuery.getPersistentEntity(),
-                (SqlStoredQuery) preparedQuery
-            );
-            return executeAndMapOracleReturningSingle(oracleStatement, preparedQuery.getDialect(), readable -> (R) oracleEntityTypeMapper.readEntity(readable))
-                .flux()
-                .onErrorResume(errorHandler(preparedQuery.getDialect()));
-        }
-        return executeAndMapOracleReturningSingleNullable(oracleStatement, preparedQuery.getDialect(), readable -> mapOracleReturningReadable(readable, preparedQuery))
+    private <R> Flux<R> executeOracleReturningPreparedQuery(Statement statement, SqlPreparedQuery<?, R> preparedQuery, int startIndex) {
+        Statement oracleStatement = bindOracleReturningOutParameters(statement, preparedQuery, startIndex);
+        SqlTypeMapper<Readable, R> mapper = createOracleReturningMapper(preparedQuery);
+        return executeAndMapOracleReturningSingleNullable(oracleStatement, preparedQuery.getDialect(), readable -> mapper.map(readable, preparedQuery.getResultType()))
             .flux()
             .onErrorResume(errorHandler(preparedQuery.getDialect()));
     }
@@ -553,23 +549,184 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             || operationType == OperationType.DELETE_RETURNING);
     }
 
-    private <T> SqlResultEntityTypeMapper<Readable, T> getOracleReturningEntityMapper(RuntimePersistentEntity<T> persistentEntity, SqlStoredQuery<T, ?> storedQuery) {
-        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
-        for (int i = 0; i < outParameterBindings.size(); i++) {
-            columnIndexesByName.put(outParameterBindings.get(i).name(), i);
-        }
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <E, R> SqlTypeMapper<Readable, R> createOracleReturningMapper(SqlStoredQuery<E, R> storedQuery) {
+        Map<String, Integer> columnIndexesByName = getOracleReturningColumnIndexes(storedQuery);
         ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, columnIndexesByName);
         SqlJsonColumnReader<Readable> reader = jsonMapper != null ? () -> jsonMapper : null;
-        return new SqlResultEntityTypeMapper<>(persistentEntity, resultReader, Set.of(), reader, conversionService);
+        if (storedQuery.getResultType().equals(Tuple.class)) {
+            return (SqlTypeMapper<Readable, R>) new ReadableTupleMapper(conversionService, columnIndexesByName);
+        }
+        if (storedQuery.getResultType().equals(Object[].class)) {
+            SqlTypeMapper<Readable, Tuple> tupleMapper = new ReadableTupleMapper(conversionService, columnIndexesByName);
+            return new SqlTypeMapper<>() {
+                @Override
+                public boolean hasNext(Readable resultSet) {
+                    throw new IllegalStateException("Not supported!");
+                }
+
+                @Override
+                public @Nullable R map(Readable object, Class<R> type) throws DataAccessException {
+                    Tuple tuple = tupleMapper.map(object, Tuple.class);
+                    return tuple == null ? null : (R) tuple.toArray();
+                }
+
+                @Override
+                public @Nullable Object read(Readable object, String name) {
+                    return tupleMapper.read(object, name);
+                }
+            };
+        }
+        RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
+        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+            return new SqlResultEntityTypeMapper<>(
+                getEntity(storedQuery.getResultType()),
+                resultReader,
+                Set.of(),
+                reader,
+                conversionService
+            );
+        }
+        if (isDtoProjection(storedQuery)) {
+            RuntimePersistentEntity<R> resultPersistentEntity = getEntity(storedQuery.getResultType());
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(storedQuery, persistentEntity, resultPersistentEntity);
+            return new SqlResultEntityTypeMapper<>(
+                dtoPersistentEntity,
+                new ColumnNameExistenceAwareReadableR2dbcResultReader(resultReader, columnIndexesByName),
+                Set.of(),
+                reader,
+                conversionService
+            );
+        }
+        if (storedQuery.getOutParameterBindings().size() == 1) {
+            QueryOutParameterBinding out = storedQuery.getOutParameterBindings().get(0);
+            return new SqlTypeMapper<>() {
+                @Override
+                public boolean hasNext(Readable resultSet) {
+                    throw new IllegalStateException("Not supported!");
+                }
+
+                @Override
+                public @Nullable R map(Readable object, Class<R> type) throws DataAccessException {
+                    Object value = resultReader.readDynamic(object, out.name(), out.dataType());
+                    if (value == null) {
+                        return null;
+                    }
+                    if (type.isInstance(value)) {
+                        return type.cast(value);
+                    }
+                    return conversionService.convert(value, type).orElse(null);
+                }
+
+                @Override
+                public @Nullable Object read(Readable object, String name) {
+                    throw new IllegalStateException("Not supported!");
+                }
+            };
+        }
+        throw new DataAccessException("Expected Oracle RETURNING mapper for result type: " + storedQuery.getResultType().getName());
     }
 
-    private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery) {
+    @SuppressWarnings("unchecked")
+    private <T> SqlResultEntityTypeMapper<Readable, T> getOracleReturningEntityMapper(SqlStoredQuery<T, ?> storedQuery) {
+        return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
+    }
+
+    private <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
+        if (storedQuery.isDtoProjection()) {
+            return true;
+        }
+        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+            return false;
+        }
+        Class<R> resultType = storedQuery.getResultType();
+        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
+            return false;
+        }
+        if (resultType.equals(String.class)
+            || Number.class.isAssignableFrom(resultType)
+            || CharSequence.class.isAssignableFrom(resultType)
+            || java.util.Date.class.isAssignableFrom(resultType)
+            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
+            || resultType.equals(Boolean.class)
+            || resultType.equals(Character.class)
+            || resultType.equals(Object.class)) {
+            return false;
+        }
+        try {
+            BeanIntrospection.getIntrospection(resultType);
+            return true;
+        } catch (IntrospectionException e) {
+            return false;
+        }
+    }
+
+    private <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(SqlStoredQuery<E, R> storedQuery,
+                                                                         RuntimePersistentEntity<E> persistentEntity,
+                                                                         RuntimePersistentEntity<R> resultPersistentEntity) {
+        List<AnnotationValue<Projection>> projections = storedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
+        if (projections != null && !projections.isEmpty()) {
+            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
+                throw new IllegalStateException("Number of projections does not match persistent entity properties");
+            }
+            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
+            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
+            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
+            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
+                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
+                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
+                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
+                if (propertyByName == null) {
+                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
+                }
+                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
+                MutableAnnotationMetadata annotationMetadata = new MutableAnnotationMetadata();
+                annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                properties.add(new BeanPropertyWithAnnotationMetadata<>(
+                    dtoProp.getName(),
+                    dtoProp.getProperty(),
+                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
+                ));
+            }
+            return new RuntimePersistentEntity<>(
+                resultPersistentEntity.getIntrospection(),
+                properties
+            );
+        }
+        return new RuntimePersistentEntity<>(
+            resultPersistentEntity.getIntrospection(),
+            getOracleReturningDtoProperties(resultPersistentEntity, persistentEntity)
+        );
+    }
+
+    private <E, R> List<BeanProperty<R, Object>> getOracleReturningDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                                  RuntimePersistentEntity<E> persistentEntity) {
+        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
+            if (p.hasAnnotation(io.micronaut.data.annotation.MappedProperty.class)) {
+                return p;
+            }
+            String name = p.getName();
+            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
+            if (projection != null) {
+                name = projection.stringValue().orElse(name);
+            }
+            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
+            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                return p;
+            }
+            return new BeanPropertyWithAnnotationMetadata<>(
+                p,
+                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+            );
+        }).toList();
+    }
+
+    private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
         List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
         if (CollectionUtils.isEmpty(outParameterBindings)) {
             throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
         }
-        int index = storedQuery.getQueryBindings().size();
+        int index = startIndex;
         for (QueryOutParameterBinding outParameterBinding : outParameterBindings) {
             statement.bind(index++, Parameters.out(findR2dbcType(outParameterBinding.dataType())));
         }
@@ -728,11 +885,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
             return executeWriteFlux(preparedQuery, connection -> {
                 if (preparedQuery.isProcedure()) {
-                    int outIndex = preparedQuery.getQueryBindings().size();
                     Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, true);
-                    preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+                    R2dbcParameterBinder binder = new R2dbcParameterBinder(connection, statement, preparedQuery);
+                    preparedQuery.bindParameters(binder);
                     if (!preparedQuery.getResultArgument().isVoid()) {
-                        statement = statement.bind(outIndex, Parameters.out(preparedQuery.getResultType()));
+                        statement = statement.bind(binder.currentIndex(), Parameters.out(preparedQuery.getResultType()));
                     }
                     if (preparedQuery.getResultArgument().isVoid()) {
                         return executeAndGetRowsUpdated(statement).thenMany(Flux.empty());
@@ -740,10 +897,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return executeAndMapEachReadable(statement, preparedQuery.getDialect(), readable -> readable.get(0, preparedQuery.getResultType()));
                 } else {
                     Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, false);
-                    preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+                    R2dbcParameterBinder binder = new R2dbcParameterBinder(connection, statement, preparedQuery);
+                    preparedQuery.bindParameters(binder);
 
                     if (isOracleReturningQuery(preparedQuery)) {
-                        return executeOracleReturningPreparedQuery(statement, preparedQuery);
+                        return executeOracleReturningPreparedQuery(statement, preparedQuery, binder.currentIndex());
                     }
                     SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                     if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
@@ -781,20 +939,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 Statement statement = connection.createStatement(storedQuery.getQuery());
-                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, storedQuery), ctx.invocationContext, operation.getEntity(), null);
+                R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
+                storedQuery.bindParameters(binder, ctx.invocationContext, operation.getEntity(), null);
                 if (isOracleReturningQuery(storedQuery)) {
-                    statement = bindOracleReturningOutParameters(statement, storedQuery);
+                    statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                    SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
+                    return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                 }
                 SqlTypeMapper<Row, R> mapper = createMapper(storedQuery, Row.class);
                 Flux<R> results;
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    if (isOracleReturningQuery(storedQuery)) {
-                        @SuppressWarnings("unchecked")
-                        SqlResultEntityTypeMapper<Readable, R> oracleEntityTypeMapper = (SqlResultEntityTypeMapper<Readable, R>) getOracleReturningEntityMapper(storedQuery.getPersistentEntity(), storedQuery);
-                        results = executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity).flux();
-                    } else {
-                        results = executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect));
-                    }
+                    results = executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect));
                 } else {
                     results = executeAndMapEachRowNullable(statement, row -> mapper.map(row, storedQuery.getResultType())).onErrorResume(errorHandler(ctx.dialect));
                 }
@@ -813,16 +968,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     operation.split().stream()
                         .map(deleteOp -> {
                             Statement statement = connection.createStatement(storedQuery.getQuery());
-                            storedQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, storedQuery), ctx.invocationContext, deleteOp.getEntity(), null);
+                            R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
+                            storedQuery.bindParameters(binder, ctx.invocationContext, deleteOp.getEntity(), null);
                             if (isOracleReturningQuery(storedQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, storedQuery);
+                                statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                                SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
+                                return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                             }
                             if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                                if (isOracleReturningQuery(storedQuery)) {
-                                    @SuppressWarnings("unchecked")
-                                    SqlResultEntityTypeMapper<Readable, R> oracleEntityTypeMapper = (SqlResultEntityTypeMapper<Readable, R>) getOracleReturningEntityMapper(storedQuery.getPersistentEntity(), storedQuery);
-                                    return executeAndMapOracleReturningSingle(statement, ctx.dialect, oracleEntityTypeMapper::readEntity);
-                                }
                                 return executeAndMapEachRow(statement, entityTypeMapper::readEntity).onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
                             }
                             return executeAndMapEachRowNullable(statement, row -> mapper.map(row, storedQuery.getResultType())).onErrorResume(errorHandler(ctx.dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
@@ -1190,7 +1343,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             Statement statement = connection.createStatement(storedQuery.getQuery());
             if (hasGeneratedId) {
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
-                    return statement.bind(storedQuery.getQueryBindings().size(), Parameters.out(R2dbcType.NUMERIC));
+                    return statement;
                 } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
                     return statement.returnGeneratedValues(persistentEntity.getIdentity().getPersistedName());
                 }
@@ -1205,9 +1358,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return Mono.deferContextual(contextView -> {
                     return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
-                        storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
+                        R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, stmt, storedQuery);
+                        storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
-                            bindOracleReturningOutParameters(stmt, storedQuery);
+                            bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
+                        }
+                        if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                            stmt.bind(binder.currentIndex(), Parameters.out(R2dbcType.NUMERIC));
                         }
                         return Mono.just(d);
                     });
@@ -1238,7 +1395,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                         @SuppressWarnings("unchecked")
                         SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(storedQuery)
-                            ? getOracleReturningEntityMapper(persistentEntity, storedQuery)
+                            ? getOracleReturningEntityMapper(storedQuery)
                             : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
                         Mono<T> result = isOracleReturningQuery(storedQuery)
                             ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
@@ -1358,13 +1515,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 entityStoredQuery = entityPreparedQuery;
                             }
                             Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
-                            entityStoredQuery.bindParameters(new R2dbcParameterBinder(ctx, statement, entityStoredQuery), ctx.invocationContext, d.entity, d.previousValues);
+                            R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
+                            entityStoredQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                             if (isOracleReturningQuery(entityStoredQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, entityStoredQuery);
+                                statement = bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
                             }
                             @SuppressWarnings("unchecked")
                             SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(entityStoredQuery)
-                                ? getOracleReturningEntityMapper(persistentEntity, entityStoredQuery)
+                                ? getOracleReturningEntityMapper(entityStoredQuery)
                                 : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
                             Mono<T> result = isOracleReturningQuery(entityStoredQuery)
                                 ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)

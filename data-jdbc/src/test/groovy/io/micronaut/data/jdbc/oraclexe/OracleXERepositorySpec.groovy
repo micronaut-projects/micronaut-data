@@ -19,6 +19,7 @@ import groovy.transform.Memoized
 import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.repositories.*
@@ -518,4 +519,41 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         cleanup:
         bookRepository.deleteAll()
     }
+
+    void "test custom update returning title with expanded ids"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        def updatedTitle = bookRepository.customUpdateReturningTitleWithExpandedIds(book.id, "Expanded Oracle Title", [book.id, Long.MAX_VALUE])
+        then:
+        updatedTitle == "Expanded Oracle Title"
+        bookRepository.findById(book.id).get().title == "Expanded Oracle Title"
+    }
+
+    void "test custom update returning dto projection"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        BookDto dto = bookRepository.customUpdateReturningDto(book.id, "Oracle DTO Title", 777)
+        then:
+        dto.title == "Oracle DTO Title"
+        dto.totalPages == 777
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle DTO Title"
+        updated.totalPages == 777
+    }
+
+    void "test custom delete returning object array projection"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        Object[] values = bookRepository.customDeleteReturningTitleAndPages(book.id)
+        then:
+        values as List == [book.title, book.totalPages]
+        bookRepository.findById(book.id).isEmpty()
+    }
+
 }

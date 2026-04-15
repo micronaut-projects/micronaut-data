@@ -26,6 +26,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.BookRepository;
 
 import org.jspecify.annotations.Nullable;
@@ -118,6 +119,15 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?")
     public abstract Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract BookDto customUpdateReturningDto(Long bookId, String title, int totalPages);
+
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract Object[] customDeleteReturningTitleAndPages(Long bookId);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:newTitle WHERE \"ID\" = :bookId AND \"ID\" IN (:bookIds) RETURNING \"TITLE\" INTO ?")
+    public abstract String customUpdateReturningTitleWithExpandedIds(Long bookId, String newTitle, List<Long> bookIds);
 
     @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\" INTO ?")
     public abstract String customDeleteReturningTitle(Long bookId);

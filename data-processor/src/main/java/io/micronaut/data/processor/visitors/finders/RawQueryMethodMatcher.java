@@ -45,6 +45,7 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.Tuple;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -464,11 +465,19 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         if (resultType == null) {
             return false;
         }
-        if (resultType instanceof ClassElement classElement && TypeUtils.isEntity(classElement)) {
-            return true;
-        }
-        if (resultType instanceof ClassElement classElement && TypeUtils.isIterableOfEntity(classElement)) {
-            return true;
+        if (resultType instanceof ClassElement classElement) {
+            if (TypeUtils.isEntity(classElement) || TypeUtils.isIterableOfEntity(classElement)) {
+                return true;
+            }
+            if (TypeUtils.isDto(classElement) || TypeUtils.isIterableOfDto(classElement)) {
+                return true;
+            }
+            if (Tuple.class.getName().equals(classElement.getName())) {
+                return true;
+            }
+            if (classElement.isArray() && Object.class.getName().equals(classElement.fromArray().getName())) {
+                return true;
+            }
         }
         return false;
     }

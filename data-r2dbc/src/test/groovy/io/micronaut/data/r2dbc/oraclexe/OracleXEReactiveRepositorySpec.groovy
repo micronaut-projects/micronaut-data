@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
@@ -170,6 +171,48 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         deletedBooks*.id == savedBooks*.id
         deletedBooks*.title == savedBooks*.title
         reloadedBooks.every { it == null }
+    }
+
+    void "test custom update returning title with expanded ids"() {
+        given:
+        def repository = context.getBean(OracleReactiveBookRepository)
+        def book = repository.save(new Book(title: "Oracle Expanded R2DBC", totalPages: 222)).block()
+
+        when:
+        def updatedTitle = repository.customUpdateReturningTitleWithExpandedIds(book.id, "Oracle Expanded Updated", [book.id, Long.MAX_VALUE]).block()
+
+        then:
+        updatedTitle == "Oracle Expanded Updated"
+        repository.findById(book.id).block().title == "Oracle Expanded Updated"
+    }
+
+    void "test custom update returning dto projection"() {
+        given:
+        def repository = context.getBean(OracleReactiveBookRepository)
+        def book = repository.save(new Book(title: "Oracle DTO R2DBC", totalPages: 333)).block()
+
+        when:
+        BookDto dto = repository.customUpdateReturningDto(book.id, "Oracle DTO Updated", 444).block()
+
+        then:
+        dto.title == "Oracle DTO Updated"
+        dto.totalPages == 444
+        def updated = repository.findById(book.id).block()
+        updated.title == "Oracle DTO Updated"
+        updated.totalPages == 444
+    }
+
+    void "test custom delete returning object array projection"() {
+        given:
+        def repository = context.getBean(OracleReactiveBookRepository)
+        def book = repository.save(new Book(title: "Oracle Array R2DBC", totalPages: 555)).block()
+
+        when:
+        Object[] values = repository.customDeleteReturningTitleAndPages(book.id).block()
+
+        then:
+        values as List == [book.title, book.totalPages]
+        repository.findById(book.id).block() == null
     }
 
 }

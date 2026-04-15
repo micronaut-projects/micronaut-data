@@ -942,5 +942,36 @@ interface BookRepository extends GenericRepository<Book, Long> {
         e.message.contains("multiple columns require an entity return type")
     }
 
+    void "ORACLE raw @Query update returning INTO allows DTO returns"() {
+        given:
+        def repository = buildRepository('test.BookRepository', '''
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("UPDATE \\\"BOOK\\\" SET \\\"TITLE\\\"=:title,\\\"TOTAL_PAGES\\\"=:totalPages WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\",\\\"TOTAL_PAGES\\\" INTO ?,?")
+    BookDto customUpdateReturningDto(Long bookId, String title, int totalPages);
+}
+''')
+
+        when:
+        def method = repository.findPossibleMethods("customUpdateReturningDto").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+
+        then:
+        getRawQuery(method) == 'BEGIN UPDATE "BOOK" SET "TITLE"=?,"TOTAL_PAGES"=? WHERE "ID" = ? RETURNING "TITLE","TOTAL_PAGES" INTO ?,?; END;'
+        outBindingParameters.length == 2
+        outBindingParameters[0].name == "title"
+        outBindingParameters[0].dataType == DataType.STRING
+        outBindingParameters[1].name == "total_pages"
+        outBindingParameters[1].dataType == DataType.INTEGER
+    }
+
 
 }

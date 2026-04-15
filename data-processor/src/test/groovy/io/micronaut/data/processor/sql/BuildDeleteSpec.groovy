@@ -779,4 +779,32 @@ interface BookRepository extends GenericRepository<Book, Long> {
         outBindingParameters[0].name == "title"
         outBindingParameters[0].dataType == DataType.STRING
     }
+
+    void "ORACLE raw @Query delete returning allows Object array returns"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("DELETE FROM \\\"BOOK\\\" WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\",\\\"TOTAL_PAGES\\\" INTO ?,?")
+    Object[] customDeleteReturningTitleAndPages(Long bookId);
+}
+""")
+        when:
+        def method = repository.findPossibleMethods("customDeleteReturningTitleAndPages").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+        then:
+        getRawQuery(method) == 'BEGIN DELETE FROM "BOOK" WHERE "ID" = ? RETURNING "TITLE","TOTAL_PAGES" INTO ?,?; END;'
+        outBindingParameters.length == 2
+        outBindingParameters[0].name == "title"
+        outBindingParameters[0].dataType == DataType.STRING
+        outBindingParameters[1].name == "total_pages"
+        outBindingParameters[1].dataType == DataType.INTEGER
+    }
 }
