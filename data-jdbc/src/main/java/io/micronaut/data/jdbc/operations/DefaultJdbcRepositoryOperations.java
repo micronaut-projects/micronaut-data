@@ -406,6 +406,26 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
+    private <R> R readOracleReturningScalarResult(CallableStatement cs, SqlPreparedQuery<?, R> preparedQuery, int columnIndex) throws SQLException {
+        Object value = columnIndexCallableResultReader.readDynamic(
+            cs,
+            columnIndex,
+            preparedQuery.getResultDataType()
+        );
+        if (value == null) {
+            return null;
+        }
+        Class<R> resultType = preparedQuery.getResultType();
+        if (resultType.isInstance(value)) {
+            return resultType.cast(value);
+        }
+        return io.micronaut.core.convert.ConversionService.SHARED.convert(value, resultType)
+            .orElseThrow(() -> new DataAccessException(
+                "Error converting Oracle SQL RETURNING value of type " + value.getClass().getName() +
+                    " to result type " + resultType.getName()
+            ));
+    }
+
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
         if (preparedQuery.getDialect() == Dialect.ORACLE && (
             preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
@@ -426,13 +446,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
                 // Otherwise single field
                 List<R> result = new ArrayList<>();
-                result.add(
-                    (R) columnIndexCallableResultReader.readDynamic(
-                        cs,
-                        inCount + 1,
-                        preparedQuery.getResultDataType()
-                    )
-                );
+                result.add(readOracleReturningScalarResult(cs, preparedQuery, inCount + 1));
                 return result;
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
