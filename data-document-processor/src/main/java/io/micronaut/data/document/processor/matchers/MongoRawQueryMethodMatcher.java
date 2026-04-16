@@ -217,7 +217,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         if (TypeUtils.isFutureType(returnType)) {
             return "MongoDB update returning supports only a single result. Use CompletionStage<T>.";
         }
-        if (TypeUtils.isReactiveType(returnType) || returnType.getName().equals("kotlinx.coroutines.flow.Flow")) {
+        if (TypeUtils.isReactiveType(returnType)) {
             return "MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).";
         }
         return "MongoDB update returning supports only a single result";

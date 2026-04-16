@@ -17,6 +17,7 @@ import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import io.micronaut.data.mongodb.annotation.MongoUpdateQuery;
 import io.micronaut.data.mongodb.annotation.MongoUpdateReturningQuery;
+import org.jspecify.annotations.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
@@ -70,6 +71,7 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoUpdateQuery(update = "{$set:{'addresses.$[address].zipCode': :zipCode}}", arrayFilters = "{'address.zipCode': null}}}")
     long updateMissingZipcodeInAddress(String zipCode);
 
+    @Nullable
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     Person updateCustomReturning(String id, String newName);
 
