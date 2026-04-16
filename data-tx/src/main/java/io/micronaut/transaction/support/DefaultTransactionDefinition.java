@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.support;
 
+import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
@@ -53,6 +54,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
     private Collection<Class<? extends Throwable>> rollbackOn = Collections.emptyList();
 
     private Collection<Class<? extends Throwable>> dontRollbackOn = Collections.emptyList();
+
+    private TransactionPriority.@Nullable Level priority;
 
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
@@ -258,6 +261,34 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
     @Override
     public Collection<Class<? extends Throwable>> getDontRollbackOn() {
         return dontRollbackOn;
+    }
+
+    @Override
+    public TransactionPriority.@Nullable Level getPriority() {
+        return priority;
+    }
+
+    /**
+     * Sets the Oracle transaction priority for this transaction definition.
+     * For other databases it will be ignored.
+     * <p>
+     * When effective (Oracle Database 26ai+ with system wait targets configured),
+     * a session-level transaction priority will be set for the duration of the transaction.
+     * If a lower-priority transaction blocks a higher-priority one on row locks,
+     * the database may automatically roll back the blocking lower-priority transaction
+     * according to the configured system wait targets.
+     * <p>
+     * Notes:
+     * - This setting is a no-op for non-Oracle databases.
+     * - It is applied at the beginning of a JDBC transaction and reset afterwards.
+     * - It is orthogonal to propagation/isolation/readOnly. It does not change transactional semantics.
+     * - Requires appropriate database configuration (PRIORITY_TXNS_* parameters).
+     *
+     * @param priority the desired transaction priority level for Oracle priority transactions,
+     *                 or {@code null} to use the default priority (effectively HIGH).
+     */
+    public void setPriority(TransactionPriority.@Nullable Level priority) {
+        this.priority = priority;
     }
 
     /**

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.data.connection.annotation.TransactionPriority;
+import io.micronaut.transaction.annotation.Transactional;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
@@ -59,6 +61,8 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Override
     @ClientInfo.Attribute(name = "OCSID.MODULE", value = "CustomModule")
     @ClientInfo.Attribute(name = "OCSID.ACTION", value = "INSERT")
+    @Transactional
+    @TransactionPriority(TransactionPriority.Level.MEDIUM)
     public abstract @NonNull Book save(@NonNull Book book);
 
     //    public abstract Book updateReturning(Book book);

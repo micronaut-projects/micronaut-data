@@ -19,6 +19,7 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.Transactional;
@@ -66,6 +67,14 @@ public final class TransactionUtil {
                 .ifPresent(definition::setPropagationBehavior);
         annotation.enumValue("isolation", TransactionDefinition.Isolation.class)
                 .ifPresent(definition::setIsolationLevel);
+
+        AnnotationValue<TransactionPriority> txPriority = annotationMetadataProvider.getAnnotation(TransactionPriority.class);
+        if (txPriority != null) {
+            TransactionPriority.Level level = txPriority.enumValue("value", TransactionPriority.Level.class)
+                .orElse(TransactionPriority.Level.HIGH);
+            definition.setPriority(level);
+        }
+
         return definition;
     }
 

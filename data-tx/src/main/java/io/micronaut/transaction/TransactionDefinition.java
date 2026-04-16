@@ -16,6 +16,7 @@
 package io.micronaut.transaction;
 
 
+import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -413,4 +414,20 @@ public interface TransactionDefinition {
         return ConnectionDefinition.DEFAULT.withName(getName());
     }
 
+    /**
+     * Returns the transaction priority hint for Oracle databases.
+     * For other databases it will be ignored.
+     * <p>
+     * The returned {@link TransactionPriority} instance is used to set the session-level
+     * transaction priority for the duration of the transaction. This is only effective
+     * for Oracle Database 26ai+ with system wait targets configured.
+     * <p>
+     * If not specified or {@code null}, the default Oracle transaction priority is used.
+     *
+     * @return the transaction priority hint, or {@code null} if not specified
+     * @see TransactionPriority
+     */
+    default TransactionPriority.@Nullable Level getPriority() {
+        return null;
+    }
 }
