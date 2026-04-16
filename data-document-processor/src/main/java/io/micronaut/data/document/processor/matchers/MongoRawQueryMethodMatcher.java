@@ -118,21 +118,13 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 if (producedType == null || TypeUtils.isVoid(producedType)) {
                     throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
                 }
-                if (TypeUtils.isFutureType(returnType)) {
-                    ClassElement futureType = returnType.getFirstTypeArgument().orElse(null);
-                    if (futureType != null && futureType.isAssignable(Iterable.class)) {
-                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use CompletionStage<T>.");
-                    }
-                } else if (TypeUtils.isReactiveType(returnType)) {
-                    if (producedType.isAssignable(Iterable.class) || !TypeUtils.isReactiveSingleResult(returnType)) {
+                if (isMultipleResultType(producedType)) {
+                    throw new MatchFailedException(updateReturningSingleResultMessage(returnType));
+                }
+                if (TypeUtils.isReactiveType(returnType)) {
+                    if (!TypeUtils.isReactiveSingleResult(returnType)) {
                         throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
                     }
-                } else if (methodElement.isSuspend()) {
-                    if (producedType.isAssignable(Iterable.class)) {
-                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
-                    }
-                } else if (returnType.isAssignable(Iterable.class)) {
-                    throw new MatchFailedException("MongoDB update returning supports only a single result");
                 }
                 MethodMatchInfo matchInfo = methodMatchByFilterQuery(DataMethod.OperationType.UPDATE_RETURNING).buildMatchInfo(matchContext);
                 if (matchInfo == null) {
@@ -150,13 +142,12 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
                 if (operationType == DataMethod.OperationType.UPDATE_RETURNING) {
                     MethodElement methodElement = matchContext.getMethodElement();
-                    ClassElement returnType = matchContext.getReturnType();
                     ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
                     if (producedType == null || TypeUtils.isVoid(producedType)) {
                         throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
                     }
-                    if (returnType.isAssignable(Iterable.class)) {
-                        throw new MatchFailedException("MongoDB update returning supports only a single result");
+                    if (isMultipleResultType(producedType)) {
+                        throw new MatchFailedException(updateReturningSingleResultMessage(matchContext.getReturnType()));
                     }
                 }
                 ParameterElement[] parameters = matchContext.getParameters();
@@ -215,6 +206,21 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 return methodMatchInfo;
             }
         };
+    }
+
+    private static boolean isMultipleResultType(@Nullable ClassElement type) {
+        return type != null && (type.isArray() || type.isAssignable(Iterable.class));
+    }
+
+    @NonNull
+    private static String updateReturningSingleResultMessage(@NonNull ClassElement returnType) {
+        if (TypeUtils.isFutureType(returnType)) {
+            return "MongoDB update returning supports only a single result. Use CompletionStage<T>.";
+        }
+        if (TypeUtils.isReactiveType(returnType) || returnType.getName().equals("kotlinx.coroutines.flow.Flow")) {
+            return "MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).";
+        }
+        return "MongoDB update returning supports only a single result";
     }
 
     private void buildRawQuery(@NonNull MethodMatchContext matchContext,

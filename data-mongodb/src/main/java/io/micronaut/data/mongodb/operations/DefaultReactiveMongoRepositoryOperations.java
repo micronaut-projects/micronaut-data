@@ -377,7 +377,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         Class<R> resultType = preparedQuery.getResultType();
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         MongoDatabase database = getDatabase(preparedQuery);
-        if (rootType.isAssignableFrom(resultType)) {
+        if (resultType.isAssignableFrom(rootType)) {
             MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
             return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
                 .map(entity -> triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity))

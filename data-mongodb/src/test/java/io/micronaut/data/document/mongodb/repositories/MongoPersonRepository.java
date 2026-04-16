@@ -73,6 +73,9 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     Person updateCustomReturning(String id, String newName);
 
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
+    Object updateCustomReturningAsObject(String id, String newName);
+
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.BEFORE)
     Person updateCustomReturningBefore(String id, String newName);
 

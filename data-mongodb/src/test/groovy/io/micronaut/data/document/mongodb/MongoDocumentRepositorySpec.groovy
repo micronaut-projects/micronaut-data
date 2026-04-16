@@ -1040,6 +1040,23 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.findById(person.id).get().name == "Updated Again"
     }
 
+    void "test custom update returning can use supertype result"() {
+        if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {
+            return
+        }
+        given:
+            def person = personRepository.save("Jeff Object", 20)
+
+        when:
+            def updated = personRepository.updateCustomReturningAsObject(person.id, "Updated Object")
+
+        then:
+            updated instanceof Person
+            updated.id == person.id
+            updated.name == "Updated Object"
+            personRepository.findById(person.id).get().name == "Updated Object"
+    }
+
 
     void "test custom update returning no match"() {
         if (this instanceof io.micronaut.data.document.mongodb.reactive.MongoSelectReactiveDriver) {

@@ -9,6 +9,7 @@ import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.MongoDocumentRepositorySpec
 import io.micronaut.data.document.mongodb.repositories.MongoReactiveExecutorPersonRepository
+import io.micronaut.data.document.tck.entities.Person
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
@@ -206,6 +207,20 @@ class MongoReactiveDocumentRepositorySpec extends MongoDocumentRepositorySpec im
         previous.id == person.id
         previous.name == "Updated"
         personRepository.findById(person.id).get().name == "Updated Again"
+    }
+
+    void "test reactive query executor custom update returning can use supertype result"() {
+        given:
+        def person = personRepository.save("Jeff Reactive Object", 20)
+
+        when:
+        def updated = mongoReactiveExecutorPersonRepository.updateCustomReturningAsObject(person.id, "Updated Reactive Object").block()
+
+        then:
+        updated instanceof Person
+        updated.id == person.id
+        updated.name == "Updated Reactive Object"
+        personRepository.findById(person.id).get().name == "Updated Reactive Object"
     }
 
     void "test reactive query executor custom update returning no match"() {

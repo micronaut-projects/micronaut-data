@@ -409,6 +409,26 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         ex.message.contains('MongoDB update returning supports only a single result')
     }
 
+    void "test update returning does not support array return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Book[] customUpdateReturningArray(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result')
+    }
+
     void "test update returning does not support Flux reactive return type"() {
         when:
         buildRepository('test.MyInterface2', """
@@ -421,6 +441,27 @@ interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
     Flux<Book> customUpdateReturningFlux(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).')
+    }
+
+    void "test update returning does not support Mono array reactive return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import reactor.core.publisher.Mono;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Mono<Book[]> customUpdateReturningMonoArray(String id);
 
 }
 """
@@ -449,6 +490,27 @@ interface MyInterface2 extends GenericRepository<Book, String> {
         then:
         def ex = thrown(Exception)
         ex.message.contains('MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).')
+    }
+
+    void "test update returning does not support CompletionStage array return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import java.util.concurrent.CompletionStage;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    CompletionStage<Book[]> customUpdateReturningStageArray(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use CompletionStage<T>.')
     }
 
     void "test update returning supports scalar return type with dedicated annotation"() {

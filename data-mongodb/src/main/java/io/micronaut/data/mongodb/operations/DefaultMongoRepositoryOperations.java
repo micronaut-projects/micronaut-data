@@ -330,7 +330,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         Class<R> resultType = preparedQuery.getResultType();
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         MongoDatabase database = getDatabase(preparedQuery);
-        if (rootType.isAssignableFrom(resultType)) {
+        if (resultType.isAssignableFrom(rootType)) {
             MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
             T entity = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
             if (entity == null) {

@@ -23,6 +23,9 @@ public interface MongoReactiveExecutorPersonRepository extends ReactorCrudReposi
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
     Mono<Person> updateCustomReturning(String id, String newName);
 
+    @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.AFTER)
+    Mono<Object> updateCustomReturningAsObject(String id, String newName);
+
     @MongoUpdateReturningQuery(update = "{$set:{name: :newName}}", filter = "{_id:{$eq: :id}}", returnDocument = ReturnDocument.BEFORE)
     Mono<Person> updateCustomReturningBefore(String id, String newName);
 
