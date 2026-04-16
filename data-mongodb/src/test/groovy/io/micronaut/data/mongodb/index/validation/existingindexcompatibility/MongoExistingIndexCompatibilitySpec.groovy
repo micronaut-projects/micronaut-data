@@ -90,6 +90,31 @@ class MongoExistingIndexCompatibilitySpec extends Specification implements Mongo
         startupContext?.close()
     }
 
+    void 'starts successfully when matching compound text index already exists'() {
+        given:
+        prepareExistingIndex('existing_compound_text_index_entities',
+                new Document('key', new Document('tenant_id', 1).append('_fts', 'text').append('_ftsx', 1).append('created_at', -1))
+                        .append('name', 'existing_compound_text_idx')
+                        .append('weights', new Document('title', 2).append('description', 5))
+                        .append('default_language', 'english')
+                        .append('language_override', 'docLang')
+                        .append('textIndexVersion', 3)
+        )
+
+        ApplicationContext startupContext = null
+
+        when:
+        startupContext = ApplicationContext.run(getProperties() + [
+                'micronaut.data.mongodb.create-indexes': 'true'
+        ])
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        startupContext?.close()
+    }
+
     protected void prepareExistingIndex(String collectionName, Document index) {
         ApplicationContext preContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-indexes': 'false'
@@ -152,4 +177,35 @@ class ExistingGeoIndexEntity {
 
     @MongoGeoIndexed(name = 'existing_geo_location_idx', sphereVersion = 3)
     Point location
+}
+
+@MongoRepository
+interface ExistingCompoundTextIndexEntityRepository extends CrudRepository<ExistingCompoundTextIndexEntity, String> {
+}
+
+@MongoCompoundIndex(
+        name = 'existing_compound_text_idx',
+        defaultLanguage = 'english',
+        languageOverride = 'docLang',
+        textIndexVersion = 3,
+        fields = [
+                @MongoCompoundIndexField(value = 'tenantId', direction = MongoIndexDirection.ASC),
+                @MongoCompoundIndexField(value = 'title', text = true, weight = 2),
+                @MongoCompoundIndexField(value = 'description', text = true, weight = 5),
+                @MongoCompoundIndexField(value = 'createdAt', direction = MongoIndexDirection.DESC)
+        ]
+)
+@MappedEntity('existing_compound_text_index_entities')
+class ExistingCompoundTextIndexEntity {
+    @Id
+    @GeneratedValue
+    String id
+
+    String tenantId
+
+    String title
+
+    String description
+
+    Long createdAt
 }

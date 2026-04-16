@@ -19,6 +19,9 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationAlternate;
+import com.mongodb.client.model.CollationCaseFirst;
+import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -61,6 +64,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -413,13 +417,27 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     static List<MongoResolvedIndexField> toResolvedIndexFields(Document indexDocument, Document keyDocument) {
         if ("text".equals(keyDocument.getString("_fts"))) {
             Document weights = indexDocument.get("weights", Document.class);
-            if (weights != null && !weights.isEmpty()) {
-                List<MongoResolvedIndexField> fields = new ArrayList<>(weights.size());
-                for (Map.Entry<String, Object> entry : weights.entrySet()) {
-                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, toInteger(entry.getValue()), "text", null, null));
+            List<MongoResolvedIndexField> fields = new ArrayList<>();
+            for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
+                if ("_fts".equals(entry.getKey())) {
+                    if (weights != null && !weights.isEmpty()) {
+                        for (Map.Entry<String, Object> weightEntry : weights.entrySet()) {
+                            fields.add(new MongoResolvedIndexField(weightEntry.getKey(), null, toInteger(weightEntry.getValue()), "text", null, null));
+                        }
+                    }
+                    continue;
                 }
-                return fields;
+                if ("_ftsx".equals(entry.getKey())) {
+                    continue;
+                }
+                Object value = entry.getValue();
+                if (value instanceof Number number) {
+                    fields.add(new MongoResolvedIndexField(entry.getKey(), number.intValue(), null, null, null, null));
+                } else {
+                    fields.add(new MongoResolvedIndexField(entry.getKey(), null, null, value.toString(), null, null));
+                }
             }
+            return fields;
         }
         List<MongoResolvedIndexField> fields = new ArrayList<>(keyDocument.size());
         for (Map.Entry<String, Object> entry : keyDocument.entrySet()) {
@@ -522,7 +540,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             indexDocument.append("partialFilterExpression", Document.parse(index.partialFilterExpression()));
         }
         if (index.collation() != null) {
-            indexDocument.append("collation", Document.parse(index.collation()));
+            indexDocument.append("collation", toCollationDocument(Document.parse(index.collation())));
         }
         if (index.bits() != null) {
             indexDocument.append("bits", index.bits());
@@ -568,15 +586,79 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         if (locale != null) {
             builder.locale(locale);
         }
-        Integer strength = document.getInteger("strength");
-        if (strength != null) {
-            builder.collationStrength(CollationStrength.fromInt(strength));
+        Object strength = document.get("strength");
+        if (strength instanceof Number number) {
+            builder.collationStrength(CollationStrength.fromInt(number.intValue()));
+        } else if (strength instanceof String strengthName) {
+            builder.collationStrength(CollationStrength.valueOf(normalizeCollationEnumName(strengthName)));
         }
         Boolean caseLevel = document.getBoolean("caseLevel");
         if (caseLevel != null) {
             builder.caseLevel(caseLevel);
         }
+        String caseFirst = document.getString("caseFirst");
+        if (caseFirst != null) {
+            builder.collationCaseFirst(CollationCaseFirst.valueOf(normalizeCollationEnumName(caseFirst)));
+        }
+        Boolean numericOrdering = document.getBoolean("numericOrdering");
+        if (numericOrdering != null) {
+            builder.numericOrdering(numericOrdering);
+        }
+        String alternate = document.getString("alternate");
+        if (alternate != null) {
+            builder.collationAlternate(CollationAlternate.valueOf(normalizeCollationEnumName(alternate)));
+        }
+        String maxVariable = document.getString("maxVariable");
+        if (maxVariable != null) {
+            builder.collationMaxVariable(CollationMaxVariable.valueOf(normalizeCollationEnumName(maxVariable)));
+        }
+        Boolean normalization = document.getBoolean("normalization");
+        if (normalization != null) {
+            builder.normalization(normalization);
+        }
+        Boolean backwards = document.getBoolean("backwards");
+        if (backwards != null) {
+            builder.backwards(backwards);
+        }
         return builder.build();
+    }
+
+    static Document toCollationDocument(Document document) {
+        Document collation = new Document(document);
+        Object strength = document.get("strength");
+        if (strength instanceof String strengthName) {
+            collation.put("strength", toCollationStrengthValue(strengthName));
+        }
+        normalizeCollationStringOption(collation, "caseFirst");
+        normalizeCollationStringOption(collation, "alternate");
+        normalizeCollationStringOption(collation, "maxVariable");
+        return collation;
+    }
+
+    private static String normalizeCollationEnumName(String value) {
+        return value.replace('-', '_').toUpperCase(Locale.ROOT);
+    }
+
+    private static int toCollationStrengthValue(String value) {
+        return switch (CollationStrength.valueOf(normalizeCollationEnumName(value))) {
+            case PRIMARY -> 1;
+            case SECONDARY -> 2;
+            case TERTIARY -> 3;
+            case QUATERNARY -> 4;
+            case IDENTICAL -> 5;
+        };
+    }
+
+    private static void normalizeCollationStringOption(Document collation, String optionName) {
+        String value = collation.getString(optionName);
+        if (value == null) {
+            return;
+        }
+        collation.put(optionName, normalizeCollationServerValue(value));
+    }
+
+    private static String normalizeCollationServerValue(String value) {
+        return normalizeCollationEnumName(value).toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
     static @Nullable String normalizeJsonValue(@Nullable Object value) {

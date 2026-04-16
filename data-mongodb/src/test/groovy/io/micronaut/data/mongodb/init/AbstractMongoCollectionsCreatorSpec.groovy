@@ -1,5 +1,8 @@
 package io.micronaut.data.mongodb.init
 
+import com.mongodb.client.model.CollationAlternate
+import com.mongodb.client.model.CollationCaseFirst
+import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
 import org.bson.Document
 import spock.lang.Specification
@@ -153,5 +156,61 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         collation.locale == 'en'
         collation.strength == CollationStrength.SECONDARY
         collation.caseLevel
+    }
+
+    void 'converts document to collation with extended options'() {
+        when:
+        def collation = AbstractMongoCollectionsCreator.toCollation(new Document('locale', 'en')
+                .append('strength', 'SECONDARY')
+                .append('caseLevel', true)
+                .append('caseFirst', 'UPPER')
+                .append('numericOrdering', true)
+                .append('alternate', 'SHIFTED')
+                .append('maxVariable', 'SPACE')
+                .append('normalization', true)
+                .append('backwards', true))
+
+        then:
+        collation.locale == 'en'
+        collation.strength == CollationStrength.SECONDARY
+        collation.caseLevel
+        collation.caseFirst == CollationCaseFirst.UPPER
+        collation.numericOrdering
+        collation.alternate == CollationAlternate.SHIFTED
+        collation.maxVariable == CollationMaxVariable.SPACE
+        collation.normalization
+        collation.backwards
+    }
+
+    void 'normalizes string collation enum values'() {
+        when:
+        def collation = AbstractMongoCollectionsCreator.toCollation(new Document('locale', 'en')
+                .append('strength', 'secondary')
+                .append('caseFirst', 'off')
+                .append('alternate', 'non-ignorable')
+                .append('maxVariable', 'punct'))
+
+        then:
+        collation.locale == 'en'
+        collation.strength == CollationStrength.SECONDARY
+        collation.caseFirst == CollationCaseFirst.OFF
+        collation.alternate == CollationAlternate.NON_IGNORABLE
+        collation.maxVariable == CollationMaxVariable.PUNCT
+    }
+
+    void 'normalizes command collation document values'() {
+        when:
+        def collation = AbstractMongoCollectionsCreator.toCollationDocument(new Document('locale', 'en')
+                .append('strength', 'secondary')
+                .append('caseFirst', 'upper')
+                .append('alternate', 'non_ignorable')
+                .append('maxVariable', 'punct'))
+
+        then:
+        collation.getString('locale') == 'en'
+        collation.getInteger('strength') == 2
+        collation.getString('caseFirst') == 'upper'
+        collation.getString('alternate') == 'non-ignorable'
+        collation.getString('maxVariable') == 'punct'
     }
 }

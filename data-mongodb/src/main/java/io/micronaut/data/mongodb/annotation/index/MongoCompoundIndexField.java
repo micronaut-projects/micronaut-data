@@ -45,6 +45,21 @@ public @interface MongoCompoundIndexField {
     MongoGeoIndexType geoType() default MongoGeoIndexType.GEO_2DSPHERE;
 
     /**
+     * @return Whether the field should use the text key kind.
+     */
+    boolean text() default false;
+
+    /**
+     * @return The text index weight. Only valid when {@link #text()} is {@code true}.
+     */
+    int weight() default 1;
+
+    /**
+     * @return Whether the field should use the hashed key kind.
+     */
+    boolean hashed() default false;
+
+    /**
      * @return Whether the field should use the geospatial key kind instead of the numeric direction.
      */
     boolean geo() default false;
@@ -53,6 +68,11 @@ public @interface MongoCompoundIndexField {
      * @return The 2d index bits setting, or -1 if unset.
      */
     int bits() default -1;
+
+    /**
+     * @return The 2dsphere index version, or -1 if unset.
+     */
+    int sphereVersion() default -1;
 
     /**
      * @return The 2d index minimum value, or NaN if unset.

@@ -9,9 +9,11 @@ import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndex
 import io.micronaut.data.mongodb.annotation.index.MongoCompoundIndexField
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexType
+import io.micronaut.data.mongodb.annotation.index.MongoHashedIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoTextIndexed
 import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndex
+import io.micronaut.data.mongodb.annotation.index.MongoWildcardIndexed
 import io.micronaut.data.mongodb.common.MongoEntityIndexes
 import org.bson.Document
 import spock.lang.Shared
@@ -97,6 +99,35 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         e.message.contains('must use the same defaultLanguage option')
     }
 
+    void 'resolves commitQuorum for simple index'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(SimpleCommitQuorumEntity)).indexes
+        def index = indexes.find { it.name() == 'simple_commit_quorum_idx' }
+
+        then:
+        index != null
+        index.commitQuorum() == 'majority'
+    }
+
+    void 'resolves commitQuorum for text index'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(TextCommitQuorumEntity)).indexes
+        def index = indexes.find { it.name() == 'text_commit_quorum_idx' }
+
+        then:
+        index != null
+        index.commitQuorum() == 'majority'
+    }
+
+    void 'fails when text indexed fields define different commitQuorum options'() {
+        when:
+        MongoEntityIndexes.create(getRuntimePersistentEntity(InvalidTextCommitQuorumEntity))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains('must use the same commitQuorum option')
+    }
+
     void 'resolves embedded field simple index path'() {
         when:
         def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(EmbeddedFieldIndexedEntity)).indexes
@@ -130,6 +161,19 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         index.sphereVersion() == 3
     }
 
+    void 'resolves geo partialFilterExpression, collation, and commitQuorum'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(GeoAdvancedOptionsEntity)).indexes
+        def index = indexes.find { it.name() == 'geo_advanced_options_idx' }
+
+        then:
+        index != null
+        Document.parse(index.partialFilterExpression()) == Document.parse('{ "active": true }')
+        Document.parse(index.collation()) == Document.parse('{ "locale": "en", "strength": 2 }')
+        index.commitQuorum() == 'majority'
+        index.sphereVersion() == 3
+    }
+
     void 'fails when 2dsphere sphereVersion is used on non-2dsphere index type'() {
         when:
         MongoEntityIndexes.create(getRuntimePersistentEntity(InvalidGeoSphereVersionOn2dEntity))
@@ -137,6 +181,26 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         then:
         def e = thrown(IllegalStateException)
         e.message.contains('2dsphere-specific geospatial options are only supported for Mongo 2dsphere indexes')
+    }
+
+    void 'resolves commitQuorum for hashed index'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(HashedCommitQuorumEntity)).indexes
+        def index = indexes.find { it.name() == 'hashed_commit_quorum_idx' }
+
+        then:
+        index != null
+        index.commitQuorum() == 'majority'
+    }
+
+    void 'resolves commitQuorum for field-level wildcard index'() {
+        when:
+        def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(WildcardFieldCommitQuorumEntity)).indexes
+        def index = indexes.find { it.name() == 'wildcard_field_commit_quorum_idx' }
+
+        then:
+        index != null
+        index.commitQuorum() == 'majority'
     }
 
     private RuntimePersistentEntity<?> getRuntimePersistentEntity(Class<?> type) {
@@ -157,6 +221,12 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
 @MappedEntity('comment_simple_entity')
 class CommentSimpleEntity {
     @MongoIndexed(name = 'comment_simple_idx', comment = 'simple-comment', storageEngine = '{ "wiredTiger": {} }')
+    String name
+}
+
+@MappedEntity('simple_commit_quorum_entity')
+class SimpleCommitQuorumEntity {
+    @MongoIndexed(name = 'simple_commit_quorum_idx', commitQuorum = 'majority')
     String name
 }
 
@@ -209,6 +279,15 @@ class TextLanguageOptionsEntity {
     String description
 }
 
+@MappedEntity('text_commit_quorum_entity')
+class TextCommitQuorumEntity {
+    @MongoTextIndexed(name = 'text_commit_quorum_idx', commitQuorum = 'majority')
+    String title
+
+    @MongoTextIndexed(name = 'text_commit_quorum_idx', commitQuorum = 'majority')
+    String description
+}
+
 @MappedEntity('invalid_text_default_language_entity')
 class InvalidTextDefaultLanguageEntity {
     @MongoTextIndexed(defaultLanguage = 'english')
@@ -218,9 +297,30 @@ class InvalidTextDefaultLanguageEntity {
     String second
 }
 
+@MappedEntity('invalid_text_commit_quorum_entity')
+class InvalidTextCommitQuorumEntity {
+    @MongoTextIndexed(name = 'invalid_text_commit_quorum_idx', commitQuorum = 'majority')
+    String first
+
+    @MongoTextIndexed(name = 'invalid_text_commit_quorum_idx', commitQuorum = 'votingMembers')
+    String second
+}
+
 @MappedEntity('geo_sphere_version_entity')
 class GeoSphereVersionEntity {
     @MongoGeoIndexed(name = 'geo_sphere_version_idx', sphereVersion = 3)
+    Point location
+}
+
+@MappedEntity('geo_advanced_options_entity')
+class GeoAdvancedOptionsEntity {
+    @MongoGeoIndexed(
+            name = 'geo_advanced_options_idx',
+            sphereVersion = 3,
+            partialFilterExpression = '{ "active": true }',
+            collation = '{ "locale": "en", "strength": 2 }',
+            commitQuorum = 'majority'
+    )
     Point location
 }
 
@@ -228,6 +328,18 @@ class GeoSphereVersionEntity {
 class InvalidGeoSphereVersionOn2dEntity {
     @MongoGeoIndexed(name = 'invalid_geo_sphere_version_idx', type = MongoGeoIndexType.GEO_2D, sphereVersion = 3)
     Map<String, Object> location
+}
+
+@MappedEntity('hashed_commit_quorum_entity')
+class HashedCommitQuorumEntity {
+    @MongoHashedIndexed(name = 'hashed_commit_quorum_idx', commitQuorum = 'majority')
+    String key
+}
+
+@MappedEntity('wildcard_field_commit_quorum_entity')
+class WildcardFieldCommitQuorumEntity {
+    @MongoWildcardIndexed(name = 'wildcard_field_commit_quorum_idx', commitQuorum = 'majority')
+    Map<String, Object> metadata
 }
 
 @MappedEntity('embedded_field_indexed_entity')

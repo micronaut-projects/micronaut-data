@@ -44,6 +44,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,22 @@ public final class MongoEntityIndexes {
         indexes.addAll(resolveTopLevelWildcardIndexes(entity));
         indexes.addAll(resolveTextIndexes(entity));
         indexes.addAll(resolveCompoundIndexes(entity));
+        validateResolvedIndexes(entity, indexes);
         return new MongoEntityIndexes(List.copyOf(indexes));
+    }
+
+    private static void validateResolvedIndexes(RuntimePersistentEntity<?> entity,
+                                                List<ResolvedIndex> indexes) {
+        long textIndexCount = indexes.stream()
+                .filter(MongoEntityIndexes::isTextIndex)
+                .count();
+        if (textIndexCount > 1) {
+            throw new IllegalStateException("MongoDB allows only one text index per collection. Entity [" + entity.getName() + "] declares " + textIndexCount + " text indexes");
+        }
+    }
+
+    private static boolean isTextIndex(ResolvedIndex index) {
+        return index.fields().stream().anyMatch(field -> "text".equals(field.kind()));
     }
 
     private static List<ResolvedIndex> resolveTopLevelWildcardIndexes(RuntimePersistentEntity<?> entity) {
@@ -136,7 +152,7 @@ public final class MongoEntityIndexes {
                     null,
                     null,
                     null,
-                    annotation.stringValue(ATTR_WILDCARD_PROJECTION).filter(s -> !s.isEmpty()).orElse(null),
+                    parseJsonOption(annotation.stringValue(ATTR_WILDCARD_PROJECTION).filter(s -> !s.isEmpty()).orElse(null), ATTR_WILDCARD_PROJECTION, entity.getName()),
                     parseJsonOption(annotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                     annotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
                     annotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null)
@@ -220,8 +236,8 @@ public final class MongoEntityIndexes {
                         annotation.booleanValue(ATTR_SPARSE).orElse(false),
                         annotation.booleanValue(ATTR_HIDDEN).orElse(false),
                         annotation.intValue(ATTR_EXPIRE_AFTER_SECONDS).isPresent() && annotation.intValue(ATTR_EXPIRE_AFTER_SECONDS).getAsInt() >= 0 ? annotation.intValue(ATTR_EXPIRE_AFTER_SECONDS).getAsInt() : null,
-                        annotation.stringValue(ATTR_PARTIAL_FILTER_EXPRESSION).filter(s -> !s.isEmpty()).orElse(null),
-                        annotation.stringValue(ATTR_COLLATION).filter(s -> !s.isEmpty()).orElse(null),
+                        parseJsonOption(annotation.stringValue(ATTR_PARTIAL_FILTER_EXPRESSION).filter(s -> !s.isEmpty()).orElse(null), ATTR_PARTIAL_FILTER_EXPRESSION, entity.getName()),
+                        parseJsonOption(annotation.stringValue(ATTR_COLLATION).filter(s -> !s.isEmpty()).orElse(null), ATTR_COLLATION, entity.getName()),
                         null,
                         null,
                         null,
@@ -232,7 +248,7 @@ public final class MongoEntityIndexes {
                         null,
                         parseJsonOption(annotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                         annotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
-                        null
+                        annotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null)
                 ));
                 return;
             }
@@ -261,7 +277,7 @@ public final class MongoEntityIndexes {
                         null,
                         parseJsonOption(hashedAnnotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                         hashedAnnotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
-                        null
+                        hashedAnnotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null)
                 ));
                 return;
             }
@@ -273,6 +289,8 @@ public final class MongoEntityIndexes {
                 Integer bits = geoAnnotation.intValue(ATTR_BITS).isPresent() && geoAnnotation.intValue(ATTR_BITS).getAsInt() >= 0 ? geoAnnotation.intValue(ATTR_BITS).getAsInt() : null;
                 Double min = geoAnnotation.doubleValue(ATTR_MIN).isPresent() && !Double.isNaN(geoAnnotation.doubleValue(ATTR_MIN).getAsDouble()) ? geoAnnotation.doubleValue(ATTR_MIN).getAsDouble() : null;
                 Double max = geoAnnotation.doubleValue(ATTR_MAX).isPresent() && !Double.isNaN(geoAnnotation.doubleValue(ATTR_MAX).getAsDouble()) ? geoAnnotation.doubleValue(ATTR_MAX).getAsDouble() : null;
+                String partialFilterExpression = parseJsonOption(geoAnnotation.stringValue(ATTR_PARTIAL_FILTER_EXPRESSION).filter(s -> !s.isEmpty()).orElse(null), ATTR_PARTIAL_FILTER_EXPRESSION, entity.getName());
+                String collation = parseJsonOption(geoAnnotation.stringValue(ATTR_COLLATION).filter(s -> !s.isEmpty()).orElse(null), ATTR_COLLATION, entity.getName());
                 if (type != MongoGeoIndexType.GEO_2D && (bits != null || min != null || max != null)) {
                     throw new IllegalStateException("2d-specific geospatial options are only supported for Mongo 2d indexes on entity [" + entity.getName() + "]");
                 }
@@ -282,6 +300,7 @@ public final class MongoEntityIndexes {
                 if (type != MongoGeoIndexType.GEO_2DSPHERE && sphereVersion != null) {
                     throw new IllegalStateException("2dsphere-specific geospatial options are only supported for Mongo 2dsphere indexes on entity [" + entity.getName() + "]");
                 }
+                validateGeoCollation(entity, "2d geospatial index", type, collation);
                 indexes.add(new ResolvedIndex(
                         geoAnnotation.stringValue(ATTR_NAME).filter(s -> !s.isEmpty()).orElse(null),
                         List.of(new ResolvedIndexField(persistedPath, null, null, type.getKey(), min, max)),
@@ -289,8 +308,8 @@ public final class MongoEntityIndexes {
                         false,
                         geoAnnotation.booleanValue(ATTR_HIDDEN).orElse(false),
                         null,
-                        null,
-                        null,
+                        partialFilterExpression,
+                        collation,
                         bits,
                         min,
                         max,
@@ -301,7 +320,7 @@ public final class MongoEntityIndexes {
                         null,
                         parseJsonOption(geoAnnotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                         geoAnnotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
-                        null
+                        geoAnnotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null)
                 ));
                 return;
             }
@@ -330,7 +349,7 @@ public final class MongoEntityIndexes {
                         null,
                         parseJsonOption(wildcardAnnotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                         wildcardAnnotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
-                        null
+                        wildcardAnnotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null)
                 ));
             }
         });
@@ -340,17 +359,23 @@ public final class MongoEntityIndexes {
     private static void validateGeoIndexedType(RuntimePersistentEntity<?> entity,
                                                RuntimePersistentProperty<?> property) {
         MongoGeoIndexType indexType = property.getAnnotationMetadata().enumValue(MongoGeoIndexed.class, "type", MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
-        Class<?> propertyType = property.getType();
-        if ((indexType == MongoGeoIndexType.GEO_2D && Map.class.isAssignableFrom(propertyType))
-                || isSupportedGeoIndexedType(propertyType)) {
+        validateGeoIndexedType(entity, property.getName(), property.getType(), indexType);
+    }
+
+    private static void validateGeoIndexedType(RuntimePersistentEntity<?> entity,
+                                               String propertyName,
+                                               Class<?> propertyType,
+                                               MongoGeoIndexType indexType) {
+        if (isSupportedGeoIndexedType(propertyType) || isSupportedLegacyGeoValueType(propertyType)) {
             return;
         }
         throw new IllegalStateException("Mongo geospatial index on entity ["
                 + entity.getName()
                 + "] property ["
-                + property.getName()
+                + propertyName
                 + "] requires a supported MongoDB GeoJSON type (Geometry, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, or GeometryCollection)"
-                + (indexType == MongoGeoIndexType.GEO_2D ? " or a Map-backed legacy 2d coordinate value" : ""));
+                + " or a map/list/array-backed legacy coordinate value"
+                + (indexType == MongoGeoIndexType.GEO_2D ? "" : " for 2dsphere indexes"));
     }
 
     private static boolean isSupportedGeoIndexedType(Class<?> propertyType) {
@@ -362,6 +387,25 @@ public final class MongoEntityIndexes {
                 || Polygon.class.isAssignableFrom(propertyType)
                 || MultiPolygon.class.isAssignableFrom(propertyType)
                 || GeometryCollection.class.isAssignableFrom(propertyType);
+    }
+
+    private static boolean isSupportedLegacyGeoValueType(Class<?> propertyType) {
+        return Map.class.isAssignableFrom(propertyType)
+                || Collection.class.isAssignableFrom(propertyType)
+                || propertyType.isArray();
+    }
+
+    private static void validateGeoCollation(RuntimePersistentEntity<?> entity,
+                                             String indexDescription,
+                                             @Nullable MongoGeoIndexType indexType,
+                                             @Nullable String collation) {
+        if (indexType != MongoGeoIndexType.GEO_2D || collation == null || collation.isBlank()) {
+            return;
+        }
+        Document collationDocument = Document.parse(collation);
+        if (!"simple".equals(collationDocument.getString("locale"))) {
+            throw new IllegalStateException("Mongo " + indexDescription + " on entity [" + entity.getName() + "] supports only collation {\"locale\":\"simple\"}");
+        }
     }
 
     private static List<ResolvedIndex> resolveTextIndexes(RuntimePersistentEntity<?> entity) {
@@ -424,12 +468,18 @@ public final class MongoEntityIndexes {
             } else if (!Objects.equals(state.textIndexVersion, declaredTextIndexVersion)) {
                 throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
             }
+            String declaredCommitQuorum = textAnnotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null);
+            if (state.commitQuorum == null) {
+                state.commitQuorum = declaredCommitQuorum;
+            } else if (!Objects.equals(state.commitQuorum, declaredCommitQuorum)) {
+                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same commitQuorum option");
+            }
             state.fields.add(new ResolvedIndexField(toPersistedPath(associations, property), null, weight, "text", null, null));
         });
         if (state.fields.isEmpty()) {
             return List.of();
         }
-        return List.of(new ResolvedIndex(state.name, List.copyOf(state.fields), false, false, state.hidden != null && state.hidden, null, null, null, null, null, null, state.defaultLanguage, state.languageOverride, state.textIndexVersion, null, null, state.storageEngine, state.comment, null));
+        return List.of(new ResolvedIndex(state.name, List.copyOf(state.fields), false, false, state.hidden != null && state.hidden, null, null, null, null, null, null, state.defaultLanguage, state.languageOverride, state.textIndexVersion, null, null, state.storageEngine, state.comment, state.commitQuorum));
     }
 
     private static List<ResolvedIndex> resolveCompoundIndexes(RuntimePersistentEntity<?> entity) {
@@ -440,33 +490,48 @@ public final class MongoEntityIndexes {
             Integer indexBits = null;
             Double indexMin = null;
             Double indexMax = null;
+            Integer indexSphereVersion = null;
+            boolean hasGeoField = false;
+            boolean hasTextField = false;
+            boolean hasHashedField = false;
+            int firstTextFieldIndex = -1;
+            int lastTextFieldIndex = -1;
             for (var fieldAnnotation : annotationValue.getAnnotations(ATTR_FIELDS, MongoCompoundIndexField.class)) {
                 String path = fieldAnnotation.stringValue(ATTR_VALUE).orElseThrow();
                 String pathForLookup = path.contains(".") ? path.replace('.', '_') : path;
-                String persistedPath = PersistentEntityUtils.getPersistentPropertyPath(entity, pathForLookup)
-                        .map(persistentPath -> {
-                            var propertyPath = entity.getPropertyPath(persistentPath);
-                            if (propertyPath == null) {
-                                throw new IllegalStateException("Invalid Mongo index path [" + path + "] for entity [" + entity.getName() + "]");
-                            }
-                            return toPersistedPath(propertyPath);
-                        })
+                PersistentPropertyPath propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, pathForLookup)
+                        .map(entity::getPropertyPath)
+                        .filter(Objects::nonNull)
                         .orElseThrow(() -> new IllegalStateException("Invalid Mongo index path [" + path + "] for entity [" + entity.getName() + "]"));
+                String persistedPath = toPersistedPath(propertyPath);
+                Class<?> propertyType = ((RuntimePersistentProperty<?>) propertyPath.getProperty()).getType();
                 if (!seenPaths.add(persistedPath)) {
                     throw new IllegalStateException("Duplicate Mongo index path [" + persistedPath + "] for entity [" + entity.getName() + "]");
                 }
                 boolean geo = fieldAnnotation.booleanValue(ATTR_GEO).orElse(false);
+                boolean text = fieldAnnotation.booleanValue("text").orElse(false);
+                boolean hashed = fieldAnnotation.booleanValue("hashed").orElse(false);
+                int specialKindCount = (geo ? 1 : 0) + (text ? 1 : 0) + (hashed ? 1 : 0);
+                if (specialKindCount > 1) {
+                    throw new IllegalStateException("Mongo compound index field [" + persistedPath + "] on entity [" + entity.getName() + "] cannot declare more than one special key kind");
+                }
                 MongoIndexDirection direction = fieldAnnotation.enumValue(ATTR_DIRECTION, MongoIndexDirection.class).orElse(MongoIndexDirection.ASC);
                 if (geo) {
+                    hasGeoField = true;
                     if (direction != MongoIndexDirection.ASC) {
                         throw new IllegalStateException("Mongo compound geospatial field [" + persistedPath + "] on entity [" + entity.getName() + "] cannot define a numeric direction");
                     }
                     MongoGeoIndexType geoType = fieldAnnotation.enumValue(ATTR_GEO_TYPE, MongoGeoIndexType.class).orElse(MongoGeoIndexType.GEO_2DSPHERE);
+                    validateGeoIndexedType(entity, persistedPath, propertyType, geoType);
                     Integer bits = fieldAnnotation.intValue(ATTR_BITS).isPresent() && fieldAnnotation.intValue(ATTR_BITS).getAsInt() >= 0 ? fieldAnnotation.intValue(ATTR_BITS).getAsInt() : null;
+                    Integer sphereVersion = fieldAnnotation.intValue(ATTR_SPHERE_VERSION).isPresent() && fieldAnnotation.intValue(ATTR_SPHERE_VERSION).getAsInt() >= 0 ? fieldAnnotation.intValue(ATTR_SPHERE_VERSION).getAsInt() : null;
                     Double min = fieldAnnotation.doubleValue(ATTR_MIN).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MIN).getAsDouble()) ? fieldAnnotation.doubleValue(ATTR_MIN).getAsDouble() : null;
                     Double max = fieldAnnotation.doubleValue(ATTR_MAX).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MAX).getAsDouble()) ? fieldAnnotation.doubleValue(ATTR_MAX).getAsDouble() : null;
                     if (geoType != MongoGeoIndexType.GEO_2D && (bits != null || min != null || max != null)) {
                         throw new IllegalStateException("2d-specific geospatial options are only supported for Mongo 2d compound geospatial fields on entity [" + entity.getName() + "]");
+                    }
+                    if (geoType != MongoGeoIndexType.GEO_2DSPHERE && sphereVersion != null) {
+                        throw new IllegalStateException("2dsphere-specific geospatial options are only supported for Mongo 2dsphere compound geospatial fields on entity [" + entity.getName() + "]");
                     }
                     if (bits != null) {
                         if (indexBits != null && !indexBits.equals(bits)) {
@@ -486,18 +551,98 @@ public final class MongoEntityIndexes {
                         }
                         indexMax = max;
                     }
+                    if (sphereVersion != null) {
+                        if (indexSphereVersion != null && !indexSphereVersion.equals(sphereVersion)) {
+                            throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] declares conflicting sphereVersion options for geospatial fields");
+                        }
+                        indexSphereVersion = sphereVersion;
+                    }
                     fields.add(new ResolvedIndexField(persistedPath, null, null, geoType.getKey(), min, max));
-                } else {
+                } else if (text) {
+                    hasTextField = true;
+                    if (direction != MongoIndexDirection.ASC) {
+                        throw new IllegalStateException("Mongo compound text field [" + persistedPath + "] on entity [" + entity.getName() + "] cannot define a numeric direction");
+                    }
                     if ((fieldAnnotation.intValue(ATTR_BITS).isPresent() && fieldAnnotation.intValue(ATTR_BITS).getAsInt() >= 0)
                             || (fieldAnnotation.doubleValue(ATTR_MIN).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MIN).getAsDouble()))
                             || (fieldAnnotation.doubleValue(ATTR_MAX).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MAX).getAsDouble()))) {
-                        throw new IllegalStateException("2d-specific geospatial options require geo=true for Mongo compound index field [" + persistedPath + "] on entity [" + entity.getName() + "]");
+                        throw new IllegalStateException("2d-specific geospatial options are not supported for Mongo compound text field [" + persistedPath + "] on entity [" + entity.getName() + "]");
+                    }
+                    int weight = fieldAnnotation.intValue("weight").orElse(1);
+                    if (weight <= 0) {
+                        throw new IllegalStateException("Mongo text index weight must be greater than zero for entity [" + entity.getName() + "]");
+                    }
+                    if (firstTextFieldIndex == -1) {
+                        firstTextFieldIndex = fields.size();
+                    }
+                    lastTextFieldIndex = fields.size();
+                    fields.add(new ResolvedIndexField(persistedPath, null, weight, "text", null, null));
+                } else if (hashed) {
+                    hasHashedField = true;
+                    if (direction != MongoIndexDirection.ASC) {
+                        throw new IllegalStateException("Mongo compound hashed field [" + persistedPath + "] on entity [" + entity.getName() + "] cannot define a numeric direction");
+                    }
+                    if ((fieldAnnotation.intValue(ATTR_BITS).isPresent() && fieldAnnotation.intValue(ATTR_BITS).getAsInt() >= 0)
+                            || (fieldAnnotation.doubleValue(ATTR_MIN).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MIN).getAsDouble()))
+                            || (fieldAnnotation.doubleValue(ATTR_MAX).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MAX).getAsDouble()))) {
+                        throw new IllegalStateException("2d-specific geospatial options are not supported for Mongo compound hashed field [" + persistedPath + "] on entity [" + entity.getName() + "]");
+                    }
+                    fields.add(new ResolvedIndexField(persistedPath, null, null, "hashed", null, null));
+                } else {
+                    if ((fieldAnnotation.intValue(ATTR_BITS).isPresent() && fieldAnnotation.intValue(ATTR_BITS).getAsInt() >= 0)
+                            || (fieldAnnotation.intValue(ATTR_SPHERE_VERSION).isPresent() && fieldAnnotation.intValue(ATTR_SPHERE_VERSION).getAsInt() >= 0)
+                            || (fieldAnnotation.doubleValue(ATTR_MIN).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MIN).getAsDouble()))
+                            || (fieldAnnotation.doubleValue(ATTR_MAX).isPresent() && !Double.isNaN(fieldAnnotation.doubleValue(ATTR_MAX).getAsDouble()))) {
+                        throw new IllegalStateException("Geospatial field-specific options require geo=true for Mongo compound index field [" + persistedPath + "] on entity [" + entity.getName() + "]");
                     }
                     fields.add(new ResolvedIndexField(persistedPath, direction == MongoIndexDirection.DESC ? -1 : 1, null, null, null, null));
                 }
             }
             if (fields.isEmpty()) {
                 throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] must declare at least one field");
+            }
+            long geospatialFieldCount = fields.stream().filter(field -> "2d".equals(field.kind()) || "2dsphere".equals(field.kind())).count();
+            long geo2dFieldCount = fields.stream().filter(field -> "2d".equals(field.kind())).count();
+            if (geo2dFieldCount > 0 && (geo2dFieldCount > 1 || geospatialFieldCount > 1 || fields.size() != 2 || !"2d".equals(fields.get(0).kind()))) {
+                throw new IllegalStateException("Mongo compound 2d geospatial index on entity [" + entity.getName() + "] must declare exactly two fields with the 2d field first");
+            }
+            String defaultLanguage = annotationValue.stringValue(ATTR_DEFAULT_LANGUAGE).filter(s -> !s.isEmpty()).orElse(null);
+            String languageOverride = annotationValue.stringValue(ATTR_LANGUAGE_OVERRIDE).filter(s -> !s.isEmpty()).orElse(null);
+            Integer textIndexVersion = annotationValue.intValue(ATTR_TEXT_INDEX_VERSION).isPresent() && annotationValue.intValue(ATTR_TEXT_INDEX_VERSION).getAsInt() >= 0
+                    ? annotationValue.intValue(ATTR_TEXT_INDEX_VERSION).getAsInt()
+                    : null;
+            if (hasTextField) {
+                if (hasGeoField || hasHashedField) {
+                    throw new IllegalStateException("Mongo compound text index on entity [" + entity.getName() + "] cannot mix text fields with hashed or geospatial fields");
+                }
+                if (annotationValue.booleanValue(ATTR_UNIQUE).orElse(false)) {
+                    throw new IllegalStateException("Mongo compound text index on entity [" + entity.getName() + "] cannot be unique");
+                }
+                if (annotationValue.booleanValue(ATTR_SPARSE).orElse(false)) {
+                    throw new IllegalStateException("Mongo compound text index on entity [" + entity.getName() + "] cannot explicitly define sparse=true");
+                }
+                for (int i = firstTextFieldIndex; i <= lastTextFieldIndex; i++) {
+                    if (!"text".equals(fields.get(i).kind())) {
+                        throw new IllegalStateException("Mongo compound text index on entity [" + entity.getName() + "] must declare all text fields adjacently");
+                    }
+                }
+                if (textIndexVersion != null && textIndexVersion <= 0) {
+                    throw new IllegalStateException("Mongo text index version must be greater than zero for entity [" + entity.getName() + "]");
+                }
+            } else if (defaultLanguage != null || languageOverride != null || textIndexVersion != null) {
+                throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] can define text-specific options only when at least one field uses text=true");
+            }
+            if (hasHashedField) {
+                long hashedFieldCount = fields.stream().filter(field -> "hashed".equals(field.kind())).count();
+                if (hashedFieldCount > 1) {
+                    throw new IllegalStateException("Mongo compound hashed index on entity [" + entity.getName() + "] can declare only one hashed field");
+                }
+                if (hasGeoField) {
+                    throw new IllegalStateException("Mongo compound hashed index on entity [" + entity.getName() + "] cannot mix hashed and geospatial fields");
+                }
+                if (annotationValue.booleanValue(ATTR_UNIQUE).orElse(false)) {
+                    throw new IllegalStateException("Mongo compound hashed index on entity [" + entity.getName() + "] cannot be unique");
+                }
             }
             if (annotationValue.intValue(ATTR_EXPIRE_AFTER_SECONDS).isPresent() && annotationValue.intValue(ATTR_EXPIRE_AFTER_SECONDS).getAsInt() >= 0) {
                 throw new IllegalStateException("TTL is not supported for Mongo compound index on entity [" + entity.getName() + "]");
@@ -507,6 +652,9 @@ public final class MongoEntityIndexes {
             if (sparse && partialFilterExpression != null) {
                 throw new IllegalStateException("Mongo compound index on entity [" + entity.getName() + "] cannot define both sparse and partialFilterExpression");
             }
+            partialFilterExpression = parseJsonOption(partialFilterExpression, ATTR_PARTIAL_FILTER_EXPRESSION, entity.getName());
+            String collation = parseJsonOption(annotationValue.stringValue(ATTR_COLLATION).filter(s -> !s.isEmpty()).orElse(null), ATTR_COLLATION, entity.getName());
+            validateGeoCollation(entity, geo2dFieldCount > 0 ? "compound 2d geospatial index" : "geospatial index", geo2dFieldCount > 0 ? MongoGeoIndexType.GEO_2D : null, collation);
             indexes.add(new ResolvedIndex(
                     annotationValue.stringValue(ATTR_NAME).filter(s -> !s.isEmpty()).orElse(null),
                     List.copyOf(fields),
@@ -515,14 +663,14 @@ public final class MongoEntityIndexes {
                     annotationValue.booleanValue(ATTR_HIDDEN).orElse(false),
                     null,
                     partialFilterExpression,
-                    annotationValue.stringValue(ATTR_COLLATION).filter(s -> !s.isEmpty()).orElse(null),
+                    collation,
                     indexBits,
                     indexMin,
                     indexMax,
-                    null,
-                    null,
-                    null,
-                    null,
+                    defaultLanguage,
+                    languageOverride,
+                    textIndexVersion,
+                    indexSphereVersion,
                     null,
                     parseJsonOption(annotationValue.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName()),
                     annotationValue.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null),
@@ -586,6 +734,7 @@ public final class MongoEntityIndexes {
         private @Nullable String defaultLanguage;
         private @Nullable String languageOverride;
         private @Nullable Integer textIndexVersion;
+        private @Nullable String commitQuorum;
     }
 
     private record WildcardIndexSignature(List<ResolvedIndexField> fields,

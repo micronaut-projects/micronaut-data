@@ -53,4 +53,9 @@ public @interface MongoHashedIndexed {
      * @return The storage engine options as JSON.
      */
     String storageEngine() default "";
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 }

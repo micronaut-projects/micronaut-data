@@ -60,6 +60,16 @@ public @interface MongoGeoIndexed {
     String storageEngine() default "";
 
     /**
+     * @return The partial filter expression as JSON.
+     */
+    String partialFilterExpression() default "";
+
+    /**
+     * @return The collation definition as JSON.
+     */
+    String collation() default "";
+
+    /**
      * @return The 2dsphere index version, or {@code -1} if unset. Only valid for
      * {@link MongoGeoIndexType#GEO_2DSPHERE}.
      */
@@ -82,4 +92,9 @@ public @interface MongoGeoIndexed {
      * {@link MongoGeoIndexType#GEO_2D}. Represents the upper inclusive boundary. MongoDB default is 180.0.
      */
     double max() default Double.NaN;
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 }

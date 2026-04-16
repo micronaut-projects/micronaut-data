@@ -17,7 +17,7 @@ If a mapped collection does not exist and collection creation is disabled, index
 Micronaut Data currently supports the following MongoDB index annotations:
 
 * ann:data.mongodb.annotation.index.MongoIndexed[] (single-field indexes)
-* ann:data.mongodb.annotation.index.MongoCompoundIndex[] / ann:data.mongodb.annotation.index.MongoCompoundIndexes[] (compound indexes)
+* ann:data.mongodb.annotation.index.MongoCompoundIndex[] / ann:data.mongodb.annotation.index.MongoCompoundIndexes[] (compound indexes, including numeric, text, hashed, and geospatial members)
 * ann:data.mongodb.annotation.index.MongoTextIndexed[] (text indexes, including multi-field aggregation)
 * ann:data.mongodb.annotation.index.MongoHashedIndexed[] (hashed indexes)
 * ann:data.mongodb.annotation.index.MongoGeoIndexed[] (geospatial indexes: `2d`, `2dsphere`)
@@ -71,6 +71,14 @@ class OrderEntity {
 ----
 
 NOTE: TTL on compound indexes is rejected during startup validation because MongoDB TTL semantics are single-field oriented. This is fail-fast validation: the application startup fails immediately with a clear error instead of silently creating a non-expiring index definition.
+
+Compound fields may also declare special key kinds:
+
+* `text = true` for compound text members
+* `hashed = true` for a compound hashed member
+* `geo = true` with `geoType` for compound geospatial members
+
+Compound geospatial members with `geoType = GEO_2DSPHERE` also support `sphereVersion`.
 
 === Compound path examples
 
@@ -128,9 +136,15 @@ NOTE: For aggregated multi-field text indexes, these text-specific options must 
 
 Use ann:data.mongodb.annotation.index.MongoHashedIndexed[] to create hashed indexes.
 
+Hashed declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
 == Geospatial indexes
 
 Use ann:data.mongodb.annotation.index.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
+
+MongoDB currently exposes these two geospatial index kinds.
+
+Geospatial declarations also support index-build `comment`, create-index command `commitQuorum`, `storageEngine`, `partialFilterExpression`, and `collation`.
 
 For `2dsphere` indexes, ann:data.mongodb.annotation.index.MongoGeoIndexed[] also supports `sphereVersion`.
 
@@ -138,13 +152,21 @@ NOTE: `sphereVersion` is only valid for `2dsphere` indexes; declaring it for oth
 
 For `2dsphere` indexes, the supported implicit property model is MongoDB Java driver GeoJSON types such as `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, and `GeometryCollection`.
 
-For `2d` indexes, Micronaut Data continues to allow legacy map-backed coordinate values.
+For `2d` indexes, Micronaut Data accepts legacy coordinate values backed by maps, lists, and arrays.
+
+For `2dsphere` indexes, Micronaut Data also accepts legacy coordinate values backed by maps, lists, and arrays in addition to MongoDB GeoJSON driver types.
+
+NOTE: For legacy map/list/array coordinate models, Micronaut Data validates declared property type compatibility during startup, but it does not validate the runtime coordinate shape itself (for example element count or numeric contents). Malformed legacy coordinate values are still rejected by MongoDB when documents are written or when the index is built.
+
+NOTE: MongoDB `2d` indexes support only simple binary collation. Micronaut Data rejects non-simple `collation` definitions for `2d` indexes during startup validation (fail-fast).
 
 NOTE: ann:data.mongodb.annotation.index.MongoGeoIndexed[] validates property type compatibility during startup and fails fast for unsupported property types.
 
 == Wildcard indexes
 
 Use ann:data.mongodb.annotation.index.MongoWildcardIndexed[] for field-level wildcard indexes.
+
+Field-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
 
 Use ann:data.mongodb.annotation.index.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
 

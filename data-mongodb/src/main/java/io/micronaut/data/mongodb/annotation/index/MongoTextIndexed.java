@@ -73,4 +73,9 @@ public @interface MongoTextIndexed {
      * @return The text index version, or -1 if unset.
      */
     int textIndexVersion() default -1;
+
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
 }

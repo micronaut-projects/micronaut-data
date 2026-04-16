@@ -59,4 +59,9 @@ public @interface MongoWildcardIndexed {
      */
     String storageEngine() default "";
 
+    /**
+     * @return The createIndexes commit quorum.
+     */
+    String commitQuorum() default "";
+
 }

@@ -77,6 +77,21 @@ public @interface MongoCompoundIndex {
     String collation() default "";
 
     /**
+     * @return The text index default language.
+     */
+    String defaultLanguage() default "";
+
+    /**
+     * @return The document field that overrides language for text processing.
+     */
+    String languageOverride() default "";
+
+    /**
+     * @return The text index version, or -1 if unset.
+     */
+    int textIndexVersion() default -1;
+
+    /**
      * @return The index creation command comment.
      */
     String comment() default "";

@@ -30,6 +30,32 @@ class MongoCompoundGeoOptionsValidationSpec extends Specification implements Mon
         def e = thrown(RuntimeException)
         e.message.contains('require geo=true')
     }
+
+    void 'fails fast when sphereVersion is used on non-2dsphere compound geospatial field'() {
+        when:
+        ApplicationContext.run(getProperties() + [
+                'mongodb.package-names'                   : ['io.micronaut.data.mongodb.index.validation.geocompoundsphereversion'],
+                'micronaut.data.mongodb.create-collections': 'true',
+                'micronaut.data.mongodb.create-indexes'    : 'true'
+        ])
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('2dsphere-specific geospatial options are only supported for Mongo 2dsphere compound geospatial fields')
+    }
+
+    void 'fails fast when compound geospatial fields define conflicting sphereVersion options'() {
+        when:
+        ApplicationContext.run(getProperties() + [
+                'mongodb.package-names'                   : ['io.micronaut.data.mongodb.index.validation.geocompoundconflictingsphere'],
+                'micronaut.data.mongodb.create-collections': 'true',
+                'micronaut.data.mongodb.create-indexes'    : 'true'
+        ])
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('declares conflicting sphereVersion options for geospatial fields')
+    }
 }
 
 @MongoRepository

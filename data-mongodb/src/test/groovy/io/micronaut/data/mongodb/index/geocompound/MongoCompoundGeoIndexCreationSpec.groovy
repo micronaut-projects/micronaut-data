@@ -54,6 +54,7 @@ class MongoCompoundGeoIndexCreationSpec extends Specification implements MongoTe
             assert index.fields.size() == 2
             assert index.fields[0].path() == 'location'
             assert index.fields[0].kind() == '2dsphere'
+            assert index.sphereVersion == 3
             assert index.fields[1].path() == 'name'
             assert index.fields[1].order() == 1
         }
@@ -63,7 +64,7 @@ class MongoCompoundGeoIndexCreationSpec extends Specification implements MongoTe
 @MongoCompoundIndex(
         name = 'geo_name_idx',
         fields = [
-                @MongoCompoundIndexField(value = 'location', geo = true, geoType = MongoGeoIndexType.GEO_2DSPHERE),
+                @MongoCompoundIndexField(value = 'location', geo = true, geoType = MongoGeoIndexType.GEO_2DSPHERE, sphereVersion = 3),
                 @MongoCompoundIndexField(value = 'name', direction = MongoIndexDirection.ASC)
         ]
 )

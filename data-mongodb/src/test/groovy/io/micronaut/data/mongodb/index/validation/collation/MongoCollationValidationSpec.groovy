@@ -24,7 +24,8 @@ class MongoCollationValidationSpec extends Specification implements MongoTestPro
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('JSON reader')
+        e.message.contains('Mongo collation for entity')
+        e.message.contains('must be valid JSON')
     }
 }
 
