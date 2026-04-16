@@ -1,4 +1,4 @@
-package io.micronaut.data.mongodb.index.validation.multipletext
+package io.micronaut.data.mongodb.index.validation.text.multiple
 
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id

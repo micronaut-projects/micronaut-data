@@ -51,7 +51,7 @@ import java.util.Set;
 @Context
 @Internal
 @RequiresSyncMongo
-@Requires(property = MongoDataConfiguration.PREFIX)
+@Requires(condition = MongoDataConfiguration.CollectionInitializationEnabledCondition.class)
 public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreator<MongoDatabase> {
 
     @PostConstruct

@@ -29,7 +29,7 @@ class MongoCompoundTextIndexValidationSpec extends Specification implements Mong
         ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-collections': 'true',
                 'micronaut.data.mongodb.create-indexes'    : 'true',
-                'mongodb.package-names'                    : ['io.micronaut.data.mongodb.index.validation.multipletext']
+                'mongodb.package-names'                    : ['io.micronaut.data.mongodb.index.validation.text.multiple']
         ])
 
         then:

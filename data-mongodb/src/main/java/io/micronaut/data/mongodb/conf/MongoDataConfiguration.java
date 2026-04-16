@@ -18,6 +18,7 @@ package io.micronaut.data.mongodb.conf;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import org.jspecify.annotations.NullUnmarked;
 
@@ -144,6 +145,19 @@ public final class MongoDataConfiguration {
         @Override
         public boolean matches(ConditionContext context) {
             return context.getBean(MongoDataConfiguration.class).driverType != DriverType.SYNC;
+        }
+    }
+
+    /**
+     * Collection initialization enabled condition.
+     */
+    @Internal
+    public static final class CollectionInitializationEnabledCondition implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context) {
+            MongoDataConfiguration configuration = context.getBean(MongoDataConfiguration.class);
+            return configuration.isCreateCollections() || configuration.isCreateIndexes();
         }
     }
 

@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @Context
 @Internal
 @RequiresReactiveMongo
-@Requires(property = MongoDataConfiguration.PREFIX)
+@Requires(condition = MongoDataConfiguration.CollectionInitializationEnabledCondition.class)
 public final class MongoReactiveCollectionsCreator extends AbstractMongoCollectionsCreator<MongoDatabase> {
 
     @PostConstruct

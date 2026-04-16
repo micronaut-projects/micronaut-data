@@ -1,5 +1,8 @@
 package io.micronaut.data.mongodb.init
 
+import io.micronaut.context.ApplicationContext
+import io.micronaut.context.condition.ConditionContext
+import io.micronaut.data.mongodb.conf.MongoDataConfiguration
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
@@ -10,6 +13,60 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 class AbstractMongoCollectionsCreatorSpec extends Specification {
+
+    void 'collection initialization condition matches when create collections is enabled'() {
+        given:
+        def configuration = new MongoDataConfiguration()
+        configuration.setCreateCollections(true)
+        ConditionContext conditionContext = Stub() {
+            getBean(MongoDataConfiguration) >> configuration
+        }
+
+        expect:
+        new MongoDataConfiguration.CollectionInitializationEnabledCondition().matches(conditionContext)
+    }
+
+    void 'collection initialization condition matches when create indexes is enabled'() {
+        given:
+        def configuration = new MongoDataConfiguration()
+        configuration.setCreateIndexes(true)
+        ConditionContext conditionContext = Stub() {
+            getBean(MongoDataConfiguration) >> configuration
+        }
+
+        expect:
+        new MongoDataConfiguration.CollectionInitializationEnabledCondition().matches(conditionContext)
+    }
+
+    void 'collection initialization condition does not match when both flags are disabled'() {
+        given:
+        def conditionContext = Stub(ConditionContext) {
+            getBean(MongoDataConfiguration) >> new MongoDataConfiguration()
+        }
+
+        expect:
+        !new MongoDataConfiguration.CollectionInitializationEnabledCondition().matches(conditionContext)
+    }
+
+    void 'mongo data configuration binds create indexes from leaf property'() {
+        given:
+        ApplicationContext applicationContext = ApplicationContext.builder([
+                (MongoDataConfiguration.CREATE_INDEXES_PROPERTY): 'true',
+                'mongodb.package-names': ['test.no.entities']
+        ])
+                .build()
+                .start()
+
+        when:
+        def configuration = applicationContext.getBean(MongoDataConfiguration)
+
+        then:
+        configuration.isCreateIndexes()
+        !configuration.isCreateCollections()
+
+        cleanup:
+        applicationContext.close()
+    }
 
     void 'resolves clustered collection options from collection document'() {
         given:
