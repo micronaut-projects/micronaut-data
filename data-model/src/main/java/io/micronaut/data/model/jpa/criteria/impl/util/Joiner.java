@@ -31,6 +31,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -223,6 +224,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         functionExpression.getExpressions().forEach(this::visitExpression);
+    }
+
+    @Override
+    public void visit(CastExpression<?> castExpression) {
+        visitExpression(castExpression.getExpression());
     }
 
     @Override

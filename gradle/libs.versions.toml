@@ -1,16 +1,16 @@
 [versions]
-micronaut = "5.0.0-M19"
+micronaut = "5.0.0-M22"
 micronaut-platform = "4.10.1"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "4.6.2"
 micronaut-testresources = "4.0.0-M1"
 
 micronaut-azure = "5.13.0"
-micronaut-reactor = "4.0.0-M1"
+micronaut-reactor = "4.0.0-M2"
 micronaut-rxjava2 = "2.9.0"
 micronaut-r2dbc = "7.0.1-M1"
 micronaut-sql = "7.0.1-M1"
-micronaut-serde = "3.0.0-M5"
+micronaut-serde = "3.0.0-M6"
 micronaut-spring = "5.12.1"
 micronaut-test = "5.0.0-M4"
 micronaut-mongo = "6.0.1-M1"
@@ -22,10 +22,10 @@ micronaut-flyway = "8.0.0-M3"
 micronaut-coherence = "6.0.0-M1"
 #micronaut-sourcegen = "1.8.2"
 
-groovy = "5.0.4"
+groovy = "5.0.5"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-data = "1.1.0-M2"
+managed-jakarta-data = "1.1.0-M3"
 
 spring-data = "4.0.4"
 
@@ -51,7 +51,7 @@ shadow-gradle-plugin = "9.4.1"
 errorprone-gradle-plugin = "5.1.0"
 nullaway = "0.13.1"
 error_prone_core = "2.48.0"
-groovy_yaml = "5.0.4"
+groovy_yaml = "5.0.5"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
