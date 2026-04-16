@@ -66,36 +66,43 @@ class JdbcRepositorySpec extends AbstractMetamodelSpec implements H2TestProperty
     }
 
     @Override
+    @Memoized
     AuthorRepository getAuthorRepository() {
         return context.getBean(H2AuthorRepository)
     }
 
     @Override
+    @Memoized
     GenreRepository getGenreRepository() {
         return context.getBean(H2GenreRepository)
     }
 
     @Override
+    @Memoized
     PublisherRepository getPublisherRepository() {
         return context.getBean(H2PublisherRepository)
     }
 
     @Override
+    @Memoized
     ClientRepository getClientRepository() {
         return context.getBean(H2ClientRepository)
     }
 
     @Override
+    @Memoized
     ClientCategoryRepository getClientCategoryRepository() {
         return context.getBean(H2ClientCategoryRepository)
     }
 
     @Override
+    @Memoized
     DeviceRepository getDeviceRepository() {
         return context.getBean(H2DeviceRepository)
     }
 
     @Override
+    @Memoized
     TrainRepository getTrainRepository() {
         return context.getBean(H2TrainRepository)
     }

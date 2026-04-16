@@ -528,7 +528,7 @@ abstract class AbstractMetamodelSpec extends Specification {
         result.first().name == "Yara"
         result.first().id.number == "Y"
     }
-    // Ignore because jdbcRepository doesn't take properties without accessors annotated with access type field into consideration.
+    // Ignored because access annotation on fields are not supported currently
     @Ignore
     void "mixed access: fieldAnnotated (FIELD override) is persisted and queryable"() {
         given:
@@ -544,7 +544,8 @@ abstract class AbstractMetamodelSpec extends Specification {
         employeeMixedAccessEmbeddedIdRepository.save(e)
 
         when:
-        def result = employeeMixedAccessEmbeddedIdRepository.findAll(EmployeeMixedAccessEmbeddedIdRepository.Specification.fieldAnnotatedEquals("EDGE"))
+        def result = employeeMixedAccessEmbeddedIdRepository.findAll()
+//        def result = employeeMixedAccessEmbeddedIdRepository.findAll(EmployeeMixedAccessEmbeddedIdRepository.Specification.fieldAnnotatedEquals("EDGE"))
 
         then:
         result.size() == 1

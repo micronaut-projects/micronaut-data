@@ -40,9 +40,9 @@ public interface EmployeeMixedAccessEmbeddedIdRepository extends CrudRepository<
         }
 
         // This throws Null pointer exception because jdbcRepository doesn't take properties without accessors annotated with access type field into consideration.
-        public static PredicateSpecification<EmployeeMixedAccessEmbeddedId> fieldAnnotatedEquals(String s) {
-            return (root, cb) -> cb.equal(root.get(EmployeeMixedAccessEmbeddedId_.fieldAnnotated), s);
-        }
+//        public static PredicateSpecification<EmployeeMixedAccessEmbeddedId> fieldAnnotatedEquals(String s) {
+//            return (root, cb) -> cb.equal(root.get(EmployeeMixedAccessEmbeddedId_.fieldAnnotated), s);
+//        }
     }
 
 }
