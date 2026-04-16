@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -24,14 +23,9 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
 
@@ -231,9 +225,16 @@ public interface PersistentEntity extends PersistentElement {
 
     /**
      * Returns the parent entity of this entity.
-     * @return The ParentEntity instance
+     * @return The ParentEntity instance , {@code null} if no parent is present.
      */
     @Nullable PersistentEntity getParentEntity();
+
+    /**
+     * Is this type an inner class.
+     *
+     * @return True if it is an inner class
+     */
+    boolean isInner();
 
     /**
      * Computes a dot separated property path for the given camel case path.

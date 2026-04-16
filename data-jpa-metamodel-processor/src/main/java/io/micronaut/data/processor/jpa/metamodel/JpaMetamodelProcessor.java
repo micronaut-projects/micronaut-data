@@ -15,15 +15,16 @@
  */
 package io.micronaut.data.processor.jpa.metamodel;
 
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
-import io.micronaut.inject.ast.*;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.sourcegen.model.*;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import javax.lang.model.element.Modifier;
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -122,20 +123,6 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_EMBEDDED_ID = "jakarta.persistence.EmbeddedId";
 
     /**
-     * Jakarta persistence AccessType enum.
-     */
-    public enum JakartaAccessType {
-        /**
-         * Jakarta persistence AccessType Field.
-         */
-        FIELD,
-        /**
-         * Jakarta persistence AccessType Property.
-         */
-        PROPERTY
-    }
-
-    /**
      * Micronaut data MappedEntity annotation name.
      */
     public static final String MICRONAUT_DATA_MAPPED_ENTITY = "io.micronaut.data.annotation.MappedEntity";
@@ -177,95 +164,47 @@ public final class JpaMetamodelProcessor {
     /**
      * JPA meta model class def generator .
      *
-     * @param packageName          Element package name
-     * @param element              Class Element
-     * @return Jpa metamodel class definition builder .
+     * @param packageName          Element package name.
+     * @param persistentEntity     Source persistent entity.
+     * @return                     Jpa metamodel class definition builder.
      */
-    public static ClassDef.ClassDefBuilder createJpaMetaModelClassDefBuilder(@NonNull String packageName, @NonNull ClassElement element) {
-        ClassTypeDef elementType = ClassTypeDef.of(element);
-        String metaModelClassName = resolveModelClassName(packageName, elementType);
-
-        List<? extends Element> fieldElements = resolveFieldElements(element, elementType.getName(), element.getAnnotation(JAKARTA_ACCESS));
+    public static ClassDef.ClassDefBuilder createJpaMetaModelClassDefBuilder(@NonNull String packageName, @NonNull ClassTypeDef classTypeDef, @NonNull SourcePersistentEntity persistentEntity) {
+        String metaModelClassName = resolveModelClassName(packageName, classTypeDef);
 
         ClassDef.ClassDefBuilder classDefBuilder = ClassDef.builder(metaModelClassName)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_STATIC_METAMODEL)).addMember("value", elementType).build())
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_STATIC_METAMODEL)).addMember("value", classTypeDef).build())
             .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_ANNOTATION_GENERATED)).addMember("value", JpaMetamodelProcessor.class.getName()).build());
 
-        ClassElement superElement = element.getSuperType().orElse(null);
+        PersistentEntity parentEntity = persistentEntity.getParentEntity();
 
-        if (superElement != null && supportedClass(superElement)) {
-            String superElementModelClassName = resolveModelClassName(superElement.getPackageName(), ClassTypeDef.of(superElement));
+        if (parentEntity instanceof SourcePersistentEntity parentSourcePersistentEntity && supportedClass(parentSourcePersistentEntity)) {
+            ClassElement parentSourcePersistentEntityClassElement = parentSourcePersistentEntity.getClassElement();
+            String superElementModelClassName = resolveModelClassName(parentSourcePersistentEntityClassElement.getPackageName(), ClassTypeDef.of(parentSourcePersistentEntityClassElement));
             ClassTypeDef superClassModelTypeDef = ClassTypeDef.of(superElementModelClassName);
+
             classDefBuilder.superclass(superClassModelTypeDef);
         }
 
         List<FieldDef> constantPropertyName = new ArrayList<>();
         List<FieldDef> attributeFields = new ArrayList<>();
 
-        for (Element fieldElement : fieldElements) {
-            if (fieldElement instanceof TypedElement typedElement) {
-                constantPropertyName.add(createConstantPropertyName(typedElement.getName()));
-                attributeFields.add(createAttributeField(fieldElement.getName(), typedElement.getType(), elementType));
+        for (String persistentPropertyName : persistentEntity.getPersistentPropertyNames()) {
+            SourcePersistentProperty persistentProperty = persistentEntity.getPropertyByName(persistentPropertyName);
+            if (persistentProperty == null) {
+                throw new ProcessingException(persistentEntity, "Persistent property " + persistentPropertyName + " not found.");
             }
+            if (!persistentProperty.getDeclaringType().getName().equals(classTypeDef.getName())) {
+                continue;
+            }
+            constantPropertyName.add(createConstantPropertyName(persistentPropertyName));
+            attributeFields.add(createAttributeField(persistentPropertyName, persistentProperty.getType(), classTypeDef));
         }
 
         classDefBuilder.addFields(constantPropertyName);
         classDefBuilder.addFields(attributeFields);
-        classDefBuilder.addField(createJakartaManagedEntityTypeField(elementType, element.getAnnotationNames()));
+        classDefBuilder.addField(createJakartaManagedEntityTypeField(classTypeDef, persistentEntity.getAnnotationNames()));
         return classDefBuilder;
-    }
-
-    /**
-     * Resolves field elements based on the access type.
-     * @param element Class element.
-     * @param elementType Class element type.
-     * @param jakartaAccessAnnotation Jakarta access annotation value.
-     * @return List of supported fields for the static metamodel.
-     */
-    private static List<? extends Element> resolveFieldElements(@NonNull ClassElement element, String elementType, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
-        JakartaAccessType jakartaAccessType = resolveAccessType(element, jakartaAccessAnnotation);
-
-        List<Element> elements = switch (jakartaAccessType) {
-            case FIELD -> new ArrayList<>(element.getFields());
-            case PROPERTY -> {
-                List<Element> properties = new ArrayList<>(element.getBeanProperties());
-                element.getFields().stream().filter(o -> o.getAnnotation(JAKARTA_ACCESS) != null && o.getAnnotation(JAKARTA_ACCESS).getRequiredValue(JakartaAccessType.class)
-                        .equals(JakartaAccessType.FIELD))
-                    .forEach(properties::add);
-                yield properties;
-            }
-        };
-        elements = elements.stream()
-            .filter(o -> !o.getModifiers().contains(ElementModifier.STATIC))
-            .filter(o -> !o.getModifiers().contains(ElementModifier.TRANSIENT) && !o.getAnnotationNames().contains(JAKARTA_TRANSIENT))
-            .filter((o) -> {
-                if (o instanceof MemberElement memberElement) {
-                    return memberElement.getDeclaringType().getName().equals(elementType);
-                }
-                return false;
-            }).toList();
-
-        return elements;
-    }
-
-    /**
-     * Resolves the access type.
-     * @param element Class element.
-     * @param jakartaAccessAnnotation Jakarta access annotation value.
-     * @return Jakarta access type.
-     */
-    private static JakartaAccessType resolveAccessType(@NonNull ClassElement element, @Nullable AnnotationValue<Annotation> jakartaAccessAnnotation) {
-        if (jakartaAccessAnnotation == null &&
-            element.getMethods().stream().anyMatch(o -> o.hasAnnotation(JAKARTA_ID) ||
-                o.hasAnnotation(JAKARTA_EMBEDDED_ID))) {
-            return JakartaAccessType.PROPERTY;
-        }
-        if (jakartaAccessAnnotation == null) {
-            return JakartaAccessType.FIELD;
-        }
-        return jakartaAccessAnnotation.getRequiredValue(JakartaAccessType.class);
-
     }
 
     /**
@@ -285,8 +224,18 @@ public final class JpaMetamodelProcessor {
     /**
      * Utility function to check if the given class is supported for StaticMetamodel generation.
      *
-     * @param classElement class element
-     * @return boolean
+     * @param sourcePersistentEntity source persistent element.
+     * @return boolean.
+     */
+    public static boolean supportedClass(SourcePersistentEntity sourcePersistentEntity) {
+        return supportedClass(sourcePersistentEntity.getClassElement());
+    }
+
+    /**
+     * Utility function to check if the given class is supported for StaticMetamodel generation.
+     *
+     * @param classElement class element.
+     * @return boolean.
      */
     public static boolean supportedClass(ClassElement classElement) {
         return !classElement.isInner() && classElement.getAnnotationNames().stream().anyMatch(SUPPORTED_ANNOTATIONS::contains);

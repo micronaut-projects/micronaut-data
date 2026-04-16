@@ -15,16 +15,19 @@
  */
 package io.micronaut.data.processor.model;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.MappingException;
-import io.micronaut.data.model.*;
+import io.micronaut.data.model.AbstractPersistentEntity;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -39,6 +42,8 @@ import java.util.function.Function;
 public class SourcePersistentEntity extends AbstractPersistentEntity implements PersistentEntity, TypedElement {
 
     private final ClassElement classElement;
+    @Nullable
+    private final SourcePersistentEntity parentSourcePersistentEntity;
     private final SourcePersistentProperty[] ids;
     @Nullable
     private final SourcePersistentProperty version;
@@ -110,6 +115,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         }
         this.ids = ids.stream().toArray(SourcePersistentProperty[]::new);
         this.version = version;
+        if (classElement.getSuperType().isPresent()) {
+            this.parentSourcePersistentEntity = new SourcePersistentEntity(classElement.getSuperType().get(), entityResolver);
+        } else {
+            this.parentSourcePersistentEntity = null;
+        }
     }
 
     @Override
@@ -260,7 +270,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @Nullable
     @Override
     public PersistentEntity getParentEntity() {
-        return null;
+        return parentSourcePersistentEntity;
     }
 
     /**
@@ -277,6 +287,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     private boolean isEmbedded(PropertyElement bp) {
         return bp.enumValue(Relation.class, Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
+    }
+
+    @Override
+    public boolean isInner() {
+        return classElement.isInner();
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.micronaut.data.processor.jpa.metamodel.visitor;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -25,10 +26,14 @@ import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.ClassTypeDef;
 
 import javax.annotation.processing.SupportedOptions;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*;
 
@@ -50,6 +55,14 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
         return SUPPORTED_ANNOTATIONS;
     }
 
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
+        @Override
+        public SourcePersistentEntity apply(ClassElement classElement) {
+            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
+        }
+    };
+
     /**
      * @param element class element
      * @param context visitor context
@@ -61,8 +74,11 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
             processed.contains(element.getName())) {
             return;
         }
+
+        SourcePersistentEntity persistentEntity = entityResolver.apply(element);
+
         try {
-            ClassDef.ClassDefBuilder builder = createJpaMetaModelClassDefBuilder(element.getPackageName(), element);
+            ClassDef.ClassDefBuilder builder = createJpaMetaModelClassDefBuilder(element.getPackageName(), ClassTypeDef.of(persistentEntity.getType()), persistentEntity);
             ClassDef builderDef = builder.build();
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {
