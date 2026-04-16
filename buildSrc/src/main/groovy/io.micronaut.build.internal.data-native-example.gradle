@@ -110,3 +110,14 @@ graalvmNative {
     }
 }
 
+tasks.withType(Test).configureEach {
+    if ( project.findProperty( 'log-test-progress' )?.toString()?.toBoolean() ) {
+        // Log a statement for each test.
+        testLogging {
+            displayGranularity = 1
+            events = ["passed", "skipped", "failed"]
+            exceptionFormat = 'full'
+            showStandardStreams = true
+        }
+    }
+}

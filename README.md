@@ -4,6 +4,7 @@
 [![](https://github.com/micronaut-projects/micronaut-data/workflows/Java%20CI/badge.svg)](https://github.com/micronaut-projects/micronaut-data/actions)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=micronaut-projects_micronaut-data&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=micronaut-projects_micronaut-data)
 [![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.micronaut.io/scans)
+[<img height="20" src="https://testpilot.oracle.com/ords/testpilot/badges/github/micronaut-projects/micronaut-data">](https://testpilot.oracle.com)
 
 Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
 

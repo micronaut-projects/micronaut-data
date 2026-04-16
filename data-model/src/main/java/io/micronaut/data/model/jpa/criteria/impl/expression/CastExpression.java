@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 original authors
+ * Copyright 2017-2021 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,30 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
+import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 
-import java.util.List;
-
 /**
- * The function expression.
+ * The cast expression.
  *
- * @param <E> The expression type
+ * @param <E> The cast expression type
  * @author Denis Stepanov
- * @since 4.9
+ * @since 5.0
  */
 @Internal
-public final class FunctionExpression<E> extends AbstractExpression<E> {
+public final class CastExpression<E> extends AbstractExpression<E> {
 
-    private final String name;
-    private final List<Expression<?>> expressions;
+    private final IExpression<?> expression;
 
-    public FunctionExpression(String name, List<Expression<?>> expressions, Class<E> expressionType) {
-        super(new ClassExpressionType<>(expressionType));
-        this.name = name;
-        this.expressions = expressions;
+    public CastExpression(Expression<?> expression, ExpressionType<E> type) {
+        super(type);
+        this.expression = (IExpression<?>) expression;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public List<Expression<?>> getExpressions() {
-        return expressions;
+    public Expression<?> getExpression() {
+        return expression;
     }
 
     @Override
@@ -55,8 +49,9 @@ public final class FunctionExpression<E> extends AbstractExpression<E> {
 
     @Override
     public String toString() {
-        return "FunctionExpression{" + "name='" + name + '\'' +
-            ", expressions=" + expressions +
+        return "CastExpression{" +
+            "type=" + getExpressionType() +
+            ", expression=" + expression +
             '}';
     }
 }
