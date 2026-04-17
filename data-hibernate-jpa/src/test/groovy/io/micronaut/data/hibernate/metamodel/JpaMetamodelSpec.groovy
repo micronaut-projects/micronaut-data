@@ -97,7 +97,7 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
     @Override
     @Memoized
     TrainRepository getTrainRepository() {
-        return context.getBean(JpaTrainRepository);
+        return context.getBean(HibernateTrainRepository);
     }
 
     @Override
