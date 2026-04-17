@@ -137,7 +137,7 @@ include 'doc-examples:jdbc-spring-template-example-java'
 include 'doc-examples:jdbc-spring-template-example-groovy'
 include 'doc-examples:jdbc-spring-template-example-kotlin'
 
-include 'doc-examples:data-jpa-metamodel-entities-example-java'
+include 'doc-examples:data-jpa-metamodel-entities-example-groovy'
 
 include 'doc-examples:jooq-r2dbc-postgres'
 

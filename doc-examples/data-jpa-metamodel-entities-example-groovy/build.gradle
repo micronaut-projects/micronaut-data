@@ -1,0 +1,29 @@
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    implementation projects.micronautDataJpaMetamodelProcessor
+    annotationProcessor projects.micronautDataProcessor
+
+    implementation mnSql.jakarta.persistence.api
+    implementation projects.micronautDataModel
+
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation projects.micronautDataTck
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation(mnTest.junit.platform.suite)
+}
