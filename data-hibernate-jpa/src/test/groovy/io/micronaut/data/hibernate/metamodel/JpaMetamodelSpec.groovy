@@ -2,12 +2,12 @@ package io.micronaut.data.hibernate.metamodel
 
 import groovy.transform.Memoized
 import io.micronaut.data.hibernate.*
+import io.micronaut.data.hibernate.entities.EntityWithMapField
 import io.micronaut.data.tck.entities.Client
 import io.micronaut.data.tck.entities.ClientCategory
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractMetamodelSpec
 
-@H2DBProperties
 class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {
 
     @Override
@@ -112,6 +112,15 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
         return context.getBean(JpaPageRepository)
     }
 
+    @Memoized
+    JpaEntityWithMapFieldRepository getEntityWithMapFieldRepository() {
+        return context.getBean(JpaEntityWithMapFieldRepository)
+    }
+
+    void setup() {
+        entityWithMapFieldRepository.deleteAll()
+    }
+
     @Override
     void populateClientAndCategories() {
         def fiction = new ClientCategory("Fiction", null, new byte[]{})
@@ -127,4 +136,32 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
         c.mainCategory = main
         clientRepository.save(c)
     }
+
+    void "can join map element collection and filter by key/value using static metamodel"() {
+        given:
+        def e1 = new EntityWithMapField()
+        e1.id = 1L
+        e1.properties = [region: "EMEA", segment: "ENT"] as Map<String, String>
+
+        def e2 = new EntityWithMapField()
+        e2.id = 2L
+        e2.properties = [region: "US", segment: "FL"] as Map<String, String>
+
+        def e3 = new EntityWithMapField()
+        e3.id = 3L
+
+        entityWithMapFieldRepository.saveAll([e1, e2, e3])
+
+        when:
+        var result = entityWithMapFieldRepository.findAll(
+                JpaEntityWithMapFieldRepository.Specification.propertyEquals("region", "EMEA")
+        )
+
+        then:
+        result.size() == 1
+        result.getFirst().id == 1
+        result.getFirst().properties.containsKey("region")
+    }
+
+
 }
