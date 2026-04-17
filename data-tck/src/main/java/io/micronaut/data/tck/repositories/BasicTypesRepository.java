@@ -32,6 +32,9 @@ public interface BasicTypesRepository extends CrudRepository<BasicTypes, Long>, 
 
     BasicTypes findByByteArray(@Parameter("byteArray") byte[] byteArray);
 
+    @Query("select byte_array from basic_types where my_id = :id")
+    Optional<byte[]> findByteArrayById(Long id);
+
     BasicTypesProjection queryById(Long id);
 
     Collection<BasicTypesProjection> findAllById(Long id);

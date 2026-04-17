@@ -311,8 +311,7 @@ abstract class AbstractRepositorySpec extends Specification {
             def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
             bookRepository.save(book1)
             bookRepository.save(book2)
-            bookRepository.save(book3
-            )
+            bookRepository.save(book3)
             def criteria = new PredicateSpecification() {
                 @Override
                 Predicate toPredicate(Root root, CriteriaBuilder criteriaBuilder) {
@@ -334,7 +333,7 @@ abstract class AbstractRepositorySpec extends Specification {
             page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
 
         when:
-            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true)))
             page = bookRepository.findAll(criteria, pageable)
 
         then:
@@ -527,6 +526,20 @@ abstract class AbstractRepositorySpec extends Specification {
             // The point of test is that it won't throw error when field value is null
             retrievedBook.wrapperChar == 'c'
         }
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/3757")
+    void 'test retrieve single byte array column'() {
+        given:
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        expect:
+        def byteArrayOpt = basicTypeRepository.findByteArrayById(entity.myId)
+        byteArrayOpt.present
+        def byteArray = byteArrayOpt.get()
+        // Compare byte[] contents instead of reference equality
+        Arrays.equals(byteArray, entity.byteArray)
+        byteArray.class == byte[].class
     }
 
     void "test save and retrieve timezone basic types"() {

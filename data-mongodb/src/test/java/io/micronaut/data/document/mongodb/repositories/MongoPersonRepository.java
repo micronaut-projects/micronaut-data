@@ -68,4 +68,6 @@ public interface MongoPersonRepository extends PersonRepository {
 
     @MongoFindQuery(filter = "{'name': {'$in': :names}}")
     List<Person> findByNameInList(String[] names);
+
+    List<Person> findByNameNotLike(String name);
 }

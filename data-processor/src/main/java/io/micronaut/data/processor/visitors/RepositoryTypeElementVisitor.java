@@ -138,7 +138,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     {
         List<MethodMatcher> matcherList = new ArrayList<>(20);
-        SoftServiceLoader.load(MethodMatcher.class).collectAll(matcherList);
+        SoftServiceLoader.load(MethodMatcher.class, RepositoryTypeElementVisitor.class.getClassLoader()).collectAll(matcherList);
         OrderUtil.sort(matcherList);
         methodsMatchers = matcherList;
     }

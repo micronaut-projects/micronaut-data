@@ -1,5 +1,7 @@
-package example;
+package example.oracle;
 
+import example.Plant;
+import example.PlantRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;

@@ -6,7 +6,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
-class BookRepositorySpec {
+public abstract class BookRepositorySpec {
 
     // tag::inject[]
     @Inject
@@ -33,12 +31,15 @@ class BookRepositorySpec {
     @Inject
     AbstractBookRepository abstractBookRepository;
 
+    protected BookRepositorySpec() {
+    }
+
     // tag::metadata[]
     @Inject
     BeanContext beanContext;
 
     @Test
-    void testAnnotationMetadata() {
+    protected void testAnnotationMetadata() {
         String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
                 .getRequiredMethod("find", String.class) // <2>
                 .getAnnotationMetadata().stringValue(Query.class) // <3>
@@ -56,7 +57,7 @@ class BookRepositorySpec {
     }
 
     @Test
-    void testCrud() {
+    protected void testCrud() {
         assertNotNull(bookRepository);
 
         // Create: Save a new book
@@ -101,7 +102,7 @@ class BookRepositorySpec {
     }
 
     @Test
-    void testExpressions() {
+    protected void testExpressions() {
         assertEquals(0, bookRepository.count());
 
         Book book = new Book();
@@ -120,7 +121,7 @@ class BookRepositorySpec {
     }
 
     @Test
-    void testPageable() {
+    protected void testPageable() {
         // tag::saveall[]
         bookRepository.saveAll(Arrays.asList(new Book("The Stand", 1000), new Book("The Shining", 600),
                 new Book("The Power of the Dog", 500), new Book("The Border", 700),
@@ -145,7 +146,7 @@ class BookRepositorySpec {
     }
 
     @Test
-    void testDto() {
+    protected void testDto() {
         bookRepository.save(new Book("The Shining", 400));
         BookDTO book = bookRepository.findOne("The Shining");
 
