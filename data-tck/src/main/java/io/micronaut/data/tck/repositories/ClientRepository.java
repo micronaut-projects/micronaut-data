@@ -20,7 +20,7 @@ public interface ClientRepository extends CrudRepository<Client, Long>, JpaSpeci
 
         public static PredicateSpecification<Client> withCategoryListName(String name) {
             return (root, criteriaBuilder) -> {
-                var category = root.join(Client_.categoriesList, JoinType.INNER);
+                var category = root.join(Client_.categoriesList, JoinType.RIGHT);
                 return criteriaBuilder.equal(category.get(ClientCategory_.name), name);
             };
         }
@@ -36,6 +36,13 @@ public interface ClientRepository extends CrudRepository<Client, Long>, JpaSpeci
             return (root, criteriaBuilder) -> {
                 var category = root.join(Client_.mainCategory, JoinType.INNER);
                 return criteriaBuilder.equal(category.get(ClientCategory_.id), id);
+            };
+        }
+
+        public static PredicateSpecification<Client> mainCategoryNameEquals(String name) {
+            return (root, criteriaBuilder) -> {
+                var category = root.join(Client_.mainCategory, JoinType.INNER);
+                return criteriaBuilder.equal(category.get(ClientCategory_.name), name);
             };
         }
 

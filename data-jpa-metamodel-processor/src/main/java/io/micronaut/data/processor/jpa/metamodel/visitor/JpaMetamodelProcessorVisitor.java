@@ -44,7 +44,25 @@ import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*;
 @SupportedOptions(JPA_METAMODEL_ENABLED_FLAG)
 public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Object, Object> {
 
+    /**
+     * Map of already processed entities.
+     */
     private final Set<String> processed = new HashSet<>();
+
+    /**
+     * Source Persistent entity registry.
+     */
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
+
+    /**
+     * Persistent Entity resolver.
+     */
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
+        @Override
+        public SourcePersistentEntity apply(ClassElement classElement) {
+            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
+        }
+    };
 
     /**
      * Supported Jakarta annotation names.
@@ -54,14 +72,6 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
     public Set<String> getSupportedAnnotationNames() {
         return SUPPORTED_ANNOTATIONS;
     }
-
-    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
-        @Override
-        public SourcePersistentEntity apply(ClassElement classElement) {
-            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
-        }
-    };
 
     /**
      * @param element class element

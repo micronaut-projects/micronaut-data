@@ -162,11 +162,11 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
-     * JPA meta model class def generator .
-     *
-     * @param packageName          Element package name.
-     * @param persistentEntity     Source persistent entity.
-     * @return                     Jpa metamodel class definition builder.
+     * JPA meta model class def generator.
+     * @param packageName Element package name.
+     * @param classTypeDef Element Type.
+     * @param persistentEntity Element persistent entity.
+     * @return Static metamodel class definition builder.
      */
     public static ClassDef.ClassDefBuilder createJpaMetaModelClassDefBuilder(@NonNull String packageName, @NonNull ClassTypeDef classTypeDef, @NonNull SourcePersistentEntity persistentEntity) {
         String metaModelClassName = resolveModelClassName(packageName, classTypeDef);

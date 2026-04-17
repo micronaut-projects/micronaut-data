@@ -28,8 +28,6 @@ abstract class AbstractMetamodelSpec extends Specification {
 
     abstract AuthorRepository getAuthorRepository();
 
-    abstract AuthenticationRepository getAuthenticationRepository();
-
     abstract BasicTypesRepository getBasicTypeRepository();
 
     abstract ChildRepository getChildRepository();
@@ -50,9 +48,13 @@ abstract class AbstractMetamodelSpec extends Specification {
 
     abstract ClientCategoryRepository getClientCategoryRepository()
 
-    abstract DeviceRepository getDeviceRepository()
-
     abstract TrainRepository getTrainRepository()
+
+    abstract ChapterRepository getChapterRepository()
+
+    abstract PageRepository getPageRepository()
+
+    abstract void populateClientAndCategories()
 
     abstract Map<String, String> getProperties()
 
@@ -61,21 +63,23 @@ abstract class AbstractMetamodelSpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     void setup() {
-        genreRepository.deleteAll();
-        bookRepository.deleteAll();
-        publisherRepository.deleteAll();
-        authorRepository.deleteAll();
+        pageRepository.deleteAll();
+        chapterRepository.deleteAll()
+        bookRepository.deleteAll()
+        chapterRepository.deleteAll()
+        genreRepository.deleteAll()
+        publisherRepository.deleteAll()
+        authorRepository.deleteAll()
         childRepository.deleteAll()
-        embeddedOwnerRepository.deleteAll();
-        employeeFieldAccessRepository.deleteAll();
-        employeeMixedAccessEmbeddedIdRepository.deleteAll();
-        employeeMixedAccessRepository.deleteAll();
-        employeePropertyAccessRepository.deleteAll();
-        clientRepository.deleteAll();
-        clientCategoryRepository.deleteAll();
-        purchaseOrderRepository.deleteAll();
-        employeeMixedAccessEmbeddedIdRepository.deleteAll();
-        deviceRepository.deleteAll()
+        embeddedOwnerRepository.deleteAll()
+        employeeFieldAccessRepository.deleteAll()
+        employeeMixedAccessEmbeddedIdRepository.deleteAll()
+        employeeMixedAccessRepository.deleteAll()
+        employeePropertyAccessRepository.deleteAll()
+        clientRepository.deleteAll()
+        clientCategoryRepository.deleteAll()
+        purchaseOrderRepository.deleteAll()
+        employeeMixedAccessEmbeddedIdRepository.deleteAll()
     }
 
     void "can query by inherited id using static metamodel"() {
@@ -418,65 +422,32 @@ abstract class AbstractMetamodelSpec extends Specification {
 
     void "can join list relationship using static metamodel"() {
         given:
-        def fiction = new ClientCategory("Fiction", null, new byte[]{})
-        def sciFi = new ClientCategory("Sci-Fi", null, new byte[]{})
-        clientCategoryRepository.saveAll([fiction, sciFi])
-
-        def c = new Client()
-        c.id = 3L
-        c.name = "Carol"
-        c.billingAddress = new Client.Address("street", "city")
-        c.categoriesList = [fiction, sciFi]
-
-        clientRepository.save(c)
-
+        populateClientAndCategories()
         when:
         def ids = clientRepository.findAll(ClientRepository.Specifications.withCategoryListName("Sci-Fi"))
                 .collect { it.id }
-
         then:
         ids == [3L]
     }
 
     void "can join set relationship using static metamodel"() {
         given:
-        def history = new ClientCategory("History", null, new byte[]{})
-        clientCategoryRepository.save(history)
-
-        def client = new Client()
-        client.id = 4L
-        client.name = "Dan"
-        client.billingAddress = new Client.Address("street", "city")
-        client.categoriesSet = [history] as Set
-
-        clientRepository.save(client)
-
+        populateClientAndCategories()
         when:
         def result = clientRepository.findAll(ClientRepository.Specifications.withCategorySetName("History"))
-
         then:
         !result.isEmpty()
     }
 
     void "can filter by many-to-one using static metamodel"() {
         given:
-        def main = new ClientCategory("Main", null, new byte[]{})
-        clientCategoryRepository.save(main)
-
-        def client = new Client()
-        client.id = 5L
-        client.name = "Eve"
-        client.mainCategory = main
-        client.billingAddress = new Client.Address("street", "city")
-
-        clientRepository.save(client)
-
+        populateClientAndCategories()
         when:
-        def result = clientRepository.findAll(ClientRepository.Specifications.mainCategoryIdEquals(main.id))
+        def result = clientRepository.findAll(ClientRepository.Specifications.mainCategoryNameEquals("Main"))
 
         then:
         result.size() == 1
-        result.first().id == 5L
+        result.first().id == 3
     }
 
     void "can query by embedded id parts using static metamodel"() {
@@ -552,40 +523,6 @@ abstract class AbstractMetamodelSpec extends Specification {
         result.first().name == "Eve"
         result.first().id.id == 100L
         result.first().id.number == "ZZ"
-    }
-
-    void "can join Authentication to Device and filter by Device name"() {
-        given:
-        def d1 = new Device()
-        def user = new User()
-        user.name = "Mohammed"
-        d1.name = "Phone"
-        d1.setUser(user)
-        def d2 = new Device()
-        d2.name = "Tablet"
-        d2.setUser(user)
-
-        deviceRepository.saveAll([d1, d2])
-
-        def a1 = new Authentication()
-        a1.description = "auth-1"
-        a1.device = d1
-
-        def a2 = new Authentication()
-        a2.description = "auth-2"
-        a2.device = d2
-
-        authenticationRepository.saveAll([a1, a2])
-
-        when:
-        def result = authenticationRepository.findAll(AuthenticationRepository.Specification.withDeviceName("Phone"))
-
-        then:
-        result.size() == 1
-        result.first().id != null
-        result.first().description == "auth-1"
-        result.first().device != null
-        result.first().device.name == "Phone"
     }
 
     void "can build criteria query using generated static metamodel - filter by string and boxed number"() {

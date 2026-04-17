@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2026 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.processor.mappers.jpa.jakarta;
+package io.micronaut.data.jdbc.h2;
 
-/**
- * Jakarta persistent access annotation mapper.
- */
-public class AccessAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.AccessAnnotationMapper {
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.repositories.ChapterRepository;
 
-    /**
-     * Jakarta persistent access annotation name.
-     */
-    @Override
-    public String getName() {
-        return "jakarta.persistence.Access";
-    }
+@JdbcRepository(dialect = Dialect.H2)
+public interface H2ChapterRepository extends ChapterRepository {
 }

@@ -25,10 +25,13 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Javax persistent access annotation mapper.
+ */
 public class AccessAnnotationMapper implements NamedAnnotationMapper {
 
-    static final String INTROSPECTED_ACCESS_KIND = "accessKind";
-    static final String INTROSPECTED_VISIBILITY = "visibility";
+    static final String MEMBER_INTROSPECTED_ACCESS_KIND = "accessKind";
+    static final String MEMBER_INTROSPECTED_VISIBILITY = "visibility";
 
     enum JavaxAccessType {
         FIELD,
@@ -42,17 +45,16 @@ public class AccessAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        JavaxAccessType accessType = annotation.getRequiredValue("value", JavaxAccessType.class);
+        JavaxAccessType accessType = annotation.getRequiredValue(JavaxAccessType.class);
 
         AnnotationValueBuilder<Introspected> introspectedBuilder = AnnotationValue.builder(Introspected.class);
 
-        switch (accessType) {
-            case FIELD ->
-                introspectedBuilder.member(INTROSPECTED_ACCESS_KIND, new Introspected.AccessKind[]{
-                    Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD
-                }).member(INTROSPECTED_VISIBILITY, Introspected.Visibility.ANY);
-            case PROPERTY ->
-                introspectedBuilder.member(INTROSPECTED_ACCESS_KIND, Introspected.AccessKind.METHOD);
+        if (accessType == JavaxAccessType.FIELD) {
+            introspectedBuilder.member(MEMBER_INTROSPECTED_ACCESS_KIND, new Introspected.AccessKind[]{
+                Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD
+            }).member(MEMBER_INTROSPECTED_VISIBILITY, Introspected.Visibility.ANY);
+        } else {
+            introspectedBuilder.member(MEMBER_INTROSPECTED_ACCESS_KIND, Introspected.AccessKind.METHOD);
         }
         return Collections.singletonList(introspectedBuilder.build());
     }

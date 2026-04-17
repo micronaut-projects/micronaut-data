@@ -29,7 +29,7 @@ public class ClientCategory {
     private long id;
 
     private String name;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "category", fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Book> books = new ArrayList<>();
     private byte[] bytes = {};
 
