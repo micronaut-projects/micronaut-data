@@ -39,7 +39,7 @@ dependencies {
     implementation(mnSql.jakarta.transaction.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
-    implementation libs.kotlin.coroutines.reactor
+    implementation(mn.kotlinx.coroutines.reactor)
 
     runtimeOnly mnLogging.logback.classic
 }

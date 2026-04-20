@@ -29,7 +29,7 @@ dependencies {
 
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
-    implementation libs.kotlin.coroutines.reactor
+    implementation(mn.kotlinx.coroutines.reactor)
     implementation mn.micronaut.http.client
     implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
