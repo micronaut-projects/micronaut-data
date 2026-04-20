@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.h2
 import groovy.transform.Memoized
 import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.repositories.*
-import io.micronaut.data.tck.tests.AbstractMetamodelSpec
+import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
 
 class JdbcRepositorySpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {
 

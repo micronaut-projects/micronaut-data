@@ -1,12 +1,12 @@
-package io.micronaut.metamodel
+package io.micronaut.data.tck.tests.metamodel
 
-import io.micronaut.ExpectedMetamodel
 import io.micronaut.core.naming.NameUtils
+import io.micronaut.data.tck.metamodel.ExpectedMetamodel
 import jakarta.persistence.metamodel.MapAttribute
 import spock.lang.Specification
 
-import static MetamodelAssertionsUtils.assertClassFieldIsEntityType
-import static MetamodelAssertionsUtils.assertMetaModelClassIsAnnotatedCorrectly
+import static io.micronaut.data.tck.tests.metamodel.MetamodelAssertionsUtils.assertClassFieldIsEntityType
+import static io.micronaut.data.tck.tests.metamodel.MetamodelAssertionsUtils.assertMetaModelClassIsAnnotatedCorrectly
 
 abstract class AbstractEntityMetamodelSpec extends Specification {
 
@@ -51,9 +51,10 @@ abstract class AbstractEntityMetamodelSpec extends Specification {
                 if (fieldType in [Set, List, Collection, Map]) {
                     assert field.getProperties()["genericType"]["actualTypeArguments"][1].rawType.canonicalName == fieldType.getName()
                 } else {
-                    assert field.getProperties()["genericType"]["actualTypeArguments"][1].canonicalName == fieldType.getName()
+                    assert field.getProperties()["genericType"]["actualTypeArguments"][1].canonicalName == fieldType.canonicalName
                 }
             }
         }
     }
+
 }

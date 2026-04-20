@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package io.micronaut.metamodel
+package io.micronaut.data.tck.tests.metamodel
 
 import jakarta.persistence.metamodel.StaticMetamodel
 

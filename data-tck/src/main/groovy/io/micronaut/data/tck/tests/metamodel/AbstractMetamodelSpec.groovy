@@ -1,4 +1,4 @@
-package io.micronaut.data.tck.tests
+package io.micronaut.data.tck.tests.metamodel
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable

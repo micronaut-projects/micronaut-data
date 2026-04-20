@@ -6,7 +6,7 @@ import io.micronaut.data.hibernate.entities.EntityWithMapField
 import io.micronaut.data.tck.entities.Client
 import io.micronaut.data.tck.entities.ClientCategory
 import io.micronaut.data.tck.repositories.*
-import io.micronaut.data.tck.tests.AbstractMetamodelSpec
+import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
 
 class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {
 

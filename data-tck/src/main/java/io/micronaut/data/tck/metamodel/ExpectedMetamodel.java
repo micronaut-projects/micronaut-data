@@ -1,7 +1,6 @@
-package io.micronaut;
+package io.micronaut.data.tck.metamodel;
 
 import java.util.List;
-
 
 public record ExpectedMetamodel(
     Class<?> entityClass,

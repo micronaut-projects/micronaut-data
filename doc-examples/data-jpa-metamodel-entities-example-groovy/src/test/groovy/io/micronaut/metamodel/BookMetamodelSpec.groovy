@@ -1,8 +1,8 @@
-package io.micronaut.metamodel.spec
+package io.micronaut.metamodel
 
-import io.micronaut.ExpectedMetamodel
 import io.micronaut.data.tck.entities.*
-import io.micronaut.metamodel.AbstractEntityMetamodelSpec
+import io.micronaut.data.tck.metamodel.ExpectedMetamodel
+import io.micronaut.data.tck.tests.metamodel.AbstractEntityMetamodelSpec
 import jakarta.persistence.metamodel.EntityType
 import jakarta.persistence.metamodel.ListAttribute
 import jakarta.persistence.metamodel.SetAttribute
@@ -10,7 +10,7 @@ import jakarta.persistence.metamodel.SingularAttribute
 
 import java.time.LocalDateTime
 
-import static io.micronaut.ExpectedMetamodel.Attribute
+import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute
 
 class BookMetamodelSpec extends AbstractEntityMetamodelSpec {
 
