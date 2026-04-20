@@ -25,7 +25,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.inject.Singleton;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -57,18 +56,28 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
-        // Pre-filter out skipIfPresent properties that already have a value to avoid returning
-        // null from the supplier (which would create ambiguity with the skip signal).
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
-        @SuppressWarnings("unchecked")
-        final RuntimePersistentProperty<Object>[] propsToPopulate = Arrays.stream(persistentProperties)
-            .filter(p -> {
-                if (p.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)) {
-                    return p.getProperty().get(context.getEntity()) == null;
+        final Object entity = context.getEntity();
+        int propertiesToPopulateCount = 0;
+        for (RuntimePersistentProperty<Object> property : persistentProperties) {
+            if (!shouldSkipPopulation(property, entity)) {
+                propertiesToPopulateCount++;
+            }
+        }
+        final RuntimePersistentProperty<Object>[] propsToPopulate;
+        if (propertiesToPopulateCount == persistentProperties.length) {
+            propsToPopulate = persistentProperties;
+        } else {
+            @SuppressWarnings("unchecked")
+            final RuntimePersistentProperty<Object>[] filteredProperties = new RuntimePersistentProperty[propertiesToPopulateCount];
+            int index = 0;
+            for (RuntimePersistentProperty<Object> property : persistentProperties) {
+                if (!shouldSkipPopulation(property, entity)) {
+                    filteredProperties[index++] = property;
                 }
-                return true;
-            })
-            .toArray(RuntimePersistentProperty[]::new);
+            }
+            propsToPopulate = filteredProperties;
+        }
         AutoPopulateUtil.applyTopLevel(context, propsToPopulate, p -> UUID.randomUUID());
 
         // 2) Embedded properties (recursive via util)
@@ -100,5 +109,10 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
         });
 
         return true;
+    }
+
+    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity) {
+        return property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)
+            && property.getProperty().get(entity) != null;
     }
 }

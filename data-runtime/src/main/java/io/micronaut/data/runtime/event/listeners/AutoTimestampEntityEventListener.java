@@ -134,6 +134,16 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return conversionService.convert(value, targetType).orElse(null);
     }
 
+    private boolean shouldSkipTimestamp(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, @Nullable Object currentValue) {
+        if (currentValue == null) {
+            return false;
+        }
+        if (annotationMetadata.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false)) {
+            return true;
+        }
+        return !isUpdate && annotationMetadata.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false);
+    }
+
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
@@ -142,22 +152,10 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return null;
             }
-            // Respect skipIfPresent on DateCreated/DateUpdated
             final AnnotationMetadata am = prop.getAnnotationMetadata();
-            boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
-            boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-            if (hasDateCreated && am.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false)) {
-                Object current = prop.getProperty().get(context.getEntity());
-                if (current != null) {
-                    return null; // skip
-                }
-            }
-            // DateUpdated.skipIfPresent applies only on insert (prePersist), not on updates
-            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false)) {
-                Object current = prop.getProperty().get(context.getEntity());
-                if (current != null) {
-                    return null; // skip
-                }
+            Object current = prop.getProperty().get(context.getEntity());
+            if (shouldSkipTimestamp(am, isUpdate, current)) {
+                return null;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);
             return convertIfNeeded(propertyNow, prop.getType());
@@ -177,11 +175,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
-            if (hasDateCreated && am.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false) && prop.get(current) != null) {
-                return current;
-            }
-            // DateUpdated.skipIfPresent applies only on insert
-            if (!isUpdate && hasDateUpdated && am.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false) && prop.get(current) != null) {
+            if (shouldSkipTimestamp(am, isUpdate, prop.get(current))) {
                 return current;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);
