@@ -403,6 +403,50 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
+        if (preparedQuery.getDialect() == Dialect.ORACLE && (
+            preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
+            preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
+            preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
+            preparedQuery.prepare(null);
+            try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
+                JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
+                preparedQuery.bindParameters(parameterBinder);
+                OracleReturningSupport.OutParameterContext outCtx = OracleReturningSupport.registerOutParameters(
+                    cs,
+                    preparedQuery,
+                    parameterBinder.currentIndex() - 1,
+                    jdbcConfiguration.getDialect(),
+                    oracleReturningDebugLogger()
+                );
+                cs.execute();
+                List<R> result = new ArrayList<>();
+                result.add(OracleReturningSupport.createMapper(
+                    preparedQuery,
+                    outCtx,
+                    columnIndexCallableResultReader,
+                    jdbcDataConversionService(),
+                    jsonMapper,
+                    this::resolveOracleReturningEntity,
+                    new OracleReturningSupport.DtoEntityResolver() {
+                        @Override
+                        public RuntimePersistentEntity<?> resolve(AnnotationMetadata annotationMetadata,
+                                                                  RuntimePersistentEntity<?> persistentEntity,
+                                                                  RuntimePersistentEntity<?> resultPersistentEntity) {
+                            return resolveOracleReturningDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity);
+                        }
+
+                        @Override
+                        public boolean isDtoProjection(SqlStoredQuery<?, ?> query) {
+                            return DefaultJdbcRepositoryOperations.this.isDtoProjection(query);
+                        }
+                    },
+                    this::triggerOracleReturningPostLoad
+                ).map(cs, preparedQuery.getResultType()));
+                return result;
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+            }
+        }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
@@ -1119,6 +1163,41 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private RuntimePersistentEntity<?> resolveOracleReturningEntity(Class<?> type) {
+        return getEntity((Class) type);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private RuntimePersistentEntity<?> resolveOracleReturningDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                                                                 RuntimePersistentEntity<?> persistentEntity,
+                                                                                 RuntimePersistentEntity<?> resultPersistentEntity) {
+        return resolveDtoPersistentEntity(annotationMetadata, (RuntimePersistentEntity) persistentEntity, (RuntimePersistentEntity) resultPersistentEntity);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private Object triggerOracleReturningPostLoad(RuntimePersistentEntity<?> loadedEntity,
+                                                  Object entity,
+                                                  AnnotationMetadata annotationMetadata) {
+        if (loadedEntity.hasPostLoadEventListeners()) {
+            return triggerPostLoad(entity, (RuntimePersistentEntity) loadedEntity, annotationMetadata);
+        }
+        return entity;
+    }
+
+    private java.util.function.Consumer<String> oracleReturningDebugLogger() {
+        if (QUERY_LOG.isDebugEnabled()) {
+            return message -> QUERY_LOG.debug(message);
+        }
+        return message -> {
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private DataConversionService jdbcDataConversionService() {
+        return conversionService;
+    }
+
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final SqlStoredQuery<?, ?> sqlStoredQuery;
@@ -1271,6 +1350,38 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         private void executeReturning() {
+            // For Oracle, RETURNING is expressed via PL/SQL block with INTO placeholders.
+            // Use CallableStatement and OUT parameter to capture the generated id and out field parameters.
+            if (ctx.dialect == Dialect.ORACLE) {
+                try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
+                    JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
+                    storedQuery.bindParameters(parameterBinder,
+                        ctx.invocationContext, entity, previousValues);
+                    OracleReturningSupport.OutParameterContext outCtx = OracleReturningSupport.registerOutParameters(
+                        cs,
+                        storedQuery,
+                        parameterBinder.currentIndex() - 1,
+                        jdbcConfiguration.getDialect(),
+                        oracleReturningDebugLogger()
+                    );
+                    rowsUpdated = cs.executeUpdate();
+                    SqlResultEntityTypeMapper mapper = OracleReturningSupport.createEntityMapper(
+                        persistentEntity,
+                        outCtx,
+                        columnIndexCallableResultReader,
+                        jsonMapper,
+                        jdbcDataConversionService()
+                    );
+                    entity = (T) mapper.readEntity(cs);
+
+                    // Trigger post-load on the entity
+                    entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
+                    return;
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+                }
+            }
+            // Default path (e.g. Postgres) uses PreparedStatement and maps a result set
             try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 List<T> result = (List<T>) findAll(storedQuery, ps);
@@ -1490,5 +1601,4 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private record ConnectionContext(Connection connection, boolean needsToBeClosed) {
     }
-
 }
