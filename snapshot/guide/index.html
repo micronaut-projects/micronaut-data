@@ -9966,7 +9966,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import jakarta.validation.constraints.NotNull
 
-@R2dbcRepository(dialect = Dialect.MYSQL) // <b class="conum">(1)</b>
+@R2dbcRepository(dialect = Dialect.POSTGRES) // <b class="conum">(1)</b>
 interface AuthorRepository : ReactiveStreamsCrudRepository&lt;Author, Long&gt; {
     override fun findById(id: @NotNull Long): Mono&lt;Author&gt; // <b class="conum">(2)</b>
     override fun findAll(): Flux&lt;Author&gt;
@@ -13318,6 +13318,9 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>For Oracle raw <code>@Query</code> methods with a <code>RETURNING</code> clause, write the returned columns and <code>INTO</code> placeholders explicitly, for example <code>RETURNING id, name INTO ?, ?</code>. The <code>INTO</code> clause must use positional <code>?</code> placeholders. You can also provide the full <code>BEGIN &#8230;&#8203; END;</code> block yourself.</p>
 </div>
 <div class="sect2">
 <h3 id="_explicit_queries_and_joins">Explicit Queries and Joins</h3>

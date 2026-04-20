@@ -76,9 +76,18 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Implementation of <a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> for R2DBC.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareR2dbcResultSetReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareR2dbcResultSetReader</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameByIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameByIndexR2dbcResultReader</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">A result reader that uses column names mapped to positional indexes for any R2DBC <code>Readable</code>,
+including Oracle OUT parameters.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareR2dbcResultSetReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareR2dbcResultSetReader</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The reader that will return null if the column doesn't exist in the result.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareReadableR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareReadableR2dbcResultReader</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Readable reader that returns null when an Oracle OUT column is not present.</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnNameR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
@@ -88,8 +97,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Implementation of <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper"><code>QueryStatement</code></a> for R2DBC.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RowTupleMapper.html" title="class in io.micronaut.data.r2dbc.mapper">RowTupleMapper</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ReadableTupleMapper.html" title="class in io.micronaut.data.r2dbc.mapper">ReadableTupleMapper</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">A mapper of <code>Tuple</code> backed by a <code>Readable</code> Oracle OUT parameter set.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RowTupleMapper.html" title="class in io.micronaut.data.r2dbc.mapper">RowTupleMapper</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A mapper of <code>Tuple</code>.</div>
 </div>
 </div>

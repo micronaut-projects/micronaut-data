@@ -66,6 +66,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getQueryResultInfo()" tabindex="0">getQueryResultInfo()</a></li>
+<li><a href="#getOutParameterBindings()" tabindex="0">getOutParameterBindings()</a></li>
 <li><a href="#isExpandableQuery()" tabindex="0">isExpandableQuery()</a></li>
 <li><a href="#getDialect()" tabindex="0">getDialect()</a></li>
 <li><a href="#getQueryBuilder()" tabindex="0">getQueryBuilder()</a></li>
@@ -169,15 +170,20 @@ implements <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.r
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get dialect.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryBuilder()" class="member-name-link">getQueryBuilder</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../../model/runtime/QueryOutParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryOutParameterBinding</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOutParameterBindings()" class="member-name-link">getOutParameterBindings</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">OUT parameters metadata for this stored query (e.g.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryBuilder()" class="member-name-link">getQueryBuilder</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -249,6 +255,25 @@ implements <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.r
 <dd><code><a href="SqlStoredQuery.html#getQueryResultInfo()">getQueryResultInfo</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlStoredQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlStoredQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>the query result info</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getOutParameterBindings()">
+<h3>getOutParameterBindings</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../../model/runtime/QueryOutParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryOutParameterBinding</a>&gt;</span>&nbsp;<span class="element-name">getOutParameterBindings</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../../model/runtime/StoredQuery.html#getOutParameterBindings()">StoredQuery</a></code></span></div>
+<div class="block">OUT parameters metadata for this stored query (e.g. Oracle RETURNING ... INTO ...).
+Order corresponds to the order in which OUT parameters must be registered.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../query/internal/DelegateStoredQuery.html#getOutParameterBindings()">getOutParameterBindings</a></code>&nbsp;in interface&nbsp;<code><a href="../../../query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlStoredQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlStoredQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/StoredQuery.html#getOutParameterBindings()">getOutParameterBindings</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlStoredQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlStoredQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>list of OUT parameter bindings or empty if none</dd>
 </dl>
 </div>
 </section>

@@ -74,6 +74,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,java.util.Collection)" tabindex="0">many(String, AnnotationMetadata, QueryResult, Class, Class, boolean, boolean, Collection)</a></li>
 <li><a href="#count(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)" tabindex="0">count(String, AnnotationMetadata, QueryResult, Class)</a></li>
 <li><a href="#getQueryResult()" tabindex="0">getQueryResult()</a></li>
+<li><a href="#getOutParameterBindings()" tabindex="0">getOutParameterBindings()</a></li>
 <li><a href="#getJoinPaths()" tabindex="0">getJoinPaths()</a></li>
 </ol>
 </li>
@@ -185,18 +186,23 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJoinPaths()" class="member-name-link">getJoinPaths</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../model/runtime/QueryOutParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryOutParameterBinding</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOutParameterBindings()" class="member-name-link">getOutParameterBindings</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">OUT parameters metadata for this stored query (e.g.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;rootEntity,
  boolean&nbsp;pageable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,java.util.Collection)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,java.util.Collection)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;rootEntity,
@@ -204,25 +210,25 @@ loadScripts(document, 'script');</script>
  boolean&nbsp;pageable,
  boolean&nbsp;isDto,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">many</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;rootEntity,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  boolean&nbsp;pageable,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
@@ -230,16 +236,16 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  boolean&nbsp;isDto,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T,<wbr>R&gt;&nbsp;<a href="QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a><wbr>&lt;T,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)" class="member-name-link">single</a><wbr>(<a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;rootEntity,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -408,6 +414,21 @@ loadScripts(document, 'script');</script>
 <h3>getQueryResult</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">getQueryResult</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getOutParameterBindings()">
+<h3>getOutParameterBindings</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/runtime/QueryOutParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryOutParameterBinding</a>&gt;</span>&nbsp;<span class="element-name">getOutParameterBindings</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#getOutParameterBindings()">StoredQuery</a></code></span></div>
+<div class="block">OUT parameters metadata for this stored query (e.g. Oracle RETURNING ... INTO ...).
+Order corresponds to the order in which OUT parameters must be registered.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>list of OUT parameter bindings or empty if none</dd>
+</dl>
 </div>
 </section>
 </li>

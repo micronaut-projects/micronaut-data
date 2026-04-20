@@ -83,36 +83,49 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnIndexCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexCallableResultReader</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="CallableStatementTupleMapper.html" title="class in io.micronaut.data.jdbc.mapper">CallableStatementTupleMapper</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">A mapper of <code>Tuple</code> backed by a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link"><code>CallableStatement</code></a> OUT parameter set.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnIndexCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexCallableResultReader</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">A reader that uses the column index.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">A reader that uses the column index.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameByIndexCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameByIndexCallableResultReader</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">A reader that uses the column index.</div>
+<div class="block">A result reader that uses the column name to retrieve the column index and then delegates to
+<a href="ColumnIndexCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper"><code>ColumnIndexCallableResultReader</code></a> to read the value.</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnNameCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameCallableResultReader</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">A <a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> for JDBC that uses the column name.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareResultSetReader</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareCallableResultReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareCallableResultReader</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Callable statement reader that returns null when an OUT column is not present.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnNameExistenceAwareResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareResultSetReader</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The reader that will return null if the column doesn't exist in the result.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A <a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> for JDBC that uses the column name.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">A <a href="../../runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper"><code>QueryStatement</code></a> for a SQL <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link"><code>PreparedStatement</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="JdbcTupleMapper.html" title="class in io.micronaut.data.jdbc.mapper">JdbcTupleMapper</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="JdbcTupleMapper.html" title="class in io.micronaut.data.jdbc.mapper">JdbcTupleMapper</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A mapper of <code>Tuple</code>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SqlResultConsumer.html" title="interface in io.micronaut.data.jdbc.mapper">SqlResultConsumer</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SqlResultConsumer.html" title="interface in io.micronaut.data.jdbc.mapper">SqlResultConsumer</a>&lt;T&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">A mapping function specific to SQL.</div>
 </div>
 </div>
