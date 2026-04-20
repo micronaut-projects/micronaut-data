@@ -24,6 +24,7 @@ public class EmployeePropertyAccess {
     private Long id;
     private String name;
     private double salary;
+    private String noAccessors;
 
     public EmployeePropertyAccess(Long id, String name, double salary) {
         this.id = id;

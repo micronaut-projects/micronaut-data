@@ -28,7 +28,7 @@ abstract class AbstractEntityMetamodelSpec extends Specification {
             expectedMetamodel.forbiddenFields().each { String f ->
                 try {
                     metamodelClass.getField(f)
-                    assert false: "Field '${f}' should not exist in ${metamodelClass.name}"
+                    assert false: "Field '${f}' should not exist in ${metamodelClass}"
                 } catch (NoSuchFieldException ignored) {
                 }
             }

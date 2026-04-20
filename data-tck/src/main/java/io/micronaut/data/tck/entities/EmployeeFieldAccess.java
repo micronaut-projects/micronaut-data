@@ -32,6 +32,8 @@ public class EmployeeFieldAccess {
     @Column(name = "salary")
     private double salary;
 
+    private String noAccessors;
+
     public EmployeeFieldAccess() {
     }
 
