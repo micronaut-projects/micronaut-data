@@ -98,6 +98,7 @@ import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -130,10 +131,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -518,13 +517,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private Map<String, Integer> getOracleReturningColumnIndexes(SqlStoredQuery<?, ?> storedQuery) {
+    private OracleReturningMetadata getOracleReturningMetadata(SqlStoredQuery<?, ?> storedQuery) {
         List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
-        for (int i = 0; i < outParameterBindings.size(); i++) {
-            addOracleReturningOutParameterAliases(columnIndexesByName, outParameterBindings.get(i).name(), i);
+        List<String> columnNames = new ArrayList<>(outParameterBindings.size());
+        for (QueryOutParameterBinding outParameterBinding : outParameterBindings) {
+            columnNames.add(outParameterBinding.name());
         }
-        return columnIndexesByName;
+        return OracleReturningMetadata.create(columnNames);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -546,19 +545,19 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <E, R> SqlTypeMapper<Readable, R> createOracleReturningMapper(SqlStoredQuery<E, R> storedQuery) {
-        Map<String, Integer> columnIndexesByName = getOracleReturningColumnIndexes(storedQuery);
-        ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, columnIndexesByName);
+        OracleReturningMetadata metadata = getOracleReturningMetadata(storedQuery);
+        ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, metadata.columnIndexesByName());
         SqlJsonColumnReader<Readable> reader = jsonMapper != null ? () -> jsonMapper : null;
         if (storedQuery.getResultType().equals(Tuple.class)) {
             return (SqlTypeMapper<Readable, R>) new ReadableTupleMapper(
                 conversionService,
-                getOracleReturningCanonicalColumnIndexes(storedQuery)
+                metadata.canonicalColumnIndexesByName()
             );
         }
         if (storedQuery.getResultType().equals(Object[].class)) {
             SqlTypeMapper<Readable, Tuple> tupleMapper = new ReadableTupleMapper(
                 conversionService,
-                getOracleReturningCanonicalColumnIndexes(storedQuery)
+                metadata.canonicalColumnIndexesByName()
             );
             return new SqlTypeMapper<>() {
                 @Override
@@ -597,7 +596,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
-                new ColumnNameExistenceAwareReadableR2dbcResultReader(resultReader, columnIndexesByName),
+                new ColumnNameExistenceAwareReadableR2dbcResultReader(resultReader, metadata.columnIndexesByName()),
                 Set.of(),
                 reader,
                 conversionService
@@ -630,35 +629,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             };
         }
         throw new DataAccessException("Expected Oracle RETURNING mapper for result type: " + storedQuery.getResultType().getName());
-    }
-
-    private static void addOracleReturningOutParameterAliases(Map<String, Integer> columnIndexesByName,
-                                                              String columnName,
-                                                              int columnIndex) {
-        columnIndexesByName.putIfAbsent(columnName, columnIndex);
-        String unquotedColumnName = unquoteColumnName(columnName);
-        columnIndexesByName.putIfAbsent(unquotedColumnName, columnIndex);
-        columnIndexesByName.putIfAbsent(unquotedColumnName.toLowerCase(Locale.ENGLISH), columnIndex);
-        columnIndexesByName.putIfAbsent(unquotedColumnName.toUpperCase(Locale.ENGLISH), columnIndex);
-    }
-
-    private static String unquoteColumnName(String columnName) {
-        if (columnName.length() > 1) {
-            char quote = columnName.charAt(0);
-            if ((quote == '"' || quote == '`') && columnName.charAt(columnName.length() - 1) == quote) {
-                return columnName.substring(1, columnName.length() - 1);
-            }
-        }
-        return columnName;
-    }
-
-    private Map<String, Integer> getOracleReturningCanonicalColumnIndexes(SqlStoredQuery<?, ?> storedQuery) {
-        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
-        for (int i = 0; i < outParameterBindings.size(); i++) {
-            columnIndexesByName.put(outParameterBindings.get(i).name(), i);
-        }
-        return columnIndexesByName;
     }
 
     @SuppressWarnings("unchecked")
@@ -705,14 +675,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             statement.bind(index++, Parameters.out(findR2dbcType(outParameterBinding.dataType())));
         }
         return statement;
-    }
-
-    private int getOracleOutParameterStartIndex(SqlStoredQuery<?, ?> storedQuery) {
-        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        if (CollectionUtils.isEmpty(outParameterBindings)) {
-            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-        }
-        return countQueryPlaceholders(storedQuery.getQuery()) - outParameterBindings.size();
     }
 
     private int getJsonGeneratedIdOutParameterIndex(SqlStoredQuery<?, ?> storedQuery) {

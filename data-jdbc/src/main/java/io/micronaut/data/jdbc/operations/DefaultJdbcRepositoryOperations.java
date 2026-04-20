@@ -21,11 +21,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.data.jdbc.mapper.ColumnNameByIndexCallableResultReader;
-import io.micronaut.data.model.runtime.QueryOutParameterBinding;
-import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -45,10 +40,8 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
-import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
-import io.micronaut.data.jdbc.mapper.CallableStatementTupleMapper;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.JdbcTupleMapper;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -126,13 +119,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Locale;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -411,150 +402,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private @Nullable <R> R readOracleReturningScalarResult(CallableStatement cs, SqlPreparedQuery<?, R> preparedQuery, int columnIndex) throws SQLException {
-        Object value = columnIndexCallableResultReader.readDynamic(
-            cs,
-            columnIndex,
-            preparedQuery.getResultDataType()
-        );
-        if (value == null) {
-            return null;
-        }
-        Class<R> resultType = preparedQuery.getResultType();
-        if (resultType.isInstance(value)) {
-            return resultType.cast(value);
-        }
-        return conversionService.convert(value, resultType)
-            .orElseThrow(() -> new DataAccessException(
-                "Error converting Oracle SQL RETURNING value of type " + value.getClass().getName() +
-                    " to result type " + resultType.getName()
-            ));
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private <E, R> SqlTypeMapper<CallableStatement, R> createOracleReturningMapper(SqlStoredQuery<E, R> query,
-                                                                                   OutParameterContext outCtx) {
-        ResultReader<CallableStatement, String> resultReader = new ColumnNameByIndexCallableResultReader(
-            columnIndexCallableResultReader,
-            outCtx.columnIndexesByName()
-        );
-        if (query.getResultType().equals(Tuple.class)) {
-            return (SqlTypeMapper<CallableStatement, R>) new CallableStatementTupleMapper(
-                conversionService,
-                getOracleReturningCanonicalColumnIndexes(outCtx.columnNames(), outCtx.columnIndexesByName())
-            );
-        }
-        if (query.getResultType().equals(Object[].class)) {
-            SqlTypeMapper<CallableStatement, Tuple> tupleMapper = new CallableStatementTupleMapper(
-                conversionService,
-                getOracleReturningCanonicalColumnIndexes(outCtx.columnNames(), outCtx.columnIndexesByName())
-            );
-            return new SqlTypeMapper<>() {
-                @Override
-                public boolean hasNext(CallableStatement resultSet) {
-                    throw new IllegalStateException("Not supported!");
-                }
-
-                @Override
-                public @Nullable R map(CallableStatement object, Class<R> type) throws DataAccessException {
-                    Tuple tuple = tupleMapper.map(object, Tuple.class);
-                    return tuple == null ? null : (R) tuple.toArray();
-                }
-
-                @Override
-                public @Nullable Object read(CallableStatement object, String name) {
-                    return tupleMapper.read(object, name);
-                }
-            };
-        }
-        RuntimePersistentEntity<E> persistentEntity = query.getPersistentEntity();
-        boolean isEntityResult = query.getResultDataType() == DataType.ENTITY;
-        if (isEntityResult) {
-            return new SqlResultEntityTypeMapper<>(
-                getEntity(query.getResultType()),
-                resultReader,
-                query.getJoinPaths(),
-                null,
-                (loadedEntity, entity) -> {
-                    if (loadedEntity.hasPostLoadEventListeners()) {
-                        return triggerPostLoad(entity, loadedEntity, query.getAnnotationMetadata());
-                    }
-                    return entity;
-                },
-                conversionService
-            );
-        }
-        if (isDtoProjection(query)) {
-            ResultReader<CallableStatement, String> dtoResultReader = new ColumnNameExistenceAwareCallableResultReader(
-                columnIndexCallableResultReader,
-                outCtx.columnIndexesByName()
-            );
-            RuntimePersistentEntity<R> resultPersistentEntity = getEntity(query.getResultType());
-            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
-                query.getAnnotationMetadata(),
-                persistentEntity,
-                resultPersistentEntity
-            );
-            return new SqlResultEntityTypeMapper<>(
-                dtoPersistentEntity,
-                dtoResultReader,
-                query.getJoinPaths(),
-                null,
-                null,
-                conversionService
-            );
-        }
-        return new SqlTypeMapper<>() {
-            @Override
-            public boolean hasNext(CallableStatement resultSet) {
-                throw new IllegalStateException("Not supported!");
-            }
-
-            @Override
-            public @Nullable R map(CallableStatement object, Class<R> type) throws DataAccessException {
-                try {
-                    return readOracleReturningScalarResult(object, (SqlPreparedQuery<?, R>) query, outCtx.firstOutIndex());
-                } catch (SQLException e) {
-                    throw new DataAccessException("Error reading Oracle SQL RETURNING value: " + e.getMessage(), e);
-                }
-            }
-
-            @Override
-            public @Nullable Object read(CallableStatement object, String name) {
-                throw new IllegalStateException("Not supported!");
-            }
-        };
-    }
-
-    private <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> query) {
-        if (query.isDtoProjection()) {
-            return true;
-        }
-        if (query.getResultDataType() == DataType.ENTITY) {
-            return false;
-        }
-        Class<R> resultType = query.getResultType();
-        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
-            return false;
-        }
-        if (resultType.equals(String.class)
-            || Number.class.isAssignableFrom(resultType)
-            || CharSequence.class.isAssignableFrom(resultType)
-            || java.util.Date.class.isAssignableFrom(resultType)
-            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
-            || resultType.equals(Boolean.class)
-            || resultType.equals(Character.class)
-            || resultType.equals(Object.class)) {
-            return false;
-        }
-        try {
-            BeanIntrospection.getIntrospection(resultType);
-            return true;
-        } catch (IntrospectionException e) {
-            return false;
-        }
-    }
-
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
         if (preparedQuery.getDialect() == Dialect.ORACLE && (
             preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
@@ -564,10 +411,25 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
                 JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
                 preparedQuery.bindParameters(parameterBinder);
-                OutParameterContext outCtx = registerOracleReturningOutParameters(cs, preparedQuery, parameterBinder.currentIndex() - 1);
+                OracleReturningSupport.OutParameterContext outCtx = OracleReturningSupport.registerOutParameters(
+                    cs,
+                    preparedQuery,
+                    parameterBinder.currentIndex() - 1,
+                    jdbcConfiguration.getDialect(),
+                    oracleReturningDebugLogger()
+                );
                 cs.execute();
                 List<R> result = new ArrayList<>();
-                result.add(createOracleReturningMapper(preparedQuery, outCtx).map(cs, preparedQuery.getResultType()));
+                result.add(OracleReturningSupport.createMapper(
+                    preparedQuery,
+                    outCtx,
+                    columnIndexCallableResultReader,
+                    jdbcDataConversionService(),
+                    jsonMapper,
+                    this::resolveOracleReturningEntity,
+                    this::resolveOracleReturningDtoPersistentEntity,
+                    this::triggerOracleReturningPostLoad
+                ).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
@@ -579,29 +441,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         } catch (Throwable e) {
             throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Creates a {@link SqlResultEntityTypeMapper} instance to map the results from a {@link CallableStatement} to an entity.
-     * Currently used for INSERT/UPDATE/DELETE ... RETURNING for Oracle dialect.
-     *
-     * @param persistentEntity the persistent entity to be mapped
-     * @param columnNames      the column names of the result set
-     * @param inCount          the number of input parameters in the statement
-     * @return a {@link SqlResultEntityTypeMapper} instance
-     */
-    private SqlResultEntityTypeMapper getSqlResultEntityTypeMapper(RuntimePersistentEntity<?> persistentEntity, List<String> columnNames, int inCount) {
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(columnNames.size());
-        int pos = inCount;
-        for (String columnName : columnNames) {
-            columnIndexesByName.put(columnName, ++pos);
-        }
-        ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(columnIndexCallableResultReader,
-            columnIndexesByName);
-        SqlJsonColumnReader<CallableStatement> reader = jsonMapper != null ? () -> jsonMapper : null;
-        SqlResultEntityTypeMapper mapper = new SqlResultEntityTypeMapper<>(persistentEntity, resultReader,
-            Set.of(), reader, conversionService);
-        return mapper;
     }
 
     private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, PreparedStatement ps) throws SQLException {
@@ -1307,72 +1146,44 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return fallbackMapper.apply(sqlException);
     }
 
-    private OutParameterContext registerOracleReturningOutParameters(CallableStatement cs,
-                                                                     SqlStoredQuery<?, ?> query,
-                                                                     int inCount) throws SQLException {
-        List<QueryOutParameterBinding> outParams = query.getOutParameterBindings();
-        if (CollectionUtils.isEmpty(outParams)) {
-            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-        }
-        int pos = inCount;
-        List<String> columnNames = new ArrayList<>(outParams.size());
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParams.size());
-        Dialect dialect = jdbcConfiguration.getDialect();
-        for (QueryOutParameterBinding outParam : outParams) {
-            DataType dataType = dialect.getDataType(outParam.dataType());
-            int sqlType = JdbcQueryStatement.findSqlType(dataType, jdbcConfiguration.getDialect());
-            if (sqlType == -1) {
-                sqlType = Types.VARCHAR;
-                if (QUERY_LOG.isDebugEnabled()) {
-                    QUERY_LOG.debug("Binding Oracle out parameter of data type: {} as sql type: {}", dataType, sqlType);
-                }
-            }
-            int columnIndex = ++pos;
-            cs.registerOutParameter(columnIndex, sqlType);
-            columnNames.add(outParam.name());
-            addOracleReturningOutParameterAliases(columnIndexesByName, outParam.name(), columnIndex);
-        }
-        return new OutParameterContext(inCount, columnNames, columnIndexesByName);
-    }
-
-    private static Map<String, Integer> getOracleReturningCanonicalColumnIndexes(List<String> columnNames,
-                                                                                 Map<String, Integer> allColumnIndexesByName) {
-        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(columnNames.size());
-        for (String columnName : columnNames) {
-            columnIndexesByName.put(columnName, Objects.requireNonNull(allColumnIndexesByName.get(columnName)));
-        }
-        return columnIndexesByName;
-    }
-
-    private static void addOracleReturningOutParameterAliases(Map<String, Integer> columnIndexesByName,
-                                                              String columnName,
-                                                              int columnIndex) {
-        columnIndexesByName.putIfAbsent(columnName, columnIndex);
-        String unquotedColumnName = unquoteColumnName(columnName);
-        columnIndexesByName.putIfAbsent(unquotedColumnName, columnIndex);
-        columnIndexesByName.putIfAbsent(unquotedColumnName.toLowerCase(Locale.ENGLISH), columnIndex);
-        columnIndexesByName.putIfAbsent(unquotedColumnName.toUpperCase(Locale.ENGLISH), columnIndex);
-    }
-
-    private static String unquoteColumnName(String columnName) {
-        if (columnName.length() > 1) {
-            char quote = columnName.charAt(0);
-            if ((quote == '"' || quote == '`') && columnName.charAt(columnName.length() - 1) == quote) {
-                return columnName.substring(1, columnName.length() - 1);
-            }
-        }
-        return columnName;
-    }
-
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
-    private record OutParameterContext(int inCount, List<String> columnNames, Map<String, Integer> columnIndexesByName) {
-        private int firstOutIndex() {
-            return inCount + 1;
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private RuntimePersistentEntity<?> resolveOracleReturningEntity(Class<?> type) {
+        return getEntity((Class) type);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private RuntimePersistentEntity<?> resolveOracleReturningDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                                                                 RuntimePersistentEntity<?> persistentEntity,
+                                                                                 RuntimePersistentEntity<?> resultPersistentEntity) {
+        return resolveDtoPersistentEntity(annotationMetadata, (RuntimePersistentEntity) persistentEntity, (RuntimePersistentEntity) resultPersistentEntity);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private Object triggerOracleReturningPostLoad(RuntimePersistentEntity<?> loadedEntity,
+                                                  Object entity,
+                                                  AnnotationMetadata annotationMetadata) {
+        if (loadedEntity.hasPostLoadEventListeners()) {
+            return triggerPostLoad(entity, (RuntimePersistentEntity) loadedEntity, annotationMetadata);
         }
+        return entity;
+    }
+
+    private java.util.function.Consumer<String> oracleReturningDebugLogger() {
+        if (QUERY_LOG.isDebugEnabled()) {
+            return message -> QUERY_LOG.debug(message);
+        }
+        return message -> {
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private DataConversionService jdbcDataConversionService() {
+        return conversionService;
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
@@ -1534,11 +1345,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
                     storedQuery.bindParameters(parameterBinder,
                         ctx.invocationContext, entity, previousValues);
-                    OutParameterContext outCtx = registerOracleReturningOutParameters(cs, storedQuery, parameterBinder.currentIndex() - 1);
-                    int inCount = outCtx.inCount();
-                    List<String> columnNames = outCtx.columnNames();
+                    OracleReturningSupport.OutParameterContext outCtx = OracleReturningSupport.registerOutParameters(
+                        cs,
+                        storedQuery,
+                        parameterBinder.currentIndex() - 1,
+                        jdbcConfiguration.getDialect(),
+                        oracleReturningDebugLogger()
+                    );
                     rowsUpdated = cs.executeUpdate();
-                    SqlResultEntityTypeMapper mapper = getSqlResultEntityTypeMapper(persistentEntity, columnNames, inCount);
+                    SqlResultEntityTypeMapper mapper = OracleReturningSupport.createEntityMapper(
+                        persistentEntity,
+                        outCtx,
+                        columnIndexCallableResultReader,
+                        jsonMapper,
+                        jdbcDataConversionService()
+                    );
                     entity = (T) mapper.readEntity(cs);
 
                     // Trigger post-load on the entity
