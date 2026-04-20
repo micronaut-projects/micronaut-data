@@ -20,7 +20,7 @@ dependencies {
     implementation projects.micronautDataTx
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation mnValidation.micronaut.validation
-    implementation libs.kotlin.coroutines
+    implementation(mn.kotlinx.coroutines.core)
     implementation(mn.kotlinx.coroutines.reactive)
 
     kapt mnValidation.micronaut.validation

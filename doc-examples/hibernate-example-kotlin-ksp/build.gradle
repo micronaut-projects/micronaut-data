@@ -17,7 +17,7 @@ dependencies {
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation(mnSql.jakarta.persistence.api)
     implementation(mnSql.jakarta.transaction.api)
-    implementation libs.kotlin.coroutines
+    implementation(mn.kotlinx.coroutines.core)
     implementation(mn.kotlinx.coroutines.reactive)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat

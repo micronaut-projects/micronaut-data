@@ -53,10 +53,6 @@ nullaway = "0.13.3"
 error_prone_core = "2.49.0"
 groovy_yaml = "5.0.5"
 
-# Dependency versions which are found in the platform BOM
-# meaning that they should be extracted into their own BOM
-kotlin-coroutines = "1.10.2"
-
 antlr = "4.13.2"
 
 [libraries]
@@ -86,7 +82,6 @@ micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
-kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }

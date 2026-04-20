@@ -37,7 +37,7 @@ dependencies {
 
     implementation(mnSql.jakarta.persistence.api)
     implementation(mnSql.jakarta.transaction.api)
-    implementation libs.kotlin.coroutines
+    implementation(mn.kotlinx.coroutines.core)
     implementation(mn.kotlinx.coroutines.reactive)
     implementation(mn.kotlinx.coroutines.reactor)
 
