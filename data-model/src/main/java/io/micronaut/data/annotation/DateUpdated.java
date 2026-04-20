@@ -41,7 +41,9 @@ public @interface DateUpdated {
 
     /**
      * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
-     * Note: On updates, {@code @DateUpdated} is always refreshed by Micronaut Data regardless of this flag.
+     * This is intended for insert-time use cases such as backfills or imports where a caller already has a last-updated value.
+     * On later updates, {@code @DateUpdated} keeps its normal semantics and is always refreshed by Micronaut Data
+     * regardless of this flag or the current value.
      * Default is {@code false} to preserve existing behavior.
      *
      * @return true if the existing value should be preserved, false otherwise

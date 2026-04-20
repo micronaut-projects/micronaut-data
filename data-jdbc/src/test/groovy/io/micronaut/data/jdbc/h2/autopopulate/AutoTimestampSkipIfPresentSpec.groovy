@@ -21,6 +21,9 @@ class AutoTimestampSkipIfPresentSpec extends Specification implements H2TestProp
     @Shared
     TSRepo repo = applicationContext.getBean(TSRepo)
 
+    @Shared
+    ImmutableTSRepo immutableRepo = applicationContext.getBean(ImmutableTSRepo)
+
     void 'date created skip if present on insert'() {
         when:
         def preset = Instant.parse("2020-01-01T00:00:00Z")
@@ -61,6 +64,43 @@ class AutoTimestampSkipIfPresentSpec extends Specification implements H2TestProp
         cleanup:
         repo.deleteAll()
     }
+
+    void 'immutable embedded timestamps preserve preset values and generate missing values on insert'() {
+        when:
+        def created = Instant.parse("2019-01-01T00:00:00Z")
+        def updated = Instant.parse("2019-01-02T00:00:00Z")
+        def saved = immutableRepo.save(new ImmutableTimestampedEntity(null, "immutable-ts-1", new ImmutableAuditTimestamps(created, updated)))
+        then:
+        saved.id
+        saved.audit.dateCreated == created
+        saved.audit.dateUpdated == updated
+
+        when:
+        def generated = immutableRepo.save(new ImmutableTimestampedEntity(null, "immutable-ts-2", new ImmutableAuditTimestamps(null, null)))
+        then:
+        generated.id
+        generated.audit.dateCreated != null
+        generated.audit.dateUpdated != null
+
+        cleanup:
+        immutableRepo.deleteAll()
+    }
+
+    void 'immutable embedded dateUpdated refreshes on update'() {
+        when:
+        def saved = immutableRepo.save(new ImmutableTimestampedEntity(null, "immutable-ts-3", new ImmutableAuditTimestamps(null, null)))
+        def before = saved.audit.dateUpdated
+        def customUpdate = Instant.parse("2021-01-03T03:04:05Z")
+        immutableRepo.update(new ImmutableTimestampedEntity(saved.id, saved.name, new ImmutableAuditTimestamps(saved.audit.dateCreated, customUpdate)))
+        def found = immutableRepo.findById(saved.id).get()
+        then:
+        found.audit.dateCreated == saved.audit.dateCreated
+        found.audit.dateUpdated != customUpdate
+        found.audit.dateUpdated >= before
+
+        cleanup:
+        immutableRepo.deleteAll()
+    }
 }
 
 @Repository
@@ -76,5 +116,21 @@ interface TSRepo {
     Optional<TSEntity> findById(@jakarta.data.repository.By(jakarta.data.repository.By.ID) UUID id)
 
     @jakarta.data.repository.Query("DELETE FROM ts_skip_ap")
+    void deleteAll()
+}
+
+@Repository
+@JdbcRepository(dialect = Dialect.H2)
+interface ImmutableTSRepo {
+    @Insert
+    ImmutableTimestampedEntity save(ImmutableTimestampedEntity e)
+
+    @jakarta.data.repository.Update
+    void update(ImmutableTimestampedEntity e)
+
+    @jakarta.data.repository.Find
+    Optional<ImmutableTimestampedEntity> findById(@jakarta.data.repository.By(jakarta.data.repository.By.ID) UUID id)
+
+    @jakarta.data.repository.Query("DELETE FROM immutable_ts_skip_ap")
     void deleteAll()
 }

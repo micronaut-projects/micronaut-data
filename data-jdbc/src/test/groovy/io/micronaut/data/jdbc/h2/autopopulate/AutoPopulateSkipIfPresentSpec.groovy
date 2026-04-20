@@ -11,21 +11,13 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.jdbc.h2.jakarta_data.simple.Address
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.GenericRepository
-import jakarta.data.repository.By
-import jakarta.data.repository.Find
-import jakarta.data.repository.Insert
-import jakarta.data.repository.Repository
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import static io.micronaut.data.annotation.Relation.Kind.EMBEDDED
-import static jakarta.data.repository.By.ID
-import static org.junit.jupiter.api.Assertions.assertEquals
-import static org.junit.jupiter.api.Assertions.assertNotNull
 
 class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPropertyProvider {
 
@@ -40,6 +32,14 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
     @Shared
     @Inject
     EmbedUUIDRepository embedUUIDRepository = applicationContext.getBean(EmbedUUIDRepository)
+
+    @Shared
+    @Inject
+    ImmutableCustomerRepository immutableCustomerRepository = applicationContext.getBean(ImmutableCustomerRepository)
+
+    @Shared
+    @Inject
+    ImmutableEmbedUUIDRepository immutableEmbedUUIDRepository = applicationContext.getBean(ImmutableEmbedUUIDRepository)
 
     void 'preset id is not overwritten and id initialized'() {
         when:"Save entity with auto populate value set"
@@ -75,6 +75,40 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
 
         cleanup:
         embedUUIDRepository.deleteAll()
+    }
+
+    void 'preset immutable id is not overwritten and null immutable id is generated'() {
+        when:
+        def preset = UUID.randomUUID()
+        def saved = immutableCustomerRepository.save(new ImmutableCustomer(preset, "immutable-1", null))
+        then:
+        saved.id == preset
+        saved.version != null
+
+        when:
+        def generated = immutableCustomerRepository.save(new ImmutableCustomer(null, "immutable-2", null))
+        then:
+        generated.id != null
+        generated.version != null
+
+        cleanup:
+        immutableCustomerRepository.deleteAll()
+    }
+
+    void 'preset immutable embedded uuid is preserved when skipIfPresent is true'() {
+        when:
+        def preset = UUID.randomUUID()
+        def saved = immutableEmbedUUIDRepository.save(new ImmutableEntityWithEmbedUUID(null, "immutable-embed-1", new ImmutableEmbedWithUUID(preset)))
+        then:
+        saved.embed.embId == preset
+
+        when:
+        def generated = immutableEmbedUUIDRepository.save(new ImmutableEntityWithEmbedUUID(null, "immutable-embed-2", new ImmutableEmbedWithUUID(null)))
+        then:
+        generated.embed.embId != null
+
+        cleanup:
+        immutableEmbedUUIDRepository.deleteAll()
     }
 }
 
@@ -123,6 +157,20 @@ class EntityWithEmbedUUID {
 @JdbcRepository(dialect = Dialect.H2)
 interface EmbedUUIDRepository extends GenericRepository<EntityWithEmbedUUID, UUID> {
     EntityWithEmbedUUID save(EntityWithEmbedUUID entity)
+
+    void deleteAll()
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ImmutableCustomerRepository extends GenericRepository<ImmutableCustomer, UUID> {
+    ImmutableCustomer save(ImmutableCustomer entity)
+
+    void deleteAll()
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ImmutableEmbedUUIDRepository extends GenericRepository<ImmutableEntityWithEmbedUUID, UUID> {
+    ImmutableEntityWithEmbedUUID save(ImmutableEntityWithEmbedUUID entity)
 
     void deleteAll()
 }
