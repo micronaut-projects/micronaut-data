@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.oraclexe;
 import io.micronaut.data.annotation.Id;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -122,6 +123,14 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
     public abstract BookDto customUpdateReturningDto(Long bookId, String title, int totalPages);
+
+    @Projection("title")
+    @Projection("totalPages")
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract OracleBookMethodProjectionDto customUpdateReturningMethodProjectionDto(Long bookId, String title, int totalPages);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract OracleBookMappedPropertyDto customUpdateReturningMappedPropertyDto(Long bookId, String title, int totalPages);
 
     @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
     public abstract Object[] customDeleteReturningTitleAndPages(Long bookId);

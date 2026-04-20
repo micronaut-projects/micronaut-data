@@ -20,10 +20,9 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.jdbc.mapper.ColumnNameByIndexCallableResultReader;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
@@ -32,13 +31,11 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.annotation.Fetch;
-import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -65,7 +62,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
-import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
@@ -112,8 +108,6 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
-import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
@@ -138,6 +132,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -489,7 +484,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 outCtx.columnIndexesByName()
             );
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(query.getResultType());
-            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(query, persistentEntity, resultPersistentEntity);
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
+                query.getAnnotationMetadata(),
+                persistentEntity,
+                resultPersistentEntity
+            );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
                 dtoResultReader,
@@ -548,66 +547,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         } catch (IntrospectionException e) {
             return false;
         }
-    }
-
-    private <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(SqlStoredQuery<E, R> query,
-                                                                         RuntimePersistentEntity<E> persistentEntity,
-                                                                         RuntimePersistentEntity<R> resultPersistentEntity) {
-        List<AnnotationValue<Projection>> projections = query.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
-        if (projections != null && !projections.isEmpty()) {
-            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
-                throw new IllegalStateException("Number of projections does not match persistent entity properties");
-            }
-            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
-            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
-            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
-            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
-                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
-                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
-                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
-                if (propertyByName == null) {
-                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
-                }
-                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
-                MutableAnnotationMetadata annotationMetadata = new MutableAnnotationMetadata();
-                annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
-                properties.add(new BeanPropertyWithAnnotationMetadata<>(
-                    dtoProp.getName(),
-                    dtoProp.getProperty(),
-                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
-                ));
-            }
-            return new RuntimePersistentEntity<>(
-                resultPersistentEntity.getIntrospection(),
-                properties
-            );
-        }
-        return new RuntimePersistentEntity<>(
-            resultPersistentEntity.getIntrospection(),
-            getOracleReturningDtoProperties(resultPersistentEntity, persistentEntity)
-        );
-    }
-
-    private <E, R> List<BeanProperty<R, Object>> getOracleReturningDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
-                                                                                  RuntimePersistentEntity<E> persistentEntity) {
-        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
-            if (p.hasAnnotation(io.micronaut.data.annotation.MappedProperty.class)) {
-                return p;
-            }
-            String name = p.getName();
-            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
-            if (projection != null) {
-                name = projection.stringValue().orElse(name);
-            }
-            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
-            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
-                return p;
-            }
-            return new BeanPropertyWithAnnotationMetadata<>(
-                p,
-                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
-            );
-        }).toList();
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
@@ -1385,9 +1324,29 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             int columnIndex = ++pos;
             cs.registerOutParameter(columnIndex, sqlType);
             columnNames.add(outParam.name());
-            columnIndexesByName.put(outParam.name(), columnIndex);
+            addOracleReturningOutParameterAliases(columnIndexesByName, outParam.name(), columnIndex);
         }
         return new OutParameterContext(inCount, columnNames, columnIndexesByName);
+    }
+
+    private static void addOracleReturningOutParameterAliases(Map<String, Integer> columnIndexesByName,
+                                                              String columnName,
+                                                              int columnIndex) {
+        columnIndexesByName.putIfAbsent(columnName, columnIndex);
+        String unquotedColumnName = unquoteColumnName(columnName);
+        columnIndexesByName.putIfAbsent(unquotedColumnName, columnIndex);
+        columnIndexesByName.putIfAbsent(unquotedColumnName.toLowerCase(Locale.ENGLISH), columnIndex);
+        columnIndexesByName.putIfAbsent(unquotedColumnName.toUpperCase(Locale.ENGLISH), columnIndex);
+    }
+
+    private static String unquoteColumnName(String columnName) {
+        if (columnName.length() > 1) {
+            char quote = columnName.charAt(0);
+            if ((quote == '"' || quote == '`') && columnName.charAt(columnName.length() - 1) == quote) {
+                return columnName.substring(1, columnName.length() - 1);
+            }
+        }
+        return columnName;
     }
 
     @Override

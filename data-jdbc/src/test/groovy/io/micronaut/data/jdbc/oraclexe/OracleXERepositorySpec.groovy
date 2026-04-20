@@ -545,6 +545,34 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         updated.totalPages == 777
     }
 
+    void "test custom update returning method-level projection dto"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        OracleBookMethodProjectionDto dto = bookRepository.customUpdateReturningMethodProjectionDto(book.id, "Oracle Projected Title", 321)
+        then:
+        dto.bookTitle() == "Oracle Projected Title"
+        dto.pageCount() == 321
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle Projected Title"
+        updated.totalPages == 321
+    }
+
+    void "test custom update returning mapped property dto"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        OracleBookMappedPropertyDto dto = bookRepository.customUpdateReturningMappedPropertyDto(book.id, "Oracle Mapped Title", 654)
+        then:
+        dto.renamedTitle == "Oracle Mapped Title"
+        dto.renamedPages == 654
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle Mapped Title"
+        updated.totalPages == 654
+    }
+
     void "test custom delete returning object array projection"() {
         given:
         setupBooks()
