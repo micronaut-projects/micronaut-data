@@ -89,12 +89,13 @@ class AutoTimestampSkipIfPresentSpec extends Specification implements H2TestProp
     void 'immutable embedded dateUpdated refreshes on update'() {
         when:
         def saved = immutableRepo.save(new ImmutableTimestampedEntity(null, "immutable-ts-3", new ImmutableAuditTimestamps(null, null)))
-        def before = saved.audit.dateUpdated
+        def persisted = immutableRepo.findById(saved.id).get()
+        def before = persisted.audit.dateUpdated
         def customUpdate = Instant.parse("2021-01-03T03:04:05Z")
-        immutableRepo.update(new ImmutableTimestampedEntity(saved.id, saved.name, new ImmutableAuditTimestamps(saved.audit.dateCreated, customUpdate)))
-        def found = immutableRepo.findById(saved.id).get()
+        immutableRepo.update(new ImmutableTimestampedEntity(persisted.id, persisted.name, new ImmutableAuditTimestamps(persisted.audit.dateCreated, customUpdate)))
+        def found = immutableRepo.findById(persisted.id).get()
         then:
-        found.audit.dateCreated == saved.audit.dateCreated
+        found.audit.dateCreated == persisted.audit.dateCreated
         found.audit.dateUpdated != customUpdate
         found.audit.dateUpdated >= before
 

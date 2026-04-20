@@ -134,14 +134,18 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return conversionService.convert(value, targetType).orElse(null);
     }
 
-    private boolean shouldSkipTimestamp(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, @Nullable Object currentValue) {
+    private boolean shouldSkipTimestamp(@NonNull AnnotationMetadata annotationMetadata,
+                                        boolean hasDateCreated,
+                                        boolean hasDateUpdated,
+                                        boolean isUpdate,
+                                        @Nullable Object currentValue) {
         if (currentValue == null) {
             return false;
         }
-        if (annotationMetadata.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false)) {
+        if (hasDateCreated && annotationMetadata.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false)) {
             return true;
         }
-        return !isUpdate && annotationMetadata.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false);
+        return hasDateUpdated && !isUpdate && annotationMetadata.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false);
     }
 
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
@@ -149,12 +153,14 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         Object now = dateTimeProvider.getNow();
         // 1) Top-level properties
         AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
-            if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
+            final AnnotationMetadata am = prop.getAnnotationMetadata();
+            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return null;
             }
-            final AnnotationMetadata am = prop.getAnnotationMetadata();
+            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
             Object current = prop.getProperty().get(context.getEntity());
-            if (shouldSkipTimestamp(am, isUpdate, current)) {
+            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, current)) {
                 return null;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);
@@ -175,7 +181,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
-            if (shouldSkipTimestamp(am, isUpdate, prop.get(current))) {
+            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, prop.get(current))) {
                 return current;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);
