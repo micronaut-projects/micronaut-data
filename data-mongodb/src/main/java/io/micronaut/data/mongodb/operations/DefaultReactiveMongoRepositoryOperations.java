@@ -365,7 +365,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     private <T, R> Flux<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
         if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
-            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result"));
+            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result, but found declared return type: "
+                + declaredReturnType.getName()
+                + ". Use a non-collection single value type, or a single-item reactive type like Mono<T>."));
         }
         MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
         if (QUERY_LOG.isDebugEnabled()) {

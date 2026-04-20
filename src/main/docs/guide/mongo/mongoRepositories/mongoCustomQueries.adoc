@@ -71,7 +71,7 @@ If your filter can match multiple documents, use `sort` to control which documen
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 
-NOTE: Filter, update and pipeline JSON can reference method parameters.
+NOTE: Filter, update and pipeline JSON can reference method parameters. The `project` and `sort` values must be constant JSON; `:param`-style placeholders are not supported there.
 
 Some annotations support to be defined on the repository, that can be used to provide the defaults for all operations that support it:
 

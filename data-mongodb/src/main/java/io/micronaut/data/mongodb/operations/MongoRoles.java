@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 
 /**
- * Mongo parameter roles contansts.
+ * Mongo parameter roles constants.
  *
  * @author Denis Stepanov
  * @since 3.3.0
