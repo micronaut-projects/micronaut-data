@@ -23,6 +23,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Person
 import spock.lang.PendingFeature
@@ -504,7 +505,8 @@ interface BookRepository extends GenericRepository<Book, Long> {
             ex.message.contains("Dialect: MYSQL doesn't support UPDATE ... RETURNING clause")
     }
 
-    void "POSTGRES test build update returning "() {
+    @Unroll
+    void "test build update returning for dialect - #dialect"() {
         given:
             def repository = buildRepository('test.BookRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -513,7 +515,7 @@ import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Author;
 
-@JdbcRepository(dialect= Dialect.POSTGRES)
+@JdbcRepository(dialect= Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
 
@@ -529,6 +531,9 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
             getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+
+        where:
+            dialect << [Dialect.POSTGRES, Dialect.SQLITE]
     }
 
     void "POSTGRES test build update returning property"() {

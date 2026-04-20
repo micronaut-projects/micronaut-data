@@ -70,6 +70,12 @@ public final class JdbcConnectionUtils {
                                      Connection connection,
                                      boolean isReadOnly,
                                      List<Runnable> onCompleteCallbacks) {
+        if (isSqliteConnection(connection)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Skipping JDBC Connection [{}] read-only toggle because SQLite doesn't support changing it after connect", connection);
+            }
+            return;
+        }
         boolean connectionReadOnly = isReadOnly(connection);
         if (connectionReadOnly != isReadOnly) {
             setConnectionReadOnly(logger, connection, isReadOnly);
@@ -144,6 +150,15 @@ public final class JdbcConnectionUtils {
             return connection.isReadOnly();
         } catch (SQLException e) {
             throw new ConnectionException("Failed to read the connection's read only flag: " + e.getMessage(), e);
+        }
+    }
+
+    private static boolean isSqliteConnection(Connection connection) {
+        try {
+            String url = connection.getMetaData().getURL();
+            return url != null && url.startsWith("jdbc:sqlite:");
+        } catch (SQLException e) {
+            return false;
         }
     }
 

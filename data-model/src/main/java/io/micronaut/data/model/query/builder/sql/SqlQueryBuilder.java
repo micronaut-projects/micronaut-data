@@ -912,6 +912,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " NOT NULL DEFAULT random_uuid()";
                 }
                 break;
+            case SQLITE:
+                if (type == UUID) {
+                    column += " NOT NULL";
+                } else if (type == SEQUENCE) {
+                    column += " NOT NULL";
+                } else if (type == IDENTITY) {
+                    if (isPk) {
+                        column += " AUTOINCREMENT";
+                    } else {
+                        column += " NOT NULL";
+                    }
+                } else {
+                    column += " NOT NULL";
+                }
+                break;
             case SQL_SERVER:
                 if (type == UUID) {
                     column += " NOT NULL DEFAULT newid()";
@@ -1181,7 +1196,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 .orElseGet(() -> selectAutoStrategy(property));
                             if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
-                            } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
+                            } else if ((dialect != Dialect.MYSQL && dialect != Dialect.SQLITE) || property.getDataType() != DataType.UUID) {
                                 // Property skipped
                                 return;
                             }

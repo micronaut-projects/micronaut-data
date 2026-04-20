@@ -55,6 +55,7 @@ dependencies {
     testRuntimeOnly mnSql.mysql.connector.java
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
+    testRuntimeOnly(mnSql.sqlite.jdbc)
     testRuntimeOnly mn.snakeyaml
 
     testResourcesService mnSql.mariadb.java.client

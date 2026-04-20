@@ -20,6 +20,7 @@ import io.micronaut.data.intercept.DeleteReturningManyInterceptor
 import io.micronaut.data.intercept.DeleteReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import spock.lang.Unroll
@@ -318,7 +319,8 @@ class UuidEntity {
         deleteByIdGreaterThanQuery == 'DELETE  FROM `uuid_entity`  WHERE (`id` > UUID_TO_BIN(?))'
     }
 
-    void "POSTGRES test build delete returning "() {
+    @Unroll
+    void "test build delete returning for dialect - #dialect"() {
         given:
             def repository = buildRepository('test.BookRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -327,7 +329,7 @@ import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Author;
 
-@JdbcRepository(dialect= Dialect.POSTGRES)
+@JdbcRepository(dialect= Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface BookRepository extends GenericRepository<Book, Long> {
 
@@ -343,6 +345,9 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getParameterPropertyPaths(deleteReturningCustomMethod) == ["id"] as String[]
             getDataInterceptor(deleteReturningCustomMethod) == "io.micronaut.data.intercept.DeleteOneInterceptor"
             getResultDataType(deleteReturningCustomMethod) == DataType.ENTITY
+
+        where:
+            dialect << [Dialect.POSTGRES, Dialect.SQLITE]
     }
 
     void "POSTGRES test build delete returning property"() {
