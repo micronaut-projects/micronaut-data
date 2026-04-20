@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
@@ -38,7 +39,6 @@ public interface QueryResult {
     /**
      * @return A string representation of the original query.
      */
-
     String getQuery();
 
     /**
@@ -77,6 +77,16 @@ public interface QueryResult {
      * @return the parameters binding
      */
     List<QueryParameterBinding> getParameterBindings();
+
+    /**
+     * Returns the out parameters binding for this query.
+     *
+     * @return the out parameters binding
+     */
+    @NonNull
+    default List<QueryOutParameterBinding> getOutParameterBindings() {
+        return List.of();
+    }
 
     /**
      * Returns additional required parameters.
@@ -138,7 +148,6 @@ public interface QueryResult {
         ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
 
         return new QueryResult() {
-
             @Override
             public String getQuery() {
                 return query;
@@ -437,4 +446,54 @@ public interface QueryResult {
         };
     }
 
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param queryParts                   The queryParts
+     * @param parameterBindings            The parameters binding
+     * @param outParameterBindings         The out parameter binding
+     * @param additionalRequiredParameters Additional required parameters to execute the query
+     * @return The query
+     */
+    @NonNull
+    static QueryResult of(
+        @NonNull String query,
+        @NonNull List<String> queryParts,
+        @NonNull List<QueryParameterBinding> parameterBindings,
+        @NonNull List<QueryOutParameterBinding> outParameterBindings,
+        @NonNull Map<String, String> additionalRequiredParameters) {
+        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+        ArgumentUtils.requireNonNull("outParameterBindings", outParameterBindings);
+        ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
+
+        return new QueryResult() {
+            @NonNull
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return additionalRequiredParameters;
+            }
+
+            @Override
+            public List<QueryOutParameterBinding> getOutParameterBindings() {
+                return outParameterBindings;
+            }
+        };
+    }
 }
