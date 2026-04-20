@@ -16,10 +16,14 @@
 package io.micronaut.data.hibernate;
 
 import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities._Train;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.tck.tests.AbstractJakartaDataTest;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.data.restrict.Restrict;
+import jakarta.data.Sort;
+import jakarta.data.page.Page;
+import jakarta.data.page.PageRequest;
+import jakarta.data.restrict.Restriction;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.hibernate.Session;
@@ -77,6 +81,24 @@ public class HibernateJakartaDataTest extends AbstractJakartaDataTest {
 
     @Override
     public void testRuntimeRestrictionsWithNumericAbsOnEmbedded() {
+    }
+
+    @Test
+    public void testPagedTrainsWithRestrictionAndSortIgnoreCase() {
+        Train lowercase = new Train("alpha", "Regional", 210, 140.0, true);
+        Train uppercase = new Train("Bravo", "Regional", 220, 145.0, true);
+        trainRepository.saveAll(List.of(lowercase, uppercase));
+
+        Restriction<Train> restriction = _Train.capacity.greaterThan(150);
+        PageRequest pageRequest = PageRequest.ofSize(10);
+        Sort<Train> sort = Sort.ascIgnoreCase("name");
+
+        Page<Train> page = trainRepository.trainsPaged(restriction, pageRequest, sort);
+
+        List<String> names = page.content().stream().map(Train::getName).collect(Collectors.toList());
+        Assertions.assertTrue(names.contains("alpha"));
+        Assertions.assertTrue(names.contains("Bravo"));
+        Assertions.assertTrue(names.indexOf("alpha") < names.indexOf("Bravo"));
     }
 
     @Test

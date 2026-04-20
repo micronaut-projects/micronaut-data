@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
@@ -38,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -120,6 +122,11 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         throw notSupportedOperation();
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
+        throw notSupportedOperation();
+    }
+
     public final boolean hasVersionRestriction() {
         if (predicate == null) {
             return false;
@@ -158,6 +165,11 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
             this.returning = null;
         }
         return this;
+    }
+
+    @Override
+    public Set<ParameterExpression<?>> getParameters() {
+        return CriteriaUtils.extractPredicateParameters(predicate);
     }
 
     private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder.DeleteQueryDefinition {

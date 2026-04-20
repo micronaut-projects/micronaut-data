@@ -55,7 +55,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         "ee.jakarta.tck.data.framework.read.only.HexInfo",
         "ee.jakarta.tck.data.framework.read.only.NumberInfo",
         "ee.jakarta.tck.data.framework.read.only.WholeNumber",
-        "ee.jakarta.tck.data.standalone.entity.FruitSummary"
+        "ee.jakarta.tck.data.framework.read.only.FruitSummary"
     );
 
     public TestClassVisitor() {

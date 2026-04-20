@@ -1,0 +1,20 @@
+---
+micronaut:
+  application:
+    name: data-example
+---
+datasources:
+  default:
+    schema-generate: CREATE_DROP
+    dialect: ORACLE
+    maximum-pool-size: 2
+    minimum-idle: 1
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        jdbc:
+          fetch_size: 100
+    compileTimeHibernateProxies: true

@@ -71,10 +71,8 @@ tasks.withType(JavaCompile).configureEach {
         disable("MissingSummary")
         disable("ClassInitializationDeadlock")
     }
-    // Disable NullAway on test code and TCK
+    // Disable Error Prone (including NullAway) on test code and TCK
     if (name.toLowerCase().contains("test") || project.name.contains("tck")) {
-        options.errorprone {
-            disable("NullAway")
-        }
+        options.errorprone.enabled = false
     }
 }

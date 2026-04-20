@@ -18,6 +18,12 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlDbType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -108,6 +114,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
+import static io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.SqlSelectionVisitor.getCastDbType;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -144,6 +151,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
     protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
+    private static final String CAST_FUNCTION = "CAST";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
 
@@ -696,9 +704,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(order.getExpression()).getPropertyPath());
+            Expression<?> expr = order.getExpression();
+            boolean lowerExpression = false;
+            if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+                lowerExpression = true;
+                expr = ue.getExpression();
+            }
+            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());
             String currentAlias = propertyPath.getTableAlias();
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
+                || lowerExpression;
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
@@ -2476,6 +2491,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(CLOSE_BRACKET);
         }
 
+        private void appendCast(ExpressionType<?> type, Expression<?> expression) {
+            query.append(CAST_FUNCTION).append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(AS_CLAUSE);
+            query.append(getCastDbType(type, getDialect()));
+            query.append(CLOSE_BRACKET);
+        }
+
         protected final void appendBindingParameter(BindingParameter bindingParameter,
                                                     @Nullable PersistentPropertyPath entityPropertyPath) {
             Runnable pushParameter = () -> {
@@ -2593,6 +2616,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public void visit(SubqueryExpression<?> subqueryExpression) {
             query.append(subqueryExpression.getType().name());
             visit(subqueryExpression.getSubquery());
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            appendCast(castExpression.getExpressionType(), castExpression.getExpression());
         }
 
         @Override
@@ -2808,6 +2836,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            appendCast(castExpression.getExpressionType(), castExpression.getExpression());
         }
 
         /**
@@ -3041,6 +3074,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (columnAlias != null) {
                 query.append(AS_CLAUSE).append(columnAlias);
             }
+        }
+
+        static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
+            if (type == null) {
+                throw new IllegalStateException("CAST type is expected");
+            }
+            if (!(type instanceof ClassExpressionType<?> classExpressionType)) {
+                throw new IllegalStateException("Only Class types are supported at the moment");
+            }
+            Class<?> javaType = ReflectionUtils.getWrapperType(classExpressionType.getJavaType());
+            DataType dataType = DataType.forType(javaType);
+            if (dataType == DataType.OBJECT) {
+                throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
+            }
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect);
+        }
+
+        private void appendCast(ExpressionType<?> type, Expression<?> expression) {
+            query.append(CAST_FUNCTION).append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(AS_CLAUSE);
+            query.append(getCastDbType(type, getDialect()));
+            query.append(CLOSE_BRACKET);
         }
 
         private void appendExpression(Expression<?> expression) {

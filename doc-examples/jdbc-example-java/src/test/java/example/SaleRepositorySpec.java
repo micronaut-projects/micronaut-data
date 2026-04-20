@@ -1,15 +1,14 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-@MicronautTest
-class SaleRepositorySpec {
+public abstract class SaleRepositorySpec {
 
-    private final ProductRepository productRepository;
-    private final SaleRepository saleRepository;
-    private final ManufacturerRepository manufacturerRepository;
+    protected final ProductRepository productRepository;
+    protected final SaleRepository saleRepository;
+    protected final ManufacturerRepository manufacturerRepository;
 
     public SaleRepositorySpec(ProductRepository productRepository,
                               SaleRepository saleRepository,

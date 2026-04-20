@@ -120,7 +120,7 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
         then:
             result == sql
         where:
-            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box"]
+            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box"]
             jdql << [
                     "WHERE id = :id",
                     "select thisCharacter where hexadecimal like '4_' and hexadecimal not like '%0' and thisCharacter not in ('E', 'G') and id not between 72 and 78 order by id asc",
@@ -132,7 +132,9 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                     "SELECT name ORDER BY ID(THIS) ASC",
                     "WHERE ID(THIS) IN (1,2)",
                     "WHERE ID(THIS) IS NULL",
-                    "WHERE ID(THIS) > 10"
+                    "WHERE ID(THIS) > 10",
+                    "WHERE ID(THIS) IN (:name1, :name1)",
+                    "WHERE ID(THIS) IN :names"
             ]
             sql << [
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" = ?)""",
@@ -145,7 +147,9 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                     """SELECT box_."name" FROM "box" box_ ORDER BY box_."id" ASC""",
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (1,2))""",
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IS NULL)""",
-                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" > 10)"""
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" > 10)""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (?,?))""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (?))"""
             ]
     }
 
