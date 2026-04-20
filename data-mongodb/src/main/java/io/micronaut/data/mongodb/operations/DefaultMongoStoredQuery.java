@@ -807,9 +807,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 throw new IllegalStateException("Update query is not provided!");
             }
             update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
-            }
             return update;
         }
 
@@ -987,9 +984,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 throw new IllegalStateException("Update query is not provided!");
             }
             update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
-            }
             return update;
         }
 

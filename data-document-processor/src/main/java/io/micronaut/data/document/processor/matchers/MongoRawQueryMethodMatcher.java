@@ -112,15 +112,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
             @Override
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
-                MethodElement methodElement = matchContext.getMethodElement();
                 ClassElement returnType = matchContext.getReturnType();
-                ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
-                if (producedType == null || TypeUtils.isVoid(producedType)) {
-                    throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
-                }
-                if (isMultipleResultType(producedType)) {
-                    throw new MatchFailedException(updateReturningSingleResultMessage(returnType));
-                }
                 if (TypeUtils.isReactiveType(returnType)) {
                     if (!TypeUtils.isReactiveSingleResult(returnType)) {
                         throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");

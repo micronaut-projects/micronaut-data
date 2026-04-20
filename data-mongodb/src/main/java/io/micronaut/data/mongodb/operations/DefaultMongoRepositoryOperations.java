@@ -317,7 +317,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
     private <T, R> List<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
-        if (Iterable.class.isAssignableFrom(declaredReturnType)) {
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
             throw new DataAccessException("MongoDB update returning supports only a single result");
         }
         MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();

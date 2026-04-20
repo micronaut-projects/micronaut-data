@@ -364,7 +364,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
 
     private <T, R> Flux<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
-        if (Iterable.class.isAssignableFrom(declaredReturnType)) {
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
             return Flux.error(new DataAccessException("MongoDB update returning supports only a single result"));
         }
         MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
