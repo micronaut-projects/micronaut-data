@@ -58,27 +58,9 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
         final Object entity = context.getEntity();
-        int propertiesToPopulateCount = 0;
-        for (RuntimePersistentProperty<Object> property : persistentProperties) {
-            if (!shouldSkipPopulation(property, entity)) {
-                propertiesToPopulateCount++;
-            }
-        }
-        final RuntimePersistentProperty<Object>[] propsToPopulate;
-        if (propertiesToPopulateCount == persistentProperties.length) {
-            propsToPopulate = persistentProperties;
-        } else {
-            @SuppressWarnings("unchecked")
-            final RuntimePersistentProperty<Object>[] filteredProperties = new RuntimePersistentProperty[propertiesToPopulateCount];
-            int index = 0;
-            for (RuntimePersistentProperty<Object> property : persistentProperties) {
-                if (!shouldSkipPopulation(property, entity)) {
-                    filteredProperties[index++] = property;
-                }
-            }
-            propsToPopulate = filteredProperties;
-        }
-        AutoPopulateUtil.applyTopLevel(context, propsToPopulate, p -> UUID.randomUUID());
+        AutoPopulateUtil.applyTopLevel(context, persistentProperties, property ->
+            shouldSkipPopulation(property, entity) ? null : UUID.randomUUID()
+        );
 
         // 2) Embedded properties (recursive via util)
         AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
