@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.oraclexe;
 
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -53,6 +54,14 @@ public interface OracleReactiveBookRepository extends BookReactiveRepository {
 
     @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
     Mono<BookDto> customUpdateReturningDto(Long bookId, String title, int totalPages);
+
+    @Projection("title")
+    @Projection("totalPages")
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    Mono<OracleBookMethodProjectionDto> customUpdateReturningMethodProjectionDto(Long bookId, String title, int totalPages);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    Mono<OracleBookMappedPropertyDto> customUpdateReturningMappedPropertyDto(Long bookId, String title, int totalPages);
 
     @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
     Mono<Object[]> customDeleteReturningTitleAndPages(Long bookId);

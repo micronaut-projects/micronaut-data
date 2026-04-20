@@ -20,7 +20,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
@@ -33,10 +32,8 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -49,7 +46,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
-import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
@@ -107,8 +103,6 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
-import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
@@ -139,6 +133,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -527,7 +522,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
         Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
         for (int i = 0; i < outParameterBindings.size(); i++) {
-            columnIndexesByName.put(outParameterBindings.get(i).name(), i);
+            addOracleReturningOutParameterAliases(columnIndexesByName, outParameterBindings.get(i).name(), i);
         }
         return columnIndexesByName;
     }
@@ -555,10 +550,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, columnIndexesByName);
         SqlJsonColumnReader<Readable> reader = jsonMapper != null ? () -> jsonMapper : null;
         if (storedQuery.getResultType().equals(Tuple.class)) {
-            return (SqlTypeMapper<Readable, R>) new ReadableTupleMapper(conversionService, columnIndexesByName);
+            return (SqlTypeMapper<Readable, R>) new ReadableTupleMapper(
+                conversionService,
+                getOracleReturningCanonicalColumnIndexes(storedQuery)
+            );
         }
         if (storedQuery.getResultType().equals(Object[].class)) {
-            SqlTypeMapper<Readable, Tuple> tupleMapper = new ReadableTupleMapper(conversionService, columnIndexesByName);
+            SqlTypeMapper<Readable, Tuple> tupleMapper = new ReadableTupleMapper(
+                conversionService,
+                getOracleReturningCanonicalColumnIndexes(storedQuery)
+            );
             return new SqlTypeMapper<>() {
                 @Override
                 public boolean hasNext(Readable resultSet) {
@@ -589,7 +590,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
         if (isDtoProjection(storedQuery)) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(storedQuery.getResultType());
-            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(storedQuery, persistentEntity, resultPersistentEntity);
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
+                storedQuery.getAnnotationMetadata(),
+                persistentEntity,
+                resultPersistentEntity
+            );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
                 new ColumnNameExistenceAwareReadableR2dbcResultReader(resultReader, columnIndexesByName),
@@ -627,6 +632,35 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         throw new DataAccessException("Expected Oracle RETURNING mapper for result type: " + storedQuery.getResultType().getName());
     }
 
+    private static void addOracleReturningOutParameterAliases(Map<String, Integer> columnIndexesByName,
+                                                              String columnName,
+                                                              int columnIndex) {
+        columnIndexesByName.putIfAbsent(columnName, columnIndex);
+        String unquotedColumnName = unquoteColumnName(columnName);
+        columnIndexesByName.putIfAbsent(unquotedColumnName, columnIndex);
+        columnIndexesByName.putIfAbsent(unquotedColumnName.toLowerCase(Locale.ENGLISH), columnIndex);
+        columnIndexesByName.putIfAbsent(unquotedColumnName.toUpperCase(Locale.ENGLISH), columnIndex);
+    }
+
+    private static String unquoteColumnName(String columnName) {
+        if (columnName.length() > 1) {
+            char quote = columnName.charAt(0);
+            if ((quote == '"' || quote == '`') && columnName.charAt(columnName.length() - 1) == quote) {
+                return columnName.substring(1, columnName.length() - 1);
+            }
+        }
+        return columnName;
+    }
+
+    private Map<String, Integer> getOracleReturningCanonicalColumnIndexes(SqlStoredQuery<?, ?> storedQuery) {
+        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
+        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(outParameterBindings.size());
+        for (int i = 0; i < outParameterBindings.size(); i++) {
+            columnIndexesByName.put(outParameterBindings.get(i).name(), i);
+        }
+        return columnIndexesByName;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> SqlResultEntityTypeMapper<Readable, T> getOracleReturningEntityMapper(SqlStoredQuery<T, ?> storedQuery) {
         return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
@@ -659,66 +693,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         } catch (IntrospectionException e) {
             return false;
         }
-    }
-
-    private <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(SqlStoredQuery<E, R> storedQuery,
-                                                                         RuntimePersistentEntity<E> persistentEntity,
-                                                                         RuntimePersistentEntity<R> resultPersistentEntity) {
-        List<AnnotationValue<Projection>> projections = storedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
-        if (projections != null && !projections.isEmpty()) {
-            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
-                throw new IllegalStateException("Number of projections does not match persistent entity properties");
-            }
-            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
-            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
-            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
-            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
-                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
-                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
-                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
-                if (propertyByName == null) {
-                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
-                }
-                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
-                MutableAnnotationMetadata annotationMetadata = new MutableAnnotationMetadata();
-                annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
-                properties.add(new BeanPropertyWithAnnotationMetadata<>(
-                    dtoProp.getName(),
-                    dtoProp.getProperty(),
-                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
-                ));
-            }
-            return new RuntimePersistentEntity<>(
-                resultPersistentEntity.getIntrospection(),
-                properties
-            );
-        }
-        return new RuntimePersistentEntity<>(
-            resultPersistentEntity.getIntrospection(),
-            getOracleReturningDtoProperties(resultPersistentEntity, persistentEntity)
-        );
-    }
-
-    private <E, R> List<BeanProperty<R, Object>> getOracleReturningDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
-                                                                                  RuntimePersistentEntity<E> persistentEntity) {
-        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
-            if (p.hasAnnotation(io.micronaut.data.annotation.MappedProperty.class)) {
-                return p;
-            }
-            String name = p.getName();
-            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
-            if (projection != null) {
-                name = projection.stringValue().orElse(name);
-            }
-            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
-            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
-                return p;
-            }
-            return new BeanPropertyWithAnnotationMetadata<>(
-                p,
-                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
-            );
-        }).toList();
     }
 
     private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {

@@ -439,10 +439,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             outCtx.columnIndexesByName()
         );
         if (query.getResultType().equals(Tuple.class)) {
-            return (SqlTypeMapper<CallableStatement, R>) new CallableStatementTupleMapper(conversionService, outCtx.columnIndexesByName());
+            return (SqlTypeMapper<CallableStatement, R>) new CallableStatementTupleMapper(
+                conversionService,
+                getOracleReturningCanonicalColumnIndexes(outCtx.columnNames(), outCtx.columnIndexesByName())
+            );
         }
         if (query.getResultType().equals(Object[].class)) {
-            SqlTypeMapper<CallableStatement, Tuple> tupleMapper = new CallableStatementTupleMapper(conversionService, outCtx.columnIndexesByName());
+            SqlTypeMapper<CallableStatement, Tuple> tupleMapper = new CallableStatementTupleMapper(
+                conversionService,
+                getOracleReturningCanonicalColumnIndexes(outCtx.columnNames(), outCtx.columnIndexesByName())
+            );
             return new SqlTypeMapper<>() {
                 @Override
                 public boolean hasNext(CallableStatement resultSet) {
@@ -1327,6 +1333,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             addOracleReturningOutParameterAliases(columnIndexesByName, outParam.name(), columnIndex);
         }
         return new OutParameterContext(inCount, columnNames, columnIndexesByName);
+    }
+
+    private static Map<String, Integer> getOracleReturningCanonicalColumnIndexes(List<String> columnNames,
+                                                                                 Map<String, Integer> allColumnIndexesByName) {
+        Map<String, Integer> columnIndexesByName = new LinkedHashMap<>(columnNames.size());
+        for (String columnName : columnNames) {
+            columnIndexesByName.put(columnName, Objects.requireNonNull(allColumnIndexesByName.get(columnName)));
+        }
+        return columnIndexesByName;
     }
 
     private static void addOracleReturningOutParameterAliases(Map<String, Integer> columnIndexesByName,

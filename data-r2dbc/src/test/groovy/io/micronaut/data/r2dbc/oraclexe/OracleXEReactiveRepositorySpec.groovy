@@ -202,6 +202,38 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         updated.totalPages == 444
     }
 
+    void "test custom update returning method-level projection dto"() {
+        given:
+        def repository = context.getBean(OracleReactiveBookRepository)
+        def book = repository.save(new Book(title: "Oracle Projected R2DBC", totalPages: 321)).block()
+
+        when:
+        OracleBookMethodProjectionDto dto = repository.customUpdateReturningMethodProjectionDto(book.id, "Oracle Projected Updated", 654).block()
+
+        then:
+        dto.bookTitle() == "Oracle Projected Updated"
+        dto.pageCount() == 654
+        def updated = repository.findById(book.id).block()
+        updated.title == "Oracle Projected Updated"
+        updated.totalPages == 654
+    }
+
+    void "test custom update returning mapped property dto"() {
+        given:
+        def repository = context.getBean(OracleReactiveBookRepository)
+        def book = repository.save(new Book(title: "Oracle Mapped R2DBC", totalPages: 432)).block()
+
+        when:
+        OracleBookMappedPropertyDto dto = repository.customUpdateReturningMappedPropertyDto(book.id, "Oracle Mapped Updated", 765).block()
+
+        then:
+        dto.renamedTitle == "Oracle Mapped Updated"
+        dto.renamedPages == 765
+        def updated = repository.findById(book.id).block()
+        updated.title == "Oracle Mapped Updated"
+        updated.totalPages == 765
+    }
+
     void "test custom delete returning object array projection"() {
         given:
         def repository = context.getBean(OracleReactiveBookRepository)
