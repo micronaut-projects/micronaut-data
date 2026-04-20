@@ -37,6 +37,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -114,7 +115,7 @@ public abstract class AbstractSpringTransactionOperations
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
         def.setPropagationBehavior(definition.getPropagationBehavior().ordinal());
-        def.setName(definition.getName());
+        def.setName(Objects.requireNonNull(definition.getName()));
         definition.getTimeout().ifPresent(timeout -> {
             if (!timeout.isNegative()) {
                 def.setTimeout((int) timeout.getSeconds());
@@ -128,7 +129,7 @@ public abstract class AbstractSpringTransactionOperations
                           TransactionDefinition transactionDefinition) {
         ArgumentUtils.requireNonNull("callback", callback);
         try {
-            return template.execute(status -> execute(callback, status, transactionDefinition));
+            return template.execute(status -> Objects.requireNonNull(execute(callback, status, transactionDefinition)));
         } catch (UndeclaredThrowableException e) {
             return ExceptionUtil.sneakyThrow(e.getUndeclaredThrowable());
         }
