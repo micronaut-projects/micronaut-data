@@ -25,12 +25,13 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -45,24 +46,17 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
-import jakarta.persistence.Tuple;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -77,9 +71,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
     private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("\\breturning\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
-    private static final Pattern INTO_PATTERN = Pattern.compile("\\binto\\b", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
     private static final String COLON = ":";
@@ -324,7 +316,15 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
                 .orElse(Dialect.ANSI);
             if (dialect == Dialect.ORACLE) {
-                return buildOracleReturningQueryResult(matchContext, finalQueryString, queryParts, parameterBindings, persistentEntity, resultType);
+                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+                return OracleRawQueryReturningSupport.buildQueryResult(
+                    finalQueryString,
+                    queryParts,
+                    parameterBindings,
+                    entity,
+                    resultType,
+                    RawQueryMethodMatcher::createOutBinding
+                );
             }
         }
 
@@ -332,15 +332,19 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return QueryResult.of(finalQueryString, queryParts, parameterBindings);
     }
 
-    private static int indexOfIntoIgnoreCase(String s) {
-        Matcher matcher = INTO_PATTERN.matcher(s);
-        return matcher.find() ? matcher.start() : -1;
+    private static boolean containsReturningClause(String query) {
+        return lastKeywordOutsideQuotes(query, "returning") > -1;
     }
 
-    private static boolean containsReturningClause(String query) {
+    private static int lastKeywordOutsideQuotes(String query, String keyword) {
+        return findKeywordOutsideQuotes(query, keyword, 0, true);
+    }
+
+    private static int findKeywordOutsideQuotes(String query, String keyword, int startIndex, boolean findLast) {
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
-        StringBuilder visible = new StringBuilder(query.length());
+        int match = -1;
+        int keywordLength = keyword.length();
         for (int i = 0; i < query.length(); i++) {
             char c = query.charAt(i);
             if (inSingleQuote) {
@@ -349,7 +353,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
                     i++;
                 }
-                visible.append(' ');
                 continue;
             }
             if (inDoubleQuote) {
@@ -358,242 +361,38 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
                     i++;
                 }
-                visible.append(' ');
                 continue;
             }
             if (c == '\'') {
                 inSingleQuote = true;
-                visible.append(' ');
                 continue;
             }
             if (c == '"') {
                 inDoubleQuote = true;
-                visible.append(' ');
                 continue;
             }
-            visible.append(c);
-        }
-        return RETURNING_PATTERN.matcher(visible).find();
-    }
-
-    private QueryResult buildOracleReturningQueryResult(MethodMatchContext matchContext,
-                                                        String finalQueryString,
-                                                        List<String> queryParts,
-                                                        List<QueryParameterBinding> parameterBindings,
-                                                        @Nullable SourcePersistentEntity persistentEntity,
-                                                        @Nullable TypedElement resultType) {
-        SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
-        OracleReturningClause returningClause = parseOracleReturningClause(finalQueryString);
-        if (returningClause.intoClause() == null) {
-            throw new MatchFailedException("Oracle raw queries with RETURNING must declare explicit returned columns and an INTO clause with positional '?' placeholders");
-        }
-        OracleReturningBindings returningBindings = resolveOracleReturningBindings(entity, returningClause.selection(), resultType);
-        validateOracleIntoClause(returningClause.intoClause(), returningBindings.outBindings().size());
-        return buildExplicitOracleReturningQueryResult(finalQueryString, queryParts, parameterBindings, returningBindings.outBindings());
-    }
-
-    private QueryResult buildExplicitOracleReturningQueryResult(String finalQueryString,
-                                                                List<String> queryParts,
-                                                                List<QueryParameterBinding> parameterBindings,
-                                                                List<QueryOutParameterBinding> outBindings) {
-        if (isOracleAnonymousBlock(finalQueryString)) {
-            return QueryResult.of(finalQueryString, queryParts, parameterBindings, outBindings, Map.of());
-        }
-        if (!parameterBindings.isEmpty()) {
-            wrapQueryPartsInOracleBlock(queryParts);
-            return QueryResult.of(assembleSqlFromQueryParts(queryParts), queryParts, parameterBindings, outBindings, Map.of());
-        }
-        String wrappedSql = wrapSqlInOracleBlock(finalQueryString);
-        return QueryResult.of(wrappedSql, List.of(wrappedSql), parameterBindings, outBindings, Map.of());
-    }
-
-    private boolean isOracleAnonymousBlock(String query) {
-        String trimmed = query.trim().toLowerCase(Locale.ENGLISH);
-        return trimmed.startsWith("begin") && trimmed.endsWith("end;");
-    }
-
-    private OracleReturningClause parseOracleReturningClause(String finalQueryString) {
-        String withoutSemicolon = stripTrailingSemicolon(finalQueryString).trim();
-        String lower = withoutSemicolon.toLowerCase(Locale.ENGLISH);
-        int returningIdx = lower.lastIndexOf("returning");
-        if (returningIdx < 0) {
-            throw new MatchFailedException("Oracle RETURNING clause was not found in query: " + finalQueryString);
-        }
-        String afterReturning = withoutSemicolon.substring(returningIdx + "returning".length()).trim();
-        int intoIdx = indexOfIntoIgnoreCase(afterReturning);
-        String selection;
-        String intoClause = null;
-        if (intoIdx > -1) {
-            selection = afterReturning.substring(0, intoIdx).trim();
-            intoClause = afterReturning.substring(intoIdx + "into".length()).trim();
-            intoClause = normalizeIntoClauseForValidation(intoClause);
-        } else {
-            selection = afterReturning;
-        }
-        return new OracleReturningClause(selection, intoClause);
-    }
-
-    private String normalizeIntoClauseForValidation(String intoClause) {
-        String trimmed = stripTrailingSemicolon(intoClause).trim();
-        int lastPlaceholder = trimmed.lastIndexOf('?');
-        if (lastPlaceholder == -1) {
-            return trimmed;
-        }
-        return trimmed.substring(0, lastPlaceholder + 1).trim();
-    }
-
-    private void wrapQueryPartsInOracleBlock(List<String> queryParts) {
-        if (!queryParts.isEmpty()) {
-            queryParts.set(0, "BEGIN " + queryParts.get(0));
-        } else {
-            queryParts.add("BEGIN ");
-        }
-        int last = queryParts.size() - 1;
-        String tail = last >= 0 ? queryParts.get(last) : "";
-        if (last >= 0) {
-            queryParts.set(last, stripTrailingSemicolon(tail) + "; END;");
-        } else {
-            queryParts.add(stripTrailingSemicolon(tail) + "; END;");
-        }
-    }
-
-    private String wrapSqlInOracleBlock(String sql) {
-        return "BEGIN " + stripTrailingSemicolon(sql) + "; END;";
-    }
-
-    private String assembleSqlFromQueryParts(List<String> queryParts) {
-        if (queryParts.size() == 1) {
-            return queryParts.get(0);
-        }
-        var sqlBuilder = new StringBuilder(queryParts.get(0));
-        for (int i = 1; i < queryParts.size(); i++) {
-            sqlBuilder.append(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER).append(queryParts.get(i));
-        }
-        return sqlBuilder.toString();
-    }
-
-    private OracleReturningBindings resolveOracleReturningBindings(@Nullable SourcePersistentEntity entity,
-                                                                  String selection,
-                                                                  @Nullable TypedElement resultType) {
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>();
-        List<String> outColumns = new ArrayList<>();
-        List<String> parts = splitByComma(selection).stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
-        if (parts.isEmpty() || (parts.size() == 1 && parts.get(0).equals("*"))) {
-            throw new MatchFailedException("Oracle raw queries with RETURNING must declare explicit returned columns instead of RETURNING *");
-        }
-        validateReturningColumnCount(parts, resultType);
-        for (String part : parts) {
-            String col = canonicalizeReturningColumn(entity, normalizeReturnedColumn(part));
-            outColumns.add(col);
-            outBindings.add(createOutBinding(col, resolveReturningDataType(entity, col)));
-        }
-        if (outBindings.isEmpty()) {
-            throw new MatchFailedException("RETURNING clause must contain at least one column for Oracle");
-        }
-        return new OracleReturningBindings(outColumns, outBindings);
-    }
-
-    private void validateReturningColumnCount(List<String> parts, @Nullable TypedElement resultType) {
-        if (parts.size() > 1 && !supportsMultiColumnReturning(resultType)) {
-            throw new MatchFailedException("Oracle raw queries returning multiple columns require an entity return type");
-        }
-    }
-
-    private boolean supportsMultiColumnReturning(@Nullable TypedElement resultType) {
-        if (resultType == null) {
-            return false;
-        }
-        if (resultType instanceof ClassElement classElement) {
-            if (TypeUtils.isEntity(classElement) || TypeUtils.isIterableOfEntity(classElement)) {
-                return true;
+            if (i < startIndex) {
+                continue;
             }
-            if (TypeUtils.isDto(classElement) || TypeUtils.isIterableOfDto(classElement)) {
-                return true;
-            }
-            if (Tuple.class.getName().equals(classElement.getName())) {
-                return true;
-            }
-            if (classElement.isArray() && Object.class.getName().equals(classElement.fromArray().getName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void validateOracleIntoClause(String intoClause, int expectedCount) {
-        List<String> intoParts = splitByComma(intoClause).stream().map(String::trim).filter(s -> !s.isEmpty()).map(RawQueryMethodMatcher::stripTrailingSemicolon).toList();
-        if (intoParts.size() != expectedCount) {
-            throw new MatchFailedException("Oracle RETURNING ... INTO placeholder count must match returned column count: " + expectedCount + " columns, " + intoParts.size() + " INTO target(s)");
-        }
-        for (String intoPart : intoParts) {
-            if (!"?".equals(intoPart)) {
-                throw new MatchFailedException("Oracle raw queries with RETURNING ... INTO must use positional '?' placeholders in the INTO clause: " + intoPart);
-            }
-        }
-    }
-
-    private DataType resolveReturningDataType(@Nullable SourcePersistentEntity entity, String col) {
-        DataType dt = DataType.STRING;
-        if (entity != null) {
-            var prop = resolveReturningProperty(entity, col);
-            if (prop != null) {
-                if (prop instanceof Association assocProp) {
-                    try {
-                        var ae = assocProp.getAssociatedEntity();
-                        if (ae != null && ae.hasIdentity()) {
-                            dt = ae.getIdentity().getDataType();
-                        }
-                    } catch (Exception ignored) {
-                        dt = DataType.STRING;
-                    }
-                } else if (prop.getDataType() != null) {
-                    dt = prop.getDataType();
+            if (query.regionMatches(true, i, keyword, 0, keyword.length()) && isKeywordBoundary(query, i - 1) && isKeywordBoundary(query, i + keywordLength)) {
+                if (!findLast) {
+                    return i;
                 }
+                match = i;
             }
         }
-        return dt;
+        return match;
     }
 
-    private String canonicalizeReturningColumn(@Nullable SourcePersistentEntity entity, String col) {
-        if (entity == null) {
-            return col;
+    private static boolean isKeywordBoundary(String query, int index) {
+        if (index < 0 || index >= query.length()) {
+            return true;
         }
-        var prop = resolveReturningProperty(entity, col);
-        if (prop != null) {
-            return prop.getPersistedName();
-        }
-        return col;
+        char c = query.charAt(index);
+        return !Character.isLetterOrDigit(c) && c != '_';
     }
 
-    @Nullable
-    private SourcePersistentProperty resolveReturningProperty(SourcePersistentEntity entity, String col) {
-        var prop = entity.getPropertyByNameIgnoreCase(col);
-        if (prop == null) {
-            for (var p : entity.getPersistentProperties()) {
-                if (p.getPersistedName().equalsIgnoreCase(col)) {
-                    prop = p;
-                    break;
-                }
-            }
-        }
-        return prop;
-    }
-
-    private String normalizeReturnedColumn(String column) {
-        if (column.length() < 2) {
-            return column;
-        }
-        char quote = column.charAt(0);
-        if ((quote == '"' || quote == '`') && column.charAt(column.length() - 1) == quote) {
-            String unquoted = column.substring(1, column.length() - 1);
-            if (unquoted.indexOf('.') == -1 && unquoted.indexOf(quote) == -1) {
-                return unquoted;
-            }
-        }
-        return column;
-    }
-
-    private QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
+    private static QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
         return new QueryOutParameterBinding() {
             @Override
             public String getName() {
@@ -605,39 +404,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 return dataType;
             }
         };
-    }
-
-    private static String stripTrailingSemicolon(String s) {
-        String t = s.trim();
-        if (t.endsWith(";")) {
-            return t.substring(0, t.length() - 1);
-        }
-        return s;
-    }
-
-    private static List<String> splitByComma(String s) {
-        List<String> parts = new ArrayList<>();
-        int depth = 0;
-        StringBuilder current = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '(') {
-                depth++;
-            }
-            if (c == ')') {
-                depth--;
-            }
-            if (c == ',' && depth == 0) {
-                parts.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-        if (current.length() > 0) {
-            parts.add(current.toString());
-        }
-        return parts;
     }
 
     public static QueryParameterBinding addBinding(MethodMatchContext matchContext,
@@ -737,9 +503,4 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext()));
     }
 
-    private record OracleReturningClause(String selection, @Nullable String intoClause) {
-    }
-
-    private record OracleReturningBindings(List<String> outColumns, List<QueryOutParameterBinding> outBindings) {
-    }
 }

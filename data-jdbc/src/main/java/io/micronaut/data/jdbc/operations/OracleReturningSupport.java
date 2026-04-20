@@ -17,8 +17,6 @@ package io.micronaut.data.jdbc.operations;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.mapper.CallableStatementTupleMapper;
@@ -144,7 +142,7 @@ final class OracleReturningSupport {
                 conversionService
             );
         }
-        if (isDtoProjection(query)) {
+        if (dtoEntityResolver.isDtoProjection(query)) {
             ResultReader<CallableStatement, String> dtoResultReader = new ColumnNameExistenceAwareCallableResultReader(
                 columnIndexCallableResultReader,
                 outCtx.metadata().columnIndexesByName()
@@ -229,40 +227,15 @@ final class OracleReturningSupport {
             ));
     }
 
-    private static <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> query) {
-        if (query.isDtoProjection()) {
-            return true;
-        }
-        if (query.getResultDataType() == DataType.ENTITY) {
-            return false;
-        }
-        Class<R> resultType = query.getResultType();
-        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
-            return false;
-        }
-        if (resultType.equals(String.class)
-            || Number.class.isAssignableFrom(resultType)
-            || CharSequence.class.isAssignableFrom(resultType)
-            || java.util.Date.class.isAssignableFrom(resultType)
-            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
-            || resultType.equals(Boolean.class)
-            || resultType.equals(Character.class)
-            || resultType.equals(Object.class)) {
-            return false;
-        }
-        try {
-            BeanIntrospection.getIntrospection(resultType);
-            return true;
-        } catch (IntrospectionException e) {
-            return false;
-        }
-    }
-
     @FunctionalInterface
     interface DtoEntityResolver {
         RuntimePersistentEntity<?> resolve(AnnotationMetadata annotationMetadata,
                                            RuntimePersistentEntity<?> persistentEntity,
                                            RuntimePersistentEntity<?> resultPersistentEntity);
+
+        default boolean isDtoProjection(SqlStoredQuery<?, ?> query) {
+            return false;
+        }
     }
 
     @FunctionalInterface

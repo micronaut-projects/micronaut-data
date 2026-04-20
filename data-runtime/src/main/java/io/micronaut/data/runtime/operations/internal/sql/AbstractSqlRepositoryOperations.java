@@ -23,6 +23,8 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
@@ -904,6 +906,35 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             resultPersistentEntity.getIntrospection(),
             getDtoProperties(resultPersistentEntity, persistentEntity)
         );
+    }
+
+    protected final <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
+        if (storedQuery.isDtoProjection()) {
+            return true;
+        }
+        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+            return false;
+        }
+        Class<R> resultType = storedQuery.getResultType();
+        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
+            return false;
+        }
+        if (resultType.equals(String.class)
+            || Number.class.isAssignableFrom(resultType)
+            || CharSequence.class.isAssignableFrom(resultType)
+            || java.util.Date.class.isAssignableFrom(resultType)
+            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
+            || resultType.equals(Boolean.class)
+            || resultType.equals(Character.class)
+            || resultType.equals(Object.class)) {
+            return false;
+        }
+        try {
+            BeanIntrospection.getIntrospection(resultType);
+            return true;
+        } catch (IntrospectionException e) {
+            return false;
+        }
     }
 
     protected final <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,

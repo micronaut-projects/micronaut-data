@@ -427,7 +427,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     jdbcDataConversionService(),
                     jsonMapper,
                     this::resolveOracleReturningEntity,
-                    this::resolveOracleReturningDtoPersistentEntity,
+                    new OracleReturningSupport.DtoEntityResolver() {
+                        @Override
+                        public RuntimePersistentEntity<?> resolve(AnnotationMetadata annotationMetadata,
+                                                                  RuntimePersistentEntity<?> persistentEntity,
+                                                                  RuntimePersistentEntity<?> resultPersistentEntity) {
+                            return resolveOracleReturningDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity);
+                        }
+
+                        @Override
+                        public boolean isDtoProjection(SqlStoredQuery<?, ?> query) {
+                            return DefaultJdbcRepositoryOperations.this.isDtoProjection(query);
+                        }
+                    },
                     this::triggerOracleReturningPostLoad
                 ).map(cs, preparedQuery.getResultType()));
                 return result;

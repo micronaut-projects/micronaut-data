@@ -814,6 +814,41 @@ interface BookRepository extends GenericRepository<Book, Long> {
         getRawQuery(method).replace('\n', ' ') == 'BEGIN INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED") VALUES (?,?,?,?,?,?) RETURNING "AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED","ID" INTO ?,?,?,?,?,?,?; END; '
     }
 
+    void "ORACLE raw @Query insert returning ignores quoted returning text after clause in block"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query(\"""
+        BEGIN
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId,:genreId,:title,:totalPages,:publisherId,:lastUpdated)
+        RETURNING "TITLE" INTO ?;
+        DBMS_OUTPUT.PUT_LINE('ignored returning into ?');
+        END;
+        \""")
+    String customInsertReturningTitle(Long authorId, Long genreId, String title, int totalPages, Long publisherId, LocalDateTime lastUpdated);
+}
+""")
+        when:
+        def method = repository.findPossibleMethods("customInsertReturningTitle").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+        then:
+        getRawQuery(method).replace('\n', ' ') == "BEGIN INSERT INTO \"BOOK\" (\"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\") VALUES (?,?,?,?,?,?) RETURNING \"TITLE\" INTO ?; DBMS_OUTPUT.PUT_LINE('ignored returning into ?'); END; "
+        getOperationType(method) == DataMethod.OperationType.INSERT_RETURNING
+        outBindingParameters.length == 1
+        outBindingParameters[0].name == "title"
+        outBindingParameters[0].dataType == DataType.STRING
+    }
+
     void "ORACLE raw @Query insert returning without INTO is rejected"() {
         when:
         buildRepository('test.BookRepository', """

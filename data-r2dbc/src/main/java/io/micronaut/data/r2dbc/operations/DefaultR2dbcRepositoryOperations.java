@@ -25,9 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -634,35 +632,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @SuppressWarnings("unchecked")
     private <T> SqlResultEntityTypeMapper<Readable, T> getOracleReturningEntityMapper(SqlStoredQuery<T, ?> storedQuery) {
         return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
-    }
-
-    private <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
-        if (storedQuery.isDtoProjection()) {
-            return true;
-        }
-        if (storedQuery.getResultDataType() == DataType.ENTITY) {
-            return false;
-        }
-        Class<R> resultType = storedQuery.getResultType();
-        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
-            return false;
-        }
-        if (resultType.equals(String.class)
-            || Number.class.isAssignableFrom(resultType)
-            || CharSequence.class.isAssignableFrom(resultType)
-            || java.util.Date.class.isAssignableFrom(resultType)
-            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
-            || resultType.equals(Boolean.class)
-            || resultType.equals(Character.class)
-            || resultType.equals(Object.class)) {
-            return false;
-        }
-        try {
-            BeanIntrospection.getIntrospection(resultType);
-            return true;
-        } catch (IntrospectionException e) {
-            return false;
-        }
     }
 
     private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
