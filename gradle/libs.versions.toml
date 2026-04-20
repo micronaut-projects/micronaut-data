@@ -49,8 +49,8 @@ spring-boot-gradle-plugin = "4.0.5"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.4.1"
 errorprone-gradle-plugin = "5.1.0"
-nullaway = "0.13.1"
-error_prone_core = "2.48.0"
+nullaway = "0.13.3"
+error_prone_core = "2.49.0"
 groovy_yaml = "5.0.5"
 
 # Dependency versions which are found in the platform BOM
