@@ -23,6 +23,8 @@ dependencies {
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
 
+    testImplementation(platform(mn.boms.kotlin.coroutines))
+    testImplementation(libs.kotlin.coroutines.test)
     implementation mn.micronaut.http.client
     implementation projects.micronautDataJdbc
     implementation(mnSql.jakarta.persistence.api)
