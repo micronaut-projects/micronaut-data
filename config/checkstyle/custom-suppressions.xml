@@ -6,7 +6,6 @@
 
 <suppressions>
     <suppress checks="FileLength" files=".*AbstractSqlLikeQueryBuilder.*" />
-    <!-- TODO: Refactor SqlQueryBuilder into smaller components and remove this suppression. -->
     <suppress checks="FileLength" files=".*/SqlQueryBuilder\.java" />
     <suppress files="[\\/]generated-src[\\/]" checks="[a-zA-Z0-9]*"/>
 </suppressions>

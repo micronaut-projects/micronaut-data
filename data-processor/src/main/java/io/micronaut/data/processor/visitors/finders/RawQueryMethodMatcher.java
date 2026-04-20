@@ -25,8 +25,10 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -42,6 +44,7 @@ import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
@@ -52,6 +55,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -66,7 +71,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
     private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
@@ -182,17 +186,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
 
         if (DELETE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
         } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
             }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
@@ -237,10 +241,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
-        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
             .orElse(null);
-        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         boolean encodeEntityParameters;
         if (implicitQueries) {
             encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
@@ -261,7 +265,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        @Nullable
                                        ParameterElement entityParam,
                                        @Nullable
-                                       SourcePersistentEntity persistentEntity) {
+                                       SourcePersistentEntity persistentEntity,
+                                       @Nullable
+                                       TypedElement resultType) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
@@ -303,20 +309,99 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
         String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
-        return new QueryResult() {
+
+        String cleanLower = SQL_COMMENT_PATTERN.matcher(finalQueryString).replaceAll("").trim().toLowerCase(Locale.ENGLISH);
+        boolean hasReturning = containsReturningClause(cleanLower);
+        if (hasReturning) {
+            Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
+                .orElse(Dialect.ANSI);
+            if (dialect == Dialect.ORACLE) {
+                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+                return OracleRawQueryReturningSupport.buildQueryResult(
+                    finalQueryString,
+                    queryParts,
+                    parameterBindings,
+                    entity,
+                    resultType,
+                    RawQueryMethodMatcher::createOutBinding
+                );
+            }
+        }
+
+        // Default: no transformation
+        return QueryResult.of(finalQueryString, queryParts, parameterBindings);
+    }
+
+    private static boolean containsReturningClause(String query) {
+        return lastKeywordOutsideQuotes(query, "returning") > -1;
+    }
+
+    private static int lastKeywordOutsideQuotes(String query, String keyword) {
+        return findKeywordOutsideQuotes(query, keyword, 0, true);
+    }
+
+    private static int findKeywordOutsideQuotes(String query, String keyword, int startIndex, boolean findLast) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int match = -1;
+        int keywordLength = keyword.length();
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= query.length() || query.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                    i++;
+                }
+                continue;
+            }
+            if (inDoubleQuote) {
+                if (c == '"' && (i + 1 >= query.length() || query.charAt(i + 1) != '"')) {
+                    inDoubleQuote = false;
+                } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
+                    i++;
+                }
+                continue;
+            }
+            if (c == '\'') {
+                inSingleQuote = true;
+                continue;
+            }
+            if (c == '"') {
+                inDoubleQuote = true;
+                continue;
+            }
+            if (i < startIndex) {
+                continue;
+            }
+            if (query.regionMatches(true, i, keyword, 0, keyword.length()) && isKeywordBoundary(query, i - 1) && isKeywordBoundary(query, i + keywordLength)) {
+                if (!findLast) {
+                    return i;
+                }
+                match = i;
+            }
+        }
+        return match;
+    }
+
+    private static boolean isKeywordBoundary(String query, int index) {
+        if (index < 0 || index >= query.length()) {
+            return true;
+        }
+        char c = query.charAt(index);
+        return !Character.isLetterOrDigit(c) && c != '_';
+    }
+
+    private static QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
+        return new QueryOutParameterBinding() {
             @Override
-            public String getQuery() {
-                return finalQueryString;
+            public String getName() {
+                return column;
             }
 
             @Override
-            public List<String> getQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
+            public DataType getDataType() {
+                return dataType;
             }
         };
     }
