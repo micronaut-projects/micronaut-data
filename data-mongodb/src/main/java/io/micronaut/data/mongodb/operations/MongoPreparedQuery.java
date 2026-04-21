@@ -56,6 +56,12 @@ public interface MongoPreparedQuery<E, R> extends PreparedQuery<E, R> {
     MongoUpdate getUpdateMany();
 
     /**
+     * @return The data to execute a single-document update returning the document
+     * @since 5.0.0
+     */
+    MongoFindOneAndUpdate getFindOneAndUpdate();
+
+    /**
      * @return The data to execute to delete many
      */
     MongoDelete getDeleteMany();
