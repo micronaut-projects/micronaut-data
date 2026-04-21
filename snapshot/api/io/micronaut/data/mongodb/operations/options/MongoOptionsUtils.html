@@ -58,6 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#buildUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" tabindex="0">buildUpdateOptions(AnnotationMetadata, boolean)</a></li>
+<li><a href="#buildFindOneAndUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" tabindex="0">buildFindOneAndUpdateOptions(AnnotationMetadata, boolean)</a></li>
 <li><a href="#buildReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">buildReplaceOptions(AnnotationMetadata)</a></li>
 <li><a href="#buildInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">buildInsertOneOptions(AnnotationMetadata)</a></li>
 <li><a href="#buildInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">buildInsertManyOptions(AnnotationMetadata)</a></li>
@@ -109,22 +110,26 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildDeleteOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  boolean&nbsp;includeCollation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildFindOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildFindOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.InsertManyOptions&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildInsertManyOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.InsertOneOptions&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildInsertOneOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.ReplaceOptions&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.UpdateOptions&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildUpdateOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.FindOneAndUpdateOptions&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildFindOneAndUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildFindOneAndUpdateOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  boolean&nbsp;includeCollation)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildFindOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildFindOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.InsertManyOptions&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildInsertManyOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.InsertOneOptions&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildInsertOneOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.ReplaceOptions&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;com.mongodb.client.model.UpdateOptions&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#buildUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildUpdateOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ boolean&nbsp;includeCollation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -147,6 +152,15 @@ loadScripts(document, 'script');</script>
 <h3>buildUpdateOptions</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;com.mongodb.client.model.UpdateOptions&gt;</span>&nbsp;<span class="element-name">buildUpdateOptions</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ boolean&nbsp;includeCollation)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildFindOneAndUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)">
+<h3>buildFindOneAndUpdateOptions</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;com.mongodb.client.model.FindOneAndUpdateOptions&gt;</span>&nbsp;<span class="element-name">buildFindOneAndUpdateOptions</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  boolean&nbsp;includeCollation)</span></div>
 </div>
 </section>

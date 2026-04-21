@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getAggregation()" tabindex="0">getAggregation()</a></li>
 <li><a href="#getFind()" tabindex="0">getFind()</a></li>
 <li><a href="#getUpdateMany()" tabindex="0">getUpdateMany()</a></li>
+<li><a href="#getFindOneAndUpdate()" tabindex="0">getFindOneAndUpdate()</a></li>
 <li><a href="#getDeleteMany()" tabindex="0">getDeleteMany()</a></li>
 </ol>
 </li>
@@ -137,15 +138,18 @@ extends <a href="../../model/runtime/PreparedQuery.html" title="interface in io.
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFind()" class="member-name-link">getFind</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="#type-param-E" title="type parameter in MongoPreparedQuery">E</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoFindOneAndUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoFindOneAndUpdate</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFindOneAndUpdate()" class="member-name-link">getFindOneAndUpdate</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateMany()" class="member-name-link">getUpdateMany</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="#type-param-E" title="type parameter in MongoPreparedQuery">E</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isAggregate()" class="member-name-link">isAggregate</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateMany()" class="member-name-link">getUpdateMany</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isAggregate()" class="member-name-link">isAggregate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -240,6 +244,20 @@ extends <a href="../../model/runtime/PreparedQuery.html" title="interface in io.
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The data to execute the update many</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getFindOneAndUpdate()">
+<h3>getFindOneAndUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="MongoFindOneAndUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoFindOneAndUpdate</a></span>&nbsp;<span class="element-name">getFindOneAndUpdate</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The data to execute a single-document update returning the document</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
 </dl>
 </div>
 </section>

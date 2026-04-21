@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getFind(io.micronaut.aop.InvocationContext)" tabindex="0">getFind(InvocationContext)</a></li>
 <li><a href="#getUpdateMany(io.micronaut.aop.InvocationContext)" tabindex="0">getUpdateMany(InvocationContext)</a></li>
 <li><a href="#getUpdateOne(E)" tabindex="0">getUpdateOne(E)</a></li>
+<li><a href="#getFindOneAndUpdate(io.micronaut.aop.InvocationContext)" tabindex="0">getFindOneAndUpdate(InvocationContext)</a></li>
 <li><a href="#getDeleteMany(io.micronaut.aop.InvocationContext)" tabindex="0">getDeleteMany(InvocationContext)</a></li>
 <li><a href="#getDeleteOne(E)" tabindex="0">getDeleteOne(E)</a></li>
 </ol>
@@ -142,18 +143,21 @@ extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.mi
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFind(io.micronaut.aop.InvocationContext)" class="member-name-link">getFind</a><wbr>(io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="#type-param-E" title="type parameter in MongoStoredQuery">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRuntimePersistentEntity()" class="member-name-link">getRuntimePersistentEntity</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoFindOneAndUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoFindOneAndUpdate</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFindOneAndUpdate(io.micronaut.aop.InvocationContext)" class="member-name-link">getFindOneAndUpdate</a><wbr>(io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateMany(io.micronaut.aop.InvocationContext)" class="member-name-link">getUpdateMany</a><wbr>(io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a><wbr>&lt;<a href="#type-param-E" title="type parameter in MongoStoredQuery">E</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRuntimePersistentEntity()" class="member-name-link">getRuntimePersistentEntity</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateOne(E)" class="member-name-link">getUpdateOne</a><wbr>(<a href="#type-param-E" title="type parameter in MongoStoredQuery">E</a>&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateMany(io.micronaut.aop.InvocationContext)" class="member-name-link">getUpdateMany</a><wbr>(io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isAggregate()" class="member-name-link">isAggregate</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUpdateOne(E)" class="member-name-link">getUpdateOne</a><wbr>(<a href="#type-param-E" title="type parameter in MongoStoredQuery">E</a>&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isAggregate()" class="member-name-link">isAggregate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -256,6 +260,22 @@ extends <a href="../../model/runtime/StoredQuery.html" title="interface in io.mi
 <dd><code>entity</code> - The entity to have query parameters extracted from</dd>
 <dt>Returns:</dt>
 <dd>The data to execute the update</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getFindOneAndUpdate(io.micronaut.aop.InvocationContext)">
+<h3>getFindOneAndUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="MongoFindOneAndUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoFindOneAndUpdate</a></span>&nbsp;<span class="element-name">getFindOneAndUpdate</span><wbr><span class="parameters">(io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;&nbsp;invocationContext)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>invocationContext</code> - The invocation context to have query parameters extracted from</dd>
+<dt>Returns:</dt>
+<dd>The data to execute a single-document update returning the document</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
 </dl>
 </div>
 </section>

@@ -81,6 +81,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" tabindex="0">isReactiveType(ClassElement)</a></li>
 <li><a href="#isFutureType(io.micronaut.inject.ast.ClassElement)" tabindex="0">isFutureType(ClassElement)</a></li>
 <li><a href="#isReactiveOrFuture(io.micronaut.inject.ast.ClassElement)" tabindex="0">isReactiveOrFuture(ClassElement)</a></li>
+<li><a href="#isReactiveSingleResult(io.micronaut.inject.ast.ClassElement)" tabindex="0">isReactiveSingleResult(ClassElement)</a></li>
 <li><a href="#isNumber(io.micronaut.inject.ast.ClassElement)" tabindex="0">isNumber(ClassElement)</a></li>
 <li><a href="#isComparable(io.micronaut.inject.ast.ClassElement)" tabindex="0">isComparable(ClassElement)</a></li>
 <li><a href="#isPeriod(io.micronaut.inject.ast.ClassElement)" tabindex="0">isPeriod(ClassElement)</a></li>
@@ -286,45 +287,50 @@ loadScripts(document, 'script');</script>
 <div class="block">Is the type a future type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveSingleResult(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveSingleResult</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Is the reactive type a single-result type, i.e.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReactiveType(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isReactiveType</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a reactive type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isTextual(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isTextual</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isTextual(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isTextual</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type a string.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isValidBatchUpdateReturnType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isValidBatchUpdateReturnType</a><wbr>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Returns true if the return type is considered valid for batch update operations likes deletes and updates.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidCountReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidCountReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isValidCountReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isValidCountReturnType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Checks whether the return type is supported.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isVoid(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoid</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isVoid(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isVoid</a><wbr>(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Is the type void.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataConverter(io.micronaut.inject.ast.ClassElement,java.util.Map)" class="member-name-link">resolveDataConverter</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataConverter(io.micronaut.inject.ast.ClassElement,java.util.Map)" class="member-name-link">resolveDataConverter</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;dataConverters)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Resolve the converter for the given type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataType(io.micronaut.inject.ast.ClassElement,java.util.Map)" class="member-name-link">resolveDataType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataType(io.micronaut.inject.ast.ClassElement,java.util.Map)" class="member-name-link">resolveDataType</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&gt;&nbsp;dataTypes)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Compute the data type for the given type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataType(io.micronaut.inject.ast.ParameterElement)" class="member-name-link">resolveDataType</a><wbr>(io.micronaut.inject.ast.ParameterElement&nbsp;parameter)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveDataType(io.micronaut.inject.ast.ParameterElement)" class="member-name-link">resolveDataType</a><wbr>(io.micronaut.inject.ast.ParameterElement&nbsp;parameter)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Compute the data type for the given parameter.</div>
 </div>
 </div>
@@ -622,6 +628,28 @@ is an entity of the given type.</div>
 <dd><code>type</code> - The type</dd>
 <dt>Returns:</dt>
 <dd>True if is</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isReactiveSingleResult(io.micronaut.inject.ast.ClassElement)">
+<h3>isReactiveSingleResult</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isReactiveSingleResult</span><wbr><span class="parameters">(@Nullable io.micronaut.inject.ast.ClassElement&nbsp;type)</span></div>
+<div class="block">Is the reactive type a single-result type, i.e. emits at most one item.
+<p>
+A reactive type is considered single-result if it meets any of the following conditions:
+<ul>
+  <li>has the <code>SingleResult</code> stereotype</li>
+  <li>is <code>reactor.core.publisher.Mono</code></li>
+  <li>is <code>io.reactivex.Single</code></li>
+</ul></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>type</code> - The type</dd>
+<dt>Returns:</dt>
+<dd>True if is a single-result reactive type</dd>
 </dl>
 </div>
 </section>

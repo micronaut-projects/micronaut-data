@@ -14322,8 +14322,12 @@ void update(@Id ObjectId id, String title);</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom update method execution with values for filter, update and collation.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html">@MongoUpdateReturningQuery</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom single-document update-returning execution with values for filter, update, sort, projection, collation and <code>returnDocument</code>.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoDeleteQuery.html">@MongoDeleteQuery</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom update method execution with values for filter and collation.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows defining a custom delete method execution with values for filter and collation.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/mongodb/annotation/MongoFilter.html">@MongoFilter</a></p></td>
@@ -14360,7 +14364,39 @@ void update(@Id ObjectId id, String title);</code></pre>
 </tbody>
 </table>
 <div class="paragraph">
-<p>Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with <code>:</code>.</p>
+<p>Custom queries for MongoDB are defined in JSON and method parameters can be referenced as variables prefixed with <code>:</code>.</p>
+</div>
+<div class="paragraph">
+<p>Mongo update methods can either return the number of updated documents (for example <code>long</code>, <code>int</code> or <code>boolean</code>) or return a single updated document.
+Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateQuery.html">@MongoUpdateQuery</a> for count/acknowledgement update methods.
+Use <a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html">@MongoUpdateReturningQuery</a> for single-document update-returning methods.</p>
+</div>
+<div class="paragraph">
+<p>For <a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html">@MongoUpdateReturningQuery</a>, the default <code>returnDocument</code> value is <code>ReturnDocument.BEFORE</code>.
+If you want the updated state returned, set <code>returnDocument = ReturnDocument.AFTER</code> explicitly.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1}}", returnDocument = ReturnDocument.AFTER)
+Book incrementTotalPagesAfter(String id);</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+MongoDB can only return a single updated document for an update operation (using <code>findOneAndUpdate</code>).
+Update-returning methods must use a single-result return type and <a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html">@MongoUpdateReturningQuery</a> (including supported single-item reactive/future types such as <code>Mono&lt;T&gt;</code> and <code>CompletionStage&lt;T&gt;</code>).
+Collection/iterable and <code>void</code> return types are rejected for <a href="../api/io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html">@MongoUpdateReturningQuery</a>.
+If you use a scalar return type (for example <code>String</code>), configure a matching projection with <code>project</code>.
+If your filter can match multiple documents, use <code>sort</code> to control which document is selected by <code>findOneAndUpdate</code>.
+<code>@MongoUpdateQuery</code> and <code>@MongoUpdateReturningQuery</code> are mutually exclusive and must not be used together on the same method.
+</td>
+</tr>
+</table>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -14414,7 +14450,7 @@ void customDelete(String t);</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Only queries for the filter, pipeline and the update can reference method parameters.
+Filter, update and pipeline JSON can reference method parameters. The <code>project</code> and <code>sort</code> values must be constant JSON; <code>:param</code>-style placeholders are not supported there.
 </td>
 </tr>
 </table>
