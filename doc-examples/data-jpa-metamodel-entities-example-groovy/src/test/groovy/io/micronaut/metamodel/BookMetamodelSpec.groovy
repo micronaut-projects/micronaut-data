@@ -30,7 +30,7 @@ class BookMetamodelSpec extends AbstractEntityMetamodelSpec {
                         new Attribute("publisher", SingularAttribute, [Publisher], BOOK_CLASS_NAME),
                         new Attribute("pages", ListAttribute, [Page], BOOK_CLASS_NAME),
                         new Attribute("chapters", ListAttribute, [Chapter], BOOK_CLASS_NAME),
-                        new Attribute("students", SetAttribute, [Student], Book.class.getName()),
+                        new Attribute("students", SetAttribute, [Student], BOOK_CLASS_NAME),
                         new Attribute("lastUpdated", SingularAttribute, [LocalDateTime], BOOK_CLASS_NAME)),
                 List.of("prePersist", "postPersist", "preUpdate", "postUpdate", "preRemove", "postRemove", "postLoad"));
     }

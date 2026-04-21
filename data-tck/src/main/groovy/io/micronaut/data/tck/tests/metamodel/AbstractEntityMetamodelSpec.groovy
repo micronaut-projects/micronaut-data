@@ -2,8 +2,9 @@ package io.micronaut.data.tck.tests.metamodel
 
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.tck.metamodel.ExpectedMetamodel
-import jakarta.persistence.metamodel.MapAttribute
 import spock.lang.Specification
+
+import java.lang.reflect.ParameterizedType
 
 import static io.micronaut.data.tck.tests.metamodel.MetamodelAssertionsUtils.assertClassFieldIsEntityType
 import static io.micronaut.data.tck.tests.metamodel.MetamodelAssertionsUtils.assertMetaModelClassIsAnnotatedCorrectly
@@ -39,22 +40,28 @@ abstract class AbstractEntityMetamodelSpec extends Specification {
             def field = metamodelClass.getField(fieldName)
 
             assert field.type == attribute.attributeType()
-            assert field.getProperties()["genericType"]["actualTypeArguments"][0].canonicalName == attribute.declaringType()
 
-            if (attribute.attributeType() == MapAttribute) {
-                assert attribute.fieldTypes().size() == 2
-                assert field.getProperties()["genericType"]["actualTypeArguments"][1].canonicalName == attribute.fieldTypes().first
-                assert field.getProperties()["genericType"]["actualTypeArguments"][2].canonicalName == attribute.fieldTypes().last
-            } else {
-                assert attribute.fieldTypes().size() == 1
-                def fieldType = attribute.fieldTypes().first
-                if (fieldType in [Set, List, Collection, Map]) {
-                    assert field.getProperties()["genericType"]["actualTypeArguments"][1].rawType.canonicalName == fieldType.getName()
-                } else {
-                    assert field.getProperties()["genericType"]["actualTypeArguments"][1].canonicalName == fieldType.canonicalName
-                }
+            def fieldTypeArguments = field.getProperties()["genericType"]["actualTypeArguments"]
+            assert fieldTypeArguments[0].canonicalName == attribute.declaringType()
+            def fieldTypeArgs = flattenFieldTypeArguments(fieldTypeArguments[1])
+
+            for (int i = 0; i < attribute.fieldTypes().size(); i++) {
+                assert fieldTypeArgs.get(i) == attribute.fieldTypes().get(i).canonicalName
             }
         }
+    }
+
+    List<String> flattenFieldTypeArguments(fieldTypeArguments) {
+        List<String> types = new ArrayList<>();
+        if (fieldTypeArguments instanceof ParameterizedType parameterizedType) {
+            types.add(fieldTypeArguments.rawType.canonicalName)
+            for (int i = 0; i < parameterizedType.actualTypeArguments.size(); i++) {
+                types.addAll(flattenFieldTypeArguments(parameterizedType.actualTypeArguments[i]))
+            }
+        } else {
+            types.add(fieldTypeArguments.canonicalName)
+        }
+        return types;
     }
 
 }

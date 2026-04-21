@@ -17,9 +17,11 @@ package io.micronaut.data.processor.jpa.metamodel;
 
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.sourcegen.model.*;
 import org.jspecify.annotations.NonNull;
@@ -41,11 +43,6 @@ public final class JpaMetamodelProcessor {
      * Jakarta Generated annotation name.
      */
     public static final String JAKARTA_ANNOTATION_GENERATED = "jakarta.annotation.Generated";
-
-    /**
-     * Jakarta persistent Transient annotation name.
-     */
-    public static final String JAKARTA_TRANSIENT = "jakarta.persistence.Transient";
 
     /**
      * Jakarta persistence metamodel StaticMetamodel annotation name.
@@ -108,21 +105,6 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_EMBEDDABLE = "jakarta.persistence.Embeddable";
 
     /**
-     * Jakarta persistence Access annotation name.
-     */
-    public static final String JAKARTA_ACCESS = "jakarta.persistence.Access";
-
-    /**
-     * Jakarta persistence Access annotation name.
-     */
-    public static final String JAKARTA_ID = "jakarta.persistence.Id";
-
-    /**
-     * Jakarta persistence EmbeddedId annotation name.
-     */
-    public static final String JAKARTA_EMBEDDED_ID = "jakarta.persistence.EmbeddedId";
-
-    /**
      * Micronaut data MappedEntity annotation name.
      */
     public static final String MICRONAUT_DATA_MAPPED_ENTITY = "io.micronaut.data.annotation.MappedEntity";
@@ -153,7 +135,8 @@ public final class JpaMetamodelProcessor {
     public static final Set<String> SUPPORTED_ANNOTATIONS = new HashSet<>(Arrays.asList(JAKARTA_ENTITY,
         JAKARTA_MAPPED_SUPER_CLASS,
         JAKARTA_EMBEDDABLE,
-        MICRONAUT_DATA_MAPPED_ENTITY));
+        MICRONAUT_DATA_MAPPED_ENTITY
+    ));
 
     /**
      * Default constructor.
@@ -198,7 +181,7 @@ public final class JpaMetamodelProcessor {
                 continue;
             }
             constantPropertyName.add(createConstantPropertyName(persistentPropertyName));
-            attributeFields.add(createAttributeField(persistentPropertyName, persistentProperty.getType(), classTypeDef));
+            attributeFields.add(createAttributeField(persistentProperty, classTypeDef));
         }
 
         classDefBuilder.addFields(constantPropertyName);
@@ -282,47 +265,69 @@ public final class JpaMetamodelProcessor {
     }
 
     /**
-     * Create attribute fields SingularAttribute,ListAttribute... based on the element type .
-     * @param fieldName Field name
-     * @param fieldType Field type
-     * @param classTypeDef Class type def
-     * @return Attribute field definition.
+     * Create attribute fields SingularAttribute, ListAttribute... based on the element type.
+     * @param persistentProperty Source persistent property.
+     * @param classTypeDef Original class type definition.
+     * @return Attribute Field Definition.
      */
-    private static FieldDef createAttributeField(String fieldName, ClassElement fieldType, ClassTypeDef classTypeDef) {
-        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(fieldName)
+    private static FieldDef createAttributeField(SourcePersistentProperty persistentProperty, ClassTypeDef classTypeDef) {
+        FieldDef.FieldDefBuilder attributeDefBuilder = FieldDef.builder(persistentProperty.getName())
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.VOLATILE);
-
-        Map<String, ClassElement> typeArguments = fieldType.getTypeArguments();
-
-        TypeDef attributeTypeDef;
-        String fieldTypeName = fieldType.getName();
-        if (fieldTypeName.equals(JAVA_UTIL_COLLECTION) &&
-            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
-            TypeDef e = TypeDef.of(typeArguments.get("E"));
-            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE), classTypeDef, e);
-
-        } else if (fieldTypeName.equals(JAVA_UTIL_SET) &&
-            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
-            TypeDef e = TypeDef.of(typeArguments.get("E"));
-            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SET_ATTRIBUTE), classTypeDef, e);
-
-        } else if (fieldTypeName.equals(JAVA_UTIL_LIST) &&
-            typeArguments.get("E") != null && !typeArguments.get("E").getName().equals(Object.class.getName())) {
-            TypeDef e = TypeDef.of(typeArguments.get("E"));
-            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_LIST_ATTRIBUTE), classTypeDef, e);
-
-        } else if (fieldTypeName.equals(JAVA_UTIL_MAP) &&
-            typeArguments.get("K") != null && !typeArguments.get("K").getName().equals(Object.class.getName()) &&
-            typeArguments.get("V") != null && !typeArguments.get("V").getName().equals(Object.class.getName())) {
-
-            TypeDef k = TypeDef.of(typeArguments.get("K"));
-            TypeDef v = TypeDef.of(typeArguments.get("V"));
-            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_MAP_ATTRIBUTE), classTypeDef, k, v);
-
-        } else {
-            attributeTypeDef = TypeDef.parameterized(ClassTypeDef.of(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE), classTypeDef, getProperType(TypeDef.of(fieldType)));
-        }
+        TypeDef attributeTypeDef = getAttributeTypeDef(persistentProperty, classTypeDef);
         return attributeDefBuilder.ofType(attributeTypeDef).build();
+    }
+
+    private static @NonNull TypeDef getAttributeTypeDef(SourcePersistentProperty persistentProperty, ClassTypeDef classTypeDef) {
+        ClassElement type = persistentProperty.getType();
+        String typeName = type.getCanonicalName();
+
+        List<TypeDef> generics = new ArrayList<>();
+        generics.add(classTypeDef);
+
+        if (!(persistentProperty instanceof SourceAssociation)) {
+            List<TypeDef> persistentPropertyGenerics = type.getTypeArguments().values().stream()
+                .filter(o -> !(o instanceof GenericPlaceholderElement))
+                .map(TypeDef::of)
+                .toList();
+
+            generics.add(createTypeDef(type, persistentPropertyGenerics));
+            return createTypeDef(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, generics);
+        }
+        String jakartaMetamodelAttributeType = resolveAttributeType(typeName);
+
+        if (jakartaMetamodelAttributeType.equals(JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE)) {
+            generics.add(createTypeDef(typeName, Collections.emptyList()));
+        } else {
+            generics.addAll(type.getTypeArguments().values().stream().map(TypeDef::of).toList());
+        }
+        return createTypeDef(jakartaMetamodelAttributeType, generics);
+    }
+
+    private static TypeDef createTypeDef(String name, List<TypeDef> generics) {
+        return createTypeDef(ClassElement.of(name), generics);
+    }
+
+    private static TypeDef createTypeDef(ClassElement type, List<TypeDef> generics) {
+        if (generics.isEmpty()) {
+            return boxPrimitive(TypeDef.of(type));
+        }
+        return TypeDef.parameterized(ClassTypeDef.of(type), generics.stream().map(JpaMetamodelProcessor::boxPrimitive).toList());
+    }
+
+    private static String resolveAttributeType(String typeName) {
+        if (typeName.equals(JAVA_UTIL_COLLECTION)) {
+            return JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE;
+        }
+        if (typeName.equals(JAVA_UTIL_LIST)) {
+            return JAKARTA_METAMODEL_LIST_ATTRIBUTE;
+        }
+        if (typeName.equals(JAVA_UTIL_SET)) {
+            return JAKARTA_METAMODEL_SET_ATTRIBUTE;
+        }
+        if (typeName.equals(JAVA_UTIL_MAP)) {
+            return JAKARTA_METAMODEL_MAP_ATTRIBUTE;
+        }
+        return JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE;
     }
 
     /**
@@ -330,8 +335,8 @@ public final class JpaMetamodelProcessor {
      * @param type provided type.
      * @return wrapper type if the provided type is a primitives.
      */
-    private static TypeDef getProperType(TypeDef type) {
-        if (type.isPrimitive() && type instanceof TypeDef.Primitive primitive) {
+    private static TypeDef boxPrimitive(TypeDef type) {
+        if (type.isPrimitive() && type instanceof TypeDef.Primitive primitive && !type.isArray()) {
             return TypeDef.of(primitive.wrapperType().getName());
         }
         return type;

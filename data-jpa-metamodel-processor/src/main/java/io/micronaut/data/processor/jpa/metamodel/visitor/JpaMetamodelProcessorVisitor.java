@@ -65,6 +65,12 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
     };
 
     /**
+     * Default constructor.
+     */
+    public JpaMetamodelProcessorVisitor() {
+    }
+
+    /**
      * Supported Jakarta annotation names.
      * @return Set of strings of supported Jakarta annotation names
      */

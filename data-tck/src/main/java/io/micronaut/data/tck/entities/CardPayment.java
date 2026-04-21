@@ -8,10 +8,6 @@ import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("CARD")
-@AttributeOverrides({
-    @AttributeOverride(name = "total.currency", column = @Column(name = "card_currency")),
-    @AttributeOverride(name = "total.amount", column = @Column(name = "card_amount"))
-})
 public class CardPayment extends Payment {
 
     private String cardLast4;

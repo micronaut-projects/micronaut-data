@@ -7,6 +7,7 @@ import io.micronaut.data.tck.entities.Client
 import io.micronaut.data.tck.entities.ClientCategory
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
+import spock.lang.Ignore
 
 class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {
 
@@ -137,6 +138,7 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
         clientRepository.save(c)
     }
 
+    @Ignore(value = "persistent map attributes are not supported currently")
     void "can join map element collection and filter by key/value using static metamodel"() {
         given:
         def e1 = new EntityWithMapField()

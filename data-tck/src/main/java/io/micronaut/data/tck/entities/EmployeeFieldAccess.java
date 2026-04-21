@@ -17,6 +17,7 @@
 package io.micronaut.data.tck.entities;
 
 import jakarta.persistence.*;
+import org.jspecify.annotations.Nullable;
 
 @Access(AccessType.FIELD)
 @Entity
@@ -31,7 +32,7 @@ public class EmployeeFieldAccess {
 
     @Column(name = "salary")
     private double salary;
-
+    @Nullable
     private String noAccessors;
 
     public EmployeeFieldAccess() {

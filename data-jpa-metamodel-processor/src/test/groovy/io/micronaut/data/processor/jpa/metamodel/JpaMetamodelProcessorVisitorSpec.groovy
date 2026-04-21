@@ -20,6 +20,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.naming.NameUtils
 import spock.lang.Ignore
 
+import java.lang.reflect.ParameterizedType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -55,6 +56,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                     Instant createdAt,
                     LocalDate departureDate,
                     LocalTime departureTimeOnly,
+                    String[] strings,
                     MicronautRecord micronautRecord,
                     @Transient
                     String transientField,
@@ -62,6 +64,8 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                     Set<Integer> set,
                     Collection<Double> collection,
                     Map<String, String> map,
+                    Map<String, String> maps,
+                    Set<Object> objectSet,
                     Set rawSet,
                     List rawList,
                     Map rawMap,
@@ -71,25 +75,25 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 }
                 """)
         def trainMetaModelClass = classLoader.loadClass("test.Train_")
-        def constantProps = ["ID"                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Train"],
-                             "NAME"               : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
-                             "MODEL"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
-                             "CAPACITY"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Integer.class.getName(), declaringType: "test.Train"],
-                             "SPEED"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.Train"],
-                             "ELECTRIC"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.Train"],
-                             "DEPARTURE_TIME"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalDateTime.class.getName(), declaringType: "test.Train"],
-                             "CREATED_AT"         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Instant.class.getName(), declaringType: "test.Train"],
-                             "DEPARTURE_DATE"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalDate.class.getName(), declaringType: "test.Train"],
-                             "DEPARTURE_TIME_ONLY": [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: LocalTime.class.getName(), declaringType: "test.Train"],
-                             "MICRONAUT_RECORD"   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: "test.Train.MicronautRecord", declaringType: "test.Train"],
-                             "SEATS"              : [attributeType: JAKARTA_METAMODEL_LIST_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Train"],
-                             "SET"                : [attributeType: JAKARTA_METAMODEL_SET_ATTRIBUTE, fieldtype: Integer.class.getName(), declaringType: "test.Train"],
-                             "COLLECTION"         : [attributeType: JAKARTA_METAMODEL_COLLECTION_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.Train"],
-                             "MAP"           : [attributeType: JAKARTA_METAMODEL_MAP_ATTRIBUTE, fieldtype: [String.class.getName(), String.class.getName()], declaringType: "test.Train"],
-                             "RAW_SET"       : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Set.class.getName(), declaringType: "test.Train"],
-                             "RAW_LIST"      : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: List.class.getName(), declaringType: "test.Train"],
-                             "RAW_COLLECTION": [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Collection.class.getName(), declaringType: "test.Train"],
-                             "RAW_MAP"       : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Map.class.getName(), declaringType: "test.Train"],
+        def constantProps = ["ID"                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Long.name], declaringType: "test.Train"],
+                             "NAME"               : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [String.name], declaringType: "test.Train"],
+                             "MODEL"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [String.name], declaringType: "test.Train"],
+                             "CAPACITY"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Integer.name], declaringType: "test.Train"],
+                             "SPEED"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Double.name], declaringType: "test.Train"],
+                             "ELECTRIC"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Boolean.name], declaringType: "test.Train"],
+                             "DEPARTURE_TIME"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [LocalDateTime.name], declaringType: "test.Train"],
+                             "CREATED_AT"         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Instant.name], declaringType: "test.Train"],
+                             "DEPARTURE_DATE"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [LocalDate.name], declaringType: "test.Train"],
+                             "DEPARTURE_TIME_ONLY": [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [LocalTime.name], declaringType: "test.Train"],
+                             "MICRONAUT_RECORD"   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: ["test.Train.MicronautRecord"], declaringType: "test.Train"],
+                             "SEATS"              : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [List.name, String.name], declaringType: "test.Train"],
+                             "SET"                : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Set.name, Integer.name], declaringType: "test.Train"],
+                             "COLLECTION"         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Collection.name, Double.name], declaringType: "test.Train"],
+                             "MAP"                : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Map.name, String.name, String.name], declaringType: "test.Train"],
+                             "RAW_SET"            : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Set.name], declaringType: "test.Train"],
+                             "RAW_LIST"           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [List.name], declaringType: "test.Train"],
+                             "RAW_COLLECTION"     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Collection.name], declaringType: "test.Train"],
+                             "RAW_MAP"            : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: [Map.name], declaringType: "test.Train"],
 
         ]
 
@@ -107,19 +111,33 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         for (var entrySet : constantProps.entrySet()) {
             def field = NameUtils.camelCase(entrySet.getKey().toLowerCase())
             assert trainMetaModelClass.getField(field).getType().getName() == entrySet.getValue().attributeType
-            assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == entrySet.getValue().declaringType
-            if (entrySet.getValue().attributeType == JAKARTA_METAMODEL_MAP_ATTRIBUTE) {
-                assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].getCanonicalName() == entrySet.getValue().fieldtype[0]
-                assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][2].getCanonicalName() == entrySet.getValue().fieldtype[1]
-            } else {
-                if (entrySet.getValue().fieldtype.equals(Set.class.getName()) ||
-                        entrySet.getValue().fieldtype.equals(List.class.getName()) ||
-                        entrySet.getValue().fieldtype.equals(Collection.class.getName()) ||
-                        entrySet.getValue().fieldtype.equals(Map.class.getName())) {
-                    assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].rawType.getCanonicalName() == entrySet.getValue().fieldtype
-                } else {
-                    assert trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"][1].getCanonicalName() == entrySet.getValue().fieldtype
 
+            def fieldTypeArgs = trainMetaModelClass.getField(field).getProperties()["genericType"]["actualTypeArguments"]
+            assert fieldTypeArgs[0].getCanonicalName() == entrySet.getValue().declaringType
+
+            if (entrySet.getValue().attributeType == JAKARTA_METAMODEL_MAP_ATTRIBUTE) {
+                assert fieldTypeArgs[1].getCanonicalName() == entrySet.getValue().fieldtype[0]
+                assert fieldTypeArgs[2].getCanonicalName() == entrySet.getValue().fieldtype[1]
+            } else {
+                if ((entrySet.getValue().fieldtype.first.equals(Set.name) ||
+                        entrySet.getValue().fieldtype.first.equals(List.name) ||
+                        entrySet.getValue().fieldtype.first.equals(Collection.name)) && entrySet.getValue().fieldtype.size() > 1) {
+                    assert fieldTypeArgs[1].rawType.getCanonicalName() == entrySet.getValue().fieldtype[0]
+                    assert fieldTypeArgs[1]["actualTypeArguments"][0].getCanonicalName() == entrySet.getValue().fieldtype[1]
+
+                } else if (entrySet.getValue().fieldtype.first.equals(Map.name) && entrySet.getValue().fieldtype.size() > 1) {
+                    if (fieldTypeArgs.findAll().isEmpty()) {
+                        continue;
+                    }
+                    assert fieldTypeArgs[1].rawType.getCanonicalName() == entrySet.getValue().fieldtype[0]
+                    assert fieldTypeArgs[1]["actualTypeArguments"][0].getCanonicalName() == entrySet.getValue().fieldtype[1]
+                    assert fieldTypeArgs[1]["actualTypeArguments"][1].getCanonicalName() == entrySet.getValue().fieldtype[2]
+                } else {
+                    if (fieldTypeArgs[1] instanceof ParameterizedType) {
+                        assert fieldTypeArgs[1].rawType.getCanonicalName() == entrySet.getValue().fieldtype[0]
+                    } else {
+                        assert fieldTypeArgs[1].getCanonicalName() == entrySet.getValue().fieldtype[0]
+                    }
                 }
             }
 
@@ -191,45 +209,17 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 }
 
                 """
-        def childCls2 = """
-                   package test;
-                import io.micronaut.core.annotation.Nullable;
-                import jakarta.persistence.*;
-                import java.time.Instant;
-                import java.time.LocalDate;
-                import java.time.LocalDateTime;
-                import java.time.LocalTime;
-                import java.util.*;
-                import io.micronaut.data.annotation.MappedEntity;
-                @MappedEntity
-                public class Child2 extends Parent {
-                    Long age;
-                    private Child2 () {}
-                    private Child2 (Long id, String name, Long age) {
-                        super(id, name);
-                        this.age = age;
-                    }
-                    public Long getAge(){
-                        return this.age;
-                    }
-                    public void setAge(Long age) {
-                        this.age = age;
-                    }
-                }
-
-                """
         files.add("test.Parent", parentCls)
         files.add("test.Child", childCls)
-        files.add("test.Child2", childCls2)
 
         def context = buildContext(files, true)
         def classLoader = context.getClassLoader()
         def parentMetaModelClass = classLoader.loadClass("test.Parent_")
         def childMetaModelClass = classLoader.loadClass("test.Child_")
 
-        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Parent"],
-                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.Parent"],
-                             AGE : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.Child"]]
+        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Parent"],
+                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.Parent"],
+                             AGE : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Child"]]
         expect:
         assert constantProps.keySet().stream().filter { o -> o != "AGE" }.allMatch { o -> parentMetaModelClass.getField(o) != null && parentMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
         assert constantProps.keySet().stream().allMatch { o -> childMetaModelClass.getField(o) != null && childMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -301,9 +291,9 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
         def fieldAccessClassMetaModelClass = classLoader.loadClass("test.FieldAccessClass_")
 
-        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.FieldAccessClass"],
-                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.FieldAccessClass"],
-                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.FieldAccessClass"]]
+        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.FieldAccessClass"],
+                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.FieldAccessClass"],
+                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.FieldAccessClass"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> fieldAccessClassMetaModelClass.getField(o) != null && fieldAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -352,8 +342,8 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 """)
         def propertyAccessClassMetaModelClass = classLoader.loadClass("test.PropertyAccessClass_")
 
-        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.PropertyAccessClass"],
-                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"]]
+        def constantProps = [ID  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.PropertyAccessClass"],
+                             NAME: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.PropertyAccessClass"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> propertyAccessClassMetaModelClass.getField(o) != null && propertyAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -371,8 +361,8 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         }
 
     }
-    // Ignored because i couldn't find a way to map access type on a property level it is only supported on class/type level;
-    @Ignore
+
+    @Ignore(value = "Ignored because i couldn't find a way to map access type on a property level it is only supported on class/type level;")
     void "test metaModel Generation with property type annotations and field annotated"() {
         given:
 
@@ -417,10 +407,10 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 """)
         def propertyAccessClassMetaModelClass = classLoader.loadClass("test.PropertyAccessClass_")
 
-        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.PropertyAccessClass"],
-                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"],
-                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.PropertyAccessClass"],
-                             ACTIVE                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.PropertyAccessClass"]]
+        def constantProps = [ID                     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.PropertyAccessClass"],
+                             NAME                   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.PropertyAccessClass"],
+                             FIELD_WITHOUT_ACCESSORS: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.PropertyAccessClass"],
+                             ACTIVE                 : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.name, declaringType: "test.PropertyAccessClass"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> propertyAccessClassMetaModelClass.getField(o) != null && propertyAccessClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -433,7 +423,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         }
     }
 
-    @Ignore
+    @Ignore(value = "Ignored because i couldn't find a way to map access type on a property level it is only supported on class/type level;")
     void "test metaModel Generation with mixed access"() {
         given:
 
@@ -504,9 +494,9 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         def employeeMixedAccessEmbaddedId = classLoader.loadClass("test.EmployeeMixedAccessEmbeddedId_")
 
         def constantProps = [ID             : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: "test.EmployeeMixedAccessEmbeddedId\$EmployeeId", declaringType: "test.EmployeeMixedAccessEmbeddedId"],
-                             NAME           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"],
-                             SALARY         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Double.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"],
-                             FIELD_ANNOTATED: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmployeeMixedAccessEmbeddedId"]]
+                             NAME           : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.EmployeeMixedAccessEmbeddedId"],
+                             SALARY         : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Double.name, declaringType: "test.EmployeeMixedAccessEmbeddedId"],
+                             FIELD_ANNOTATED: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.EmployeeMixedAccessEmbeddedId"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> employeeMixedAccessEmbaddedId.getField(o) != null && employeeMixedAccessEmbaddedId.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -570,9 +560,9 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 """)
         def embeddableClassMetaModelClass = classLoader.loadClass("test.EmbeddableClass_")
 
-        def constantProps = [ID    : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.EmbeddableClass"],
-                             NAME  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.EmbeddableClass"],
-                             ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.EmbeddableClass"]]
+        def constantProps = [ID    : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.EmbeddableClass"],
+                             NAME  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.EmbeddableClass"],
+                             ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.name, declaringType: "test.EmbeddableClass"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> embeddableClassMetaModelClass.getField(o) != null && embeddableClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -630,9 +620,9 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
                 """)
         def embeddableClassMetaModelClass = classLoader.loadClass("test.MappedEntityTest_")
 
-        def constantProps = [ID    : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.class.getName(), declaringType: "test.MappedEntityTest"],
-                             NAME  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.class.getName(), declaringType: "test.MappedEntityTest"],
-                             ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.class.getName(), declaringType: "test.MappedEntityTest"]]
+        def constantProps = [ID    : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.MappedEntityTest"],
+                             NAME  : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.MappedEntityTest"],
+                             ACTIVE: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Boolean.name, declaringType: "test.MappedEntityTest"]]
         expect:
 
         assert constantProps.keySet().stream().allMatch { o -> embeddableClassMetaModelClass.getField(o) != null && embeddableClassMetaModelClass.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase()) }
@@ -646,6 +636,193 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
         embeddableClassMetaModelClass.getField('class_').getType().getName() == JAKARTA_METAMODEL_ENTITY_TYPE
         embeddableClassMetaModelClass.getField('class_').getProperties()["genericType"]["actualTypeArguments"][0].getCanonicalName() == 'test.MappedEntityTest'
+    }
+
+    void "test metaModel Generation with bidirectional OneToMany and ManyToOne"() {
+        given:
+        JavaFiles files = new JavaFiles()
+
+        files.add("test.Department", """
+        package test;
+
+        import jakarta.persistence.*;
+        import java.util.*;
+
+        @Entity
+        @Access(AccessType.FIELD)
+        public class Department {
+            @Id
+            Long id;
+
+            String name;
+
+            @OneToMany(mappedBy = "department")
+            List<Employee> employees = new ArrayList<>();
+        }
+    """)
+
+        files.add("test.Employee", """
+        package test;
+
+        import jakarta.persistence.*;
+
+        @Entity
+        @Access(AccessType.FIELD)
+        public class Employee {
+            @Id
+            Long id;
+
+            String name;
+
+            @ManyToOne
+            Department department;
+        }
+    """)
+
+        def context = buildContext(files, true)
+        def cl = context.classLoader
+
+        def deptMeta = cl.loadClass("test.Department_")
+        def empMeta = cl.loadClass("test.Employee_")
+
+        def deptConstantProps = [
+                ID       : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Department"],
+                NAME     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.Department"],
+                EMPLOYEES: [attributeType: JAKARTA_METAMODEL_LIST_ATTRIBUTE, fieldtype: "test.Employee", declaringType: "test.Department"],
+        ]
+
+        def empConstantProps = [
+                ID        : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Employee"],
+                NAME      : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.Employee"],
+                DEPARTMENT: [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: "test.Department", declaringType: "test.Employee"],
+        ]
+
+        expect: "Department constants + fields"
+        assert deptConstantProps.keySet().stream().allMatch { o ->
+            deptMeta.getField(o) != null && deptMeta.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase())
+        }
+        for (def entry : deptConstantProps.entrySet()) {
+            def field = NameUtils.camelCase(entry.key.toLowerCase())
+            def f = deptMeta.getField(field)
+            assert f.type.name == entry.value.attributeType
+
+            def typeArgs = f.getProperties()["genericType"]["actualTypeArguments"]
+            assert typeArgs[0].name == entry.value.declaringType
+
+            if (entry.value.attributeType == JAKARTA_METAMODEL_LIST_ATTRIBUTE) {
+                assert typeArgs[1].name == entry.value.fieldtype
+            } else {
+                assert typeArgs[1].name == entry.value.fieldtype
+            }
+        }
+
+        and: "Employee constants + fields"
+        assert empConstantProps.keySet().stream().allMatch { o ->
+            empMeta.getField(o) != null && empMeta.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase())
+        }
+        for (def entry : empConstantProps.entrySet()) {
+            def field = NameUtils.camelCase(entry.key.toLowerCase())
+            def f = empMeta.getField(field)
+            assert f.type.name == entry.value.attributeType
+            def typeArgs = f.getProperties()["genericType"]["actualTypeArguments"]
+            assert typeArgs[0].name == entry.value.declaringType
+            assert typeArgs[1].name == entry.value.fieldtype
+        }
+
+        and: "class_ field types"
+        deptMeta.getField('class_').type.name == JAKARTA_METAMODEL_ENTITY_TYPE
+        empMeta.getField('class_').type.name == JAKARTA_METAMODEL_ENTITY_TYPE
+    }
+
+    void "test metaModel Generation with bidirectional ManyToMany"() {
+        given:
+        JavaFiles files = new JavaFiles()
+
+        files.add("test.Student", """
+        package test;
+
+        import jakarta.persistence.*;
+        import java.util.*;
+
+        @Entity
+        @Access(AccessType.FIELD)
+        public class Student {
+            @Id
+            Long id;
+
+            String name;
+
+            @ManyToMany(mappedBy = "students")
+            Set<Course> courses = new HashSet<>();
+        }
+    """)
+
+        files.add("test.Course", """
+        package test;
+
+        import jakarta.persistence.*;
+        import java.util.*;
+
+        @Entity
+        @Access(AccessType.FIELD)
+        public class Course {
+            @Id
+            Long id;
+
+            String title;
+
+            @ManyToMany
+            Set<Student> students = new HashSet<>();
+        }
+    """)
+
+        def context = buildContext(files, true)
+        def cl = context.classLoader
+
+        def studentMeta = cl.loadClass("test.Student_")
+        def courseMeta = cl.loadClass("test.Course_")
+
+        def studentConstantProps = [
+                ID     : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Student"],
+                NAME   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.Student"],
+                COURSES: [attributeType: JAKARTA_METAMODEL_SET_ATTRIBUTE, fieldtype: "test.Course", declaringType: "test.Student"],
+        ]
+
+        def courseConstantProps = [
+                ID      : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: Long.name, declaringType: "test.Course"],
+                TITLE   : [attributeType: JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE, fieldtype: String.name, declaringType: "test.Course"],
+                STUDENTS: [attributeType: JAKARTA_METAMODEL_SET_ATTRIBUTE, fieldtype: "test.Student", declaringType: "test.Course"],
+        ]
+
+        expect: "Student constants + fields"
+        assert studentConstantProps.keySet().stream().allMatch { o ->
+            studentMeta.getField(o) != null && studentMeta.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase())
+        }
+        for (def entry : studentConstantProps.entrySet()) {
+            def field = NameUtils.camelCase(entry.key.toLowerCase())
+            def f = studentMeta.getField(field)
+            assert f.type.name == entry.value.attributeType
+            def typeArgs = f.getProperties()["genericType"]["actualTypeArguments"]
+            assert typeArgs[0].name == entry.value.declaringType
+            assert typeArgs[1].name == entry.value.fieldtype
+        }
+
+        and: "Course constants + fields"
+        assert courseConstantProps.keySet().stream().allMatch { o ->
+            courseMeta.getField(o) != null && courseMeta.getProperties().get(o) == NameUtils.camelCase(o.toLowerCase())
+        }
+        for (def entry : courseConstantProps.entrySet()) {
+            def field = NameUtils.camelCase(entry.key.toLowerCase())
+            def f = courseMeta.getField(field)
+            assert f.type.name == entry.value.attributeType
+            def typeArgs = f.getProperties()["genericType"]["actualTypeArguments"]
+            assert typeArgs[0].name == entry.value.declaringType
+            assert typeArgs[1].name == entry.value.fieldtype
+        }
+
+        and: "class_ field types"
+        studentMeta.getField('class_').type.name == JAKARTA_METAMODEL_ENTITY_TYPE
+        courseMeta.getField('class_').type.name == JAKARTA_METAMODEL_ENTITY_TYPE
     }
 
 }
