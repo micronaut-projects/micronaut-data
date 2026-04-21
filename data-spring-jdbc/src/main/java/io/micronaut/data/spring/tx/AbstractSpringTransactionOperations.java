@@ -37,7 +37,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -110,12 +109,13 @@ public abstract class AbstractSpringTransactionOperations
         return execute(new TransactionTemplate(transactionManager, def), callback, definition);
     }
 
+    @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
         def.setPropagationBehavior(definition.getPropagationBehavior().ordinal());
-        def.setName(Objects.requireNonNull(definition.getName()));
+        def.setName(definition.getName());
         definition.getTimeout().ifPresent(timeout -> {
             if (!timeout.isNegative()) {
                 def.setTimeout((int) timeout.getSeconds());
@@ -124,12 +124,13 @@ public abstract class AbstractSpringTransactionOperations
         return def;
     }
 
+    @SuppressWarnings("NullAway")
     private <R> R execute(TransactionTemplate template,
                           TransactionCallback<Connection, R> callback,
                           TransactionDefinition transactionDefinition) {
         ArgumentUtils.requireNonNull("callback", callback);
         try {
-            return template.execute(status -> Objects.requireNonNull(execute(callback, status, transactionDefinition)));
+            return template.execute(status -> execute(callback, status, transactionDefinition));
         } catch (UndeclaredThrowableException e) {
             return ExceptionUtil.sneakyThrow(e.getUndeclaredThrowable());
         }
