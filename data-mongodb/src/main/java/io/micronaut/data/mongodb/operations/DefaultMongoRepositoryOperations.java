@@ -268,6 +268,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
+    public <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return withClientSession(clientSession -> execute(clientSession, getMongoPreparedQuery(preparedQuery)));
+    }
+
+    @Override
     public <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
         Optional<ConnectionStatus<ClientSession>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isEmpty()) {
@@ -300,6 +305,50 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             return findAllAggregated(clientSession, preparedQuery, stream);
         }
         return findAllFiltered(clientSession, preparedQuery, stream);
+    }
+
+    private <T, R> List<R> execute(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        StoredQuery.OperationType operationType = preparedQuery.getOperationType();
+        if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
+            return executeUpdateReturning(clientSession, preparedQuery);
+        }
+        throw new DataAccessException("Unsupported MongoDB execute operation: " + operationType + ". Expected update returning single entity, DTO or scalar.");
+    }
+
+    private <T, R> List<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
+            throw new DataAccessException("MongoDB update returning supports only a single result, but found declared return type: "
+                + declaredReturnType.getName()
+                + ". Use a non-collection single value type, or a single-item reactive type like Mono<T>.");
+        }
+        MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
+                updateOne.getFilter().toBsonDocument().toJson(),
+                updateOne.getUpdate().toBsonDocument().toJson());
+        }
+        Class<T> rootType = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+        MongoDatabase database = getDatabase(preparedQuery);
+        if (resultType.isAssignableFrom(rootType)) {
+            MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
+            T entity = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
+            if (entity == null) {
+                return Collections.emptyList();
+            }
+            entity = triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity);
+            @SuppressWarnings("unchecked")
+            R result = (R) entity;
+            return Collections.singletonList(result);
+        }
+        MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
+        BsonDocument result = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
+        if (result == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
     }
 
     @Nullable
