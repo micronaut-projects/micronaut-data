@@ -71,14 +71,14 @@ public final class JdbcConnectionUtils {
                                      Connection connection,
                                      boolean isReadOnly,
                                      List<Runnable> onCompleteCallbacks) {
-        if (!ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.READ_ONLY, connection)) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only.", connection.getClass().getName());
-            }
-            return;
-        }
         boolean connectionReadOnly = isReadOnly(connection);
         if (connectionReadOnly != isReadOnly) {
+            if (!ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.READ_ONLY, connection)) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only.", connection.getClass().getName());
+                }
+                return;
+            }
             setConnectionReadOnly(logger, connection, isReadOnly);
             onCompleteCallbacks.add(() -> setConnectionReadOnly(logger, connection, connectionReadOnly));
         }
