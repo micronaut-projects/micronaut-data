@@ -17,6 +17,7 @@ package io.micronaut.data.connection;
 
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.core.order.Ordered;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.List;
  *
  * @since 5.0.0
  */
-public interface ConnectionCapabilities {
+public interface ConnectionCapabilities extends Ordered {
     /**
      * Connection capability.
      *
