@@ -40,7 +40,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    void defaultConnectionCapabilitiesInstanceDoesNotApplyReadOnlyForSqliteConnections(BookRepository repository) {
-        assertDoesNotThrow(repository::findAll);
+    void sqliteConnectionCapabilitiesDoesNotApplyReadOnlyForSqliteConnections(BookRepository repository) {
+        assertDoesNotThrow(() -> repository.findAll().iterator().hasNext());
     }
 }

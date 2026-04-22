@@ -23,15 +23,19 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SqliteConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(SqliteConnectionCapabilities.class);
+    private final Map<String, Boolean> readOnlyCache = new ConcurrentHashMap<>();
 
     @Override
     public boolean supports(Capability capability, Connection connection) {
         if (capability == Capability.READ_ONLY) {
             try {
-                return supportsReadOnly(connection.getMetaData().getURL());
+                String url = connection.getMetaData().getURL();
+                return readOnlyCache.computeIfAbsent(url, this::supportsReadOnly);
             } catch (SQLException e) {
                 LOG.trace("Could not get metadata from connection", e);
             }
@@ -40,9 +44,6 @@ public class SqliteConnectionCapabilities implements ConnectionCapabilities {
     }
 
     private boolean supportsReadOnly(String url) {
-        if (url == null) {
-            return true;
-        }
         return !url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:");
     }
 }
