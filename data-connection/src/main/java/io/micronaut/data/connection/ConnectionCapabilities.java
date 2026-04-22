@@ -29,8 +29,22 @@ import java.sql.Connection;
  * <p>
  * Implementations are expected to be thread-safe and preferably stateless because
  * {@link #INSTANCE} is a JVM-wide singleton that may be used concurrently.
+ *
+ * @since 5.0.0
  */
 public interface ConnectionCapabilities {
+    /**
+     * Connection capability.
+     *
+     * @since 5.0.0
+     */
+    enum Capability {
+        /**
+         * Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
+         */
+        READ_ONLY
+    }
+
     /**
      * The default {@link ConnectionCapabilities} instance.
      * This is a JVM-wide singleton and may be accessed concurrently.
@@ -42,10 +56,11 @@ public interface ConnectionCapabilities {
         .orElseGet(DefaultConnectionCapabilities::new);
 
     /**
+     * Determines whether the given JDBC connection supports the requested capability.
      *
-     * @param capability Capability
-     * @param connection Connection
-     * @return Whether the connection supports a capability
+     * @param capability The capability to evaluate
+     * @param connection The JDBC connection
+     * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
     boolean supports(Capability capability, Connection connection);
 }

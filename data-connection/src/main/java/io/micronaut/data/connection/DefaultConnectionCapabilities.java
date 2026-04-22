@@ -22,7 +22,7 @@ import java.sql.Connection;
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
 
     @Override
-    public boolean supports(Capability capability, Connection connection) {
+    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
         return true;
     }
 }
