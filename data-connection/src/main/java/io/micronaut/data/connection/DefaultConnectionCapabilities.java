@@ -23,7 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 @Internal
-public class DefaultConnectionCapabilities implements ConnectionCapabilities {
+class DefaultConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultConnectionCapabilities.class);
     @Override
     public boolean supportsReadOnly(Connection connection) {
