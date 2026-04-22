@@ -26,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SqliteConnectionCapabilities implements ConnectionCapabilities {
+public final class SqliteConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(SqliteConnectionCapabilities.class);
     private final Map<String, Boolean> readOnlyCache = new ConcurrentHashMap<>();
 
