@@ -21,10 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Locale;
 
 @Internal
 class DefaultConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultConnectionCapabilities.class);
+
     @Override
     public boolean supportsReadOnly(Connection connection) {
         try {
@@ -39,6 +41,6 @@ class DefaultConnectionCapabilities implements ConnectionCapabilities {
         if (url == null) {
             return true;
         }
-        return !url.startsWith("jdbc:sqlite:");
+        return !url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:");
     }
 }

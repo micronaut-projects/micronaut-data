@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Property(name = "datasources.default.url", value = "jdbc:sqlite:file:mydb?mode=memory&cache=shared")
 @Property(name = "datasources.default.driver-class-name", value = "org.sqlite.JDBC")
+// There is no SQLite dialect yet; H2 is used as a substitute.
+// See: https://github.com/micronaut-projects/micronaut-data/pull/3820
 @Property(name = "datasources.default.dialect", value = "H2")
 @Property(name = "datasources.default.schema-generate", value = "NONE")
 @MicronautTest(transactional = false)
