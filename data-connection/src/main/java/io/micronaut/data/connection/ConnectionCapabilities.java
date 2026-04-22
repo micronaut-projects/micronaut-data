@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.connection;
 
-import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
+import io.micronaut.core.order.OrderUtil;
 
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Defines the capabilities of a {@link Connection}.
@@ -29,6 +31,9 @@ import java.sql.Connection;
  * <p>
  * Implementations are expected to be thread-safe and preferably stateless because
  * {@link #INSTANCE} is a JVM-wide singleton that may be used concurrently.
+ * <p>
+ * When multiple SPI providers are present, the one with the lowest order value
+ * (highest precedence, as defined by {@link io.micronaut.core.order.Ordered}) is selected.
  *
  * @since 5.0.0
  */
@@ -48,12 +53,10 @@ public interface ConnectionCapabilities {
     /**
      * The default {@link ConnectionCapabilities} instance.
      * This is a JVM-wide singleton and may be accessed concurrently.
+     * When multiple SPI providers are found, the one with the lowest order value
+     * (highest precedence) is selected.
      */
-    ConnectionCapabilities INSTANCE = SoftServiceLoader
-        .load(ConnectionCapabilities.class)
-        .first()
-        .map(ServiceDefinition::load)
-        .orElseGet(DefaultConnectionCapabilities::new);
+    ConnectionCapabilities INSTANCE = loadInstance();
 
     /**
      * Determines whether the given JDBC connection supports the requested capability.
@@ -63,4 +66,11 @@ public interface ConnectionCapabilities {
      * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
     boolean supports(Capability capability, Connection connection);
+
+    private static ConnectionCapabilities loadInstance() {
+        List<ConnectionCapabilities> providers = new ArrayList<>();
+        SoftServiceLoader.load(ConnectionCapabilities.class).collectAll(providers);
+        OrderUtil.sort(providers);
+        return providers.isEmpty() ? new DefaultConnectionCapabilities() : providers.get(0);
+    }
 }
