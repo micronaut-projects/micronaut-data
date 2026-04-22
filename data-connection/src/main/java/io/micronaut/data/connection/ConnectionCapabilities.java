@@ -21,12 +21,19 @@ import io.micronaut.core.io.service.SoftServiceLoader;
 import java.sql.Connection;
 
 /**
- * Define the capabilities of a Connection.
- * You can provide your own implementation via SPI.
+ * Defines the capabilities of a {@link Connection}.
+ * <p>
+ * You can provide your own implementation via Java SPI by registering
+ * {@code io.micronaut.data.connection.ConnectionCapabilities} in
+ * {@code META-INF/services/io.micronaut.data.connection.ConnectionCapabilities}.
+ * <p>
+ * Implementations are expected to be thread-safe and preferably stateless because
+ * {@link #INSTANCE} is a JVM-wide singleton that may be used concurrently.
  */
 public interface ConnectionCapabilities {
     /**
      * The default {@link ConnectionCapabilities} instance.
+     * This is a JVM-wide singleton and may be accessed concurrently.
      */
     ConnectionCapabilities INSTANCE = SoftServiceLoader
         .load(ConnectionCapabilities.class)
