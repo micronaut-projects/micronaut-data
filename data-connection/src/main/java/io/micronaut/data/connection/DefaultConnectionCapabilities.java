@@ -18,6 +18,11 @@ package io.micronaut.data.connection;
 import io.micronaut.core.annotation.Internal;
 import java.sql.Connection;
 
+/**
+ * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
+ *
+ * @since 5.0.0
+ */
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
 
