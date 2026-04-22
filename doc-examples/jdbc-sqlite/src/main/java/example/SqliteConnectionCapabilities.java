@@ -15,35 +15,36 @@
  */
 package example;
 
-import io.micronaut.data.connection.Capability;
 import io.micronaut.data.connection.ConnectionCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class SqliteConnectionCapabilities implements ConnectionCapabilities {
+/**
+ * {@link ConnectionCapabilities} implementation used by the SQLite JDBC example.
+ */
+public final class SqliteConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(SqliteConnectionCapabilities.class);
-    private final Map<String, Boolean> readOnlyCache = new ConcurrentHashMap<>();
+    public static final String SQ_LITE = "SQLite";
 
+    /**
+     * Connection capabilities implementation for the SQLite JDBC example.
+     * <p>
+     * SQLite connections do not support toggling read-only mode through JDBC, so
+     * {@link ConnectionCapabilities.Capability#READ_ONLY} is reported as unsupported for SQLite URLs.
+     * Other capabilities are treated as supported.
+     */
     @Override
-    public boolean supports(Capability capability, Connection connection) {
-        if (capability == Capability.READ_ONLY) {
+    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
+        if (capability == ConnectionCapabilities.Capability.READ_ONLY) {
             try {
-                String url = connection.getMetaData().getURL();
-                return readOnlyCache.computeIfAbsent(url, this::supportsReadOnly);
+                return !connection.getMetaData().getDatabaseProductName().equalsIgnoreCase(SQ_LITE);
             } catch (SQLException e) {
                 LOG.trace("Could not get metadata from connection", e);
             }
         }
         return true;
-    }
-
-    private boolean supportsReadOnly(String url) {
-        return !url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:");
     }
 }
