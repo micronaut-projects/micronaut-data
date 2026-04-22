@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,9 @@ public interface ConnectionCapabilities {
 
     /**
      *
+     * @param capability Capability
      * @param connection Connection
-     * @return Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
+     * @return Whether the connection supports a capability
      */
-    boolean supportsReadOnly(Connection connection);
+    boolean supports(Capability capability, Connection connection);
 }

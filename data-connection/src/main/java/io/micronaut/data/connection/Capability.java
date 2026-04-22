@@ -15,14 +15,14 @@
  */
 package io.micronaut.data.connection;
 
-import io.micronaut.core.annotation.Internal;
 import java.sql.Connection;
 
-@Internal
-final class DefaultConnectionCapabilities implements ConnectionCapabilities {
-
-    @Override
-    public boolean supports(Capability capability, Connection connection) {
-        return true;
-    }
+/**
+ * Connection Capability.
+ */
+public enum Capability {
+    /**
+     * Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
+     */
+    READ_ONLY
 }
