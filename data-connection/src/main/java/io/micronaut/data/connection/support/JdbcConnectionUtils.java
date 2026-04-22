@@ -74,7 +74,7 @@ public final class JdbcConnectionUtils {
                                      List<Runnable> onCompleteCallbacks) {
         if (!ConnectionCapabilities.INSTANCE.supports(Capability.READ_ONLY, connection)) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only. You can load your own io.micronaut.data.connection.ConnectionCapabilities implementation via SPI.", connection.getClass().getName());
+                logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only.", connection.getClass().getName());
             }
             return;
         }
