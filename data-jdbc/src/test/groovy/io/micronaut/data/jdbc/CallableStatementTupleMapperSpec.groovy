@@ -1,5 +1,6 @@
-package io.micronaut.data.jdbc.mapper
+package io.micronaut.data.jdbc
 
+import io.micronaut.data.jdbc.mapper.CallableStatementTupleMapper
 import spock.lang.Specification
 
 import java.sql.CallableStatement

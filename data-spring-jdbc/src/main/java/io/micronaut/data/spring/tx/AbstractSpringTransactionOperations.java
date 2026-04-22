@@ -110,6 +110,7 @@ public abstract class AbstractSpringTransactionOperations
         return execute(new TransactionTemplate(transactionManager, def), callback, definition);
     }
 
+    @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
@@ -124,6 +125,7 @@ public abstract class AbstractSpringTransactionOperations
         return def;
     }
 
+    @SuppressWarnings("NullAway")
     private <R> R execute(TransactionTemplate template,
                           TransactionCallback<Connection, R> callback,
                           TransactionDefinition transactionDefinition) {
