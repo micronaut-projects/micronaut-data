@@ -95,6 +95,10 @@ include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
 
+include 'doc-examples:jdbc-sqlite'
+include 'doc-examples:jdbc-connection-capabilities-spi'
+
+
 include 'doc-examples:jdbc-jakarta-data-example-java'
 
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
@@ -129,6 +133,7 @@ include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
 
 include 'doc-examples:coherence-example-java'
+
 
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'

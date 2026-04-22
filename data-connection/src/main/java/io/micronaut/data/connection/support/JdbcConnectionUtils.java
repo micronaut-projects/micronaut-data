@@ -16,6 +16,7 @@
 package io.micronaut.data.connection.support;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionCapabilities;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import org.slf4j.Logger;
@@ -70,6 +71,12 @@ public final class JdbcConnectionUtils {
                                      Connection connection,
                                      boolean isReadOnly,
                                      List<Runnable> onCompleteCallbacks) {
+        if (!ConnectionCapabilities.INSTANCE.supportsReadOnly(connection)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only. You can load your own io.micronaut.data.connection.ConnectionCapabilities implementation via SPI.", connection);
+            }
+            return;
+        }
         boolean connectionReadOnly = isReadOnly(connection);
         if (connectionReadOnly != isReadOnly) {
             setConnectionReadOnly(logger, connection, isReadOnly);
