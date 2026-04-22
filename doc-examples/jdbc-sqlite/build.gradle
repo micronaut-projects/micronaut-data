@@ -2,10 +2,6 @@ plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
 
-application {
-    mainClass = "example.Application"
-}
-
 micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
