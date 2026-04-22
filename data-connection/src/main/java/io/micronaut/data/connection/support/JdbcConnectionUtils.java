@@ -16,6 +16,8 @@
 package io.micronaut.data.connection.support;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.Capability;
+import io.micronaut.data.connection.ConnectionCapabilities;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import org.slf4j.Logger;
@@ -70,9 +72,9 @@ public final class JdbcConnectionUtils {
                                      Connection connection,
                                      boolean isReadOnly,
                                      List<Runnable> onCompleteCallbacks) {
-        if (isSqliteConnection(connection)) {
+        if (!ConnectionCapabilities.INSTANCE.supports(Capability.READ_ONLY, connection)) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Skipping JDBC Connection [{}] read-only toggle because SQLite doesn't support changing it after connect", connection);
+                logger.debug("Skipping JDBC Connection [{}] read-only toggle. Connection does not support applying read-only. You can load your own io.micronaut.data.connection.ConnectionCapabilities implementation via SPI.", connection.getClass().getName());
             }
             return;
         }
@@ -150,15 +152,6 @@ public final class JdbcConnectionUtils {
             return connection.isReadOnly();
         } catch (SQLException e) {
             throw new ConnectionException("Failed to read the connection's read only flag: " + e.getMessage(), e);
-        }
-    }
-
-    private static boolean isSqliteConnection(Connection connection) {
-        try {
-            String url = connection.getMetaData().getURL();
-            return url != null && url.startsWith("jdbc:sqlite:");
-        } catch (SQLException e) {
-            return false;
         }
     }
 
