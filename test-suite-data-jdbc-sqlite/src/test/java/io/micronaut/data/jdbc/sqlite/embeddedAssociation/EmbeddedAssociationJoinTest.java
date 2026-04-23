@@ -88,9 +88,9 @@ class EmbeddedAssociationJoinTest {
             entity = mainEntityRepository.findById(entity.getId()).orElseThrow();
             Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
             Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
-            assertEquals(1, mainEntityRepository.findAll(pageable).getTotalPages());
+            assertEquals(1, mainEntityRepository.findAll(pageable).getContent().size());
             PredicateSpecification<Order> predicate = null;
-            assertEquals(1, mainEntityRepository.findAllByCriteria(predicate, pageable).getTotalPages());
+            assertEquals(1, mainEntityRepository.findAllByCriteria(predicate, pageable).getContent().size());
 
             assertAssoc(entity, "A", "B", "C", "D");
 
