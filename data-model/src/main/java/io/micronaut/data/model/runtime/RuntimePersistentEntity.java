@@ -466,10 +466,9 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
             if (bp.hasStereotype(Transient.class)) {
                 continue;
             }
-            // Check direct auto-populated, including generated UUID values.
+            // Check direct auto-populated (but not @GeneratedValue)
             var am = bp.getAnnotationMetadata();
-            if ((am.hasStereotype(AutoPopulated.class) && !am.hasAnnotation(GeneratedValue.class))
-                || (am.hasAnnotation(GeneratedValue.class) && bp.getType() == UUID.class)) {
+            if (!am.hasAnnotation(GeneratedValue.class) && am.hasStereotype(AutoPopulated.class)) {
                 return true;
             }
             // Recurse into nested embedded associations

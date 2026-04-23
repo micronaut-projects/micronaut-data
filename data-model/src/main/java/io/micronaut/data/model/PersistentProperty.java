@@ -130,10 +130,7 @@ public interface PersistentProperty extends PersistentElement {
      * @return True if the property is auto-populated
      */
     default boolean isAutoPopulated() {
-        if (isGenerated() && getDataType() == DataType.UUID) {
-            return true;
-        }
-        return getAnnotationMetadata().hasStereotype(AutoPopulated.class);
+        return !isGenerated() && getAnnotationMetadata().hasStereotype(AutoPopulated.class);
     }
 
     /**
