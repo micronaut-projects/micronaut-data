@@ -122,10 +122,9 @@ class ManyToManyJoinTableTest {
         SqlQueryBuilder encoder = new SqlQueryBuilder();
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student.class));
 
-        assertEquals(3, statements.length);
-        assertEquals("CREATE SCHEMA \"students\";", statements[0]);
-        assertEquals("CREATE TABLE \"students\".\"m2m_student_course_association\" (\"st_id\" BIGINT NOT NULL,\"cs_id\" BIGINT NOT NULL, PRIMARY KEY(\"st_id\",\"cs_id\"));", statements[1]);
-        assertEquals("CREATE TABLE \"students\".\"m2m_student\" (\"id\" BIGINT PRIMARY KEY AUTO_INCREMENT,\"name\" VARCHAR(255) NOT NULL);", statements[2]);
+        assertEquals(2, statements.length);
+        assertEquals("CREATE TABLE \"m2m_student_course_association\" (\"st_id\" BIGINT NOT NULL,\"cs_id\" BIGINT NOT NULL, PRIMARY KEY(\"st_id\",\"cs_id\"));", statements[0]);
+        assertEquals("CREATE TABLE \"m2m_student\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
     }
 
     @Test
@@ -133,9 +132,8 @@ class ManyToManyJoinTableTest {
         SqlQueryBuilder encoder = new SqlQueryBuilder();
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating.class));
 
-        assertEquals(2, statements.length);
-        assertEquals("CREATE SCHEMA \"students\";", statements[0]);
-        assertEquals("CREATE TABLE \"students\".\"m2m_course_rating\" (\"id\" BIGINT PRIMARY KEY AUTO_INCREMENT,\"student_id\" BIGINT NOT NULL,\"course_id\" BIGINT NOT NULL,\"rating\" INT NOT NULL);", statements[1]);
+        assertEquals(1, statements.length);
+        assertEquals("CREATE TABLE \"m2m_course_rating\" (\"id\" INTEGER PRIMARY KEY,\"student_id\" BIGINT NOT NULL,\"course_id\" BIGINT NOT NULL,\"rating\" INT NOT NULL);", statements[0]);
     }
 
     @Test
@@ -143,9 +141,8 @@ class ManyToManyJoinTableTest {
         SqlQueryBuilder encoder = new SqlQueryBuilder();
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course.class));
 
-        assertEquals(2, statements.length);
-        assertEquals("CREATE SCHEMA \"students\";", statements[0]);
-        assertEquals("CREATE TABLE \"students\".\"m2m_course\" (\"id\" BIGINT PRIMARY KEY AUTO_INCREMENT,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
+        assertEquals(1, statements.length);
+        assertEquals("CREATE TABLE \"m2m_course\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[0]);
     }
 
     @Test
@@ -156,7 +153,7 @@ class ManyToManyJoinTableTest {
         root.join("courses", Join.Type.FETCH);
         var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
 
-        assertEquals("SELECT student_.\"id\",student_.\"name\",student_courses_.\"id\" AS courses_id,student_courses_.\"name\" AS courses_name FROM \"students\".\"m2m_student\" student_ INNER JOIN \"students\".\"m2m_student_course_association\" student_courses_m2m_student_course_association_ ON student_.\"id\"=student_courses_m2m_student_course_association_.\"st_id\"  INNER JOIN \"students\".\"m2m_course\" student_courses_ ON student_courses_m2m_student_course_association_.\"cs_id\"=student_courses_.\"id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
+        assertEquals("SELECT student_.\"id\",student_.\"name\",student_courses_.\"id\" AS courses_id,student_courses_.\"name\" AS courses_name FROM \"m2m_student\" student_ INNER JOIN \"m2m_student_course_association\" student_courses_m2m_student_course_association_ ON student_.\"id\"=student_courses_m2m_student_course_association_.\"st_id\"  INNER JOIN \"m2m_course\" student_courses_ ON student_courses_m2m_student_course_association_.\"cs_id\"=student_courses_.\"id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
         assertEquals(Map.of("1", "id"), builtQuery.getParameters());
     }
 
@@ -168,7 +165,7 @@ class ManyToManyJoinTableTest {
         root.join("ratings", Join.Type.FETCH);
         var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
 
-        assertEquals("SELECT student_.\"id\",student_.\"name\",student_ratings_.\"id\" AS ratings_id,student_ratings_.\"student_id\" AS ratings_student_id,student_ratings_.\"course_id\" AS ratings_course_id,student_ratings_.\"rating\" AS ratings_rating FROM \"students\".\"m2m_student\" student_ INNER JOIN \"students\".\"m2m_course_rating\" student_ratings_ ON student_.\"id\"=student_ratings_.\"student_id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
+        assertEquals("SELECT student_.\"id\",student_.\"name\",student_ratings_.\"id\" AS ratings_id,student_ratings_.\"student_id\" AS ratings_student_id,student_ratings_.\"course_id\" AS ratings_course_id,student_ratings_.\"rating\" AS ratings_rating FROM \"m2m_student\" student_ INNER JOIN \"m2m_course_rating\" student_ratings_ ON student_.\"id\"=student_ratings_.\"student_id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
         assertEquals(Map.of("1", "id"), builtQuery.getParameters());
     }
 
@@ -178,7 +175,7 @@ class ManyToManyJoinTableTest {
         RuntimePersistentEntity<?> entity = getRuntimePersistentEntity(Student.class);
         String query = encoder.buildJoinTableInsert(entity, (Association) entity.getPropertyByName("courses"));
 
-        assertEquals("INSERT INTO \"students\".\"m2m_student_course_association\" (\"st_id\",\"cs_id\") VALUES (?,?)", query);
+        assertEquals("INSERT INTO \"m2m_student_course_association\" (\"st_id\",\"cs_id\") VALUES (?,?)", query);
     }
 
     @Test
@@ -186,7 +183,7 @@ class ManyToManyJoinTableTest {
         RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder();
         var insert = builder.createCriteriaInsert(CourseRatingCompositeKey.class).build(new SqlQueryBuilder());
 
-        assertEquals("INSERT INTO \"students\".\"m2m_course_rating_ck\" (\"rating\",\"xyz_student_id\",\"abc_course_id\") VALUES (?,?,?)", insert.getQuery());
+        assertEquals("INSERT INTO \"m2m_course_rating_ck\" (\"rating\",\"xyz_student_id\",\"abc_course_id\") VALUES (?,?,?)", insert.getQuery());
     }
 
     private RuntimePersistentEntity getRuntimePersistentEntity(Class type) {
@@ -260,7 +257,7 @@ interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRating
     Optional<CourseRatingCompositeKey> findById(CourseRatingKey id);
 }
 
-@MappedEntity(value = "m2m_student", schema = "students")
+@MappedEntity(value = "m2m_student")
 class Student {
 
     @Id
@@ -339,7 +336,7 @@ class Student {
     }
 }
 
-@MappedEntity(value = "m2m_course", schema = "students")
+@MappedEntity(value = "m2m_course")
 class Course {
 
     @Id
@@ -402,7 +399,7 @@ class Course {
     }
 }
 
-@MappedEntity(value = "m2m_course_rating", schema = "students")
+@MappedEntity(value = "m2m_course_rating")
 class CourseRating {
 
     @Id
@@ -450,7 +447,7 @@ class CourseRating {
     }
 }
 
-@MappedEntity(value = "m2m_course_rating_ck", schema = "students")
+@MappedEntity(value = "m2m_course_rating_ck")
 class CourseRatingCompositeKey {
 
     @EmbeddedId
