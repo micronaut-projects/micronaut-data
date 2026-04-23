@@ -34,10 +34,8 @@ record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:
-        sql == 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"age" INT NOT NULL);'
-
+        sql == 'CREATE TABLE "person" ("id" INTEGER PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"age" INTEGER NOT NULL);'
     }
-
 
     void 'test runtime persistent entity'() {
         given:

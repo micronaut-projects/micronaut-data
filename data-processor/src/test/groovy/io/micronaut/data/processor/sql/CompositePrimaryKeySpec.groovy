@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
@@ -204,11 +205,11 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id"));'
+        sql == 'CREATE TABLE `project` (`department_id` INT NOT NULL,`project_id` INT AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL, PRIMARY KEY(`department_id`,`project_id`));'
     }
 
     void "test build insert"() {
