@@ -17,9 +17,22 @@ package io.micronaut.data.jdbc.sqlite;
 
 import io.micronaut.data.tck.tests.AbstractJakartaDataTest;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest(transactional = false)
 public class SQLiteJakartaDataTest extends AbstractJakartaDataTest implements SQLiteTestingPropertyProvider {
+    @Disabled("LEFT Function not supported in SQLite")
+    @Test
+    public void testRuntimeRestrictionsWithLeft() {
+        super.testRuntimeRestrictionsWithLeft();
+    }
+
+    @Disabled("RIGHT Function not supported in SQLite")
+    @Test
+    public void testRuntimeRestrictionsWithRight() {
+        super.testRuntimeRestrictionsWithRight();
+    }
 }
