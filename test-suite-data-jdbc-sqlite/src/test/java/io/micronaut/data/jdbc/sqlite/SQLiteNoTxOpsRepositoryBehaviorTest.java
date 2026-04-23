@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection;
+package io.micronaut.data.jdbc.sqlite;
 
-import io.micronaut.core.annotation.Internal;
-import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
- *
- * @since 5.0.0
- */
-@Internal
-final class DefaultConnectionCapabilities implements ConnectionCapabilities {
+class SQLiteNoTxOpsRepositoryBehaviorTest extends AbstractSQLiteRepositoryBehaviorTest {
 
     @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        return true;
+    public Map<String, String> getProperties() {
+        Map<String, String> properties = new HashMap<>(super.getProperties());
+        properties.put("micronaut.data.jdbc.transaction-per-operation", "false");
+        properties.put("micronaut.data.jdbc.allow-connection-per-operation", "true");
+        return properties;
     }
 }

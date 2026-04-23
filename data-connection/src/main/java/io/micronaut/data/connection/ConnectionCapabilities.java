@@ -15,10 +15,14 @@
  */
 package io.micronaut.data.connection;
 
-import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
-
 import java.sql.Connection;
+
+import io.micronaut.core.order.OrderUtil;
+import io.micronaut.core.order.Ordered;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Defines the capabilities of a {@link Connection}.
@@ -32,7 +36,8 @@ import java.sql.Connection;
  *
  * @since 5.0.0
  */
-public interface ConnectionCapabilities {
+public interface ConnectionCapabilities extends Ordered {
+
     /**
      * Connection capability.
      *
@@ -53,12 +58,10 @@ public interface ConnectionCapabilities {
     /**
      * The default {@link ConnectionCapabilities} instance.
      * This is a JVM-wide singleton and may be accessed concurrently.
+     * When multiple SPI providers are found, the one with the lowest order value
+     * (highest precedence) is selected.
      */
-    ConnectionCapabilities INSTANCE = SoftServiceLoader
-        .load(ConnectionCapabilities.class)
-        .first()
-        .map(ServiceDefinition::load)
-        .orElseGet(DefaultConnectionCapabilities::new);
+    ConnectionCapabilities INSTANCE = loadInstance();
 
     /**
      * Determines whether the given JDBC connection supports the requested capability.
@@ -68,4 +71,11 @@ public interface ConnectionCapabilities {
      * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
     boolean supports(Capability capability, Connection connection);
+
+    private static ConnectionCapabilities loadInstance() {
+        List<ConnectionCapabilities> providers = new ArrayList<>();
+        SoftServiceLoader.load(ConnectionCapabilities.class).collectAll(providers);
+        OrderUtil.sort(providers);
+        return providers.isEmpty() ? new DefaultConnectionCapabilities() : providers.get(0);
+    }
 }

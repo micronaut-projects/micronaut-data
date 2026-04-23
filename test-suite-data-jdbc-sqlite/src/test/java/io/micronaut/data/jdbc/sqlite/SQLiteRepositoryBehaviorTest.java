@@ -13,21 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection;
+package io.micronaut.data.jdbc.sqlite;
 
-import io.micronaut.core.annotation.Internal;
-import java.sql.Connection;
-
-/**
- * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
- *
- * @since 5.0.0
- */
-@Internal
-final class DefaultConnectionCapabilities implements ConnectionCapabilities {
-
-    @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        return true;
-    }
+class SQLiteRepositoryBehaviorTest extends AbstractSQLiteRepositoryBehaviorTest {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2026 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection;
+package io.micronaut.data.jdbc.sqlite;
 
-import io.micronaut.core.annotation.Internal;
-import java.sql.Connection;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
-/**
- * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
- *
- * @since 5.0.0
- */
-@Internal
-final class DefaultConnectionCapabilities implements ConnectionCapabilities {
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        return true;
+@MicronautTest
+@JavaSQLiteDBProperties
+class SQLiteNoIdEntityRepositoryTest {
+
+    @Inject
+    SQLiteNoIdEntityRepository noIdEntityRepository;
+
+    @Test
+    void testTheRepositoryWorks() {
+        assertTrue(noIdEntityRepository.findById(123456L).isEmpty());
     }
 }
