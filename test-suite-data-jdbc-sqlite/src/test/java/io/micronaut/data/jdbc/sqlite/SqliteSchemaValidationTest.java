@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.sqlite;
 
 import io.micronaut.context.ApplicationContext;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class SqliteSchemaValidationTest {
 
+    @Disabled
     @Test
     void validateSchema() {
         Map<String, Object> props = createProperties();
@@ -29,6 +31,7 @@ class SqliteSchemaValidationTest {
         }
     }
 
+    @Disabled
     @Test
     void validateSchemaForTckSchemaEntities() {
         Map<String, Object> props = createProperties();

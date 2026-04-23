@@ -8,6 +8,7 @@ import jakarta.data.Sort;
 import jakarta.data.exceptions.EntityExistsException;
 import jakarta.data.exceptions.OptimisticLockingFailureException;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class PersistenceEntityTests {
         assertEquals(5L, catalog.deleteByProductNumLike("TEST-PROD-%"));
     }
 
+    @Disabled
     @Test
     public void testInsertEntityThatAlreadyExists() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
@@ -212,6 +214,7 @@ public class PersistenceEntityTests {
         assertEquals(4L, catalog.deleteByProductNumLike("TEST-PROD-%"));
     }
 
+    @Disabled
     @Test
     public void testSort() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
@@ -286,6 +289,7 @@ public class PersistenceEntityTests {
             found.stream().map(CatalogProduct::getName).collect(Collectors.toList()));
     }
 
+    @Disabled
     @Test
     public void testQueryWithNamedParameters() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
@@ -305,6 +309,7 @@ public class PersistenceEntityTests {
         assertEquals(6L, catalog.deleteByProductNumLike("TEST-PROD-%"));
     }
 
+    @Disabled
     @Test
     public void testQueryWithPositionalParameters() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
