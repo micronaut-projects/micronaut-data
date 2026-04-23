@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.sqlite;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.tck.tests.BarBookClient;
 import io.micronaut.data.tck.tests.BookDto;
 import io.micronaut.data.tck.tests.FooBookClient;
@@ -62,7 +63,7 @@ class SQLiteMultitenancyTest {
     }
 
     private long getBooksCount(DataSource dataSource) {
-        try (Connection connection = dataSource.getConnection();
+        try (Connection connection = DelegatingDataSource.unwrapDataSource(dataSource).getConnection();
              PreparedStatement ps = connection.prepareStatement("select count(*) from book");
              ResultSet resultSet = ps.executeQuery()) {
             resultSet.next();
