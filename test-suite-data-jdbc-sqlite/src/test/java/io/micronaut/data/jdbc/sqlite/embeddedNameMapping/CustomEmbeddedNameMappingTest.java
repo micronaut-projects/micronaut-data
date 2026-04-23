@@ -80,7 +80,7 @@ class CustomEmbeddedNameMappingTest {
         var statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook.class));
 
         assertEquals(
-            "CREATE TABLE \"MyBook\" (\"id\" VARCHAR(255) NOT NULL,\"firstName\" VARCHAR(255) NOT NULL,\"lastName\" VARCHAR(255) NOT NULL,\"numberAge\" INT NOT NULL, PRIMARY KEY(\"id\"));",
+            "CREATE TABLE \"MyBook\" (\"id\" VARCHAR(255) NOT NULL,\"firstName\" VARCHAR(255) NOT NULL,\"lastName\" VARCHAR(255) NOT NULL,\"numberAge\" INTEGER NOT NULL, PRIMARY KEY(\"id\"));",
             String.join("\n", statements)
         );
     }

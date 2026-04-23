@@ -123,7 +123,7 @@ class SQLiteEnumsMappingTest {
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity.class));
 
-        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
     }
 
     @Test
@@ -132,7 +132,7 @@ class SQLiteEnumsMappingTest {
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity.class));
 
-        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INT NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INTEGER NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
     }
 
     @Test
@@ -141,7 +141,7 @@ class SQLiteEnumsMappingTest {
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity.class));
 
-        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
     }
 
     @Test
@@ -150,7 +150,7 @@ class SQLiteEnumsMappingTest {
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity.class));
 
-        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INT NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INTEGER NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
     }
 }
 

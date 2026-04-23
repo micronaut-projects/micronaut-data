@@ -123,7 +123,7 @@ class ManyToManyJoinTableTest {
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student.class));
 
         assertEquals(2, statements.length);
-        assertEquals("CREATE TABLE \"m2m_student_course_association\" (\"st_id\" BIGINT NOT NULL,\"cs_id\" BIGINT NOT NULL, PRIMARY KEY(\"st_id\",\"cs_id\"));", statements[0]);
+        assertEquals("CREATE TABLE \"m2m_student_course_association\" (\"st_id\" INTEGER NOT NULL,\"cs_id\" INTEGER NOT NULL, PRIMARY KEY(\"st_id\",\"cs_id\"));", statements[0]);
         assertEquals("CREATE TABLE \"m2m_student\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
     }
 
@@ -133,7 +133,7 @@ class ManyToManyJoinTableTest {
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating.class));
 
         assertEquals(1, statements.length);
-        assertEquals("CREATE TABLE \"m2m_course_rating\" (\"id\" INTEGER PRIMARY KEY,\"student_id\" BIGINT NOT NULL,\"course_id\" BIGINT NOT NULL,\"rating\" INT NOT NULL);", statements[0]);
+        assertEquals("CREATE TABLE \"m2m_course_rating\" (\"id\" INTEGER PRIMARY KEY,\"student_id\" INTEGER NOT NULL,\"course_id\" INTEGER NOT NULL,\"rating\" INTEGER NOT NULL);", statements[0]);
     }
 
     @Test
