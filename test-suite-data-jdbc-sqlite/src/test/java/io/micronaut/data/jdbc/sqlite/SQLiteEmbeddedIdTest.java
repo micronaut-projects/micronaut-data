@@ -304,9 +304,6 @@ class ItemGroupId {
     private Long firstId;
     private Long secondId;
 
-    ItemGroupId() {
-    }
-
     ItemGroupId(Long firstId, Long secondId) {
         this.firstId = firstId;
         this.secondId = secondId;
