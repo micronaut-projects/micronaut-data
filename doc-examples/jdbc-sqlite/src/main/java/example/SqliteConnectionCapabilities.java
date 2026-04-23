@@ -38,7 +38,8 @@ public final class SqliteConnectionCapabilities implements ConnectionCapabilitie
      */
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        if (capability == ConnectionCapabilities.Capability.READ_ONLY) {
+        if (capability == ConnectionCapabilities.Capability.BATCH_INSERT ||
+            capability == ConnectionCapabilities.Capability.READ_ONLY) {
             try {
                 return !connection.getMetaData().getDatabaseProductName().equalsIgnoreCase(SQ_LITE);
             } catch (SQLException e) {

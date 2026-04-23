@@ -25,6 +25,7 @@ import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import tools.jackson.databind.ObjectMapper
@@ -289,6 +290,7 @@ abstract class AbstractJSONSpec extends Specification {
         cleanup()
     }
 
+    @PendingFeature(reason = "JSON FORMAT not supported")
     void "test JSON fields retrieval"() {
         def jsonEntity = new JsonEntity()
         jsonEntity.id = 1L

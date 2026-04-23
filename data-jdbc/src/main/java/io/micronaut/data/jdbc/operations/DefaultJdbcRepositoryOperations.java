@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionCapabilities;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -286,6 +287,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             childPersistentEntity.getIntrospection().getBeanType(),
             childPersistentEntity
         );
+        if (!isSupportsBatchInsert(childPersistentEntity, storedQuery) || !isSupportsBatchInsert(ctx, childPersistentEntity)) {
+            List<T> entities = new ArrayList<>();
+            for (T value : values) {
+                if (predicate.test(value)) {
+                    entities.add(value);
+                    continue;
+                }
+                JdbcEntityOperations<T> persistOneOp = new JdbcEntityOperations<>(ctx, storedQuery, childPersistentEntity, value, true);
+                persistOneOp.persist();
+                entities.add(persistOneOp.getEntity());
+            }
+            return entities;
+        }
         JdbcEntitiesOperations<T> persistBatchOp = new JdbcEntitiesOperations<>(ctx, childPersistentEntity, values, storedQuery, true);
         persistBatchOp.veto(predicate);
         persistBatchOp.persist();
@@ -853,7 +867,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
+            if (!isSupportsBatchInsert(persistentEntity, storedQuery) || !isSupportsBatchInsert(ctx, persistentEntity)) {
                 return operation.split().stream()
                     .map(persistOp -> {
                         JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
@@ -1160,8 +1174,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
+        if (persistentEntity.hasIdentity()
+            && persistentEntity.getIdentity().isGenerated()
+            && !ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.BATCH_INSERT, jdbcOperationContext.connection)) {
+            return false;
+        }
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
+
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private RuntimePersistentEntity<?> resolveOracleReturningEntity(Class<?> type) {

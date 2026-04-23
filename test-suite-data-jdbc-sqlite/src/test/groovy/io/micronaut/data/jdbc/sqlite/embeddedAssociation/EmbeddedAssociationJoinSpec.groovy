@@ -1,0 +1,304 @@
+package io.micronaut.data.jdbc.sqlite.embeddedAssociation
+
+import io.micronaut.context.ApplicationContext
+import org.jspecify.annotations.Nullable
+import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.repeatable.JoinSpecifications
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties
+import io.micronaut.data.jdbc.sqlite.SQLiteTestPropertyProvider
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.tck.entities.Order
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+import spock.lang.Specification
+
+import jakarta.inject.Inject
+
+import java.time.Instant
+
+
+@SQLiteDBProperties
+class EmbeddedAssociationJoinSpec extends Specification implements SQLiteTestPropertyProvider {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
+
+    @Shared
+    @Inject
+    MainEntityRepository mainEntityRepository = applicationContext.getBean(MainEntityRepository)
+
+    @Shared
+    @Inject
+    OneMainEntityRepository oneMainEntityRepository = applicationContext.getBean(OneMainEntityRepository)
+
+    @Shared
+    @Inject
+    OneMainEntityEmRepository oneMainEntityEmRepository = applicationContext.getBean(OneMainEntityEmRepository)
+
+    @Shared
+    @Inject
+    ClientRepository clientRepository = applicationContext.getBean(ClientRepository)
+
+    @Shared
+    @Inject
+    RelationshipStatusRepository relationshipStatusRepository = applicationContext.getBean(RelationshipStatusRepository)
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.jdbc.sqlite.embeddedAssociation")
+    }
+
+    void 'test one-to-one update'() {
+        given:
+            ChildEntity child = new ChildEntity(name: "child")
+            MainEntity main = new MainEntity(name: "test")
+            main.child = child
+            child.main = main
+        when:
+            mainEntityRepository.save(main)
+            main.name = "diff-name"
+            child.name = "diff-child"
+            MainEntity updatedMain = mainEntityRepository.update(main)
+        then:
+            updatedMain.name == "diff-name"
+            updatedMain.child.name == "diff-child"
+    }
+
+    void 'test many-to-many hierarchy'() {
+        given:
+            MainEntity e = new MainEntity(name: "test",
+                    assoc: [
+                    new MainEntityAssociation(name: "A"),
+                    new MainEntityAssociation(name: "B"),
+            ], em: new MainEmbedded(
+                    assoc: [
+                            new MainEntityAssociation(name: "C"),
+                            new MainEntityAssociation(name: "D"),
+                    ]
+            ))
+        when:
+            mainEntityRepository.save(e)
+            e = mainEntityRepository.findById(e.id).get()
+            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
+            mainEntityRepository.findAll(pageable).totalPages == 1
+            PredicateSpecification<Order> predicate = null
+             mainEntityRepository.findAllByCriteria(predicate, pageable).totalPages == 1
+        then:
+            e.id
+            e.assoc.size() == 2
+            e.assoc[0].name == "A"
+            e.assoc[1].name == "B"
+            e.em
+            e.em.assoc.size() == 2
+            e.em.assoc[0].name == "C"
+            e.em.assoc[1].name == "D"
+        when:
+            mainEntityRepository.update(e)
+            e = mainEntityRepository.findById(e.id).get()
+        then:
+            e.id
+            e.assoc.size() == 2
+            e.assoc[0].name == "A"
+            e.assoc[1].name == "B"
+            e.em.assoc.size() == 2
+            e.em.assoc[0].name == "C"
+            e.em.assoc[1].name == "D"
+        when:
+            def o = new OneMainEntity(one: e)
+            o = oneMainEntityRepository.save(o)
+            o = oneMainEntityRepository.findById(o.id).get()
+        then:
+            o.one.id
+            o.one.assoc.size() == 2
+            o.one.assoc[0].name == "A"
+            o.one.assoc[1].name == "B"
+            o.one.em.assoc.size() == 2
+            o.one.em.assoc[0].name == "C"
+            o.one.em.assoc[1].name == "D"
+        when:
+            def oem = new OneMainEntityEm(id: new EmId(one: e), name: "Embedded is crazy")
+            oem = oneMainEntityEmRepository.save(oem)
+            oem = oneMainEntityEmRepository.findById(oem.id).get()
+        then:
+            oem.name == "Embedded is crazy"
+            oem.id.one.id
+            oem.id.one.assoc.size() == 2
+            oem.id.one.assoc[0].name == "A"
+            oem.id.one.assoc[1].name == "B"
+            oem.id.one.em.assoc.size() == 2
+            oem.id.one.em.assoc[0].name == "C"
+            oem.id.one.em.assoc[1].name == "D"
+    }
+
+    void 'embedded with generated values are saved'() {
+        given:
+        relationshipStatusRepository.save(new RelationshipStatus(id: 1, name: 'Active'))
+        relationshipStatusRepository.save(new RelationshipStatus(id: 2, name: 'InActive'))
+        when:
+        var status = relationshipStatusRepository.findById(1L).orElse(null)
+        then:
+        status
+        status.name == 'Active'
+        when:"New client with embedded is created"
+        var newClient = clientRepository.save(new Client(name: 'Active Client', relationship: new Relationship(status: status)))
+        then:"Embedded is saved"
+        newClient.name == 'Active Client'
+        newClient.relationship.type == RelationshipType.CLIENT
+        newClient.relationship.status
+        newClient.relationship.status.id == status.id
+        newClient.relationship.status.name == status.name
+    }
+}
+
+@JdbcRepository(dialect = Dialect.ANSI)
+interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpecificationExecutor<MainEntity> {
+
+    @Join(value = "assoc", type = Join.Type.FETCH)
+    @Join(value = "em.assoc", type = Join.Type.FETCH)
+    @Override
+    Optional<MainEntity> findById(Long aLong)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAll(Pageable pageable)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAllByCriteria(@Nullable PredicateSpecification<Order> spec, Pageable pageable)
+}
+
+@JdbcRepository(dialect = Dialect.ANSI)
+interface OneMainEntityRepository extends CrudRepository<OneMainEntity, Long> {
+
+    @Join(value = "one", type = Join.Type.FETCH)
+    @Join(value = "one.assoc", type = Join.Type.FETCH)
+    @Join(value = "one.em.assoc", type = Join.Type.FETCH)
+    @Override
+    Optional<OneMainEntity> findById(Long aLong)
+}
+
+@Join(value = "id.one", type = Join.Type.FETCH)
+@Join(value = "id.one.assoc", type = Join.Type.FETCH)
+@Join(value = "id.one.em.assoc", type = Join.Type.FETCH)
+@JdbcRepository(dialect = Dialect.ANSI)
+interface OneMainEntityEmRepository extends CrudRepository<OneMainEntityEm, EmId> {
+}
+
+@MappedEntity
+class OneMainEntity {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(value = Relation.Kind.ONE_TO_ONE)
+    MainEntity one
+}
+
+@MappedEntity
+class OneMainEntityEm {
+    @EmbeddedId
+    EmId id
+
+    String name
+}
+
+@Embeddable
+class EmId {
+    @Relation(value = Relation.Kind.ONE_TO_ONE)
+    MainEntity one
+}
+
+@MappedEntity
+class MainEntity {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    List<MainEntityAssociation> assoc
+    @Relation(value = Relation.Kind.EMBEDDED)
+    MainEmbedded em
+    @Relation(value = Relation.Kind.ONE_TO_ONE, mappedBy = "main", cascade = Relation.Cascade.ALL)
+    ChildEntity child
+    String name
+}
+
+@MappedEntity
+class ChildEntity {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(Relation.Kind.ONE_TO_ONE)
+    MainEntity main
+    String name
+}
+
+@Embeddable
+class MainEmbedded {
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    List<MainEntityAssociation> assoc
+
+}
+
+@MappedEntity
+class MainEntityAssociation {
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+}
+
+@MappedEntity
+class RelationshipStatus {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+}
+
+enum RelationshipType {
+    CLIENT,
+    SUPPLIER
+}
+
+@Embeddable
+class Relationship {
+    RelationshipType type = RelationshipType.CLIENT
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    RelationshipStatus status
+}
+
+@MappedEntity
+class Client {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    Relationship relationship
+
+    @DateCreated
+    Instant createdAt = Instant.now()
+
+    @DateUpdated
+    Instant updatedAt =Instant.now()
+}
+
+@JdbcRepository(dialect = Dialect.ANSI)
+@Join(value = "relationship.status", type = Join.Type.LEFT_FETCH)
+interface ClientRepository extends CrudRepository<Client, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.ANSI)
+interface RelationshipStatusRepository extends CrudRepository<RelationshipStatus, Long> {
+}

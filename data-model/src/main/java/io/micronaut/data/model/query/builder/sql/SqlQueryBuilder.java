@@ -912,21 +912,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " NOT NULL DEFAULT random_uuid()";
                 }
                 break;
-            case SQLITE:
-                if (type == UUID) {
-                    column += " NOT NULL";
-                } else if (type == SEQUENCE) {
-                    column += " NOT NULL";
-                } else if (type == IDENTITY) {
-                    if (isPk) {
-                        column += " AUTOINCREMENT";
-                    } else {
-                        column += " NOT NULL";
-                    }
-                } else {
-                    column += " NOT NULL";
-                }
-                break;
             case SQL_SERVER:
                 if (type == UUID) {
                     column += " NOT NULL DEFAULT newid()";
@@ -961,7 +946,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     } else {
                         column += " NOT NULL";
                     }
-                } else if (dataType.isNumeric()) {
+                } else if (dataType.isNumeric() && dialect == Dialect.MYSQL) { // ansi SQL standard does not
                     column += " AUTO_INCREMENT";
                 }
         }
@@ -1196,7 +1181,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 .orElseGet(() -> selectAutoStrategy(property));
                             if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
-                            } else if ((dialect != Dialect.MYSQL && dialect != Dialect.SQLITE) || property.getDataType() != DataType.UUID) {
+                            } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
                                 // Property skipped
                                 return;
                             }
@@ -1244,9 +1229,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 });
             }
 
-            builder = INSERT_INTO + getTableName(entity) +
-                " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
-                "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            if (columns.isEmpty()) {
+                builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
+            } else {
+                builder = INSERT_INTO + getTableName(entity) +
+                    " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
+                    "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            }
 
             if (definition.returning()) {
                 if (dialect == Dialect.ORACLE) {

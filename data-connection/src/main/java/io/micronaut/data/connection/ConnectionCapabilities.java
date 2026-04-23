@@ -42,7 +42,12 @@ public interface ConnectionCapabilities {
         /**
          * Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
          */
-        READ_ONLY
+        READ_ONLY,
+
+        /**
+         * Whether the connection supports batch inserts.
+         */
+        BATCH_INSERT
     }
 
     /**

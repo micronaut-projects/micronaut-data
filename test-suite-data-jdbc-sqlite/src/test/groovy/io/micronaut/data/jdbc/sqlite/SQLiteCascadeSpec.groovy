@@ -1,0 +1,30 @@
+package io.micronaut.data.jdbc.sqlite
+
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+import spock.lang.Shared
+import spock.lang.Specification
+
+
+@MicronautTest
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite")
+class SQLiteCascadeSpec extends Specification {
+
+    @Inject
+    @Shared
+    CascadeEntityRepository repository
+
+    void "test cascade save"() {
+        when:
+        def entityA = new CascadeSubEntityA(null, 1, null)
+        def entityB = new CascadeSubEntityB(null, 2, null)
+        def entity = new CascadeEntity(null, List.of(entityA), List.of(entityB))
+        entity = repository.save(entity)
+        def opt = repository.findById(entity.id())
+        then:
+        opt.present
+        def loadedEntity = opt.get()
+        loadedEntity.subEntityAs().size() == 1
+        loadedEntity.subEntityBs().size() == 1
+    }
+}

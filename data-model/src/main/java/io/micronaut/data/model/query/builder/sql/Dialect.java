@@ -70,10 +70,6 @@ public enum Dialect {
      */
     ORACLE(true, true, ALL_TYPES, true, true, true, true),
     /**
-     * SQLite 3.35 or above.
-     */
-    SQLITE(true, true, ALL_TYPES, false, true, true, true),
-    /**
      * Ansi compliant SQL.
      */
     ANSI(true, false, ALL_TYPES);

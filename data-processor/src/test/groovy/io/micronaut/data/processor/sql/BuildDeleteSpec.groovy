@@ -347,7 +347,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(deleteReturningCustomMethod) == DataType.ENTITY
 
         where:
-            dialect << [Dialect.POSTGRES, Dialect.SQLITE]
+            dialect << [Dialect.POSTGRES, Dialect.ANSI]
     }
 
     void "POSTGRES test build delete returning property"() {

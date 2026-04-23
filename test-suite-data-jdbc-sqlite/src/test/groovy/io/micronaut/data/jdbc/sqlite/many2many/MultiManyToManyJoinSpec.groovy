@@ -1,0 +1,99 @@
+package io.micronaut.data.jdbc.sqlite.many2many
+
+
+import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.*
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties
+import io.micronaut.data.jdbc.sqlite.SQLiteTestPropertyProvider
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+import spock.lang.Specification
+
+import jakarta.inject.Inject
+
+@SQLiteDBProperties
+class MultiManyToManyJoinSpec extends Specification implements SQLiteTestPropertyProvider {
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
+
+    @Shared
+    @Inject
+    RefARepository refARepository = applicationContext.getBean(RefARepository)
+
+    void 'test many-to-many hierarchy'() {
+        given:
+            RefA refA = new RefA(refB: [new RefB(refC: [new RefC(name: "TestXyz")])])
+        when:
+            refARepository.save(refA)
+            refA = refARepository.findById(refA.id).get()
+        then:
+            refA.id
+            refA.refB[0].refC[0].name == "TestXyz"
+        when:
+            def list = refARepository.queryAll(Pageable.from(0, 10))
+        then:
+            list.size() == 1
+            list[0].refB[0].refC[0].name == "TestXyz"
+        when:
+            def page = refARepository.findAll(Pageable.from(0, 10))
+        then:
+            page.content.size() == 1
+            page.content[0].refB[0].refC[0].name == "TestXyz"
+// refA doesn't have any field to update
+//        when:
+//            refARepository.update(refA)
+//            refA = refARepository.findById(refA.id).get()
+//        then:
+//            refA.id
+//            refA.refB[0].refC[0].name == "TestXyz"
+    }
+}
+
+@JdbcRepository(dialect = Dialect.ANSI)
+interface RefARepository extends CrudRepository<RefA, Long> {
+
+    @Join(value = "refB", type = Join.Type.LEFT_FETCH)
+    @Join(value = "refB.refC", type = Join.Type.LEFT_FETCH)
+    Page<RefA> findAll(Pageable pageable)
+
+    @Join(value = "refB", type = Join.Type.LEFT_FETCH)
+    @Join(value = "refB.refC", type = Join.Type.LEFT_FETCH)
+    List<RefA> queryAll(Pageable pageable)
+
+    @Join(value = "refB", type = Join.Type.LEFT_FETCH)
+    @Join(value = "refB.refC", type = Join.Type.LEFT_FETCH)
+    @Override
+    Optional<RefA> findById(Long aLong)
+}
+
+@MappedEntity("many_ref_a")
+class RefA {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    List<RefB> refB
+}
+
+@MappedEntity("many_ref_b")
+class RefB {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    List<RefC> refC
+}
+
+@MappedEntity("many_ref_c")
+class RefC {
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+}

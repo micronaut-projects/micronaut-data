@@ -533,7 +533,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
 
         where:
-            dialect << [Dialect.POSTGRES, Dialect.SQLITE]
+            dialect << [Dialect.POSTGRES, Dialect.ANSI]
     }
 
     void "POSTGRES test build update returning property"() {
