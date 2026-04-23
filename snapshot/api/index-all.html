@@ -2796,6 +2796,14 @@ including Oracle OUT parameters.</div>
 <dd>
 <div class="block">SQL callback interface that helps with handling SQLException.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.html" class="type-name-link" title="interface in io.micronaut.data.connection">ConnectionCapabilities</a> - Interface in <a href="io/micronaut/data/connection/package-summary.html">io.micronaut.data.connection</a></dt>
+<dd>
+<div class="block">Defines the capabilities of a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html" class="type-name-link" title="enum class in io.micronaut.data.connection">ConnectionCapabilities.Capability</a> - Enum Class in <a href="io/micronaut/data/connection/package-summary.html">io.micronaut.data.connection</a></dt>
+<dd>
+<div class="block">Connection capability.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/support/ConnectionCustomizer.html" class="type-name-link" title="interface in io.micronaut.data.connection.support">ConnectionCustomizer&lt;C&gt;</a> - Interface in <a href="io/micronaut/data/connection/support/package-summary.html">io.micronaut.data.connection.support</a></dt>
 <dd>
 <div class="block">Customizes connection before or after data repository call based on the provided <a href="io/micronaut/data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection"><code>ConnectionStatus</code></a>.</div>
@@ -14756,6 +14764,10 @@ preserving the original exception despite the overriding TransactionSystemExcept
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/services/TxEventsService.html#insertWithTransaction()" class="member-name-link">insertWithTransaction()</a> - Method in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/TxEventsService.html" title="class in io.micronaut.data.tck.services">TxEventsService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.html#INSTANCE" class="member-name-link">INSTANCE</a> - Static variable in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.html" title="interface in io.micronaut.data.connection">ConnectionCapabilities</a></dt>
+<dd>
+<div class="block">The default <a href="io/micronaut/data/connection/ConnectionCapabilities.html" title="interface in io.micronaut.data.connection"><code>ConnectionCapabilities</code></a> instance.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity(Class, Map)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
 <div class="block">Instantiate the given entity for the given parameter values.</div>
@@ -21618,6 +21630,10 @@ raw SQL encoding and <a href="io/micronaut/data/r2dbc/operations/R2dbcRepository
 <div class="block">Indicates that dirty reads are prevented; non-repeatable reads and
 phantom reads can occur.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html#READ_ONLY" class="member-name-link">READ_ONLY</a> - Enum constant in enum class io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html" title="enum class in io.micronaut.data.connection">ConnectionCapabilities.Capability</a></dt>
+<dd>
+<div class="block">Whether the connection supports invoking <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setReadOnly(boolean)" title="class or interface in java.sql" class="external-link"><code>Connection.setReadOnly(boolean)</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionDefinition.html#READ_ONLY" class="member-name-link">READ_ONLY</a> - Static variable in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></dt>
 <dd>
 <div class="block">A read only definition.</div>
@@ -25903,6 +25919,10 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#supportedByImplicitQueries()" class="member-name-link">supportedByImplicitQueries()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.html#supports(io.micronaut.data.connection.ConnectionCapabilities.Capability,java.sql.Connection)" class="member-name-link">supports(ConnectionCapabilities.Capability, Connection)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.html" title="interface in io.micronaut.data.connection">ConnectionCapabilities</a></dt>
+<dd>
+<div class="block">Determines whether the given JDBC connection supports the requested capability.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/event/EntityEventRegistry.html#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports(RuntimePersistentEntity, Class)</a> - Method in class io.micronaut.data.runtime.event.<a href="io/micronaut/data/runtime/event/EntityEventRegistry.html" title="class in io.micronaut.data.runtime.event">EntityEventRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/event/listeners/AnnotatedMethodInvokingEntityEventListener.html#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports(RuntimePersistentEntity, Class)</a> - Method in class io.micronaut.data.runtime.event.listeners.<a href="io/micronaut/data/runtime/event/listeners/AnnotatedMethodInvokingEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AnnotatedMethodInvokingEntityEventListener</a></dt>
@@ -28306,6 +28326,10 @@ followed by the second, and so forth.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html" title="enum class in io.micronaut.data.connection">ConnectionCapabilities.Capability</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionDefinition.Propagation.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionDefinition.Propagation.html" title="enum class in io.micronaut.data.connection">ConnectionDefinition.Propagation</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -28475,6 +28499,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/Relation.Kind.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Kind.html" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html" title="enum class in io.micronaut.data.connection">ConnectionCapabilities.Capability</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
