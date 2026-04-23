@@ -94,7 +94,7 @@ but is independent of any specific persistence technology.</div>
 <li><a href="TransactionStatus.html" title="interface in io.micronaut.transaction"><code>TransactionStatus</code></a></li>
 <li><a href="TransactionDefinition.Propagation.html#NESTED">* @see java.sql.Savepoint</a></li>
 <li><a href="TransactionDefinition.Propagation.html#NESTED"><code>TransactionDefinition.Propagation.NESTED</code></a></li>
-<li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Savepoint.html" title="class or interface in java.sql" class="external-link"><code>Savepoint</code></a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Savepoint.html" title="class or interface in java.sql" class="external-link"><code>Savepoint</code></a></li>
 </ul>
 </dd>
 </dl>
@@ -113,18 +113,18 @@ but is independent of any specific persistence technology.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createSavepoint()" class="member-name-link">createSavepoint</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a new savepoint.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#releaseSavepoint(java.lang.Object)" class="member-name-link">releaseSavepoint</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#releaseSavepoint(java.lang.Object)" class="member-name-link">releaseSavepoint</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Explicitly release the given savepoint.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#rollbackToSavepoint(java.lang.Object)" class="member-name-link">rollbackToSavepoint</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#rollbackToSavepoint(java.lang.Object)" class="member-name-link">rollbackToSavepoint</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Roll back to the given savepoint.</div>
 </div>
@@ -146,7 +146,7 @@ but is independent of any specific persistence technology.</div>
 <section class="detail" id="createSavepoint()">
 <h3>createSavepoint</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">createSavepoint</span>()
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">createSavepoint</span>()
                 throws <span class="exceptions"><a href="exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block">Create a new savepoint. You can roll back to a specific savepoint
 via <code>rollbackToSavepoint</code>, and explicitly release a savepoint
@@ -165,7 +165,7 @@ for example because the transaction is not in an appropriate state</dd>
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list">
-<li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html#setSavepoint()" title="class or interface in java.sql" class="external-link"><code>Connection.setSavepoint()</code></a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setSavepoint()" title="class or interface in java.sql" class="external-link"><code>Connection.setSavepoint()</code></a></li>
 </ul>
 </dd>
 </dl>
@@ -176,7 +176,7 @@ for example because the transaction is not in an appropriate state</dd>
 <section class="detail" id="rollbackToSavepoint(java.lang.Object)">
 <h3>rollbackToSavepoint</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">rollbackToSavepoint</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</span>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">rollbackToSavepoint</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</span>
                   throws <span class="exceptions"><a href="exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block">Roll back to the given savepoint.
 <p>The savepoint will <i>not</i> be automatically released afterward.
@@ -192,7 +192,7 @@ transaction does not support savepoints</dd>
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list-long">
-<li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html#rollback(java.sql.Savepoint)" title="class or interface in java.sql" class="external-link"><code>Connection.rollback(java.sql.Savepoint)</code></a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#rollback(java.sql.Savepoint)" title="class or interface in java.sql" class="external-link"><code>Connection.rollback(java.sql.Savepoint)</code></a></li>
 </ul>
 </dd>
 </dl>
@@ -203,7 +203,7 @@ transaction does not support savepoints</dd>
 <section class="detail" id="releaseSavepoint(java.lang.Object)">
 <h3>releaseSavepoint</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">releaseSavepoint</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</span>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">releaseSavepoint</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</span>
                throws <span class="exceptions"><a href="exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block">Explicitly release the given savepoint.
 <p>Note that most transaction managers will automatically release
@@ -220,7 +220,7 @@ transaction does not support savepoints</dd>
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list-long">
-<li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html#releaseSavepoint(java.sql.Savepoint)" title="class or interface in java.sql" class="external-link"><code>Connection.releaseSavepoint(Savepoint)</code></a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#releaseSavepoint(java.sql.Savepoint)" title="class or interface in java.sql" class="external-link"><code>Connection.releaseSavepoint(Savepoint)</code></a></li>
 </ul>
 </dd>
 </dl>

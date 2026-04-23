@@ -71,12 +71,12 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="../../repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;, <a href="../../repository/GenericRepository.html" title="interface in io.micronaut.data.repository">GenericRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;</code></dd>
+<dd><code><a href="../../repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;, <a href="../../repository/GenericRepository.html" title="interface in io.micronaut.data.repository">GenericRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;</code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">UuidRepository</span><span class="extends-implements">
-extends <a href="../../repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;</span></div>
+extends <a href="../../repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;</span></div>
 </div>
 </section>
 <section class="summary">
@@ -92,8 +92,8 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByNullableValue(java.util.UUID)" class="member-name-link">findByNullableValue</a><wbr>(@Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByNullableValue(java.util.UUID)" class="member-name-link">findByNullableValue</a><wbr>(@Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">This method semantically makes no sense because it'll always produce NULL
 without correctly wrapping nullable value like this:
@@ -101,8 +101,8 @@ WHERE :nullableValue IS NULL AND nullable_value IS NULL
       OR
       :nullableValue IS NOT NULL AND nullable_value = :nullableValue</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findUuidByName(java.lang.String)" class="member-name-link">findUuidByName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findUuidByName(java.lang.String)" class="member-name-link">findUuidByName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
@@ -125,7 +125,7 @@ WHERE :nullableValue IS NULL AND nullable_value IS NULL
 <section class="detail" id="findUuidByName(java.lang.String)">
 <h3>findUuidByName</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name">findUuidByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name">findUuidByName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 </div>
 </section>
 </li>
@@ -135,8 +135,8 @@ WHERE :nullableValue IS NULL AND nullable_value IS NULL
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations"><a href="../../annotation/Query.html" title="annotation interface in io.micronaut.data.annotation">@Query</a>(<a href="../../annotation/Query.html#value()">value</a>="select * from uuid_entity where :param is null",
        <a href="../../annotation/Query.html#nativeQuery()">nativeQuery</a>=true)
-</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</span>&nbsp;<span class="element-name">findByNullableValue</span><wbr><span class="parameters">(@Parameter("param") @Nullable
- @Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</span></div>
+</span><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a>&gt;</span>&nbsp;<span class="element-name">findByNullableValue</span><wbr><span class="parameters">(@Parameter("param") @Nullable
+ @Nullable @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;param)</span></div>
 <div class="block">This method semantically makes no sense because it'll always produce NULL
 without correctly wrapping nullable value like this:
 WHERE :nullableValue IS NULL AND nullable_value IS NULL

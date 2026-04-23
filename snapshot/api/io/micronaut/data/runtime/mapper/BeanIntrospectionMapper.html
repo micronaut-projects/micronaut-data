@@ -88,7 +88,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/FunctionalInterface.html" title="class or interface in java.lang" class="external-link">@FunctionalInterface</a>
+<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/FunctionalInterface.html" title="class or interface in java.lang" class="external-link">@FunctionalInterface</a>
 </span><span class="modifiers">public interface </span><span class="element-name type-name-label">BeanIntrospectionMapper&lt;D,<wbr>R&gt;</span><span class="extends-implements">
 extends <a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;D,<wbr>R&gt;</span></div>
 <div class="block">A <a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that maps objects using a compile time computed <code>BeanIntrospection</code>.</div>
@@ -113,13 +113,13 @@ extends <a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convert(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convert</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#convert(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convert</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#map(D,java.lang.Class)" class="member-name-link">map</a><wbr>(<a href="#type-param-D" title="type parameter in BeanIntrospectionMapper">D</a>&nbsp;object,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a>&gt;&nbsp;type)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a>&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Map the given result set to the given object.</div>
 </div>
@@ -145,7 +145,7 @@ extends <a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.
 <h3 id="map(java.lang.Object,java.lang.Class)">map</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a></span>&nbsp;<span class="element-name">map</span><wbr><span class="parameters">(<a href="#type-param-D" title="type parameter in BeanIntrospectionMapper">D</a>&nbsp;object,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a>&gt;&nbsp;type)</span>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BeanIntrospectionMapper">R</a>&gt;&nbsp;type)</span>
        throws <span class="exceptions">io.micronaut.core.reflect.exception.InstantiationException</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="TypeMapper.html#map(D,java.lang.Class)">TypeMapper</a></code></span></div>
 <div class="block">Map the given result set to the given object.</div>
@@ -167,7 +167,7 @@ extends <a href="TypeMapper.html" title="interface in io.micronaut.data.runtime.
 <section class="detail" id="convert(java.lang.Object,io.micronaut.core.type.Argument)">
 <h3>convert</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">convert</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">convert</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</span></div>
 </div>
 </section>

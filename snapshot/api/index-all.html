@@ -1413,7 +1413,7 @@ is issues.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#BIGDECIMAL" class="member-name-link">BIGDECIMAL</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A big decimal such as <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link"><code>BigDecimal</code></a>.</div>
+<div class="block">A big decimal such as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link"><code>BigDecimal</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#BIGINT" class="member-name-link">BIGINT</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -2019,7 +2019,7 @@ a persistent field:</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/CallableStatementTupleMapper.html" class="type-name-link" title="class in io.micronaut.data.jdbc.mapper">CallableStatementTupleMapper</a> - Class in <a href="io/micronaut/data/jdbc/mapper/package-summary.html">io.micronaut.data.jdbc.mapper</a></dt>
 <dd>
-<div class="block">A mapper of <code>Tuple</code> backed by a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link"><code>CallableStatement</code></a> OUT parameter set.</div>
+<div class="block">A mapper of <code>Tuple</code> backed by a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/CallableStatement.html" title="class or interface in java.sql" class="external-link"><code>CallableStatement</code></a> OUT parameter set.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/CallableStatementTupleMapper.html#%3Cinit%3E(io.micronaut.core.convert.ConversionService,java.util.Map)" class="member-name-link">CallableStatementTupleMapper(ConversionService, Map)</a> - Constructor for class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/CallableStatementTupleMapper.html" title="class in io.micronaut.data.jdbc.mapper">CallableStatementTupleMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -2231,7 +2231,7 @@ underlying transaction API such as JTA.</div>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#checkDialectSupportsJsonEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">checkDialectSupportsJsonEntity(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">If and when <a href="io/micronaut/data/annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation"><code>EntityRepresentation</code></a> annotation with JSON type is used for the repository method but dialect does not support
-JSON entity representations this will throw <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link"><code>IllegalArgumentException</code></a>.</div>
+JSON entity representations this will throw <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link"><code>IllegalArgumentException</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/services/ConnectionBookService.html#checkInConnection(java.lang.Runnable)" class="member-name-link">checkInConnection(Runnable)</a> - Method in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/ConnectionBookService.html" title="class in io.micronaut.data.tck.services">ConnectionBookService</a></dt>
 <dd>&nbsp;</dd>
@@ -2898,12 +2898,12 @@ including Oracle OUT parameters.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/ContextualConnection.html" class="type-name-link" title="interface in io.micronaut.data.connection.jdbc.advice">ContextualConnection</a> - Interface in <a href="io/micronaut/data/connection/jdbc/advice/package-summary.html">io.micronaut.data.connection.jdbc.advice</a></dt>
 <dd>
-<div class="block">Allows injecting a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> instance as a bean with any methods invoked
+<div class="block">Allows injecting a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> instance as a bean with any methods invoked
 on the connection being delegated to connection bound to the current context connection.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/ContextualConnectionInterceptor.html" class="type-name-link" title="class in io.micronaut.data.connection.jdbc.advice">ContextualConnectionInterceptor</a> - Class in <a href="io/micronaut/data/connection/jdbc/advice/package-summary.html">io.micronaut.data.connection.jdbc.advice</a></dt>
 <dd>
-<div class="block">An interceptor that allows injecting a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> that acts a proxy to look up the connection for the current transaction.</div>
+<div class="block">An interceptor that allows injecting a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> that acts a proxy to look up the connection for the current transaction.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/advice/ContexualClientSession.html" class="type-name-link" title="interface in io.micronaut.data.mongodb.advice">ContexualClientSession</a> - Interface in <a href="io/micronaut/data/mongodb/advice/package-summary.html">io.micronaut.data.mongodb.advice</a></dt>
 <dd>
@@ -3891,7 +3891,7 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/operations/DataSourceConnectionOperations.html" class="type-name-link" title="interface in io.micronaut.data.connection.jdbc.operations">DataSourceConnectionOperations</a> - Interface in <a href="io/micronaut/data/connection/jdbc/operations/package-summary.html">io.micronaut.data.connection.jdbc.operations</a></dt>
 <dd>
-<div class="block">The <a href="io/micronaut/data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> for <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
+<div class="block">The <a href="io/micronaut/data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> for <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/multitenancy/conf/DataSourceMultiTenancyEnabledCondition.html" class="type-name-link" title="class in io.micronaut.data.runtime.multitenancy.conf">DataSourceMultiTenancyEnabledCondition</a> - Class in <a href="io/micronaut/data/runtime/multitenancy/conf/package-summary.html">io.micronaut.data.runtime.multitenancy.conf</a></dt>
 <dd>
@@ -3907,7 +3907,7 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 </dd>
 <dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a> - Class in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
 <dd>
-<div class="block">The <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.</div>
+<div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" class="member-name-link">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager)</a> - Constructor for class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
 <dd>
@@ -3915,7 +3915,7 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 </dd>
 <dt><a href="io/micronaut/data/spring/tx/DataSourceTransactionManagerFactory.html" class="type-name-link" title="class in io.micronaut.data.spring.tx">DataSourceTransactionManagerFactory</a> - Class in <a href="io/micronaut/data/spring/tx/package-summary.html">io.micronaut.data.spring.tx</a></dt>
 <dd>
-<div class="block">Configures a <code>DataSourceTransactionManager</code> for each configured JDBC <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
+<div class="block">Configures a <code>DataSourceTransactionManager</code> for each configured JDBC <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/spring/tx/DataSourceTransactionManagerFactory.html#%3Cinit%3E()" class="member-name-link">DataSourceTransactionManagerFactory()</a> - Constructor for class io.micronaut.data.spring.tx.<a href="io/micronaut/data/spring/tx/DataSourceTransactionManagerFactory.html" title="class in io.micronaut.data.spring.tx">DataSourceTransactionManagerFactory</a></dt>
 <dd>&nbsp;</dd>
@@ -3945,7 +3945,7 @@ switching.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#DATE" class="member-name-link">DATE</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A date such as <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link"><code>Date</code></a> or <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link"><code>LocalDate</code></a>.</div>
+<div class="block">A date such as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link"><code>Date</code></a> or <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link"><code>LocalDate</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#DATE" class="member-name-link">DATE</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -4152,7 +4152,7 @@ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" titl
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/operations/DefaultDataSourceConnectionOperations.html" class="type-name-link" title="class in io.micronaut.data.connection.jdbc.operations">DefaultDataSourceConnectionOperations</a> - Class in <a href="io/micronaut/data/connection/jdbc/operations/package-summary.html">io.micronaut.data.connection.jdbc.operations</a></dt>
 <dd>
-<div class="block">The <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> connection operations.</div>
+<div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> connection operations.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultDeleteAllAsyncInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.async">DefaultDeleteAllAsyncInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/runtime/intercept/async/package-summary.html">io.micronaut.data.runtime.intercept.async</a></dt>
 <dd>
@@ -4884,8 +4884,8 @@ you can do so here.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/DelegatingDataSource.html" class="type-name-link" title="class in io.micronaut.data.connection.jdbc.advice">DelegatingDataSource</a> - Class in <a href="io/micronaut/data/connection/jdbc/advice/package-summary.html">io.micronaut.data.connection.jdbc.advice</a></dt>
 <dd>
-<div class="block">JDBC <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> implementation that delegates all calls
-to a given target <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
+<div class="block">JDBC <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> implementation that delegates all calls
+to a given target <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/DelegatingDataSource.html#%3Cinit%3E(javax.sql.DataSource)" class="member-name-link">DelegatingDataSource(DataSource)</a> - Constructor for class io.micronaut.data.connection.jdbc.advice.<a href="io/micronaut/data/connection/jdbc/advice/DelegatingDataSource.html" title="class in io.micronaut.data.connection.jdbc.advice">DelegatingDataSource</a></dt>
 <dd>
@@ -5696,7 +5696,7 @@ definition.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#DOUBLE" class="member-name-link">DOUBLE</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link"><code>Double</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link"><code>Double</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#DOUBLE" class="member-name-link">DOUBLE</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -5763,7 +5763,7 @@ definition.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#DURATION" class="member-name-link">DURATION</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link"><code>Duration</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link"><code>Duration</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#DURATION" class="member-name-link">DURATION</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -6961,7 +6961,7 @@ definition.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a> - Class in <a href="io/micronaut/data/runtime/operations/package-summary.html">io.micronaut.data.runtime.operations</a></dt>
 <dd>
-<div class="block">An implementation of <a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
+<div class="block">An implementation of <a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations,java.util.concurrent.Executor)" class="member-name-link">ExecutorAsyncOperations(RepositoryOperations, Executor)</a> - Constructor for class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a></dt>
 <dd>
@@ -6977,7 +6977,7 @@ definition.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a> - Class in <a href="io/micronaut/data/runtime/operations/package-summary.html">io.micronaut.data.runtime.operations</a></dt>
 <dd>
-<div class="block">An implementation of <a href="io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactiveRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
+<div class="block">An implementation of <a href="io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactiveRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations,java.util.concurrent.Executor,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">ExecutorReactiveOperations(RepositoryOperations, Executor, DataConversionService)</a> - Constructor for class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a></dt>
 <dd>
@@ -9139,7 +9139,7 @@ as a RxJava Single or a Reactor Mono.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/FindStreamInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">FindStreamInterceptor&lt;T&gt;</a> - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
-<div class="block">An interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation"><code>Query</code></a> and returns a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link"><code>Stream</code></a> of results.</div>
+<div class="block">An interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation"><code>Query</code></a> and returns a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link"><code>Stream</code></a> of results.</div>
 </dd>
 <dt><a href="io/micronaut/coherence/data/repositories/AsyncBookRepository.html#findSumPagesByAuthor(io.micronaut.coherence.data.model.Author)" class="member-name-link">findSumPagesByAuthor(Author)</a> - Method in interface io.micronaut.coherence.data.repositories.<a href="io/micronaut/coherence/data/repositories/AsyncBookRepository.html" title="interface in io.micronaut.coherence.data.repositories">AsyncBookRepository</a></dt>
 <dd>&nbsp;</dd>
@@ -9221,7 +9221,7 @@ as a RxJava Single or a Reactor Mono.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#FLOAT" class="member-name-link">FLOAT</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link"><code>Float</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Float.html" title="class or interface in java.lang" class="external-link"><code>Float</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#FLOAT" class="member-name-link">FLOAT</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -12616,7 +12616,7 @@ i.e.</div>
 </dd>
 <dt><a href="io/micronaut/coherence/data/model/Book.html#getPublished()" class="member-name-link">getPublished()</a> - Method in class io.micronaut.coherence.data.model.<a href="io/micronaut/coherence/data/model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a></dt>
 <dd>
-<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Calendar.html" title="class or interface in java.util" class="external-link"><code>Calendar</code></a> representing the publication date of the <code>book</code>.</div>
+<div class="block">Returns a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Calendar.html" title="class or interface in java.util" class="external-link"><code>Calendar</code></a> representing the publication date of the <code>book</code>.</div>
 </dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Book.html#getPublisher()" class="member-name-link">getPublisher()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Book.html" title="class in io.micronaut.data.document.tck.entities">Book</a></dt>
 <dd>&nbsp;</dd>
@@ -14268,7 +14268,7 @@ decision on the side of the transaction coordinator.</div>
 </dd>
 <dt><a href="io/micronaut/data/hibernate/connection/HibernateConnectionConnectionOperations.html" class="type-name-link" title="class in io.micronaut.data.hibernate.connection">HibernateConnectionConnectionOperations</a> - Class in <a href="io/micronaut/data/hibernate/connection/package-summary.html">io.micronaut.data.hibernate.connection</a></dt>
 <dd>
-<div class="block">The connection operations that extract <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> from Hibernate Session.</div>
+<div class="block">The connection operations that extract <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> from Hibernate Session.</div>
 </dd>
 <dt><a href="io/micronaut/data/hibernate/connection/HibernateConnectionConnectionOperations.html#%3Cinit%3E(io.micronaut.data.hibernate.connection.HibernateConnectionOperations)" class="member-name-link">HibernateConnectionConnectionOperations(HibernateConnectionOperations)</a> - Constructor for class io.micronaut.data.hibernate.connection.<a href="io/micronaut/data/hibernate/connection/HibernateConnectionConnectionOperations.html" title="class in io.micronaut.data.hibernate.connection">HibernateConnectionConnectionOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -14762,7 +14762,7 @@ preserving the original exception despite the overriding TransactionSystemExcept
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#INTEGER" class="member-name-link">INTEGER</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link"><code>Integer</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link"><code>Integer</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#INTEGER" class="member-name-link">INTEGER</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -16555,7 +16555,7 @@ in them.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" class="type-name-link" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a> - Class in <a href="io/micronaut/data/jdbc/mapper/package-summary.html">io.micronaut.data.jdbc.mapper</a></dt>
 <dd>
-<div class="block">A <a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper"><code>QueryStatement</code></a> for a SQL <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link"><code>PreparedStatement</code></a>.</div>
+<div class="block">A <a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper"><code>QueryStatement</code></a> for a SQL <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link"><code>PreparedStatement</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#%3Cinit%3E(io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">JdbcQueryStatement(DataConversionService)</a> - Constructor for class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
 <dd>
@@ -17249,7 +17249,7 @@ of the available methods.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#LONG" class="member-name-link">LONG</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link"><code>Long</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link"><code>Long</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#LONG_ARRAY" class="member-name-link">LONG_ARRAY</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
@@ -17698,7 +17698,7 @@ exists.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/SqlExceptionMapper.html#mapSqlException(java.sql.SQLException)" class="member-name-link">mapSqlException(SQLException)</a> - Method in interface io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/SqlExceptionMapper.html" title="interface in io.micronaut.data.jdbc.operations">SqlExceptionMapper</a></dt>
 <dd>
-<div class="block">Maps <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> to custom <a href="io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a>.</div>
+<div class="block">Maps <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> to custom <a href="io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonValueMapper.html#mapValue(java.lang.Object,io.micronaut.data.model.JsonDataType)" class="member-name-link">mapValue(Object, JsonDataType)</a> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonValueMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonValueMapper</a></dt>
 <dd>
@@ -19530,8 +19530,8 @@ exists.</div>
 <dd>
 <div class="block">A type code indicating that the SQL type is SQL dialect-specific
 and is mapped to a Java object that can be accessed via the methods
-<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/ResultSet.html#getObject(int)" title="class or interface in java.sql" class="external-link"><code>ResultSet.getObject(int)</code></a> and
-<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/PreparedStatement.html#setObject(int,java.lang.Object,int)" title="class or interface in java.sql" class="external-link"><code>PreparedStatement.setObject(int, Object, int)</code></a>.</div>
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html#getObject(int)" title="class or interface in java.sql" class="external-link"><code>ResultSet.getObject(int)</code></a> and
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/PreparedStatement.html#setObject(int,java.lang.Object,int)" title="class or interface in java.sql" class="external-link"><code>PreparedStatement.setObject(int, Object, int)</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/Join.Type.html#OUTER" class="member-name-link">OUTER</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></dt>
 <dd>&nbsp;</dd>
@@ -19760,7 +19760,7 @@ a direction.</div>
 &nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#PERIOD" class="member-name-link">PERIOD</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link"><code>Period</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Period.html" title="class or interface in java.time" class="external-link"><code>Period</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#PERIOD" class="member-name-link">PERIOD</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -20242,12 +20242,12 @@ a direction.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html#positionalParameterFormat()" class="member-name-link">positionalParameterFormat()</a> - Element in annotation interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html" title="annotation interface in io.micronaut.data.model.query.builder.sql">SqlQueryConfiguration.DialectConfiguration</a></dt>
 <dd>
-<div class="block">A String format (see <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...)" title="class or interface in java.lang" class="external-link"><code>String.format(String, Object...)</code></a>) to format the appearance
+<div class="block">A String format (see <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...)" title="class or interface in java.lang" class="external-link"><code>String.format(String, Object...)</code></a>) to format the appearance
 of position parameters.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html#positionalParameterName()" class="member-name-link">positionalParameterName()</a> - Element in annotation interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html" title="annotation interface in io.micronaut.data.model.query.builder.sql">SqlQueryConfiguration.DialectConfiguration</a></dt>
 <dd>
-<div class="block">A String format (see <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...)" title="class or interface in java.lang" class="external-link"><code>String.format(String, Object...)</code></a>) to format the parameter name.</div>
+<div class="block">A String format (see <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#format(java.lang.String,java.lang.Object...)" title="class or interface in java.lang" class="external-link"><code>String.format(String, Object...)</code></a>) to format the parameter name.</div>
 </dd>
 <dt><a href="io/micronaut/coherence/data/util/EventType.html#POST_PERSIST" class="member-name-link">POST_PERSIST</a> - Enum constant in enum class io.micronaut.coherence.data.util.<a href="io/micronaut/coherence/data/util/EventType.html" title="enum class in io.micronaut.coherence.data.util">EventType</a></dt>
 <dd>&nbsp;</dd>
@@ -25147,7 +25147,7 @@ in them.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#SHORT" class="member-name-link">SHORT</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link"><code>Short</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Short.html" title="class or interface in java.lang" class="external-link"><code>Short</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#SHORT_ARRAY" class="member-name-link">SHORT_ARRAY</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
@@ -25544,7 +25544,7 @@ pagination operations.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/SqlExceptionMapper.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.operations">SqlExceptionMapper</a> - Interface in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
 <dd>
-<div class="block">The <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> mapper interface.</div>
+<div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> mapper interface.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
 <dd>
@@ -25791,7 +25791,7 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#STRING" class="member-name-link">STRING</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link"><code>String</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link"><code>String</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/JsonDataType.html#STRING" class="member-name-link">STRING</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></dt>
 <dd>
@@ -26166,7 +26166,7 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/DataType.html#TIME" class="member-name-link">TIME</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link"><code>Time</code></a> value.</div>
+<div class="block">A <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link"><code>Time</code></a> value.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#TIME" class="member-name-link">TIME</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -26204,7 +26204,7 @@ or none if timeouts are not supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#TIMESTAMP" class="member-name-link">TIMESTAMP</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
-<div class="block">A timestamp such as <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Timestamp.html" title="class or interface in java.sql" class="external-link"><code>Timestamp</code></a> or <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link"><code>Instant</code></a>.</div>
+<div class="block">A timestamp such as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Timestamp.html" title="class or interface in java.sql" class="external-link"><code>Timestamp</code></a> or <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link"><code>Instant</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#TIMESTAMP" class="member-name-link">TIMESTAMP</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
