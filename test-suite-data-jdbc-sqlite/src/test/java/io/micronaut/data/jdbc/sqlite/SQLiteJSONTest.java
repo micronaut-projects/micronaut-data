@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -128,7 +129,23 @@ class SQLiteJSONTest {
         Sale saleById = saleRepository.findById(sale.getId()).orElse(null);
         assertNotNull(saleById);
         assertEquals("test 1", saleById.getName());
-        assertEquals(new java.util.HashSet<>(items), saleById.getItems());
+        assertEquals(items.size(), saleById.getItems().size());
+        assertEquals(
+            items.stream()
+                .map(item -> Map.of(
+                    "id", item.getId(),
+                    "name", item.getName(),
+                    "data", item.getData()
+                ))
+                .collect(java.util.stream.Collectors.toSet()),
+            saleById.getItems().stream()
+                .map(item -> Map.of(
+                    "id", item.getId(),
+                    "name", item.getName(),
+                    "data", item.getData()
+                ))
+                .collect(java.util.stream.Collectors.toSet())
+        );
     }
 
     @Test
