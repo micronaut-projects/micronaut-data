@@ -42,7 +42,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -1192,7 +1191,6 @@ public abstract class AbstractJakartaDataTest {
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
-    @Disabled("SQLite does not support LEFT")
     @Test
     public void testRuntimeRestrictionsWithLeft() {
         List<Train> trains = trainRepository.findTrains(_Train.name.left(7).equalTo("Express"));
@@ -1201,7 +1199,6 @@ public abstract class AbstractJakartaDataTest {
         trains.forEach(train -> assertTrue(train.getName().startsWith("Express")));
     }
 
-    @Disabled("SQLite does not support RIGHT")
     @Test
     public void testRuntimeRestrictionsWithRight() {
         List<Train> trains = trainRepository.findTrains(_Train.name.right(1).equalTo("1"));
