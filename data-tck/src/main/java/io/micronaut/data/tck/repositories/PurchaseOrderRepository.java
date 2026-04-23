@@ -16,14 +16,12 @@
 
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.*;
 
-@JdbcRepository(dialect = Dialect.H2)
 public interface PurchaseOrderRepository extends CrudRepository<PurchaseOrder, OrderPk>, JpaSpecificationExecutor<PurchaseOrder> {
     class Specification {
 
