@@ -39,10 +39,10 @@ class SQLiteStreamingStatementTest {
         var list = personRepository.findAllAndStream().toList();
 
         assertEquals(4, list.size());
-        assertEquals("a", list.get(0).get("NAME"));
-        assertEquals("b", list.get(1).get("NAME"));
-        assertEquals("c", list.get(2).get("NAME"));
-        assertEquals("d", list.get(3).get("NAME"));
+        assertEquals("a", list.get(0).get("name"));
+        assertEquals("b", list.get(1).get("name"));
+        assertEquals("c", list.get(2).get("name"));
+        assertEquals("d", list.get(3).get("name"));
     }
 
     private static Person person(String name) {
