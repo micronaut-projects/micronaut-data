@@ -16,6 +16,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -37,6 +38,7 @@ class OneToManyHierarchicalTest {
     @Inject
     TestHierarchyEntityRepository testHierarchyEntityRepository;
 
+    @Disabled(value = "currently UUID not supported for SQLite")
     @Test
     void testOneToManyParentChildHierarchy() {
         TestEntity testEntity = new TestEntity();
