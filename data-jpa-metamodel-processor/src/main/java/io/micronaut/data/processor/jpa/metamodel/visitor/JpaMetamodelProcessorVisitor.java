@@ -18,6 +18,7 @@ package io.micronaut.data.processor.jpa.metamodel.visitor;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
@@ -65,6 +66,12 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
     };
 
     /**
+     * Jakarta persistent dependency exists in compilation classpath flag.
+     */
+    @Nullable
+    private Boolean jakartaPersistencePresent;
+
+    /**
      * Default constructor.
      */
     public JpaMetamodelProcessorVisitor() {
@@ -87,6 +94,7 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
     public void visitClass(ClassElement element, VisitorContext context) {
         if (!isEnabled(context) ||
             !supportedClass(element) ||
+            !jakartaPersistenceIsPresent(context, element) ||
             processed.contains(element.getName())) {
             return;
         }
@@ -133,5 +141,18 @@ public final class JpaMetamodelProcessorVisitor implements TypeElementVisitor<Ob
 
     private boolean isEnabled(VisitorContext context) {
         return Boolean.parseBoolean(context.getOptions().getOrDefault(JPA_METAMODEL_ENABLED_FLAG, "true"));
+    }
+
+    private boolean jakartaPersistenceIsPresent(VisitorContext context, ClassElement element) {
+        if (jakartaPersistencePresent != null) {
+            return jakartaPersistencePresent;
+        }
+        if (context.getClassElement(JAKARTA_ENTITY).isPresent()) {
+            jakartaPersistencePresent = true;
+            return true;
+        }
+        context.warn("Jakarta Persistence API not found on compilation classpath; skipping metamodel generation.", element);
+        jakartaPersistencePresent = false;
+        return false;
     }
 }

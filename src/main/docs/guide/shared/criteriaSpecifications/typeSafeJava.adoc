@@ -50,10 +50,13 @@ For Groovy, add it in `compileOnly` scope.
 
 === Supported annotations
 
-The metamodel generators support only Jakarta Persistence annotations (located in the `jakarta.persistence` package).
+The Micronaut static metamodel generator supports:
 
-NOTE: It is not possible to use Micronaut Data annotations (those found in the `io.micronaut.data.annotation` package) to generate static JPA metamodel classes.
+* Jakarta Persistence annotations from the `jakarta.persistence` package (for example `@Entity`, `@Embeddable`, `@MappedSuperclass`, and relationship/embedded mappings), and
+* Micronaut Data mapping annotations from the `io.micronaut.data.annotation` package (for example `@MappedEntity`, `@Relation`, `@EmbeddedId`, and related mapping annotations).
 
+NOTE: Jakarta Persistence (`jakarta.persistence`) must be present on the *compilation classpath* for static metamodel generation to run.
+If the Jakarta Persistence API is not available at compile time, metamodel generation is skipped.
 === Using generated sources
 
 The generated metamodel classes must be available on the compilation classpath for the module using them.

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.jpa.metamodel;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.processor.model.SourceAssociation;
@@ -32,6 +33,7 @@ import java.util.*;
 /**
  * Jpa Static Metamodel processor.
  */
+@Internal
 public final class JpaMetamodelProcessor {
 
     /**
