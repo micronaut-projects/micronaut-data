@@ -31,7 +31,7 @@ spring-data = "4.0.5"
 
 # Lombok
 
-lombok = "1.18.44"
+lombok = "1.18.46"
 
 # Testing and benchmarking
 
