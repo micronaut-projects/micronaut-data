@@ -44,12 +44,12 @@ class CallableStatementTupleMapperTest {
                 return null;
             }
         );
+        LinkedHashMap<String, Integer> columnIndexesByName = new LinkedHashMap<>();
+        columnIndexesByName.put("title", 4);
+        columnIndexesByName.put("total_pages", 5);
         var mapper = new CallableStatementTupleMapper(
             io.micronaut.core.convert.ConversionService.SHARED,
-            new LinkedHashMap<>(Map.of(
-                "title", 4,
-                "total_pages", 5
-            ))
+            columnIndexesByName
         );
 
         Tuple tuple = mapper.map(callableStatement, Tuple.class);

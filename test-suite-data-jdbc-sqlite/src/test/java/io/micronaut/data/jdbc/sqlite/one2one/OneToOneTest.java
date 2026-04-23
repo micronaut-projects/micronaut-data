@@ -37,48 +37,53 @@ class OneToOneTest {
     @Test
     void test() throws SQLException {
         try (var s = connection.createStatement()) {
-            s.execute("""
-DROP TABLE IF EXISTS `TestXyzCategory`;
-DROP TABLE IF EXISTS `TestXyzCustomer`;
-DROP TABLE IF EXISTS `TestXyzCustomerDetails`;
-
-CREATE OR REPLACE TABLE `TestXyzCategory` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `active` boolean DEFAULT NULL,
-  `createdAt` timestamp(6) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `priority` bigint DEFAULT NULL
-);
-
-CREATE OR REPLACE TABLE `TestXyzCustomer` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` timestamp(6) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `showCustomer` boolean DEFAULT NULL
-);
-
-CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` timestamp(6) NOT NULL,
-  `detail` varchar(255) DEFAULT NULL,
-  `label` varchar(255) DEFAULT NULL,
-  `updatedAt` timestamp(6) NOT NULL,
-  `categoryId` bigint DEFAULT NULL,
-  `customerId` bigint DEFAULT NULL
-);
-
-INSERT INTO TestXyzCategory
-(active, createdAt, name, priority)
-VALUES(true, '2020-03-08 21:40:34', '24h', true);
-
-INSERT INTO TestXyzCustomer
-(createdAt, name, showCustomer)
-VALUES('2020-03-08 21:40:34', 'Alfa', true);
-
-INSERT INTO TestXyzCustomerDetails
-(createdAt, detail, label, updatedAt, categoryId, customerId)
-VALUES('2020-03-08 21:40:34', 'detail', 'label', '2020-03-08 21:40:34', 1, 1);
-""");
+            for (String sql : List.of(
+                "DROP TABLE IF EXISTS \"TestXyzCategory\"",
+                "DROP TABLE IF EXISTS \"TestXyzCustomer\"",
+                "DROP TABLE IF EXISTS \"TestXyzCustomerDetails\"",
+                """
+                CREATE TABLE "TestXyzCategory" (
+                  "id" INTEGER PRIMARY KEY,
+                  "active" BOOLEAN,
+                  "createdAt" TEXT NOT NULL,
+                  "name" VARCHAR(255),
+                  "priority" BIGINT
+                )
+                """,
+                """
+                CREATE TABLE "TestXyzCustomer" (
+                  "id" INTEGER PRIMARY KEY,
+                  "createdAt" TEXT NOT NULL,
+                  "name" VARCHAR(255),
+                  "showCustomer" BOOLEAN
+                )
+                """,
+                """
+                CREATE TABLE "TestXyzCustomerDetails" (
+                  "id" INTEGER PRIMARY KEY,
+                  "createdAt" TEXT NOT NULL,
+                  "detail" VARCHAR(255),
+                  "label" VARCHAR(255),
+                  "updatedAt" TEXT NOT NULL,
+                  "categoryId" BIGINT,
+                  "customerId" BIGINT
+                )
+                """,
+                """
+                INSERT INTO "TestXyzCategory" ("id", "active", "createdAt", "name", "priority")
+                VALUES (1, 1, '2020-03-08 21:40:34', '24h', 1)
+                """,
+                """
+                INSERT INTO "TestXyzCustomer" ("id", "createdAt", "name", "showCustomer")
+                VALUES (1, '2020-03-08 21:40:34', 'Alfa', 1)
+                """,
+                """
+                INSERT INTO "TestXyzCustomerDetails" ("id", "createdAt", "detail", "label", "updatedAt", "categoryId", "customerId")
+                VALUES (1, '2020-03-08 21:40:34', 'detail', 'label', '2020-03-08 21:40:34', 1, 1)
+                """
+            )) {
+                s.execute(sql);
+            }
         }
 
         Customer customer = new Customer();

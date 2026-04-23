@@ -13,6 +13,9 @@ dependencies {
 //    testRuntimeOnly(mnSql.micronaut.jdbc.hikari)
     testRuntimeOnly(mnSql.micronaut.jdbc.tomcat)
 
+    // MULTITENANCY
+    testImplementation(mnMultitenancy.micronaut.multitenancy)
+
     // REACTIVE
     testImplementation(mnReactor.micronaut.reactor)
     testImplementation(mnRxjava2.micronaut.rxjava2)
