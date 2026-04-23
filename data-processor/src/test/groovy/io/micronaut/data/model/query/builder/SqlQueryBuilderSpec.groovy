@@ -477,11 +477,11 @@ interface MyRepository {
     void "test encode create statement for embedded"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"street" VARCHAR(255) NOT NULL,"zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
+        result == 'CREATE TABLE `restaurant` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`street` VARCHAR(255) NOT NULL,`zip_code` VARCHAR(255) NOT NULL,`hqaddress_street` VARCHAR(255),`hqaddress_zip_code` VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
@@ -534,7 +534,7 @@ interface MyRepository {
     @Unroll
     void "test build create embedded"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
             def statements = encoder.buildCreateTableStatements(entity)
 
         then:
@@ -555,79 +555,79 @@ interface MyRepository {
 
     void "test build create index from embedded class and field annotations"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Vehicle))
 
         then:
-        statements[0] == 'CREATE TABLE "vehicle" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"plate_number" VARCHAR(255) NOT NULL,"status" VARCHAR(255) NOT NULL,"jurisdiction_country_code" VARCHAR(255) NOT NULL,"jurisdiction_region_code" VARCHAR(255) NOT NULL,"second_plate_number" VARCHAR(255) NOT NULL,"second_status" VARCHAR(255) NOT NULL,"second_jurisdiction_country_code" VARCHAR(255) NOT NULL,"second_jurisdiction_region_code" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE INDEX "idx_vehicle_name" ON "vehicle" ("name");'
-        statements[2] == 'CREATE INDEX "idx_vehicle_plate_number" ON "vehicle" ("plate_number");'
-        statements[3] == 'CREATE INDEX "idx_vehicle_status" ON "vehicle" ("status");'
-        statements[4] == 'CREATE INDEX "idx_vehicle_jurisdiction_region_code" ON "vehicle" ("jurisdiction_region_code");'
-        statements[5] == 'CREATE INDEX "idx_vehicle_second_plate_number" ON "vehicle" ("second_plate_number");'
-        statements[6] == 'CREATE INDEX "idx_vehicle_second_status" ON "vehicle" ("second_status");'
-        statements[7] == 'CREATE INDEX "idx_vehicle_second_jurisdiction_region_code" ON "vehicle" ("second_jurisdiction_region_code");'
+        statements[0] == 'CREATE TABLE `vehicle` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`plate_number` VARCHAR(255) NOT NULL,`status` VARCHAR(255) NOT NULL,`jurisdiction_country_code` VARCHAR(255) NOT NULL,`jurisdiction_region_code` VARCHAR(255) NOT NULL,`second_plate_number` VARCHAR(255) NOT NULL,`second_status` VARCHAR(255) NOT NULL,`second_jurisdiction_country_code` VARCHAR(255) NOT NULL,`second_jurisdiction_region_code` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE INDEX `idx_vehicle_name` ON `vehicle` (`name`);'
+        statements[2] == 'CREATE INDEX `idx_vehicle_plate_number` ON `vehicle` (`plate_number`);'
+        statements[3] == 'CREATE INDEX `idx_vehicle_status` ON `vehicle` (`status`);'
+        statements[4] == 'CREATE INDEX `idx_vehicle_jurisdiction_region_code` ON `vehicle` (`jurisdiction_region_code`);'
+        statements[5] == 'CREATE INDEX `idx_vehicle_second_plate_number` ON `vehicle` (`second_plate_number`);'
+        statements[6] == 'CREATE INDEX `idx_vehicle_second_status` ON `vehicle` (`second_status`);'
+        statements[7] == 'CREATE INDEX `idx_vehicle_second_jurisdiction_region_code` ON `vehicle` (`second_jurisdiction_region_code`);'
     }
 
     void "test build create index from table annotation"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndex))
 
         then:
-        statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" ("field", "taxCode");'
+        statements[0] == 'CREATE TABLE `shipment_with_index` (`shipment_id` BIGINT PRIMARY KEY AUTO_INCREMENT,`field` VARCHAR(255) NOT NULL,`taxCode` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_field_taxcode` ON `shipment_with_index` (`field`, `taxCode`);'
 
         when:
         def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
 
         then:
         productStatements.length == 1
-        productStatements[0] == 'CREATE TABLE "product" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"price" DECIMAL NOT NULL,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" VARCHAR(255),"date_created" TIMESTAMP,"last_updated" TIMESTAMP,"category_id" BIGINT);'
+        productStatements[0] == 'CREATE TABLE `product` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`price` DECIMAL NOT NULL,`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` VARCHAR(255),`date_created` TIMESTAMP(6) DEFAULT NOW(6),`last_updated` TIMESTAMP(6) DEFAULT NOW(6),`category_id` BIGINT);'
     }
 
     void "test build create index from field annotation"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFields))
 
         then:
-        statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_field" ON "shipment_with_index_on_fields" ("field");'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_fields_taxcode" ON "shipment_with_index_on_fields" ("taxCode");'
+        statements[0] == 'CREATE TABLE `shipment_with_index_on_fields` (`shipment_id` BIGINT PRIMARY KEY AUTO_INCREMENT,`field` VARCHAR(255) NOT NULL,`taxCode` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_on_fields_field` ON `shipment_with_index_on_fields` (`field`);'
+        statements[2] == 'CREATE INDEX `idx_shipment_with_index_on_fields_taxcode` ON `shipment_with_index_on_fields` (`taxCode`);'
     }
 
     void "test build create index from field annotation with composite indexes"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFieldsCompositeIndexes))
 
         then:
-        statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_composite_indexes_field_taxcode" ON "shipment_with_index_on_fields_composite_indexes" ("field", "taxCode");'
+        statements[0] == 'CREATE TABLE `shipment_with_index_on_fields_composite_indexes` (`shipment_id` BIGINT PRIMARY KEY AUTO_INCREMENT,`field` VARCHAR(255) NOT NULL,`taxCode` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_on_fields_composite_indexes_field_taxcode` ON `shipment_with_index_on_fields_composite_indexes` (`field`, `taxCode`);'
     }
 
     void "test build create index from index class annotation"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClass))
 
         then:
-        statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" ("field");'
-        statements[2] == 'CREATE INDEX "idx_shipment_tax" ON "shipment_with_index_on_class" ("taxCode");'
+        statements[0] == 'CREATE TABLE `shipment_with_index_on_class` (`shipment_id` BIGINT PRIMARY KEY AUTO_INCREMENT,`field` VARCHAR(255) NOT NULL,`taxCode` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_on_class_field` ON `shipment_with_index_on_class` (`field`);'
+        statements[2] == 'CREATE INDEX `idx_shipment_tax` ON `shipment_with_index_on_class` (`taxCode`);'
     }
 
     void "test build create index from index class annotation and field annotation"() {
         when:
-        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClassAndFields))
 
         then:
-        statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" ("field");'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" ("taxCode");'
-        statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" ("field2", "taxCode2");'
+        statements[0] == 'CREATE TABLE `shipment_with_index_on_class_and_fields` (`shipment_id` BIGINT PRIMARY KEY AUTO_INCREMENT,`field2` VARCHAR(255) NOT NULL,`taxCode2` VARCHAR(255) NOT NULL,`field` VARCHAR(255) NOT NULL,`taxCode` VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_on_class_and_fields_field` ON `shipment_with_index_on_class_and_fields` (`field`);'
+        statements[2] == 'CREATE INDEX `idx_shipment_with_index_on_class_and_fields_taxcode` ON `shipment_with_index_on_class_and_fields` (`taxCode`);'
+        statements[3] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_on_class_and_fields_field2_taxcode2` ON `shipment_with_index_on_class_and_fields` (`field2`, `taxCode2`);'
     }
 
     void "test build composite id query"() {
