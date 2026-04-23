@@ -46,6 +46,9 @@ dependencies {
     // Serialization
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
+
+    // LOGGING
+    runtimeOnly(mnLogging.logback.classic)
 }
 
 tasks.test {
