@@ -131,16 +131,33 @@ class MultiOneToManyJoinTest {
         assertNotNull(category.getId());
         assertEquals("Cats", category.getName());
         assertEquals(2, category.getProductList().size());
-        assertEquals("Food", category.getProductList().get(0).getName());
-        assertEquals("Pork", category.getProductList().get(0).getProductOption().get(0).getName());
-        assertEquals(3, category.getProductList().get(0).getProductOption().get(0).getOption().size());
-        assertEquals("Beef", category.getProductList().get(0).getProductOption().get(1).getName());
-        assertEquals(3, category.getProductList().get(0).getProductOption().get(1).getOption().size());
-        assertEquals("Toys", category.getProductList().get(1).getName());
-        assertEquals("Ffff", category.getProductList().get(1).getProductOption().get(0).getName());
-        assertEquals(3, category.getProductList().get(1).getProductOption().get(0).getOption().size());
-        assertEquals("Pfff", category.getProductList().get(1).getProductOption().get(1).getName());
-        assertEquals(3, category.getProductList().get(1).getProductOption().get(1).getOption().size());
+        Product food = findProduct(category, "Food");
+        Product toys = findProduct(category, "Toys");
+
+        ProductOption pork = findProductOption(food, "Pork");
+        ProductOption beef = findProductOption(food, "Beef");
+        ProductOption ffff = findProductOption(toys, "Ffff");
+        ProductOption pfff = findProductOption(toys, "Pfff");
+
+        assertEquals(3, pork.getOption().size());
+        assertEquals(3, beef.getOption().size());
+        assertEquals(3, ffff.getOption().size());
+        assertEquals(3, pfff.getOption().size());
+    }
+
+    private Product findProduct(Category category, String name) {
+        return category.getProductList().stream()
+            .filter(product -> name.equals(product.getName()))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    private ProductOption findProductOption(Product product, String name) {
+        assertEquals(2, product.getProductOption().size());
+        return product.getProductOption().stream()
+            .filter(productOption -> name.equals(productOption.getName()))
+            .findFirst()
+            .orElseThrow();
     }
 }
 
