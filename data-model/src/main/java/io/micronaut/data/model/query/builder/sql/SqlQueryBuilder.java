@@ -942,7 +942,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (type == UUID) {
                     // mysql requires the UUID generation in the insert statement
                     if (dialect != Dialect.MYSQL) {
-                        column += " NOT NULL DEFAULT random_uuid()";
+                        if (dialect == Dialect.ANSI) {
+                            column += " NOT NULL DEFAULT (lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))))";
+                        } else {
+                            column += " NOT NULL DEFAULT random_uuid()";
+                        }
                     } else {
                         column += " NOT NULL";
                     }
@@ -1181,8 +1185,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 .orElseGet(() -> selectAutoStrategy(property));
                             if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
-                            } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
-                                // Property skipped
+                            } else if (property.getDataType() != DataType.UUID) {
+                                // Non-UUID generated properties are supplied by the database.
                                 return;
                             }
                         }
