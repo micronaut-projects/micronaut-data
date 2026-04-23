@@ -177,7 +177,7 @@ class CompositeTest {
 
         assertEquals(2, statements.length);
         assertEquals("CREATE TABLE \"citizen_settlement\" (\"citizen_id\" BIGINT NOT NULL,\"settlement_id_code\" VARCHAR(255) NOT NULL,\"settlement_id_code_id\" INT NOT NULL,\"settlement_id_county_id_id\" INT NOT NULL,\"settlement_id_county_id_state_id\" INT NOT NULL, PRIMARY KEY(\"citizen_id\",\"settlement_id_code\",\"settlement_id_code_id\",\"settlement_id_county_id_id\",\"settlement_id_county_id_state_id\"));", statements[0]);
-        assertEquals("CREATE TABLE \"comp_citizen\" (\"id\" BIGINT PRIMARY KEY AUTO_INCREMENT,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
+        assertEquals("CREATE TABLE \"comp_citizen\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
     }
 
     @Test
