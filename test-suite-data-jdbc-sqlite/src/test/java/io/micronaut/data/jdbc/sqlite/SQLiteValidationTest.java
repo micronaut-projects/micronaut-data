@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteValidationTest {
 
     @Inject

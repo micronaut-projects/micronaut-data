@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class JpaTransientPropertyTest {
 
     @Inject

@@ -20,6 +20,7 @@ dependencies {
     // TEST
     testRuntimeOnly(mnTest.junit.jupiter.engine)
     testRuntimeOnly(mnTest.junit.platform.launcher)
+    testImplementation(mnTest.micronaut.test.spock)
     testImplementation(mnTest.micronaut.test.junit5)
 
     // PERSISTENCE API

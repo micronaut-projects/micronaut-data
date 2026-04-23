@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.many2many")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.many2many")
 class MultiManyToManyJoinTest {
 
     @Inject

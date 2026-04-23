@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 @Property(name = "datasources.other.name", value = "otherdb")
 @Property(name = "datasources.other.schema-generate", value = "CREATE_DROP")
 @Property(name = "datasources.other.dialect", value = "ANSI")

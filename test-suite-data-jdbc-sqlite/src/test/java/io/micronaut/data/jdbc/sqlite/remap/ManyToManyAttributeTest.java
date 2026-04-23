@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.sqlite.remap;
 
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.remap")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.remap")
 class ManyToManyAttributeTest {
 
     @Inject

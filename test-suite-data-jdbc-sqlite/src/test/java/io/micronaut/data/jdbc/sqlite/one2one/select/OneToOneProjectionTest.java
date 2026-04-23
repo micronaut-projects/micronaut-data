@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.sqlite.one2one.select;
 
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @MicronautTest(transactional = false)
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2one.select")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2one.select")
 class OneToOneProjectionTest {
 
     @Inject

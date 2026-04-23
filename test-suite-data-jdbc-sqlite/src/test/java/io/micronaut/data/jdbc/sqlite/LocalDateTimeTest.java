@@ -27,7 +27,7 @@ import java.time.ZonedDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class LocalDateTimeTest {
 
     @Inject

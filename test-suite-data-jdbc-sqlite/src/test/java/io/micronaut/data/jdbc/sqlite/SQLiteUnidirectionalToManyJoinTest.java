@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteUnidirectionalToManyJoinTest {
 
     @Inject

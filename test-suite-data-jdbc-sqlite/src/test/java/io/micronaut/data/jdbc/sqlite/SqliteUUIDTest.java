@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite")
 class SqliteUUIDTest {
 
     @Inject

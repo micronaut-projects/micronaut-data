@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.sqlite.one2many;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.Employee;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2many,io.micronaut.data.tck.jdbc.entities")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2many,io.micronaut.data.tck.jdbc.entities")
 class OneToManyJoinColumnTest {
 
     @Inject

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteNoIdEntityRepositoryTest {
 
     @Inject

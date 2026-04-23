@@ -9,9 +9,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.repository.CrudRepository;
@@ -38,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.composite")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.composite")
 class CompositeTest {
 
     @Inject

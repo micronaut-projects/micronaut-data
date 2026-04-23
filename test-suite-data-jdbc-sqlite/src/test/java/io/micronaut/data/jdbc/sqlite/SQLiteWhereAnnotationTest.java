@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SQLiteWhereAnnotationTest {
 

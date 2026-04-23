@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteRepositoryScopeTest {
 
     private static final Field INTERCEPTORS_FIELD = interceptorsField();

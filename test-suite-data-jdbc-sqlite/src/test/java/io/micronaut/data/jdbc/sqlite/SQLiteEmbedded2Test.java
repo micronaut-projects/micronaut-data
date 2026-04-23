@@ -33,7 +33,7 @@ import static io.micronaut.data.model.query.builder.sql.Dialect.ANSI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteEmbedded2Test {
 
     @Inject

@@ -9,7 +9,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
@@ -25,7 +25,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties(schemaGenerate = "NONE", packages = "io.micronaut.data.jdbc.sqlite.one2one")
+@SQLiteDBProperties(schemaGenerate = "NONE", packages = "io.micronaut.data.jdbc.sqlite.one2one")
 class OneToOneTest {
 
     @Inject

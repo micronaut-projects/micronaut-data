@@ -17,20 +17,27 @@ package io.micronaut.data.jdbc.sqlite;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(rollback = false)
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class EscapeIdentifiersTest {
 
     @Inject
     SQLiteTableRatingsRepository repository;
+
+    @AfterEach
+    void cleanup() {
+        repository.deleteAll();
+    }
 
     @Test
     void testSaveOne() {
@@ -52,12 +59,14 @@ class EscapeIdentifiersTest {
 
         assertTrue(ratings.stream().allMatch(r -> r.getId() != null));
         assertTrue(ratings.stream().allMatch(r -> repository.findById(r.getId()).isPresent()));
-        assertEquals(3, repository.findAll().size());
-        assertEquals(3, repository.count());
+        assertEquals(2, repository.findAll().size());
+        assertEquals(2, repository.count());
     }
 
     @Test
     void testDeleteById() {
+        repository.save(new TableRatings(20));
+        repository.save(new TableRatings(30));
         TableRatings rating = repository.findByRating(20);
 
         assertNotNull(rating);
@@ -67,18 +76,19 @@ class EscapeIdentifiersTest {
         repository.deleteById(rating.getId());
 
         assertTrue(repository.findById(rating.getId()).isEmpty());
-        assertEquals(2, repository.count());
+        assertEquals(1, repository.count());
     }
 
     @Test
     void testUpdateOne() {
+        repository.save(new TableRatings(10));
         TableRatings ratings = repository.findByRating(10);
 
         assertNotNull(ratings);
 
         repository.updateRating(ratings.getId(), 15);
 
-        assertEquals(null, repository.findByRating(10));
+        assertNull(repository.findByRating(10));
         assertNotNull(repository.findByRating(15));
     }
 }

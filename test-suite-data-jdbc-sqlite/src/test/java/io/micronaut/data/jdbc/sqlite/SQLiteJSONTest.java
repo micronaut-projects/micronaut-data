@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.sqlite;
 
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
 import io.micronaut.data.tck.entities.Discount;
 import io.micronaut.data.tck.entities.JsonEntity;
 import io.micronaut.data.tck.entities.Sale;
@@ -27,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class SQLiteJSONTest {
 
     @Inject

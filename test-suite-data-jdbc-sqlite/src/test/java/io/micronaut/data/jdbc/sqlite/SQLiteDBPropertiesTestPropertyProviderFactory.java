@@ -26,20 +26,19 @@ public class SQLiteDBPropertiesTestPropertyProviderFactory implements TestProper
     @Override
     public TestPropertyProvider create(Map<String, Object> availableProperties, Class<?> testClass) {
         SQLiteDBProperties sqliteDbProperties = testClass.getAnnotation(SQLiteDBProperties.class);
-        JavaSQLiteDBProperties javaSqliteDbProperties = testClass.getAnnotation(JavaSQLiteDBProperties.class);
-        if (sqliteDbProperties == null && javaSqliteDbProperties == null) {
+        if (sqliteDbProperties == null) {
             return Collections::emptyMap;
         }
         return () -> Map.of(
-            "datasources.default.name", sqliteDbProperties != null ? sqliteDbProperties.name() : javaSqliteDbProperties.name(),
-            "datasources.default.packages", sqliteDbProperties != null ? sqliteDbProperties.packages() : javaSqliteDbProperties.packages(),
-            "datasources.default.schema-generate", sqliteDbProperties != null ? sqliteDbProperties.schemaGenerate() : javaSqliteDbProperties.schemaGenerate(),
-            "datasources.default.dialect", sqliteDbProperties != null ? sqliteDbProperties.dialect() : javaSqliteDbProperties.dialect(),
-            "datasources.default.db-type", sqliteDbProperties != null ? sqliteDbProperties.dbType() : javaSqliteDbProperties.dbType(),
-            "datasources.default.driverClassName", sqliteDbProperties != null ? sqliteDbProperties.driverClassName() : javaSqliteDbProperties.driverClassName(),
-            "datasources.default.url", sqliteDbProperties != null ? sqliteDbProperties.url() : javaSqliteDbProperties.url(),
-            "datasources.default.username", sqliteDbProperties != null ? sqliteDbProperties.username() : javaSqliteDbProperties.username(),
-            "datasources.default.password", sqliteDbProperties != null ? sqliteDbProperties.password() : javaSqliteDbProperties.password()
+            "datasources.default.name", sqliteDbProperties.name(),
+            "datasources.default.packages", sqliteDbProperties.packages(),
+            "datasources.default.schema-generate", sqliteDbProperties.schemaGenerate(),
+            "datasources.default.dialect", sqliteDbProperties.dialect(),
+            "datasources.default.db-type", sqliteDbProperties.dbType(),
+            "datasources.default.driverClassName", sqliteDbProperties.driverClassName(),
+            "datasources.default.url", sqliteDbProperties.url(),
+            "datasources.default.username", sqliteDbProperties.username(),
+            "datasources.default.password", sqliteDbProperties.password()
         );
     }
 }

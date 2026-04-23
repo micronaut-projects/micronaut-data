@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @MicronautTest(rollback = false)
-@JavaSQLiteDBProperties
+@SQLiteDBProperties
 class ChallengeRepositoryTest {
 
     @Inject

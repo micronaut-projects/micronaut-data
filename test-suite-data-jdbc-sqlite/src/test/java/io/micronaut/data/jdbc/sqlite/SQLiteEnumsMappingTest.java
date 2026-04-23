@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite")
 class SQLiteEnumsMappingTest {
 
     @Inject

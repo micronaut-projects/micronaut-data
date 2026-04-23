@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2many")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.one2many")
 class DoubleOneToManyJoinTest {
 
     @Inject

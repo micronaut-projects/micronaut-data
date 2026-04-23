@@ -5,7 +5,7 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.jdbc.sqlite.JavaSQLiteDBProperties;
+import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -26,7 +26,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@JavaSQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.embeddedNameMapping,io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities")
+@SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.embeddedNameMapping,io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities")
 class CustomEmbeddedNameMappingTest {
 
     private static ApplicationContext applicationContext;
