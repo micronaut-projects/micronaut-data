@@ -54,7 +54,7 @@ public interface SQLiteTestingPropertyProvider extends TestPropertyProvider {
             (prefix + ".db-type"), "sqlite",
             (prefix + ".username"), "",
             (prefix + ".password"), "",
-            (prefix + ".packages"), packages().stream().reduce("", (a, b) -> a + "," + b),
+            (prefix + ".packages"), String.join(",", packages()),
             (prefix + ".driverClassName"), "org.sqlite.JDBC"
         );
     }
