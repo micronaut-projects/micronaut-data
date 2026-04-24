@@ -14,7 +14,6 @@ class SQLiteSchemaGenerationTest {
     @Inject
     SQLiteOrganizationRepository repository;
 
-    @Disabled(value = "currently UUID not supported for SQLite")
     @Test
     void testUuidGeneratedValue() {
         assertEquals(0L, repository.count());

@@ -209,6 +209,8 @@ public final class SqlColumnMapping {
             case UUID -> {
                 if (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL) {
                     yield varcharType(36);
+                } else if (dialect == Dialect.SQLITE) {
+                    yield "TEXT";
                 } else if (dialect == Dialect.SQL_SERVER) {
                     yield "UNIQUEIDENTIFIER";
                 } else {
