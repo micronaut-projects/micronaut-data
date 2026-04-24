@@ -17,7 +17,6 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 class RecordsSpec extends AbstractDataSpec {
