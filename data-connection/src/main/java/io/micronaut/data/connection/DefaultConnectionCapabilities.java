@@ -16,6 +16,8 @@
 package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.Internal;
+
+import java.sql.Connection;
 import java.util.function.Supplier;
 
 /**
@@ -27,6 +29,11 @@ import java.util.function.Supplier;
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
+        return true;
+    }
+
+    @Override
+    public boolean supports(Capability capability, Connection connection) {
         return true;
     }
 }
