@@ -41,7 +41,8 @@ record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
         Dialect.POSTGRES   | 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"age" INTEGER NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [person] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[age] INT NOT NULL);'
         Dialect.ANSI       | 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"age" INT NOT NULL);'
-        Dialect.ORACLE     | 'CREATE TABLE "PERSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"AGE" NUMBER(10) NOT NULL)\n' +
+        Dialect.ORACLE     | 'CREATE TABLE "PERSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"AGE" NUMBER(10) NOT NULL)' +
+                             System.lineSeparator() +
                              'CREATE SEQUENCE "PERSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
         Dialect.MYSQL      | 'CREATE TABLE `person` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`age` INT NOT NULL);'
     }
