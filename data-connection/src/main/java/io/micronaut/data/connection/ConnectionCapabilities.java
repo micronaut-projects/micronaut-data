@@ -26,7 +26,17 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Defines the capabilities of a {@link Connection}.
+ * Defines the capabilities of a database connection.
+ * <p>
+ * The primary API is {@link #supports(Capability, Supplier)}, which accepts a supplier of
+ * the database product name so that capability detection works for both JDBC
+ * ({@link Connection}) and R2DBC ({@code io.r2dbc.spi.Connection}) connections.
+ * Convenience overloads such as {@link #supports(Capability, Connection)} delegate to the
+ * supplier-based method.
+ * <p>
+ * When the database product name cannot be determined (e.g., the supplier throws or returns
+ * an unrecognised value), implementations should default to returning {@code true} (capability
+ * is supported) so that the calling code can fall back to its own default behaviour safely.
  * <p>
  * You can provide your own implementation via Java SPI by registering
  * {@code io.micronaut.data.connection.ConnectionCapabilities} in
@@ -66,10 +76,20 @@ public interface ConnectionCapabilities extends Ordered {
     ConnectionCapabilities INSTANCE = loadInstance();
 
     /**
-     * Determines whether the given database supports the requested capability.
+     * Determines whether the database supports the requested capability.
+     * <p>
+     * Implementations receive a {@link Supplier} rather than a direct connection object so
+     * that this method works uniformly with JDBC ({@link Connection}) and R2DBC
+     * ({@code io.r2dbc.spi.Connection}) connections. The supplier is called lazily; if
+     * determining the product name is expensive, implementations may cache the result.
+     * <p>
+     * If the supplier throws or returns an unrecognised product name, implementations should
+     * return {@code true} (capability supported) so that callers can fall back gracefully to
+     * their own default behaviour.
      *
      * @param capability The capability to evaluate
-     * @param databaseProductNameSupplier supplier of the database product name
+     * @param databaseProductNameSupplier supplier of the database product name; may throw
+     *        {@link RuntimeException} if the metadata cannot be retrieved
      * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
     boolean supports(Capability capability, Supplier<String> databaseProductNameSupplier);
