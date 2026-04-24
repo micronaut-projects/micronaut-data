@@ -16,17 +16,14 @@
 package example;
 
 import io.micronaut.data.connection.ConnectionCapabilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.function.Supplier;
 
 /**
  * {@link ConnectionCapabilities} implementation used by the SQLite JDBC example.
  */
 public final class SqliteConnectionCapabilities implements ConnectionCapabilities {
-    private static final Logger LOG = LoggerFactory.getLogger(SqliteConnectionCapabilities.class);
-    public static final String SQLITE = "SQLite";
-    private final static String MICROSOFT_SQL_SERVER = "Microsoft SQL Server";
+    private static final String SQLITE = "SQLite";
+    private static final String MICROSOFT_SQL_SERVER = "Microsoft SQL Server";
 
     /**
      * Connection capabilities implementation for the SQLite JDBC example.
