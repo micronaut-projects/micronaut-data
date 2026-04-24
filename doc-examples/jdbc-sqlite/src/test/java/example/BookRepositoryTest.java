@@ -1,16 +1,8 @@
 package example;
 
 import io.micronaut.context.annotation.Property;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
