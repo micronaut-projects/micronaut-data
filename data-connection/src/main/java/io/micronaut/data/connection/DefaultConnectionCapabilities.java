@@ -25,15 +25,8 @@ import java.util.function.Supplier;
  */
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
-    private static final String MICROSOFT_SQL_SERVER = "Microsoft SQL Server";
-
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
-        try {
-            String dbProductName = databaseProductNameSupplier.get();
-            return capability != Capability.BATCH_INSERT || !dbProductName.equalsIgnoreCase(MICROSOFT_SQL_SERVER);
-        } catch (RuntimeException e) {
-            return true;
-        }
+        return true;
     }
 }

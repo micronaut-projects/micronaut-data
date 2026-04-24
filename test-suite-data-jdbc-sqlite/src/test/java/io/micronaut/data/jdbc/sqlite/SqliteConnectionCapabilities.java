@@ -31,12 +31,10 @@ public final class SqliteConnectionCapabilities implements ConnectionCapabilitie
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
         String dbProductName = databaseProductNameSupplier.get();
-        if (capability == Capability.BATCH_INSERT && dbProductName.equals(MICROSOFT_SQL_SERVER)) {
-            return false;
-        }
-        if ((capability == Capability.BATCH_INSERT || capability == Capability.READ_ONLY) && dbProductName.equals(SQLITE)) {
+        if (capability == Capability.READ_ONLY && dbProductName.equals(SQLITE)) {
             return false;
         }
         return true;
     }
 }
+

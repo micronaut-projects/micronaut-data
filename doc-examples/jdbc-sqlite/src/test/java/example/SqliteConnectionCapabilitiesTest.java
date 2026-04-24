@@ -32,27 +32,6 @@ class SqliteConnectionCapabilitiesTest {
         assertEquals(expected, capabilities.supports(ConnectionCapabilities.Capability.READ_ONLY, connection(databaseProductName)));
     }
 
-    @DisabledInNativeImage
-    @ParameterizedTest
-    @CsvSource({
-        "MySQL, true",
-        "MariaDB, true",
-        "PostgreSQL, true",
-        "H2, true",
-        "SQLite, false",
-        "Oracle, true",
-        "'Microsoft SQL Server', false"
-    })
-    void supportsBatchInsertForDifferentDatabaseProducts(String databaseProductName, boolean expected) {
-        assertEquals(expected, capabilities.supports(ConnectionCapabilities.Capability.BATCH_INSERT, connection(databaseProductName)));
-    }
-
-    @DisabledInNativeImage
-    @Test
-    void supportsBatchInsertWhenDatabaseMetadataCannotBeRead()  {
-        assertTrue(capabilities.supports(ConnectionCapabilities.Capability.BATCH_INSERT, connectionThrowingMetadataException()));
-    }
-
     private Connection connection(String databaseProductName) {
         DatabaseMetaData metaData = (DatabaseMetaData) Proxy.newProxyInstance(
             DatabaseMetaData.class.getClassLoader(),

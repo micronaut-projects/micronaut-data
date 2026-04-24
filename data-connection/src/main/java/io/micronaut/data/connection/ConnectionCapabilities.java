@@ -60,11 +60,7 @@ public interface ConnectionCapabilities extends Ordered {
         /**
          * Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
          */
-        READ_ONLY,
-        /**
-         * Whether the connection supports JDBC batch inserts.
-         */
-        BATCH_INSERT
+        READ_ONLY
     }
 
     /**
