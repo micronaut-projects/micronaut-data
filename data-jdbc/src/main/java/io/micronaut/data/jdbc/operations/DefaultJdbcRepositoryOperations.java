@@ -854,7 +854,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.BATCH_INSERT, ctx.connection) || !isSupportsBatchInsert(persistentEntity, storedQuery)) {
+            if (!ctx.dialect.allowBatch() || !isSupportsBatchInsert(persistentEntity, storedQuery)) {
                 return operation.split().stream()
                     .map(persistOp -> {
                         JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
@@ -1161,6 +1161,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
+        if (!jdbcOperationContext.dialect.allowBatch()) {
+            return false;
+        }
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
     }
 
