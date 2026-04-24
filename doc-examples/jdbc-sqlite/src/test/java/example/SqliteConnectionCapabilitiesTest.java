@@ -46,26 +46,6 @@ class SqliteConnectionCapabilitiesTest {
         return connection(metaData);
     }
 
-    private Connection connectionThrowingMetadataException() {
-        DatabaseMetaData metaData = (DatabaseMetaData) Proxy.newProxyInstance(
-            DatabaseMetaData.class.getClassLoader(),
-            new Class<?>[]{DatabaseMetaData.class},
-            (proxy, method, args) -> {
-                if ("getDatabaseProductName".equals(method.getName())) {
-                    throw new SQLException("metadata unavailable");
-                }
-                if ("unwrap".equals(method.getName())) {
-                    return null;
-                }
-                if ("isWrapperFor".equals(method.getName())) {
-                    return false;
-                }
-                throw new UnsupportedOperationException(method.getName());
-            }
-        );
-        return connection(metaData);
-    }
-
     private Connection connection(DatabaseMetaData metaData) {
         return (Connection) Proxy.newProxyInstance(
             Connection.class.getClassLoader(),
