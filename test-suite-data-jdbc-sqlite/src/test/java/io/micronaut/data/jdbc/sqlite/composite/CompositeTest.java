@@ -167,7 +167,7 @@ class CompositeTest {
         SqlQueryBuilder encoder = new SqlQueryBuilder();
         String[] statements = encoder.buildCreateTableStatements(builder.getRuntimeEntityRegistry().getEntity(Settlement.class));
 
-        assertEquals("CREATE TABLE \"comp_settlement\" (\"code\" VARCHAR(255) NOT NULL,\"code_id\" INTEGER NOT NULL,\"id_county_id_id\" INTEGER NOT NULL,\"id_county_id_state_id\" INTEGER NOT NULL,\"description\" VARCHAR(255) NOT NULL,\"settlement_type_id\" INTEGER NOT NULL,\"zone_id\" INTEGER NOT NULL,\"is_enabled\" BOOLEAN NOT NULL, PRIMARY KEY(\"code\",\"code_id\",\"id_county_id_id\",\"id_county_id_state_id\"));", String.join("\n", statements));
+        assertEquals("CREATE TABLE \"comp_settlement\" (\"code\" VARCHAR(255) NOT NULL,\"code_id\" INTEGER NOT NULL,\"id_county_id_id\" INTEGER NOT NULL,\"id_county_id_state_id\" INTEGER NOT NULL,\"description\" VARCHAR(255) NOT NULL,\"settlement_type_id\" BIGINT NOT NULL,\"zone_id\" BIGINT NOT NULL,\"is_enabled\" BOOLEAN NOT NULL, PRIMARY KEY(\"code\",\"code_id\",\"id_county_id_id\",\"id_county_id_state_id\"));", String.join("\n", statements));
     }
 
     @Test
@@ -176,7 +176,7 @@ class CompositeTest {
         String[] statements = encoder.buildCreateTableStatements(builder.getRuntimeEntityRegistry().getEntity(Citizen.class));
 
         assertEquals(2, statements.length);
-        assertEquals("CREATE TABLE \"citizen_settlement\" (\"citizen_id\" INTEGER NOT NULL,\"settlement_id_code\" VARCHAR(255) NOT NULL,\"settlement_id_code_id\" INTEGER NOT NULL,\"settlement_id_county_id_id\" INTEGER NOT NULL,\"settlement_id_county_id_state_id\" INTEGER NOT NULL, PRIMARY KEY(\"citizen_id\",\"settlement_id_code\",\"settlement_id_code_id\",\"settlement_id_county_id_id\",\"settlement_id_county_id_state_id\"));", statements[0]);
+        assertEquals("CREATE TABLE \"citizen_settlement\" (\"citizen_id\" BIGINT NOT NULL,\"settlement_id_code\" VARCHAR(255) NOT NULL,\"settlement_id_code_id\" INTEGER NOT NULL,\"settlement_id_county_id_id\" INTEGER NOT NULL,\"settlement_id_county_id_state_id\" INTEGER NOT NULL, PRIMARY KEY(\"citizen_id\",\"settlement_id_code\",\"settlement_id_code_id\",\"settlement_id_county_id_id\",\"settlement_id_county_id_state_id\"));", statements[0]);
         assertEquals("CREATE TABLE \"comp_citizen\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
     }
 

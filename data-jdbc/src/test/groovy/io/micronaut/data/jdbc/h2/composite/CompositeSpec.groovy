@@ -344,7 +344,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement))
 
         then:
-            statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INT NOT NULL,"id_county_id_id" INT NOT NULL,"id_county_id_state_id" INT NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
+            statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INTEGER NOT NULL,"id_county_id_id" INTEGER NOT NULL,"id_county_id_state_id" INTEGER NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
     }
 
     void "test build create Citizen"() {
@@ -354,7 +354,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
         then:
             statements.length == 2
-            statements[0] == 'CREATE TABLE "citizen_settlement" ("citizen_id" BIGINT NOT NULL,"settlement_id_code" VARCHAR(255) NOT NULL,"settlement_id_code_id" INT NOT NULL,"settlement_id_county_id_id" INT NOT NULL,"settlement_id_county_id_state_id" INT NOT NULL, PRIMARY KEY("citizen_id","settlement_id_code","settlement_id_code_id","settlement_id_county_id_id","settlement_id_county_id_state_id"));'
+            statements[0] == 'CREATE TABLE "citizen_settlement" ("citizen_id" BIGINT NOT NULL,"settlement_id_code" VARCHAR(255) NOT NULL,"settlement_id_code_id" INTEGER NOT NULL,"settlement_id_county_id_id" INTEGER NOT NULL,"settlement_id_county_id_state_id" INTEGER NOT NULL, PRIMARY KEY("citizen_id","settlement_id_code","settlement_id_code_id","settlement_id_county_id_id","settlement_id_county_id_state_id"));'
             statements[1] == 'CREATE TABLE "comp_citizen" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
