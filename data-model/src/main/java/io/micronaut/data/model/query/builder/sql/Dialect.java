@@ -70,7 +70,7 @@ public enum Dialect {
      */
     ORACLE(true, true, ALL_TYPES, true, true, true, true, true),
     /**
-     * SQLite
+     * SQLite.
      */
     SQLITE(false, false, ALL_TYPES, false, true, true, true, false),
     /**
@@ -89,7 +89,6 @@ public enum Dialect {
     private final boolean supportsInsertReturning;
     private final boolean supportsDeleteReturning;
     private final boolean supportsReadOnly;
-
 
     /**
      * Allows customization of batch support.
