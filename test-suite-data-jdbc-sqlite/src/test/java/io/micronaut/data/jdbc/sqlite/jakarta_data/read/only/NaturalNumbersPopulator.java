@@ -20,7 +20,7 @@ public class NaturalNumbersPopulator implements Populator<NaturalNumbers> {
 
     @Override
     public void populationLogic(NaturalNumbers repo) {
-        List<NaturalNumber> dictonary = new ArrayList<>();
+        List<NaturalNumber> dictionary = new ArrayList<>();
 
         IntStream.range(1, 101)
             .forEach(id -> {
@@ -39,10 +39,10 @@ public class NaturalNumbersPopulator implements Populator<NaturalNumbers> {
                 inst.setNumTypeOrdinal(numType.ordinal());
                 inst.setFloorOfSquareRoot(sqrRoot);
 
-                dictonary.add(inst);
+                dictionary.add(inst);
             });
 
-        repo.saveAll(dictonary);
+        repo.saveAll(dictionary);
     }
 
     private static Short bitsRequired(int value) {
