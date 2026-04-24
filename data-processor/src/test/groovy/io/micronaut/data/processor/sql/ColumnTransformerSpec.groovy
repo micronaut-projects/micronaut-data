@@ -29,7 +29,7 @@ class ColumnTransformerSpec extends AbstractDataSpec {
     @Shared
     def builder = new RuntimeCriteriaBuilder()
     @Shared
-    def queryBuilder = new SqlQueryBuilder(Dialect.SQLITE)
+    def queryBuilder = new SqlQueryBuilder()
 
     void "test mapping"() {
         given:
@@ -63,7 +63,7 @@ class Project {
     void "test build insert with column writer"() {
         given:
         def builder = new RuntimeCriteriaBuilder()
-        def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder(Dialect.SQLITE)).query
+        def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder()).query
 
         expect:
         sql == 'INSERT INTO "project" ("name","db_name","org","department_id","project_id") VALUES (UPPER(?),?,?,?,?)'
@@ -116,7 +116,7 @@ class Project {
     void "test build insert with column writer2"() {
         given:
             def query = builder.createCriteriaInsert(Transform)
-            def sql = query.build(new SqlQueryBuilder(Dialect.SQLITE)).query
+            def sql = query.build(new SqlQueryBuilder()).query
 
         expect:
             sql == 'INSERT INTO "transform" ("xyz","department_id","project_id") VALUES (LOWER(?),?,?)'
@@ -134,7 +134,7 @@ class Project {
     void "test build query with column reader2"() {
         given:
             def query = builder.createQuery(Transform)
-            def sql = query.build(new SqlQueryBuilder(Dialect.SQLITE)).query
+            def sql = query.build(new SqlQueryBuilder()).query
 
         expect:
             sql == 'SELECT transform_."department_id",transform_."project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'

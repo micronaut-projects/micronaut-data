@@ -403,11 +403,11 @@ class Emb {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE)
+        SqlQueryBuilder builder = new SqlQueryBuilder()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "embedded_entity" ("id" INTEGER NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
+        sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
     }
 
     void "test create table OneToMany with JoinColumn"() {

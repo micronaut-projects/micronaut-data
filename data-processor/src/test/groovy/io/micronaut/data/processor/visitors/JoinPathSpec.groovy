@@ -330,7 +330,7 @@ interface MyInterface extends GenericRepository<City, Long> {
     }
 
     private String columns(Class t, String alias) {
-        def builder = new SqlQueryBuilder(Dialect.SQLITE)
+        def builder = new SqlQueryBuilder()
         StringBuilder columns = new StringBuilder()
         builder.selectAllColumns(PersistentEntity.of(t), alias, columns)
         columns.toString()
