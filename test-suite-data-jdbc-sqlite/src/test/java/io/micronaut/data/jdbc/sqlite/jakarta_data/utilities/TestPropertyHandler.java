@@ -5,7 +5,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * This uitlity class handles the caching and loading of test properties between the
+ * This utility class handles the caching and loading of test properties between the
  * client and container when tests are run inside an Arquillian container.
  */
 public class TestPropertyHandler {
