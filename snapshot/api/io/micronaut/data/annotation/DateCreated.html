@@ -59,10 +59,12 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#NAME" tabindex="0">NAME</a></li>
+<li><a href="#SKIP_IF_PRESENT" tabindex="0">SKIP_IF_PRESENT</a></li>
 </ol>
 </li>
 <li><a href="#annotation-interface-element-detail" tabindex="0">Element Details</a>
 <ol class="toc-list">
+<li><a href="#skipIfPresent()" tabindex="0">skipIfPresent</a></li>
 <li><a href="#truncatedTo()" tabindex="0">truncatedTo</a></li>
 </ol>
 </li>
@@ -106,6 +108,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">The annotation name.</div>
 </div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#SKIP_IF_PRESENT" class="member-name-link">SKIP_IF_PRESENT</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">The metadata key for <a href="#skipIfPresent()"><code>skipIfPresent()</code></a>.</div>
+</div>
 </div>
 </section>
 </li>
@@ -118,9 +125,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Optional Element</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/temporal/ChronoUnit.html" title="class or interface in java.time.temporal" class="external-link">ChronoUnit</a></code></div>
-<div class="col-second even-row-color"><code><a href="#truncatedTo()" class="member-name-link">truncatedTo</a></code></div>
+<div class="col-first even-row-color"><code>boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#skipIfPresent()" class="member-name-link">skipIfPresent</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/temporal/ChronoUnit.html" title="class or interface in java.time.temporal" class="external-link">ChronoUnit</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#truncatedTo()" class="member-name-link">truncatedTo</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Allows to truncate the auto set date value.</div>
 </div>
 </div>
@@ -144,6 +156,23 @@ loadScripts(document, 'script');</script>
 </div>
 </section>
 </li>
+<li>
+<section class="detail" id="SKIP_IF_PRESENT">
+<h3>SKIP_IF_PRESENT</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SKIP_IF_PRESENT</span></div>
+<div class="block">The metadata key for <a href="#skipIfPresent()"><code>skipIfPresent()</code></a>.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.data.annotation.DateCreated.SKIP_IF_PRESENT">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -152,6 +181,26 @@ loadScripts(document, 'script');</script>
 <section class="member-details">
 <h2>Element Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="skipIfPresent()">
+<h3>skipIfPresent</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">skipIfPresent</span></div>
+<div class="block">When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
+Default false preserves existing behavior of always setting the value on insert.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd><code>true</code> if an existing non-null value should be preserved, <code>false</code> otherwise</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd><code>false</code></dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="truncatedTo()">
 <h3>truncatedTo</h3>
