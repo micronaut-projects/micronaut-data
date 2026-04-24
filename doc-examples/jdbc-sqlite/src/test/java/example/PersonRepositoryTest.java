@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Property(name = "datasources.default.url", value = "jdbc:sqlite:file:mydb_person?mode=memory&cache=shared")
 @Property(name = "datasources.default.driver-class-name", value = "org.sqlite.JDBC")
-@Property(name = "datasources.default.dialect", value = "ANSI")
+@Property(name = "datasources.default.dialect", value = "SQLITE")
 @Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
 @MicronautTest(transactional = false)
 class PersonRepositoryTest {
