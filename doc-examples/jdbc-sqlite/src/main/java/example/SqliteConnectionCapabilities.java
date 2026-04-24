@@ -37,11 +37,15 @@ public final class SqliteConnectionCapabilities implements ConnectionCapabilitie
      */
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
-        String name = databaseProductNameSupplier.get();
-        if (name.equalsIgnoreCase(SQLITE) && (capability == Capability.READ_ONLY || capability == Capability.BATCH_INSERT)) {
-            return false;
-        } else if (name.equalsIgnoreCase(MICROSOFT_SQL_SERVER) && capability == Capability.BATCH_INSERT) {
-            return false;
+        try {
+            String name = databaseProductNameSupplier.get();
+            if (name.equalsIgnoreCase(SQLITE) && (capability == Capability.READ_ONLY || capability == Capability.BATCH_INSERT)) {
+                return false;
+            } else if (name.equalsIgnoreCase(MICROSOFT_SQL_SERVER) && capability == Capability.BATCH_INSERT) {
+                return false;
+            }
+        } catch (RuntimeException e) {
+            return true;
         }
         return true;
     }

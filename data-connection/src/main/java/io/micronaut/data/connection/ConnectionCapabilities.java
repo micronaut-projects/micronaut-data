@@ -62,7 +62,7 @@ public interface ConnectionCapabilities extends Ordered {
          */
         READ_ONLY,
         /**
-         * Whether the connection supports JDBC batch inserts.
+         * Whether the connection supports batch inserts (multiple rows in a single statement).
          */
         BATCH_INSERT
     }
