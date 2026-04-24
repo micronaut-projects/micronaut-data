@@ -22,7 +22,7 @@ import io.micronaut.data.tck.repositories.RestaurantRepository;
 
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteRestaurantRepository extends RestaurantRepository {
 
     Optional<Restaurant> findByAddressStreet(String street);

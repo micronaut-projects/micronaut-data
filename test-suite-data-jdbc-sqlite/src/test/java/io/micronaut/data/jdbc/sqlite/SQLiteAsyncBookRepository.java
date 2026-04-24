@@ -20,6 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.BookAsyncRepository;
 import io.micronaut.data.tck.repositories.PersonAsyncRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteAsyncBookRepository extends BookAsyncRepository {
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * A repository that performs operations on different types of entities.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface MultipleEntityRepo { // Do not add a primary entity type.
 
     // Methods for Box entity:

@@ -22,6 +22,6 @@ import io.micronaut.data.tck.entities.GenericEntity;
 import io.micronaut.data.tck.entities.Task;
 import io.micronaut.data.tck.entities.TaskGenericEntity;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteTaskGenericEntityRepository extends CrudRepository<TaskGenericEntity, Long> {
 }

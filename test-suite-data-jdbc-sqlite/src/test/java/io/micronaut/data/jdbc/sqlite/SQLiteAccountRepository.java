@@ -22,6 +22,6 @@ import io.micronaut.data.tck.entities.Account;
 import io.micronaut.data.tck.repositories.AccountRepository;
 import io.micronaut.data.tck.repositories.ArraysEntityRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteAccountRepository extends AccountRepository {
 }

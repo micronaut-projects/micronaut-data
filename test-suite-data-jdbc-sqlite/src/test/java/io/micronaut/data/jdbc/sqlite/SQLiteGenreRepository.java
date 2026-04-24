@@ -7,6 +7,6 @@ import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.Genre;
 import io.micronaut.data.tck.repositories.GenreRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteGenreRepository extends GenreRepository {
 }

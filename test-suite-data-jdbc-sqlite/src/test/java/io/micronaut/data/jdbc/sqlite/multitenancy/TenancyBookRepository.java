@@ -7,7 +7,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 
 @Requires(property = "spec.name", value = "TenancyBookControllerSpec")
-@JdbcRepository(dialect = Dialect.ANSI) // <1>
+@JdbcRepository(dialect = Dialect.SQLITE) // <1>
 interface TenancyBookRepository extends CrudRepository<TenancyBook, Long> {  // <2>
     Long save(String title);
 

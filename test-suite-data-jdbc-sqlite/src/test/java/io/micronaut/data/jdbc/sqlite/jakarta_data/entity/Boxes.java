@@ -8,6 +8,6 @@ import jakarta.data.repository.Repository;
 /**
  * A repository that inherits from the built-in BasicRepository and adds no methods.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface Boxes extends BasicRepository<Box, String> {
 }

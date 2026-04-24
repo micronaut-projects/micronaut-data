@@ -21,6 +21,6 @@ import io.micronaut.data.tck.repositories.BookDtoRepository;
 import jakarta.inject.Singleton;
 
 @Singleton
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteBookDtoRepository extends BookDtoRepository {
 }

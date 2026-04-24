@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface DirectorRepository extends CrudRepository<Director, Long> {
 
     @Join(value = "movies", type= Join.Type.LEFT_FETCH)

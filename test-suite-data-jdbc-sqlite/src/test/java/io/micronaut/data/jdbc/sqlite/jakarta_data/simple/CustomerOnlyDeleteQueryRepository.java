@@ -19,7 +19,7 @@ import java.util.UUID;
 import static jakarta.data.repository.By.ID;
 
 @Repository
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface CustomerOnlyDeleteQueryRepository {
     @Query("""
     DELETE FROM CUSTOMERS WHERE ID=:id

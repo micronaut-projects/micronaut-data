@@ -97,7 +97,7 @@ class OneToOneTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CustomerRepository extends CrudRepository<CustomerDetails, Long> {
 
     @Join("customer")

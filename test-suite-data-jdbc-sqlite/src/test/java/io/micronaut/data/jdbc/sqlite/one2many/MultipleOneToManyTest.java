@@ -240,7 +240,7 @@ class Match {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TeamRepository extends CrudRepository<Team, Long> {
 
     @Join(value = "homeMatches", type = Join.Type.LEFT_FETCH)
@@ -248,7 +248,7 @@ interface TeamRepository extends CrudRepository<Team, Long> {
     Team getById(Long id);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface MatchRepository extends CrudRepository<Match, Long> {
 
     @Join(value = "homeTeam", type = Join.Type.LEFT_FETCH)

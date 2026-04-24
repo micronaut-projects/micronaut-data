@@ -20,6 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.CarRepository;
 import io.micronaut.data.tck.repositories.DoubleImplement1Repository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteDoubleImplement1Repository extends DoubleImplement1Repository {
 }

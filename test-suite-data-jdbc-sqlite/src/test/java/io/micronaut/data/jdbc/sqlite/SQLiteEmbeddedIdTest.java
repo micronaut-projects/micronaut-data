@@ -52,7 +52,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.micronaut.data.model.query.builder.sql.Dialect.ANSI;
+import static io.micronaut.data.model.query.builder.sql.Dialect.SQLITE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -342,7 +342,7 @@ class ItemGroupId {
     }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface ItemGroupRepository extends CrudRepository<ItemGroup, Long> {
 
     @Override
@@ -437,7 +437,7 @@ class ConfigItemEntity {
     }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface ConfigurationItemRepository extends PageableRepository<ConfigItemEntity, ConfigItemEntityId>, JpaSpecificationExecutor<ConfigItemEntity> {
 
     long countByIdOheId(String oheId);

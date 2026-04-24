@@ -25,7 +25,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface ShipmentRepository extends PageableRepository<Shipment, ShipmentId> {
 
     Shipment findByShipmentIdCountry(String country);

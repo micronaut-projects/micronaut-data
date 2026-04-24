@@ -14,7 +14,7 @@ import java.util.Set;
  * the lifecycle methods with the same entity class are what identifies the
  * primary entity class to use for the count and exist methods.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface CustomRepository {
 
     @Insert

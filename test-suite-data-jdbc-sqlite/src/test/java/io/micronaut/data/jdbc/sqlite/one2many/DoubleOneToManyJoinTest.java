@@ -189,7 +189,7 @@ class EntityC {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 abstract class EntityARepository implements CrudRepository<EntityA, Long> {
 
     @Query("""
@@ -221,10 +221,10 @@ abstract class EntityARepository implements CrudRepository<EntityA, Long> {
     abstract List<EntityA> findOrderByAscBDescCDesc(Long aId);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 abstract class EntityBRepository implements CrudRepository<EntityB, Long> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 abstract class EntityCRepository implements CrudRepository<EntityC, Long> {
 }

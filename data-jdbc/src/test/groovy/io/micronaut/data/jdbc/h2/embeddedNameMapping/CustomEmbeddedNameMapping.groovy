@@ -61,7 +61,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build create"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
 
         then:
@@ -71,7 +71,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
     void "test build insert"() {
         when:
             RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
-            def res = builder.createCriteriaInsert(MyBook).build(new SqlQueryBuilder())
+            def res = builder.createCriteriaInsert(MyBook).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             res.query == 'INSERT INTO "MyBook" ("firstName","lastName","numberAge","id") VALUES (?,?,?,?)'
@@ -86,7 +86,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             query.set('author.lastName', builder.parameter(Object))
             query.set('author.detailsIncluded.numberAge', builder.parameter(Object))
             query.where(builder.equal(query.root.id(), builder.parameter(Object)))
-            def res = query.build(new SqlQueryBuilder())
+            def res = query.build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             res.query == 'UPDATE "MyBook" SET "id"=?,"firstName"=?,"lastName"=?,"numberAge"=? WHERE ("id" = ?)'
@@ -105,7 +105,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             def query = builder.createQuery(MyBook)
             def root = query.from(MyBook)
             query.where(builder.equal(root.id(), builder.parameter(Object)))
-            def q = query.build(new SqlQueryBuilder())
+            def q = query.build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT my_book_."id",my_book_."firstName",my_book_."lastName",my_book_."numberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
     }

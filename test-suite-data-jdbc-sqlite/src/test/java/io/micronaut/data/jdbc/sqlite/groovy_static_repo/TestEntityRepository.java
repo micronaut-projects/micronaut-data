@@ -5,6 +5,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.util.UUID;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TestEntityRepository extends MyCrudRepository<GTestEntity, UUID> {
 }

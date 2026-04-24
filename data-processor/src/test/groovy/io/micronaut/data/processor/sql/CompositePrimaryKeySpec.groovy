@@ -218,7 +218,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:
         def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
         def query = builder.createCriteriaInsert(entity)
-        def sql = query.build(new SqlQueryBuilder()).query
+        def sql = query.build(new SqlQueryBuilder(Dialect.SQLITE)).query
 
         then:
         sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
@@ -232,7 +232,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def root = query.from(entity)
 
         when:
-        def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
+        def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE)).query
 
         then:
         sql == 'SELECT project_."department_id",project_."project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id" = ?)'
@@ -246,7 +246,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:
         def query1 = builder.createQuery()
         def root1 = query1.from(entity)
-        def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
+        def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE)).query
 
         then:
         sql1.startsWith('SELECT project_."department_id",project_."project_id"')
@@ -254,7 +254,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:"an id project ins used"
         def query2 = builder.createQuery()
         def root2 = query2.from(entity)
-        def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
+        def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE)).query
 
         then:
         sql2.startsWith('SELECT project_."department_id",project_."project_id"')

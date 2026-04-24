@@ -119,42 +119,42 @@ class SQLiteEnumsMappingTest {
 
     @Test
     void testCreateTableWithEnums() {
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI);
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE);
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity.class));
 
-        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
     }
 
     @Test
     void testJpaCreateTableWithEnums() {
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI);
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE);
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity.class));
 
-        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INTEGER NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INT NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
     }
 
     @Test
     void testCreateTableWithEnums2() {
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI);
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE);
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity.class));
 
-        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" VARCHAR(255) NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
     }
 
     @Test
     void testJpaCreateTableWithEnums2() {
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI);
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE);
 
         String sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity.class));
 
-        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INTEGER NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INTEGER NOT NULL);", sql);
+        assertEquals("CREATE TABLE \"jpa_enum_entity\" (\"id\" INTEGER PRIMARY KEY,\"as_default\" INT NOT NULL,\"as_string\" VARCHAR(255) NOT NULL,\"as_int\" INT NOT NULL);", sql);
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 abstract class EnumEntityRepository implements CrudRepository<EnumEntity, Long> {
 
     private final JdbcOperations jdbcOperations;
@@ -184,7 +184,7 @@ abstract class EnumEntityRepository implements CrudRepository<EnumEntity, Long> 
     abstract EnumEntityDto queryById(Long id);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface JpaEnumEntityRepository extends CrudRepository<JpaEnumEntity, Long> {
 
     int update(@Id Long id, MyEnum asDefault, MyEnum asString, MyEnum asInt);

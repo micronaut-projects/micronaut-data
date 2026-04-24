@@ -23,6 +23,6 @@ import io.micronaut.data.tck.repositories.MealRepository;
 import io.micronaut.validation.Validated;
 import jakarta.validation.Valid;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteMealRepository extends MealRepository, CrudRepository<@Valid Meal, Long> {
 }

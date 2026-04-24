@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SQLiteDBProperties
 @Property(name = "datasources.other.name", value = "otherdb")
 @Property(name = "datasources.other.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.other.dialect", value = "ANSI")
+@Property(name = "datasources.other.dialect", value = "SQLITE")
 @Property(name = "datasources.other.db-type", value = "sqlite")
 @Property(name = "datasources.other.packages", value = "io.micronaut.data.tck.entities,io.micronaut.data.tck.jdbc.entities,io.micronaut.data.jdbc.sqlite")
 @Property(name = "datasources.other.driverClassName", value = "org.sqlite.JDBC")
@@ -169,7 +169,7 @@ class MultipleDataSourceTest {
         }
     }
 
-    @JdbcRepository(dataSource = "other", dialect = Dialect.ANSI)
+    @JdbcRepository(dataSource = "other", dialect = Dialect.SQLITE)
     static abstract class OtherPersonRepository implements CrudRepository<Person, Long> {
 
         private final JdbcOperations jdbcOperations;

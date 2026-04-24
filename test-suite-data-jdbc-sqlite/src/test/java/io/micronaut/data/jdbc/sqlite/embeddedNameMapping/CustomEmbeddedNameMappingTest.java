@@ -76,11 +76,11 @@ class CustomEmbeddedNameMappingTest {
 
     @Test
     void testBuildCreate() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         var statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook.class));
 
         assertEquals(
-            "CREATE TABLE \"MyBook\" (\"id\" VARCHAR(255) NOT NULL,\"firstName\" VARCHAR(255) NOT NULL,\"lastName\" VARCHAR(255) NOT NULL,\"numberAge\" INTEGER NOT NULL, PRIMARY KEY(\"id\"));",
+            "CREATE TABLE \"MyBook\" (\"id\" VARCHAR(255) NOT NULL,\"firstName\" VARCHAR(255) NOT NULL,\"lastName\" VARCHAR(255) NOT NULL,\"numberAge\" INT NOT NULL, PRIMARY KEY(\"id\"));",
             String.join("\n", statements)
         );
     }
@@ -88,7 +88,7 @@ class CustomEmbeddedNameMappingTest {
     @Test
     void testBuildInsert() {
         RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder();
-        var result = builder.createCriteriaInsert(MyBook.class).build(new SqlQueryBuilder());
+        var result = builder.createCriteriaInsert(MyBook.class).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("INSERT INTO \"MyBook\" (\"firstName\",\"lastName\",\"numberAge\",\"id\") VALUES (?,?,?,?)", result.getQuery());
     }
@@ -102,7 +102,7 @@ class CustomEmbeddedNameMappingTest {
         query.set("author.lastName", builder.parameter(Object.class));
         query.set("author.detailsIncluded.numberAge", builder.parameter(Object.class));
         query.where(builder.equal(query.getRoot().id(), builder.parameter(Object.class)));
-        var result = query.build(new SqlQueryBuilder());
+        var result = query.build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("UPDATE \"MyBook\" SET \"id\"=?,\"firstName\"=?,\"lastName\"=?,\"numberAge\"=? WHERE (\"id\" = ?)", result.getQuery());
         assertEquals(
@@ -123,7 +123,7 @@ class CustomEmbeddedNameMappingTest {
         var query = builder.createQuery(MyBook.class);
         var root = query.from(MyBook.class);
         query.where(builder.equal(root.id(), builder.parameter(Object.class)));
-        var result = query.build(new SqlQueryBuilder());
+        var result = query.build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals(
             "SELECT my_book_.\"id\",my_book_.\"firstName\",my_book_.\"lastName\",my_book_.\"numberAge\" FROM \"MyBook\" my_book_ WHERE (my_book_.\"id\" = ?)",
@@ -153,7 +153,7 @@ class CustomEmbeddedNameMappingTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put("datasources.default.url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put("datasources.default.schema-generate", "CREATE");
-            properties.put("datasources.default.dialect", "ANSI");
+            properties.put("datasources.default.dialect", "SQLITE");
             properties.put("datasources.default.db-type", "sqlite");
             properties.put("datasources.default.username", "");
             properties.put("datasources.default.password", "");
@@ -166,7 +166,7 @@ class CustomEmbeddedNameMappingTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface MyBookRepository extends CrudRepository<MyBook, String> {
 }
 

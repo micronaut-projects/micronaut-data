@@ -59,11 +59,11 @@ class OneToManyJoinColumnTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface EmployeeRepository extends CrudRepository<Employee, Long> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface EmployeeGroupRepository extends CrudRepository<EmployeeGroup, Long> {
 
     @Join(value = "employees", alias = "employee_", type = Join.Type.LEFT_FETCH)

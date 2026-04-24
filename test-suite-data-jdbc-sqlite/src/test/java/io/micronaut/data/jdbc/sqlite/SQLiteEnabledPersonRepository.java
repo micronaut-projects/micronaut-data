@@ -21,7 +21,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Person;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 @Where("enabled = true")
 public interface SQLiteEnabledPersonRepository extends CrudRepository<Person, Long> {
 

@@ -161,7 +161,7 @@ class MultiOneToManyJoinTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CategoryRepository extends CrudRepository<Category, Long> {
 
     @Join(value = "productList", alias = "p_", type = Join.Type.LEFT_FETCH)

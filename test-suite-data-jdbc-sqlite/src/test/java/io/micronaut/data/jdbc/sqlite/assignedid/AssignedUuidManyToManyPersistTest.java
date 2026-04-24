@@ -84,7 +84,7 @@ class AssignedUuidManyToManyPersistTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put("datasources.default.url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put("datasources.default.schema-generate", "CREATE");
-            properties.put("datasources.default.dialect", "ANSI");
+            properties.put("datasources.default.dialect", "SQLITE");
             properties.put("datasources.default.db-type", "sqlite");
             properties.put("datasources.default.username", "");
             properties.put("datasources.default.password", "");
@@ -177,13 +177,13 @@ class Course {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface JdbcStudentRepository extends CrudRepository<Student, UUID> {
 
     @Join("courses")
     Optional<Student> findById(UUID id);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface JdbcCourseRepository extends CrudRepository<Course, UUID> {
 }

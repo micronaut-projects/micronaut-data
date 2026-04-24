@@ -340,7 +340,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build create Settlement"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement))
 
         then:
@@ -349,7 +349,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build create Citizen"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Citizen))
 
         then:
@@ -360,7 +360,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build insert"() {
         when:
-            def res = builder.createCriteriaInsert(Settlement).build(new SqlQueryBuilder())
+            def res = builder.createCriteriaInsert(Settlement).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             res.query == 'INSERT INTO "comp_settlement" ("description","settlement_type_id","zone_id","is_enabled","code","code_id","id_county_id_id","id_county_id_state_id") VALUES (?,?,?,?,?,?,?,?)'
@@ -383,7 +383,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             query.root.persistentEntity.getPersistentPropertyNames().forEach { prop ->
                 query.set(query.root.get(prop), builder.parameter(Object.class))
             }
-            def res = query.build(new SqlQueryBuilder())
+            def res = query.build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             res.query == 'UPDATE "comp_settlement" SET "code"=?,"code_id"=?,"id_county_id_id"=?,"id_county_id_state_id"=?,"description"=?,"settlement_type_id"=?,"zone_id"=?,"is_enabled"=? WHERE ("code" = ? AND "code_id" = ? AND "id_county_id_id" = ? AND "id_county_id_state_id" = ?)'
@@ -407,7 +407,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             def query = builder.createQuery()
             def root = query.from(Settlement)
-            def q = query.where(builder.equal(root.id(), builder.parameter(SettlementPk))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(SettlementPk))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled" FROM "comp_settlement" settlement_ WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -422,7 +422,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             def query = builder.createQuery()
             def root = query.from(Settlement)
-            def q = query.where(builder.equal(root.id(), new SettlementPk(code: "Kode", codeId: 123))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), new SettlementPk(code: "Kode", codeId: 123))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled" FROM "comp_settlement" settlement_ WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -441,7 +441,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def root = query.from(Settlement)
             root.join("settlementType", Join.Type.FETCH)
             root.join("zone", Join.Type.FETCH)
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_zone_."name" AS zone_name FROM "comp_settlement" settlement_ INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -458,7 +458,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def root = query.from(Settlement)
             root.fetch("settlementType")
             root.fetch("zone")
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_zone_."name" AS zone_name FROM "comp_settlement" settlement_ INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -476,7 +476,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             root.join("settlementType", Join.Type.FETCH)
             root.join("zone", Join.Type.FETCH)
             root.join("id.county", Join.Type.FETCH)
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_id_county_."county_name" AS id_county_county_name,settlement_id_county_."is_enabled" AS id_county_is_enabled,settlement_zone_."name" AS zone_name FROM "comp_settlement" settlement_ INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" INNER JOIN "comp_country" settlement_id_county_ ON settlement_."id_county_id_id"=settlement_id_county_."id" AND settlement_."id_county_id_state_id"=settlement_id_county_."state_id" INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -494,7 +494,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             root.fetch("settlementType")
             root.fetch("zone")
             root.fetch("id.county")
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_id_county_."county_name" AS id_county_county_name,settlement_id_county_."is_enabled" AS id_county_is_enabled,settlement_zone_."name" AS zone_name FROM "comp_settlement" settlement_ INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" INNER JOIN "comp_country" settlement_id_county_ ON settlement_."id_county_id_id"=settlement_id_county_."id" AND settlement_."id_county_id_state_id"=settlement_id_county_."state_id" INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -510,7 +510,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def query = builder.createQuery()
             def root = query.from(Citizen)
             root.join("settlements", Join.Type.FETCH)
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT citizen_."id",citizen_."name",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
             q.parameters == [
@@ -523,7 +523,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def query = builder.createQuery()
             def root = query.from(Citizen)
             root.fetch("settlements")
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT citizen_."id",citizen_."name",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
             q.parameters == [

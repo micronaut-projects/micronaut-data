@@ -30,7 +30,7 @@ public @interface SQLiteDBProperties {
 
     String schemaGenerate() default "CREATE_DROP";
 
-    String dialect() default "ANSI";
+    String dialect() default "SQLITE";
 
     String dbType() default "sqlite";
 

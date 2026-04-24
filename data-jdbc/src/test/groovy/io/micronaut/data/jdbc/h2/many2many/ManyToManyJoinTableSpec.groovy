@@ -99,7 +99,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Student tables"() {
         when:
-            SqlQueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student))
 
         then:
@@ -111,7 +111,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create CourseRating tables"() {
         when:
-            SqlQueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating))
 
         then:
@@ -122,7 +122,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Course tables"() {
         when:
-            SqlQueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course))
 
         then:
@@ -137,7 +137,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def query = builder.createQuery(Student)
             def root = query.from(Student)
             root.join("courses", Join.Type.FETCH)
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT student_."id",student_."name",student_courses_."id" AS courses_id,student_courses_."name" AS courses_name FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_student_course_association" student_courses_m2m_student_course_association_ ON student_."id"=student_courses_m2m_student_course_association_."st_id"  INNER JOIN "students"."m2m_course" student_courses_ ON student_courses_m2m_student_course_association_."cs_id"=student_courses_."id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
@@ -149,7 +149,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def query = builder.createQuery(Student)
             def root = query.from(Student)
             root.join("ratings", Join.Type.FETCH)
-            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder(Dialect.SQLITE))
         then:
             q.query == 'SELECT student_."id",student_."name",student_ratings_."id" AS ratings_id,student_ratings_."student_id" AS ratings_student_id,student_ratings_."course_id" AS ratings_course_id,student_ratings_."rating" AS ratings_rating FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_course_rating" student_ratings_ ON student_."id"=student_ratings_."student_id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
@@ -157,7 +157,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def e = getRuntimePersistentEntity(Student)
             def query = encoder.buildJoinTableInsert(e, e.getPropertyByName("courses") as Association)
 
@@ -168,7 +168,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build CourseRatingCompositeKey insert"() {
         when:
             RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
-            def insert = builder.createCriteriaInsert(CourseRatingCompositeKey).build(new SqlQueryBuilder())
+            def insert = builder.createCriteriaInsert(CourseRatingCompositeKey).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             insert.query == 'INSERT INTO "students"."m2m_course_rating_ck" ("rating","xyz_student_id","abc_course_id") VALUES (?,?,?)'

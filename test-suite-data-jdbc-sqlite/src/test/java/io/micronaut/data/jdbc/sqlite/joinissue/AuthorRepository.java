@@ -9,7 +9,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 @Join(value = "books", type = Join.Type.LEFT_FETCH)
 public interface AuthorRepository extends CrudRepository<Author, Long> {
 

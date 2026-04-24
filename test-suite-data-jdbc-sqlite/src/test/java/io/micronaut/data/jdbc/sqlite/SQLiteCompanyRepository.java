@@ -20,6 +20,6 @@ import io.micronaut.data.tck.repositories.CompanyRepository;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteCompanyRepository extends CompanyRepository {
 }

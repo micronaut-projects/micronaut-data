@@ -177,7 +177,7 @@ class EmbeddedAssociationJoinTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put("datasources.default.url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put("datasources.default.schema-generate", "CREATE");
-            properties.put("datasources.default.dialect", "ANSI");
+            properties.put("datasources.default.dialect", "SQLITE");
             properties.put("datasources.default.db-type", "sqlite");
             properties.put("datasources.default.username", "");
             properties.put("datasources.default.password", "");
@@ -190,7 +190,7 @@ class EmbeddedAssociationJoinTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpecificationExecutor<MainEntity> {
 
     @Join(value = "assoc", type = Join.Type.FETCH)
@@ -205,7 +205,7 @@ interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpec
     Page<MainEntity> findAllByCriteria(@Nullable PredicateSpecification<Order> spec, Pageable pageable);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface OneMainEntityRepository extends CrudRepository<OneMainEntity, Long> {
 
     @Join(value = "one", type = Join.Type.FETCH)
@@ -218,7 +218,7 @@ interface OneMainEntityRepository extends CrudRepository<OneMainEntity, Long> {
 @Join(value = "id.one", type = Join.Type.FETCH)
 @Join(value = "id.one.assoc", type = Join.Type.FETCH)
 @Join(value = "id.one.em.assoc", type = Join.Type.FETCH)
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface OneMainEntityEmRepository extends CrudRepository<OneMainEntityEm, EmId> {
 }
 
@@ -553,11 +553,11 @@ class Client {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 @Join(value = "relationship.status", type = Join.Type.LEFT_FETCH)
 interface ClientRepository extends CrudRepository<Client, Long> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface RelationshipStatusRepository extends CrudRepository<RelationshipStatus, Long> {
 }

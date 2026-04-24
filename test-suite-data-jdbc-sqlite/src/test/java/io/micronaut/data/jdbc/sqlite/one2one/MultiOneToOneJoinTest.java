@@ -58,7 +58,7 @@ class MultiOneToOneJoinTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface RefARepository extends CrudRepository<RefA, Long> {
 
     @Join(value = "refB", type = Join.Type.LEFT_FETCH)

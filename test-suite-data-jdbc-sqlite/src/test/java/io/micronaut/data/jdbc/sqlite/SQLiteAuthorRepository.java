@@ -23,7 +23,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorDTO;
 import io.micronaut.data.tck.entities.Book;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteAuthorRepository extends io.micronaut.data.tck.repositories.AuthorRepository  {
 
     @Query("select *, author.name as author_name, author.nick_name as author_nick_name from book as book inner join author as author where book.title = :title and book.total_pages > :pages")

@@ -65,7 +65,7 @@ class SQLiteEmbeddedCascadeTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put("datasources.default.url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put("datasources.default.schema-generate", "CREATE");
-            properties.put("datasources.default.dialect", "ANSI");
+            properties.put("datasources.default.dialect", "SQLITE");
             properties.put("datasources.default.db-type", "sqlite");
             properties.put("datasources.default.username", "");
             properties.put("datasources.default.password", "");
@@ -78,7 +78,7 @@ class SQLiteEmbeddedCascadeTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TemplateRepository extends CrudRepository<Template, Long> {
 
     @Join("tags")
@@ -86,7 +86,7 @@ interface TemplateRepository extends CrudRepository<Template, Long> {
     Optional<Template> findById(Long id);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TagRepository extends CrudRepository<Tag, TagPk> {
 }
 

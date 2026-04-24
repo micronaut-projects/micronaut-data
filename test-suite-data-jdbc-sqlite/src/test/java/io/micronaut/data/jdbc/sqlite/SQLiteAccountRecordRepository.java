@@ -20,6 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.AccountRecordRepository;
 import io.micronaut.data.tck.repositories.AccountRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteAccountRecordRepository extends AccountRecordRepository {
 }

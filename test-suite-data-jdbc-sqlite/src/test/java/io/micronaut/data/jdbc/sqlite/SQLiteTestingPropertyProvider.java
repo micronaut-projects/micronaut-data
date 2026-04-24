@@ -50,7 +50,7 @@ public interface SQLiteTestingPropertyProvider extends TestPropertyProvider {
         return Map.of(
             (prefix + ".url"), url,
             (prefix + ".schema-generate"), schemaGenerate().toString(),
-            (prefix + ".dialect"), "ANSI",
+            (prefix + ".dialect"), "SQLITE",
             (prefix + ".db-type"), "sqlite",
             (prefix + ".username"), "",
             (prefix + ".password"), "",

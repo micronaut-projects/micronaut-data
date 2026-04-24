@@ -24,7 +24,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.Collection;
 import java.util.UUID;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SqliteUuidRepository extends CrudRepository<SqliteUuidEntity, UUID> {
 
     UUID findUuidByName(String name);

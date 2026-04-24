@@ -458,7 +458,7 @@ interface MyRepository {
 
     void "test encode insert statement"() {
         given:
-        def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder())
+        def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         expect:
         result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
@@ -467,7 +467,7 @@ interface MyRepository {
 
     void "test encode insert statement for embedded"() {
         given:
-        def result = builder.createCriteriaInsert(Restaurant).build(new SqlQueryBuilder())
+        def result = builder.createCriteriaInsert(Restaurant).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         expect:
         result.query == 'INSERT INTO "restaurant" ("name","street","zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
@@ -486,7 +486,7 @@ interface MyRepository {
 
     void "test encode insert statement - custom mapping strategy"() {
         given:
-        def result = builder.createCriteriaInsert(CountryRegion).build(new SqlQueryBuilder())
+        def result = builder.createCriteriaInsert(CountryRegion).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         expect:
         result.query == 'INSERT INTO "CountryRegion" ("name","countryId") VALUES (?,?)'
@@ -494,7 +494,7 @@ interface MyRepository {
 
     void "test encode insert statement - custom mapping"() {
         given:
-        def result = builder.createCriteriaInsert(City).build(new SqlQueryBuilder())
+        def result = builder.createCriteriaInsert(City).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         expect:
         result.query == 'INSERT INTO "T_CITY" ("C_NAME","country_region_id") VALUES (?,?)'
@@ -503,7 +503,7 @@ interface MyRepository {
 
     void "test encode insert statement - assigned id"() {
         given:
-        def result = builder.createCriteriaInsert(PersonAssignedId).build(new SqlQueryBuilder())
+        def result = builder.createCriteriaInsert(PersonAssignedId).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         expect:
         result.query == 'INSERT INTO "person_assigned_id" ("name","age","enabled","id") VALUES (?,?,?,?)'
@@ -513,7 +513,7 @@ interface MyRepository {
     @Unroll
     void "test build insert embedded"() {
         when:
-            QueryResult encodedQuery = builder.createCriteriaInsert(type).build(new SqlQueryBuilder())
+            QueryResult encodedQuery = builder.createCriteriaInsert(type).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             encodedQuery.query == query
@@ -632,7 +632,7 @@ interface MyRepository {
 
     void "test build composite id query"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE)
             def query = builder.createQuery()
             def root = query.from(Project)
             def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(encoder)
@@ -647,7 +647,7 @@ interface MyRepository {
 
     void "test insert statement with version"() {
         when:
-            def insertResult = builder.createCriteriaInsert(Bike).build(new SqlQueryBuilder())
+            def insertResult = builder.createCriteriaInsert(Bike).build(new SqlQueryBuilder(Dialect.SQLITE))
 
         then:
             insertResult.query == 'INSERT INTO "bike" ("name","age","enabled","public_id","version") VALUES (?,?,?,?,?)'

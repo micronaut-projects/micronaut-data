@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  * This interface is required to inherit only from DataRepository in order to satisfy a TCK scenario.
  */
 @Repository
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface AsciiCharacters extends DataRepository<AsciiCharacter, Long>, IdOperations {
 
     @Query(" ") // it is valid to have a query with no clauses

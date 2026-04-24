@@ -119,7 +119,7 @@ class ManyToManyJoinTableTest {
 
     @Test
     void testBuildCreateStudentTables() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student.class));
 
         assertEquals(2, statements.length);
@@ -129,16 +129,16 @@ class ManyToManyJoinTableTest {
 
     @Test
     void testBuildCreateCourseRatingTables() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating.class));
 
         assertEquals(1, statements.length);
-        assertEquals("CREATE TABLE \"m2m_course_rating\" (\"id\" INTEGER PRIMARY KEY,\"student_id\" BIGINT NOT NULL,\"course_id\" BIGINT NOT NULL,\"rating\" INTEGER NOT NULL);", statements[0]);
+        assertEquals("CREATE TABLE \"m2m_course_rating\" (\"id\" INTEGER PRIMARY KEY,\"student_id\" BIGINT NOT NULL,\"course_id\" BIGINT NOT NULL,\"rating\" INT NOT NULL);", statements[0]);
     }
 
     @Test
     void testBuildCreateCourseTables() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         String[] statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course.class));
 
         assertEquals(1, statements.length);
@@ -151,7 +151,7 @@ class ManyToManyJoinTableTest {
         var query = builder.createQuery(Student.class);
         var root = query.from(Student.class);
         root.join("courses", Join.Type.FETCH);
-        var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT student_.\"id\",student_.\"name\",student_courses_.\"id\" AS courses_id,student_courses_.\"name\" AS courses_name FROM \"m2m_student\" student_ INNER JOIN \"m2m_student_course_association\" student_courses_m2m_student_course_association_ ON student_.\"id\"=student_courses_m2m_student_course_association_.\"st_id\"  INNER JOIN \"m2m_course\" student_courses_ ON student_courses_m2m_student_course_association_.\"cs_id\"=student_courses_.\"id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
         assertEquals(Map.of("1", "id"), builtQuery.getParameters());
@@ -163,7 +163,7 @@ class ManyToManyJoinTableTest {
         var query = builder.createQuery(Student.class);
         var root = query.from(Student.class);
         root.join("ratings", Join.Type.FETCH);
-        var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var builtQuery = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT student_.\"id\",student_.\"name\",student_ratings_.\"id\" AS ratings_id,student_ratings_.\"student_id\" AS ratings_student_id,student_ratings_.\"course_id\" AS ratings_course_id,student_ratings_.\"rating\" AS ratings_rating FROM \"m2m_student\" student_ INNER JOIN \"m2m_course_rating\" student_ratings_ ON student_.\"id\"=student_ratings_.\"student_id\" WHERE (student_.\"id\" = ?)", builtQuery.getQuery());
         assertEquals(Map.of("1", "id"), builtQuery.getParameters());
@@ -171,7 +171,7 @@ class ManyToManyJoinTableTest {
 
     @Test
     void testBuildInsert() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         RuntimePersistentEntity<?> entity = getRuntimePersistentEntity(Student.class);
         String query = encoder.buildJoinTableInsert(entity, (Association) entity.getPropertyByName("courses"));
 
@@ -181,7 +181,7 @@ class ManyToManyJoinTableTest {
     @Test
     void testBuildCourseRatingCompositeKeyInsert() {
         RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder();
-        var insert = builder.createCriteriaInsert(CourseRatingCompositeKey.class).build(new SqlQueryBuilder());
+        var insert = builder.createCriteriaInsert(CourseRatingCompositeKey.class).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("INSERT INTO \"m2m_course_rating_ck\" (\"rating\",\"xyz_student_id\",\"abc_course_id\") VALUES (?,?,?)", insert.getQuery());
     }
@@ -201,7 +201,7 @@ class ManyToManyJoinTableTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface StudentRepository extends CrudRepository<Student, Long> {
 
     @Join(value = "courses", type = Join.Type.LEFT_FETCH)
@@ -221,7 +221,7 @@ interface StudentRepository extends CrudRepository<Student, Long> {
     int countDistinctByCoursesRatingsRatingInList(List<Integer> ratings);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CourseRepository extends CrudRepository<Course, Long> {
 
     @Join(value = "students", type = Join.Type.LEFT_FETCH)
@@ -229,7 +229,7 @@ interface CourseRepository extends CrudRepository<Course, Long> {
     List<Course> findAll();
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CourseRatingRepository extends CrudRepository<CourseRating, Long> {
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)
@@ -243,7 +243,7 @@ interface CourseRatingRepository extends CrudRepository<CourseRating, Long> {
     Optional<CourseRating> findById(Long id);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRatingCompositeKey, CourseRatingKey> {
 
     @Join(value = "student", type = Join.Type.LEFT_FETCH)

@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static jakarta.data.repository.By.ID;
 
 @Repository
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface Catalog extends DataRepository<CatalogProduct, String> {
 
     @Insert

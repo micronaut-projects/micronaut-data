@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static io.micronaut.data.model.query.builder.sql.Dialect.ANSI;
+import static io.micronaut.data.model.query.builder.sql.Dialect.SQLITE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
@@ -54,7 +54,7 @@ class SQLiteEmbedded2Test {
     }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface FooRepo extends CrudRepository<Foo, Integer> {
 }
 

@@ -7,7 +7,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TenancyPersonRepository extends CrudRepository<TenancyPerson, Integer> {
 
     @Query(

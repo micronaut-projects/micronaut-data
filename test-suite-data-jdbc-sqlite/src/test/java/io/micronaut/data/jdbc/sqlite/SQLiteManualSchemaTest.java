@@ -109,7 +109,7 @@ class SQLiteManualSchemaTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put("datasources.default.url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put("datasources.default.schema-generate", "NONE");
-            properties.put("datasources.default.dialect", "ANSI");
+            properties.put("datasources.default.dialect", "SQLITE");
             properties.put("datasources.default.db-type", "sqlite");
             properties.put("datasources.default.username", "");
             properties.put("datasources.default.password", "");

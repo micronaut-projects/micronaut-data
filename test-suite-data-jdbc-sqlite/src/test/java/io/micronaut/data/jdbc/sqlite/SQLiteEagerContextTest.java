@@ -41,7 +41,7 @@ class SQLiteEagerContextTest {
             Map<String, Object> properties = new HashMap<>();
             properties.put(prefix + ".url", "jdbc:sqlite:" + databaseFile.getAbsolutePath());
             properties.put(prefix + ".schema-generate", "CREATE");
-            properties.put(prefix + ".dialect", "ANSI");
+            properties.put(prefix + ".dialect", "SQLITE");
             properties.put(prefix + ".db-type", "sqlite");
             properties.put(prefix + ".username", "");
             properties.put(prefix + ".password", "");

@@ -7,7 +7,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface MyBookRepository extends CrudRepository<MyBook, Integer> {
     @Query("""
         SELECT 1 AS id, 'Title #1' AS title

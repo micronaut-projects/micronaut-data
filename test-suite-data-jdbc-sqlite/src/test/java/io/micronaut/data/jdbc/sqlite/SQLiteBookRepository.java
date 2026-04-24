@@ -23,7 +23,7 @@ import io.micronaut.data.tck.entities.Book;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public abstract class SQLiteBookRepository extends io.micronaut.data.tck.repositories.BookRepository {
 
     public SQLiteBookRepository(SQLiteAuthorRepository authorRepository) {

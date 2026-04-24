@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public abstract class SQLitePersonRepository implements io.micronaut.data.tck.repositories.PersonRepository {
 
     private final JdbcOperations jdbcOperations;

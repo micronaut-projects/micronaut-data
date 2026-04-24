@@ -10,7 +10,7 @@ import io.micronaut.data.tck.repositories.PatientRepository;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLitePatientRepository extends PatientRepository {
 
     @Override

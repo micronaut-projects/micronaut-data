@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.micronaut.data.model.query.builder.sql.Dialect.ANSI;
+import static io.micronaut.data.model.query.builder.sql.Dialect.SQLITE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -171,7 +171,7 @@ class MultiManyToOneJoinTest {
     }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface RefARepository extends CrudRepository<RefA, Long> {
 
     @Join(value = "refB", type = Join.Type.LEFT_FETCH)
@@ -229,7 +229,7 @@ class RefC {
     void setName(String name) { this.name = name; }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 @Join("author")
 interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
 
@@ -368,7 +368,7 @@ class User {
     void setLogin(String login) { this.login = login; }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembership, Long> {
     List<UserGroupMembership> findAllByUserLogin(String login);
 
@@ -414,10 +414,10 @@ class MyOther {
     void setLid(String lid) { this.lid = lid; }
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface MyEntityRepository extends CrudRepository<MyEntity, Long> {
 }
 
-@JdbcRepository(dialect = ANSI)
+@JdbcRepository(dialect = SQLITE)
 interface MyOtherRepository extends CrudRepository<MyOther, String> {
 }

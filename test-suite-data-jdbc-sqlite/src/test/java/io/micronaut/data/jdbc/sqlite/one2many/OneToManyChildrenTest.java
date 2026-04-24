@@ -74,7 +74,7 @@ class OneToManyChildrenTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface ParentRepository extends CrudRepository<Parent, Long> {
 
     @Join(value = "children", type = Join.Type.FETCH)

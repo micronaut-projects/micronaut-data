@@ -10,7 +10,7 @@ import io.micronaut.data.tck.entities.Challenge;
 import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface ChallengeRepository extends CrudRepository<Challenge, Long> {
 
     @Override

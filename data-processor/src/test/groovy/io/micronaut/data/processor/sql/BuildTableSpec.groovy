@@ -403,7 +403,7 @@ class Emb {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQLITE)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:

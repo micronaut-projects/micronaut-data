@@ -163,11 +163,11 @@ class TestHierarchyEntity {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TestHierarchyEntityRepository extends CrudRepository<TestHierarchyEntity, UUID> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface TestEntityRepository extends CrudRepository<TestEntity, UUID>, JpaSpecificationExecutor<TestEntity> {
 
     @Join("parents")

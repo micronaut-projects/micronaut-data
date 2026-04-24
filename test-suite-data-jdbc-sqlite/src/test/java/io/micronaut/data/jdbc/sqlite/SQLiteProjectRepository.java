@@ -20,7 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.jdbc.entities.ProjectId;
 import io.micronaut.data.tck.repositories.ProjectRepository;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface SQLiteProjectRepository extends ProjectRepository {
     @Override
     void update(ProjectId projectId, String name);

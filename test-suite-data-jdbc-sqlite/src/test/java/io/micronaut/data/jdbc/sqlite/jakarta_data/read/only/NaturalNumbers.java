@@ -24,7 +24,7 @@ import java.util.stream.Stream;
  * TODO figure out a way to make this a ReadOnlyRepository instead.
  */
 @Repository
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface NaturalNumbers extends BasicRepository<NaturalNumber, Long>, IdOperations {
 
     long countAll();

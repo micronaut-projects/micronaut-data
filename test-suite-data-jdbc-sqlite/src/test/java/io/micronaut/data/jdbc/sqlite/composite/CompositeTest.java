@@ -164,25 +164,25 @@ class CompositeTest {
 
     @Test
     void testBuildCreateSettlement() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         String[] statements = encoder.buildCreateTableStatements(builder.getRuntimeEntityRegistry().getEntity(Settlement.class));
 
-        assertEquals("CREATE TABLE \"comp_settlement\" (\"code\" VARCHAR(255) NOT NULL,\"code_id\" INTEGER NOT NULL,\"id_county_id_id\" INTEGER NOT NULL,\"id_county_id_state_id\" INTEGER NOT NULL,\"description\" VARCHAR(255) NOT NULL,\"settlement_type_id\" BIGINT NOT NULL,\"zone_id\" BIGINT NOT NULL,\"is_enabled\" BOOLEAN NOT NULL, PRIMARY KEY(\"code\",\"code_id\",\"id_county_id_id\",\"id_county_id_state_id\"));", String.join("\n", statements));
+        assertEquals("CREATE TABLE \"comp_settlement\" (\"code\" VARCHAR(255) NOT NULL,\"code_id\" INT NOT NULL,\"id_county_id_id\" INT NOT NULL,\"id_county_id_state_id\" INT NOT NULL,\"description\" VARCHAR(255) NOT NULL,\"settlement_type_id\" BIGINT NOT NULL,\"zone_id\" BIGINT NOT NULL,\"is_enabled\" BOOLEAN NOT NULL, PRIMARY KEY(\"code\",\"code_id\",\"id_county_id_id\",\"id_county_id_state_id\"));", String.join("\n", statements));
     }
 
     @Test
     void testBuildCreateCitizen() {
-        SqlQueryBuilder encoder = new SqlQueryBuilder();
+        SqlQueryBuilder encoder = new SqlQueryBuilder(Dialect.SQLITE);
         String[] statements = encoder.buildCreateTableStatements(builder.getRuntimeEntityRegistry().getEntity(Citizen.class));
 
         assertEquals(2, statements.length);
-        assertEquals("CREATE TABLE \"citizen_settlement\" (\"citizen_id\" BIGINT NOT NULL,\"settlement_id_code\" VARCHAR(255) NOT NULL,\"settlement_id_code_id\" INTEGER NOT NULL,\"settlement_id_county_id_id\" INTEGER NOT NULL,\"settlement_id_county_id_state_id\" INTEGER NOT NULL, PRIMARY KEY(\"citizen_id\",\"settlement_id_code\",\"settlement_id_code_id\",\"settlement_id_county_id_id\",\"settlement_id_county_id_state_id\"));", statements[0]);
+        assertEquals("CREATE TABLE \"citizen_settlement\" (\"citizen_id\" BIGINT NOT NULL,\"settlement_id_code\" VARCHAR(255) NOT NULL,\"settlement_id_code_id\" INT NOT NULL,\"settlement_id_county_id_id\" INT NOT NULL,\"settlement_id_county_id_state_id\" INT NOT NULL, PRIMARY KEY(\"citizen_id\",\"settlement_id_code\",\"settlement_id_code_id\",\"settlement_id_county_id_id\",\"settlement_id_county_id_state_id\"));", statements[0]);
         assertEquals("CREATE TABLE \"comp_citizen\" (\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR(255) NOT NULL);", statements[1]);
     }
 
     @Test
     void testBuildInsert() {
-        var res = builder.createCriteriaInsert(Settlement.class).build(new SqlQueryBuilder());
+        var res = builder.createCriteriaInsert(Settlement.class).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("INSERT INTO \"comp_settlement\" (\"description\",\"settlement_type_id\",\"zone_id\",\"is_enabled\",\"code\",\"code_id\",\"id_county_id_id\",\"id_county_id_state_id\") VALUES (?,?,?,?,?,?,?,?)", res.getQuery());
         assertEquals(List.of("description", "settlementType.id", "zone.id", "enabled", "id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -204,7 +204,7 @@ class CompositeTest {
         for (String prop : query.getRoot().getPersistentEntity().getPersistentPropertyNames()) {
             query.set(prop, builder.parameter(Object.class));
         }
-        var res = query.build(new SqlQueryBuilder());
+        var res = query.build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("UPDATE \"comp_settlement\" SET \"code\"=?,\"code_id\"=?,\"id_county_id_id\"=?,\"id_county_id_state_id\"=?,\"description\"=?,\"settlement_type_id\"=?,\"zone_id\"=?,\"is_enabled\"=? WHERE (\"code\" = ? AND \"code_id\" = ? AND \"id_county_id_id\" = ? AND \"id_county_id_state_id\" = ?)", res.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id", "description", "settlementType.id", "zone.id", "enabled", "id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -227,7 +227,7 @@ class CompositeTest {
     void testBuildQueryByIdParameter() {
         var query = builder.createQuery();
         var root = query.from(Settlement.class);
-        var q = query.where(builder.equal(root.id(), builder.parameter(SettlementPk.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(SettlementPk.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\" FROM \"comp_settlement\" settlement_ WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -246,7 +246,7 @@ class CompositeTest {
 
         var query = builder.createQuery();
         var root = query.from(Settlement.class);
-        var q = query.where(builder.equal(root.id(), settlementPk)).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), settlementPk)).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\" FROM \"comp_settlement\" settlement_ WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -265,7 +265,7 @@ class CompositeTest {
         var root = query.from(Settlement.class);
         root.join("settlementType", Join.Type.FETCH);
         root.join("zone", Join.Type.FETCH);
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\",settlement_settlement_type_.\"name\" AS settlement_type_name,settlement_zone_.\"name\" AS zone_name FROM \"comp_settlement\" settlement_ INNER JOIN \"comp_zone\" settlement_zone_ ON settlement_.\"zone_id\"=settlement_zone_.\"id\" INNER JOIN \"comp_sett_type\" settlement_settlement_type_ ON settlement_.\"settlement_type_id\"=settlement_settlement_type_.\"id\" WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -282,7 +282,7 @@ class CompositeTest {
         var root = query.from(Settlement.class);
         root.fetch("settlementType");
         root.fetch("zone");
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\",settlement_settlement_type_.\"name\" AS settlement_type_name,settlement_zone_.\"name\" AS zone_name FROM \"comp_settlement\" settlement_ INNER JOIN \"comp_zone\" settlement_zone_ ON settlement_.\"zone_id\"=settlement_zone_.\"id\" INNER JOIN \"comp_sett_type\" settlement_settlement_type_ ON settlement_.\"settlement_type_id\"=settlement_settlement_type_.\"id\" WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -300,7 +300,7 @@ class CompositeTest {
         root.join("settlementType", Join.Type.FETCH);
         root.join("zone", Join.Type.FETCH);
         root.join("id.county", Join.Type.FETCH);
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\",settlement_settlement_type_.\"name\" AS settlement_type_name,settlement_id_county_.\"county_name\" AS id_county_county_name,settlement_id_county_.\"is_enabled\" AS id_county_is_enabled,settlement_zone_.\"name\" AS zone_name FROM \"comp_settlement\" settlement_ INNER JOIN \"comp_zone\" settlement_zone_ ON settlement_.\"zone_id\"=settlement_zone_.\"id\" INNER JOIN \"comp_country\" settlement_id_county_ ON settlement_.\"id_county_id_id\"=settlement_id_county_.\"id\" AND settlement_.\"id_county_id_state_id\"=settlement_id_county_.\"state_id\" INNER JOIN \"comp_sett_type\" settlement_settlement_type_ ON settlement_.\"settlement_type_id\"=settlement_settlement_type_.\"id\" WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -318,7 +318,7 @@ class CompositeTest {
         root.fetch("settlementType");
         root.fetch("zone");
         root.fetch("id.county");
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT settlement_.\"code\",settlement_.\"code_id\",settlement_.\"id_county_id_id\",settlement_.\"id_county_id_state_id\",settlement_.\"description\",settlement_.\"settlement_type_id\",settlement_.\"zone_id\",settlement_.\"is_enabled\",settlement_settlement_type_.\"name\" AS settlement_type_name,settlement_id_county_.\"county_name\" AS id_county_county_name,settlement_id_county_.\"is_enabled\" AS id_county_is_enabled,settlement_zone_.\"name\" AS zone_name FROM \"comp_settlement\" settlement_ INNER JOIN \"comp_zone\" settlement_zone_ ON settlement_.\"zone_id\"=settlement_zone_.\"id\" INNER JOIN \"comp_country\" settlement_id_county_ ON settlement_.\"id_county_id_id\"=settlement_id_county_.\"id\" AND settlement_.\"id_county_id_state_id\"=settlement_id_county_.\"state_id\" INNER JOIN \"comp_sett_type\" settlement_settlement_type_ ON settlement_.\"settlement_type_id\"=settlement_settlement_type_.\"id\" WHERE (settlement_.\"code\" = ? AND settlement_.\"code_id\" = ? AND settlement_.\"id_county_id_id\" = ? AND settlement_.\"id_county_id_state_id\" = ?)", q.getQuery());
         assertEquals(List.of("id.code", "id.codeId", "id.county.id.id", "id.county.id.state.id"), List.of(
@@ -334,7 +334,7 @@ class CompositeTest {
         var query = builder.createQuery();
         var root = query.from(Citizen.class);
         root.join("settlements", Join.Type.FETCH);
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT citizen_.\"id\",citizen_.\"name\",citizen_settlements_.\"code\" AS settlements_code,citizen_settlements_.\"code_id\" AS settlements_code_id,citizen_settlements_.\"id_county_id_id\" AS settlements_id_county_id_id,citizen_settlements_.\"id_county_id_state_id\" AS settlements_id_county_id_state_id,citizen_settlements_.\"description\" AS settlements_description,citizen_settlements_.\"settlement_type_id\" AS settlements_settlement_type_id,citizen_settlements_.\"zone_id\" AS settlements_zone_id,citizen_settlements_.\"is_enabled\" AS settlements_is_enabled FROM \"comp_citizen\" citizen_ INNER JOIN \"citizen_settlement\" citizen_settlements_citizen_settlement_ ON citizen_.\"id\"=citizen_settlements_citizen_settlement_.\"citizen_id\"  INNER JOIN \"comp_settlement\" citizen_settlements_ ON citizen_settlements_citizen_settlement_.\"settlement_id_code\"=citizen_settlements_.\"code\" AND citizen_settlements_citizen_settlement_.\"settlement_id_code_id\"=citizen_settlements_.\"code_id\" AND citizen_settlements_citizen_settlement_.\"settlement_id_county_id_id\"=citizen_settlements_.\"id_county_id_id\" AND citizen_settlements_citizen_settlement_.\"settlement_id_county_id_state_id\"=citizen_settlements_.\"id_county_id_state_id\" WHERE (citizen_.\"id\" = ?)", q.getQuery());
         assertEquals("id", q.getParameters().get("1"));
@@ -345,7 +345,7 @@ class CompositeTest {
         var query = builder.createQuery();
         var root = query.from(Citizen.class);
         root.fetch("settlements");
-        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder());
+        var q = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder(Dialect.SQLITE));
 
         assertEquals("SELECT citizen_.\"id\",citizen_.\"name\",citizen_settlements_.\"code\" AS settlements_code,citizen_settlements_.\"code_id\" AS settlements_code_id,citizen_settlements_.\"id_county_id_id\" AS settlements_id_county_id_id,citizen_settlements_.\"id_county_id_state_id\" AS settlements_id_county_id_state_id,citizen_settlements_.\"description\" AS settlements_description,citizen_settlements_.\"settlement_type_id\" AS settlements_settlement_type_id,citizen_settlements_.\"zone_id\" AS settlements_zone_id,citizen_settlements_.\"is_enabled\" AS settlements_is_enabled FROM \"comp_citizen\" citizen_ INNER JOIN \"citizen_settlement\" citizen_settlements_citizen_settlement_ ON citizen_.\"id\"=citizen_settlements_citizen_settlement_.\"citizen_id\"  INNER JOIN \"comp_settlement\" citizen_settlements_ ON citizen_settlements_citizen_settlement_.\"settlement_id_code\"=citizen_settlements_.\"code\" AND citizen_settlements_citizen_settlement_.\"settlement_id_code_id\"=citizen_settlements_.\"code_id\" AND citizen_settlements_citizen_settlement_.\"settlement_id_county_id_id\"=citizen_settlements_.\"id_county_id_id\" AND citizen_settlements_citizen_settlement_.\"settlement_id_county_id_state_id\"=citizen_settlements_.\"id_county_id_state_id\" WHERE (citizen_.\"id\" = ?)", q.getQuery());
         assertEquals("id", q.getParameters().get("1"));
@@ -396,7 +396,7 @@ class CompositeTest {
     }
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface SettlementRepository extends CrudRepository<Settlement, SettlementPk>, JpaSpecificationExecutor<Settlement> {
 
     @Join(value = "settlementType", type = Join.Type.FETCH)
@@ -415,19 +415,19 @@ interface SettlementRepository extends CrudRepository<Settlement, SettlementPk>,
     List<Settlement> findAll(Pageable pageable);
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface SettlementTypeRepository extends CrudRepository<SettlementType, Long> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface ZoneRepository extends CrudRepository<Zone, Long> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CountryRepository extends CrudRepository<County, CountyPk> {
 }
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 interface CitizenRepository extends CrudRepository<Citizen, Long> {
 
     @Join(value = "settlements", type = Join.Type.FETCH)

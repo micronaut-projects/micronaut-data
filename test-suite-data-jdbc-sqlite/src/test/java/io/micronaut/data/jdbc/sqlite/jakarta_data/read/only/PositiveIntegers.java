@@ -24,7 +24,7 @@ import java.util.stream.Stream;
  * as the NaturalNumbers repository: the positive integers 1-100.
  * This repository is pre-populated at test startup and verified prior to running tests.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface PositiveIntegers extends BasicRepository<NaturalNumber, Long> {
     long countByIdLessThan(long number);
 

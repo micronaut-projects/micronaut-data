@@ -13,7 +13,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.util.UUID;
 
-@JdbcRepository(dialect = Dialect.ANSI)
+@JdbcRepository(dialect = Dialect.SQLITE)
 public interface MyOrderRepository extends CrudRepository<MyOrder, UUID> {
     @NonNull
     @JoinSpecifications({
