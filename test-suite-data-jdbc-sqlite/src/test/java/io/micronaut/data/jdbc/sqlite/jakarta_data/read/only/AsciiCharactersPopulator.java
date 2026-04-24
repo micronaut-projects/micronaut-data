@@ -13,7 +13,7 @@ public class AsciiCharactersPopulator implements Populator<AsciiCharacters> {
 
     @Override
     public void populationLogic(AsciiCharacters repo) {
-        List<AsciiCharacter> dictonary = new ArrayList<>();
+        List<AsciiCharacter> dictionary = new ArrayList<>();
 
         IntStream.range(1, 128) // Some databases don't support ASCII NULL character (0)
             .forEach(value -> {
@@ -25,10 +25,10 @@ public class AsciiCharactersPopulator implements Populator<AsciiCharacters> {
                 inst.setThisCharacter((char) value);
                 inst.setControl(Character.isISOControl((char) value));
 
-                dictonary.add(inst);
+                dictionary.add(inst);
             });
 
-        repo.saveAll(dictonary);
+        repo.saveAll(dictionary);
     }
 
     @Override
