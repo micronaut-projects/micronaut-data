@@ -938,16 +938,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " NOT NULL";
                 }
                 break;
-            default:
+            case MYSQL:
                 if (type == UUID) {
-                    // mysql requires the UUID generation in the insert statement
-                    if (dialect != Dialect.MYSQL) {
-                        column += " NOT NULL DEFAULT random_uuid()";
-                    } else {
-                        column += " NOT NULL";
-                    }
+                    column += " NOT NULL";
                 } else if (dataType.isNumeric()) {
                     column += " AUTO_INCREMENT";
+                }
+                break;
+            default:
+                if (type == UUID) {
+                    column += " NOT NULL DEFAULT random_uuid()";
                 }
         }
         if (isPk && !addPkBefore) {
