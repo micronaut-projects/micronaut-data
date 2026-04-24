@@ -20,8 +20,10 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.order.Ordered;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Defines the capabilities of a {@link Connection}.
@@ -48,7 +50,11 @@ public interface ConnectionCapabilities extends Ordered {
         /**
          * Whether the connection supports invoking {@link Connection#setReadOnly(boolean)}.
          */
-        READ_ONLY
+        READ_ONLY,
+        /**
+         * Whether the connection supports JDBC batch inserts.
+         */
+        BATCH_INSERT
     }
 
     /**
@@ -60,13 +66,30 @@ public interface ConnectionCapabilities extends Ordered {
     ConnectionCapabilities INSTANCE = loadInstance();
 
     /**
+     * Determines whether the given database supports the requested capability.
+     *
+     * @param capability The capability to evaluate
+     * @param databaseProductNameSupplier supplier of the database product name
+     * @return {@code true} if the connection supports the capability; {@code false} otherwise
+     */
+    boolean supports(Capability capability, Supplier<String> databaseProductNameSupplier);
+
+    /**
      * Determines whether the given JDBC connection supports the requested capability.
      *
      * @param capability The capability to evaluate
      * @param connection The JDBC connection
      * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
-    boolean supports(Capability capability, Connection connection);
+    default boolean supports(Capability capability, Connection connection) {
+        return supports(capability, () -> {
+            try {
+                return connection.getMetaData().getDatabaseProductName();
+            } catch (SQLException e) {
+                return "Unknown";
+            }
+        });
+    }
 
     private static ConnectionCapabilities loadInstance() {
         List<ConnectionCapabilities> providers = new ArrayList<>();

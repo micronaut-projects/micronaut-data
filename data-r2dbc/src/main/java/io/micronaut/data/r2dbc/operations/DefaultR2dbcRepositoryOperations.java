@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionCapabilities;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
@@ -125,6 +126,7 @@ import reactor.util.context.Context;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -918,7 +920,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
+                if (!ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.BATCH_INSERT, () -> ctx.connection.getMetadata().getDatabaseProductName()) ||
+                    !isSupportsBatchInsert(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(persistOp -> {

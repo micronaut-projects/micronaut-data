@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionCapabilities;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -853,7 +854,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
+            if (!ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.BATCH_INSERT, ctx.connection) || !isSupportsBatchInsert(persistentEntity, storedQuery)) {
                 return operation.split().stream()
                     .map(persistOp -> {
                         JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);

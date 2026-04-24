@@ -18,32 +18,32 @@ package example;
 import io.micronaut.data.connection.ConnectionCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.function.Supplier;
 
 /**
  * {@link ConnectionCapabilities} implementation used by the SQLite JDBC example.
  */
 public final class SqliteConnectionCapabilities implements ConnectionCapabilities {
     private static final Logger LOG = LoggerFactory.getLogger(SqliteConnectionCapabilities.class);
-    public static final String SQ_LITE = "SQLite";
+    public static final String SQLITE = "SQLite";
+    private final static String MICROSOFT_SQL_SERVER = "Microsoft SQL Server";
 
     /**
      * Connection capabilities implementation for the SQLite JDBC example.
      * <p>
      * SQLite connections do not support toggling read-only mode through JDBC, so
      * {@link ConnectionCapabilities.Capability#READ_ONLY} is reported as unsupported for SQLite URLs.
+     * SQLite generated keys are also not reliable for JDBC batch inserts, so
+     * {@link ConnectionCapabilities.Capability#BATCH_INSERT} is reported as unsupported.
      * Other capabilities are treated as supported.
      */
     @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        if (capability == ConnectionCapabilities.Capability.READ_ONLY) {
-            try {
-                return !connection.getMetaData().getDatabaseProductName().equalsIgnoreCase(SQ_LITE);
-            } catch (SQLException e) {
-                LOG.trace("Could not get metadata from connection", e);
-            }
+    public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
+        String name = databaseProductNameSupplier.get();
+        if (name.equalsIgnoreCase(SQLITE) && (capability == Capability.READ_ONLY || capability == Capability.BATCH_INSERT)) {
+            return false;
+        } else if (name.equalsIgnoreCase(MICROSOFT_SQL_SERVER) && capability == Capability.BATCH_INSERT) {
+            return false;
         }
         return true;
     }

@@ -11,18 +11,28 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Property(name = "datasources.default.url", value = "jdbc:sqlite:file:mydb?mode=memory&cache=shared")
 @Property(name = "datasources.default.driver-class-name", value = "org.sqlite.JDBC")
 @Property(name = "datasources.default.dialect", value = "ANSI")
 @Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
 @MicronautTest(transactional = false)
-class BookRepositoryTest {
+class PersonRepositoryTest {
 
     @Test
-    void sqliteConnectionCapabilitiesDoesNotApplyReadOnlyForSqliteConnections(BookRepository repository) {
-        assertDoesNotThrow(() -> repository.findAll().iterator().hasNext());
+    void batchInsertSQLite(PersonRepository personRepository) {
+        long count = personRepository.count();
+        personRepository.save(new Person(null, "Sergio", 43));
+        assertEquals(1 + count, personRepository.count());
+        count = personRepository.count();
+        personRepository.saveAll(List.of(
+            new Person(null, "John Ternus", 51),
+            new Person(null, "Tim Cook", 65)
+        ));
+        assertEquals(2 + count, personRepository.count());
     }
 }

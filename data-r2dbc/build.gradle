@@ -27,6 +27,7 @@ dependencies {
 
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
+    testImplementation(mnTest.junit.jupiter.params)
     testImplementation mnR2dbc.r2dbc.pool
     testImplementation mnRxjava2.micronaut.rxjava2
 

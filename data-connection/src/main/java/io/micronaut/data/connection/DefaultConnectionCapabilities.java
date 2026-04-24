@@ -16,7 +16,7 @@
 package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.Internal;
-import java.sql.Connection;
+import java.util.function.Supplier;
 
 /**
  * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
@@ -25,9 +25,11 @@ import java.sql.Connection;
  */
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
+    private static final String MICROSOFT_SQL_SERVER = "Microsoft SQL Server";
 
     @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
-        return true;
+    public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
+        String dbProductName = databaseProductNameSupplier.get();
+        return capability != Capability.BATCH_INSERT || !dbProductName.equalsIgnoreCase(MICROSOFT_SQL_SERVER);
     }
 }
