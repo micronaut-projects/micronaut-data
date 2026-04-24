@@ -60,15 +60,15 @@ public enum Dialect {
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, ALL_TYPES, false, true, true, true),
+    POSTGRES(true, false, ALL_TYPES, false, true, true, true, true, true),
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER(false, false, ALL_TYPES),
+    SQL_SERVER(false, false, ALL_TYPES, false, false, false, false, true, false),
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true, true, true, true),
+    ORACLE(true, true, ALL_TYPES, true, true, true, true, true, true),
     /**
      * SQLite
      */
@@ -76,7 +76,8 @@ public enum Dialect {
     /**
      * Ansi compliant SQL.
      */
-    ANSI(true, false, ALL_TYPES);
+    ANSI(true, false, ALL_TYPES, false, true, true, true, false, false);
+
 
     private final boolean supportsBatch;
     private final boolean stringUUID;
@@ -88,6 +89,9 @@ public enum Dialect {
     private final boolean supportsUpdateReturning;
     private final boolean supportsInsertReturning;
     private final boolean supportsDeleteReturning;
+    private final boolean supportsReadOnly;
+    private final boolean supportsBatchInsert;
+
 
     /**
      * Allows customization of batch support.
@@ -97,7 +101,7 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      */
     Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported) {
-        this(supportsBatch, stringUUID, joinTypesSupported, false, false, false, false);
+        this(supportsBatch, stringUUID, joinTypesSupported, false, false, false, false, true, true);
     }
 
     /**
@@ -110,6 +114,8 @@ public enum Dialect {
      * @param supportsUpdateReturning Whether the dialect supports UPDATE ... RETURNING clause.
      * @param supportsInsertReturning Whether the dialect supports INSERT ... RETURNING clause.
      * @param supportsDeleteReturning Whether the dialect supports DELETE ... RETURNING clause.
+     * @param supportsReadOnly Whether the dialect supports invoking {@link java.sql.Connection#setReadOnly(boolean)}
+     * @param supportsBatchInsert Whether the dialect supports batch inserts
      * @since 4.2.0
      */
     Dialect(boolean supportsBatch,
@@ -118,7 +124,9 @@ public enum Dialect {
             boolean supportsJsonEntity,
             boolean supportsUpdateReturning,
             boolean supportsInsertReturning,
-            boolean supportsDeleteReturning) {
+            boolean supportsDeleteReturning,
+            boolean supportsReadOnly,
+            boolean supportsBatchInsert) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.joinTypesSupported = joinTypesSupported;
@@ -126,6 +134,8 @@ public enum Dialect {
         this.supportsUpdateReturning = supportsUpdateReturning;
         this.supportsInsertReturning = supportsInsertReturning;
         this.supportsDeleteReturning = supportsDeleteReturning;
+        this.supportsReadOnly = supportsReadOnly;
+        this.supportsBatchInsert = supportsBatchInsert;
     }
 
     /**
@@ -213,5 +223,25 @@ public enum Dialect {
      */
     public boolean supportsDeleteReturning() {
         return supportsDeleteReturning;
+    }
+
+    /**
+     * Whether the dialect supports read only. e.g. invoking {@link java.sql.Connection#setReadOnly(boolean)}.
+     *
+     * @return true if it does support
+     * @since 5.0.0
+     */
+    public boolean supportsReadOnly() {
+        return supportsReadOnly;
+    }
+
+    /**
+     * Whether the dialect supports batch insert.
+     *
+     * @return true if it does support
+     * @since 4.2.0
+     */
+    public boolean supportsBatchInsert() {
+        return supportsBatchInsert;
     }
 }
