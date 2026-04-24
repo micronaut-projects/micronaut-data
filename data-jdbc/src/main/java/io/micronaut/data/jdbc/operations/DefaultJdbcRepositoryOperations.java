@@ -1176,7 +1176,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
         if (persistentEntity.hasIdentity()
             && persistentEntity.getIdentity().isGenerated()
-            && !ConnectionCapabilities.INSTANCE.supports(ConnectionCapabilities.Capability.BATCH_INSERT, jdbcOperationContext.connection)) {
+            && !jdbcOperationContext.dialect.supportsBatchInsert()) {
             return false;
         }
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
