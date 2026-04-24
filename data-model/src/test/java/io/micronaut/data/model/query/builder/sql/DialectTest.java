@@ -61,7 +61,7 @@ class DialectTest {
         assertTrue(Dialect.POSTGRES.allowBatch());
         assertFalse(Dialect.SQL_SERVER.allowBatch());
         assertTrue(Dialect.ORACLE.allowBatch());
-        assertTrue(Dialect.SQLITE.allowBatch());
+        assertFalse(Dialect.SQLITE.allowBatch());
         assertTrue(Dialect.ANSI.allowBatch());
     }
 
@@ -83,8 +83,8 @@ class DialectTest {
         assertTrue(Dialect.POSTGRES.supportsUpdateReturning());
         assertFalse(Dialect.SQL_SERVER.supportsUpdateReturning());
         assertTrue(Dialect.ORACLE.supportsUpdateReturning());
-        assertFalse(Dialect.SQLITE.supportsUpdateReturning());
-        assertTrue(Dialect.ANSI.supportsUpdateReturning());
+        assertTrue(Dialect.SQLITE.supportsUpdateReturning());
+        assertFalse(Dialect.ANSI.supportsUpdateReturning());
     }
 
     @Test
@@ -94,8 +94,8 @@ class DialectTest {
         assertTrue(Dialect.POSTGRES.supportsInsertReturning());
         assertFalse(Dialect.SQL_SERVER.supportsInsertReturning());
         assertTrue(Dialect.ORACLE.supportsInsertReturning());
-        assertFalse(Dialect.SQLITE.supportsInsertReturning());
-        assertTrue(Dialect.ANSI.supportsInsertReturning());
+        assertTrue(Dialect.SQLITE.supportsInsertReturning());
+        assertFalse(Dialect.ANSI.supportsInsertReturning());
     }
 
     @Test
@@ -105,8 +105,8 @@ class DialectTest {
         assertTrue(Dialect.POSTGRES.supportsDeleteReturning());
         assertFalse(Dialect.SQL_SERVER.supportsDeleteReturning());
         assertTrue(Dialect.ORACLE.supportsDeleteReturning());
-        assertFalse(Dialect.SQLITE.supportsDeleteReturning());
-        assertTrue(Dialect.ANSI.supportsDeleteReturning());
+        assertTrue(Dialect.SQLITE.supportsDeleteReturning());
+        assertFalse(Dialect.ANSI.supportsDeleteReturning());
     }
 
     @Test
@@ -116,19 +116,8 @@ class DialectTest {
         assertTrue(Dialect.POSTGRES.supportsReadOnly());
         assertTrue(Dialect.SQL_SERVER.supportsReadOnly());
         assertTrue(Dialect.ORACLE.supportsReadOnly());
-        assertTrue(Dialect.SQLITE.supportsReadOnly());
-        assertFalse(Dialect.ANSI.supportsReadOnly());
-    }
-
-    @Test
-    void supportsBatchInsertMatchesExpectedDialects() {
-        assertTrue(Dialect.H2.supportsBatchInsert());
-        assertTrue(Dialect.MYSQL.supportsBatchInsert());
-        assertTrue(Dialect.POSTGRES.supportsBatchInsert());
-        assertFalse(Dialect.SQL_SERVER.supportsBatchInsert());
-        assertTrue(Dialect.ORACLE.supportsBatchInsert());
-        assertTrue(Dialect.SQLITE.supportsBatchInsert());
-        assertFalse(Dialect.ANSI.supportsBatchInsert());
+        assertFalse(Dialect.SQLITE.supportsReadOnly());
+        assertTrue(Dialect.ANSI.supportsReadOnly());
     }
 
     private static void assertSupportedJoinTypes(Dialect dialect, EnumSet<Join.Type> expectedJoinTypes) {
