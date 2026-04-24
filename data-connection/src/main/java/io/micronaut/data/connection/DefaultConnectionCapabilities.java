@@ -29,7 +29,11 @@ final class DefaultConnectionCapabilities implements ConnectionCapabilities {
 
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
-        String dbProductName = databaseProductNameSupplier.get();
-        return capability != Capability.BATCH_INSERT || !dbProductName.equalsIgnoreCase(MICROSOFT_SQL_SERVER);
+        try {
+            String dbProductName = databaseProductNameSupplier.get();
+            return capability != Capability.BATCH_INSERT || !dbProductName.equalsIgnoreCase(MICROSOFT_SQL_SERVER);
+        } catch (RuntimeException e) {
+            return true;
+        }
     }
 }
