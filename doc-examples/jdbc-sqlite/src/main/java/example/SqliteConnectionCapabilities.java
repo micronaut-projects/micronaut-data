@@ -32,7 +32,8 @@ public final class SqliteConnectionCapabilities implements ConnectionCapabilitie
      * {@link ConnectionCapabilities.Capability#READ_ONLY} is reported as unsupported for SQLite URLs.
      * SQLite generated keys are also not reliable for JDBC batch inserts, so
      * {@link ConnectionCapabilities.Capability#BATCH_INSERT} is reported as unsupported.
-     * Other capabilities are treated as supported.
+     * In addition, {@link ConnectionCapabilities.Capability#BATCH_INSERT} is reported as unsupported
+     * for Microsoft SQL Server. All other capabilities are treated as supported.
      */
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
