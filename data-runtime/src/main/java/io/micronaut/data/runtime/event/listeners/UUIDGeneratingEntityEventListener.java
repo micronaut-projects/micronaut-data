@@ -55,9 +55,12 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties
+        // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
-        AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> UUID.randomUUID());
+        final Object entity = context.getEntity();
+        AutoPopulateUtil.applyTopLevel(context, persistentProperties, property ->
+            shouldSkipPopulation(property, entity) ? null : UUID.randomUUID()
+        );
 
         // 2) Embedded properties (recursive via util)
         AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
@@ -71,6 +74,13 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
+            boolean skipIfPresent = embeddedPersistentProperty.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
+            if (skipIfPresent) {
+                Object existing = prop.get(current);
+                if (existing != null) {
+                    return current; // skip
+                }
+            }
             UUID value = UUID.randomUUID();
             if (prop.isReadOnly()) {
                 return prop.withValue(current, value);
@@ -81,5 +91,10 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
         });
 
         return true;
+    }
+
+    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity) {
+        return property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)
+            && property.getProperty().get(entity) != null;
     }
 }

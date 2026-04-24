@@ -37,7 +37,22 @@ public @interface AutoPopulated {
     String UPDATABLE = "updatable";
 
     /**
+     * The metadata key for {@link #skipIfPresent()}.
+     */
+    String SKIP_IF_PRESENT = "skipIfPresent";
+
+    /**
      * @return Whether the property can be updated following an insert
      */
     boolean updatable() default true;
+
+    /**
+     * Controls whether auto-population should skip if a non-null value is already present.
+     *
+     * Default is false to preserve the existing behavior of always generating a value.
+     *
+     * @return {@code true} if auto-population should be skipped if a non-null value is present, {@code false} otherwise
+     * @since 5.0
+     */
+    boolean skipIfPresent() default false;
 }
