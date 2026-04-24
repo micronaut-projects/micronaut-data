@@ -20,24 +20,32 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-@IgnoreIf({ !jvm.isJava14Compatible() })
 class RecordsSpec extends AbstractDataSpec {
 
-    void 'test build create table'() {
+    @Unroll("create table with dialect #dialect should be #expectedSql")
+    void 'test build create table'(Dialect dialect, String expectedSql) {
         given:
         def entity = buildEntity('test.Person', '''
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
 ''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        String sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:
-        sql == 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"age" INT NOT NULL);'
+        sql == expectedSql
 
+        where:
+        dialect            | expectedSql
+        Dialect.H2         | 'CREATE TABLE `person` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`age` INT NOT NULL);'
+        Dialect.POSTGRES   | 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"age" INTEGER NOT NULL);'
+        Dialect.SQL_SERVER | 'CREATE TABLE [person] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[age] INT NOT NULL);'
+        Dialect.ANSI       | 'CREATE TABLE "person" ("id" BIGINT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"age" INT NOT NULL);'
+        Dialect.ORACLE     | 'CREATE TABLE "PERSON" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL,"AGE" NUMBER(10) NOT NULL)\n' +
+                             'CREATE SEQUENCE "PERSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        Dialect.MYSQL      | 'CREATE TABLE `person` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`age` INT NOT NULL);'
     }
-
 
     void 'test runtime persistent entity'() {
         given:
