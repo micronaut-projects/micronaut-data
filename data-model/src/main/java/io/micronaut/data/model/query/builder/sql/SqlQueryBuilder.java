@@ -1230,7 +1230,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
 
             if (columns.isEmpty()) {
-                builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
+                // MySQL/MariaDB do not support DEFAULT VALUES syntax
+                if (dialect == Dialect.MYSQL) {
+                    builder = INSERT_INTO + getTableName(entity) + " () VALUES ()";
+                } else {
+                    builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
+                }
             } else {
                 builder = INSERT_INTO + getTableName(entity) +
                     " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
