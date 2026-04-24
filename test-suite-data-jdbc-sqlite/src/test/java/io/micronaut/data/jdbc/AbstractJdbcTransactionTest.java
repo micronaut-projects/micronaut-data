@@ -31,7 +31,7 @@ abstract class AbstractJdbcTransactionTest extends AbstractTransactionSpec {
             }
             Connection connection = (Connection) status.get().getConnection();
             try {
-                assert connection.getAutoCommit();
+                org.junit.jupiter.api.Assertions.assertTrue(connection.getAutoCommit());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
