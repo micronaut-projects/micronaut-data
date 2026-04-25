@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
 import io.micronaut.data.tck.entities.Student;
-import io.reactivex.Completable;
+import io.reactivex.rxjava3.core.Completable;
 
 public interface StudentReactiveRepository extends RxJavaCrudRepository<Student, Long> {
 

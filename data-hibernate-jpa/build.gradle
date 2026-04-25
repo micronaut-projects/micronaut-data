@@ -33,7 +33,7 @@ dependencies {
     testImplementation (projects.micronautDataProcessor) {
         exclude group: 'org.antlr'
     }
-    testImplementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql

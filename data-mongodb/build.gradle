@@ -46,7 +46,7 @@ dependencies {
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation projects.micronautDataDocumentTck
     testImplementation(mnSql.jakarta.persistence.api)
-    testImplementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
     testImplementation(mnSql.jakarta.persistence.api)
     testImplementation mnValidation.micronaut.validation

@@ -7,7 +7,7 @@ micronaut-testresources = "4.0.0-M1"
 
 micronaut-azure = "5.13.0"
 micronaut-reactor = "4.0.0-M2"
-micronaut-rxjava2 = "2.9.0"
+micronaut-rxjava3 = "4.0.0-M1"
 micronaut-r2dbc = "7.0.1-M2"
 micronaut-sql = "7.0.1-M2"
 micronaut-serde = "3.0.0-M7"
@@ -64,7 +64,7 @@ micronaut-testresources-extensions-junit-platform = { module = 'io.micronaut.tes
 # BOMs
 
 micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor-bom', version.ref = "micronaut-reactor" }
-micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2-bom', version.ref = "micronaut-rxjava2" }
+micronaut-rxjava3 = { module = 'io.micronaut.rxjava3:micronaut-rxjava3-bom', version.ref = "micronaut-rxjava3" }
 micronaut-kotlin = { module = 'io.micronaut.kotlin:micronaut-kotlin-bom', version.ref = "micronaut-kotlin" }
 micronaut-multitenancy = { module = 'io.micronaut.multitenancy:micronaut-multitenancy-bom', version.ref = "micronaut-multitenancy" }
 micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-resources-bom', version.ref = "micronaut-testresources" }

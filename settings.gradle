@@ -23,7 +23,7 @@ micronautBuild {
     useStandardizedProjectNames = true
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
-    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-rxjava3")
     importMicronautCatalog("micronaut-r2dbc")
     importMicronautCatalog("micronaut-spring")
     importMicronautCatalog("micronaut-serde")

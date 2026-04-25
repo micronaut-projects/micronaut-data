@@ -23,7 +23,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-class RxJava2Spec extends Specification implements PostgresHibernateReactiveProperties {
+class RxJavaSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Inject
     RxJavaPersonRepo reactiveRepo

@@ -61,8 +61,8 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         where:
         type                                          | interceptor
         'java.util.concurrent.Future<java.lang.Void>' | UpdateAsyncInterceptor
-        'io.reactivex.Completable'                    | UpdateReactiveInterceptor
-        'io.reactivex.Single<Long>'                   | UpdateReactiveInterceptor
+        'io.reactivex.rxjava3.core.Completable'                    | UpdateReactiveInterceptor
+        'io.reactivex.rxjava3.core.Single<Long>'                   | UpdateReactiveInterceptor
         'java.util.concurrent.CompletableFuture<Long>'| UpdateAsyncInterceptor
         'long'                                        | UpdateInterceptor
         'Long'                                        | UpdateInterceptor
