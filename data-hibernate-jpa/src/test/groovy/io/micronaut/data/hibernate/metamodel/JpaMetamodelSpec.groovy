@@ -9,6 +9,10 @@ import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
 import spock.lang.Ignore
 
+import static io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository.Specification.hasTagInList
+import static io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository.Specification.hasTagInSet
+import static io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository.Specification.propertyEquals
+
 class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {
 
     @Override
@@ -138,7 +142,6 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
         clientRepository.save(c)
     }
 
-    @Ignore(value = "persistent map attributes are not supported currently")
     void "can join map element collection and filter by key/value using static metamodel"() {
         given:
         def e1 = new EntityWithMapField()
@@ -156,7 +159,7 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
 
         when:
         var result = entityWithMapFieldRepository.findAll(
-                JpaEntityWithMapFieldRepository.Specification.propertyEquals("region", "EMEA")
+                propertyEquals("region", "EMEA")
         )
 
         then:
@@ -165,5 +168,41 @@ class JpaMetamodelSpec extends AbstractMetamodelSpec implements H2TestPropertyPr
         result.getFirst().properties.containsKey("region")
     }
 
+    void "can join list element collection and filter by tag"() {
+        given:
+        def e1 = new EntityWithMapField(id: 10L)
+        e1.tagsList = ["a", "b", "x"]
 
+        def e2 = new EntityWithMapField(id: 11L)
+        e2.tagsList = ["c", "d"]
+
+        entityWithMapFieldRepository.saveAll([e1, e2])
+
+        when:
+        def result = entityWithMapFieldRepository.findAll(
+                hasTagInList('x'))
+
+        then:
+        result*.id == [10L]
+        result.first().tagsList.contains("x")
+    }
+
+    void "can join set element collection and filter by tag"() {
+        given:
+        def e1 = new EntityWithMapField(id: 20L)
+        e1.tagsSet = ["red", "blue"] as Set
+
+        def e2 = new EntityWithMapField(id: 21L)
+        e2.tagsSet = ["green"] as Set
+
+        entityWithMapFieldRepository.saveAll([e1, e2])
+
+        when:
+        def result = entityWithMapFieldRepository.findAll(
+                hasTagInSet("green"))
+
+        then:
+        result*.id == [21L]
+        result.first().tagsSet.contains("green")
+    }
 }

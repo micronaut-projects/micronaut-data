@@ -43,7 +43,11 @@ abstract class AbstractEntityMetamodelSpec extends Specification {
 
             def fieldTypeArguments = field.getProperties()["genericType"]["actualTypeArguments"]
             assert fieldTypeArguments[0].canonicalName == attribute.declaringType()
-            def fieldTypeArgs = flattenFieldTypeArguments(fieldTypeArguments[1])
+            def fieldTypeArgs = [];
+
+            for (int i = 1; i < fieldTypeArguments.length; i++) {
+                fieldTypeArgs.addAll(flattenFieldTypeArguments(fieldTypeArguments[i]))
+            }
 
             for (int i = 0; i < attribute.fieldTypes().size(); i++) {
                 assert fieldTypeArgs.get(i) == attribute.fieldTypes().get(i).canonicalName

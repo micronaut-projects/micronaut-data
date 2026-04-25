@@ -107,6 +107,11 @@ public final class JpaMetamodelProcessor {
     public static final String JAKARTA_EMBEDDABLE = "jakarta.persistence.Embeddable";
 
     /**
+     * Jakarta persistence ElementCollection annotation name.
+     */
+    public static final String JAKARTA_ELEMENT_COLLECTION = "jakarta.persistence.ElementCollection";
+
+    /**
      * Micronaut data MappedEntity annotation name.
      */
     public static final String MICRONAUT_DATA_MAPPED_ENTITY = "io.micronaut.data.annotation.MappedEntity";
@@ -286,7 +291,7 @@ public final class JpaMetamodelProcessor {
         List<TypeDef> generics = new ArrayList<>();
         generics.add(classTypeDef);
 
-        if (!(persistentProperty instanceof SourceAssociation)) {
+        if (!(persistentProperty instanceof SourceAssociation) && !persistentProperty.isAnnotationPresent(JAKARTA_ELEMENT_COLLECTION)) {
             List<TypeDef> persistentPropertyGenerics = type.getTypeArguments().values().stream()
                 .filter(o -> !(o instanceof GenericPlaceholderElement))
                 .map(TypeDef::of)
