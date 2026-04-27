@@ -10,7 +10,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Specification
 import spock.lang.Stepwise
-import spock.util.concurrent.AsyncConditions
+import spock.util.concurrent.PollingConditions
 
 import jakarta.transaction.Transactional
 import java.sql.Connection
@@ -24,7 +24,7 @@ class TransactionAnnotationSpec extends Specification {
     @Inject TestService testService
     @Inject BeanDefinitionRegistry registry
 
-    AsyncConditions asyncConditions = new AsyncConditions()
+    PollingConditions conditions = new PollingConditions(timeout: 10, initialDelay: 0.1, delay: 0.2)
 
     void "test transactional annotation handling"() {
         given:
@@ -84,7 +84,7 @@ class TransactionAnnotationSpec extends Specification {
             testService.doWork1()
 
         then:
-            asyncConditions.evaluate {
+            conditions.eventually {
                 testService.readTransactionally() == 4
                 testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
@@ -98,13 +98,18 @@ class TransactionAnnotationSpec extends Specification {
             testService."$workMethod"()
 
         then:
-            asyncConditions.evaluate {
-                testService.readTransactionally() == 4
+            conditions.eventually {
+                testService.readTransactionally() == expectedCount
                 testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
 
         where:
-            workMethod << ["doWork1", "doWork2", "doWork3", "doWork4", "doWork5"]
+            workMethod | expectedCount
+            "doWork1"  | 4
+            "doWork2"  | 4
+            "doWork3"  | 4
+            "doWork4"  | 4
+            "doWork5"  | 3
     }
 
     @Singleton
@@ -284,4 +289,3 @@ class TransactionAnnotationSpec extends Specification {
         }
     }
 }
-
