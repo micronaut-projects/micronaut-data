@@ -9,8 +9,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 /**
- * Tests Oracle Transaction Priority which older database which does not support it.
- * The test should not fail as we catch exception when setting unsupported session attribute
+ * Tests Oracle Transaction Priority with older database which does not support it.
+ * The test should not fail as we catch Oracle exception when setting unsupported session attribute
  * in DataSourceTransactionManager.
  */
 @TestResourcesScope("oracle-xe-transaction-priority")
