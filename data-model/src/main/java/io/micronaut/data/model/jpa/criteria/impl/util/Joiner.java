@@ -210,6 +210,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     @Override
     public void visit(IParameterExpression<?> parameterExpression) {
+        // Parameters do not introduce join paths.
     }
 
     @Override
@@ -239,6 +240,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     @Override
     public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+        // Current temporal expressions do not introduce join paths.
     }
 
     @Override

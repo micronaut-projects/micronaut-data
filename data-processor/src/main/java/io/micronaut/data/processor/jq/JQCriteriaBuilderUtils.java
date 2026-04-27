@@ -70,7 +70,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * The utils to generate Criteria queries from Jakarta Query statements.
@@ -97,22 +96,22 @@ public final class JQCriteriaBuilderUtils {
         if (child instanceof JQParser.Update_statementContext updateStatementContext) {
             return JQCriteriaBuilderUtils.buildUpdate(updateStatementContext, classElementResolver, criteriaBuilder);
         }
-        if (child instanceof JQParser.Select_statementContext select_clauseContext) {
-            return JQCriteriaBuilderUtils.buildSelect(rootPersistentEntity, select_clauseContext, classElementResolver, criteriaBuilder, methodElement, query);
+        if (child instanceof JQParser.Select_statementContext selectStatementContext) {
+            return JQCriteriaBuilderUtils.buildSelect(rootPersistentEntity, selectStatementContext, classElementResolver, criteriaBuilder, methodElement, query);
         }
 
         throw new MatchFailedException("Unrecognized query: " + child.getParent(), methodElement);
     }
 
-    public static PersistentEntityCriteriaQuery<?> buildCount(String query,
-                                                                    PersistentEntity rootPersistentEntity,
-                                                                    MethodElement methodElement,
-                                                                    Function<String, ClassElement> classElementResolver,
-                                                                    SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
+    public static PersistentEntityCriteriaQuery<Object> buildCount(String query,
+                                                                   PersistentEntity rootPersistentEntity,
+                                                                   MethodElement methodElement,
+                                                                   Function<String, ClassElement> classElementResolver,
+                                                                   SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
 
         ParseTree child = parse(query, methodElement);
-        if (child instanceof JQParser.Select_statementContext select_clauseContext) {
-            return JQCriteriaBuilderUtils.buildCount(rootPersistentEntity, select_clauseContext, classElementResolver, criteriaBuilder);
+        if (child instanceof JQParser.Select_statementContext selectStatementContext) {
+            return JQCriteriaBuilderUtils.buildCount(rootPersistentEntity, selectStatementContext, classElementResolver, criteriaBuilder);
         }
 
         throw new MatchFailedException("Unrecognized count query: " + child.getParent(), methodElement);
@@ -129,14 +128,17 @@ public final class JQCriteriaBuilderUtils {
 
             @Override
             public void reportAmbiguity(Parser parser, DFA dfa, int i, int i1, boolean b, BitSet bitSet, ATNConfigSet atnConfigSet) {
+                // Syntax errors are reported through syntaxError.
             }
 
             @Override
             public void reportAttemptingFullContext(Parser parser, DFA dfa, int i, int i1, BitSet bitSet, ATNConfigSet atnConfigSet) {
+                // Syntax errors are reported through syntaxError.
             }
 
             @Override
             public void reportContextSensitivity(Parser parser, DFA dfa, int i, int i1, int i2, ATNConfigSet atnConfigSet) {
+                // Syntax errors are reported through syntaxError.
             }
         };
         var tokenStream = new CommonTokenStream(lexer);
@@ -181,12 +183,12 @@ public final class JQCriteriaBuilderUtils {
         return errorText;
     }
 
-    public static PersistentEntityCriteriaQuery<?> buildSelect(@Nullable PersistentEntity rootPersistentEntity,
-                                                               JQParser.Select_statementContext selectStatementContext,
-                                                               Function<String, ClassElement> classElementResolver,
-                                                               SourcePersistentEntityCriteriaBuilder criteriaBuilder,
-                                                               @Nullable MethodElement methodElement,
-                                                               String q) {
+    public static PersistentEntityCriteriaQuery<Object> buildSelect(@Nullable PersistentEntity rootPersistentEntity,
+                                                                    JQParser.Select_statementContext selectStatementContext,
+                                                                    Function<String, ClassElement> classElementResolver,
+                                                                    SourcePersistentEntityCriteriaBuilder criteriaBuilder,
+                                                                    @Nullable MethodElement methodElement,
+                                                                    String q) {
 
         SourcePersistentEntityCriteriaQuery<Object> query = criteriaBuilder
             .createQuery(null);
@@ -214,16 +216,15 @@ public final class JQCriteriaBuilderUtils {
             }
             List<JQParser.Select_itemContext> selectItems = selectClauseContext.select_item();
             if (selectItems.size() > 1) {
-                query.multiselect(
-                    selectItems
-                        .stream()
-                        .map(selectItem -> {
-                            Selection<?> selection = getSelection(selectItem, true, rootContext, criteriaBuilder);
-                            annotateProjection(methodElement, selection);
-                            return selection;
-                        })
-                        .collect(Collectors.toUnmodifiableList())
-                );
+                List<Selection<?>> selections = selectItems
+                    .stream()
+                    .<Selection<?>>map(selectItem -> {
+                        Selection<?> selection = getSelection(selectItem, true, rootContext, criteriaBuilder);
+                        annotateProjection(methodElement, selection);
+                        return selection;
+                    })
+                    .toList();
+                query.multiselect(selections);
             }
             if (selectItems.size() == 1) {
                 query.select(getSelection(selectItems.get(0), false, rootContext, criteriaBuilder));
@@ -232,10 +233,10 @@ public final class JQCriteriaBuilderUtils {
         return query;
     }
 
-    public static PersistentEntityCriteriaQuery<?> buildCount(PersistentEntity rootPersistentEntity,
-                                                              JQParser.Select_statementContext selectStatementContext,
-                                                              Function<String, ClassElement> classElementResolver,
-                                                              SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
+    public static PersistentEntityCriteriaQuery<Object> buildCount(PersistentEntity rootPersistentEntity,
+                                                                   JQParser.Select_statementContext selectStatementContext,
+                                                                   Function<String, ClassElement> classElementResolver,
+                                                                   SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
 
         SourcePersistentEntityCriteriaQuery<Object> query = criteriaBuilder
             .createQuery(null);
@@ -256,9 +257,9 @@ public final class JQCriteriaBuilderUtils {
         return query;
     }
 
-    public static PersistentEntityCriteriaUpdate<?> buildUpdate(JQParser.Update_statementContext updateStatementContext,
-                                                                Function<String, ClassElement> classElementResolver,
-                                                                SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
+    public static PersistentEntityCriteriaUpdate<Object> buildUpdate(JQParser.Update_statementContext updateStatementContext,
+                                                                     Function<String, ClassElement> classElementResolver,
+                                                                     SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
         String entityName = updateStatementContext.update_clause().entity_name().getText();
 
         JQParser.Where_clauseContext whereClauseContext = updateStatementContext.where_clause();
@@ -290,9 +291,9 @@ public final class JQCriteriaBuilderUtils {
         return updateQuery;
     }
 
-    public static PersistentEntityCriteriaDelete<?> buildDelete(JQParser.Delete_statementContext deleteStatementContext,
-                                                                Function<String, ClassElement> classElementResolver,
-                                                                SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
+    public static PersistentEntityCriteriaDelete<Object> buildDelete(JQParser.Delete_statementContext deleteStatementContext,
+                                                                     Function<String, ClassElement> classElementResolver,
+                                                                     SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
 
         String entityName = deleteStatementContext.delete_clause().entity_name().getText();
         JQParser.Where_clauseContext whereClauseContext = deleteStatementContext.where_clause();
@@ -390,23 +391,39 @@ public final class JQCriteriaBuilderUtils {
                                          PersistentEntityCriteriaBuilder criteriaBuilder,
                                          @Nullable
                                          MethodElement methodElement) {
-        List<Order> orders = new ArrayList<>();
+        var orders = new ArrayList<Order>();
+        addQueryOrders(orderByClause, rootContext, criteriaBuilder, orders);
+        addAnnotatedOrders(methodElement, rootContext, criteriaBuilder, orders);
+        return orders;
+    }
+
+    private static void addQueryOrders(JQParser. @Nullable Orderby_clauseContext orderByClause,
+                                       RootContext rootContext,
+                                       PersistentEntityCriteriaBuilder criteriaBuilder,
+                                       List<Order> orders) {
         if (orderByClause != null) {
             List<JQParser.Orderby_itemContext> orderbyItemContexts = orderByClause.orderby_item();
             for (JQParser.Orderby_itemContext orderbyItemContext : orderbyItemContexts) {
-                Expression<?> expression = getExpression(orderbyItemContext.orderby_expression(), rootContext);
-                Nulls nullPrecedence = getNullPrecedence(orderbyItemContext);
-                if (nullPrecedence == Nulls.NONE) {
-                    orders.add(
-                        orderbyItemContext.DESC() == null ? criteriaBuilder.asc(expression) : criteriaBuilder.desc(expression)
-                    );
-                } else {
-                    orders.add(
-                        orderbyItemContext.DESC() == null ? criteriaBuilder.asc(expression, nullPrecedence) : criteriaBuilder.desc(expression, nullPrecedence)
-                    );
-                }
+                orders.add(getOrder(orderbyItemContext, rootContext, criteriaBuilder));
             }
         }
+    }
+
+    private static Order getOrder(JQParser.Orderby_itemContext orderbyItemContext,
+                                  RootContext rootContext,
+                                  PersistentEntityCriteriaBuilder criteriaBuilder) {
+        Expression<?> expression = getExpression(orderbyItemContext.orderby_expression(), rootContext);
+        Nulls nullPrecedence = getNullPrecedence(orderbyItemContext);
+        if (nullPrecedence == Nulls.NONE) {
+            return orderbyItemContext.DESC() == null ? criteriaBuilder.asc(expression) : criteriaBuilder.desc(expression);
+        }
+        return orderbyItemContext.DESC() == null ? criteriaBuilder.asc(expression, nullPrecedence) : criteriaBuilder.desc(expression, nullPrecedence);
+    }
+
+    private static void addAnnotatedOrders(@Nullable MethodElement methodElement,
+                                           RootContext rootContext,
+                                           PersistentEntityCriteriaBuilder criteriaBuilder,
+                                           List<Order> orders) {
         if (methodElement != null) {
             for (AnnotationValue<?> av : methodElement.getAnnotationValuesByStereotype(OrderBy.class.getName())) {
                 orders.add(criteriaBuilder.sort(
@@ -416,7 +433,6 @@ public final class JQCriteriaBuilderUtils {
                 ));
             }
         }
-        return orders;
     }
 
     private static Nulls getNullPrecedence(JQParser.Orderby_itemContext orderbyItemContext) {
@@ -437,7 +453,7 @@ public final class JQCriteriaBuilderUtils {
         if (orderbyExpression.id_expression() != null) {
             return getExpression(orderbyExpression.id_expression(), rootContext);
         }
-        return (Expression<?>) getExpression(orderbyExpression.simple_path_expression(), false, rootContext);
+        return getPath(orderbyExpression.simple_path_expression(), rootContext);
     }
 
     private static Predicate getPredicate(JQParser.Conditional_expressionContext conditionalExpression,
@@ -465,98 +481,116 @@ public final class JQCriteriaBuilderUtils {
         }
         JQParser.Comparison_expressionContext comparisonExpression = conditionalExpression.comparison_expression();
         if (comparisonExpression != null) {
-            Expression<?> firstExp = getExpression(
-                comparisonExpression.scalar_expression(0),
-                rootContext,
-                criteriaBuilder
-            );
-            Expression<?> secondExp = getExpression(
-                comparisonExpression.scalar_expression(1),
-                rootContext,
-                criteriaBuilder
-            );
-            JQParser.Comparison_operatorContext comparisonOperator = comparisonExpression.comparison_operator();
-            if (comparisonOperator.EQ() != null) {
-                return criteriaBuilder.equal(firstExp, secondExp);
-            }
-            if (comparisonOperator.NEQ() != null) {
-                return criteriaBuilder.notEqual(firstExp, secondExp);
-            }
-            if (comparisonOperator.GT() != null) {
-                return criteriaBuilder.greaterThan((Expression) firstExp, (Expression) secondExp);
-            }
-            if (comparisonOperator.GTEQ() != null) {
-                return criteriaBuilder.greaterThanOrEqualTo((Expression) firstExp, (Expression) secondExp);
-            }
-            if (comparisonOperator.LT() != null) {
-                return criteriaBuilder.lessThan((Expression) firstExp, (Expression) secondExp);
-            }
-            if (comparisonOperator.LTEQ() != null) {
-                return criteriaBuilder.lessThanOrEqualTo((Expression) firstExp, (Expression) secondExp);
-            }
-            throw new IllegalStateException("Unsupported comparison operator: " + comparisonOperator);
+            return getComparisonPredicate(comparisonExpression, rootContext, criteriaBuilder);
         }
         JQParser.Like_expressionContext likeExpression = conditionalExpression.like_expression();
         if (likeExpression != null) {
-            JQParser.Escaped_patternContext escapedPattern = likeExpression.escaped_pattern();
-            Expression<String> pattern = getPattern(escapedPattern, criteriaBuilder);
-            Expression<Character> escapeCharacter = getEscapeCharacter(escapedPattern, criteriaBuilder);
-            Expression<String> expression = (Expression<String>) getExpression(likeExpression.scalar_expression(), rootContext, criteriaBuilder);
-            if (likeExpression.NOT() != null) {
-                if (escapeCharacter != null) {
-                    return criteriaBuilder.notLike(expression, pattern, escapeCharacter);
-                }
-                return criteriaBuilder.notLike(expression, pattern);
-            }
-            if (escapeCharacter != null) {
-                return criteriaBuilder.like(expression, pattern, escapeCharacter);
-            }
-            return criteriaBuilder.like(expression, pattern);
+            return getLikePredicate(likeExpression, rootContext, criteriaBuilder);
         }
         JQParser.In_expressionContext inExpression = conditionalExpression.in_expression();
         if (inExpression != null) {
-            Expression<?> expression = getExpression(inExpression.scalar_expression(), rootContext, criteriaBuilder);
-            CriteriaBuilder.In<?> in = criteriaBuilder.in(expression);
-            JQParser.In_item_listContext inItemListContext = inExpression.in_item_list();
-            JQParser.Input_parameterContext inputParameterContext = inItemListContext.input_parameter();
-            if (inputParameterContext != null) {
-                Expression e = getExpression(inputParameterContext, criteriaBuilder);
-                in.value(e);
-            } else {
-                JQParser.In_item_list_manyContext inItemListManyContext = inItemListContext.in_item_list_many();
-                if (inItemListManyContext != null) {
-                    for (JQParser.In_itemContext item : inItemListManyContext.in_item()) {
-                        Expression e = getExpression(item, criteriaBuilder);
-                        in.value(e);
-                    }
-                }
-            }
-            if (inExpression.NOT() != null) {
-                return in.not();
-            }
-            return in;
+            return getInPredicate(inExpression, rootContext, criteriaBuilder);
         }
         JQParser.Between_expressionContext betweenExpression = conditionalExpression.between_expression();
         if (betweenExpression != null) {
-            Predicate between = criteriaBuilder.between(
-                (Expression<String>) getExpression(betweenExpression.scalar_expression(0), rootContext, criteriaBuilder),
-                (Expression<String>) getExpression(betweenExpression.scalar_expression(1), rootContext, criteriaBuilder),
-                (Expression<String>) getExpression(betweenExpression.scalar_expression(2), rootContext, criteriaBuilder)
-            );
-            if (betweenExpression.NOT() != null) {
-                return between.not();
-            }
-            return between;
+            return getBetweenPredicate(betweenExpression, rootContext, criteriaBuilder);
         }
         JQParser.Null_comparison_expressionContext nullComparisonExpression = conditionalExpression.null_comparison_expression();
         if (nullComparisonExpression != null) {
-            Expression<?> expression = getExpression(nullComparisonExpression.scalar_expression(), rootContext, criteriaBuilder);
-            if (nullComparisonExpression.NOT() != null) {
-                return criteriaBuilder.isNotNull(expression);
-            }
-            return criteriaBuilder.isNull(expression);
+            return getNullComparisonPredicate(nullComparisonExpression, rootContext, criteriaBuilder);
         }
         throw new IllegalStateException("Unsupported conditional expression: " + conditionalExpression);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static Predicate getComparisonPredicate(JQParser.Comparison_expressionContext comparisonExpression,
+                                                    RootContext rootContext,
+                                                    PersistentEntityCriteriaBuilder criteriaBuilder) {
+        Expression<?> firstExpression = getExpression(comparisonExpression.scalar_expression(0), rootContext, criteriaBuilder);
+        Expression<?> secondExpression = getExpression(comparisonExpression.scalar_expression(1), rootContext, criteriaBuilder);
+        JQParser.Comparison_operatorContext comparisonOperator = comparisonExpression.comparison_operator();
+        if (comparisonOperator.EQ() != null) {
+            return criteriaBuilder.equal(firstExpression, secondExpression);
+        }
+        if (comparisonOperator.NEQ() != null) {
+            return criteriaBuilder.notEqual(firstExpression, secondExpression);
+        }
+        if (comparisonOperator.GT() != null) {
+            return criteriaBuilder.greaterThan((Expression) firstExpression, (Expression) secondExpression);
+        }
+        if (comparisonOperator.GTEQ() != null) {
+            return criteriaBuilder.greaterThanOrEqualTo((Expression) firstExpression, (Expression) secondExpression);
+        }
+        if (comparisonOperator.LT() != null) {
+            return criteriaBuilder.lessThan((Expression) firstExpression, (Expression) secondExpression);
+        }
+        if (comparisonOperator.LTEQ() != null) {
+            return criteriaBuilder.lessThanOrEqualTo((Expression) firstExpression, (Expression) secondExpression);
+        }
+        throw new IllegalStateException("Unsupported comparison operator: " + comparisonOperator);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Predicate getLikePredicate(JQParser.Like_expressionContext likeExpression,
+                                              RootContext rootContext,
+                                              PersistentEntityCriteriaBuilder criteriaBuilder) {
+        JQParser.Escaped_patternContext escapedPattern = likeExpression.escaped_pattern();
+        Expression<String> pattern = getPattern(escapedPattern, criteriaBuilder);
+        Expression<Character> escapeCharacter = getEscapeCharacter(escapedPattern, criteriaBuilder);
+        Expression<String> expression = (Expression<String>) getExpression(likeExpression.scalar_expression(), rootContext, criteriaBuilder);
+        if (likeExpression.NOT() != null) {
+            return escapeCharacter == null ? criteriaBuilder.notLike(expression, pattern) : criteriaBuilder.notLike(expression, pattern, escapeCharacter);
+        }
+        return escapeCharacter == null ? criteriaBuilder.like(expression, pattern) : criteriaBuilder.like(expression, pattern, escapeCharacter);
+    }
+
+    private static Predicate getInPredicate(JQParser.In_expressionContext inExpression,
+                                            RootContext rootContext,
+                                            PersistentEntityCriteriaBuilder criteriaBuilder) {
+        Expression<?> expression = getExpression(inExpression.scalar_expression(), rootContext, criteriaBuilder);
+        CriteriaBuilder.In<?> in = criteriaBuilder.in(expression);
+        JQParser.In_item_listContext inItemListContext = inExpression.in_item_list();
+        JQParser.Input_parameterContext inputParameterContext = inItemListContext.input_parameter();
+        if (inputParameterContext != null) {
+            addInValue(in, getExpression(inputParameterContext, criteriaBuilder));
+        } else {
+            addInValues(in, inItemListContext.in_item_list_many(), criteriaBuilder);
+        }
+        return inExpression.NOT() == null ? in : in.not();
+    }
+
+    private static void addInValues(CriteriaBuilder.In<?> in,
+                                    JQParser.@Nullable In_item_list_manyContext inItemListManyContext,
+                                    PersistentEntityCriteriaBuilder criteriaBuilder) {
+        if (inItemListManyContext != null) {
+            for (JQParser.In_itemContext item : inItemListManyContext.in_item()) {
+                addInValue(in, getExpression(item, criteriaBuilder));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void addInValue(CriteriaBuilder.In<T> in, Expression<?> expression) {
+        in.value((Expression<? extends T>) expression);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Predicate getBetweenPredicate(JQParser.Between_expressionContext betweenExpression,
+                                                 RootContext rootContext,
+                                                 PersistentEntityCriteriaBuilder criteriaBuilder) {
+        Predicate between = criteriaBuilder.between(
+            (Expression<String>) getExpression(betweenExpression.scalar_expression(0), rootContext, criteriaBuilder),
+            (Expression<String>) getExpression(betweenExpression.scalar_expression(1), rootContext, criteriaBuilder),
+            (Expression<String>) getExpression(betweenExpression.scalar_expression(2), rootContext, criteriaBuilder)
+        );
+        return betweenExpression.NOT() == null ? between : between.not();
+    }
+
+    private static Predicate getNullComparisonPredicate(JQParser.Null_comparison_expressionContext nullComparisonExpression,
+                                                        RootContext rootContext,
+                                                        PersistentEntityCriteriaBuilder criteriaBuilder) {
+        Expression<?> expression = getExpression(nullComparisonExpression.scalar_expression(), rootContext, criteriaBuilder);
+        return nullComparisonExpression.NOT() == null ? criteriaBuilder.isNull(expression) : criteriaBuilder.isNotNull(expression);
     }
 
     private static Expression<String> getPattern(JQParser.Escaped_patternContext escapedPattern,
@@ -647,7 +681,7 @@ public final class JQCriteriaBuilderUtils {
     private static Expression<?> getExpression(JQParser.Aggregate_argumentContext aggregateArgument,
                                                RootContext rootContext) {
         if (aggregateArgument.THIS() != null) {
-            return (Expression<?>) rootContext.root();
+            return rootContext.root();
         }
         if (aggregateArgument.id_expression() != null) {
             return getExpression(aggregateArgument.id_expression(), rootContext);
@@ -656,9 +690,9 @@ public final class JQCriteriaBuilderUtils {
         if (simplePathExpression != null) {
             String text = simplePathExpression.getText();
             if (rootContext.isRootReference(text)) {
-                return (Expression<?>) rootContext.root();
+                return rootContext.root();
             }
-            return (Expression<?>) getExpression(simplePathExpression, false, rootContext);
+            return getPath(simplePathExpression, rootContext);
         }
         throw new IllegalStateException("Unsupported aggregate argument: " + aggregateArgument.getText());
     }
@@ -803,17 +837,17 @@ public final class JQCriteriaBuilderUtils {
                 }
                 case "length" -> {
                     requireArgumentCount(functionExpression, arguments, 1);
-                    Expression expression = getExpression(arguments.get(0), rootContext, criteriaBuilder);
+                    Expression<String> expression = getStringExpression(arguments.get(0), rootContext, criteriaBuilder);
                     yield criteriaBuilder.length(expression);
                 }
                 case "lower" -> {
                     requireArgumentCount(functionExpression, arguments, 1);
-                    Expression expression = getExpression(arguments.get(0), rootContext, criteriaBuilder);
+                    Expression<String> expression = getStringExpression(arguments.get(0), rootContext, criteriaBuilder);
                     yield criteriaBuilder.lower(expression);
                 }
                 case "upper" -> {
                     requireArgumentCount(functionExpression, arguments, 1);
-                    Expression expression = getExpression(arguments.get(0), rootContext, criteriaBuilder);
+                    Expression<String> expression = getStringExpression(arguments.get(0), rootContext, criteriaBuilder);
                     yield criteriaBuilder.upper(expression);
                 }
                 case "left" -> {
@@ -893,6 +927,13 @@ public final class JQCriteriaBuilderUtils {
             return ((PersistentEntityRoot<?>) rootContext.root()).id();
         }
         throw new UnsupportedOperationException("Not supported expression: " + context.getText());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Expression<String> getStringExpression(JQParser.Scalar_expressionContext scalarExpression,
+                                                          RootContext rootContext,
+                                                          CriteriaBuilder criteriaBuilder) {
+        return (Expression<String>) getExpression(scalarExpression, rootContext, criteriaBuilder);
     }
 
     private static Expression<?>[] getExpressions(List<JQParser.Scalar_expressionContext> arguments,

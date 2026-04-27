@@ -156,13 +156,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String CAST_FUNCTION = "CAST";
+    private static final String CURRENT_DATE = "CURRENT_DATE";
+    private static final String CURRENT_TIME = "CURRENT_TIME";
+    private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
-        "CURRENT_DATE",
-        "CURRENT_TIME",
-        "CURRENT_TIMESTAMP"
+        CURRENT_DATE,
+        CURRENT_TIME,
+        CURRENT_TIMESTAMP
     );
     private static final Set<String> DISTINCT_AGGREGATE_FUNCTIONS = Set.of(
         "AVG",
@@ -220,14 +223,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private static String getCurrentTemporalExpression(CurrentTemporalExpression.Type type, Dialect dialect) {
         return switch (type) {
-            case DATE -> dialect == Dialect.SQL_SERVER ? "CAST(CURRENT_TIMESTAMP AS DATE)" : "CURRENT_DATE";
+            case DATE -> dialect == Dialect.SQL_SERVER ? "CAST(" + CURRENT_TIMESTAMP + " AS DATE)" : CURRENT_DATE;
             case TIME -> switch (dialect) {
                 case H2 -> "LOCALTIME";
-                case SQL_SERVER -> "CAST(CURRENT_TIMESTAMP AS TIME)";
-                case ORACLE -> "CURRENT_DATE";
-                default -> "CURRENT_TIME";
+                case SQL_SERVER -> "CAST(" + CURRENT_TIMESTAMP + " AS TIME)";
+                case ORACLE -> CURRENT_DATE;
+                default -> CURRENT_TIME;
             };
-            case TIMESTAMP -> "CURRENT_TIMESTAMP";
+            case TIMESTAMP -> CURRENT_TIMESTAMP;
         };
     }
 

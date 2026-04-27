@@ -10,6 +10,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
+import io.micronaut.data.processor.visitors.MatchFailedException
 import io.micronaut.inject.ast.ClassElement
 import spock.lang.Specification
 
@@ -80,6 +81,18 @@ class JakartaQueryBuilderSpec extends Specification {
     String transform(String rootEntityName, String q) {
         def root = new SourcePersistentEntity(classElementResolver.apply(rootEntityName ?: "Box"), (x) -> null)
         def query = JQCriteriaBuilderUtils.build(
+                q, root, null, classElementResolver, criteriaBuilder
+        )
+        return query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder).query
+    }
+
+    String transformCount(String q) {
+        return transformCount(null, q)
+    }
+
+    String transformCount(String rootEntityName, String q) {
+        def root = new SourcePersistentEntity(classElementResolver.apply(rootEntityName ?: "Box"), (x) -> null)
+        def query = JQCriteriaBuilderUtils.buildCount(
                 q, root, null, classElementResolver, criteriaBuilder
         )
         return query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder).query
@@ -190,6 +203,59 @@ class JakartaQueryBuilderSpec extends Specification {
                     """SELECT box_."name" FROM "box" box_ WHERE (box_."name" IS NOT NULL) ORDER BY box_."name" ASC NULLS LAST,box_."id" DESC NULLS FIRST""",
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE ((box_."length" >= ? AND box_."length" <= ?))"""
             ]
+    }
+
+    def 'test count query'() {
+        when:
+            def result = transformCount(rootEntityName, jq)
+        then:
+            result == sql
+        where:
+            rootEntityName | jq                                      || sql
+            "Box"          | "WHERE name = :name"                    || """SELECT COUNT(*) FROM "box" box_ WHERE (box_."name" = ?)"""
+            "Coordinate"   | "FROM Coordinate WHERE x > 0"           || """SELECT COUNT(*) FROM "coordinate" coordinate_ WHERE (coordinate_."x" > 0)"""
+    }
+
+    def 'test additional select coverage'() {
+        when:
+            def result = transform(rootEntityName, jq)
+        then:
+            result == sql
+        where:
+            rootEntityName   | jq                                                                                                     || sql
+            "Box"            | "WHERE (name = :name)"                                                                                 || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."name" = ?)"""
+            "Box"            | "WHERE NOT (name NOT LIKE 'A!_%' ESCAPE '!')"                                                          || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (NOT(box_."name" NOT LIKE 'A!_%' ESCAPE '!'))"""
+            "Box"            | "WHERE length = +10 AND width = -5L"                                                                  || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."length" = 10 AND box_."width" = -5)"""
+            "Box"            | "WHERE length = -width"                                                                               || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."length" = (-1 * box_."width"))"""
+            "Box"            | "WHERE name = 'a' || 'b'"                                                                             || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."name" = CONCAT('a','b'))"""
+            "Box"            | "WHERE CEILING(length) > 1 AND EXP(width) > 1 AND FLOOR(height) < 10"                                  || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (CEILING(box_."length") > 1 AND EXP(box_."width") > 1 AND FLOOR(box_."height") < 10)"""
+            "Box"            | "WHERE LN(length) > 1 AND SIGN(width) = 1 AND ROUND(height, 1) >= 3"                                   || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LN(box_."length") > 1 AND SIGN(box_."width") = 1 AND ROUND(box_."height",1) >= 3)"""
+            "Box"            | "WHERE LOCATE('a', name) > 0"                                                                         || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LOCATE('a',box_."name") > 0)"""
+            "NaturalNumber"  | "WHERE numType IN (NumberType.PRIME, NumberType.ONE)"                                                 || """SELECT natural_number_."id",natural_number_."odd",natural_number_."num_bits_required",natural_number_."num_type",natural_number_."num_type_ordinal",natural_number_."floor_of_square_root",natural_number_."is_odd" FROM "natural_number" natural_number_ WHERE (natural_number_."num_type" IN ('PRIME','ONE'))"""
+            "Box"            | "SELECT COUNT(ID(THIS)), COUNT(b) FROM Box b WHERE b.id > 0"                                          || """SELECT COUNT(box_."id"),COUNT(*) FROM "box" box_ WHERE (box_."id" > 0)"""
+            "Event"          | "SELECT LOCAL DATE FROM Event"                                                                       || """SELECT ? FROM "event" event_"""
+            "Box"            | 'WHERE name = "crate"'                                                                                || """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."name" = 'crate')"""
+    }
+
+    def 'test parse failures include context'() {
+        when:
+            transform(jq)
+        then:
+            def e = thrown(MatchFailedException)
+            e.message.contains("Failed to parse Jakarta Query")
+        where:
+            jq << [
+                    "@",
+                    "SELECT FROM Box"
+            ]
+    }
+
+    def 'test count query rejects non-select statements'() {
+        when:
+            transformCount("DELETE FROM Box")
+        then:
+            def e = thrown(MatchFailedException)
+            e.message.contains("Unrecognized count query")
     }
 
     private static ClassElement buildBoxElement() {
