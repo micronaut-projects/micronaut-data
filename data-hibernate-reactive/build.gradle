@@ -25,7 +25,7 @@ dependencies {
     testImplementation mn.micronaut.http.client
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.micronautDataProcessor
-    implementation(mnRxjava3.micronaut.rxjava3)
+    testImplementation mnRxjava3.micronaut.rxjava3
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
