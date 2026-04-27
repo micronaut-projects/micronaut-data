@@ -50,9 +50,9 @@ public final class DefaultUpdateReturningOneInterceptor<T, R> extends AbstractQu
         PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         List<R> results = operations.execute(preparedQuery);
         if (results.isEmpty()) {
-            return null;
+            return (R) convertOne(context, (Object) null);
         }
-        return operations.getConversionService().
-            convertRequired(results.get(0), context.getExecutableMethod().getReturnType().asArgument());
+        return operations.getConversionService()
+            .convertRequired(results.get(0), context.getExecutableMethod().getReturnType().asArgument());
     }
 }

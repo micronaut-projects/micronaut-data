@@ -23,6 +23,7 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
 
     private final QueryResult queryResult;
     private final Set<JoinPath> joinPaths;
+    private final List<QueryOutParameterBinding> outParameterBindings;
 
     public QueryResultStoredQuery(String name,
                                   AnnotationMetadata annotationMetadata,
@@ -68,6 +70,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             operationType);
         this.queryResult = queryResult;
         this.joinPaths = joinPaths == null ? Collections.emptySet() : Set.copyOf(joinPaths);
+        this.outParameterBindings = mapOut(queryResult.getOutParameterBindings());
     }
 
     public QueryResultStoredQuery(String name,
@@ -94,6 +97,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             operationType);
         this.queryResult = queryResult;
         this.joinPaths = joinPaths == null ? Collections.emptySet() : Set.copyOf(joinPaths);
+        this.outParameterBindings = mapOut(queryResult.getOutParameterBindings());
     }
 
     public static <T> QueryResultStoredQuery<T, T> single(OperationType operationType,
@@ -176,8 +180,39 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
     }
 
     @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return outParameterBindings;
+    }
+
+    @Override
     public Set<JoinPath> getJoinPaths() {
         return joinPaths;
+    }
+
+    private static List<QueryOutParameterBinding> mapOut(List<io.micronaut.data.model.query.builder.QueryOutParameterBinding> bindings) {
+        if (bindings == null || bindings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<QueryOutParameterBinding> out = new ArrayList<>(bindings.size());
+        for (io.micronaut.data.model.query.builder.QueryOutParameterBinding b : bindings) {
+            out.add(new QueryResultOutParameterBinding(b));
+        }
+        return Collections.unmodifiableList(out);
+    }
+
+    private record QueryResultOutParameterBinding(
+        io.micronaut.data.model.query.builder.QueryOutParameterBinding delegate) implements QueryOutParameterBinding {
+
+        @Override
+        public String name() {
+            return delegate.getName();
+        }
+
+        @Override
+        public DataType dataType() {
+            return delegate.getDataType();
+        }
+
     }
 
     private static final class QueryResultParameterBinding implements QueryParameterBinding {

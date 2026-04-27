@@ -388,6 +388,232 @@ interface MyInterface2 extends GenericRepository<Book, String> {
             collation == '{ locale: \'en_US\', numericOrdering: true}'
     }
 
+    void "test update returning does not support iterable return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import java.util.List;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    List<Book> customUpdateReturningList(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result')
+    }
+
+    void "test update returning does not support array return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Book[] customUpdateReturningArray(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result')
+    }
+
+    void "test update returning does not support Flux reactive return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import reactor.core.publisher.Flux;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Flux<Book> customUpdateReturningFlux(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).')
+    }
+
+    void "test update returning does not support Mono array reactive return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import reactor.core.publisher.Mono;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Mono<Book[]> customUpdateReturningMonoArray(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).')
+    }
+
+    void "test update returning does not support Publisher reactive return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import org.reactivestreams.Publisher;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Publisher<Book> customUpdateReturningPublisher(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).')
+    }
+
+    void "test update returning does not support CompletionStage array return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+import java.util.concurrent.CompletionStage;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    CompletionStage<Book[]> customUpdateReturningStageArray(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB update returning supports only a single result. Use CompletionStage<T>.')
+    }
+
+    void "test update returning supports scalar return type with dedicated annotation"() {
+        when:
+        def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}", project = "{counter: 1}")
+    String customUpdateReturningString(String id);
+
+}
+"""
+        )
+        then:
+        repository.getRequiredMethod("customUpdateReturningString", String)
+    }
+
+    void "test update returning annotation stores sort metadata"() {
+        when:
+        def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{title:{\$eq: :t}}", update = "{\$set:{name: \\\"tom\\\"}}", sort = "{age: 1}")
+    Book customUpdateReturningSorted(String t);
+
+}
+"""
+        )
+        def method = repository.getRequiredMethod("customUpdateReturningSorted", String)
+        then:
+        method.stringValue(MongoAnnotations.SORT).orElse(null) == '{age: 1}'
+        method.stringValue(Query).orElse(null) == '{title:{$eq: {$mn_qp:0}}}'
+        method.stringValue(Query, "update").orElse(null) == '{$set:{name: "tom"}}'
+    }
+
+    void "test update query entity return remains regular update path"() {
+        when:
+        def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Book customUpdateReturningEntity(String id);
+
+}
+"""
+        )
+        then:
+        repository.getRequiredMethod("customUpdateReturningEntity", String)
+    }
+
+    void "test update returning annotation does not support void return type"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    void customUpdateReturningVoid(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('MongoDB @MongoUpdateReturningQuery requires a non-void single return type')
+    }
+
+    void "test update and update returning annotations are mutually exclusive"() {
+        when:
+        buildRepository('test.MyInterface2', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Book;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    @MongoUpdateQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    @MongoUpdateReturningQuery(filter = "{_id:{\$eq: :id}}", update = "{\$inc:{counter: 1}}")
+    Book conflictingUpdateAnnotations(String id);
+
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive. Use only one on a method.')
+    }
+
     void "test find by ids method"() {
         given:
         def repository = buildRepository('test.PersonRepository', """

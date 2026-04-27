@@ -20,6 +20,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -114,4 +115,11 @@ public interface ExpressionVisitor {
      * @param subqueryExpression The subquery expression
      */
     void visit(SubqueryExpression<?> subqueryExpression);
+
+    /**
+     * Visit {@link CastExpression}.
+     *
+     * @param castExpression The cast expression
+     */
+    void visit(CastExpression<?> castExpression);
 }

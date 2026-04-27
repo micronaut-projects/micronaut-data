@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -94,6 +95,11 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     @Nullable
     public QueryResultInfo getQueryResultInfo() {
         return queryResultInfo;
+    }
+
+    @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return getStoredQueryDelegate().getOutParameterBindings();
     }
 
     @Override

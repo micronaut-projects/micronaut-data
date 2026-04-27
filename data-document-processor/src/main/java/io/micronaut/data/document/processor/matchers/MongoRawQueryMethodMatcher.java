@@ -79,8 +79,15 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         if (annotationMetadata.hasAnnotation(MongoAnnotations.DELETE_QUERY)) {
             return methodMatchByFilterQuery(DataMethod.OperationType.DELETE);
         }
+        if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_QUERY)
+            && annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)) {
+            throw new MatchFailedException("`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive. Use only one on a method.");
+        }
         if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_QUERY)) {
             return methodMatchByFilterQuery(DataMethod.OperationType.UPDATE);
+        }
+        if (annotationMetadata.hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)) {
+            return methodMatchByUpdateReturningQuery();
         }
         if (annotationMetadata.stringValue(Query.class).isPresent()) {
             throw new MatchFailedException("`@Query` annotations is not supported for MongoDB repositories. Use one of the annotations from `io.micronaut.data.mongodb.annotation` for a custom query.");
@@ -100,20 +107,57 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
     }
 
+    private MethodMatch methodMatchByUpdateReturningQuery() {
+        return new MethodMatch() {
+
+            @Override
+            public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                ClassElement returnType = matchContext.getReturnType();
+                if (TypeUtils.isReactiveType(returnType)) {
+                    if (!TypeUtils.isReactiveSingleResult(returnType)) {
+                        throw new MatchFailedException("MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).");
+                    }
+                }
+                MethodMatchInfo matchInfo = methodMatchByFilterQuery(DataMethod.OperationType.UPDATE_RETURNING).buildMatchInfo(matchContext);
+                if (matchInfo == null) {
+                    throw new MatchFailedException("MongoDB update returning match info could not be created");
+                }
+                return matchInfo;
+            }
+        };
+    }
+
     private MethodMatch methodMatchByFilterQuery(DataMethod.OperationType operationType) {
         return new MethodMatch() {
 
             @Override
             public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                if (operationType == DataMethod.OperationType.UPDATE_RETURNING) {
+                    MethodElement methodElement = matchContext.getMethodElement();
+                    ClassElement producedType = TypeUtils.getMethodProducingItemType(methodElement);
+                    if (producedType == null || TypeUtils.isVoid(producedType)) {
+                        throw new MatchFailedException("MongoDB @MongoUpdateReturningQuery requires a non-void single return type");
+                    }
+                    if (isMultipleResultType(producedType)) {
+                        throw new MatchFailedException(updateReturningSingleResultMessage(matchContext.getReturnType()));
+                    }
+                }
                 ParameterElement[] parameters = matchContext.getParameters();
                 ParameterElement entityParameter;
                 ParameterElement entitiesParameter;
+                ParameterElement updateReturningOptionsParameter = null;
                 if (parameters.length > 1) {
                     entityParameter = null;
                     entitiesParameter = null;
                 } else {
                     entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
                     entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+                }
+                if (operationType == DataMethod.OperationType.UPDATE_RETURNING) {
+                    updateReturningOptionsParameter = Arrays.stream(parameters)
+                        .filter(p -> p.getType().isAssignable(MongoAnnotations.UPDATE_RETURNING_OPTIONS_BEAN))
+                        .findFirst()
+                        .orElse(null);
                 }
 
                 FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
@@ -125,15 +169,12 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 ClassElement resultType = entry.returnType();
                 ClassElement interceptorType = entry.interceptor();
 
-                boolean isDto = false;
                 if (resultType == null) {
                     resultType = matchContext.getRootEntity().getType();
-                } else {
-                    if (resultType.hasAnnotation(Introspected.class)) {
-                        if (!resultType.hasAnnotation(MappedEntity.class)) {
-                            isDto = true;
-                        }
-                    }
+                }
+                boolean isDto = false;
+                if (resultType.hasAnnotation(Introspected.class) && !resultType.hasAnnotation(MappedEntity.class)) {
+                    isDto = true;
                 }
 
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
@@ -151,9 +192,27 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 } else if (entitiesParameter != null) {
                     methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                 }
+                if (updateReturningOptionsParameter != null) {
+                    methodMatchInfo.addParameterRole(updateReturningOptionsParameter, MongoAnnotations.UPDATE_OPTIONS_ROLE);
+                }
                 return methodMatchInfo;
             }
         };
+    }
+
+    private static boolean isMultipleResultType(@Nullable ClassElement type) {
+        return type != null && (type.isArray() || type.isAssignable(Iterable.class));
+    }
+
+    @NonNull
+    private static String updateReturningSingleResultMessage(@NonNull ClassElement returnType) {
+        if (TypeUtils.isFutureType(returnType)) {
+            return "MongoDB update returning supports only a single result. Use CompletionStage<T>.";
+        }
+        if (TypeUtils.isReactiveType(returnType)) {
+            return "MongoDB update returning supports only a single result. Use a single-item reactive type (e.g. Mono<T>).";
+        }
+        return "MongoDB update returning supports only a single result";
     }
 
     private void buildRawQuery(@NonNull MethodMatchContext matchContext,
@@ -177,7 +236,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
 
         QueryResult queryResult;
-        if (operationType == DataMethod.OperationType.UPDATE) {
+        if (operationType == DataMethod.OperationType.UPDATE
+            || methodElement.hasAnnotation(MongoAnnotations.UPDATE_QUERY)
+            || methodElement.hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)) {
             queryResult = getUpdateQueryResult(matchContext, parameters, entityParam, persistentEntity);
         } else {
             queryResult = getQueryResult(matchContext, parameters, entityParam, persistentEntity);
@@ -234,7 +295,10 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                                              @Nullable ParameterElement entityParam,
                                              @Nullable SourcePersistentEntity persistentEntity) {
         String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElse("{}");
-        String updateQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.UPDATE_QUERY, "update").orElseThrow(() ->
+        String updateAnnotation = matchContext.getMethodElement().hasAnnotation(MongoAnnotations.UPDATE_RETURNING_QUERY)
+            ? MongoAnnotations.UPDATE_RETURNING_QUERY
+            : MongoAnnotations.UPDATE_QUERY;
+        String updateQueryString = matchContext.getMethodElement().stringValue(updateAnnotation, "update").orElseThrow(() ->
                 new MatchFailedException("Update query is missing!")
         );
         removeAnnotation(matchContext.getAnnotationMetadata(), MongoAnnotations.FILTER); // Mapped to query

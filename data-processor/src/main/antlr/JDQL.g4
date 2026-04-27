@@ -49,8 +49,10 @@ comparison_operator : EQ | GT | GTEQ | LT | LTEQ | NEQ;
 between_expression : scalar_expression NOT? BETWEEN scalar_expression AND scalar_expression;
 like_expression : scalar_expression NOT? LIKE (STRING | input_parameter);
 
-in_expression : scalar_expression NOT? IN '(' in_item (',' in_item)* ')';
-in_item : literal | enum_literal | input_parameter; // could simplify to just literal
+in_expression : scalar_expression NOT? IN in_item_list;
+in_item_list : input_parameter | in_item_list_many ;
+in_item_list_many : '(' in_item (',' in_item)* ')' ;
+in_item : literal | enum_literal | input_parameter;
 
 null_comparison_expression : scalar_expression IS NOT? NULL;
 

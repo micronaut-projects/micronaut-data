@@ -105,6 +105,7 @@ public @interface DataMethodQuery {
      * Meta member for storing the parameters.
      */
     String META_MEMBER_PARAMETERS = "parameters";
+    String META_MEMBER_OUT_PARAMETERS = "outParameters";
 
     /**
      * The member name that holds the root entity type.
@@ -138,6 +139,12 @@ public @interface DataMethodQuery {
      * @return The query parameters
      */
     DataMethodQueryParameter[] parameters() default {};
+
+    /**
+     * @return The query OUT parameters (e.g. Oracle RETURNING ... INTO ...)
+     * @since 5.0
+     */
+    DataMethodQueryOutParameter[] outParameters() default {};
 
     /**
      * @return True if the method represents the procedure invocation.
