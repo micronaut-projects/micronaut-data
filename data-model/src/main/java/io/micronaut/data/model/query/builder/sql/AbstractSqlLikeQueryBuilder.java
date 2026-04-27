@@ -2997,6 +2997,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (propertyPath.getProperty() instanceof Association association && association.isEmbedded() && !isIdentityProperty) {
                 int resultAssociationOffset = propertyPath.getAssociations().size() + 1;
                 NamingStrategy resultNamingStrategy = getNamingStrategy(association.getAssociatedEntity());
+                int[] propertiesCount = new int[1];
+                PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> propertiesCount[0]++);
+                String selectionAlias = resolveSelectionColumnAlias(propertiesCount[0], propertyPath);
                 boolean[] needsTrimming = {false};
                 PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
                     String projectedColumnName = getMappedName(namingStrategy, associations, property);
@@ -3005,7 +3008,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         ? Collections.emptyList()
                         : associations.subList(resultAssociationOffset, associations.size());
                     String resultColumnName = getMappedName(resultNamingStrategy, resultAssociations, property);
-                    appendEmbeddedProjectionProperty(query, property, tableAlias, escape, projectedColumnName, resultColumnName);
+                    appendEmbeddedProjectionProperty(query, property, tableAlias, escape, projectedColumnName, resultColumnName, selectionAlias);
                     needsTrimming[0] = true;
                 });
                 if (needsTrimming[0]) {
@@ -3025,13 +3028,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (needsTrimming[0]) {
                 query.setLength(query.length() - 1);
             }
-            if (StringUtils.isNotEmpty(columnAlias)) {
-                if (propertiesCount[0] > 1) {
-                    throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
-                }
-                if (propertiesCount[0] == 1) {
-                    query.append(AS_CLAUSE).append(columnAlias);
-                }
+            String selectionAlias = resolveSelectionColumnAlias(propertiesCount[0], propertyPath);
+            if (selectionAlias != null) {
+                query.append(AS_CLAUSE).append(selectionAlias);
             }
         }
 
@@ -3153,11 +3152,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                                       String tableAlias,
                                                       boolean escape,
                                                       String projectedColumnName,
-                                                      String resultColumnName) {
+                                                      String resultColumnName,
+                                                      @Nullable
+                                                      String selectionAlias) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
             String columnAlias = getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(columnAlias);
-            String resultAlias = useAlias ? columnAlias : resultColumnName;
+            String resultAlias = selectionAlias != null ? selectionAlias : useAlias ? columnAlias : resultColumnName;
             if (transformed != null) {
                 sb.append(transformed).append(AS_CLAUSE).append(resultAlias);
             } else {
@@ -3165,11 +3166,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     sb.append(tableAlias).append(DOT);
                 }
                 sb.append(escape ? quote(projectedColumnName) : projectedColumnName);
-                if (useAlias || !projectedColumnName.equals(resultColumnName)) {
+                if (selectionAlias != null || useAlias || !projectedColumnName.equals(resultColumnName)) {
                     sb.append(AS_CLAUSE).append(resultAlias);
                 }
             }
             sb.append(COMMA);
+        }
+
+        @Nullable
+        private String resolveSelectionColumnAlias(int propertiesCount, Object propertyPath) {
+            if (StringUtils.isEmpty(columnAlias)) {
+                return null;
+            }
+            if (propertiesCount > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            return propertiesCount == 1 ? columnAlias : null;
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {

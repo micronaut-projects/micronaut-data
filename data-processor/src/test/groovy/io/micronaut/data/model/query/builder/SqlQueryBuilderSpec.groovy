@@ -28,6 +28,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
@@ -235,6 +236,20 @@ interface MyRepository {
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
+    }
+
+    void "test aliased embedded projection with multiple columns throws"() {
+        given:
+        def criteriaQuery = builder.createQuery(Address)
+        def root = criteriaQuery.from(Restaurant)
+        criteriaQuery.select(root.get("hqAddress").alias("address_alias"))
+
+        when:
+        criteriaQuery.build(new SqlQueryBuilder(Dialect.H2))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("Cannot apply a column alias: address_alias with expanded property:")
     }
 
     void "test h2 crud"() {
