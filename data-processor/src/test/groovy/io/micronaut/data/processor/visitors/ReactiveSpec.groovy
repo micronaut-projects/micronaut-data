@@ -31,7 +31,7 @@ import java.util.concurrent.CompletionStage;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import java.util.*;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import reactor.core.publisher.*;
 
 @Repository
