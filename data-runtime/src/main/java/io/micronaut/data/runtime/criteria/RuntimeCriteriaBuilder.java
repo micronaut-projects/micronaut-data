@@ -28,12 +28,15 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
+import io.micronaut.data.runtime.date.CurrentDateTimeProvider;
+import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,11 +87,16 @@ public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
             public @NonNull ApplicationContext getApplicationContext() {
                 throw new IllegalStateException("ApplicationContext are not yet supported");
             }
-        });
+        }, new CurrentDateTimeProvider());
+    }
+
+    public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry) {
+        this(runtimeEntityRegistry, new CurrentDateTimeProvider());
     }
 
     @Inject
-    public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry) {
+    public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry, DateTimeProvider<OffsetDateTime> dateTimeProvider) {
+        super(dateTimeProvider::getNow);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
 

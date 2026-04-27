@@ -20,8 +20,10 @@ import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -128,6 +130,11 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     }
 
     @Override
+    public void visit(IParameterExpression<?> parameterExpression) {
+        queryResultTypeName = parameterExpression.getJavaType().getName();
+    }
+
+    @Override
     public void visit(IdExpression<?, ?> idExpression) {
         SourcePersistentEntity persistentEntity = (SourcePersistentEntity) idExpression.getRoot().getPersistentEntity();
         if (persistentEntity.hasCompositeIdentity()) {
@@ -151,5 +158,10 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     @Override
     public void visit(CastExpression<?> castExpression) {
         queryResultTypeName = castExpression.getJavaType().getName();
+    }
+
+    @Override
+    public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+        queryResultTypeName = currentTemporalExpression.getJavaType().getName();
     }
 }

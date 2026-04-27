@@ -78,10 +78,16 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Connection
+import java.sql.Time
+import java.sql.Timestamp
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -3248,6 +3254,88 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             })
             count == 50
+    }
+
+    void "test criteria current temporal expressions"() {
+        given:
+            def dateTimeProvider = context.getBean(MockedDateTimeProvider)
+            def now = OffsetDateTime.of(2025, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC)
+            dateTimeProvider.setValue(now)
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Temporal", age: 1))
+
+        when:
+            def currentDate = personRepository.findOne(new CriteriaQueryBuilder<java.sql.Date>() {
+                @Override
+                CriteriaQuery<java.sql.Date> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(java.sql.Date)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.currentDate())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+            def currentTime = personRepository.findOne(new CriteriaQueryBuilder<Time>() {
+                @Override
+                CriteriaQuery<Time> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Time)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.currentTime())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+            def currentTimestamp = personRepository.findOne(new CriteriaQueryBuilder<Timestamp>() {
+                @Override
+                CriteriaQuery<Timestamp> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Timestamp)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.currentTimestamp())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+            def localDate = personRepository.findOne(new CriteriaQueryBuilder<LocalDate>() {
+                @Override
+                CriteriaQuery<LocalDate> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(LocalDate)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.localDate())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+            def localTime = personRepository.findOne(new CriteriaQueryBuilder<LocalTime>() {
+                @Override
+                CriteriaQuery<LocalTime> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(LocalTime)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.localTime())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+            def localDateTime = personRepository.findOne(new CriteriaQueryBuilder<LocalDateTime>() {
+                @Override
+                CriteriaQuery<LocalDateTime> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(LocalDateTime)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.localDateTime())
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Temporal"))
+                    return query
+                }
+            })
+
+        then:
+            currentDate instanceof java.sql.Date
+            currentTime instanceof Time
+            currentTimestamp instanceof Timestamp
+            localDate == now.toLocalDate()
+            localTime == now.toLocalTime()
+            localDateTime == now.toLocalDateTime()
+
+        cleanup:
+            dateTimeProvider.setValue(null)
     }
 
     void "test sum function"() {

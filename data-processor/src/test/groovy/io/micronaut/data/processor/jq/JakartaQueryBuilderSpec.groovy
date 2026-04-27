@@ -1,4 +1,4 @@
-package io.micronaut.data.processor.jdql
+package io.micronaut.data.processor.jq
 
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.jpa.criteria.CriteriaSpec
@@ -15,7 +15,7 @@ import spock.lang.Specification
 
 import java.util.function.Function
 
-class JakartaDataQueryLanguageBuilderSpec extends Specification {
+class JakartaQueryBuilderSpec extends Specification {
 
     SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.POSTGRES)
 
@@ -58,6 +58,9 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                 if (name == "NaturalNumber") {
                     return buildNaturalNumber()
                 }
+                if (name == "Event") {
+                    return buildEvent()
+                }
                 throw new IllegalStateException("Unknown entity: " + name)
             })
         }
@@ -76,7 +79,7 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
 
     String transform(String rootEntityName, String q) {
         def root = new SourcePersistentEntity(classElementResolver.apply(rootEntityName ?: "Box"), (x) -> null)
-        def query = JDQLCriteriaBuilderUtils.build(
+        def query = JQCriteriaBuilderUtils.build(
                 q, root, null, classElementResolver, criteriaBuilder
         )
         return query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder).query
@@ -84,44 +87,50 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
 
     def 'test delete query'() {
         when:
-            def result = transform(jdql)
+            def result = transform(jq)
         then:
             result == sql
         where:
-            jdql << [
+            jq << [
                     "DELETE FROM Box",
-                    "DELETE FROM Coordinate WHERE x > 0.0d AND y > 0.0f"
+                    "DELETE FROM Coordinate WHERE x > 0.0d AND y > 0.0f",
+                    "DELETE FROM Box b WHERE b.id = ?1"
             ]
             sql << [
                     """DELETE  FROM "box" """,
-                    """DELETE  FROM "coordinate"  WHERE ("x" > 0 AND "y" > 0)"""
+                    """DELETE  FROM "coordinate"  WHERE ("x" > 0 AND "y" > 0)""",
+                    """DELETE  FROM "box"  WHERE ("id" = ?)"""
             ]
     }
 
     def 'test update query'() {
         when:
-            def result = transform(jdql)
+            def result = transform(jq)
         then:
             result == sql
         where:
-            jdql << [
+            jq << [
                     "UPDATE Coordinate SET x = :newX, y = y / :yDivisor WHERE id = :id",
-                    "UPDATE Box SET length = length + ?1, width = width - ?1, height = height * ?2"
+                    "UPDATE Box SET length = length + ?1, width = width - ?1, height = height * ?2",
+                    "UPDATE Box SET name = NULL WHERE id = ?1",
+                    "UPDATE Box b SET b.name = CONCAT(b.name, ' v2') WHERE b.id = ?1"
             ]
             sql << [
                     """UPDATE "coordinate" SET "x"=?,"y"=("y" / ?) WHERE ("id" = ?)""",
-                    """UPDATE "box" SET "length"=("length" + ?),"width"=("width" - ?),"height"=("height" * ?)"""
+                    """UPDATE "box" SET "length"=("length" + ?),"width"=("width" - ?),"height"=("height" * ?)""",
+                    """UPDATE "box" SET "name"=NULL WHERE ("id" = ?)""",
+                    """UPDATE "box" SET "name"=CONCAT("name",' v2') WHERE ("id" = ?)"""
             ]
     }
 
     def 'test select'() {
         when:
-            def result = transform(rootEntityName, jdql)
+            def result = transform(rootEntityName, jq)
         then:
             result == sql
         where:
-            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box"]
-            jdql << [
+            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Event", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box"]
+            jq << [
                     "WHERE id = :id",
                     "select thisCharacter where hexadecimal like '4_' and hexadecimal not like '%0' and thisCharacter not in ('E', 'G') and id not between 72 and 78 order by id asc",
                     "WHERE isOdd = false AND numType = test.NaturalNumber.NumberType.PRIME",
@@ -134,7 +143,22 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                     "WHERE ID(THIS) IS NULL",
                     "WHERE ID(THIS) > 10",
                     "WHERE ID(THIS) IN (:name1, :name1)",
-                    "WHERE ID(THIS) IN :names"
+                    "WHERE ID(THIS) IN :names",
+                    "WHERE ABS(length - ?1) > 10",
+                    "WHERE LEFT(name, 2) = 'ab' AND RIGHT(name, 1) = 'z'",
+                    "WHERE LOWER(name) = 'abc' OR UPPER(name) = 'ABC'",
+                    "WHERE name LIKE 'A!_%' ESCAPE '!' AND name = 'Furry''s theorem'",
+                    "WHERE eventDate < LOCAL DATE AND eventTime < LOCAL TIME AND eventDateTime < LOCAL DATETIME",
+                    "SELECT COUNT(THIS) FROM Box WHERE length >= 1_000L",
+                    "SELECT name FROM Box WHERE width <> height OR length <= 10 ORDER BY name DESC, ID(THIS)",
+                    "WHERE name LIKE :pattern AND name NOT LIKE :excluded",
+                    "SELECT DISTINCT b.name FROM Box b WHERE b.length > 0 ORDER BY b.name DESC",
+                    "SELECT b.length + b.width AS footprint FROM Box b WHERE b.id = ?1",
+                    "SELECT AVG(b.length), MAX(b.width), MIN(b.height), SUM(b.length), COUNT(DISTINCT b.name) FROM Box b WHERE b.height > 0",
+                    "SELECT CONCAT(SUBSTRING(b.name, 1, 2), RIGHT(b.name, 1)) AS code FROM Box b WHERE MOD(b.length, 2) = 0 AND POWER(b.width, 2) > 10 AND SQRT(b.height) >= 3",
+                    "SELECT AVG(DISTINCT b.length), SUM(DISTINCT b.width), MAX(DISTINCT b.height), MIN(DISTINCT b.height) FROM Box b WHERE b.height > 0",
+                    "SELECT b.name FROM Box b WHERE b.name IS NOT NULL ORDER BY b.name ASC NULLS LAST, b.id DESC NULLS FIRST",
+                    "FROM Box WHERE length BETWEEN :min AND :max"
             ]
             sql << [
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" = ?)""",
@@ -149,7 +173,22 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IS NULL)""",
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" > 10)""",
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (?,?))""",
-                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (?))"""
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (?))""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (ABS((box_."length" - ?)) > 10)""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LEFT(box_."name",2) = 'ab' AND RIGHT(box_."name",1) = 'z')""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LOWER(box_."name") = 'abc' OR UPPER(box_."name") = 'ABC')""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."name" LIKE 'A!_%' ESCAPE '!' AND box_."name" = 'Furry''s theorem')""",
+                    """SELECT event_."id",event_."event_date",event_."event_time",event_."event_date_time" FROM "event" event_ WHERE (event_."event_date" < ? AND event_."event_time" < ? AND event_."event_date_time" < ?)""",
+                    """SELECT COUNT(*) FROM "box" box_ WHERE (box_."length" >= 1000)""",
+                    """SELECT box_."name" FROM "box" box_ WHERE (box_."width" != box_."height" OR box_."length" <= 10) ORDER BY box_."name" DESC,box_."id" ASC""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."name" LIKE ? AND box_."name" NOT LIKE ?)""",
+                    """SELECT DISTINCT box_."name" FROM "box" box_ WHERE (box_."length" > 0) ORDER BY box_."name" DESC""",
+                    """SELECT box_."length" + box_."width" AS footprint FROM "box" box_ WHERE (box_."id" = ?)""",
+                    """SELECT AVG(box_."length"),MAX(box_."width"),MIN(box_."height"),SUM(box_."length"),COUNT(DISTINCT(box_."name")) FROM "box" box_ WHERE (box_."height" > 0)""",
+                    """SELECT CONCAT(SUBSTRING(box_."name",1,2),RIGHT(box_."name",1)) AS code FROM "box" box_ WHERE (MOD(box_."length",2) = 0 AND POWER(box_."width",2) > 10 AND SQRT(box_."height") >= 3)""",
+                    """SELECT AVG(DISTINCT(box_."length")),SUM(DISTINCT(box_."width")),MAX(DISTINCT(box_."height")),MIN(DISTINCT(box_."height")) FROM "box" box_ WHERE (box_."height" > 0)""",
+                    """SELECT box_."name" FROM "box" box_ WHERE (box_."name" IS NOT NULL) ORDER BY box_."name" ASC NULLS LAST,box_."id" DESC NULLS FIRST""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE ((box_."length" >= ? AND box_."length" <= ?))"""
             ]
     }
 
@@ -397,6 +436,62 @@ class NaturalNumber implements Serializable {
 
     public void setFloorOfSquareRoot(long floorOfSquareRoot) {
         this.floorOfSquareRoot = floorOfSquareRoot;
+    }
+}
+""")
+    }
+
+    private static ClassElement buildEvent() {
+        new CriteriaSpec.CustomAbstractDataSpec().buildClassElement("""
+package test;
+
+import io.micronaut.core.annotation.Introspected;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+@jakarta.persistence.Entity
+@Introspected(accessKind = {Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD}, visibility = Introspected.Visibility.ANY)
+class Event {
+    @jakarta.persistence.Id
+    private long id;
+
+    private LocalDate eventDate;
+
+    private LocalTime eventTime;
+
+    private LocalDateTime eventDateTime;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public LocalDate getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(LocalDate eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public LocalTime getEventTime() {
+        return eventTime;
+    }
+
+    public void setEventTime(LocalTime eventTime) {
+        this.eventTime = eventTime;
+    }
+
+    public LocalDateTime getEventDateTime() {
+        return eventDateTime;
+    }
+
+    public void setEventDateTime(LocalDateTime eventDateTime) {
+        this.eventDateTime = eventDateTime;
     }
 }
 """)
