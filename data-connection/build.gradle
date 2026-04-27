@@ -15,5 +15,6 @@ dependencies {
     implementation mn.micronaut.context.propagation
     implementation mn.micronaut.core.reactive
 
-    compileOnly libs.kotlin.coroutines.reactor
+    testImplementation(mnTest.micronaut.test.junit5)
+    compileOnly(mn.kotlinx.coroutines.reactor)
 }
