@@ -86,6 +86,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         this.name = other.getName();
         this.rollbackOn = other.getRollbackOn();
         this.dontRollbackOn = other.getDontRollbackOn();
+        this.priority = other.getPriority();
     }
 
     /**
@@ -280,7 +281,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      * <p>
      * Notes:
      * - This setting is a no-op for non-Oracle databases.
-     * - It is applied at the beginning of a JDBC transaction and reset afterwards.
+     * - It is applied at the beginning of a JDBC or R2DBC transaction and reset afterwards.
      * - It is orthogonal to propagation/isolation/readOnly. It does not change transactional semantics.
      * - Requires appropriate database configuration (PRIORITY_TXNS_* parameters).
      *
@@ -330,6 +331,9 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         }
         if (!dontRollbackOn.isEmpty()) {
             sb.append(", dontRollbackOn=").append(dontRollbackOn);
+        }
+        if (priority != null) {
+            sb.append(", priority=").append(priority);
         }
         sb.append(']');
         return sb.toString();

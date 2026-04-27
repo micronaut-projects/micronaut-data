@@ -164,7 +164,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             .then(Mono.just(true))
             .onErrorResume(e -> {
                 if (isOracleTxnPriorityUnsupported(e)) {
-                    LOG.warn("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
+                    LOG.debug("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
                     return Mono.just(false);
                 }
                 return Mono.error(e);

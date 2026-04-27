@@ -305,7 +305,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             return true;
         } catch (SQLException e) {
             if (isOracleTxnPriorityUnsupported(e)) {
-                logger.warn("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
+                logger.debug("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
                 return false;
             }
             throw e;

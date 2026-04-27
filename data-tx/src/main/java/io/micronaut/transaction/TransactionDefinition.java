@@ -415,16 +415,16 @@ public interface TransactionDefinition {
     }
 
     /**
-     * Returns the transaction priority hint for Oracle databases.
+     * Returns the transaction priority level hint for Oracle databases.
      * For other databases it will be ignored.
      * <p>
-     * The returned {@link TransactionPriority} instance is used to set the session-level
+     * The returned {@link TransactionPriority.Level} is used to set the session-level
      * transaction priority for the duration of the transaction. This is only effective
      * for Oracle Database 26ai+ with system wait targets configured.
      * <p>
      * If not specified or {@code null}, the default Oracle transaction priority is used.
      *
-     * @return the transaction priority hint, or {@code null} if not specified
+     * @return the transaction priority level hint, or {@code null} if not specified
      * @see TransactionPriority
      */
     default TransactionPriority.@Nullable Level getPriority() {

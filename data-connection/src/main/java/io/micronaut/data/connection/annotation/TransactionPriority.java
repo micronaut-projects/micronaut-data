@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * <p>
  * Notes:
  * - This annotation is a no-op for non-Oracle databases.
- * - It is applied at the beginning of a JDBC transaction and reset afterwards.
+ * - It is applied at the beginning of a JDBC or R2DBC transaction and reset afterwards.
  * - It is orthogonal to propagation/isolation/readOnly. It does not change transactional semantics.
  * - Requires appropriate database configuration (PRIORITY_TXNS_* parameters).
  *
