@@ -2904,14 +2904,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         ? Collections.emptyList()
                         : associations.subList(resultAssociationOffset, associations.size());
                     String resultColumnName = getMappedName(resultNamingStrategy, resultAssociations, property);
-                    query
-                        .append(tableAlias)
-                        .append(DOT)
-                        .append(escape ? quote(projectedColumnName) : projectedColumnName);
-                    if (!projectedColumnName.equals(resultColumnName)) {
-                        query.append(AS_CLAUSE).append(resultColumnName);
-                    }
-                    query.append(COMMA);
+                    appendEmbeddedProjectionProperty(query, property, tableAlias, escape, projectedColumnName, resultColumnName);
                     needsTrimming[0] = true;
                 });
                 if (needsTrimming[0]) {
@@ -3048,6 +3041,31 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 if (useAlias) {
                     sb.append(AS_CLAUSE).append(columnAlias);
+                }
+            }
+            sb.append(COMMA);
+        }
+
+        private void appendEmbeddedProjectionProperty(StringBuilder sb,
+                                                      PersistentProperty property,
+                                                      @Nullable
+                                                      String tableAlias,
+                                                      boolean escape,
+                                                      String projectedColumnName,
+                                                      String resultColumnName) {
+            String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
+            String columnAlias = getColumnAlias(property);
+            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
+            String resultAlias = useAlias ? columnAlias : resultColumnName;
+            if (transformed != null) {
+                sb.append(transformed).append(AS_CLAUSE).append(resultAlias);
+            } else {
+                if (tableAlias != null) {
+                    sb.append(tableAlias).append(DOT);
+                }
+                sb.append(escape ? quote(projectedColumnName) : projectedColumnName);
+                if (useAlias || !projectedColumnName.equals(resultColumnName)) {
+                    sb.append(AS_CLAUSE).append(resultAlias);
                 }
             }
             sb.append(COMMA);

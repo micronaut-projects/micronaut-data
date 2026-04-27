@@ -1023,6 +1023,79 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
     }
 
+    void "test embedded projection result preserves leaf aliases and read transformers"() {
+        given:
+        def repository = buildRepository('test.LocationRestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@Embeddable
+class LocationLabel {
+    @MappedProperty(alias = "ll")
+    private String label;
+
+    @DataTransformer(read = "LOWER(@.pref_normalized_code)")
+    @MappedProperty("normalized_code")
+    private String normalizedCode;
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getNormalizedCode() {
+        return normalizedCode;
+    }
+
+    public void setNormalizedCode(String normalizedCode) {
+        this.normalizedCode = normalizedCode;
+    }
+}
+
+@MappedEntity
+class LocationRestaurant {
+    @GeneratedValue
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("pref_")
+    private LocationLabel location;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocationLabel getLocation() {
+        return location;
+    }
+
+    public void setLocation(LocationLabel location) {
+        this.location = location;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LocationRestaurantRepository extends GenericRepository<LocationRestaurant, Long> {
+    LocationLabel findLocationById(Long id);
+}
+""")
+
+        def findLocationByIdMethod = repository.getRequiredMethod("findLocationById", Long)
+
+        expect:
+        getQuery(findLocationByIdMethod) == 'SELECT location_restaurant_.`pref_label` AS ll,LOWER(location_restaurant_.pref_normalized_code) AS normalized_code FROM `location_restaurant` location_restaurant_ WHERE (location_restaurant_.`id` = ?)'
+        getResultDataType(findLocationByIdMethod) == DataType.ENTITY
+    }
+
     void "test invalid embedded projection result"() {
         when:
         buildRepository('test.RestaurantRepository', """
