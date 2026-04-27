@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.connection.annotation.TransactionPriority;
+import io.micronaut.transaction.annotation.Transactional;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
@@ -158,4 +161,9 @@ public abstract class PostgresBookRepository extends BookRepository {
         RETURNING "id"
         """)
     public abstract Optional<Long> customDeleteReturningIdByTitle(String title);
+
+    @Override
+    @Transactional
+    @TransactionPriority(TransactionPriority.Level.MEDIUM)
+    public abstract @NonNull Book save(@NonNull Book book);
 }

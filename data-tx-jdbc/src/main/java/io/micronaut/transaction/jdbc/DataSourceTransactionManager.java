@@ -19,6 +19,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -44,6 +46,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -62,6 +65,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
     private static final int ORACLE_INVALID_ALTER_SESSION_OPTION = 2248;
+    private static final String ORACLE_PRODUCT_NAME_UPPER = "ORACLE";
 
     private final DataSource dataSource;
 
@@ -143,7 +147,10 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             TransactionPriority.Level priority = definition.getPriority();
             if (priority != null) {
                 String productName = connection.getMetaData().getDatabaseProductName();
-                if ("Oracle".equalsIgnoreCase(productName)) {
+                if (productName != null) {
+                    productName = productName.toUpperCase(Locale.ENGLISH);
+                }
+                if (ORACLE_PRODUCT_NAME_UPPER.equals(productName)) {
                     boolean applied = applyOracleTxnPriority(logger, connection, priority);
                     if (applied) {
                         // Reset only if the session-level setting succeeded, otherwise older Oracle versions
