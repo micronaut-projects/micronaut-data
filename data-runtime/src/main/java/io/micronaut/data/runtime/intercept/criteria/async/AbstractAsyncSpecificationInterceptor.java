@@ -25,10 +25,9 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.operations.async.AsyncCapableRepository;
-import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import jakarta.persistence.criteria.CriteriaQuery;
 
@@ -58,20 +57,20 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
      */
     protected AbstractAsyncSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof AsyncCapableRepository asyncCapableRepository) {
-            this.asyncOperations = asyncCapableRepository.async();
-        } else {
+        AsyncRepositoryOperations asyncRepositoryOperations = findRepositoryOperations(AsyncRepositoryOperations.class);
+        if (asyncRepositoryOperations == null) {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
         }
-        if (operations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
-            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
-        } else if (asyncOperations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
-            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
-        } else if (operations instanceof AsyncCriteriaCapableRepository repository) {
-            asyncCriteriaOperations = repository.async();
-        } else {
-            asyncCriteriaOperations = null;
+        this.asyncOperations = asyncRepositoryOperations;
+
+        AsyncCriteriaRepositoryOperations criteriaOperations = findRepositoryOperations(AsyncCriteriaRepositoryOperations.class);
+        if (criteriaOperations == null) {
+            ReactiveCriteriaRepositoryOperations reactiveCriteriaOperations = findRepositoryOperations(ReactiveCriteriaRepositoryOperations.class);
+            if (reactiveCriteriaOperations != null) {
+                criteriaOperations = new ReactiveAsyncCriteriaRepositoryOperations(reactiveCriteriaOperations);
+            }
         }
+        asyncCriteriaOperations = criteriaOperations;
         if (asyncCriteriaOperations != null) {
             criteriaBuilder = asyncCriteriaOperations.getCriteriaBuilder();
         }
