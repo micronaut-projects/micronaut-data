@@ -48,10 +48,12 @@ public class TransactionUtilSpec {
         @Transactional
         @TransactionPriority(TransactionPriority.Level.MEDIUM)
         void methodWithPriority() {
+            // Does nothing, just to test TransactionUtil with TransactionPriority
         }
 
         @Transactional
         void methodWithoutPriority() {
+            // Does nothing, just to test TransactionUtil without TransactionPriority
         }
     }
 }
