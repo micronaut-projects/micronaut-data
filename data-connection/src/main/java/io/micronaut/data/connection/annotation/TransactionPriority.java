@@ -44,7 +44,7 @@ import java.lang.annotation.*;
  * The default Oracle transaction priority is effectively HIGH if not specified.
  *
  * @author radovanradic
- * @since 5.10
+ * @since 5.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

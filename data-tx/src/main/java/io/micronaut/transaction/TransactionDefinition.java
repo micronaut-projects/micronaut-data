@@ -426,6 +426,7 @@ public interface TransactionDefinition {
      *
      * @return the transaction priority level hint, or {@code null} if not specified
      * @see TransactionPriority
+     * @since 5.0
      */
     default TransactionPriority.@Nullable Level getPriority() {
         return null;
