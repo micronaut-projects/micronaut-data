@@ -28,7 +28,7 @@ public interface PostgresStudentReactiveRepository extends StudentReactiveReposi
 
     @Override
     @Transactional
-    // TransactionPriority is used only for Oracle, so this is just for test to skip priority for Postgres
+    // Verify non-Oracle databases ignore TransactionPriority annotations
     @TransactionPriority(TransactionPriority.Level.MEDIUM)
     <S extends Student> Single<S> save(S entity);
 }

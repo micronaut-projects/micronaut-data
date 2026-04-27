@@ -85,8 +85,8 @@ class TransactionAnnotationSpec extends Specification {
 
         then:
             conditions.eventually {
-                testService.readTransactionally() == 4
-                testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
+                assert testService.readTransactionally() == 4
+                assert testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
     }
 
@@ -99,8 +99,8 @@ class TransactionAnnotationSpec extends Specification {
 
         then:
             conditions.eventually {
-                testService.readTransactionally() == expectedCount
-                testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
+                assert testService.readTransactionally() == expectedCount
+                assert testService.commitCount.get() + testService.rollbackCount.get() == testService.completionCount.get()
             }
 
         where:

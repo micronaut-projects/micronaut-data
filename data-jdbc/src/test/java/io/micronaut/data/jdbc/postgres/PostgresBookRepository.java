@@ -164,7 +164,7 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     @Override
     @Transactional
-    // TransactionPriority is used only for Oracle, so this is just for test to skip priority for Postgres
+    // TransactionPriority is Oracle-specific; this test keeps the annotation to verify Postgres ignores the hint.
     @TransactionPriority(TransactionPriority.Level.MEDIUM)
     public abstract @NonNull Book save(@NonNull Book book);
 }
