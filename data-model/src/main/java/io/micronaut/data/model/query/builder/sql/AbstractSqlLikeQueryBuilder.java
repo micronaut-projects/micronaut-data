@@ -166,6 +166,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     );
     private static final Set<String> DISTINCT_AGGREGATE_FUNCTIONS = Set.of(
         "AVG",
+        "COUNT",
         "MAX",
         "MIN",
         "SUM"
@@ -2798,6 +2799,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Nullable
         protected String columnAlias;
         private boolean isCompound;
+        private boolean isNestedExpression;
 
         public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             this.queryState = queryState;
@@ -2812,7 +2814,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
             PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
             PersistentProperty property = propertyPath.getProperty();
-            if (isCompound) {
+            if (isNestedExpression) {
+                AbstractSqlLikeQueryBuilder.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, true);
+            } else if (isCompound) {
                 // Compound property which is part of a DTO
                 if (property instanceof Association association && !property.isEmbedded()) {
                     if (queryState.isJoined(propertyPath.getPath())) {
@@ -2911,8 +2915,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCountDistinct(Objects.requireNonNull(tableAlias));
                     } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                        appendFunction("COUNT(DISTINCT", persistentPropertyPath);
-                        query.append(CLOSE_BRACKET);
+                        appendFunction("COUNT_DISTINCT", persistentPropertyPath);
                     } else {
                         throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                     }
@@ -3277,11 +3280,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         private void appendExpression(Expression<?> expression) {
             String currentColumnAlias = columnAlias;
+            boolean currentNestedExpression = isNestedExpression;
             columnAlias = null;
+            isNestedExpression = true;
             try {
                 CriteriaUtils.requireIExpression(expression).visitExpression(this);
             } finally {
                 columnAlias = currentColumnAlias;
+                isNestedExpression = currentNestedExpression;
             }
         }
 
