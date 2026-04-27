@@ -77,6 +77,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getDontRollbackOn()" tabindex="0">getDontRollbackOn()</a></li>
 <li><a href="#rollbackOn(java.lang.Throwable)" tabindex="0">rollbackOn(Throwable)</a></li>
 <li><a href="#getConnectionDefinition()" tabindex="0">getConnectionDefinition()</a></li>
+<li><a href="#getPriority()" tabindex="0">getPriority()</a></li>
 </ol>
 </li>
 </ol>
@@ -203,39 +204,44 @@ or none if timeouts are not supported.</div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return the name of this transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getPropagationBehavior()" class="member-name-link">getPropagationBehavior</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="../data/connection/annotation/TransactionPriority.Level.html" title="enum class in io.micronaut.data.connection.annotation">TransactionPriority.Level</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getPriority()" class="member-name-link">getPriority</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Returns the transaction priority hint for Oracle databases.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getPropagationBehavior()" class="member-name-link">getPropagationBehavior</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return the propagation behavior.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getRollbackOn()" class="member-name-link">getRollbackOn</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getRollbackOn()" class="member-name-link">getRollbackOn</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Collection of exception classes that should cause the rollback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return the transaction timeout.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isReadOnly()" class="member-name-link">isReadOnly</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isReadOnly()" class="member-name-link">isReadOnly</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Return whether to optimize as a read-only transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#named(java.lang.String)" class="member-name-link">named</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#named(java.lang.String)" class="member-name-link">named</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Create a new <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a> with a given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">of</a><wbr>(@NonNull <a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehaviour)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.transaction.TransactionDefinition.Propagation)" class="member-name-link">of</a><wbr>(@NonNull <a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a>&nbsp;propagationBehaviour)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Create a new <a href="TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a> for the given behaviour.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#rollbackOn(java.lang.Throwable)" class="member-name-link">rollbackOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;e)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#rollbackOn(java.lang.Throwable)" class="member-name-link">rollbackOn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;e)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Check of the transaction should roll back when exception occurs.</div>
 </div>
 </div>
@@ -490,6 +496,32 @@ the <code>fully-qualified class name + "." + method name</code> (by default).</d
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The connection definition that is required for this transaction.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getPriority()">
+<h3>getPriority</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="../data/connection/annotation/TransactionPriority.Level.html" title="enum class in io.micronaut.data.connection.annotation">TransactionPriority.Level</a></span>&nbsp;<span class="element-name">getPriority</span>()</div>
+<div class="block">Returns the transaction priority hint for Oracle databases.
+For other databases it will be ignored.
+<p>
+The returned <a href="../data/connection/annotation/TransactionPriority.html" title="annotation interface in io.micronaut.data.connection.annotation"><code>TransactionPriority</code></a> instance is used to set the session-level
+transaction priority for the duration of the transaction. This is only effective
+for Oracle Database 26ai+ with system wait targets configured.
+<p>
+If not specified or <code>null</code>, the default Oracle transaction priority is used.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the transaction priority hint, or <code>null</code> if not specified</dd>
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../data/connection/annotation/TransactionPriority.html" title="annotation interface in io.micronaut.data.connection.annotation"><code>TransactionPriority</code></a></li>
+</ul>
+</dd>
 </dl>
 </div>
 </section>
