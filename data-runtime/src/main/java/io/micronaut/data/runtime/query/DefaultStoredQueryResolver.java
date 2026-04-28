@@ -23,6 +23,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -54,6 +55,31 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
     }
 
     @Override
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
+                                                 OperationType operationType) {
+        AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
+        if (dataMethodQuery != null) {
+            if (isOperationType(dataMethodQuery, operationType)) {
+                return new DefaultStoredQuery<>(
+                    context.getExecutableMethod(),
+                    dataMethodQuery,
+                    getHintsCapableRepository()
+                );
+            }
+            for (AnnotationValue<DataMethodQuery> query : dataMethodQuery.getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery.class)) {
+                if (isOperationType(query, operationType)) {
+                    return new DefaultStoredQuery<>(
+                        context.getExecutableMethod(),
+                        (AnnotationValue<Annotation>) (AnnotationValue<?>) query,
+                        getHintsCapableRepository()
+                    );
+                }
+            }
+        }
+        return resolveQuery(context);
+    }
+
+    @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
         AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
         if (dataMethodQuery != null) {
@@ -72,6 +98,12 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             true,
             getHintsCapableRepository()
         );
+    }
+
+    private boolean isOperationType(AnnotationValue<?> dataMethodQuery, OperationType operationType) {
+        return dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethodQuery.OperationType.class)
+            .map(op -> op.name().equals(operationType.name()))
+            .orElse(false);
     }
 
     @Override

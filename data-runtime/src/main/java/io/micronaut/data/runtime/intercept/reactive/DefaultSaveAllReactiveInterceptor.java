@@ -21,6 +21,10 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Default implementation of {@link SaveAllReactiveInterceptor}.
@@ -41,6 +45,24 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        return reactiveOperations.persistAll(getInsertBatchOperation(context, iterable));
+        List<Object> entities = toList(iterable);
+        return saveAll(context, entities);
+    }
+
+    private Publisher<Object> saveAll(MethodInvocationContext<Object, Object> context, List<Object> entities) {
+        return Flux.fromIterable(entities)
+            .concatMap(entity -> persistOrUpdateReactive(context, entity));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> toList(Iterable<Object> iterable) {
+        if (iterable instanceof List<?> list) {
+            return (List<Object>) list;
+        }
+        List<Object> list = new ArrayList<>();
+        for (Object entity : iterable) {
+            list.add(entity);
+        }
+        return list;
     }
 }

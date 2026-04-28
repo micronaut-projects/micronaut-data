@@ -6,6 +6,8 @@ import jakarta.data.Limit;
 import jakarta.data.Sort;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,6 +25,53 @@ class CustomerDaoTest {
         found.ifPresent(it -> assertEquals("customer_test", it.name()));
         customerRepository.deleteById(savedCustomer.id());
         assertTrue(customerRepository.findById(savedCustomer.id()).isEmpty());
+        customerRepository.deleteAll();
+    }
+
+    @Test
+    public void testSaveChoosesInsertOrUpdate(CustomerRepository customerRepository) {
+        var inserted = customerRepository.saveOrUpdate(Customer.of("customer_insert", 20, Address.of("test", "NY", "210000")));
+        assertNotNull(inserted.id());
+
+        var updated = customerRepository.saveOrUpdate(new Customer(
+            inserted.id(),
+            "customer_update",
+            21,
+            Address.of("test2", "LA", "220000"),
+            inserted.version()
+        ));
+
+        assertEquals(inserted.id(), updated.id());
+        var found = customerRepository.findById(inserted.id()).orElseThrow();
+        assertEquals("customer_update", found.name());
+        assertEquals(21, found.age());
+        assertEquals("LA", found.address().city());
+        customerRepository.deleteAll();
+    }
+
+    @Test
+    public void testSaveAllChoosesInsertOrUpdate(CustomerRepository customerRepository) {
+        var existing = customerRepository.saveOrUpdate(Customer.of("customer_existing", 30, Address.of("test", "NY", "210000")));
+        var update = new Customer(
+            existing.id(),
+            "customer_existing_updated",
+            31,
+            Address.of("test3", "SF", "230000"),
+            existing.version()
+        );
+
+        var saved = customerRepository.saveOrUpdateAll(List.of(
+            Customer.of("customer_new_1", 20, Address.of("test1", "NY", "210000")),
+            update,
+            Customer.of("customer_new_2", 22, Address.of("test2", "LA", "220000"))
+        ));
+
+        assertEquals(3, saved.size());
+        assertEquals("customer_new_1", saved.get(0).name());
+        assertEquals(existing.id(), saved.get(1).id());
+        assertEquals("customer_existing_updated", saved.get(1).name());
+        assertEquals("customer_new_2", saved.get(2).name());
+        assertEquals("customer_existing_updated", customerRepository.findById(existing.id()).orElseThrow().name());
         customerRepository.deleteAll();
     }
 

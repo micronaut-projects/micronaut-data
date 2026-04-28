@@ -95,6 +95,28 @@ public class PersistenceEntityTests {
     }
 
     @Test
+    public void testSaveChoosesInsertOrUpdate() {
+        catalog.deleteByProductNumLike("TEST-PROD-%");
+
+        CatalogProduct product = CatalogProduct.of("save insert", 1.99, "TEST-PROD-SAVE", GROCERY);
+        catalog.customSave(product);
+
+        Optional<CatalogProduct> found = catalog.get("TEST-PROD-SAVE");
+        assertEquals(true, found.isPresent());
+        assertEquals("save insert", found.orElseThrow().getName());
+
+        product.setName("save update");
+        product.setPrice(2.49);
+        catalog.customSave(product);
+
+        found = catalog.get("TEST-PROD-SAVE");
+        assertEquals(true, found.isPresent());
+        assertEquals("save update", found.orElseThrow().getName());
+        assertEquals(2.49, found.orElseThrow().getPrice(), 0.001);
+        assertEquals(1L, catalog.deleteByProductNumLike("TEST-PROD-%"));
+    }
+
+    @Test
     public void testLike() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
 

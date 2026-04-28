@@ -2,10 +2,13 @@ Unlike JPA/Hibernate, Micronaut Data JDBC / R2DBC is stateless and has no notion
 
 Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.
 
-By default, when saving an entity with a method like `save(MyEntity)` a SQL `INSERT` is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.
+When saving an entity with a method like `save(MyEntity)`, Micronaut Data JDBC / R2DBC decides between a SQL `INSERT` and `UPDATE` from the entity identity value.
+An entity without an assigned identity value is inserted.
+An entity with an assigned identity value is updated.
 
-If you wish to update an entity you should instead either use `update(MyEntity)` or even better define an appropriate `update` method to update only the data you want to update, for example:
+If you need to require an insert, use `insert(MyEntity)`, `insertAll(Iterable<MyEntity>)`, or define an insert method.
+If you need to require an update, use `update(MyEntity)` or define an appropriate `update` method to update only the data you want to update, for example:
 
 snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main" tags="update", indent="0"]
 
-By being explicit in defining the method as an update method Micronaut Data knows to execute an `UPDATE`.
+By being explicit in defining the method as an insert or update method, Micronaut Data knows which SQL operation to execute.

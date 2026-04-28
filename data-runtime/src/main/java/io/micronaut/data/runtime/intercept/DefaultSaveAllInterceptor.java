@@ -23,6 +23,10 @@ import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * Default implementation of {@link SaveAllInterceptor}.
  * @param <T> The declaring type
@@ -45,7 +49,8 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     @Nullable
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        Iterable<Object> rs = operations.persistAll(getInsertBatchOperation(context, iterable));
+        List<Object> entities = toList(iterable);
+        List<Object> rs = saveAll(context, entities);
         ReturnType<R> rt = context.getReturnType();
         if (rt.isVoid()) {
             return null;
@@ -57,4 +62,52 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         return operations.getConversionService().convert(rs, rt.asArgument())
                 .orElseThrow(() -> new IllegalStateException("Unsupported iterable return type: " + rt.getType()));
     }
+
+    private List<Object> saveAll(MethodInvocationContext<T, R> context, List<Object> entities) {
+        List<Object> results = new ArrayList<>(entities);
+        List<Object> insertRun = new ArrayList<>();
+        List<Integer> insertIndexes = new ArrayList<>();
+        for (int i = 0; i < entities.size(); i++) {
+            Object entity = entities.get(i);
+            if (isEntityUpdateCandidate(context, entity)) {
+                persistInsertRun(context, insertRun, insertIndexes, results);
+                results.set(i, persistOrUpdate(context, entity));
+            } else {
+                insertRun.add(entity);
+                insertIndexes.add(i);
+            }
+        }
+        persistInsertRun(context, insertRun, insertIndexes, results);
+        return results;
+    }
+
+    private void persistInsertRun(MethodInvocationContext<T, R> context,
+                                  List<Object> insertRun,
+                                  List<Integer> insertIndexes,
+                                  List<Object> results) {
+        if (insertRun.isEmpty()) {
+            return;
+        }
+        Iterable<Object> persisted = operations.persistAll(getInsertBatchOperation(context, insertRun));
+        Iterator<Object> persistedIterator = persisted.iterator();
+        for (int i = 0; i < insertIndexes.size(); i++) {
+            Object entity = persistedIterator.hasNext() ? persistedIterator.next() : insertRun.get(i);
+            results.set(insertIndexes.get(i), entity);
+        }
+        insertRun.clear();
+        insertIndexes.clear();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> toList(Iterable<Object> iterable) {
+        if (iterable instanceof List<?> list) {
+            return (List<Object>) list;
+        }
+        List<Object> list = new ArrayList<>();
+        for (Object entity : iterable) {
+            list.add(entity);
+        }
+        return list;
+    }
+
 }

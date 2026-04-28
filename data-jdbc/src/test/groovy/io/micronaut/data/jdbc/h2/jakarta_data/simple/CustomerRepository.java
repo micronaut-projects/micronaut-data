@@ -12,6 +12,7 @@ import jakarta.data.repository.OrderBy;
 import jakarta.data.repository.Param;
 import jakarta.data.repository.Query;
 import jakarta.data.repository.Repository;
+import jakarta.data.repository.Save;
 import jakarta.data.repository.Update;
 
 import java.util.List;
@@ -35,6 +36,12 @@ public interface CustomerRepository {
 
     @Insert
     Customer save(Customer data);
+
+    @Save
+    Customer saveOrUpdate(Customer data);
+
+    @Save
+    List<Customer> saveOrUpdateAll(List<Customer> data);
 
     @Update
     void update(Customer data);

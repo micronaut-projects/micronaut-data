@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
@@ -2492,7 +2493,8 @@ interface Repo extends GenericRepository<Book, Long> {
         def method = repository.getRequiredMethod("replaceCustom", Long, String, int)
 
         expect:
-        getOperationType(method) == DataMethod.OperationType.UPDATE
+        getOperationType(method) == DataMethod.OperationType.INSERT
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
         getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
     }
 

@@ -46,6 +46,9 @@ public interface Catalog extends DataRepository<CatalogProduct, String> {
     @Save
     void customSave(CatalogProduct product);
 
+    @Save
+    CatalogProduct[] customSaveMultiple(CatalogProduct... products);
+
     @Delete
     void deleteById(@By(ID) String productNum);
 

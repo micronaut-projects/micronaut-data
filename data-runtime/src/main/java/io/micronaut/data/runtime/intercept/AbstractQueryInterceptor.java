@@ -35,6 +35,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.EmptyResultException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -57,6 +58,8 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
@@ -84,8 +87,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_LIMIT;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_OFFSET;
@@ -100,11 +105,15 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
+    private static final String JAKARTA_OPTIMISTIC_LOCK_EXCEPTION = "jakarta.persistence.OptimisticLockException";
+    private static final String HIBERNATE_INSTANTIATION_EXCEPTION = "org.hibernate.InstantiationException";
+
     protected final ConversionService conversionService;
     protected final RepositoryOperations operations;
     protected final PreparedQueryResolver preparedQueryResolver;
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> queries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<StoredQueryKey, StoredQuery> operationQueries = new ConcurrentHashMap<>(50);
     private final StoredQueryResolver storedQueryResolver;
     private final MethodContextAwareStoredQueryDecorator storedQueryDecorator;
     private final PagedQueryResolver pagedQueryResolver;
@@ -279,17 +288,25 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context) {
-        RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
-        return findStoreQuery(key, context);
-    }
-
     private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
         StoredQuery<E, RT> storedQuery = queries.get(methodKey);
         if (storedQuery == null) {
             storedQuery = storedQueryResolver.resolveQuery(context);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             queries.put(methodKey, storedQuery);
+        }
+        return storedQuery;
+    }
+
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context,
+                                                      StoredQuery.OperationType operationType) {
+        RepositoryMethodKey methodKey = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
+        StoredQueryKey key = new StoredQueryKey(methodKey, operationType);
+        StoredQuery<E, RT> storedQuery = operationQueries.get(key);
+        if (storedQuery == null) {
+            storedQuery = storedQueryResolver.resolveQuery(context, operationType);
+            storedQuery = storedQueryDecorator.decorate(context, storedQuery);
+            operationQueries.put(key, storedQuery);
         }
         return storedQuery;
     }
@@ -545,6 +562,152 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         return context.intValue(DataMethod.class, META_MEMBER_LIMIT).orElse(-1);
     }
 
+    private StoredQuery.OperationType resolveInsertOperationType(MethodInvocationContext<?, ?> context) {
+        return switch (getDataMethodOperationType(context)) {
+            case INSERT_RETURNING -> StoredQuery.OperationType.INSERT_RETURNING;
+            default -> StoredQuery.OperationType.INSERT;
+        };
+    }
+
+    private StoredQuery.OperationType resolveUpdateOperationType(MethodInvocationContext<?, ?> context) {
+        return switch (getDataMethodOperationType(context)) {
+            case UPDATE_RETURNING, INSERT_RETURNING -> StoredQuery.OperationType.UPDATE_RETURNING;
+            default -> StoredQuery.OperationType.UPDATE;
+        };
+    }
+
+    private DataMethod.OperationType getDataMethodOperationType(MethodInvocationContext<?, ?> context) {
+        return context.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .orElse(DataMethod.OperationType.QUERY);
+    }
+
+    /**
+     * Whether the entity has a non-null identity value.
+     *
+     * @param context The method invocation context
+     * @param entity  The entity instance
+     * @return True if the entity has an ID value
+     */
+    protected final boolean hasEntityId(MethodInvocationContext<?, ?> context, Object entity) {
+        Class<Object> rootEntity = getRequiredRootEntity(context);
+        RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
+        return hasEntityId(persistentEntity, entity);
+    }
+
+    /**
+     * Whether the entity should be updated instead of inserted.
+     *
+     * @param context The method invocation context
+     * @param entity  The entity instance
+     * @return True if the entity has enough state to use the update query
+     */
+    protected final boolean isEntityUpdateCandidate(MethodInvocationContext<?, ?> context, Object entity) {
+        Class<Object> rootEntity = getRequiredRootEntity(context);
+        RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
+        if (!hasEntityId(persistentEntity, entity)) {
+            return false;
+        }
+        return !persistentEntity.hasVersion()
+            || persistentEntity.getVersion().isGenerated()
+            || persistentEntity.getVersion().getProperty().get(entity) != null;
+    }
+
+    private boolean hasEntityId(RuntimePersistentEntity<Object> persistentEntity, Object entity) {
+        if (persistentEntity.hasIdentity()) {
+            RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
+            return identity.getProperty().get(entity) != null;
+        }
+        if (persistentEntity.hasCompositeIdentity()) {
+            for (RuntimePersistentProperty<Object> identity : persistentEntity.getCompositeIdentity()) {
+                if (identity.getProperty().get(entity) == null) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Persists a new entity, or updates an entity that already has an identity.
+     * If an update does not affect a row, this falls back to insert so save works
+     * for assigned identities that are not stored yet.
+     *
+     * @param context The method invocation context
+     * @param entity  The entity
+     * @param <E>     The entity type
+     * @return The persisted or updated entity
+     */
+    protected final <E> E persistOrUpdate(MethodInvocationContext<T, ?> context, E entity) {
+        if (!isEntityUpdateCandidate(context, entity)) {
+            return operations.persist(getInsertOperation(context, entity));
+        }
+        try {
+            return operations.update(getUpdateOperation(context, entity));
+        } catch (RuntimeException e) {
+            if (!canFallbackToInsert(e)) {
+                throw e;
+            }
+            try {
+                return operations.persist(getInsertOperation(context, entity));
+            } catch (RuntimeException insertFailure) {
+                e.addSuppressed(insertFailure);
+                throw e;
+            }
+        }
+    }
+
+    protected final Throwable unwrapCompletionException(Throwable throwable) {
+        Throwable cause = throwable;
+        while ((cause instanceof CompletionException || cause instanceof ExecutionException) && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
+
+    protected final boolean isOptimisticLockException(Throwable throwable) {
+        Throwable cause = unwrapCompletionException(throwable);
+        while (cause != null) {
+            if (cause instanceof OptimisticLockException || hasClassName(cause, JAKARTA_OPTIMISTIC_LOCK_EXCEPTION)) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    protected final boolean canFallbackToInsert(Throwable throwable) {
+        Throwable cause = unwrapCompletionException(throwable);
+        while (cause != null) {
+            if (cause instanceof OptimisticLockException
+                || hasClassName(cause, JAKARTA_OPTIMISTIC_LOCK_EXCEPTION)
+                || hasClassName(cause, HIBERNATE_INSTANTIATION_EXCEPTION)) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private boolean hasClassName(Throwable throwable, String className) {
+        Class<?> type = throwable.getClass();
+        while (type != null) {
+            if (type.getName().equals(className)) {
+                return true;
+            }
+            type = type.getSuperclass();
+        }
+        return false;
+    }
+
+    protected final RuntimeException propagate(Throwable throwable) {
+        Throwable cause = unwrapCompletionException(throwable);
+        if (cause instanceof RuntimeException runtimeException) {
+            return runtimeException;
+        }
+        return new CompletionException(cause);
+    }
+
     /**
      * Looks up the entity to persist from the execution context, or throws an exception.
      *
@@ -657,7 +820,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
-        return new DefaultInsertBatchOperation<>(context, rootEntity, iterable);
+        return new DefaultInsertBatchOperation<>(context, rootEntity, iterable, resolveInsertOperationType(context));
     }
 
     /**
@@ -671,7 +834,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     @NonNull
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context) {
         E o = (E) getRequiredEntity(context);
-        return new DefaultInsertOperation<>(context, o);
+        return new DefaultInsertOperation<>(context, o, resolveInsertOperationType(context));
     }
 
     /**
@@ -697,7 +860,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> UpdateOperation<E> getUpdateOperation(@NonNull MethodInvocationContext<T, ?> context, E entity) {
-        return new DefaultUpdateOperation<>(context, entity);
+        return new DefaultUpdateOperation<>(context, entity, resolveUpdateOperationType(context));
     }
 
     /**
@@ -711,7 +874,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> UpdateBatchOperation<E> getUpdateAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
-        return new DefaultUpdateBatchOperation<>(context, rootEntity, iterable);
+        return new DefaultUpdateBatchOperation<>(context, rootEntity, iterable, resolveUpdateOperationType(context));
     }
 
     /**
@@ -724,7 +887,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> DeleteOperation<E> getDeleteOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull E entity) {
-        return new DefaultDeleteOperation<>(context, entity);
+        return new DefaultDeleteOperation<>(context, entity, StoredQuery.OperationType.DELETE);
     }
 
     /**
@@ -809,7 +972,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext<T, ?> context, E entity) {
-        return new DefaultInsertOperation<>(context, entity);
+        return new DefaultInsertOperation<>(context, entity, resolveInsertOperationType(context));
     }
 
     /**
@@ -891,6 +1054,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
     }
 
+    private record StoredQueryKey(RepositoryMethodKey methodKey, StoredQuery.OperationType operationType) {
+    }
+
     /**
      * Default implementation of {@link InsertOperation}.
      *
@@ -899,8 +1065,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final class DefaultInsertOperation<E> extends AbstractEntityOperation<E> implements InsertOperation<E> {
         private final E entity;
 
-        DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super(method, (Class<E>) entity.getClass());
+        DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity, StoredQuery.OperationType operationType) {
+            super(method, (Class<E>) entity.getClass(), operationType);
             this.entity = entity;
         }
 
@@ -917,8 +1083,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private final class DefaultDeleteOperation<E> extends AbstractEntityInstanceOperation<E> implements DeleteOperation<E> {
-        DefaultDeleteOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super(method, entity);
+        DefaultDeleteOperation(MethodInvocationContext<?, ?> method, E entity, StoredQuery.OperationType operationType) {
+            super(method, entity, operationType);
         }
     }
 
@@ -930,7 +1096,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     private final class DefaultDeleteReturningOperation<E, K> extends AbstractEntityInstanceOperation<E> implements DeleteReturningOperation<E, K> {
         DefaultDeleteReturningOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super(method, entity);
+            super(method, entity, StoredQuery.OperationType.DELETE_RETURNING);
         }
 
         @Override
@@ -949,7 +1115,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final class DefaultDeleteReturningBatchOperation<E, K> extends DefaultDeleteBatchOperation<E> implements DeleteReturningBatchOperation<E, K> {
 
         DefaultDeleteReturningBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super(method, rootEntity, iterable);
+            super(method, rootEntity, iterable, StoredQuery.OperationType.DELETE_RETURNING);
         }
 
         @Override
@@ -967,8 +1133,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final class DefaultUpdateOperation<E> extends AbstractEntityOperation<E> implements UpdateOperation<E> {
         private final E entity;
 
-        DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super(method, (Class<E>) entity.getClass());
+        DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity, StoredQuery.OperationType operationType) {
+            super(method, (Class<E>) entity.getClass(), operationType);
             this.entity = entity;
         }
 
@@ -982,8 +1148,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private abstract sealed class AbstractEntityInstanceOperation<E> extends AbstractEntityOperation<E> implements EntityInstanceOperation<E> {
         private final E entity;
 
-        AbstractEntityInstanceOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super(method, (Class<E>) entity.getClass());
+        AbstractEntityInstanceOperation(MethodInvocationContext<?, ?> method, E entity, StoredQuery.OperationType operationType) {
+            super(method, (Class<E>) entity.getClass(), operationType);
             this.entity = entity;
         }
 
@@ -996,15 +1162,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     private abstract sealed class AbstractEntityOperation<E> extends AbstractPreparedDataOperation<E> implements EntityOperation<E> {
-        protected final MethodInvocationContext<?, ?> method;
-        protected final Class<E> rootEntity;
+        final MethodInvocationContext<?, ?> method;
+        final Class<E> rootEntity;
+        final StoredQuery.OperationType operationType;
         @Nullable
-        protected StoredQuery<E, ?> storedQuery;
+        StoredQuery<E, ?> storedQuery;
 
-        AbstractEntityOperation(MethodInvocationContext<?, ?> method, Class<E> rootEntity) {
+        AbstractEntityOperation(MethodInvocationContext<?, ?> method, Class<E> rootEntity, StoredQuery.OperationType operationType) {
             super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.rootEntity = rootEntity;
+            this.operationType = operationType;
         }
 
         @Override
@@ -1015,7 +1183,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 if (queryString == null) {
                     return null;
                 }
-                storedQuery = findStoreQuery(method);
+                storedQuery = findStoreQuery(method, operationType);
             }
             return storedQuery;
         }
@@ -1060,15 +1228,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private final class DefaultInsertBatchOperation<E> extends DefaultBatchOperation<E> implements InsertBatchOperation<E> {
-        DefaultInsertBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super(method, rootEntity, iterable);
+        DefaultInsertBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable, StoredQuery.OperationType operationType) {
+            super(method, rootEntity, iterable, operationType);
         }
 
         @Override
         public List<InsertOperation<E>> split() {
             List<InsertOperation<E>> inserts = new ArrayList<>(10);
             for (E e : iterable) {
-                inserts.add(new DefaultInsertOperation<>(method, e));
+                inserts.add(new DefaultInsertOperation<>(method, e, operationType));
             }
             return inserts;
         }
@@ -1082,7 +1250,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final class DefaultDeleteAllBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
         DefaultDeleteAllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
-            super(method, rootEntity, Collections.emptyList());
+            super(method, rootEntity, Collections.emptyList(), StoredQuery.OperationType.DELETE);
         }
 
         @Override
@@ -1104,14 +1272,18 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private sealed class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
         DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super(method, rootEntity, iterable);
+            this(method, rootEntity, iterable, StoredQuery.OperationType.DELETE);
+        }
+
+        DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable, StoredQuery.OperationType operationType) {
+            super(method, rootEntity, iterable, operationType);
         }
 
         @Override
         public List<DeleteOperation<E>> split() {
             List<DeleteOperation<E>> deletes = new ArrayList<>(10);
             for (E e : iterable) {
-                deletes.add(new DefaultDeleteOperation<>(method, e));
+                deletes.add(new DefaultDeleteOperation<>(method, e, operationType));
             }
             return deletes;
         }
@@ -1125,15 +1297,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     private final class DefaultUpdateBatchOperation<E> extends DefaultBatchOperation<E> implements UpdateBatchOperation<E> {
 
-        DefaultUpdateBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super(method, rootEntity, iterable);
+        DefaultUpdateBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable, StoredQuery.OperationType operationType) {
+            super(method, rootEntity, iterable, operationType);
         }
 
         @Override
         public List<UpdateOperation<E>> split() {
             List<UpdateOperation<E>> updates = new ArrayList<>(10);
             for (E e : iterable) {
-                updates.add(new DefaultUpdateOperation<>(method, e));
+                updates.add(new DefaultUpdateOperation<>(method, e, operationType));
             }
             return updates;
         }
@@ -1146,10 +1318,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private sealed class DefaultBatchOperation<E> extends AbstractEntityOperation<E> implements BatchOperation<E> {
-        protected final Iterable<E> iterable;
+        final Iterable<E> iterable;
 
-        public DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super(method, rootEntity);
+        DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable, StoredQuery.OperationType operationType) {
+            super(method, rootEntity, operationType);
             this.iterable = iterable;
         }
 

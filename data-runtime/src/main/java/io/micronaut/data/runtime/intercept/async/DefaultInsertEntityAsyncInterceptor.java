@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,33 @@
 package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertEntityAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletionStage;
 
 /**
- * Default implementation of {@link SaveEntityAsyncInterceptor}.
+ * Default implementation of {@link InsertEntityAsyncInterceptor}.
  *
- * @param <T> The declaring type
- * @author graemerocher
- * @since 1.0.0
+ * @since 5.0.0
  */
-public class DefaultSaveEntityInterceptor<T> extends AbstractCountConvertCompletionStageInterceptor implements SaveEntityAsyncInterceptor<Object> {
+public class DefaultInsertEntityAsyncInterceptor extends AbstractCountConvertCompletionStageInterceptor implements InsertEntityAsyncInterceptor<Object> {
 
     /**
      * Default constructor.
      *
      * @param datastore The operations
      */
-    protected DefaultSaveEntityInterceptor(@NonNull RepositoryOperations datastore) {
+    protected DefaultInsertEntityAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Object entity = getEntityParameter(context, Object.class);
-        return persistOrUpdateAsync(context, entity);
+        return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
     }
 
 }

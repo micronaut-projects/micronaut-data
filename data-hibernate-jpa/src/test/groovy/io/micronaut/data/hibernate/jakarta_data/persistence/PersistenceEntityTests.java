@@ -99,6 +99,56 @@ public class PersistenceEntityTests {
     }
 
     @Test
+    public void testSaveChoosesInsertOrUpdate() {
+        catalog.deleteByProductNumLike("TEST-PROD-%");
+
+        CatalogProduct product = CatalogProduct.of("save insert", 1.99, "TEST-PROD-SAVE", GROCERY);
+        catalog.customSave(product);
+
+        Optional<CatalogProduct> found = catalog.get("TEST-PROD-SAVE");
+        assertEquals(true, found.isPresent());
+        assertEquals("save insert", found.orElseThrow().getName());
+
+        product = found.orElseThrow();
+        product.setName("save update");
+        product.setPrice(2.49);
+        catalog.customSave(product);
+
+        found = catalog.get("TEST-PROD-SAVE");
+        assertEquals(true, found.isPresent());
+        assertEquals("save update", found.orElseThrow().getName());
+        assertEquals(2.49, found.orElseThrow().getPrice(), 0.001);
+        assertEquals(1L, catalog.deleteByProductNumLike("TEST-PROD-%"));
+    }
+
+    @Test
+    public void testSaveAllChoosesInsertOrUpdate() {
+        catalog.deleteByProductNumLike("TEST-PROD-%");
+
+        CatalogProduct existing = CatalogProduct.of("save all existing", 4.99, "TEST-PROD-SAVE-ALL-1", GROCERY);
+        catalog.customSave(existing);
+        existing = catalog.get("TEST-PROD-SAVE-ALL-1").orElseThrow();
+        existing.setName("save all existing updated");
+        existing.setPrice(5.49);
+
+        CatalogProduct[] saved = catalog.customSaveMultiple(
+            CatalogProduct.of("save all insert", 1.99, "TEST-PROD-SAVE-ALL-2", GROCERY),
+            existing,
+            CatalogProduct.of("save all insert 2", 2.99, "TEST-PROD-SAVE-ALL-3", GROCERY)
+        );
+
+        assertEquals(3, saved.length);
+        assertEquals("save all insert", saved[0].getName());
+        assertEquals("save all existing updated", saved[1].getName());
+        assertEquals("save all insert 2", saved[2].getName());
+        Optional<CatalogProduct> found = catalog.get("TEST-PROD-SAVE-ALL-1");
+        assertEquals(true, found.isPresent());
+        assertEquals("save all existing updated", found.orElseThrow().getName());
+        assertEquals(5.49, found.orElseThrow().getPrice(), 0.001);
+        assertEquals(3L, catalog.deleteByProductNumLike("TEST-PROD-%"));
+    }
+
+    @Test
     public void testLike() {
         catalog.deleteByProductNumLike("TEST-PROD-%");
 

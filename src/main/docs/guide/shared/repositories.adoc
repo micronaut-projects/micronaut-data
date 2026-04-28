@@ -56,6 +56,11 @@ The following table summarizes the repository interfaces that come with Micronau
 |Extends api:data.repository.kotlin.CoroutineCrudRepository[] and adds methods for pagination
 |===
 
+The built-in CRUD repository interfaces provide three distinct write operations:
+`save` / `saveAll` perform a conditional save, inserting entities without an assigned identity value and updating entities with an assigned identity value.
+`insert` / `insertAll` require an insert operation.
+`update` / `updateAll` require an update operation.
+
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/hibernate-example", source="main"]

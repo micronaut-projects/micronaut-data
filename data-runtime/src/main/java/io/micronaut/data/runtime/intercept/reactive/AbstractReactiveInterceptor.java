@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
+import io.micronaut.aop.MethodInvocationContext;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -64,5 +65,23 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
             }
             return 1L;
         }).reduce(0L, Long::sum).map(Long::intValue);
+    }
+
+    protected final <E> Publisher<E> persistOrUpdateReactive(MethodInvocationContext<T, ?> context, E entity) {
+        if (!isEntityUpdateCandidate(context, entity)) {
+            return reactiveOperations.persist(getInsertOperation(context, entity));
+        }
+        return Flux.from(reactiveOperations.update(getUpdateOperation(context, entity)))
+            .onErrorResume(throwable -> {
+                Throwable updateFailure = unwrapCompletionException(throwable);
+                if (!canFallbackToInsert(updateFailure)) {
+                    return Flux.error(updateFailure);
+                }
+                return Flux.from(reactiveOperations.persist(getInsertOperation(context, entity)))
+                    .onErrorMap(insertFailure -> {
+                        updateFailure.addSuppressed(unwrapCompletionException(insertFailure));
+                        return updateFailure;
+                    });
+            });
     }
 }

@@ -45,4 +45,39 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements
         then:
         person != null
     }
+
+    void 'test save chooses update for entity with id'() {
+        given:
+        Person person = personRepository.save(new Person(name: "SaveInsert", age: 10)).block()
+
+        when:
+        person.name = "SaveUpdate"
+        person.age = 11
+        Person updated = personRepository.save(person).block()
+
+        then:
+        updated.id == person.id
+        updated.name == "SaveUpdate"
+        updated.age == 11
+        personRepository.findById(person.id).block().name == "SaveUpdate"
+    }
+
+    void 'test saveAll chooses insert or update and preserves order'() {
+        given:
+        Person existing = personRepository.save(new Person(name: "SaveAllExisting", age: 30)).block()
+        existing.name = "SaveAllExistingUpdated"
+        existing.age = 31
+
+        when:
+        List<Person> saved = personRepository.saveAll([
+                new Person(name: "SaveAllNew1", age: 20),
+                existing,
+                new Person(name: "SaveAllNew2", age: 22)
+        ]).collectList().block()
+
+        then:
+        saved*.name == ["SaveAllNew1", "SaveAllExistingUpdated", "SaveAllNew2"]
+        saved[1].id == existing.id
+        personRepository.findById(existing.id).block().name == "SaveAllExistingUpdated"
+    }
 }

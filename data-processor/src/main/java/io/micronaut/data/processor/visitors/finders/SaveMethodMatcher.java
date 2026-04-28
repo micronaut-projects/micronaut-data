@@ -19,13 +19,18 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Insert;
 import io.micronaut.data.annotation.Save;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -38,11 +43,14 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.criteria.Predicate;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -114,13 +122,25 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         if (parameters.length == 0) {
             throw new ProcessingException(methodElement, "Save method requires parameters");
         }
+        boolean saveOperation = isSaveOperation(methodElement, matches);
         if (matchContext.getParametersNotInRole().stream().allMatch(p -> TypeUtils.isIterableOfEntity(p.getGenericType()) || TypeUtils.isEntity(p.getGenericType()))) {
-            return saveEntity(matchContext, isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT);
+            return saveEntity(matchContext, isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT, saveOperation);
         }
-        return saveProperties();
+        return saveProperties(saveOperation);
     }
 
-    public static MethodMatch saveEntity(MethodMatchContext matchContext, DataMethod.OperationType operationType) {
+    private boolean isSaveOperation(MethodElement methodElement, List<MethodNameParser.Match> matches) {
+        if (methodElement.hasStereotype(Save.class)) {
+            return true;
+        }
+        if (methodElement.hasStereotype(Insert.class)) {
+            return false;
+        }
+        return matches.stream()
+            .anyMatch(match -> match.id() == QueryMatchId.PREFIX && match.part().equals("save"));
+    }
+
+    public static MethodMatch saveEntity(MethodMatchContext matchContext, DataMethod.OperationType operationType, boolean saveOperation) {
         return mc -> {
             ParameterElement[] parameters = mc.getParameters();
             ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
@@ -128,11 +148,13 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             if (entityParameter == null && entitiesParameter == null) {
                 throw new MatchFailedException("Cannot implement save method for specified arguments and return type", mc.getMethodElement());
             }
-            FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
-                entityParameter != null,
-                entitiesParameter != null,
-                operationType, mc
-            );
+            FindersUtils.InterceptorMatch entry = saveOperation
+                ? FindersUtils.resolveSaveInterceptorType(entityParameter != null, entitiesParameter != null, mc)
+                : FindersUtils.resolveInterceptorTypeByOperationType(
+                    entityParameter != null,
+                    entitiesParameter != null,
+                    operationType, mc
+                );
             MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                 operationType,
                 entry.returnType(),
@@ -157,6 +179,15 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     .queryResult(
                         queryResult
                     );
+                if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
+                    boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
+                    MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
+                        .buildMatchInfo(mc);
+                    QueryResult updateQueryResult = updateInfo.getQueryResult();
+                    if (updateQueryResult != null) {
+                        methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
+                    }
+                }
             }
             if (entitiesParameter != null) {
                 methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
@@ -168,7 +199,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private MethodMatch saveProperties() {
+    private MethodMatch saveProperties(boolean saveOperation) {
         return new MethodMatch() {
 
             @Override
@@ -180,7 +211,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
                     returnType = returnType.getFirstTypeArgument().orElse(null);
                 }
-                if (returnType == null || !TypeUtils.isNumber(returnType) && !rootEntity.getName().equals(returnType.getName())) {
+                if (returnType == null || (!TypeUtils.isNumber(returnType) && !rootEntity.getName().equals(returnType.getName()))) {
                     throw new MatchFailedException("The return type of the save method must be the same as the root entity type: " + rootEntity.getName());
                 }
 
@@ -242,9 +273,11 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 );
 
                 SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
-                FindersUtils.InterceptorMatch e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
+                FindersUtils.InterceptorMatch e = saveOperation
+                    ? FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType())
+                    : FindersUtils.pickInsertOneInterceptor(matchContext, matchContext.getReturnType());
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
-                return new MethodMatchInfo(
+                MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                     DataMethod.OperationType.INSERT,
                     e.returnType(),
                     e.interceptor()
@@ -253,6 +286,10 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     .queryResult(
                         criteriaBuilder.createCriteriaInsert(matchContext.getRootEntity()).build(annotationMetadataHierarchy, matchContext.getQueryBuilder())
                     );
+                if (saveOperation) {
+                    addPropertyUpdateQueryIfPossible(methodMatchInfo, matchContext, rootEntity, parameters, annotationMetadataHierarchy, e.returnType());
+                }
+                return methodMatchInfo;
             }
 
             private boolean isRequiredProperty(SourcePersistentProperty pp) {
@@ -261,6 +298,101 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             }
 
         };
+    }
+
+    private void addPropertyUpdateQueryIfPossible(MethodMatchInfo methodMatchInfo,
+                                                  MethodMatchContext matchContext,
+                                                  SourcePersistentEntity rootEntity,
+                                                  List<ParameterElement> parameters,
+                                                  AnnotationMetadataHierarchy annotationMetadataHierarchy,
+                                                  ClassElement resultType) {
+        Map<SourcePersistentProperty, ParameterElement> identityParameters = findIdentityParameters(rootEntity, parameters);
+        if (identityParameters.isEmpty()) {
+            return;
+        }
+        SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
+        PersistentEntityCriteriaUpdate<Object> criteriaUpdate = criteriaBuilder.createCriteriaUpdate(null);
+        PersistentEntityRoot<Object> root = criteriaUpdate.from(rootEntity);
+
+        List<Predicate> predicates = new ArrayList<>(identityParameters.size() + 1);
+        for (Map.Entry<SourcePersistentProperty, ParameterElement> entry : identityParameters.entrySet()) {
+            SourcePersistentProperty identity = entry.getKey();
+            ParameterElement identityParameter = entry.getValue();
+            PersistentPropertyPath identityPath = new PersistentPropertyPath(identity);
+            if (rootEntity.hasIdentity()) {
+                predicates.add(criteriaBuilder.equal(root.id(), criteriaBuilder.parameter(identityParameter, identityPath)));
+            } else {
+                predicates.add(criteriaBuilder.equal(root.get(identity.getName()), criteriaBuilder.parameter(identityParameter, identityPath)));
+            }
+        }
+
+        ParameterElement versionParameter = null;
+        if (rootEntity.hasVersion()) {
+            versionParameter = findParameterForProperty(parameters, rootEntity.getVersion());
+            if (versionParameter != null) {
+                predicates.add(criteriaBuilder.equal(root.version(), criteriaBuilder.parameter(versionParameter, new PersistentPropertyPath(rootEntity.getVersion()))));
+            }
+        }
+        criteriaUpdate.where(predicates.toArray(Predicate[]::new));
+
+        Set<SourcePersistentProperty> identities = identityParameters.keySet();
+        for (ParameterElement parameter : parameters) {
+            SourcePersistentProperty property = rootEntity.getPropertyByName(getParameterValue(parameter));
+            if (property != null
+                && !identities.contains(property)
+                && (!rootEntity.hasVersion() || !property.equals(rootEntity.getVersion()))
+                && !property.isGenerated()) {
+                criteriaUpdate.set(property.getName(), criteriaBuilder.parameter(parameter, new PersistentPropertyPath(property)));
+            }
+        }
+
+        rootEntity.getPersistentProperties().stream()
+            .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
+            .forEach(p -> criteriaUpdate.set(p.getName(), criteriaBuilder.parameter(null, new PersistentPropertyPath(p))));
+
+        if (versionParameter != null && !rootEntity.getVersion().isGenerated()) {
+            criteriaUpdate.set(rootEntity.getVersion().getName(), criteriaBuilder.parameter(null, new PersistentPropertyPath(rootEntity.getVersion())));
+        }
+
+        AbstractPersistentEntityCriteriaUpdate<Object> update = (AbstractPersistentEntityCriteriaUpdate<Object>) criteriaUpdate;
+        if (update.getUpdateValues().isEmpty()) {
+            Map.Entry<SourcePersistentProperty, ParameterElement> firstIdentity = identityParameters.entrySet().iterator().next();
+            SourcePersistentProperty identity = firstIdentity.getKey();
+            criteriaUpdate.set(identity.getName(), criteriaBuilder.parameter(firstIdentity.getValue(), new PersistentPropertyPath(identity)));
+        }
+
+        QueryResult queryResult = criteriaUpdate.build(annotationMetadataHierarchy, matchContext.getQueryBuilder());
+        if (queryResult != null) {
+            methodMatchInfo.addQueryResult(DataMethod.OperationType.UPDATE, resultType, queryResult, true);
+        }
+    }
+
+    private Map<SourcePersistentProperty, ParameterElement> findIdentityParameters(SourcePersistentEntity rootEntity, List<ParameterElement> parameters) {
+        if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
+            return Map.of();
+        }
+        SourcePersistentProperty[] identities = rootEntity.hasIdentity()
+            ? new SourcePersistentProperty[] { rootEntity.getIdentity() }
+            : rootEntity.getCompositeIdentity();
+        Map<SourcePersistentProperty, ParameterElement> identityParameters = new LinkedHashMap<>(identities.length);
+        for (SourcePersistentProperty identity : identities) {
+            ParameterElement identityParameter = findParameterForProperty(parameters, identity);
+            if (identityParameter == null) {
+                return Map.of();
+            }
+            identityParameters.put(identity, identityParameter);
+        }
+        return identityParameters;
+    }
+
+    @Nullable
+    private ParameterElement findParameterForProperty(List<ParameterElement> parameters, SourcePersistentProperty property) {
+        for (ParameterElement parameter : parameters) {
+            if (getParameterValue(parameter).equals(property.getName())) {
+                return parameter;
+            }
+        }
+        return null;
     }
 
     private String getParameterValue(ParameterElement p) {

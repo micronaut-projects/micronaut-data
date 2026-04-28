@@ -1,8 +1,17 @@
-To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the api:data.repository.CrudRepository[] interface does:
+To explicitly insert data, use `insert` and `insertAll` from the built-in CRUD repository interfaces or define a repository method that requires an insert operation.
+Unlike `save` and `saveAll`, explicit insert methods always issue an insert and may fail if the entity already exists.
 
-snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="save", indent="0"]
+[source,java]
+----
+Book insert(Book entity);
+List<Book> insertAll(Iterable<Book> entities);
+----
 
-The method must accept a single argument that is the entity and start with either `save`, `persist`, `insert` or `store`, to persist multiple entities the method needs to accept `java.lag.Iterable` of the entity.
+The asynchronous, reactive, Reactor, RxJava, and Kotlin coroutine CRUD repository variants expose the same insert operations with their native return types.
+
+Custom insert methods must accept a single argument that is the entity and start with `persist`, `insert`, or `store`, or be annotated with ann:data.annotation.Insert[].
+To persist multiple entities the method needs to accept `java.lang.Iterable` of the entity.
+Methods that start with `save` perform a conditional save: an entity without an assigned identity value is inserted, and an entity with an assigned identity value is updated.
 
 Alternatively you can also define a method that features parameter names that match the properties of the entity name:
 

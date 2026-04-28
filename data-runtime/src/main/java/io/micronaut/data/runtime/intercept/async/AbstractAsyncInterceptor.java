@@ -27,6 +27,8 @@ import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -70,6 +72,31 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
             }
         }
         return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
+    }
+
+    protected final <E> CompletionStage<E> persistOrUpdateAsync(MethodInvocationContext<T, ?> context, E entity) {
+        if (!isEntityUpdateCandidate(context, entity)) {
+            return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+        }
+        return asyncDatastoreOperations.update(getUpdateOperation(context, entity))
+            .handle((updated, throwable) -> {
+                if (throwable == null) {
+                    return CompletableFuture.completedFuture(updated);
+                }
+                Throwable updateFailure = unwrapCompletionException(throwable);
+                if (!canFallbackToInsert(updateFailure)) {
+                    return CompletableFuture.<E>failedFuture(updateFailure);
+                }
+                return asyncDatastoreOperations.persist(getInsertOperation(context, entity))
+                    .handle((inserted, insertThrowable) -> {
+                        if (insertThrowable == null) {
+                            return inserted;
+                        }
+                        updateFailure.addSuppressed(unwrapCompletionException(insertThrowable));
+                        throw new CompletionException(updateFailure);
+                    });
+            })
+            .thenCompose(stage -> stage);
     }
 
     /**

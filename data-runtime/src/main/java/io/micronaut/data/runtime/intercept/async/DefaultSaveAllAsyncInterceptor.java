@@ -21,6 +21,9 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -43,8 +46,33 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompl
     @Override
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        return asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, iterable));
+        List<Object> entities = toList(iterable);
+        return saveAll(context, entities);
+    }
+
+    private CompletionStage<List<Object>> saveAll(MethodInvocationContext<Object, CompletionStage<Object>> context, List<Object> entities) {
+        List<Object> results = new ArrayList<>(entities.size());
+        CompletionStage<List<Object>> stage = CompletableFuture.completedFuture(results);
+        for (Object entity : entities) {
+            stage = stage.thenCompose(ignore -> persistOrUpdateAsync(context, entity)
+                .thenApply(saved -> {
+                    results.add(saved);
+                    return results;
+                }));
+        }
+        return stage;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> toList(Iterable<Object> iterable) {
+        if (iterable instanceof List<?> list) {
+            return (List<Object>) list;
+        }
+        List<Object> list = new ArrayList<>();
+        for (Object entity : iterable) {
+            list.add(entity);
+        }
+        return list;
     }
 
 }
-

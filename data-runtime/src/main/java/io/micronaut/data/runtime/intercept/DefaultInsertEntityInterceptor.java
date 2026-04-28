@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,33 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.ReturnType;
+import io.micronaut.data.intercept.InsertEntityInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.NonNull;
 
 /**
- * Default implementation of {@link SaveEntityInterceptor}.
+ * Default implementation of {@link InsertEntityInterceptor}.
  *
  * @param <T> The declaring type
- * @author graemerocher
- * @since 1.0.0
+ * @since 5.0.0
  */
-public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements SaveEntityInterceptor<T> {
+public class DefaultInsertEntityInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements InsertEntityInterceptor<T> {
 
     /**
      * Default constructor.
+     *
      * @param datastore The operations
      */
-    protected DefaultSaveEntityInterceptor(@NonNull RepositoryOperations datastore) {
+    protected DefaultInsertEntityInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Object entity = getEntityParameter(context, Object.class);
-        entity = persistOrUpdate(context, entity);
+        entity = operations.persist(getInsertOperation(context, entity));
         ReturnType<Object> rt = context.getReturnType();
         if (isNumber(rt.getType())) {
             return operations.getConversionService().convert(1, rt.asArgument())

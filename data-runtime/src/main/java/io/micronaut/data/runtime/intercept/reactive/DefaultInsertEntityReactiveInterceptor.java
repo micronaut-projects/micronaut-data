@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,32 @@
 package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.InsertEntityReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.NonNull;
 import org.reactivestreams.Publisher;
 
 /**
- * Default implementation of {@link SaveEntityReactiveInterceptor}.
- * @author graemerocher
- * @since 1.0.0
+ * Default implementation of {@link InsertEntityReactiveInterceptor}.
+ *
+ * @since 5.0.0
  */
-public class DefaultSaveEntityReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor
-        implements SaveEntityReactiveInterceptor<Object, Object> {
+public class DefaultInsertEntityReactiveInterceptor extends AbstractCountOrEntityPublisherInterceptor
+        implements InsertEntityReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected DefaultSaveEntityReactiveInterceptor(@NonNull RepositoryOperations operations) {
+    protected DefaultInsertEntityReactiveInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object entity = getEntityParameter(context, Object.class);
-        return persistOrUpdateReactive(context, entity);
+        return reactiveOperations.persist(getInsertOperation(context, entity));
     }
 
 }

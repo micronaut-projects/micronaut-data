@@ -32,6 +32,7 @@ import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
@@ -122,7 +123,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     private ExecutorService executorService;
     private final boolean uniqueResultOnFindOne;
-    private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
 
     /**
@@ -152,7 +152,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
         ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
         this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
-        this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
         this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
             .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, 0));
     }
@@ -452,16 +451,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 return executeUpdate(operation, session, storedQuery);
             }
             T entity = operation.getEntity();
-            if (persistOrMergeOnSave) {
-                RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                    session.persist(entity);
-                } else {
-                    entity = session.merge(entity);
-                }
-            } else {
-                session.persist(entity);
-            }
+            session.persist(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
@@ -476,7 +466,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 return executeUpdate(operation, session, storedQuery);
             }
             T entity = operation.getEntity();
-            entity = session.merge(entity);
+            if (!session.contains(entity)) {
+                entity = session.merge(entity);
+            }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
@@ -500,8 +492,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             }
             List<T> results = new ArrayList<>();
             for (T entity : operation) {
-                T merge = session.merge(entity);
-                results.add(merge);
+                if (session.contains(entity)) {
+                    results.add(entity);
+                } else {
+                    results.add(session.merge(entity));
+                }
             }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return results;
@@ -528,19 +523,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             if (storedQuery != null) {
                 return executeUpdate(operation, session, storedQuery);
             }
-            if (persistOrMergeOnSave) {
-                RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                for (T entity : operation) {
-                    if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                        session.persist(entity);
-                    } else {
-                        session.merge(entity);
-                    }
-                }
-            } else {
-                for (T entity : operation) {
-                    session.persist(entity);
-                }
+            for (T entity : operation) {
+                session.persist(entity);
             }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return operation;
@@ -685,7 +669,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         Objects.requireNonNull(invocationContext, "Invocation context is required!");
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
-        return query.executeUpdate();
+        int updated = query.executeUpdate();
+        if (storedQuery.isOptimisticLock() && updated != 1) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: " + updated);
+        }
+        return updated;
     }
 
     @NonNull

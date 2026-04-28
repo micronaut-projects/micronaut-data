@@ -121,11 +121,13 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     ClassElement resultType = entry.returnType();
                     ClassElement interceptorType = entry.interceptor();
 
-                    if (interceptorType.getSimpleName().startsWith("SaveOne")) {
+                    if (entityParameter == null
+                        && entitiesParameter == null
+                        && operationType == DataMethod.OperationType.INSERT
+                        && (interceptorType.getSimpleName().startsWith("SaveOne") || interceptorType.getSimpleName().startsWith("InsertOne"))) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
-                        operationType = DataMethod.OperationType.UPDATE;
                         FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.returnType();
                         interceptorType = e.interceptor();
