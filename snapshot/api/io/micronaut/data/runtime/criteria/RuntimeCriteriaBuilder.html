@@ -61,6 +61,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">RuntimeCriteriaBuilder()</a></li>
 <li><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimeEntityRegistry)" tabindex="0">RuntimeCriteriaBuilder(RuntimeEntityRegistry)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.date.DateTimeProvider)" tabindex="0">RuntimeCriteriaBuilder(RuntimeEntityRegistry, DateTimeProvider)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -129,6 +130,9 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimeEntityRegistry)" class="member-name-link">RuntimeCriteriaBuilder</a><wbr>(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.date.DateTimeProvider)" class="member-name-link">RuntimeCriteriaBuilder</a><wbr>(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+ <a href="../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/OffsetDateTime.html" title="class or interface in java.time" class="external-link">OffsetDateTime</a>&gt;&nbsp;dateTimeProvider)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -204,8 +208,17 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimeEntityRegistry)">
 <h3>RuntimeCriteriaBuilder</h3>
 <div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">RuntimeCriteriaBuilder</span><wbr><span class="parameters">(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.date.DateTimeProvider)">
+<h3>RuntimeCriteriaBuilder</h3>
+<div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name">RuntimeCriteriaBuilder</span><wbr><span class="parameters">(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name">RuntimeCriteriaBuilder</span><wbr><span class="parameters">(<a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+ <a href="../date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/OffsetDateTime.html" title="class or interface in java.time" class="external-link">OffsetDateTime</a>&gt;&nbsp;dateTimeProvider)</span></div>
 </div>
 </section>
 </li>

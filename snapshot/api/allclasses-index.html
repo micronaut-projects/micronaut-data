@@ -969,6 +969,14 @@ as a RxJava Single or a Reactor Mono.</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Default implementation of <a href="io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date"><code>DateTimeProvider</code></a>.</div>
 </div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/jpa/criteria/impl/expression/CurrentTemporalExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">CurrentTemporalExpression&lt;E&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">The current temporal expression.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/model/jpa/criteria/impl/expression/CurrentTemporalExpression.Type.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">CurrentTemporalExpression.Type</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="block">The current temporal expression type.</div>
+</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage&lt;T&gt;</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">Inspired by the Jakarta's <code>CursoredPage</code>, this models a type that supports
@@ -2392,7 +2400,7 @@ transaction manager implementation doesn't support timeouts.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">JakartaDataQueryMethodMatcher</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">The Jakarta Data Query annotation matcher.</div>
+<div class="block">The Jakarta Query annotation matcher.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRefreshMapper</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -2465,161 +2473,193 @@ raw SQL encoding and <a href="io/micronaut/data/jdbc/operations/JdbcRepositoryOp
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A mapper of <code>Tuple</code>.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLBaseListener.html" title="class in io.micronaut.data.jdql">JDQLBaseListener</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
+<div class="block">A @Join defines how a join for a particular association path should be generated.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="block">The type of join.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumn</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
+<div class="block">Subset of the JPA join column annotation.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">JoinColumnAnnotationMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps JPA's <code>JoinColumn</code> annotation to Micronaut's.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jx/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">JoinColumnAnnotationMapper</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">This class provides an empty implementation of <a href="io/micronaut/data/jdql/JDQLListener.html" title="interface in io.micronaut.data.jdql"><code>JDQLListener</code></a>,
+<div class="block">Maps JPA's <code>JoinColumn</code> annotation to Micronaut's.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinColumns.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumns</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
+<div class="block">The repeatable container of @<a href="io/micronaut/data/annotation/sql/JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>JoinColumn</code></a>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Traversing the query selection and predicates and extracting required query joins.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.Joined.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner.Joined</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">The data structure representing a join.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">A join path represents a path, association and join type for performing a join with a query.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/repeatable/JoinSpecifications.html" title="annotation interface in io.micronaut.data.annotation.repeatable">JoinSpecifications</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
+<div class="block">Repeatable annotation for <a href="io/micronaut/data/annotation/Join.html" title="annotation interface in io.micronaut.data.annotation"><code>Join</code></a>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinTable.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinTable</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
+<div class="block">Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">JoinTableAnnotationMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps JPA's <code>JoinTable</code> annotation to Micronaut's.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jx/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">JoinTableAnnotationMapper</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Maps JPA's <code>JoinTable</code> annotation to Micronaut's.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Builds JPA 1.0 String-based queries from the Query model.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository&lt;E,<wbr>ID&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Simple composed repository interface that includes <a href="io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository"><code>CrudRepository</code></a> and <a href="io/micronaut/data/repository/PageableRepository.html" title="interface in io.micronaut.data.repository"><code>PageableRepository</code></a>.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Operations interface specific to JPA.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor&lt;T&gt;</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Interface to allow execution of query/delete/update methods using dynamic JPA criteria API.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQBaseListener.html" title="class in io.micronaut.data.jq">JQBaseListener</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">This class provides an empty implementation of <a href="io/micronaut/data/jq/JQListener.html" title="interface in io.micronaut.data.jq"><code>JQListener</code></a>,
 which can be extended to create a listener which only needs to handle a subset
 of the available methods.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/jdql/JDQLCriteriaBuilderUtils.html" title="class in io.micronaut.data.processor.jdql">JDQLCriteriaBuilderUtils</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">The utils to generate Criteria queries from Jakarta Data Query Language statements.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLLexer.html" title="class in io.micronaut.data.jdql">JDQLLexer</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jdql/JDQLListener.html" title="interface in io.micronaut.data.jdql">JDQLListener</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">This interface defines a complete listener for a parse tree produced by
-<a href="io/micronaut/data/jdql/JDQLParser.html" title="class in io.micronaut.data.jdql"><code>JDQLParser</code></a>.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.html" title="class in io.micronaut.data.jdql">JDQLParser</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Aggregate_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Aggregate_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Between_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Between_expressionContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Comparison_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Comparison_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Comparison_operatorContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Comparison_operatorContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Conditional_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Conditional_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Delete_statementContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Delete_statementContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Entity_nameContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Entity_nameContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Enum_literalContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Enum_literalContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.From_clauseContext.html" title="class in io.micronaut.data.jdql">JDQLParser.From_clauseContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Function_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Function_expressionContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Id_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Id_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.In_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.In_expressionContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.In_item_list_manyContext.html" title="class in io.micronaut.data.jdql">JDQLParser.In_item_list_manyContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.In_item_listContext.html" title="class in io.micronaut.data.jdql">JDQLParser.In_item_listContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.In_itemContext.html" title="class in io.micronaut.data.jdql">JDQLParser.In_itemContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Input_parameterContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Input_parameterContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Like_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Like_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.LiteralContext.html" title="class in io.micronaut.data.jdql">JDQLParser.LiteralContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Null_comparison_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Null_comparison_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Orderby_clauseContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Orderby_clauseContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Orderby_itemContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Orderby_itemContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Primary_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Primary_expressionContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Scalar_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Scalar_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Select_clauseContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Select_clauseContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Select_itemContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Select_itemContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Select_itemsContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Select_itemsContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Select_statementContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Select_statementContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Set_clauseContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Set_clauseContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Special_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Special_expressionContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.State_field_path_expressionContext.html" title="class in io.micronaut.data.jdql">JDQLParser.State_field_path_expressionContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.StatementContext.html" title="class in io.micronaut.data.jdql">JDQLParser.StatementContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Update_itemContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Update_itemContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Update_statementContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Update_statementContext</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdql/JDQLParser.Where_clauseContext.html" title="class in io.micronaut.data.jdql">JDQLParser.Where_clauseContext</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
-<div class="block">A @Join defines how a join for a particular association path should be generated.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
-<div class="block">The type of join.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumn</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
-<div class="block">Subset of the JPA join column annotation.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">JoinColumnAnnotationMapper</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/jq/JQCriteriaBuilderUtils.html" title="class in io.micronaut.data.processor.jq">JQCriteriaBuilderUtils</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Maps JPA's <code>JoinColumn</code> annotation to Micronaut's.</div>
+<div class="block">The utils to generate Criteria queries from Jakarta Query statements.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jx/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">JoinColumnAnnotationMapper</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Maps JPA's <code>JoinColumn</code> annotation to Micronaut's.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinColumns.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumns</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
-<div class="block">The repeatable container of @<a href="io/micronaut/data/annotation/sql/JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>JoinColumn</code></a>.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Traversing the query selection and predicates and extracting required query joins.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/jpa/criteria/impl/util/Joiner.Joined.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner.Joined</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">The data structure representing a join.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">A join path represents a path, association and join type for performing a join with a query.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/repeatable/JoinSpecifications.html" title="annotation interface in io.micronaut.data.annotation.repeatable">JoinSpecifications</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
-<div class="block">Repeatable annotation for <a href="io/micronaut/data/annotation/Join.html" title="annotation interface in io.micronaut.data.annotation"><code>Join</code></a>.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/sql/JoinTable.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinTable</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
-<div class="block">Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">JoinTableAnnotationMapper</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Maps JPA's <code>JoinTable</code> annotation to Micronaut's.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jx/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">JoinTableAnnotationMapper</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Maps JPA's <code>JoinTable</code> annotation to Micronaut's.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Builds JPA 1.0 String-based queries from the Query model.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository&lt;E,<wbr>ID&gt;</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">Simple composed repository interface that includes <a href="io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository"><code>CrudRepository</code></a> and <a href="io/micronaut/data/repository/PageableRepository.html" title="interface in io.micronaut.data.repository"><code>PageableRepository</code></a>.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jq/JQListener.html" title="interface in io.micronaut.data.jq">JQListener</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
-<div class="block">Operations interface specific to JPA.</div>
+<div class="block">This interface defines a complete listener for a parse tree produced by
+<a href="io/micronaut/data/jq/JQParser.html" title="class in io.micronaut.data.jq"><code>JQParser</code></a>.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa">JpaSpecificationExecutor&lt;T&gt;</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">Interface to allow execution of query/delete/update methods using dynamic JPA criteria API.</div>
-</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.html" title="class in io.micronaut.data.jq">JQParser</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Aggregate_argumentContext.html" title="class in io.micronaut.data.jq">JQParser.Aggregate_argumentContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Aggregate_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Aggregate_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Aggregate_functionContext.html" title="class in io.micronaut.data.jq">JQParser.Aggregate_functionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Between_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Between_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Comparison_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Comparison_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Comparison_operatorContext.html" title="class in io.micronaut.data.jq">JQParser.Comparison_operatorContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Conditional_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Conditional_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Delete_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Delete_clauseContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Delete_statementContext.html" title="class in io.micronaut.data.jq">JQParser.Delete_statementContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Entity_nameContext.html" title="class in io.micronaut.data.jq">JQParser.Entity_nameContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Enum_literalContext.html" title="class in io.micronaut.data.jq">JQParser.Enum_literalContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Escape_characterContext.html" title="class in io.micronaut.data.jq">JQParser.Escape_characterContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Escaped_patternContext.html" title="class in io.micronaut.data.jq">JQParser.Escaped_patternContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.From_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.From_clauseContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Function_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Function_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Id_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Id_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Identification_variableContext.html" title="class in io.micronaut.data.jq">JQParser.Identification_variableContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.In_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.In_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.In_item_list_manyContext.html" title="class in io.micronaut.data.jq">JQParser.In_item_list_manyContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.In_item_listContext.html" title="class in io.micronaut.data.jq">JQParser.In_item_listContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.In_itemContext.html" title="class in io.micronaut.data.jq">JQParser.In_itemContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Input_parameterContext.html" title="class in io.micronaut.data.jq">JQParser.Input_parameterContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Like_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Like_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Literal_patternContext.html" title="class in io.micronaut.data.jq">JQParser.Literal_patternContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.LiteralContext.html" title="class in io.micronaut.data.jq">JQParser.LiteralContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.New_valueContext.html" title="class in io.micronaut.data.jq">JQParser.New_valueContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Null_comparison_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Null_comparison_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Numeric_literalContext.html" title="class in io.micronaut.data.jq">JQParser.Numeric_literalContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Orderby_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Orderby_clauseContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Orderby_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Orderby_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Orderby_itemContext.html" title="class in io.micronaut.data.jq">JQParser.Orderby_itemContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Parameter_nameContext.html" title="class in io.micronaut.data.jq">JQParser.Parameter_nameContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Primary_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Primary_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Result_variableContext.html" title="class in io.micronaut.data.jq">JQParser.Result_variableContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Scalar_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Scalar_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Select_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Select_clauseContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Select_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Select_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Select_itemContext.html" title="class in io.micronaut.data.jq">JQParser.Select_itemContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Select_statementContext.html" title="class in io.micronaut.data.jq">JQParser.Select_statementContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Set_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Set_clauseContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Simple_path_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Simple_path_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Special_boolean_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Special_boolean_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Special_datetime_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Special_datetime_expressionContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Special_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Special_expressionContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.StatementContext.html" title="class in io.micronaut.data.jq">JQParser.StatementContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.String_literalContext.html" title="class in io.micronaut.data.jq">JQParser.String_literalContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Update_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Update_clauseContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Update_itemContext.html" title="class in io.micronaut.data.jq">JQParser.Update_itemContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Update_statementContext.html" title="class in io.micronaut.data.jq">JQParser.Update_statementContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jq/JQParser.Where_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Where_clauseContext</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/runtime/mapper/JsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper">JsonColumnReader&lt;S&gt;</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">The wrapper around <code>JsonMapper</code> to read JSON values from the result set.</div>
@@ -4781,14 +4821,6 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/transaction/TransactionOperationsRegistry.html" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">The registry of various transactional operations managers.</div>
-</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/connection/annotation/TransactionPriority.html" title="annotation interface in io.micronaut.data.connection.annotation">TransactionPriority</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
-<div class="block">Oracle-only transaction priority hint.</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/connection/annotation/TransactionPriority.Level.html" title="enum class in io.micronaut.data.connection.annotation">TransactionPriority.Level</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
-<div class="block">Priority level for Oracle priority transactions.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus&lt;T&gt;</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
