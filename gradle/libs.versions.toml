@@ -39,6 +39,7 @@ benchmark-spring-data = "2025.1.5"
 spock = "2.4-groovy-5.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
+h2gis = "2.2.5"
 
 # Gradle plugins
 
@@ -120,6 +121,8 @@ junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suit
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error_prone_core" }
 groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
+
+h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
 
 # Benchmark
 

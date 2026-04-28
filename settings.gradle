@@ -97,6 +97,8 @@ include 'doc-examples:jdbc-example-records-java'
 
 include 'doc-examples:jdbc-sqlite'
 
+include 'doc-examples:jdbc-geospatial'
+
 include 'doc-examples:jdbc-jakarta-data-example-java'
 
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
