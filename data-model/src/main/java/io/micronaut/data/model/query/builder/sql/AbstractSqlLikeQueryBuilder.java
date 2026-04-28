@@ -65,6 +65,7 @@ import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -88,6 +89,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
@@ -108,6 +110,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -153,8 +156,24 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String CAST_FUNCTION = "CAST";
+    private static final String CURRENT_DATE = "CURRENT_DATE";
+    private static final String CURRENT_TIME = "CURRENT_TIME";
+    private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
+    private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
+        CURRENT_DATE,
+        CURRENT_TIME,
+        CURRENT_TIMESTAMP
+    );
+    private static final Set<String> DISTINCT_AGGREGATE_FUNCTIONS = Set.of(
+        "AVG",
+        "COUNT",
+        "MAX",
+        "MIN",
+        "SUM"
+    );
 
     /**
      * A pattern used to find variables in a query string.
@@ -199,7 +218,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (value instanceof Boolean) {
             return value.toString().toUpperCase(Locale.ROOT);
         }
-        return "'" + value + "'";
+        return "'" + value.toString().replace("'", "''") + "'";
+    }
+
+    private static String getCurrentTemporalExpression(CurrentTemporalExpression.Type type, Dialect dialect) {
+        return switch (type) {
+            case DATE -> dialect == Dialect.SQL_SERVER ? "CAST(" + CURRENT_TIMESTAMP + " AS DATE)" : CURRENT_DATE;
+            case TIME -> switch (dialect) {
+                case H2 -> "LOCALTIME";
+                case SQL_SERVER -> "CAST(" + CURRENT_TIMESTAMP + " AS TIME)";
+                case ORACLE -> CURRENT_DATE;
+                default -> CURRENT_TIME;
+            };
+            case TIMESTAMP -> CURRENT_TIMESTAMP;
+        };
     }
 
     protected final QueryPropertyPath asQueryPropertyPath(@Nullable String tableAlias, PersistentProperty persistentProperty) {
@@ -736,10 +768,35 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             } else {
                 buff.append("DESC");
             }
+            appendNullPrecedence(order, buff);
             if (i.hasNext()) {
                 buff.append(",");
             }
         }
+    }
+
+    private static void appendNullPrecedence(Order order, StringBuilder query) {
+        if (order instanceof DefaultOrder<?> defaultOrder) {
+            Nulls nullPrecedence = defaultOrder.getNullPrecedence();
+            if (nullPrecedence == Nulls.FIRST) {
+                query.append(" NULLS FIRST");
+            } else if (nullPrecedence == Nulls.LAST) {
+                query.append(" NULLS LAST");
+            }
+        }
+    }
+
+    @Nullable
+    private static String getDistinctAggregateFunction(String functionName) {
+        String upperCaseName = functionName.toUpperCase(Locale.ROOT);
+        if (!upperCaseName.endsWith(DISTINCT_AGGREGATE_SUFFIX)) {
+            return null;
+        }
+        String aggregateFunction = upperCaseName.substring(0, upperCaseName.length() - DISTINCT_AGGREGATE_SUFFIX.length());
+        if (DISTINCT_AGGREGATE_FUNCTIONS.contains(aggregateFunction)) {
+            return aggregateFunction;
+        }
+        return null;
     }
 
     /**
@@ -2547,6 +2604,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         protected final void appendFunction(String functionName, List<Expression<?>> expressions) {
+            String aggregateFunction = getDistinctAggregateFunction(functionName);
+            if (aggregateFunction != null) {
+                if (expressions.size() != 1) {
+                    throw new IllegalStateException("Distinct aggregate function expects one expression: " + functionName);
+                }
+                query.append(aggregateFunction)
+                    .append("(DISTINCT(");
+                appendExpression(expressions.get(0));
+                query.append("))");
+                return;
+            }
             query.append(functionName)
                 .append(OPEN_BRACKET);
             for (Iterator<Expression<?>> iterator = expressions.iterator(); iterator.hasNext();) {
@@ -2672,7 +2740,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+                query.append(functionExpression.getName());
+            } else {
+                appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            }
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            query.append(getCurrentTemporalExpression(currentTemporalExpression.getType(), getDialect()));
         }
 
         @Override
@@ -2725,6 +2802,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Nullable
         protected String columnAlias;
         private boolean isCompound;
+        private boolean isNestedExpression;
 
         public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             this.queryState = queryState;
@@ -2739,7 +2817,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
             PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
             PersistentProperty property = propertyPath.getProperty();
-            if (isCompound) {
+            if (isNestedExpression) {
+                AbstractSqlLikeQueryBuilder.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, true);
+            } else if (isCompound) {
                 // Compound property which is part of a DTO
                 if (property instanceof Association association && !property.isEmbedded()) {
                     if (queryState.isJoined(propertyPath.getPath())) {
@@ -2809,6 +2889,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public void visit(LiteralExpression<?> literalExpression) {
             // Support alias?
             query.append(asLiteral(literalExpression.getValue()));
+            appendColumnAliasIfNecessary();
         }
 
         @Override
@@ -2837,8 +2918,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCountDistinct(Objects.requireNonNull(tableAlias));
                     } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                        appendFunction("COUNT(DISTINCT", persistentPropertyPath);
-                        query.append(CLOSE_BRACKET);
+                        appendFunction("COUNT_DISTINCT", persistentPropertyPath);
                     } else {
                         throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                     }
@@ -2846,6 +2926,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + unaryExpression.getType());
             }
+            appendColumnAliasIfNecessary();
         }
 
         @Override
@@ -2877,6 +2958,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
             }
+            appendColumnAliasIfNecessary();
         }
 
         @Override
@@ -2903,12 +2985,36 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+                query.append(functionExpression.getName());
+            } else {
+                appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+            }
+            appendColumnAliasIfNecessary();
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            query.append(getCurrentTemporalExpression(currentTemporalExpression.getType(), getDialect()));
+            appendColumnAliasIfNecessary();
+        }
+
+        @Override
+        public void visit(IParameterExpression<?> parameterExpression) {
+            queryState.pushParameter(parameterExpression, newBindingContext(null));
+            appendColumnAliasIfNecessary();
         }
 
         @Override
         public void visit(CastExpression<?> castExpression) {
             appendCast(castExpression.getExpressionType(), castExpression.getExpression());
+            appendColumnAliasIfNecessary();
+        }
+
+        private void appendColumnAliasIfNecessary() {
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                query.append(AS_CLAUSE).append(columnAlias);
+            }
         }
 
         /**
@@ -3189,6 +3295,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private void appendFunction(String functionName, List<Expression<?>> expressions) {
+            String aggregateFunction = getDistinctAggregateFunction(functionName);
+            if (aggregateFunction != null) {
+                if (expressions.size() != 1) {
+                    throw new IllegalStateException("Distinct aggregate function expects one expression: " + functionName);
+                }
+                query.append(aggregateFunction)
+                    .append("(DISTINCT(");
+                appendExpression(expressions.get(0));
+                query.append("))");
+                return;
+            }
             query.append(functionName)
                 .append(OPEN_BRACKET);
             for (Iterator<Expression<?>> iterator = expressions.iterator(); iterator.hasNext();) {
@@ -3199,9 +3316,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             query.append(CLOSE_BRACKET);
-            if (columnAlias != null) {
-                query.append(AS_CLAUSE).append(columnAlias);
-            }
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
@@ -3228,7 +3342,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private void appendExpression(Expression<?> expression) {
-            AbstractSqlLikeQueryBuilder.this.appendExpression(annotationMetadata, query, queryState, expression, true);
+            String currentColumnAlias = columnAlias;
+            boolean currentNestedExpression = isNestedExpression;
+            columnAlias = null;
+            isNestedExpression = true;
+            try {
+                CriteriaUtils.requireIExpression(expression).visitExpression(this);
+            } finally {
+                columnAlias = currentColumnAlias;
+                isNestedExpression = currentNestedExpression;
+            }
         }
 
         private QueryPropertyPath findProperty(String propertyPath) {

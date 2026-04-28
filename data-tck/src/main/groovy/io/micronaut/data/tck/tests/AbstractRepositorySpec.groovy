@@ -80,8 +80,12 @@ import spock.lang.Unroll
 import java.sql.Connection
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -3248,6 +3252,60 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             })
             count == 50
+    }
+
+    void "test criteria current temporal expressions"() {
+        given:
+            def dateTimeProvider = context.getBean(MockedDateTimeProvider)
+            def now = OffsetDateTime.of(2025, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC)
+            dateTimeProvider.setValue(now)
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Temporal", age: 1))
+            basicTypeRepository.deleteAll()
+            def basicTypes = new BasicTypes()
+            basicTypes.localDate = now.toLocalDate()
+            basicTypes.localTime = now.toLocalTime()
+            basicTypes.localDateTime = now.toLocalDateTime()
+            basicTypeRepository.save(basicTypes)
+
+        when:
+            def currentTemporalMatches = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<String>get("name"), "Temporal"),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentDate()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTime()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTimestamp())
+                    ))
+                    return query
+                }
+            })
+            def localTemporalMatches = basicTypeRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(BasicTypes)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<LocalDate>get("localDate"), criteriaBuilder.localDate()),
+                            criteriaBuilder.equal(root.<LocalTime>get("localTime"), criteriaBuilder.localTime()),
+                            criteriaBuilder.equal(root.<LocalDateTime>get("localDateTime"), criteriaBuilder.localDateTime())
+                    ))
+                    return query
+                }
+            })
+
+        then:
+            currentTemporalMatches == 1
+            localTemporalMatches == 1
+
+        cleanup:
+            dateTimeProvider.setValue(null)
+            basicTypeRepository.deleteAll()
     }
 
     void "test sum function"() {

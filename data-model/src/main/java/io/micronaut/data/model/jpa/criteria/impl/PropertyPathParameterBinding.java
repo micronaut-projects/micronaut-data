@@ -22,6 +22,8 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
+import java.util.function.Supplier;
+
 /**
  * The property path implementation of {@link QueryParameterBinding}.
  *
@@ -61,6 +63,9 @@ record PropertyPathParameterBinding(String getName,
     @Override
     @Nullable
     public Object getValue() {
+        if (value instanceof Supplier<?> supplier) {
+            return supplier.get();
+        }
         return value;
     }
 }
