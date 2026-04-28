@@ -22,7 +22,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Interface for CRUD using RxJava 2.
+ * Interface for CRUD using RxJava 3.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
