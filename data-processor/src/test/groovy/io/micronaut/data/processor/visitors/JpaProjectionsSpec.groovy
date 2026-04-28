@@ -114,6 +114,79 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
         Person     | int.class  | 'findNameByAge'         | [name: int.class] | 'Query results in a type [java.lang.String] whilst method returns an incompatible type: int'
     }
 
+    void "test JPA embedded projection is not treated as DTO projection"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.UserWithAuditRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import java.time.Instant;
+import java.util.UUID;
+
+@Embeddable
+class Audit {
+    private Instant createdTime;
+    private String createdBy;
+
+    Instant getCreatedTime() {
+        return createdTime;
+    }
+
+    void setCreatedTime(Instant createdTime) {
+        this.createdTime = createdTime;
+    }
+
+    String getCreatedBy() {
+        return createdBy;
+    }
+
+    void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+}
+
+@Entity
+class UserWithAudit {
+    @Id
+    private UUID id;
+    private Audit audit;
+
+    UUID getId() {
+        return id;
+    }
+
+    void setId(UUID id) {
+        this.id = id;
+    }
+
+    Audit getAudit() {
+        return audit;
+    }
+
+    void setAudit(Audit audit) {
+        this.audit = audit;
+    }
+}
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface UserWithAuditRepository extends GenericRepository<UserWithAudit, UUID> {
+    Audit findAuditById(UUID id);
+}
+
+""")
+
+        def executableMethod = beanDefinition.getRequiredMethod("findAuditById", UUID)
+
+        expect:
+        executableMethod.getValue(Query, String).orElse(null).contains('.audit')
+        !executableMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_DTO).orElse(false)
+    }
+
     @CompileStatic
     BeanDefinition compileRepository(Class returnType, String method, Map<String, Class> arguments) {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """

@@ -818,9 +818,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
             return createQueryResultMapper(preparedQuery, column, jsonDataType, rsType, persistentEntity, loadListener);
         }
+        boolean isDtoProjection = isDtoProjection(preparedQuery);
         if (isEntityResult) {
             ResultReader<RS, String> resultReader =
-                preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader;
+                isDtoProjection ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader;
             return new SqlResultEntityTypeMapper<>(
                 getEntity(preparedQuery.getResultType()),
                 resultReader,
@@ -829,7 +830,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 loadListener,
                 conversionService);
         }
-        if (preparedQuery.isDtoProjection()) {
+        if (isDtoProjection) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
             RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
                 preparedQuery.getAnnotationMetadata(),

@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -56,6 +57,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Order;
@@ -429,7 +431,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             false
         );
 
-        if (result.isDto() && !result.isRuntimeDtoConversion()) {
+        boolean embeddedSelection = isEmbeddedSelection(query);
+        boolean dto = result.isDto() && !embeddedSelection;
+        if (dto && !result.isRuntimeDtoConversion()) {
             List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 Root<?> root = query.getRoots().iterator().next();
@@ -467,10 +471,33 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             result.resultType(),
             interceptorType
         )
-            .dto(result.isDto())
+            .dto(dto)
             .optimisticLock(optimisticLock)
+            .resultDataType(embeddedSelection ? DataType.ENTITY : null)
             .queryResult(queryResult)
             .countQueryResult(countQueryResult);
+    }
+
+    private boolean isEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
+        Selection<?> selection = query.getSelection();
+        if (isEmbeddedSelection(selection)) {
+            return true;
+        }
+        Optional<String> projection = findMatchPart(matches, QueryMatchId.PROJECTION);
+        if (projection.isEmpty()) {
+            return false;
+        }
+        Root<?> root = query.getRoots().iterator().next();
+        if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> propertyPath = findProperty(persistentEntityRoot, projection.get());
+            return propertyPath != null && propertyPath.getProperty() instanceof Embedded;
+        }
+        return false;
+    }
+
+    private boolean isEmbeddedSelection(@Nullable Selection<?> selection) {
+        return selection instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+            && propertyPath.getProperty() instanceof Embedded;
     }
 
     private void applyOrderBy(String orderBy,

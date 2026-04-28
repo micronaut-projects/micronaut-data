@@ -15,12 +15,13 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +49,8 @@ public final class MethodMatchInfo {
     private QueryResult queryResult;
     @Nullable
     private QueryResult countQueryResult;
+    @Nullable
+    private DataType resultDataType;
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
 
@@ -163,6 +166,11 @@ public final class MethodMatchInfo {
         return this;
     }
 
+    public MethodMatchInfo resultDataType(@Nullable DataType resultDataType) {
+        this.resultDataType = resultDataType;
+        return this;
+    }
+
     public ClassElement getInterceptor() {
         return interceptor;
     }
@@ -183,6 +191,11 @@ public final class MethodMatchInfo {
 
     public boolean isEncodeEntityParameters() {
         return encodeEntityParameters;
+    }
+
+    @Nullable
+    public DataType getResultDataType() {
+        return resultDataType;
     }
 
 }

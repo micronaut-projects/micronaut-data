@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -86,8 +87,11 @@ public final class MatchUtils {
     }
 
     public static boolean isDto(ClassElement entityType, ClassElement resultType) {
-        return resultType.hasStereotype(Introspected.class) && entityType.hasStereotype(MappedEntity.class)
-            || resultType.isArray() && resultType.getName().equals(Object.class.getName()); // Allow Object[] as a DTO
+        if (resultType.hasAnnotation(Embeddable.class) || resultType.hasStereotype(Embeddable.class)) {
+            return false;
+        }
+        return (resultType.hasStereotype(Introspected.class) && entityType.hasStereotype(MappedEntity.class))
+            || (resultType.isArray() && resultType.getName().equals(Object.class.getName())); // Allow Object[] as a DTO
     }
 
     private static boolean isVoid(ClassElement resultType) {

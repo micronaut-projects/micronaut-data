@@ -1023,6 +1023,42 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
     }
 
+    void "test embedded projection aliases nested embedded columns"() {
+        given:
+        def repository = buildRepository('test.VehicleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Jurisdiction;
+import io.micronaut.data.tck.entities.Registration;
+import io.micronaut.data.tck.entities.Vehicle;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface VehicleRepository extends GenericRepository<Vehicle, Long> {
+
+    Registration findFirstRegistrationById(Long id);
+
+    Registration findSecondRegistrationById(Long id);
+
+    Jurisdiction findFirstRegistrationJurisdictionById(Long id);
+
+    Jurisdiction findSecondRegistrationJurisdictionById(Long id);
+}
+
+""")
+
+        def findFirstRegistrationByIdQuery = getQuery(repository.getRequiredMethod("findFirstRegistrationById", Long))
+        def findSecondRegistrationByIdQuery = getQuery(repository.getRequiredMethod("findSecondRegistrationById", Long))
+        def findFirstRegistrationJurisdictionByIdQuery = getQuery(repository.getRequiredMethod("findFirstRegistrationJurisdictionById", Long))
+        def findSecondRegistrationJurisdictionByIdQuery = getQuery(repository.getRequiredMethod("findSecondRegistrationJurisdictionById", Long))
+
+        expect:
+        findFirstRegistrationByIdQuery == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationByIdQuery == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findFirstRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+    }
+
     void "test embedded projection result preserves leaf aliases and read transformers"() {
         given:
         def repository = buildRepository('test.LocationRestaurantRepository', """

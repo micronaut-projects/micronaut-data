@@ -33,7 +33,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Delete;
-import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Insert;
 import io.micronaut.data.annotation.Join;
@@ -627,6 +626,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 methodInfo.getOperationType(),
                 queryResult,
                 methodInfo.getResultType(),
+                methodInfo.getResultDataType(),
                 parameterBinding,
                 methodInfo.isEncodeEntityParameters());
 
@@ -651,6 +651,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     DataMethod.OperationType.COUNT,
                     countQuery,
                     methodMatchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(),
+                    null,
                     countParametersBindings,
                     methodInfo.isEncodeEntityParameters());
 
@@ -666,6 +667,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     QueryResult queryResult,
                                     @Nullable
                                     TypedElement resultType,
+                                    @Nullable
+                                    DataType resultDataType,
                                     List<QueryParameterBinding> parameterBinding,
                                     boolean encodeEntityParameters) {
 
@@ -683,15 +686,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
             ClassElement type = resultType.getType();
             if (!TypeUtils.isVoid(type)) {
-                DataType resultDataType = TypeUtils.resolveDataType(type, dataTypes);
-                if (operationType == DataMethod.OperationType.QUERY
-                    && resultDataType == DataType.OBJECT
-                    && (type.hasStereotype(Embeddable.class)
-                        || type.hasStereotype("jakarta.persistence.Embeddable")
-                        || type.hasStereotype("javax.persistence.Embeddable"))) {
-                    resultDataType = DataType.ENTITY;
-                }
-                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, resultDataType);
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE,
+                    resultDataType == null ? TypeUtils.resolveDataType(type, dataTypes) : resultDataType);
             }
         }
 

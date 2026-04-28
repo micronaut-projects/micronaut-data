@@ -1640,7 +1640,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @Internal
     protected final class QueryState implements PropertyParameterCreator {
-        private final AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder;
+        private final QueryBuilder queryBuilder;
         @Nullable
         private final String rootAlias;
         private final Map<String, JoinPath> appliedJoinPaths = new LinkedHashMap<>();
@@ -1650,11 +1650,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
         private List<JoinPath> joinPaths = new ArrayList<>();
 
-        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
+        private QueryState(QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
             this(queryBuilder, query, allowJoins, useAlias, null);
         }
 
-        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, @Nullable String tableAliasPrefix) {
+        private QueryState(QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, @Nullable String tableAliasPrefix) {
             this.queryBuilder = queryBuilder;
             this.allowJoins = allowJoins;
             this.baseQueryDefinition = query;
@@ -2838,6 +2838,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 if (property instanceof Association association && !property.isEmbedded()) {
                     appendAssociationProjection(new PersistentAssociationPath(propertyPath.getAssociations(), association));
+                } else if (computePropertyPaths() && property instanceof Embedded) {
+                    appendEmbeddedPropertyProjection(propertyPath);
                 } else {
                     appendPropertyProjection(findProperty(propertyPath.getPath()));
                 }
@@ -3072,6 +3074,81 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
+         * Appends an embedded projection with column aliases matching the projected embeddable type.
+         *
+         * @param propertyPath The property path
+         */
+        private void appendEmbeddedPropertyProjection(PersistentPropertyPath propertyPath) {
+            PersistentProperty property = propertyPath.getProperty();
+            if (!(property instanceof Embedded embedded)) {
+                appendPropertyProjection(findProperty(propertyPath.getPath()));
+                return;
+            }
+
+            boolean escape = shouldEscape(propertyPath.findPropertyOwner().orElse(property.getOwner()));
+            NamingStrategy sourceNamingStrategy = getNamingStrategy(propertyPath);
+            NamingStrategy targetNamingStrategy = getNamingStrategy(embedded.getAssociatedEntity());
+            List<Association> projectedPath = new ArrayList<>(propertyPath.getAssociations());
+            projectedPath.add(embedded);
+            int[] propertiesCount = new int[1];
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> propertiesCount[0]++);
+            if (StringUtils.isNotEmpty(columnAlias) && propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> {
+                List<Association> relativeAssociations = getRelativeAssociations(projectedPath, associations);
+                String targetName = StringUtils.isNotEmpty(columnAlias)
+                    ? columnAlias
+                    : getEmbeddedProjectionTargetName(targetNamingStrategy, relativeAssociations, p);
+                appendEmbeddedProjectionProperty(associations, p, sourceNamingStrategy, queryState.rootAlias, escape, targetName);
+                query.append(COMMA);
+            });
+            if (propertiesCount[0] > 0) {
+                query.setLength(query.length() - 1);
+            }
+        }
+
+        private List<Association> getRelativeAssociations(List<Association> projectedPath, List<Association> associations) {
+            if (associations.size() <= projectedPath.size()) {
+                return Collections.emptyList();
+            }
+            return associations.subList(projectedPath.size(), associations.size());
+        }
+
+        private String getEmbeddedProjectionTargetName(NamingStrategy targetNamingStrategy,
+                                                       List<Association> relativeAssociations,
+                                                       PersistentProperty property) {
+            String columnAlias = getColumnAlias(property);
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                return columnAlias;
+            }
+            return getMappedName(targetNamingStrategy, relativeAssociations, property);
+        }
+
+        private void appendEmbeddedProjectionProperty(List<Association> associations,
+                                                      PersistentProperty property,
+                                                      NamingStrategy sourceNamingStrategy,
+                                                      @Nullable String tableAlias,
+                                                      boolean escape,
+                                                      String targetName) {
+            String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
+            if (transformed != null) {
+                query.append(transformed).append(AS_CLAUSE).append(targetName);
+                return;
+            }
+            String column = getMappedName(sourceNamingStrategy, associations, property);
+            String escapedColumn = escapeColumnIfNeeded(column, escape);
+            if (tableAlias == null) {
+                query.append(escapedColumn);
+            } else {
+                query.append(tableAlias).append(DOT).append(escapedColumn);
+            }
+            if (!column.equals(targetName)) {
+                query.append(AS_CLAUSE).append(targetName);
+            }
+        }
+
+        /**
          * Append the property projection.
          *
          * @param propertyPath The property
@@ -3097,32 +3174,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String tableAlias = propertyPath.getTableAlias();
             boolean escape = propertyPath.shouldEscape();
             NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
-
-            // Projection for Embeddable retrieval. EmbeddedId is covered in Id projection/traversal.
-            boolean isIdentityProperty = propertyPath.getProperty().getOwner().hasIdentity() && propertyPath.getProperty().getOwner().getIdentity() == propertyPath.getProperty();
-            if (propertyPath.getProperty() instanceof Association association && association.isEmbedded() && !isIdentityProperty) {
-                int resultAssociationOffset = propertyPath.getAssociations().size() + 1;
-                NamingStrategy resultNamingStrategy = getNamingStrategy(association.getAssociatedEntity());
-                int[] propertiesCount = new int[1];
-                PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> propertiesCount[0]++);
-                String selectionAlias = resolveSelectionColumnAlias(propertiesCount[0], propertyPath);
-                boolean[] needsTrimming = {false};
-                PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
-                    String projectedColumnName = getMappedName(namingStrategy, associations, property);
-                    // Nested embedded fields
-                    List<Association> resultAssociations = associations.size() <= resultAssociationOffset
-                        ? Collections.emptyList()
-                        : associations.subList(resultAssociationOffset, associations.size());
-                    String resultColumnName = getMappedName(resultNamingStrategy, resultAssociations, property);
-                    appendEmbeddedProjectionProperty(query, property, tableAlias, escape, projectedColumnName, resultColumnName, selectionAlias);
-                    needsTrimming[0] = true;
-                });
-                if (needsTrimming[0]) {
-                    query.setLength(query.length() - 1);
-                }
-                return;
-            }
-
             boolean[] needsTrimming = {false};
             int[] propertiesCount = new int[1];
 
@@ -3134,9 +3185,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (needsTrimming[0]) {
                 query.setLength(query.length() - 1);
             }
-            String selectionAlias = resolveSelectionColumnAlias(propertiesCount[0], propertyPath);
-            if (selectionAlias != null) {
-                query.append(AS_CLAUSE).append(selectionAlias);
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                if (propertiesCount[0] > 1) {
+                    throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+                }
+                if (propertiesCount[0] == 1) {
+                    query.append(AS_CLAUSE).append(columnAlias);
+                }
             }
         }
 
@@ -3250,44 +3305,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             sb.append(COMMA);
-        }
-
-        private void appendEmbeddedProjectionProperty(StringBuilder sb,
-                                                      PersistentProperty property,
-                                                      @Nullable
-                                                      String tableAlias,
-                                                      boolean escape,
-                                                      String projectedColumnName,
-                                                      String resultColumnName,
-                                                      @Nullable
-                                                      String selectionAlias) {
-            String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
-            String columnAlias = getColumnAlias(property);
-            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
-            String resultAlias = selectionAlias != null ? selectionAlias : useAlias ? columnAlias : resultColumnName;
-            if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(resultAlias);
-            } else {
-                if (tableAlias != null) {
-                    sb.append(tableAlias).append(DOT);
-                }
-                sb.append(escape ? quote(projectedColumnName) : projectedColumnName);
-                if (selectionAlias != null || useAlias || !projectedColumnName.equals(resultColumnName)) {
-                    sb.append(AS_CLAUSE).append(resultAlias);
-                }
-            }
-            sb.append(COMMA);
-        }
-
-        @Nullable
-        private String resolveSelectionColumnAlias(int propertiesCount, Object propertyPath) {
-            if (StringUtils.isEmpty(columnAlias)) {
-                return null;
-            }
-            if (propertiesCount > 1) {
-                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
-            }
-            return propertiesCount == 1 ? columnAlias : null;
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {
