@@ -71,6 +71,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#findRepositoryOperations(java.lang.Class)" tabindex="0">findRepositoryOperations(Class)</a></li>
 <li><a href="#getParameterValueMap(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getParameterValueMap(MethodInvocationContext)</a></li>
 <li><a href="#getReturnType(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getReturnType(MethodInvocationContext)</a></li>
 <li><a href="#convertOne(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" tabindex="0">convertOne(MethodInvocationContext, Object)</a></li>
@@ -227,209 +228,214 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find an entity parameter value in role.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteAllBatchOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getDeleteAllBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;O&gt;&nbsp;@Nullable O</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findRepositoryOperations(java.lang.Class)" class="member-name-link">findRepositoryOperations</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;O&gt;&nbsp;operationsType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the delete all batch operation for the given context.</div>
+<div class="block">Finds the requested repository operations from the root operations or one of its async/reactive variants.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getDeleteBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteAllBatchOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getDeleteAllBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the delete batch operation for the given context.</div>
+<div class="block">Get the delete all batch operation for the given context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getDeleteBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getDeleteBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the delete batch operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull E&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the delete operation for the given context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a><wbr>&lt;E,<wbr>K&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteReturningBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getDeleteReturningBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the delete returning batch operation for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a><wbr>&lt;E,<wbr>K&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteReturningOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- @NonNull E&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the delete operation for the given context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a><wbr>&lt;RT&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntitiesParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getEntitiesParameter</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve an entities parameter value in role.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;RT</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntityParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getEntityParameter</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve an entity parameter value in role.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getInsertBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the insert batch operation for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getInsertBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getDeleteBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the insert batch operation for the given context.</div>
+<div class="block">Get the delete batch operation for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getInsertOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ @NonNull E&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the batch operation for the given context.</div>
+<div class="block">Get the delete operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getInsertOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- E&nbsp;entity)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a><wbr>&lt;E,<wbr>K&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteReturningBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getDeleteReturningBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the batch operation for the given context.</div>
+<div class="block">Get the delete returning batch operation for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLimit(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getLimit</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a><wbr>&lt;E,<wbr>K&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteReturningOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ @NonNull E&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Resolves the limit.</div>
+<div class="block">Get the delete operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOffset(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getOffset</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a><wbr>&lt;RT&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntitiesParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getEntitiesParameter</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Resolves the offset.</div>
+<div class="block">Retrieve an entities parameter value in role.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageable</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageableInRole(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageableInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPagedQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPagedQuery</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the paged query for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;RT&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">getParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull io.micronaut.core.type.Argument&lt;RT&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve a parameter in the given role for the given type.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;RT&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;RT</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntityParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getEntityParameter</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieve a parameter in the given role for the given type.</div>
+<div class="block">Retrieve an entity parameter value in role.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;RT&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">getParametersInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getInsertBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the insert batch operation for the given context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getInsertBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the insert batch operation for the given context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getInsertOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the batch operation for the given context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getInsertOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the batch operation for the given context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLimit(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getLimit</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the limit.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOffset(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getOffset</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the offset.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageable</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageableInRole(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageableInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPagedQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPagedQuery</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the paged query for the given context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;RT&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">getParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull io.micronaut.core.type.Argument&lt;RT&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Retrieve a parameter in the given role for the given type.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;RT&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;RT&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getParametersInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,io.micronaut.core.type.Argument)" class="member-name-link">getParametersInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
+ @NonNull io.micronaut.core.type.Argument&lt;RT&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterValueMap(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getParameterValueMap</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;RT&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParametersInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getParametersInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Retrieve a parameter in the given role for the given type.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterValueMap(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getParameterValueMap</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns parameter values with respect of <code>Parameter</code> annotation.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredEntity(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getRequiredEntity</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredEntity(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getRequiredEntity</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Looks up the entity to persist from the execution context, or throws an exception.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;RT</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getRequiredParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;RT&gt;&nbsp;RT</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredParameterInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">getRequiredParameterInRole</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Retrieve a parameter in the given role for the given type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredRootEntity(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getRequiredRootEntity</a><wbr>(io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredRootEntity(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getRequiredRootEntity</a><wbr>(io.micronaut.aop.MethodInvocationContext&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the root entity or throws an exception if it is not available.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.type.Argument<wbr>&lt;?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReturnType(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getReturnType</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.type.Argument<wbr>&lt;?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReturnType(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getReturnType</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the return type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateAllBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getUpdateAllBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateAllBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Class,java.lang.Iterable)" class="member-name-link">getUpdateAllBatchOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;E&gt;&nbsp;iterable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the update all batch operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getUpdateOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the batch operation for the given context.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a><wbr>&lt;E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getUpdateOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
- E&nbsp;entity)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getUpdateOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the batch operation for the given context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a><wbr>&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getUpdateOperation</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get the batch operation for the given context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check the return role from the method context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;parameterValues)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Instantiate the given entity for the given parameter values.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNumber(java.lang.Class)" class="member-name-link">isNumber</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNumber(java.lang.Class)" class="member-name-link">isNumber</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is the type a number.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareCountQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareCountQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareCountQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareCountQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Prepares a query for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr>RT&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepares a query for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateNullArguments(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">validateNullArguments</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr>RT&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Prepares a query for the given context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateNullArguments(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">validateNullArguments</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Validates null arguments ensuring no argument is null unless declared so.</div>
 </div>
 </div>
@@ -505,6 +511,26 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="findRepositoryOperations(java.lang.Class)">
+<h3>findRepositoryOperations</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Internal
+</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;O&gt;</span>&nbsp;<span class="return-type">@Nullable O</span>&nbsp;<span class="element-name">findRepositoryOperations</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;O&gt;&nbsp;operationsType)</span></div>
+<div class="block">Finds the requested repository operations from the root operations or one of its async/reactive variants.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="findRepositoryOperations(java.lang.Class)-type-param-O"><code>O</code> - The operations type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>operationsType</code> - The operations type</dd>
+<dt>Returns:</dt>
+<dd>The operations, if available</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getParameterValueMap(io.micronaut.aop.MethodInvocationContext)">
 <h3>getParameterValueMap</h3>
