@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.ArgumentUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
@@ -25,6 +26,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
@@ -56,12 +58,8 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
      * @param operations The operations
      */
     protected AbstractAsyncSpecificationInterceptor(RepositoryOperations operations) {
-        super(operations);
-        AsyncRepositoryOperations asyncRepositoryOperations = findRepositoryOperations(AsyncRepositoryOperations.class);
-        if (asyncRepositoryOperations == null) {
-            throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
-        }
-        this.asyncOperations = asyncRepositoryOperations;
+        super(validateAsyncRepositoryOperations(operations));
+        this.asyncOperations = ((AsyncCapableRepository) operations).async();
 
         AsyncCriteriaRepositoryOperations criteriaOperations = findRepositoryOperations(AsyncCriteriaRepositoryOperations.class);
         if (criteriaOperations == null) {
@@ -74,6 +72,14 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         if (asyncCriteriaOperations != null) {
             criteriaBuilder = asyncCriteriaOperations.getCriteriaBuilder();
         }
+    }
+
+    private static RepositoryOperations validateAsyncRepositoryOperations(RepositoryOperations operations) {
+        ArgumentUtils.requireNonNull("operations", operations);
+        if (operations instanceof AsyncCapableRepository) {
+            return operations;
+        }
+        throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
     }
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
