@@ -253,13 +253,15 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-mappedPropertyAlias"><a href="#mappedPropertyAlias"><strong>6.5.10</strong><span>Using @MappedProperty alias</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.11</strong><span>JSON Column Support</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlGeospatial"><a href="#sqlGeospatial"><strong>6.5.11</strong><span>Geospatial Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.12</strong><span>JSON View</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.12</strong><span>JSON Column Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.13</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.13</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.14</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.14</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.15</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -12453,7 +12455,523 @@ When <code>alias</code> property is set then be careful when writing custom or n
 <p>Setting <code>alias</code> in MappedProperty on assocations does not have an effect as it makes sense only on fields/columns mappings.</p>
 </div>
 
-<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>6.5.11 JSON Column Support</h2>
+<h2 id="sqlGeospatial"><a class="anchor" href="#sqlGeospatial"></a>6.5.11 Geospatial Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/sqlMapping/sqlGeospatial.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports geospatial persistence through Micronaut repositories using the <code>io.micronaut.data.model.geo</code> model types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/Point.html">Point</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiPoint.html">MultiPoint</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/LineString.html">LineString</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiLineString.html">MultiLineString</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/Polygon.html">Polygon</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/MultiPolygon.html">MultiPolygon</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/data/model/geo/GeometryCollection.html">GeometryCollection</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The implementation is database-aware. Micronaut Data uses JSON and WKT converters in the Java model,
+and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.</p>
+</div>
+<div class="sect2">
+<h3 id="_json_and_wkt_converters">JSON and WKT converters</h3>
+<div class="paragraph">
+<p>The model types in <code>io.micronaut.data.model.geo</code> are declared with <code>@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)</code>,
+so GeoJSON is the default mapping.</p>
+</div>
+<div class="paragraph">
+<p><a href="../api/io/micronaut/data/model/runtime/convert/GeometryJsonConverter.html">GeometryJsonConverter</a> converts between Micronaut Data geospatial objects and GeoJSON strings.
+<a href="../api/io/micronaut/data/model/runtime/convert/GeometryWktConverter.html">GeometryWktConverter</a> converts the same model types to and from Well-Known Text (WKT).</p>
+</div>
+<div class="paragraph">
+<p>Use the default GeoJSON mapping when you want Micronaut Data to serialize geospatial values as JSON:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeometryEntityJson {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty("location")
+    private Point point;
+
+    @Nullable
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use <code>@MappedProperty(converter = GeometryWktConverter.class)</code> when you want WKT conversion instead:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeometryEntityWkt {
+
+    @Srid(3857)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class)
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
+and native spatial column definitions when the dialect supports them.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_database_vendor_details">Database vendor details</h3>
+<div class="paragraph">
+<p>Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
+generates its own spatial column definitions, and emits its own index DDL.</p>
+</div>
+<div class="sect3">
+<h4 id="_oracle">Oracle</h4>
+<div class="paragraph">
+<p>Oracle stores spatial values in <code>SDO_GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.TO_GEOJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_GEOJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_GEOJSON(?, NULL, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.TO_WKTGEOMETRY(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?))</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Oracle <code>SDO_UTIL.FROM_GEOJSON</code> currently does not accept <code>NULL</code>. The bug has been reported and the fix will be released soon.
+Until the bug fix gets released, you can use GeoJSON conversion only for geospatial columns that are required.
+Otherwise you can use WKT conversion.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The Oracle database requires rows in <code>USER_SDO_GEOM_METADATA</code> for spatial columns that are indexed. Micronaut Data generates
+those metadata statements automatically if you use Micronaut Data&#8217;s internal schema-generation tooling, which is intended
+for tests rather than production schema management. In that case, the generated metadata depends on the SRID.
+The internal schema-generation tooling currently supports the following SRIDs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>4326 - WGS 84 - World Geodetic System 1984</p>
+</li>
+<li>
+<p>3857 - Web Mercator</p>
+</li>
+<li>
+<p>4258 - ETRS89 - Geodetic coordinate system for Europe</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling and another SRID, a new row will not be inserted into the <code>USER_SDO_GEOM_METADATA</code> table.</p>
+</div>
+<div class="paragraph">
+<p>In production you will insert those metadata rows using a SQL migration tool such as
+<a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or
+<a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties
+are annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX "IDX_GEOMETRY_ENTITY_JSON_LOCATION" ON "GEOMETRY_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_postgresql">PostgreSQL</h4>
+<div class="paragraph">
+<p>PostgreSQL geospatial support requires the PostGIS extension because the spatial types, functions, and indexes used by
+Micronaut Data come from PostGIS.</p>
+</div>
+<div class="paragraph">
+<p>PostGIS stores spatial values in <code>GEOMETRY</code> or <code>GEOGRAPHY</code> columns. Micronaut Data uses the <code>GEOMETRY</code> column type
+by default. To change the column type to <code>GEOGRAPHY</code>, set <code>@MappedProperty(definition = "geography")</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityJson {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For WKT conversion, use:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityWkt {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>For <code>GEOGRAPHY</code> data type Micronaut Data still uses the same <code>ST_GeomFromGeoJSON</code>, <code>ST_GeomFromText</code>, <code>ST_AsGeoJSON</code>,
+and <code>ST_AsText</code> functions, but casts through <code>::geography</code> on writes and <code>::geometry</code> on reads because
+the PostGIS JSON and text conversion functions operate on geometry values.</p>
+</div>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX "idx_geography_entity_json_location" ON "geography_entity_json" USING GIST ("location");</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_mysql">MySQL</h4>
+<div class="paragraph">
+<p>MySQL stores spatial values in <code>GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?, 1, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_mariadb">MariaDB</h4>
+<div class="paragraph">
+<p>MariaDB uses the same converter model as MySQL in Micronaut Data. The generated SQL and function handling
+follow the same MySQL-style <code>GEOMETRY</code> storage model, <code>ST_AsGeoJSON</code> and <code>ST_AsText</code> read conversion,
+<code>ST_GeomFromGeoJSON</code> and <code>ST_GeomFromText</code> write conversion, and <code>CREATE SPATIAL INDEX &#8230;&#8203;</code> DDL.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?, 1, srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
+spatial-function behavior.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_h2">H2</h4>
+<div class="paragraph">
+<p>H2 geospatial support requires the H2GIS extension because the spatial types, functions, and indexes used by Micronaut
+Data come from H2GIS.</p>
+</div>
+<div class="paragraph">
+<p>H2GIS stores spatial values in <code>GEOMETRY</code> columns.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion with SRID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GeoJSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsGeoJSON(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromGeoJSON(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_sql_server">SQL Server</h4>
+<div class="paragraph">
+<p>SQL Server stores spatial values in <code>GEOMETRY</code> or <code>GEOGRAPHY</code> columns. Micronaut Data uses the <code>GEOMETRY</code> column type
+by default. To change the column type to <code>GEOGRAPHY</code>, set <code>@MappedProperty(definition = "geography")</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class GeographyEntityWkt {
+
+    @Srid(4258)
+    @Index(columns = "location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
+    private Point point;
+
+    @Nullable
+    @MappedProperty(converter = GeometryWktConverter.class, definition = "geography")
+    private MultiPoint multiPoint;
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+SQL Server doesn&#8217;t have built-in functions for conversion between JSON and internal geospatial data types
+so Micronaut Data will use WKT conversion.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses the following functions to read and write spatial data:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Mapping</th>
+<th class="tableblock halign-left valign-top">Read conversion</th>
+<th class="tableblock halign-left valign-top">Write conversion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>column.STAsText()</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>geometry::STGeomFromText(?, srid)</code> or <code>geography::STGeomFromText(?, srid)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
+annotated with <code>@Index</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX [idx_geography_entity_wkt_location] ON [geography_entity_wkt] ([location]);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the indexed column definition contains <code>geometry</code>, the internal schema-generation tooling also appends the geometry
+grid bounding box clause using default coordinates for SRID = 3857 - Web Mercator:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX [idx_geometry_entity_wkt_location] ON [geometry_entity_wkt] ([location])
+USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That clause is generated for <code>geometry</code> SQL Server mappings and is not used for the <code>geography</code> mapping.</p>
+</div>
+</div>
+</div>
+
+<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>6.5.12 JSON Column Support</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/sqlMapping/sqlJsonType.adoc"'>
@@ -12487,7 +13005,7 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.12 JSON View</h2>
+<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.13 JSON View</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
@@ -12744,7 +13262,7 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.13 Support for Java 16 Records</h2>
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.14 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -12796,7 +13314,7 @@ record Book(
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.14 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.15 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/kotlinData.adoc"'>
