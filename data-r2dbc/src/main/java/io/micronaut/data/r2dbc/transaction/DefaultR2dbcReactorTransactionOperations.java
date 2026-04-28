@@ -20,11 +20,11 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.data.r2dbc.connection.DefaultR2dbcReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
@@ -88,7 +88,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
             }
         }
-        TransactionPriority.Level priority = definition.getPriority();
+        OracleTransactional.Priority priority = getOraclePriority(definition);
         if (priority != null && isOracleConnection(connection)) {
             result = result.thenMany(applyOracleTxnPriority(connection, priority)
                 .flatMapMany(applied -> {
@@ -136,7 +136,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         return ORACLE_PRODUCT_NAME_UPPER.equals(productName);
     }
 
-    private Mono<Boolean> applyOracleTxnPriority(Connection connection, TransactionPriority.Level level) {
+    private Mono<Boolean> applyOracleTxnPriority(Connection connection, OracleTransactional.Priority level) {
         return executeOracleTxnPriorityStatement(connection,
             "ALTER SESSION SET \"txn_priority\"=\"" + level.name() + "\"",
             "Setting",
@@ -169,6 +169,20 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 }
                 return Mono.error(e);
             });
+    }
+
+    private OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
+        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
+        if (value instanceof OracleTransactional.Priority priority) {
+            return priority;
+        }
+        if (value instanceof String priority) {
+            return OracleTransactional.Priority.valueOf(priority);
+        }
+        if (value instanceof Enum<?> priority) {
+            return OracleTransactional.Priority.valueOf(priority.name());
+        }
+        return null;
     }
 
     private void registerOracleTxnPriorityReset(ConnectionStatus<Connection> connectionStatus, Connection connection) {

@@ -15,7 +15,6 @@
  */
 package io.micronaut.transaction.support;
 
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
@@ -23,6 +22,8 @@ import io.micronaut.transaction.TransactionDefinition;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -55,7 +56,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
 
     private Collection<Class<? extends Throwable>> dontRollbackOn = Collections.emptyList();
 
-    private TransactionPriority.@Nullable Level priority;
+    private Map<String, Object> properties = Collections.emptyMap();
 
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
@@ -86,7 +87,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         this.name = other.getName();
         this.rollbackOn = other.getRollbackOn();
         this.dontRollbackOn = other.getDontRollbackOn();
-        this.priority = other.getPriority();
+        this.properties = new LinkedHashMap<>(other.getProperties());
     }
 
     /**
@@ -265,31 +266,37 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
     }
 
     @Override
-    public TransactionPriority.@Nullable Level getPriority() {
-        return priority;
+    public Map<String, Object> getProperties() {
+        return Collections.unmodifiableMap(properties);
     }
 
     /**
-     * Sets the Oracle transaction priority for this transaction definition.
-     * For other databases it will be ignored.
-     * <p>
-     * When effective (Oracle Database 26ai+ with system wait targets configured),
-     * a session-level transaction priority will be set for the duration of the transaction.
-     * If a lower-priority transaction blocks a higher-priority one on row locks,
-     * the database may automatically roll back the blocking lower-priority transaction
-     * according to the configured system wait targets.
-     * <p>
-     * Notes:
-     * - This setting is a no-op for non-Oracle databases.
-     * - It is applied at the beginning of a JDBC or R2DBC transaction and reset afterwards.
-     * - It is orthogonal to propagation/isolation/readOnly. It does not change transactional semantics.
-     * - Requires appropriate database configuration (PRIORITY_TXNS_* parameters).
+     * Sets additional transaction properties that may be interpreted by specific transaction managers.
      *
-     * @param priority the desired transaction priority level for Oracle priority transactions,
-     *                 or {@code null} to use the default priority (effectively HIGH).
+     * @param properties The transaction properties
+     * @since 5.0
      */
-    public void setPriority(TransactionPriority.@Nullable Level priority) {
-        this.priority = priority;
+    public void setProperties(@Nullable Map<String, Object> properties) {
+        this.properties = properties == null ? Collections.emptyMap() : new LinkedHashMap<>(properties);
+    }
+
+    /**
+     * Adds an additional transaction property that may be interpreted by a specific transaction manager.
+     *
+     * @param name The property name
+     * @param value The property value
+     * @since 5.0
+     */
+    public void putProperty(@NonNull String name, @Nullable Object value) {
+        Objects.requireNonNull(name, "Argument [name] cannot be null");
+        if (this.properties.isEmpty()) {
+            this.properties = new LinkedHashMap<>();
+        }
+        if (value == null) {
+            this.properties.remove(name);
+        } else {
+            this.properties.put(name, value);
+        }
     }
 
     /**
@@ -332,12 +339,11 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         if (!dontRollbackOn.isEmpty()) {
             sb.append(", dontRollbackOn=").append(dontRollbackOn);
         }
-        if (priority != null) {
-            sb.append(", priority=").append(priority);
+        if (!properties.isEmpty()) {
+            sb.append(", properties=").append(properties);
         }
         sb.append(']');
         return sb.toString();
     }
 
 }
-

@@ -1,8 +1,8 @@
 package io.micronaut.data.r2dbc.transaction
 
-import io.micronaut.data.connection.annotation.TransactionPriority
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization
+import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionMetadata
@@ -42,7 +42,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         def resetStatement = Mock(Statement)
         def resetResult = Mock(Result)
         def definition = new DefaultTransactionDefinition()
-        definition.setPriority(TransactionPriority.Level.LOW)
+        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, OracleTransactional.Priority.LOW)
         ReactiveConnectionSynchronization synchronization = null
 
         when:
@@ -76,7 +76,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         def connection = Mock(Connection)
         def metadata = Mock(ConnectionMetadata)
         def definition = new DefaultTransactionDefinition()
-        definition.setPriority(TransactionPriority.Level.LOW)
+        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, OracleTransactional.Priority.LOW)
 
         when:
         Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()

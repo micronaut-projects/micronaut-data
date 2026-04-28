@@ -19,9 +19,9 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -56,7 +56,7 @@ public final class TransactionUtil {
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
         definition.setName(name);
         definition.setReadOnly(annotation.isTrue("readOnly"));
-        annotation.intValue("timeout").ifPresent(value -> definition.setTimeout(Duration.ofSeconds(value)));
+        annotation.intValue("timeout").ifPresent(timeout -> definition.setTimeout(Duration.ofSeconds(timeout)));
         final Class[] rollbackFor = annotation.classValues("rollbackFor");
         //noinspection unchecked
         definition.setRollbackOn(Arrays.asList(rollbackFor));
@@ -68,11 +68,11 @@ public final class TransactionUtil {
         annotation.enumValue("isolation", TransactionDefinition.Isolation.class)
                 .ifPresent(definition::setIsolationLevel);
 
-        AnnotationValue<TransactionPriority> txPriority = annotationMetadataProvider.getAnnotation(TransactionPriority.class);
-        if (txPriority != null) {
-            TransactionPriority.Level level = txPriority.enumValue("value", TransactionPriority.Level.class)
-                .orElse(TransactionPriority.Level.HIGH);
-            definition.setPriority(level);
+        AnnotationValue<OracleTransactional> oracleTransactional = annotationMetadataProvider.getAnnotation(OracleTransactional.class);
+        if (oracleTransactional != null) {
+            OracleTransactional.Priority priority = oracleTransactional.enumValue("priority", OracleTransactional.Priority.class)
+                .orElse(OracleTransactional.Priority.HIGH);
+            definition.putProperty(OracleTransactional.ORACLE_PRIORITY, priority);
         }
 
         return definition;

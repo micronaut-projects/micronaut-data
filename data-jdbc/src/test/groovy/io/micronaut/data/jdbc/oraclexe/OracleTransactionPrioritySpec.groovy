@@ -2,10 +2,9 @@ package io.micronaut.data.jdbc.oraclexe
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.ConnectionOperations
-import io.micronaut.data.connection.annotation.TransactionPriority
-import io.micronaut.data.jdbc.TestResourcesDatabaseTestPropertyProvider
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
+import io.micronaut.transaction.annotation.OracleTransactional
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -33,8 +32,8 @@ class OracleTransactionPrioritySpec extends Specification implements OracleTestP
         given:
         def mediumPriorityTransaction = new TransactionDefinition() {
             @Override
-            TransactionPriority.Level getPriority() {
-                return TransactionPriority.Level.MEDIUM
+            Map<String, Object> getProperties() {
+                return [(OracleTransactional.ORACLE_PRIORITY): OracleTransactional.Priority.MEDIUM]
             }
         }
         when:

@@ -16,9 +16,9 @@
 package io.micronaut.transaction;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
@@ -28,32 +28,34 @@ import org.junit.jupiter.api.Test;
 public class TransactionUtilSpec {
 
     @Test
-    void testTransactionPriorityAnnotationWiring() {
+    void testOracleTransactionalAnnotationWiring() {
         try (ApplicationContext applicationContext = ApplicationContext.run()) {
             BeanDefinition<AnnotatedService> beanDefinition = applicationContext.getBeanDefinition(AnnotatedService.class);
 
             ExecutableMethod<AnnotatedService, Object> methodWithPriority = beanDefinition.getRequiredMethod("methodWithPriority");
             TransactionDefinition priorityDefinition = TransactionUtil.getTransactionDefinition("test", methodWithPriority);
-            Assertions.assertEquals(TransactionPriority.Level.MEDIUM, priorityDefinition.getPriority());
+            Assertions.assertEquals(
+                OracleTransactional.Priority.MEDIUM,
+                priorityDefinition.getProperties().get(OracleTransactional.ORACLE_PRIORITY)
+            );
 
             ExecutableMethod<AnnotatedService, Object> methodWithoutPriority = beanDefinition.getRequiredMethod("methodWithoutPriority");
             TransactionDefinition defaultDefinition = TransactionUtil.getTransactionDefinition("test", methodWithoutPriority);
-            Assertions.assertNull(defaultDefinition.getPriority());
+            Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY));
         }
     }
 
     @Singleton
     static class AnnotatedService {
 
-        @Transactional
-        @TransactionPriority(TransactionPriority.Level.MEDIUM)
+        @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
         void methodWithPriority() {
-            // Does nothing, just to test TransactionUtil with TransactionPriority
+            // Does nothing, just to test TransactionUtil with OracleTransactional
         }
 
         @Transactional
         void methodWithoutPriority() {
-            // Does nothing, just to test TransactionUtil without TransactionPriority
+            // Does nothing, just to test TransactionUtil without OracleTransactional
         }
     }
 }

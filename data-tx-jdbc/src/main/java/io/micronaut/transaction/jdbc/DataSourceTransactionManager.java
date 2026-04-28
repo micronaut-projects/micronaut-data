@@ -27,8 +27,8 @@ import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
@@ -140,9 +140,9 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
         JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
 
-        // Apply Oracle transaction priority if requested via @TransactionPriority (Oracle Database 26ai+)
+        // Apply Oracle transaction priority if requested via @OracleTransactional (Oracle Database 26ai+)
         try {
-            TransactionPriority.Level priority = definition.getPriority();
+            OracleTransactional.Priority priority = getOraclePriority(definition);
             if (priority != null) {
                 String productName = connection.getMetaData().getDatabaseProductName();
                 if (productName != null) {
@@ -278,7 +278,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         }
     }
 
-    private static boolean applyOracleTxnPriority(Logger logger, Connection connection, TransactionPriority.Level level) throws SQLException {
+    private static boolean applyOracleTxnPriority(Logger logger, Connection connection, OracleTransactional.Priority level) throws SQLException {
         String sql = "ALTER SESSION SET \"txn_priority\"=\"" + level.name() + "\"";
         return executeOracleTxnPriorityStatement(logger, connection, sql, "Setting", level.name());
     }
@@ -310,6 +310,20 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             }
             throw e;
         }
+    }
+
+    private static OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
+        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
+        if (value instanceof OracleTransactional.Priority priority) {
+            return priority;
+        }
+        if (value instanceof String priority) {
+            return OracleTransactional.Priority.valueOf(priority);
+        }
+        if (value instanceof Enum<?> priority) {
+            return OracleTransactional.Priority.valueOf(priority.name());
+        }
+        return null;
     }
 
     @NonNull

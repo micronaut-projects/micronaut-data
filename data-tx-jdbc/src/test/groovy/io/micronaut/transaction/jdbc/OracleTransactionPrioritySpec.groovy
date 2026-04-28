@@ -2,9 +2,9 @@ package io.micronaut.transaction.jdbc
 
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.DefaultConnectionDefinition
-import io.micronaut.data.connection.annotation.TransactionPriority
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
 import io.micronaut.transaction.exceptions.TransactionSystemException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
@@ -18,11 +18,11 @@ import java.sql.Statement
 
 /**
  * Verifies that Oracle transaction priority is applied (ALTER SESSION "txn_priority")
- * at transaction begin and reset after completion when @TransactionPriority is present.
+ * at transaction begin and reset after completion when @OracleTransactional is present.
  */
 class OracleTransactionPrioritySpec extends Specification {
 
-    def "applies and resets Oracle txn_priority when @TransactionPriority present"() {
+    def "applies and resets Oracle txn_priority when oracle priority is present"() {
         given: "Mocks for Oracle connection and statement"
         def dataSource = Mock(DataSource)
         def connection = Mock(Connection)
@@ -36,7 +36,7 @@ class OracleTransactionPrioritySpec extends Specification {
         def status = new DefaultConnectionStatus<>(connection, connDef, true, null)
 
         and: "A DefaultTransactionStatus with the above connection status"
-        def txDef = createWithPriority(TransactionPriority.Level.LOW)
+        def txDef = createWithPriority(OracleTransactional.Priority.LOW)
         def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
         def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
 
@@ -66,7 +66,7 @@ class OracleTransactionPrioritySpec extends Specification {
     def "ignores ORA-02248 while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
-        def fixture = newOracleTxFixture(txManager, TransactionPriority.Level.MEDIUM)
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
         def stmt = Mock(Statement)
         1 * fixture.connection.createStatement() >> stmt
         _ * stmt.close()
@@ -83,7 +83,7 @@ class OracleTransactionPrioritySpec extends Specification {
     def "ignores chained ORA-02248 while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
-        def fixture = newOracleTxFixture(txManager, TransactionPriority.Level.MEDIUM)
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
         def stmt = Mock(Statement)
         1 * fixture.connection.createStatement() >> stmt
         _ * stmt.close()
@@ -102,7 +102,7 @@ class OracleTransactionPrioritySpec extends Specification {
     def "rethrows non-ORA-02248 failure while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
-        def fixture = newOracleTxFixture(txManager, TransactionPriority.Level.MEDIUM)
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
         def stmt = Mock(Statement)
         fixture.connection.createStatement() >> stmt
         _ * stmt.close()
@@ -120,7 +120,7 @@ class OracleTransactionPrioritySpec extends Specification {
     def "ignores ORA-02248 while resetting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
-        def fixture = newOracleTxFixture(txManager, TransactionPriority.Level.LOW)
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
         def stmt = Mock(Statement)
         2 * fixture.connection.createStatement() >> stmt
         _ * stmt.close()
@@ -138,7 +138,7 @@ class OracleTransactionPrioritySpec extends Specification {
     def "rethrows non-ORA-02248 failure while resetting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
-        def fixture = newOracleTxFixture(txManager, TransactionPriority.Level.LOW)
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
         def stmt = Mock(Statement)
         2 * fixture.connection.createStatement() >> stmt
         _ * stmt.close()
@@ -162,7 +162,7 @@ class OracleTransactionPrioritySpec extends Specification {
         def meta = Mock(DatabaseMetaData)
         ConnectionDefinition connDef = new DefaultConnectionDefinition("test")
         def status = new DefaultConnectionStatus<>(connection, connDef, true, null)
-        def txDef = createWithPriority(TransactionPriority.Level.HIGH)
+        def txDef = createWithPriority(OracleTransactional.Priority.HIGH)
         def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
         def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
 
@@ -186,7 +186,7 @@ class OracleTransactionPrioritySpec extends Specification {
         new DataSourceTransactionManager(Mock(DataSource), Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
     }
 
-    private OracleTxFixture newOracleTxFixture(DataSourceTransactionManager txManager, TransactionPriority.Level priority) {
+    private OracleTxFixture newOracleTxFixture(DataSourceTransactionManager txManager, OracleTransactional.Priority priority) {
         def connection = Mock(Connection)
         def meta = Mock(DatabaseMetaData)
         connection.getMetaData() >> meta
@@ -203,7 +203,7 @@ class OracleTransactionPrioritySpec extends Specification {
         new OracleTxFixture(connection, status, txStatus)
     }
 
-    static TransactionDefinition createWithPriority(TransactionPriority.Level priority) {
+    static TransactionDefinition createWithPriority(OracleTransactional.Priority priority) {
         return new TransactionDefinition() {
             @Override
             public String getName() {
@@ -211,8 +211,8 @@ class OracleTransactionPrioritySpec extends Specification {
             }
 
             @Override
-            TransactionPriority.Level getPriority() {
-                return priority
+            Map<String, Object> getProperties() {
+                return [(OracleTransactional.ORACLE_PRIORITY): priority]
             }
         }
     }

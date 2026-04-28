@@ -16,7 +16,6 @@
 package io.micronaut.transaction;
 
 
-import io.micronaut.data.connection.annotation.TransactionPriority;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -25,6 +24,7 @@ import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -377,6 +377,17 @@ public interface TransactionDefinition {
     }
 
     /**
+     * Additional transaction properties that may be interpreted by specific transaction managers.
+     *
+     * @return the transaction properties
+     * @since 5.0
+     */
+    @NonNull
+    default Map<String, Object> getProperties() {
+        return Collections.emptyMap();
+    }
+
+    /**
      * Check of the transaction should roll back when exception occurs.
      *
      * @param e The exception
@@ -414,21 +425,4 @@ public interface TransactionDefinition {
         return ConnectionDefinition.DEFAULT.withName(getName());
     }
 
-    /**
-     * Returns the transaction priority level hint for Oracle databases.
-     * For other databases it will be ignored.
-     * <p>
-     * The returned {@link TransactionPriority.Level} is used to set the session-level
-     * transaction priority for the duration of the transaction. This is only effective
-     * for Oracle Database 26ai+ with system wait targets configured.
-     * <p>
-     * If not specified or {@code null}, the default Oracle transaction priority is used.
-     *
-     * @return the transaction priority level hint, or {@code null} if not specified
-     * @see TransactionPriority
-     * @since 5.0
-     */
-    default TransactionPriority.@Nullable Level getPriority() {
-        return null;
-    }
 }
