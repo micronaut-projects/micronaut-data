@@ -29,7 +29,7 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.processor.jdql.JDQLCriteriaBuilderUtils;
+import io.micronaut.data.processor.jq.JQCriteriaBuilderUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
@@ -49,7 +49,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * The Jakarta Data Query annotation matcher.
+ * The Jakarta Query annotation matcher.
  *
  * @author Denis Stepanov
  * @since 4.13
@@ -60,8 +60,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
     @Override
     @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
-        Optional<String> jdqlQuery = matchContext.getMethodElement().stringValue("jakarta.data.repository.Query");
-        if (jdqlQuery.isPresent()) {
+        Optional<String> jakartaQuery = matchContext.getMethodElement().stringValue("jakarta.data.repository.Query");
+        if (jakartaQuery.isPresent()) {
 
             Function<String, ClassElement> findClassElementFn = name -> {
                 if (matchContext.hasRootEntity()) {
@@ -77,8 +77,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 return matchContext.getVisitorContext().getClassElement(name)
                     .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "Unable to find an entity: " + name));
             };
-            PersistentEntityCommonAbstractCriteria criteriaQuery = JDQLCriteriaBuilderUtils.build(
-                jdqlQuery.get(),
+            PersistentEntityCommonAbstractCriteria criteriaQuery = JQCriteriaBuilderUtils.build(
+                jakartaQuery.get(),
                 matchContext.hasRootEntity() ? matchContext.getRootEntity() : null,
                 matchContext.getMethodElement(),
                 findClassElementFn,
@@ -93,7 +93,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 return getDeleteQuery(criteriaQuery);
             }
             if (criteriaQuery instanceof PersistentEntityCriteriaQuery<?>) {
-                return getSelectQuery(criteriaQuery, jdqlQuery.get(), findClassElementFn);
+                return getSelectQuery(criteriaQuery, jakartaQuery.get(), findClassElementFn);
             }
             return null;
         }
@@ -243,7 +243,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
                     || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {
 
-                    PersistentEntityCommonAbstractCriteria countCriteriaQuery = JDQLCriteriaBuilderUtils.buildCount(
+                    PersistentEntityCommonAbstractCriteria countCriteriaQuery = JQCriteriaBuilderUtils.buildCount(
                         query,
                         matchContext.getRootEntity(),
                         matchContext.getMethodElement(),
