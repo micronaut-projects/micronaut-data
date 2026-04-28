@@ -67,6 +67,13 @@ public interface MongoStoredQuery<E, R> extends StoredQuery<E, R> {
 
     /**
      * @param invocationContext The invocation context to have query parameters extracted from
+     * @return The data to execute a single-document update returning the document
+     * @since 5.0.0
+     */
+    MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext);
+
+    /**
+     * @param invocationContext The invocation context to have query parameters extracted from
      * @return The data to execute the delete
      */
     MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext);

@@ -6,8 +6,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
-@H2DBProperties
-@Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2.identity")
+@H2DBProperties(packages = "io.micronaut.data.jdbc.h2.identity")
 @Property(name = "datasources.default.batch-generate", value = "true")
 @MicronautTest
 class SameIdentityRepositorySpec extends Specification {

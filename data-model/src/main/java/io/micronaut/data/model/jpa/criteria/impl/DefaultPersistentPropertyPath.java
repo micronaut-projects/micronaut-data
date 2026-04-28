@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -65,6 +67,11 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
     public DefaultPersistentPropertyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
         this.propertyPath = propertyPath;
         this.criteriaBuilder = null;
+    }
+
+    @Override
+    public <X> Expression<X> cast(Class<X> type) {
+        return new CastExpression<>(this, new ClassExpressionType<>(type));
     }
 
     @Override

@@ -394,6 +394,55 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             bookRepository.findByTitle("My book")
     }
 
+    void "test custom insert returning optional id when no row produced"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def firstInsert = bookRepository.customInsertReturningIdIfTitleNotExists(
+                    book.getAuthor().getId(),
+                    null,
+                    "My unique book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+            def secondInsert = bookRepository.customInsertReturningIdIfTitleNotExists(
+                    book.getAuthor().getId(),
+                    null,
+                    "My unique book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+        then:
+            firstInsert.present
+            secondInsert.empty
+    }
+
+    void "test custom update returning optional id when no row produced"() {
+        given:
+            setupBooks()
+        when:
+            def firstUpdate = bookRepository.customUpdateReturningIdIfTitleMatches("Pet Cemetery", "Pet Cemetery Updated")
+            def secondUpdate = bookRepository.customUpdateReturningIdIfTitleMatches("Pet Cemetery", "Pet Cemetery Updated Again")
+        then:
+            firstUpdate.present
+            secondUpdate.empty
+            bookRepository.findByTitle("Pet Cemetery Updated")
+    }
+
+    void "test custom delete returning optional id when no row produced"() {
+        given:
+            setupBooks()
+        when:
+            def firstDelete = bookRepository.customDeleteReturningIdByTitle("Pet Cemetery")
+            def secondDelete = bookRepository.customDeleteReturningIdByTitle("Pet Cemetery")
+        then:
+            firstDelete.present
+            secondDelete.empty
+    }
+
     void "test update returning book title"() {
         given:
             setupBooks()

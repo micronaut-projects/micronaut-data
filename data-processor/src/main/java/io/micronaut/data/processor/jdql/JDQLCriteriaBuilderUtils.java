@@ -429,9 +429,19 @@ public final class JDQLCriteriaBuilderUtils {
         if (inExpression != null) {
             Expression<?> expression = getExpression(inExpression.scalar_expression(), root, criteriaBuilder);
             CriteriaBuilder.In<?> in = criteriaBuilder.in(expression);
-            for (JDQLParser.In_itemContext item : inExpression.in_item()) {
-                Expression e = getExpression(item, criteriaBuilder);
+            JDQLParser.In_item_listContext inItemListContext = inExpression.in_item_list();
+            JDQLParser.Input_parameterContext inputParameterContext = inItemListContext.input_parameter();
+            if (inputParameterContext != null) {
+                Expression e = getExpression(inputParameterContext, criteriaBuilder);
                 in.value(e);
+            } else {
+                JDQLParser.In_item_list_manyContext inItemListManyContext = inItemListContext.in_item_list_many();
+                if (inItemListManyContext != null) {
+                    for (JDQLParser.In_itemContext item : inItemListManyContext.in_item()) {
+                        Expression e = getExpression(item, criteriaBuilder);
+                        in.value(e);
+                    }
+                }
             }
             if (inExpression.NOT() != null) {
                 return in.not();

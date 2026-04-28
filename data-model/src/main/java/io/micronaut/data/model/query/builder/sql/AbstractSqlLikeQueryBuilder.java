@@ -18,12 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.model.geo.Geometry;
-import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
-import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
-import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
-import org.jspecify.annotations.Nullable;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -35,6 +30,7 @@ import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -48,6 +44,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
@@ -55,19 +52,22 @@ import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
+import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
-import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -82,14 +82,20 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlDbType;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -113,6 +119,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
+import static io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.SqlSelectionVisitor.getCastDbType;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -149,6 +156,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
     protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
+    private static final String CAST_FUNCTION = "CAST";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
 
@@ -179,7 +187,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param value The literal value
      * @return converter value
      */
-
     protected String asLiteral(@Nullable Object value) {
         if (value instanceof LiteralExpression<?> literalExpression) {
             value = literalExpression.getValue();
@@ -360,7 +367,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param joinPath The join path
      * @return The alias
      */
-
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
             var p = new StringBuilder();
@@ -534,7 +540,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param association    the association
      * @return the mapped name for the association
      */
-
     protected String getMappedName(NamingStrategy namingStrategy,  Association association) {
         return namingStrategy.mappedName(association);
     }
@@ -547,7 +552,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param property       the property
      * @return the mappen name for the list of associations and property using given naming strategy
      */
-
     protected String getMappedName(NamingStrategy namingStrategy,  List<Association> associations,  PersistentProperty property) {
         return namingStrategy.mappedName(associations, property);
     }
@@ -559,7 +563,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param propertyPath   the property path
      * @return the mappen name for the list of associations and property using given naming strategy
      */
-
     protected String getMappedName(NamingStrategy namingStrategy,  PersistentPropertyPath propertyPath) {
         return namingStrategy.mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
     }
@@ -982,8 +985,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected abstract boolean computePropertyPaths();
 
+    /**
+     * Creates a visitor for handling the RETURNING clause in an UPDATE/DELETE statement.
+     *
+     * This method is used to generate the necessary SQL for the RETURNING clause
+     * when executing an UPDATE or DELETE query with a RETURNING clause.
+     *
+     * @param annotationMetadata The annotation metadata associated with the query.
+     * @param queryState         The current state of the query being built.
+     * @param distinct           Whether the query is marked as DISTINCT.
+     * @return A visitor that can handle the RETURNING clause.
+     */
+    protected ReturningSelectionVisitor createReturningSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        throw new UnsupportedOperationException("Not supported by this SQL builder.");
+    }
+
     @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata,  UpdateQueryDefinition definition) {
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
         Map<String, Object> propertiesToUpdate = definition.propertiesToUpdate();
         if (propertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
@@ -1006,10 +1024,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support UPDATE ... RETURNING clause");
             }
             queryString.append(RETURNING);
-            buildSelect(annotationMetadata,
-                queryState,
-                returningSelection,
-                false);
+            if (getDialect() == Dialect.ORACLE) {
+                return buildOracleUpdateOrDeleteReturningQueryResult(annotationMetadata, queryState, returningSelection, definition, true);
+            } else {
+                buildSelect(annotationMetadata,
+                    queryState,
+                    returningSelection,
+                    false);
+            }
         }
         return QueryResult.of(queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1035,10 +1057,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support DELETE ... RETURNING clause");
             }
             queryString.append(RETURNING);
-            buildSelect(annotationMetadata,
-                queryState,
-                returningSelection,
-                false);
+            if (getDialect() == Dialect.ORACLE) {
+                return buildOracleUpdateOrDeleteReturningQueryResult(annotationMetadata, queryState, returningSelection, definition, false);
+            } else {
+                buildSelect(annotationMetadata,
+                    queryState,
+                    returningSelection,
+                    false);
+            }
         }
         return QueryResult.of(queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1060,7 +1086,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param queryString The query string
      * @return The delete clause
      */
-
     protected StringBuilder appendDeleteClause(StringBuilder queryString) {
         return queryString.append("DELETE ").append(FROM_CLAUSE);
     }
@@ -1076,7 +1101,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param tableAlias         The table alias
      * @return The encoded query
      */
-
     public String buildOrderBy(String query,
                                PersistentEntity entity,
                                AnnotationMetadata annotationMetadata,
@@ -1506,6 +1530,57 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+    }
+
+    private QueryResult buildOracleUpdateOrDeleteReturningQueryResult(AnnotationMetadata annotationMetadata,
+                                                                      QueryState queryState,
+                                                                      Selection<?> returningSelection,
+                                                                      BaseQueryDefinition definition,
+                                                                      boolean update) {
+        // Collect OUT parameter metadata (column names and data types)
+        ReturningSelectionVisitor visitor = createReturningSelectionVisitor(annotationMetadata, queryState, false);
+        if (returningSelection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(visitor);
+        } else {
+            throw new IllegalStateException("Unknown selection type: " + returningSelection.getClass().getName());
+        }
+        int inCount = queryState.getParameterBindings().size();
+        int outCount = visitor.getUnescapedColumns().size();
+        if (outCount == 0) {
+            String operation = update ? "UPDATE" : "DELETE";
+            throw new IllegalStateException(operation + " ... RETURNING requires at least one column to return for entity: " + definition.persistentEntity().getName());
+        }
+        List<String> placeholders = new ArrayList<>(outCount);
+        for (int i = 0; i < outCount; i++) {
+            placeholders.add(formatParameter(inCount + 1 + i).name());
+        }
+        final String returningClause = " INTO " + String.join(",", placeholders) + "; END;";
+        final String finalSql = "BEGIN " + queryState.getFinalQuery() + returningClause;
+        final List<QueryOutParameterBinding> outBindings = new ArrayList<>(outCount);
+        for (int i = 0; i < outCount; i++) {
+            final String col = visitor.getUnescapedColumns().get(i);
+            final DataType dt = visitor.getResultColumnTypes().get(i);
+            outBindings.add(new QueryOutParameterBinding() {
+                @Override
+                public String getName() {
+                    return col;
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return dt;
+                }
+            });
+        }
+        final List<String> queryParts = new ArrayList<>(queryState.getQueryParts());
+        if (queryParts.isEmpty()) {
+            queryParts.add(finalSql);
+        } else {
+            queryParts.set(0, "BEGIN " + queryParts.get(0));
+            int lastIndex = queryParts.size() - 1;
+            queryParts.set(lastIndex, queryParts.get(lastIndex) + returningClause);
+        }
+        return QueryResult.of(finalSql, queryParts, queryState.getParameterBindings(), outBindings, Map.of());
     }
 
     protected record QueryBuilder(AtomicInteger position,
@@ -2499,6 +2574,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(CLOSE_BRACKET);
         }
 
+        private void appendCast(ExpressionType<?> type, Expression<?> expression) {
+            query.append(CAST_FUNCTION).append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(AS_CLAUSE);
+            query.append(getCastDbType(type, getDialect()));
+            query.append(CLOSE_BRACKET);
+        }
+
         protected final void appendBindingParameter(BindingParameter bindingParameter,
                                                     @Nullable PersistentPropertyPath entityPropertyPath) {
             Runnable pushParameter = () -> {
@@ -2616,6 +2699,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public void visit(SubqueryExpression<?> subqueryExpression) {
             query.append(subqueryExpression.getType().name());
             visit(subqueryExpression.getSubquery());
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            appendCast(castExpression.getExpressionType(), castExpression.getExpression());
         }
 
         @Override
@@ -2831,6 +2919,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             appendFunction(functionExpression.getName(), functionExpression.getExpressions());
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            appendCast(castExpression.getExpressionType(), castExpression.getExpression());
         }
 
         /**
@@ -3107,6 +3200,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         }
 
+        static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
+            if (type == null) {
+                throw new IllegalStateException("CAST type is expected");
+            }
+            if (!(type instanceof ClassExpressionType<?> classExpressionType)) {
+                throw new IllegalStateException("Only Class types are supported at the moment");
+            }
+            Class<?> javaType = ReflectionUtils.getWrapperType(classExpressionType.getJavaType());
+            DataType dataType = DataType.forType(javaType);
+            if (dataType == DataType.OBJECT) {
+                throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
+            }
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect);
+        }
+
+        private void appendCast(ExpressionType<?> type, Expression<?> expression) {
+            query.append(CAST_FUNCTION).append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(AS_CLAUSE);
+            query.append(getCastDbType(type, getDialect()));
+            query.append(CLOSE_BRACKET);
+        }
+
         private void appendExpression(Expression<?> expression) {
             AbstractSqlLikeQueryBuilder.this.appendExpression(annotationMetadata, query, queryState, expression, true);
         }
@@ -3115,5 +3231,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return queryState.findProperty(propertyPath);
         }
 
+    }
+
+    /**
+     * Visitor for handling the columns produced by a dialect-specific
+     * UPDATE/DELETE ... RETURNING clause.
+     * <p>
+     * Implementations collect the unescaped column names as they are rendered
+     * into the SQL and the corresponding {@link DataType}s so that callers can
+     * construct the appropriate OUT parameter metadata (for example, when using
+     * Oracle's RETURNING INTO mechanism).
+     * </p>
+     */
+    protected interface ReturningSelectionVisitor extends SelectionVisitor {
+
+        /**
+         * Returns the list of physical column names as they appear in the SQL,
+         * without dialect-specific quoting applied.
+         *
+         * @return unescaped column names in the order they are rendered
+         */
+        List<String> getUnescapedColumns();
+
+        /**
+         * Returns the data types for the columns produced by the RETURNING clause.
+         * The order must match {@link #getUnescapedColumns()}.
+         *
+         * @return result column data types
+         */
+        List<DataType> getResultColumnTypes();
     }
 }
