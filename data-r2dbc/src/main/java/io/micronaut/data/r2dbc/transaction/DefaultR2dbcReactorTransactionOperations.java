@@ -28,6 +28,7 @@ import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
+import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
@@ -88,7 +89,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
             }
         }
-        OracleTransactional.Priority priority = getOraclePriority(definition);
+        OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
         if (priority != null && isOracleConnection(connection)) {
             result = result.thenMany(applyOracleTxnPriority(connection, priority)
                 .flatMapMany(applied -> {
@@ -169,20 +170,6 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 }
                 return Mono.error(e);
             });
-    }
-
-    private OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
-        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
-        if (value instanceof OracleTransactional.Priority priority) {
-            return priority;
-        }
-        if (value instanceof String priority) {
-            return OracleTransactional.Priority.valueOf(priority);
-        }
-        if (value instanceof Enum<?> priority) {
-            return OracleTransactional.Priority.valueOf(priority.name());
-        }
-        return null;
     }
 
     private void registerOracleTxnPriorityReset(ConnectionStatus<Connection> connectionStatus, Connection connection) {

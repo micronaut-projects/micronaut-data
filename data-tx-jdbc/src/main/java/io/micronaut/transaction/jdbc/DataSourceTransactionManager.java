@@ -33,6 +33,7 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
+import io.micronaut.transaction.support.TransactionUtil;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -142,7 +143,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         // Apply Oracle transaction priority if requested via @OracleTransactional (Oracle Database 26ai+)
         try {
-            OracleTransactional.Priority priority = getOraclePriority(definition);
+            OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
             if (priority != null) {
                 String productName = connection.getMetaData().getDatabaseProductName();
                 if (productName != null) {
@@ -310,20 +311,6 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             }
             throw e;
         }
-    }
-
-    private static OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
-        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
-        if (value instanceof OracleTransactional.Priority priority) {
-            return priority;
-        }
-        if (value instanceof String priority) {
-            return OracleTransactional.Priority.valueOf(priority);
-        }
-        if (value instanceof Enum<?> priority) {
-            return OracleTransactional.Priority.valueOf(priority.name());
-        }
-        return null;
     }
 
     @NonNull

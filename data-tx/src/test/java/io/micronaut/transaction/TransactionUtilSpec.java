@@ -20,6 +20,8 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Assertions;
@@ -43,6 +45,29 @@ public class TransactionUtilSpec {
             TransactionDefinition defaultDefinition = TransactionUtil.getTransactionDefinition("test", methodWithoutPriority);
             Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY));
         }
+    }
+
+    @Test
+    void testOraclePriorityParsing() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, " medium ");
+
+        Assertions.assertEquals(
+            OracleTransactional.Priority.MEDIUM,
+            TransactionUtil.getOraclePriority(definition)
+        );
+    }
+
+    @Test
+    void testInvalidOraclePriorityFailsWithCannotCreateTransactionException() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, "invalid");
+
+        CannotCreateTransactionException exception = Assertions.assertThrows(
+            CannotCreateTransactionException.class,
+            () -> TransactionUtil.getOraclePriority(definition)
+        );
+        Assertions.assertEquals("Invalid Oracle transaction priority: invalid", exception.getMessage());
     }
 
     @Singleton

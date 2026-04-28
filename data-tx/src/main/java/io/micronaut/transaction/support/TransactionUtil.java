@@ -19,13 +19,16 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * Transaction utils.
@@ -76,6 +79,34 @@ public final class TransactionUtil {
         }
 
         return definition;
+    }
+
+    /**
+     * Resolves Oracle transaction priority from a transaction definition.
+     *
+     * @param definition The transaction definition
+     * @return The Oracle transaction priority, or {@code null} if none is present
+     */
+    public static OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
+        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
+        if (value instanceof OracleTransactional.Priority priority) {
+            return priority;
+        }
+        if (value instanceof String priority) {
+            return parseOraclePriority(priority);
+        }
+        if (value instanceof Enum<?> priority) {
+            return parseOraclePriority(priority.name());
+        }
+        return null;
+    }
+
+    private static OracleTransactional.Priority parseOraclePriority(String priority) {
+        try {
+            return OracleTransactional.Priority.valueOf(priority.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new CannotCreateTransactionException("Invalid Oracle transaction priority: " + priority, e);
+        }
     }
 
 }
