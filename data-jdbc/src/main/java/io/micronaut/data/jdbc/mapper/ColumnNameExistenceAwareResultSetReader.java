@@ -19,11 +19,13 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.AbstractDelegatingResultReader;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -39,7 +41,11 @@ public class ColumnNameExistenceAwareResultSetReader extends AbstractDelegatingR
     private Set<String> knownColumns;
 
     public ColumnNameExistenceAwareResultSetReader() {
-        super(new ColumnNameResultSetReader());
+        this(new ColumnNameResultSetReader());
+    }
+
+    public ColumnNameExistenceAwareResultSetReader(ResultReader<ResultSet, String> delegate) {
+        super(delegate);
     }
 
     @Override
@@ -62,13 +68,13 @@ public class ColumnNameExistenceAwareResultSetReader extends AbstractDelegatingR
                     if (columnLabel == null) {
                         continue;
                     }
-                    knownColumns.add(columnLabel.toLowerCase());
+                    knownColumns.add(columnLabel.toLowerCase(Locale.ENGLISH));
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
-        return knownColumns.contains(name.toLowerCase());
+        return knownColumns.contains(name.toLowerCase(Locale.ENGLISH));
     }
 
 }
