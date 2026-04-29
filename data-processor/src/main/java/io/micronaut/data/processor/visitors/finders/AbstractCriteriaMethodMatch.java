@@ -764,36 +764,18 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     // Convert anything to a string or an object
                     return pp;
                 }
-                if (pp instanceof Association association) {
-                    if (areAssociationProjectionTypesCompatible(dtoPropertyType, association)
-                        || validateNestedDtoProjection(dtoPropertyType, association)) {
-                        return pp;
-                    }
-                } else if (TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType())) {
-                    return pp;
+                if (!TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType()) && !isNestedDtoAssociationProjection(dtoPropertyType, pp)) {
+                    throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
                 }
-                throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
+                return pp;
             }).toList();
     }
 
-    private boolean areAssociationProjectionTypesCompatible(ClassElement dtoPropertyType, Association association) {
-        if (!(association instanceof SourcePersistentProperty sourceAssociation)) {
+    private boolean isNestedDtoAssociationProjection(ClassElement dtoPropertyType, SourcePersistentProperty property) {
+        if (!(property instanceof Association association)) {
             return false;
         }
-        ClassElement associationType = sourceAssociation.getType();
-        if (TypeUtils.isContainerType(dtoPropertyType) && TypeUtils.isContainerType(associationType)) {
-            ClassElement dtoTypeArgument = dtoPropertyType.getFirstTypeArgument().orElse(null);
-            ClassElement associationTypeArgument = associationType.getFirstTypeArgument().orElse(null);
-            if (dtoTypeArgument == null || associationTypeArgument == null) {
-                return false;
-            }
-            return TypeUtils.areTypesCompatible(dtoTypeArgument, associationTypeArgument);
-        }
-        return TypeUtils.areTypesCompatible(dtoPropertyType, associationType);
-    }
-
-    private boolean validateNestedDtoProjection(ClassElement dtoPropertyType, Association association) {
-        ClassElement nestedDtoType = getNestedDtoType(dtoPropertyType, association);
+        ClassElement nestedDtoType = getNestedDtoType(dtoPropertyType, property.getType());
         if (nestedDtoType == null) {
             return false;
         }
@@ -802,15 +784,13 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     @Nullable
-    private ClassElement getNestedDtoType(ClassElement dtoPropertyType, Association association) {
+    private ClassElement getNestedDtoType(ClassElement dtoPropertyType, ClassElement propertyType) {
         if (TypeUtils.isDto(dtoPropertyType)) {
             return dtoPropertyType;
         }
-        if (association instanceof SourcePersistentProperty sourceAssociation
-            && TypeUtils.isContainerType(dtoPropertyType)
-            && TypeUtils.isContainerType(sourceAssociation.getType())) {
+        if (TypeUtils.isContainerType(dtoPropertyType) && TypeUtils.isContainerType(propertyType)) {
             ClassElement dtoTypeArgument = dtoPropertyType.getFirstTypeArgument().orElse(null);
-            if (TypeUtils.isDto(dtoTypeArgument)) {
+            if (dtoTypeArgument != null && TypeUtils.isDto(dtoTypeArgument)) {
                 return dtoTypeArgument;
             }
         }
