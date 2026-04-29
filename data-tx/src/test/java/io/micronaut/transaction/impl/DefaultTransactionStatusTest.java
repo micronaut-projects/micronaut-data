@@ -19,8 +19,13 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionStatus;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,13 +35,39 @@ class DefaultTransactionStatusTest {
 
     private static final TransactionDefinition NESTED_DEFINITION =
         TransactionDefinition.of(TransactionDefinition.Propagation.NESTED);
+    private static final TransactionOperations<Object> TRANSACTION_OPERATIONS = new TransactionOperations<>() {
+        @Override
+        public Object getConnection() {
+            throw new UnsupportedOperationException("stub");
+        }
+
+        @Override
+        public boolean hasConnection() {
+            return false;
+        }
+
+        @Override
+        public Optional<TransactionStatus<Object>> findTransactionStatus() {
+            return Optional.empty();
+        }
+
+        @Override
+        public <R> R execute(TransactionDefinition definition, TransactionCallback<Object, R> callback) {
+            throw new UnsupportedOperationException("stub");
+        }
+
+        @Override
+        public boolean managesTransaction(TransactionStatus<Object> transactionStatus) {
+            return false;
+        }
+    };
 
     @Test
     void existingTxWithNestedDefinitionReportsIsNestedTransaction() {
         DefaultTransactionStatus<Object> outerTx = newOuterTx();
 
         DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
-            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx, TRANSACTION_OPERATIONS
         );
 
         assertTrue(nestedTx.isNestedTransaction(),
@@ -51,7 +82,7 @@ class DefaultTransactionStatusTest {
         DefaultTransactionStatus<Object> outerTx = newOuterTx();
 
         DefaultTransactionStatus<Object> existingTx = DefaultTransactionStatus.existingTx(
-            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx
+            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx, TRANSACTION_OPERATIONS
         );
 
         assertFalse(existingTx.isNestedTransaction());
@@ -66,7 +97,7 @@ class DefaultTransactionStatusTest {
         DefaultTransactionStatus<Object> outerTx = newOuterTx();
 
         DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
-            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx, TRANSACTION_OPERATIONS
         );
 
         assertEquals(TransactionDefinition.Propagation.REQUIRED,
@@ -84,7 +115,7 @@ class DefaultTransactionStatusTest {
         DefaultTransactionStatus<Object> outerTx = newOuterTx();
 
         DefaultTransactionStatus<Object> nestedTx = DefaultTransactionStatus.existingTx(
-            stubConnectionStatus(), NESTED_DEFINITION, outerTx
+            stubConnectionStatus(), NESTED_DEFINITION, outerTx, TRANSACTION_OPERATIONS
         );
 
         nestedTx.setRollbackOnly();
@@ -102,7 +133,7 @@ class DefaultTransactionStatusTest {
         DefaultTransactionStatus<Object> outerTx = newOuterTx();
 
         DefaultTransactionStatus<Object> existingTx = DefaultTransactionStatus.existingTx(
-            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx
+            stubConnectionStatus(), TransactionDefinition.DEFAULT, outerTx, TRANSACTION_OPERATIONS
         );
 
         existingTx.setRollbackOnly();
@@ -113,7 +144,7 @@ class DefaultTransactionStatusTest {
     }
 
     private static DefaultTransactionStatus<Object> newOuterTx() {
-        return DefaultTransactionStatus.newTx(stubConnectionStatus(), TransactionDefinition.DEFAULT);
+        return DefaultTransactionStatus.newTx(stubConnectionStatus(), TransactionDefinition.DEFAULT, TRANSACTION_OPERATIONS);
     }
 
     private static ConnectionStatus<Object> stubConnectionStatus() {

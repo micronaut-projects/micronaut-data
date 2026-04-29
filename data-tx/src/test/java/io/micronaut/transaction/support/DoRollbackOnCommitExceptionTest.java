@@ -222,6 +222,11 @@ class DoRollbackOnCommitExceptionTest {
                 stack.pop();
             }
         }
+
+        @Override
+        public boolean managesConnection(ConnectionStatus<String> connectionStatus) {
+            return stack.contains(connectionStatus);
+        }
     }
 
     static class StubConnectionStatus implements ConnectionStatus<String> {

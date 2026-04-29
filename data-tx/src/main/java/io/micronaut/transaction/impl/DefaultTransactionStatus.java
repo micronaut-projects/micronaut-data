@@ -187,9 +187,9 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         private final DefaultTransactionStatus<C> existingTransaction;
 
         private ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                         TransactionDefinition definition,
-                                         DefaultTransactionStatus<C> existingTransaction,
-                                         TransactionOperations<C> transactionOperations) {
+                                          TransactionDefinition definition,
+                                          DefaultTransactionStatus<C> existingTransaction,
+                                          TransactionOperations<C> transactionOperations) {
             super(connectionStatus, definition, transactionOperations);
             this.existingTransaction = existingTransaction;
         }
