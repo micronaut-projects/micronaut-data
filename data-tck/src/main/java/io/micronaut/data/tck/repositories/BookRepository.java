@@ -35,6 +35,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
+import io.micronaut.data.tck.entities.BookDtoWithAuthorDto;
 import io.micronaut.data.tck.entities.Genre;
 
 import java.util.ArrayList;
@@ -210,4 +211,10 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
         countQuery = "SELECT COUNT(*) FROM book WHERE total_pages = :totalPages",
         nativeQuery = true)
     public abstract Page<Book> findBooksByTotalPages(int totalPages, Pageable pageable);
+
+    @Join(value = "author")
+    public abstract Optional<BookDtoWithAuthorDto> queryByTitleContains(String title);
+
+    // Returns DTO without joined author
+    public abstract Optional<BookDtoWithAuthorDto> findByTitleStartingWith(String title);
 }

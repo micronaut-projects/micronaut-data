@@ -3069,7 +3069,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 // Strip last ,
                 query.setLength(query.length() - 1);
             }
-            selectAllColumnsFromJoinPaths(queryState.baseQueryDefinition().getJoinPaths(), null);
+            selectAllColumnsFromJoinPathsIncludingIdentity(queryState.baseQueryDefinition().getJoinPaths(), null);
         }
 
         /**
@@ -3216,6 +3216,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths,
                                                      @Nullable
                                                      Map<JoinPath, String> joinAliasOverride) {
+        }
+
+        /**
+         * Select all columns from the join paths including identity columns.
+         *
+         * @param allPaths          The join paths
+         * @param joinAliasOverride The join alias override
+         */
+        protected void selectAllColumnsFromJoinPathsIncludingIdentity(Collection<JoinPath> allPaths,
+                                                                      @Nullable
+                                                                      Map<JoinPath, String> joinAliasOverride) {
+            selectAllColumnsFromJoinPaths(allPaths, joinAliasOverride);
         }
 
         protected final void appendProperty(StringBuilder sb,

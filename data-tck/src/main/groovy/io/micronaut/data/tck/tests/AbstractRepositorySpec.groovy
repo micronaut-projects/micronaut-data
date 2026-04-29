@@ -3705,6 +3705,26 @@ abstract class AbstractRepositorySpec extends Specification {
         foundEntity.id == savedEntity.id
     }
 
+    void "test DTO with nested DTO"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def optBook = bookRepository.queryByTitleContains("Stand")
+
+        then:
+        optBook.present
+        optBook.get().author
+
+        when:
+        optBook = bookRepository.findByTitleStartingWith("The Stand")
+
+        then:
+        optBook.present
+        // author not joined, should be null in DTO
+        !optBook.get().author
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

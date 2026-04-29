@@ -310,6 +310,223 @@ class AuthorDto {
         findAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
     }
 
+    void "test build repository with DTO projection with nested association DTO"() {
+        when:
+        def repository = buildRepository('test.ReviewRepository', """
+
+import io.micronaut.core.annotation.Introspected;
+import java.time.LocalDateTime;
+
+@Repository
+interface ReviewRepository extends GenericRepository<Review, UUID> {
+
+    @Join("user")
+    Page<ReviewDTO> findByFarmIdOrderByUpdatedAtDesc(UUID farmId, Pageable pageable);
+}
+
+@MappedEntity
+class Review {
+
+    @Id
+    private UUID id;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private User user;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Farm farm;
+
+    private String text;
+    private int stars;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Farm getFarm() {
+        return farm;
+    }
+
+    public void setFarm(Farm farm) {
+        this.farm = farm;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getStars() {
+        return stars;
+    }
+
+    public void setStars(int stars) {
+        this.stars = stars;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}
+
+@MappedEntity
+class User {
+
+    @Id
+    private UUID id;
+    private String username;
+    private String email;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+
+@MappedEntity
+class Farm {
+
+    @Id
+    private UUID id;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+}
+
+@Introspected
+class ReviewDTO {
+
+    private UUID id;
+    private UserDTO user;
+    private String text;
+    private int stars;
+    private LocalDateTime updatedAt;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UserDTO getUser() {
+        return user;
+    }
+
+    public void setUser(UserDTO user) {
+        this.user = user;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getStars() {
+        return stars;
+    }
+
+    public void setStars(int stars) {
+        this.stars = stars;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}
+
+@Introspected
+class UserDTO {
+
+    private UUID id;
+    private String username;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+}
+""")
+
+        then:
+        repository != null
+        def method = repository.getRequiredMethod("findByFarmIdOrderByUpdatedAtDesc", UUID, Pageable)
+        method.synthesize(DataMethod).resultType().name.contains("ReviewDTO")
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+    }
+
     void "test build repository with DTO projection 2"() {
         when:
             def repository = buildJpaRepository('test.MyInterface', """

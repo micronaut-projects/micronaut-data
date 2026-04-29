@@ -25,6 +25,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
@@ -33,6 +34,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -86,10 +88,13 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -838,7 +843,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
-                columnNameResultSetReader,
+                createColumnNameResultSetReaderWithColumnExistenceAware(),
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 null,
@@ -902,10 +907,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 properties
             );
         }
-        return new RuntimePersistentEntity<>(
-            resultPersistentEntity.getIntrospection(),
-            getDtoProperties(resultPersistentEntity, persistentEntity)
-        );
+        return createDtoPersistentEntity(resultPersistentEntity, persistentEntity, Set.of(resultPersistentEntity.getIntrospection().getBeanType()));
     }
 
     protected final <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
@@ -939,6 +941,24 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
     protected final <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
                                                                           RuntimePersistentEntity<E> persistentEntity) {
+        return getDtoProperties(resultPersistentEntity, persistentEntity, new HashMap<>(), Set.of());
+    }
+
+    private <E, R> RuntimePersistentEntity<R> createDtoPersistentEntity(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                        RuntimePersistentEntity<E> persistentEntity,
+                                                                        Set<Class<?>> visitedDtoTypes) {
+        Map<Class<?>, RuntimePersistentEntity<?>> associatedDtoEntities = new HashMap<>();
+        return new DtoRuntimePersistentEntity<>(
+            resultPersistentEntity.getIntrospection(),
+            getDtoProperties(resultPersistentEntity, persistentEntity, associatedDtoEntities, visitedDtoTypes),
+            associatedDtoEntities
+        );
+    }
+
+    private <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                  RuntimePersistentEntity<E> persistentEntity,
+                                                                  Map<Class<?>, RuntimePersistentEntity<?>> associatedDtoEntities,
+                                                                  Set<Class<?>> visitedDtoTypes) {
         return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
             if (p.hasAnnotation(MappedProperty.class)) {
                 return p;
@@ -949,7 +969,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 name = projection.stringValue().orElse(name);
             }
             RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
-            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+            if (entityProperty == null) {
+                return p;
+            }
+            if (entityProperty instanceof Association association) {
+                resolveAssociatedDtoEntity(p, association, visitedDtoTypes)
+                    .ifPresent(dtoEntity -> associatedDtoEntities.put(dtoEntity.getIntrospection().getBeanType(), dtoEntity));
+                return new BeanPropertyWithAnnotationMetadata<>(
+                    p,
+                    new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+                );
+            }
+            if (!ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
                 return p;
             }
             return new BeanPropertyWithAnnotationMetadata<>(
@@ -957,6 +988,57 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
             );
         }).toList();
+    }
+
+    private Optional<RuntimePersistentEntity<?>> resolveAssociatedDtoEntity(BeanProperty<?, Object> dtoProperty,
+                                                                           Association association,
+                                                                           Set<Class<?>> visitedDtoTypes) {
+        Class<?> dtoType = getDtoAssociationType(dtoProperty, association);
+        if (dtoType == null) {
+            return Optional.empty();
+        }
+        RuntimePersistentEntity<?> associatedEntity = (RuntimePersistentEntity<?>) association.getAssociatedEntity();
+        if (associatedEntity.getIntrospection().getBeanType().equals(dtoType) || visitedDtoTypes.contains(dtoType)) {
+            return Optional.empty();
+        }
+        try {
+            RuntimePersistentEntity<?> dtoEntity = new RuntimePersistentEntity<>(BeanIntrospection.getIntrospection(dtoType));
+            Set<Class<?>> nextVisitedDtoTypes = new HashSet<>(visitedDtoTypes);
+            nextVisitedDtoTypes.add(dtoType);
+            return Optional.of(createDtoPersistentEntity(dtoEntity, associatedEntity, nextVisitedDtoTypes));
+        } catch (IntrospectionException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Nullable
+    private Class<?> getDtoAssociationType(BeanProperty<?, Object> dtoProperty, Association association) {
+        if (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY) {
+            Argument<?> typeArgument = dtoProperty.asArgument().getFirstTypeVariable().orElse(null);
+            return typeArgument == null ? null : typeArgument.getType();
+        }
+        return dtoProperty.getType();
+    }
+
+    private static final class DtoRuntimePersistentEntity<T> extends RuntimePersistentEntity<T> {
+
+        private final Map<Class<?>, RuntimePersistentEntity<?>> associatedDtoEntities;
+
+        private DtoRuntimePersistentEntity(BeanIntrospection<T> introspection,
+                                           Collection<BeanProperty<T, Object>> beanProperties,
+                                           Map<Class<?>, RuntimePersistentEntity<?>> associatedDtoEntities) {
+            super(introspection, beanProperties);
+            this.associatedDtoEntities = associatedDtoEntities;
+        }
+
+        @Override
+        protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
+            RuntimePersistentEntity<?> associatedDtoEntity = associatedDtoEntities.get(type);
+            if (associatedDtoEntity != null) {
+                return (RuntimePersistentEntity<T>) associatedDtoEntity;
+            }
+            return super.getEntity(type);
+        }
     }
 
     private String resolveEnvPlaceholderValues(String value) {

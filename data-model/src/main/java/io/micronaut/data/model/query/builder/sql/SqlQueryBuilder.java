@@ -2130,6 +2130,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths,
                                                      @Nullable
                                                      Map<JoinPath, String> joinAliasOverride) {
+            selectAllColumnsFromJoinPaths(allPaths, joinAliasOverride, false);
+        }
+
+        @Internal
+        @Override
+        protected void selectAllColumnsFromJoinPathsIncludingIdentity(Collection<JoinPath> allPaths,
+                                                                      @Nullable
+                                                                      Map<JoinPath, String> joinAliasOverride) {
+            selectAllColumnsFromJoinPaths(allPaths, joinAliasOverride, true);
+        }
+
+        private void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths,
+                                                   @Nullable
+                                                   Map<JoinPath, String> joinAliasOverride,
+                                                   boolean forceIncludeIdentity) {
             if (CollectionUtils.isEmpty(allPaths)) {
                 return;
             }
@@ -2156,7 +2171,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                 query.append(COMMA);
 
-                boolean includeIdentity = association.isForeignKey();
+                boolean includeIdentity = forceIncludeIdentity || association.isForeignKey();
                 // in the case of a foreign key association the ID is not in the table,
                 // so we need to retrieve it
                 PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
