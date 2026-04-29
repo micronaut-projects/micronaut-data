@@ -29,11 +29,16 @@ class NestedTransactionSpec extends Specification {
 
     void setup() {
         transactionManager.executeWrite({ status ->
-            def connection = dataSource.getConnection()
-            connection.prepareStatement("drop table test_nested if exists").execute()
-            connection.prepareStatement(
-                "create table test_nested (id bigint not null auto_increment, name varchar(255), primary key (id))"
-            ).execute()
+            dataSource.getConnection().withCloseable { connection ->
+                connection.prepareStatement("drop table test_nested if exists").withCloseable { statement ->
+                    statement.execute()
+                }
+                connection.prepareStatement(
+                    "create table test_nested (id bigint not null auto_increment, name varchar(255), primary key (id))"
+                ).withCloseable { statement ->
+                    statement.execute()
+                }
+            }
             return null
         })
     }
