@@ -250,7 +250,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     protected ResultReader<Row, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
-        return new ColumnNameExistenceAwareR2dbcResultSetReader();
+        return new ColumnNameExistenceAwareR2dbcResultSetReader(columnNameResultSetReader);
     }
 
     @Override
