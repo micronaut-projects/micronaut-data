@@ -40,10 +40,6 @@ public class ColumnNameExistenceAwareResultSetReader extends AbstractDelegatingR
     @Nullable
     private Set<String> knownColumns;
 
-    public ColumnNameExistenceAwareResultSetReader() {
-        this(new ColumnNameResultSetReader());
-    }
-
     public ColumnNameExistenceAwareResultSetReader(ResultReader<ResultSet, String> delegate) {
         super(delegate);
     }

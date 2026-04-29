@@ -41,10 +41,6 @@ public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelega
     @Nullable
     private Set<String> knownColumns;
 
-    public ColumnNameExistenceAwareR2dbcResultSetReader() {
-        this(new ColumnNameR2dbcResultReader());
-    }
-
     public ColumnNameExistenceAwareR2dbcResultSetReader(ResultReader<Row, String> delegate) {
         super(delegate);
     }
