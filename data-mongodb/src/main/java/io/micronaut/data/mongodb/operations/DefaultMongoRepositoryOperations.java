@@ -882,6 +882,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 modifiedCount = updateResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(1, (int) modifiedCount);
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, updateResult.getMatchedCount());
                 }
             }
 
@@ -915,6 +917,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 modifiedCount += bulkWriteResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(updates.size(), (int) modifiedCount);
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), bulkWriteResult.getMatchedCount());
                 }
             }
         };
@@ -952,6 +956,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 modifiedCount = bulkWriteResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(replaces.size(), (int) modifiedCount);
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), bulkWriteResult.getMatchedCount());
                 }
             }
         };

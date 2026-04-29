@@ -79,6 +79,8 @@ import io.micronaut.data.runtime.query.StoredQueryResolver;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 
 import java.lang.annotation.Annotation;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -615,17 +617,34 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private boolean hasEntityId(RuntimePersistentEntity<Object> persistentEntity, Object entity) {
         if (persistentEntity.hasIdentity()) {
             RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
-            return identity.getProperty().get(entity) != null;
+            return hasAssignedIdentityValue(identity, identity.getProperty().get(entity));
         }
         if (persistentEntity.hasCompositeIdentity()) {
             for (RuntimePersistentProperty<Object> identity : persistentEntity.getCompositeIdentity()) {
-                if (identity.getProperty().get(entity) == null) {
+                if (!hasAssignedIdentityValue(identity, identity.getProperty().get(entity))) {
                     return false;
                 }
             }
             return true;
         }
         return false;
+    }
+
+    private boolean hasAssignedIdentityValue(RuntimePersistentProperty<Object> identity, @Nullable Object value) {
+        if (value == null) {
+            return false;
+        }
+        return !identity.isGenerated() || !(value instanceof Number number) || !isZero(number);
+    }
+
+    private boolean isZero(Number number) {
+        if (number instanceof BigDecimal bigDecimal) {
+            return bigDecimal.signum() == 0;
+        }
+        if (number instanceof BigInteger bigInteger) {
+            return bigInteger.signum() == 0;
+        }
+        return number.doubleValue() == 0D;
     }
 
     /**

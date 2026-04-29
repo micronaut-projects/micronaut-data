@@ -799,6 +799,8 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                         d.rowsUpdated = updateResult.getModifiedCount();
                         if (persistentEntity.hasVersion()) {
                             checkOptimisticLocking(1, (int) d.rowsUpdated);
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, updateResult.getMatchedCount());
                         }
                         return d;
                     });
@@ -847,6 +849,8 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     return Mono.from(collection.bulkWrite(ctx.clientSession, replaces)).map(bulkWriteResult -> {
                         if (persistentEntity.hasVersion()) {
                             checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), bulkWriteResult.getMatchedCount());
                         }
                         return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
@@ -877,6 +881,8 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     Mono<Long> modifiedCount = Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates)).map(result -> {
                         if (storedQuery.isOptimisticLock()) {
                             checkOptimisticLocking(updates.size(), result.getModifiedCount());
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), result.getMatchedCount());
                         }
                         return (long) result.getModifiedCount();
                     });

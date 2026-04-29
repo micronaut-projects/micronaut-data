@@ -30,6 +30,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -108,6 +109,21 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {
         return MongoOptionsUtils.buildReplaceOptions(annotationMetadata).orElseGet(ReplaceOptions::new);
+    }
+
+    protected final void checkSaveMatchedCount(AnnotationMetadata annotationMetadata,
+                                               RuntimePersistentEntity<?> persistentEntity,
+                                               int expected,
+                                               long matched) {
+        if (!persistentEntity.hasVersion() && isSaveOperation(annotationMetadata)) {
+            checkOptimisticLocking(expected, matched);
+        }
+    }
+
+    private boolean isSaveOperation(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .map(operationType -> operationType == DataMethod.OperationType.INSERT || operationType == DataMethod.OperationType.INSERT_RETURNING)
+            .orElse(false);
     }
 
     protected final InsertOneOptions getInsertOneOptions(AnnotationMetadata annotationMetadata) {

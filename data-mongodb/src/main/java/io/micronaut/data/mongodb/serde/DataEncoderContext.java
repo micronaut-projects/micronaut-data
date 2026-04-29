@@ -103,9 +103,13 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                             && type.isAnnotationPresent(GeneratedValue.class);
                     if (isGeneratedObjectIdAsString) {
                         Serializer<? super ObjectId> objectIdSerializer = findSerializer(OBJECT_ID);
-                        return (encoder, encoderContext2, stringType, val) -> {
-                            String stringId = (String) val;
-                            objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
+                        return (encoder, encoderContext2, stringType, value) -> {
+                            String stringId = (String) value;
+                            if (ObjectId.isValid(stringId)) {
+                                objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
+                            } else {
+                                encoder.encodeString(stringId);
+                            }
                         };
                     }
                     Serializer<? super Object> serializer = findSerializer(type);

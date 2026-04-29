@@ -42,7 +42,7 @@ class HibernateReactiveSpec extends Specification implements PostgresHibernateRe
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).block()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).block()
             def found = userWithWhereRepository.findById(e.id).blockOptional()
         then:
             found.isPresent()
@@ -50,7 +50,7 @@ class HibernateReactiveSpec extends Specification implements PostgresHibernateRe
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).block()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).block()
             def found = userWithWhereRepository.findById(e.id).blockOptional()
         then:
             !found.isPresent()

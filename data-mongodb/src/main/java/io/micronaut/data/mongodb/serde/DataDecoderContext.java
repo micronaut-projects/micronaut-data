@@ -40,7 +40,6 @@ import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.ObjectId;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -55,8 +54,6 @@ import java.util.Collection;
  */
 @Internal
 final class DataDecoderContext implements Deserializer.DecoderContext {
-
-    private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
     private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
@@ -73,7 +70,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
      */
     DataDecoderContext(MongoDataConfiguration mongoDataConfiguration,
                        AttributeConverterRegistry attributeConverterRegistry,
-                        Deserializer.DecoderContext parent,
+                       Deserializer.DecoderContext parent,
                        CodecRegistry codecRegistry) {
         this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
@@ -125,11 +122,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 @Override
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     if (type.getType().isAssignableFrom(String.class) && type.isAnnotationPresent(GeneratedValue.class)) {
-                        Deserializer<? extends ObjectId> deserializer = findDeserializer(OBJECT_ID);
-                        return (decoder, decoderContext2, objectIdType) -> {
-                            ObjectId objectId = deserializer.deserialize(decoder, decoderContext2, OBJECT_ID);
-                            return objectId == null ? null : objectId.toHexString();
-                        };
+                        return (decoder, decoderContext2, objectIdType) -> decoder.decodeStringNullable();
                     }
                     Deserializer<? extends Object> deserializer = findDeserializer(type);
                     return (Deserializer<Object>) deserializer.createSpecific(decoderContext, type);
