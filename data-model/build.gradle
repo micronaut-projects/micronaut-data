@@ -15,7 +15,7 @@ dependencies {
     implementation mn.reactor
 
     compileOnly(mnSql.jakarta.persistence.api)
-    compileOnly mnRxjava2.rxjava2
+    compileOnly(mnRxjava3.rxjava3)
     compileOnly mn.jackson.annotations
     compileOnly mn.jackson.databind
     compileOnly mnSerde.micronaut.serde.api

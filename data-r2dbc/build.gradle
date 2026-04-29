@@ -28,7 +28,7 @@ dependencies {
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
     testImplementation mnR2dbc.r2dbc.pool
-    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation(mnRxjava3.micronaut.rxjava3)
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor mnValidation.micronaut.validation.processor

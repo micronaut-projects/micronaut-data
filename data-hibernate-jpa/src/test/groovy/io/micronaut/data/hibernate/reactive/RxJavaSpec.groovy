@@ -26,7 +26,7 @@ import jakarta.inject.Inject
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @H2DBProperties
-class RxJava2Spec extends Specification{
+class RxJavaSpec extends Specification{
 
     @Inject
     RxJavaPersonRepo reactiveRepo
@@ -81,15 +81,15 @@ class RxJava2Spec extends Specification{
         reactiveRepo.findByName("Bob").blockingGet().age == 50
 
         when:"An entity is deleted"
-        reactiveRepo.deleteById(john.id).blockingGet() == null
-        reactiveRepo.delete(p).blockingGet() == null
+        reactiveRepo.deleteById(john.id).blockingAwait()
+        reactiveRepo.delete(p).blockingAwait()
         list = reactiveRepo.findAll().toList().blockingGet()
 
         then:"The results are correct"
         list.size() == 2
 
         when:"All are deleted"
-        reactiveRepo.deleteAll().blockingGet() == null
+        reactiveRepo.deleteAll().blockingAwait()
 
         then:"All are gone"
         reactiveRepo.count().blockingGet() == 0
