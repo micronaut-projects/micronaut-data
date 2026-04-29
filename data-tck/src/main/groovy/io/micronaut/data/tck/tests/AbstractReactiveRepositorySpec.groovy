@@ -69,7 +69,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     def setup() {
         init()
         personRepository.deleteAll().block()
-        studentRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingAwait()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
                 new Person(name: "James")
@@ -83,7 +83,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     def cleanup() {
         personRepository.deleteAll().block()
-        studentRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingAwait()
     }
 
     void "test criteria pagination"() {
@@ -421,24 +421,29 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             def e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
-            e = studentRepository.updateByIdAndVersion(student.getId(), student.getVersion(), student.getName()).blockingGet()
+            studentRepository.updateByIdAndVersion(student.getId(), student.getVersion(), student.getName()).blockingAwait()
         then:
+            e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
-            e = studentRepository.delete(student).blockingGet()
+            studentRepository.delete(student).blockingAwait()
         then:
+            e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
-            e = studentRepository.deleteByIdAndVersionAndName(student.getId(), student.getVersion(), student.getName()).blockingGet()
+            studentRepository.deleteByIdAndVersionAndName(student.getId(), student.getVersion(), student.getName()).blockingAwait()
         then:
+            e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
-            e = studentRepository.deleteByIdAndVersion(student.getId(), student.getVersion()).blockingGet()
+            studentRepository.deleteByIdAndVersion(student.getId(), student.getVersion()).blockingAwait()
         then:
+            e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
-            e = studentRepository.deleteAll([student]).blockingGet()
+            studentRepository.deleteAll([student]).blockingAwait()
         then:
+            e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             student = studentRepository.findById(student.getId()).blockingGet()
@@ -454,19 +459,19 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             student2.name == "Abc"
             student2.version == 1
         when:
-            studentRepository.updateByIdAndVersion(student2.getId(), student2.getVersion(), "Joe").blockingGet()
+            studentRepository.updateByIdAndVersion(student2.getId(), student2.getVersion(), "Joe").blockingAwait()
             def student3 = studentRepository.findById(student2.getId()).blockingGet()
         then:
             student3.name == "Joe"
             student3.version == 2
         when:
-            studentRepository.updateById(student2.getId(), "Joe2").blockingGet()
+            studentRepository.updateById(student2.getId(), "Joe2").blockingAwait()
             def student4 = studentRepository.findById(student2.getId()).blockingGet()
         then:
             student4.name == "Joe2"
             student4.version == 2
         when:
-            studentRepository.deleteByIdAndVersionAndName(student4.getId(), student4.getVersion(), student4.getName()).blockingGet()
+            studentRepository.deleteByIdAndVersionAndName(student4.getId(), student4.getVersion(), student4.getName()).blockingAwait()
             def student5 = studentRepository.findById(student2.getId())
         then:
             student5.isEmpty().blockingGet()
@@ -509,14 +514,15 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             def e = thrown(Exception)
             e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         when:
-        student1 = studentRepository.findById(student1.getId()).blockingGet()
-        student2 = studentRepository.findById(student2.getId()).blockingGet()
-        student1.setVersion(5)
-        e = studentRepository.deleteAll([student1, student2]).blockingGet()
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+            student1.setVersion(5)
+            studentRepository.deleteAll([student1, student2]).blockingAwait()
         then:
-        e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
+            e = thrown(Exception)
+            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         cleanup:
-        studentRepository.deleteAll().blockingGet()
+            studentRepository.deleteAll().blockingAwait()
     }
 
     def "test save all with empty collection"() {

@@ -49,7 +49,7 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         def repository = context.getBean(PostgresReactiveReturningBookRepository)
         def bookRepository = context.getBean(PostgresReactiveBookRepository)
         def authorRepository = context.getBean(PostgresAuthorRepository)
-        studentRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingAwait()
         def author = authorRepository.customInsertReturningAuthor("Reactive Stephen King", null)
         def replacementAuthor = authorRepository.customInsertReturningAuthor("Reactive Neil Gaiman", null)
         def lastUpdated = LocalDateTime.now()
@@ -127,7 +127,7 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         given:
         def repository = context.getBean(PostgresReactiveBookRepository)
         def authorRepository = context.getBean(PostgresAuthorRepository)
-        studentRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingAwait()
         def author = authorRepository.customInsertReturningAuthor("Stephen King", null)
         def existing = repository.customInsertReturningBook(author.id, null, "Pet Cemetery", 321, null, LocalDateTime.now())
         def authorId = existing.author.id
