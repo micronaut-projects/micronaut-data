@@ -25,7 +25,7 @@ dependencies {
     implementation mnMultitenancy.micronaut.multitenancy
     annotationProcessor projects.micronautDataDocumentProcessor
 
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
     implementation projects.micronautDataMongodb
