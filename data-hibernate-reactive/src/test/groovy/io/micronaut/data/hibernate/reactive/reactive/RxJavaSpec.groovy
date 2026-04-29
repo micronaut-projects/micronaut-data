@@ -23,7 +23,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-class RxJava2Spec extends Specification implements PostgresHibernateReactiveProperties {
+class RxJavaSpec extends Specification implements PostgresHibernateReactiveProperties {
 
     @Inject
     RxJavaPersonRepo reactiveRepo
@@ -75,15 +75,14 @@ class RxJava2Spec extends Specification implements PostgresHibernateReactiveProp
         reactiveRepo.findByName("Bob").blockingGet().age == 50
 
         when:"An entity is deleted"
-        reactiveRepo.deleteById(john.id).blockingGet() == null
-//        reactiveRepo.delete(p).blockingGet() == null
+        reactiveRepo.deleteById(john.id).blockingAwait()
         list = reactiveRepo.findAll().toList().blockingGet()
 
         then:"The results are correct"
         list.size() == 3
 
         when:"All are deleted"
-        reactiveRepo.deleteAll().blockingGet() == null
+        reactiveRepo.deleteAll().blockingAwait()
 
         then:"All are gone"
         reactiveRepo.count().blockingGet() == 0

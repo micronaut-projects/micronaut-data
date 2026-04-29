@@ -20,6 +20,8 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
+import java.util.function.Supplier;
+
 /**
  * The simple {@link QueryParameterBinding}.
  *
@@ -49,6 +51,9 @@ record SimpleParameterBinding(String getName,
     @Override
     @Nullable
     public Object getValue() {
+        if (value instanceof Supplier<?> supplier) {
+            return supplier.get();
+        }
         return value;
     }
 }

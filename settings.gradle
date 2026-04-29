@@ -23,7 +23,7 @@ micronautBuild {
     useStandardizedProjectNames = true
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
-    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-rxjava3")
     importMicronautCatalog("micronaut-r2dbc")
     importMicronautCatalog("micronaut-spring")
     importMicronautCatalog("micronaut-serde")
@@ -96,6 +96,8 @@ include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
 
 include 'doc-examples:jdbc-sqlite'
+
+include 'doc-examples:jdbc-geospatial'
 
 include 'doc-examples:jdbc-jakarta-data-example-java'
 

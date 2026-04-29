@@ -287,7 +287,7 @@ public class TypeUtils {
      */
     public static boolean isReactiveType(@Nullable ClassElement type) {
         return type != null && (type.isAssignable(Publisher.class)
-                || type.getPackageName().equals("io.reactivex")
+                || type.getPackageName().equals("io.reactivex.rxjava3.core")
                 || type.getPackageName().startsWith("kotlinx.coroutines.flow"));
     }
 
@@ -323,7 +323,7 @@ public class TypeUtils {
      * <ul>
      *   <li>has the {@link io.micronaut.core.async.annotation.SingleResult} stereotype</li>
      *   <li>is {@code reactor.core.publisher.Mono}</li>
-     *   <li>is {@code io.reactivex.Single}</li>
+     *   <li>is {@code io.reactivex.rxjava3.core.Single}</li>
      * </ul>
      * @param type The type
      * @return True if is a single-result reactive type
@@ -333,7 +333,7 @@ public class TypeUtils {
             return false;
         }
         return type.hasStereotype(SingleResult.class)
-            || type.isAssignable("io.reactivex.Single")
+            || type.isAssignable("io.reactivex.rxjava3.core.Single")
             || type.isAssignable("reactor.core.publisher.Mono");
     }
 

@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.0.0-M24"
+micronaut = "5.0.0-M25"
 micronaut-platform = "5.0.0-M2"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.0-M1"
@@ -7,7 +7,7 @@ micronaut-testresources = "4.0.0-M1"
 
 micronaut-azure = "5.13.0"
 micronaut-reactor = "4.0.0-M2"
-micronaut-rxjava2 = "2.9.0"
+micronaut-rxjava3 = "4.0.0-M1"
 micronaut-r2dbc = "7.0.1-M2"
 micronaut-sql = "7.0.1-M2"
 micronaut-serde = "3.0.0-M7"
@@ -39,6 +39,7 @@ benchmark-spring-data = "2025.1.5"
 spock = "2.4-groovy-5.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
+h2gis = "2.2.5"
 
 # Gradle plugins
 
@@ -64,7 +65,7 @@ micronaut-testresources-extensions-junit-platform = { module = 'io.micronaut.tes
 # BOMs
 
 micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor-bom', version.ref = "micronaut-reactor" }
-micronaut-rxjava2 = { module = 'io.micronaut.rxjava2:micronaut-rxjava2-bom', version.ref = "micronaut-rxjava2" }
+micronaut-rxjava3 = { module = 'io.micronaut.rxjava3:micronaut-rxjava3-bom', version.ref = "micronaut-rxjava3" }
 micronaut-kotlin = { module = 'io.micronaut.kotlin:micronaut-kotlin-bom', version.ref = "micronaut-kotlin" }
 micronaut-multitenancy = { module = 'io.micronaut.multitenancy:micronaut-multitenancy-bom', version.ref = "micronaut-multitenancy" }
 micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-resources-bom', version.ref = "micronaut-testresources" }
@@ -120,6 +121,8 @@ junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suit
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error_prone_core" }
 groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
+
+h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
 
 # Benchmark
 

@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
@@ -38,6 +39,7 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -80,6 +82,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -343,7 +346,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -383,7 +386,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
@@ -588,7 +591,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'_id': {");
         }
         Field[] fields = ((RuntimePersistentProperty<?>) identity).getType().getDeclaredFields();
-        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity).getFirst().primaryKeyColumns();
+        List<SqlColumnMapping> columnMappings = SqlSchemaUtils.getSqlTableMappings(entity, getDialect()).getFirst().primaryKeyColumns();
         if (fields.length != columnMappings.size()) {
             throw new IllegalStateException("Declared fields array length (" + fields.length + ") != table mapping primary key array length (" + columnMappings.size() + ").");
         }
@@ -776,7 +779,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         addToCollectionIfNotContains(createStatements, builder.toString());
         createSequenceStatements(table, escape, createStatements);
+        createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
+        List<String> auxiliaryStatements = table.auxiliaryStatements();
+        if (CollectionUtils.isEmpty(auxiliaryStatements)) {
+            return;
+        }
+        for (String auxiliaryStatement : auxiliaryStatements) {
+            addToCollectionIfNotContains(createStatements, dialect == Dialect.ORACLE ? auxiliaryStatement : auxiliaryStatement + ';');
+        }
     }
 
     private void createSequenceStatements(SqlTableMapping table, boolean escape, List<String> createStatements) {
@@ -807,7 +821,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private  String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
         // Create index name without escaped table name and then escape if needed
         String columnNames = String.join(", ", indexMapping.columns());
         String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
@@ -818,13 +832,42 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         StringBuilder indexBuilder = new StringBuilder();
-        indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
-            .append("INDEX ");
+        indexBuilder.append("CREATE ");
+        if (indexMapping.unique()) {
+            indexBuilder.append("UNIQUE ");
+        } else if (indexMapping.spatial() && (dialect == Dialect.MYSQL || dialect == Dialect.SQL_SERVER || dialect == Dialect.H2)) {
+            indexBuilder.append("SPATIAL ");
+        }
+        indexBuilder.append("INDEX ");
         String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
-        indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(indexColumnNames);
-
+        indexBuilder.append(indexName).append(" ON ").append(escapedTableName);
+        if (indexMapping.spatial() && dialect == Dialect.POSTGRES) {
+            indexBuilder.append(" USING GIST");
+        }
+        indexBuilder.append(" (").append(indexColumnNames);
         if (dialect == Dialect.ORACLE) {
             indexBuilder.append(")");
+            if (indexMapping.spatial()) {
+                indexBuilder.append(" INDEXTYPE IS MDSYS.SPATIAL_INDEX");
+            }
+        } else if (dialect == Dialect.SQL_SERVER) {
+            indexBuilder.append(")");
+            if (indexMapping.spatial()) {
+                // sqlserver geospatial columns can be geometry or geography type
+                // when geometry column type is used, the index must have BOUNDING_BOX
+                Optional<SqlColumnMapping> optSqlColumnMapping = tableMapping.columns()
+                    .stream()
+                    .filter(column -> column.getName().equals(indexMapping.columns()[0]))
+                    .findFirst();
+                if (optSqlColumnMapping.isPresent()) {
+                    String definition = optSqlColumnMapping.get().getDefinition();
+                    if (definition != null && definition.toLowerCase().contains("geometry")) {
+                        // should be used with srid = 3857 which is default value when geometry type is used
+                        indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
+                    }
+                }
+            }
+            indexBuilder.append(";");
         } else {
             indexBuilder.append(");");
         }
@@ -1082,7 +1125,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         return;
                     }
 
-                    addWriteExpression(values, prop);
+                    addWriteExpression(values, property);
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);
@@ -1356,18 +1399,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (transformer != null) {
             return values.add(transformer);
         }
+        String param = formatParameter(values.size() + 1).name();
         if (dt == DataType.JSON) {
             switch (dialect) {
-                case POSTGRES ->
-                    values.add("to_json(" + formatParameter(values.size() + 1).name() + "::json)");
-                case H2 -> values.add(formatParameter(values.size() + 1).name() + " FORMAT JSON");
-                case MYSQL ->
-                    values.add("CONVERT(" + formatParameter(values.size() + 1).name() + " USING UTF8MB4)");
-                default -> values.add(formatParameter(values.size() + 1).name());
+                case POSTGRES -> values.add("to_json(" + param + "::json)");
+                case H2 -> values.add(param + " FORMAT JSON");
+                case MYSQL -> values.add("CONVERT(" + param + " USING UTF8MB4)");
+                default -> values.add(param);
             }
             return true;
         }
-        return values.add(formatParameter(values.size() + 1).name());
+        if (isJsonOrWktGeometry(property)) {
+            switch (dialect) {
+                case ORACLE -> values.add(getOracleGeometryExpression(param, property));
+                case MYSQL -> values.add(getMysqlGeometryExpression(param, property));
+                case SQL_SERVER -> values.add(getSqlServerGeometryExpression(param, property));
+                case POSTGRES, H2 -> values.add(getPostgresGeometryExpression(param, property));
+                default -> values.add(param);
+            }
+            return true;
+        }
+        return values.add(param);
     }
 
     @Override
@@ -1396,8 +1448,148 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 default:
                     super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
             }
+        } else if (isJsonOrWktGeometry(prop)) {
+            switch (dialect) {
+                case ORACLE:
+                    appendOracleGeometryExpression(sb, prop, appendParameter);
+                    break;
+                case MYSQL:
+                    appendMysqlGeometryExpression(sb, prop, appendParameter);
+                    break;
+                case SQL_SERVER:
+                    appendSqlServerGeometryExpression(sb, prop, appendParameter);
+                    break;
+                case POSTGRES, H2:
+                    appendPostgresGeometryExpression(sb, prop, appendParameter);
+                    break;
+                default:
+                    super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
+            }
         } else {
             super.appendUpdateSetParameter(sb, alias, prop, appendParameter);
+        }
+    }
+
+    private String getOracleGeometryExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendOracleGeometryExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendOracleGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
+        if (isWkt) {
+            sb.append("SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(");
+        } else {
+            sb.append("SDO_UTIL.FROM_GEOJSON(");
+        }
+        appendParameter.run();
+        if (isWkt) {
+            sb.append(")");
+        }
+        if (optSrid.isPresent()) {
+            sb.append(", ");
+            if (isWkt) {
+                sb.append(optSrid.getAsInt());
+            } else {
+                sb.append("NULL, ").append(optSrid.getAsInt());
+            }
+        }
+        sb.append(")");
+    }
+
+    private String getMysqlGeometryExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendMysqlGeometryExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendMysqlGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
+        if (isWkt) {
+            sb.append("ST_GeomFromText(");
+        } else {
+            sb.append("ST_GeomFromGeoJSON(");
+        }
+        appendParameter.run();
+        if (optSrid.isPresent()) {
+            sb.append(", ");
+            if (isWkt) {
+                sb.append(optSrid.getAsInt());
+            } else {
+                sb.append("1, ").append(optSrid.getAsInt());
+            }
+        }
+        sb.append(")");
+    }
+
+    private String getSqlServerGeometryExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendSqlServerGeometryExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendSqlServerGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        // since sqlserver doesn't have built-in functions for conversion between
+        // json and internal geospatial data type, use always Well-Known Text (WKT) functions
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+
+        String geoDataType;
+        int defaultSrid;
+        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            geoDataType = "geography";
+            defaultSrid = 4326;
+        } else {
+            geoDataType = "geometry";
+            defaultSrid = 3857;
+        }
+
+        sb.append(geoDataType).append("::STGeomFromText(");
+        appendParameter.run();
+        sb.append(", ").append(optSrid.orElse(defaultSrid)).append(")");
+    }
+
+    private String getPostgresGeometryExpression(String parameter, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        appendPostgresGeometryExpression(sb, property, () -> sb.append(parameter));
+        return sb.toString();
+    }
+
+    private void appendPostgresGeometryExpression(StringBuilder sb, PersistentProperty property, Runnable appendParameter) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+        boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
+        if (isWkt) {
+            sb.append("ST_GeomFromText(");
+            appendParameter.run();
+            if (optSrid.isPresent()) {
+                sb.append(", ").append(optSrid.getAsInt());
+            }
+            sb.append(")");
+        } else {
+            if (optSrid.isPresent()) {
+                sb.append("ST_SetSRID(");
+            }
+            sb.append("ST_GeomFromGeoJSON(");
+            appendParameter.run();
+            sb.append(')');
+            if (optSrid.isPresent()) {
+                sb.append(", ").append(optSrid.getAsInt()).append(')');
+            }
+        }
+        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            // convert result of ST_GeomFromText and ST_GeomFromGeoJSON to geography
+            sb.append("::geography");
         }
     }
 

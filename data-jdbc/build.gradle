@@ -18,7 +18,7 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
-    compileOnly mnRxjava2.micronaut.rxjava2
+    compileOnly(mnRxjava3.micronaut.rxjava3)
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
 
@@ -28,7 +28,7 @@ dependencies {
 
     testImplementation projects.micronautDataTck
     testImplementation projects.micronautDataProcessor
-    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
@@ -56,6 +56,7 @@ dependencies {
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
+    testRuntimeOnly libs.h2gis
 
     testResourcesService mnSql.mariadb.java.client
     testResourcesService mnSql.ojdbc11

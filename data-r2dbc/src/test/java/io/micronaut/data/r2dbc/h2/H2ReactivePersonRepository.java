@@ -21,7 +21,7 @@ import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonReactiveRepository;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 
 @R2dbcRepository(dialect = Dialect.H2)
 public interface H2ReactivePersonRepository extends PersonReactiveRepository {
