@@ -65,7 +65,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#newTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionOperations)" tabindex="0">newTx(ConnectionStatus, TransactionDefinition, TransactionOperations)</a></li>
 <li><a href="#noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionOperations)" tabindex="0">noTx(ConnectionStatus, TransactionDefinition, TransactionOperations)</a></li>
-<li><a href="#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)" tabindex="0">existingTx(ConnectionStatus, DefaultTransactionStatus, TransactionOperations)</a></li>
+<li><a href="#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)" tabindex="0">existingTx(ConnectionStatus, TransactionDefinition, DefaultTransactionStatus, TransactionOperations)</a></li>
 <li><a href="#isTransactionOf(io.micronaut.transaction.TransactionOperations)" tabindex="0">isTransactionOf(TransactionOperations)</a></li>
 <li><a href="#isNestedTransaction()" tabindex="0">isNestedTransaction()</a></li>
 <li><a href="#setTransaction(java.lang.Object)" tabindex="0">setTransaction(Object)</a></li>
@@ -146,7 +146,8 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a><wbr>&lt;C&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)" class="member-name-link">existingTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)" class="member-name-link">existingTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;&nbsp;existingTransaction,
  <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
@@ -264,10 +265,11 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 </section>
 </li>
 <li>
-<section class="detail" id="existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)">
+<section class="detail" id="existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)">
 <h3>existingTx</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;C&gt;</span>&nbsp;<span class="return-type"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</span>&nbsp;<span class="element-name">existingTx</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;&nbsp;existingTransaction,
  <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</span></div>
 </div>
