@@ -881,9 +881,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata));
                 modifiedCount = updateResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
-                    checkOptimisticLocking(1, (int) modifiedCount);
+                    checkOptimisticLocking(1, getModifiedOrUpsertedCount(updateResult));
                 } else {
-                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, updateResult.getMatchedCount());
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, getMatchedOrUpsertedCount(updateResult));
                 }
             }
 
@@ -916,9 +916,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 BulkWriteResult bulkWriteResult = getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates);
                 modifiedCount += bulkWriteResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
-                    checkOptimisticLocking(updates.size(), (int) modifiedCount);
+                    checkOptimisticLocking(updates.size(), getModifiedOrUpsertedCount(bulkWriteResult));
                 } else {
-                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), bulkWriteResult.getMatchedCount());
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                 }
             }
         };
@@ -955,9 +955,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 BulkWriteResult bulkWriteResult = collection.bulkWrite(ctx.clientSession, replaces);
                 modifiedCount = bulkWriteResult.getModifiedCount();
                 if (persistentEntity.hasVersion()) {
-                    checkOptimisticLocking(replaces.size(), (int) modifiedCount);
+                    checkOptimisticLocking(replaces.size(), getModifiedOrUpsertedCount(bulkWriteResult));
                 } else {
-                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), bulkWriteResult.getMatchedCount());
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                 }
             }
         };
