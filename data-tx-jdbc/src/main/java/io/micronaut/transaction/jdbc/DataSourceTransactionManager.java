@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.OrderUtil;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -28,12 +29,12 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
-import io.micronaut.transaction.support.TransactionUtil;
+import io.micronaut.transaction.support.TransactionExecutionListener;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
@@ -45,7 +46,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -63,12 +63,31 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
     // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
-    private static final int ORACLE_INVALID_ALTER_SESSION_OPTION = 2248;
-    private static final String ORACLE_PRODUCT_NAME_UPPER = "ORACLE";
 
     private final DataSource dataSource;
+    private final List<TransactionExecutionListener<Connection>> transactionExecutionListeners;
 
     private boolean enforceReadOnly = false;
+
+    /**
+     * Create a new DataSourceTransactionManager instance.
+     *
+     * @param dataSource                   the JDBC DataSource to manage transactions for
+     * @param connectionOperations         the connection operations
+     * @param synchronousConnectionManager the synchronous connection operations
+     */
+    @Inject
+    public DataSourceTransactionManager(@NonNull DataSource dataSource,
+                                        @Parameter ConnectionOperations<Connection> connectionOperations,
+                                        @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager,
+                                        List<TransactionExecutionListener<Connection>> transactionExecutionListeners) {
+        super(connectionOperations, synchronousConnectionManager);
+        Objects.requireNonNull(dataSource, "DataSource cannot be null");
+        dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
+        this.dataSource = dataSource;
+        this.transactionExecutionListeners = new ArrayList<>(transactionExecutionListeners);
+        OrderUtil.sort(this.transactionExecutionListeners);
+    }
 
     /**
      * Create a new DataSourceTransactionManager instance.
@@ -80,10 +99,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     public DataSourceTransactionManager(@NonNull DataSource dataSource,
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
-        super(connectionOperations, synchronousConnectionManager);
-        Objects.requireNonNull(dataSource, "DataSource cannot be null");
-        dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
-        this.dataSource = dataSource;
+        this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
     }
 
     /**
@@ -135,32 +151,15 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         List<Runnable> onComplete = new ArrayList<>(5);
 
+        for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            transactionExecutionListener.beforeBegin(status.getConnectionStatus(), definition);
+        }
+
         definition.isReadOnly()
             .ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
         definition.getIsolationLevel()
             .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
         JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
-
-        // Apply Oracle transaction priority if requested via @OracleTransactional (Oracle Database 26ai+)
-        try {
-            OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
-            if (priority != null) {
-                String productName = connection.getMetaData().getDatabaseProductName();
-                if (productName != null) {
-                    productName = productName.toUpperCase(Locale.ENGLISH);
-                }
-                if (ORACLE_PRODUCT_NAME_UPPER.equals(productName)) {
-                    boolean applied = applyOracleTxnPriority(logger, connection, priority);
-                    if (applied) {
-                        // Reset only if the session-level setting succeeded, otherwise older Oracle versions
-                        // would log another unsupported warning on completion for every transaction.
-                        onComplete.add(() -> resetOracleTxnPriority(logger, connection));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new CannotCreateTransactionException("Could not evaluate/apply Oracle transaction priority", e);
-        }
 
         //        prepareTransactionalConnection(connection, definition);
 
@@ -174,6 +173,9 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                     }
                 }
             });
+        }
+        for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
         }
     }
 
@@ -279,40 +281,6 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         }
     }
 
-    private static boolean applyOracleTxnPriority(Logger logger, Connection connection, OracleTransactional.Priority level) throws SQLException {
-        String sql = "ALTER SESSION SET \"txn_priority\"=\"" + level.name() + "\"";
-        return executeOracleTxnPriorityStatement(logger, connection, sql, "Setting", level.name());
-    }
-
-    private static void resetOracleTxnPriority(Logger logger, Connection connection) {
-        String sql = "ALTER SESSION SET \"txn_priority\"=\"HIGH\"";
-        try {
-            executeOracleTxnPriorityStatement(logger, connection, sql, "Resetting", "HIGH");
-        } catch (SQLException e) {
-            throw new TransactionSystemException("Could not reset Oracle transaction priority", e);
-        }
-    }
-
-    private static boolean executeOracleTxnPriorityStatement(Logger logger,
-                                                             Connection connection,
-                                                             String sql,
-                                                             String action,
-                                                             String level) throws SQLException {
-        try (Statement stmt = connection.createStatement()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("{} Oracle txn_priority to {}", action, level);
-            }
-            stmt.executeUpdate(sql);
-            return true;
-        } catch (SQLException e) {
-            if (isOracleTxnPriorityUnsupported(e)) {
-                logger.debug("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
-                return false;
-            }
-            throw e;
-        }
-    }
-
     @NonNull
     @Override
     public Connection getConnection() {
@@ -327,28 +295,6 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * @param exception The thrown exception
      * @return true if exception is thrown for unsupported operation
      */
-    private static boolean isOracleTxnPriorityUnsupported(SQLException exception) {
-        SQLException current = exception;
-        while (current != null) {
-            if (current.getErrorCode() == ORACLE_INVALID_ALTER_SESSION_OPTION ||
-                (current.getMessage() != null && current.getMessage().contains("ORA-02248"))) {
-                return true;
-            }
-            current = current.getNextException();
-        }
-        Throwable cause = exception.getCause();
-        while (cause != null) {
-            if (cause instanceof SQLException sqlException) {
-                if (isOracleTxnPriorityUnsupported(sqlException)) {
-                    return true;
-                }
-                break;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
     private static boolean isUnsupportedOperation(Exception exception) {
         if (exception instanceof SQLFeatureNotSupportedException) {
             return true;

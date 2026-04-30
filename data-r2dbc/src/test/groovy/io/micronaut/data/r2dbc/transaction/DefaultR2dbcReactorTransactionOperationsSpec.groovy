@@ -16,7 +16,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
 
     void "does not evaluate oracle session priority when transaction priority is absent"() {
         given:
-        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null)
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, oracleListeners())
         def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
         def connection = Mock(Connection)
         def definition = new DefaultTransactionDefinition()
@@ -33,7 +33,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
 
     void "applies and resets oracle session priority when transaction priority is present"() {
         given:
-        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null)
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, oracleListeners())
         def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
         def connection = Mock(Connection)
         def metadata = Mock(ConnectionMetadata)
@@ -49,7 +49,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
 
         then:
-        1 * connectionStatus.getConnection() >> connection
+        2 * connectionStatus.getConnection() >> connection
         1 * connection.getMetadata() >> metadata
         1 * metadata.getDatabaseProductName() >> "Oracle"
         1 * connection.createStatement('ALTER SESSION SET "txn_priority"="LOW"') >> applyStatement
@@ -71,7 +71,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
 
     void "does not apply oracle session priority when db is not oracle"() {
         given:
-        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null)
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, oracleListeners())
         def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
         def connection = Mock(Connection)
         def metadata = Mock(ConnectionMetadata)
@@ -82,11 +82,15 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
 
         then:
-        1 * connectionStatus.getConnection() >> connection
+        2 * connectionStatus.getConnection() >> connection
         1 * connection.getMetadata() >> metadata
         1 * metadata.getDatabaseProductName() >> "PostgreSQL"
         1 * connection.beginTransaction() >> Mono.empty()
         0 * connection.createStatement(_)
         0 * connectionStatus.registerReactiveSynchronization(_)
+    }
+
+    private static List oracleListeners() {
+        [new OracleTransactionPriorityReactiveTransactionExecutionListener()]
     }
 }

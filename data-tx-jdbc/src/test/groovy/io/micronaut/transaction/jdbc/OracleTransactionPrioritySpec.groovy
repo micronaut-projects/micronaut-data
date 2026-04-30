@@ -37,7 +37,7 @@ class OracleTransactionPrioritySpec extends Specification {
 
         and: "A DefaultTransactionStatus with the above connection status"
         def txDef = createWithPriority(OracleTransactional.Priority.LOW)
-        def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
+        def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
         def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
 
         and: "Oracle connection behavior"
@@ -163,7 +163,7 @@ class OracleTransactionPrioritySpec extends Specification {
         ConnectionDefinition connDef = new DefaultConnectionDefinition("test")
         def status = new DefaultConnectionStatus<>(connection, connDef, true, null)
         def txDef = createWithPriority(OracleTransactional.Priority.HIGH)
-        def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
+        def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
         def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
 
         and: "Non-Oracle database"
@@ -183,7 +183,11 @@ class OracleTransactionPrioritySpec extends Specification {
     }
 
     private DataSourceTransactionManager newTxManager() {
-        new DataSourceTransactionManager(Mock(DataSource), Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager))
+        new DataSourceTransactionManager(Mock(DataSource), Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
+    }
+
+    private static List oracleListeners() {
+        [new OracleTransactionPriorityTransactionExecutionListener()]
     }
 
     private OracleTxFixture newOracleTxFixture(DataSourceTransactionManager txManager, OracleTransactional.Priority priority) {
