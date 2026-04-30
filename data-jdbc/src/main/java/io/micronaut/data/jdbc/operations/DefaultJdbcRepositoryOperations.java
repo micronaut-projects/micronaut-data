@@ -249,7 +249,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     protected ResultReader<ResultSet, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
-        return new ColumnNameExistenceAwareResultSetReader();
+        return new ColumnNameExistenceAwareResultSetReader(columnNameResultSetReader);
     }
 
     @NonNull

@@ -37,7 +37,7 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.persistence.Basic;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;

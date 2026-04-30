@@ -16,13 +16,13 @@
 package io.micronaut.data.repository.reactive;
 
 import io.micronaut.data.repository.GenericRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
- * Interface for CRUD using RxJava 2.
+ * Interface for CRUD using RxJava 3.
  *
  * @param <E> The entity type
  * @param <ID> The ID type

@@ -14,7 +14,7 @@ micronaut {
 }
 
 dependencies {
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mn.micronaut.http.client
     implementation projects.micronautDataHibernateJpa
     implementation projects.micronautDataTx

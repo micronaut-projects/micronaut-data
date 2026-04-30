@@ -17,7 +17,7 @@ dependencies {
     annotationProcessor mnValidation.micronaut.validation
     implementation projects.micronautDataJdbc
     implementation projects.micronautDataR2dbc
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
     implementation(mnSql.jakarta.persistence.api)

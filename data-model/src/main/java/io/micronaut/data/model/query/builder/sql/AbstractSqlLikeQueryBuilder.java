@@ -18,14 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.core.reflect.ReflectionUtils;
-import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
-import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
-import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
-import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -37,6 +30,7 @@ import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -50,6 +44,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
@@ -57,20 +52,23 @@ import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
+import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
-import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -85,15 +83,21 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlDbType;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -232,6 +236,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             };
             case TIMESTAMP -> CURRENT_TIMESTAMP;
         };
+    }
+
+    protected final boolean isJsonOrWktGeometry(PersistentProperty property) {
+        if (property.isAssignable(Geometry.class)) {
+            Optional<String> optPropConverter = property.getAnnotationMetadata().stringValue(MappedProperty.class, "converter");
+            if (optPropConverter.isPresent()) {
+                String converter = optPropConverter.get();
+                return converter.equals(GeometryJsonConverter.class.getName()) || converter.equals(GeometryWktConverter.class.getName());
+            }
+        }
+        return false;
     }
 
     protected final QueryPropertyPath asQueryPropertyPath(@Nullable String tableAlias, PersistentProperty persistentProperty) {
@@ -3218,16 +3233,57 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
                 column = escapeColumnIfNeeded(column, escape);
-                if (tableAlias == null) {
-                    sb.append(column);
+                String columnWithTableAlias = tableAlias == null ? column : tableAlias + DOT + column;
+                if (isJsonOrWktGeometry(property)) {
+                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column, property));
+                } else if (useAlias) {
+                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
                 } else {
-                    sb.append(tableAlias).append(DOT).append(column);
-                }
-                if (useAlias) {
-                    sb.append(AS_CLAUSE).append(columnAlias);
+                    sb.append(columnWithTableAlias);
                 }
             }
             sb.append(COMMA);
+        }
+
+        @SuppressWarnings("NullAway")
+        private String getGeometryFunction(String column, String columnAlias, PersistentProperty property) {
+            AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+            String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
+            boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
+            return switch (getDialect()) {
+                case ORACLE -> getOracleGeometryFunction(column, columnAlias, isWkt);
+                case SQL_SERVER ->  getSqlServerGeometryFunction(column, columnAlias);
+                case POSTGRES -> getPostgresGeometryFunction(column, columnAlias, isWkt, annotationMetadata);
+                case MYSQL, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
+                default -> column + AS_CLAUSE + columnAlias;
+            };
+        }
+
+        private String getOracleGeometryFunction(String column, String columnAlias, boolean isWkt) {
+            String function = isWkt ? "SDO_UTIL.TO_WKTGEOMETRY(" : "SDO_UTIL.TO_GEOJSON(";
+            return function + column + ")" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getSqlServerGeometryFunction(String column, String columnAlias) {
+            // since sqlserver doesn't have built-in functions for conversion between
+            // json and internal geospatial data type, use always Well-Known Text (WKT) functions
+            return column + ".STAsText()" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
+            Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+            String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
+            function = function + column;
+            if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+                // convert value from geography to geometry since ST_AsText and ST_AsGeoJSON requires geometry
+                function = function + "::geometry";
+            }
+            return function + ")" + AS_CLAUSE + columnAlias;
+        }
+
+        private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {
+            String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
+            return function + column + ")" + AS_CLAUSE + columnAlias;
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {
