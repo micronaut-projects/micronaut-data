@@ -35,7 +35,6 @@ import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -72,9 +71,10 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     /**
      * Create a new DataSourceTransactionManager instance.
      *
-     * @param dataSource                   the JDBC DataSource to manage transactions for
-     * @param connectionOperations         the connection operations
-     * @param synchronousConnectionManager the synchronous connection operations
+     * @param dataSource                    The JDBC DataSource to manage transactions for
+     * @param connectionOperations          The connection operations
+     * @param synchronousConnectionManager  The synchronous connection operations
+     * @param transactionExecutionListeners The transaction execution listeners
      */
     @Inject
     public DataSourceTransactionManager(@NonNull DataSource dataSource,

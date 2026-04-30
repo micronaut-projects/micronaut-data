@@ -16,11 +16,11 @@
 package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
 
 /**
  * Listener for reactive transaction execution lifecycle events.
@@ -39,7 +39,7 @@ public interface ReactiveTransactionExecutionListener<C> extends Ordered {
      * @return The publisher
      */
     default Publisher<Void> beforeBegin(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return Mono.empty();
+        return Publishers.empty();
     }
 
     /**
@@ -50,6 +50,6 @@ public interface ReactiveTransactionExecutionListener<C> extends Ordered {
      * @return The publisher
      */
     default Publisher<Void> afterBegin(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return Mono.empty();
+        return Publishers.empty();
     }
 }
