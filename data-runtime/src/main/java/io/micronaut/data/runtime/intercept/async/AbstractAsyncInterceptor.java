@@ -75,6 +75,9 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
     }
 
     protected final <E> CompletionStage<E> persistOrUpdateAsync(MethodInvocationContext<T, ?> context, E entity) {
+        if (isSaveAsInsert()) {
+            return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+        }
         if (!isEntityUpdateCandidate(context, entity)) {
             return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
         }

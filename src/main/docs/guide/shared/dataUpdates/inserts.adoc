@@ -7,11 +7,37 @@ Book insert(Book entity);
 List<Book> insertAll(Iterable<Book> entities);
 ----
 
-The asynchronous, reactive, Reactor, RxJava, and Kotlin coroutine CRUD repository variants expose the same insert operations with their native return types.
+The built-in CRUD repository variants include insert methods with their native return types:
+
+[cols=2*]
+|===
+|*Repository*
+|*Insert methods*
+
+|api:data.repository.CrudRepository[]
+|`S insert(S entity)`, `List<S> insertAll(Iterable<S> entities)`
+
+|api:data.repository.async.AsyncCrudRepository[]
+|`CompletableFuture<S> insert(S entity)`, `CompletableFuture<? extends Iterable<S>> insertAll(Iterable<S> entities)`
+
+|api:data.repository.reactive.ReactiveStreamsCrudRepository[]
+|`Publisher<S> insert(S entity)`, `Publisher<S> insertAll(Iterable<S> entities)`
+
+|api:data.repository.reactive.ReactorCrudRepository[]
+|`Mono<S> insert(S entity)`, `Flux<S> insertAll(Iterable<S> entities)`
+
+|api:data.repository.reactive.RxJavaCrudRepository[]
+|`Single<S> insert(S entity)`, `Flowable<S> insertAll(Iterable<S> entities)`
+
+|api:data.repository.kotlin.CoroutineCrudRepository[]
+|`suspend fun <S : E> insert(entity: S): S`, `fun <S : E> insertAll(entities: Iterable<S>): Flow<S>`
+|===
 
 Custom insert methods must accept a single argument that is the entity and start with `persist`, `insert`, or `store`, or be annotated with ann:data.annotation.Insert[].
 To persist multiple entities the method needs to accept `java.lang.Iterable` of the entity.
 Methods that start with `save` perform a conditional save: an entity without an assigned identity value is inserted, and an entity with an assigned identity value is updated.
+
+To temporarily restore the Micronaut Data 4 behavior where repository `save` and `saveAll` always issue insert operations, set `micronaut.data.save-as-insert` to `true`.
 
 Alternatively you can also define a method that features parameter names that match the properties of the entity name:
 

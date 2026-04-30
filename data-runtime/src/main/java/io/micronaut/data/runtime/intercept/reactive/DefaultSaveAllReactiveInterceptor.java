@@ -50,6 +50,9 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
     }
 
     private Publisher<Object> saveAll(MethodInvocationContext<Object, Object> context, List<Object> entities) {
+        if (isSaveAsInsert()) {
+            return reactiveOperations.persistAll(getInsertBatchOperation(context, entities));
+        }
         return Flux.fromIterable(entities)
             .concatMap(entity -> persistOrUpdateReactive(context, entity));
     }

@@ -12,6 +12,16 @@ Code that relied on `save` or `saveAll` to always issue an insert should use the
 Custom repository methods can also require insert behavior by starting with `insert`, `persist`, or `store`, or by using ann:data.annotation.Insert[].
 This applies to the synchronous, asynchronous, reactive, Reactor, RxJava, and Kotlin coroutine CRUD repository variants.
 
+To temporarily restore the Micronaut Data 4 behavior for repository `save` and `saveAll` methods, set `micronaut.data.save-as-insert` to `true`.
+When enabled, `save` and `saveAll` always issue insert operations and fail if the entity already exists.
+
+[configuration]
+----
+micronaut:
+  data:
+    save-as-insert: true
+----
+
 === Mapping between Java time types and Oracle database INTERVAL types
 
 The following Java time types are now mapped to INTERVAL database types instead of string database types when using Oracle database:

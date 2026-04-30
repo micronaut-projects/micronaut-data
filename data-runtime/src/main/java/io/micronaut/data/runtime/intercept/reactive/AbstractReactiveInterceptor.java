@@ -68,6 +68,9 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
     }
 
     protected final <E> Publisher<E> persistOrUpdateReactive(MethodInvocationContext<T, ?> context, E entity) {
+        if (isSaveAsInsert()) {
+            return reactiveOperations.persist(getInsertOperation(context, entity));
+        }
         if (!isEntityUpdateCandidate(context, entity)) {
             return reactiveOperations.persist(getInsertOperation(context, entity));
         }

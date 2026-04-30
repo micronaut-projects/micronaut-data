@@ -61,6 +61,9 @@ The built-in CRUD repository interfaces provide three distinct write operations:
 `insert` / `insertAll` require an insert operation.
 `update` / `updateAll` require an update operation.
 
+To temporarily restore the Micronaut Data 4 behavior where `save` and `saveAll` always issue insert operations, set `micronaut.data.save-as-insert` to `true`.
+For new code, prefer `insert` and `insertAll` when an insert is required.
+
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/hibernate-example", source="main"]

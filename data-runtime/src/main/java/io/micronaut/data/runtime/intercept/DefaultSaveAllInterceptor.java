@@ -64,6 +64,9 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     private List<Object> saveAll(MethodInvocationContext<T, R> context, List<Object> entities) {
+        if (isSaveAsInsert()) {
+            return toList(operations.persistAll(getInsertBatchOperation(context, entities)));
+        }
         List<Object> results = new ArrayList<>(entities);
         List<Object> insertRun = new ArrayList<>();
         List<Integer> insertIndexes = new ArrayList<>();

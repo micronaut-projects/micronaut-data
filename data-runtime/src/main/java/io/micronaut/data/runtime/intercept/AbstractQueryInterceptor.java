@@ -67,6 +67,7 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.runtime.config.DataConfiguration;
 import io.micronaut.data.runtime.query.DefaultPagedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
@@ -120,6 +121,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final MethodContextAwareStoredQueryDecorator storedQueryDecorator;
     private final PagedQueryResolver pagedQueryResolver;
     private final PreparedQueryDecorator preparedQueryDecorator;
+    private final boolean saveAsInsert;
 
     /**
      * Default constructor.
@@ -130,6 +132,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         ArgumentUtils.requireNonNull("operations", operations);
         this.conversionService = operations.getConversionService();
         this.operations = operations;
+        this.saveAsInsert = operations.getApplicationContext().getEnvironment()
+            .getProperty(DataConfiguration.SAVE_AS_INSERT_PROPERTY, Boolean.class)
+            .orElse(false);
         this.storedQueryResolver = operations instanceof StoredQueryResolver sQueryResolver ? sQueryResolver : new DefaultStoredQueryResolver() {
             @Override
             protected HintsCapableRepository getHintsCapableRepository() {
@@ -614,6 +619,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             || persistentEntity.getVersion().getProperty().get(entity) != null;
     }
 
+    /**
+     * @return Whether save methods should always perform insert operations.
+     */
+    protected final boolean isSaveAsInsert() {
+        return saveAsInsert;
+    }
+
     private boolean hasEntityId(RuntimePersistentEntity<Object> persistentEntity, Object entity) {
         if (persistentEntity.hasIdentity()) {
             RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
@@ -658,6 +670,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return The persisted or updated entity
      */
     protected final <E> E persistOrUpdate(MethodInvocationContext<T, ?> context, E entity) {
+        if (isSaveAsInsert()) {
+            return operations.persist(getInsertOperation(context, entity));
+        }
         if (!isEntityUpdateCandidate(context, entity)) {
             return operations.persist(getInsertOperation(context, entity));
         }

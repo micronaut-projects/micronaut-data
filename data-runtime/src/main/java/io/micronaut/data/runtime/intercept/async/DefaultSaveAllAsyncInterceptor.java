@@ -51,6 +51,10 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompl
     }
 
     private CompletionStage<List<Object>> saveAll(MethodInvocationContext<Object, CompletionStage<Object>> context, List<Object> entities) {
+        if (isSaveAsInsert()) {
+            return asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, entities))
+                .thenApply(this::toList);
+        }
         List<Object> results = new ArrayList<>(entities.size());
         CompletionStage<List<Object>> stage = CompletableFuture.completedFuture(results);
         for (Object entity : entities) {
