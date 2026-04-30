@@ -49,8 +49,7 @@ final class OracleTransactionPriorityTransactionExecutionListener implements Tra
 
     @Override
     public void afterBegin(ConnectionStatus<Connection> connectionStatus, TransactionDefinition definition) {
-        OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
-        if (priority == null) {
+        if (!definition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY)) {
             return;
         }
         Connection connection = connectionStatus.getConnection();
@@ -60,14 +59,17 @@ final class OracleTransactionPriorityTransactionExecutionListener implements Tra
                 productName = productName.toUpperCase(Locale.ENGLISH);
             }
             if (ORACLE_PRODUCT_NAME_UPPER.equals(productName)) {
-                boolean applied = applyOracleTxnPriority(connection, priority);
-                if (applied) {
-                    connectionStatus.registerSynchronization(new ConnectionSynchronization() {
-                        @Override
-                        public void executionComplete() {
-                            resetOracleTxnPriority(connection);
-                        }
-                    });
+                OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
+                if (priority != null) {
+                    boolean applied = applyOracleTxnPriority(connection, priority);
+                    if (applied) {
+                        connectionStatus.registerSynchronization(new ConnectionSynchronization() {
+                            @Override
+                            public void executionComplete() {
+                                resetOracleTxnPriority(connection);
+                            }
+                        });
+                    }
                 }
             }
         } catch (SQLException e) {

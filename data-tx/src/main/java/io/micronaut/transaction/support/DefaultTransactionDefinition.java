@@ -289,6 +289,9 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      */
     public void putProperty(@NonNull String name, @Nullable Object value) {
         Objects.requireNonNull(name, "Argument [name] cannot be null");
+        if (value == null && this.properties.isEmpty()) {
+            return;
+        }
         if (this.properties.isEmpty()) {
             this.properties = new LinkedHashMap<>();
         }

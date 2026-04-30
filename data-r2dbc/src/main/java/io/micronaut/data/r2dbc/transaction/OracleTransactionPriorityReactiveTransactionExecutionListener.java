@@ -53,12 +53,15 @@ final class OracleTransactionPriorityReactiveTransactionExecutionListener implem
 
     @Override
     public Publisher<Void> beforeBegin(ConnectionStatus<Connection> connectionStatus, TransactionDefinition definition) {
-        OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
-        if (priority == null) {
+        if (!definition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY)) {
             return Mono.empty();
         }
         Connection connection = connectionStatus.getConnection();
         if (!isOracleConnection(connection)) {
+            return Mono.empty();
+        }
+        OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
+        if (priority == null) {
             return Mono.empty();
         }
         return applyOracleTxnPriority(connection, priority)

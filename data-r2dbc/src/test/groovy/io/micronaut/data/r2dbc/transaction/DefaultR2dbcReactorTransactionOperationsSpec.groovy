@@ -76,7 +76,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         def connection = Mock(Connection)
         def metadata = Mock(ConnectionMetadata)
         def definition = new DefaultTransactionDefinition()
-        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, OracleTransactional.Priority.LOW)
+        definition.putProperty(OracleTransactional.ORACLE_PRIORITY, "invalid")
 
         when:
         Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
@@ -88,6 +88,7 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         1 * connection.beginTransaction() >> Mono.empty()
         0 * connection.createStatement(_)
         0 * connectionStatus.registerReactiveSynchronization(_)
+        noExceptionThrown()
     }
 
     private static List oracleListeners() {

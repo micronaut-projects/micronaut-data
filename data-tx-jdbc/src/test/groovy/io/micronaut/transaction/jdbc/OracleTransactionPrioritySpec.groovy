@@ -162,7 +162,7 @@ class OracleTransactionPrioritySpec extends Specification {
         def meta = Mock(DatabaseMetaData)
         ConnectionDefinition connDef = new DefaultConnectionDefinition("test")
         def status = new DefaultConnectionStatus<>(connection, connDef, true, null)
-        def txDef = createWithPriority(OracleTransactional.Priority.HIGH)
+        def txDef = createWithPriority("invalid")
         def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
         def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
 
@@ -178,7 +178,8 @@ class OracleTransactionPrioritySpec extends Specification {
         txManager.doBegin(txStatus)
         status.complete()
 
-        then: "No ALTER SESSION is executed"
+        then: "No ALTER SESSION is executed and the invalid Oracle-specific value is ignored"
+        noExceptionThrown()
         0 * connection.createStatement()
     }
 
@@ -207,7 +208,7 @@ class OracleTransactionPrioritySpec extends Specification {
         new OracleTxFixture(connection, status, txStatus)
     }
 
-    static TransactionDefinition createWithPriority(OracleTransactional.Priority priority) {
+    static TransactionDefinition createWithPriority(Object priority) {
         return new TransactionDefinition() {
             @Override
             public String getName() {
