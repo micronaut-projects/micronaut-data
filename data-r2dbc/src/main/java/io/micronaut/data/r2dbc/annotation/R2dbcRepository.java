@@ -24,7 +24,11 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.r2dbc.operations.R2dbcRepositoryOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Stereotype repository that configures a {@link Repository} as a {@link R2dbcRepository} using
