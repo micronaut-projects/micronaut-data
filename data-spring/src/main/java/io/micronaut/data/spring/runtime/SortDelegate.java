@@ -19,7 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Sort;
 
 import org.jspecify.annotations.NonNull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Supports representing a Spring Sort as a Micronaut {@link io.micronaut.data.model.Page}.

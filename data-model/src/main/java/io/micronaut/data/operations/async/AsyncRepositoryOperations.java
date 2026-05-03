@@ -19,7 +19,14 @@ import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -209,4 +216,3 @@ public interface AsyncRepositoryOperations {
      <R> CompletionStage<Page<R>> findPage(PagedQuery<R> pagedQuery);
 
 }
-
