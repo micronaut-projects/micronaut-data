@@ -13,6 +13,6 @@ dependencies {
     implementation(projects.micronautDataJdbc)
     implementation(mnSql.micronaut.jdbc.hikari)
     runtimeOnly(mnLogging.logback.classic)
-    testRuntimeOnly(mnSql.sqlite.jdbc)
+    testRuntimeOnly(mnSql.micronaut.jdbc.sqlite)
     testImplementation(mnTest.junit.jupiter.params)
 }
