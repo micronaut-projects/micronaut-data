@@ -95,7 +95,7 @@ class SQLiteEventsTest {
     @Order(8)
     void testsPreAndPostRemoveEventsTriggeredReactive() {
         entityUnderTest.setName("changed");
-        eventsReactiveRepository.delete(entityUnderTest).blockingGet();
+        eventsReactiveRepository.delete(entityUnderTest).blockingAwait();
 
         assertCounters(entityUnderTest, 1, 1, 1, 1, 1, 1, 0);
     }
