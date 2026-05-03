@@ -7,7 +7,7 @@ dependencies {
     testAnnotationProcessor(mn.micronaut.inject.java)
 
     // SQLite
-    testRuntimeOnly(mnSql.sqlite.jdbc)
+    testRuntimeOnly(mnSql.micronaut.jdbc.sqlite)
 
     // CONNECTION POOL
 //    testRuntimeOnly(mnSql.micronaut.jdbc.hikari)
@@ -18,7 +18,7 @@ dependencies {
 
     // REACTIVE
     testImplementation(mnReactor.micronaut.reactor)
-    testImplementation(mnRxjava2.micronaut.rxjava2)
+    testImplementation(mnRxjava3.micronaut.rxjava3)
 
     // TEST
     testRuntimeOnly(mnTest.junit.jupiter.engine)
