@@ -736,7 +736,7 @@ public interface FindersUtils {
 
     static boolean isReactiveSingleResult(ClassElement returnType) {
         return returnType.hasStereotype(SingleResult.class)
-            || isContainer(returnType, "io.reactivex.Single")
+            || isContainer(returnType, "io.reactivex.rxjava3.core.Single")
             || isContainer(returnType, "reactor.core.publisher.Mono");
     }
 

@@ -22,6 +22,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
@@ -72,6 +73,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default List<QueryParameterBinding> getQueryBindings() {
         return getStoredQueryDelegate().getQueryBindings();
+    }
+
+    @Override
+    default List<QueryOutParameterBinding> getOutParameterBindings() {
+        return getStoredQueryDelegate().getOutParameterBindings();
     }
 
     @Override

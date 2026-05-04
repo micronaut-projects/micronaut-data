@@ -8,8 +8,8 @@ import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.joinOne
 import io.micronaut.data.runtime.criteria.where
-import io.reactivex.Maybe
-import io.reactivex.Single
+import io.reactivex.rxjava3.core.Maybe
+import io.reactivex.rxjava3.core.Single
 import org.bson.types.ObjectId
 import java.util.concurrent.CompletableFuture
 

@@ -18,16 +18,18 @@ micronaut {
 dependencies {
     kapt projects.micronautDataProcessor
 
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mnReactor.micronaut.reactor
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
 
+    testImplementation(platform(mn.boms.kotlin.coroutines))
+    testImplementation(libs.kotlin.coroutines.test)
     implementation mn.micronaut.http.client
     implementation projects.micronautDataJdbc
     implementation(mnSql.jakarta.persistence.api)
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

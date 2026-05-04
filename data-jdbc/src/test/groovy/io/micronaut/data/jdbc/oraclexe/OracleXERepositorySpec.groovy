@@ -16,12 +16,17 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Address
+import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.PendingFeature
+
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 import java.time.Duration
 import java.time.Period
@@ -43,6 +48,11 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     @Override
     OracleXEBookRepository getBookRepository() {
         return context.getBean(OracleXEBookRepository)
+    }
+
+    @Memoized
+    OracleRestaurantRepository getRestaurantRepository() {
+        return context.getBean(OracleRestaurantRepository)
     }
 
     @Memoized
@@ -238,7 +248,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             cleanupBooks()
     }
 
-    @PendingFeature
     void "test update returning book"() {
         given:
             setupBooks()
@@ -251,7 +260,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             newBook.title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title"() {
         given:
             setupBooks()
@@ -264,7 +272,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             bookRepository.findById(book.id).get().title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title 2"() {
         given:
             setupBooks()
@@ -276,7 +283,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             bookRepository.findById(book.id).get().title == "Xyz"
     }
 
-    @PendingFeature
     void "test update returning book title 3"() {
         given:
             setupBooks()
@@ -386,4 +392,196 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         then:
         count == 2
     }
+
+    void "test insert returning book"() {
+        given:
+        setupBooks()
+        def existing = bookRepository.findByTitle("Pet Cemetery")
+        def bookToCreate = new Book(title: "My book ORA", totalPages: 321, author: existing.author)
+        when:
+        def newBook = bookRepository.saveReturning(bookToCreate)
+        then:
+        newBook.id
+        !newBook.is(bookToCreate)
+        // lifecycle events
+        bookToCreate.prePersist == 1
+        newBook.postLoad == 1
+        newBook.postPersist == 1
+        // verify persisted
+        bookRepository.findById(newBook.id).get().title == "My book ORA"
+        bookRepository.findByTitle("My book ORA")
+    }
+
+    void "test insert returning books"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+
+        def booksToCreate = List.of(
+                new Book(title: "My book 1", totalPages: 123, author: book.author),
+                new Book(title: "My book 2", totalPages: 123, author: book.author),
+                new Book(title: "My book 3", totalPages: 123, author: book.author),
+        )
+        when:
+        def newBooks = bookRepository.saveReturning(
+                booksToCreate
+        )
+        then:
+        newBooks.size() == 3
+        newBooks[0].id
+        !newBooks[0].is(booksToCreate[0])
+        newBooks[0].title == "My book 1"
+        newBooks[1].title == "My book 2"
+        newBooks[2].title == "My book 3"
+        def newBook = newBooks[0]
+        bookRepository.findById(newBook.id).get().title == "My book 1"
+        bookRepository.findByTitle("My book 1")
+        booksToCreate.forEach {
+            assert it.prePersist == 1
+        }
+        newBooks.forEach {
+            assert it.postLoad == 1
+            assert it.postPersist == 1
+        }
+    }
+
+    void "test delete returning book"() {
+        given:
+        setupBooks()
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        Book deletedBook = bookRepository.deleteReturning(book)
+        then:
+        deletedBook.id == book.id
+        deletedBook.title == book.title
+        deletedBook.postLoad == 1
+    }
+
+    void "test delete returning title book"() {
+        given:
+        setupBooks()
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        String deletedTitle = bookRepository.deleteReturningTitle(book)
+        then:
+        deletedTitle == book.title
+        bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test insert returning restaurant with embedded fields"() {
+        given:
+        def restaurantToCreate = new Restaurant("Una", new Address("Main", "21002"))
+        when:
+        def newRestaurant = restaurantRepository.saveReturning(restaurantToCreate)
+        then:
+        newRestaurant.id
+        !newRestaurant.is(restaurantToCreate)
+        newRestaurant.address
+        newRestaurant.address.street == "Main"
+        // verify persisted
+        restaurantRepository.findById(newRestaurant.id).get().name == "Una"
+        cleanup:
+        restaurantRepository.deleteAll()
+    }
+
+    void "test custom insert/update/delete returning book(s) with @Query"() {
+        given:
+        setupBooks()
+        def existing = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        def one = bookRepository.customInsertReturningBook(existing.author.id, null, "CI one", 111, null, LocalDateTime.now())
+        then:
+        one
+        one.id
+        one.title == "CI one"
+        when:
+        def current = LocalDateTime.now()
+        def updated = bookRepository.customUpdateReturning(one.id, "CI one - updated", 110, current)
+        then:
+        updated.title == "CI one - updated"
+        updated.totalPages == 110
+        updated.lastUpdated.truncatedTo(ChronoUnit.MILLIS) == current.truncatedTo(ChronoUnit.MILLIS)
+        when:
+        def title = bookRepository.customDeleteReturningTitle(updated.id)
+        then:
+        title == "CI one - updated"
+        !bookRepository.findById(updated.id).present
+        when:
+        def many = bookRepository.customInsertReturningBooks(existing.author.id, null, "CI many", 112, null, LocalDateTime.now())
+        then:
+        many
+        many.size() >= 1
+        when:
+        def onlyTitle = bookRepository.customInsertReturningTitle(existing.author.id, null, "CI title", 113, null, LocalDateTime.now())
+        then:
+        onlyTitle == "CI title"
+        bookRepository.findByTitle("CI title")
+        cleanup:
+        bookRepository.deleteAll()
+    }
+
+    void "test custom update returning title with expanded ids"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        def updatedTitle = bookRepository.customUpdateReturningTitleWithExpandedIds(book.id, "Expanded Oracle Title", [book.id, Long.MAX_VALUE])
+        then:
+        updatedTitle == "Expanded Oracle Title"
+        bookRepository.findById(book.id).get().title == "Expanded Oracle Title"
+    }
+
+    void "test custom update returning dto projection"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        BookDto dto = bookRepository.customUpdateReturningDto(book.id, "Oracle DTO Title", 777)
+        then:
+        dto.title == "Oracle DTO Title"
+        dto.totalPages == 777
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle DTO Title"
+        updated.totalPages == 777
+    }
+
+    void "test custom update returning method-level projection dto"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        OracleBookMethodProjectionDto dto = bookRepository.customUpdateReturningMethodProjectionDto(book.id, "Oracle Projected Title", 321)
+        then:
+        dto.bookTitle() == "Oracle Projected Title"
+        dto.pageCount() == 321
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle Projected Title"
+        updated.totalPages == 321
+    }
+
+    void "test custom update returning mapped property dto"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        OracleBookMappedPropertyDto dto = bookRepository.customUpdateReturningMappedPropertyDto(book.id, "Oracle Mapped Title", 654)
+        then:
+        dto.renamedTitle == "Oracle Mapped Title"
+        dto.renamedPages == 654
+        def updated = bookRepository.findById(book.id).get()
+        updated.title == "Oracle Mapped Title"
+        updated.totalPages == 654
+    }
+
+    void "test custom delete returning object array projection"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        Object[] values = bookRepository.customDeleteReturningTitleAndPages(book.id)
+        then:
+        values as List == [book.title, book.totalPages]
+        bookRepository.findById(book.id).isEmpty()
+    }
+
 }

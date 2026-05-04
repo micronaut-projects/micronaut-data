@@ -17,7 +17,13 @@ package io.micronaut.data.annotation;
 
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * There {@code Where} annotation allows augmenting the {@code WHERE} statement of generated

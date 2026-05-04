@@ -27,9 +27,9 @@ dependencies {
     kapt projects.micronautDataProcessor
     implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
-    implementation libs.kotlin.coroutines.reactor
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
+    implementation(mn.kotlinx.coroutines.reactor)
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation(mnSql.jakarta.persistence.api)

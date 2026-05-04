@@ -21,7 +21,10 @@ import io.micronaut.context.annotation.Type;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.interceptor.TransactionalInterceptor;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Micronaut alternative {@code jakarta.transaction.Transactional} annotation.

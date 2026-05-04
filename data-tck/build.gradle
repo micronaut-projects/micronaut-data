@@ -14,7 +14,7 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation mn.micronaut.http.server.netty
     implementation projects.micronautDataModel
-    implementation mnRxjava2.rxjava2
+    implementation(mnRxjava3.rxjava3)
     implementation mn.reactor
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core

@@ -27,7 +27,14 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.*;
+import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PostDeleteEvent;
+import org.hibernate.event.spi.PostDeleteEventListener;
+import org.hibernate.event.spi.PostInsertEvent;
+import org.hibernate.event.spi.PostInsertEventListener;
+import org.hibernate.event.spi.PostUpdateEvent;
+import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
@@ -196,7 +203,7 @@ public class EventIntegrator implements Integrator {
         // no-op
     }
 
-    private static class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+    private static final class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         private final AbstractPreDatabaseOperationEvent event;
         @Nullable
         private final Object[] state;
@@ -224,7 +231,7 @@ public class EventIntegrator implements Integrator {
         }
 
         @Override
-        public final boolean supportsEventSystem() {
+        public boolean supportsEventSystem() {
             return false;
         }
     }

@@ -28,10 +28,9 @@ import spock.lang.Specification
 @Property(name = "datasources.other.dialect", value = "H2")
 // This properties can be eliminated after TestResources bug is fixed
 @Property(name = "datasources.other.driverClassName", value = "org.h2.Driver")
-@Property(name = "datasources.other.url", value = "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE")
+@Property(name = "datasources.other.url", value = "jdbc:h2:mem:otherDB;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE")
 @Property(name = "datasources.other.username", value = "")
 @Property(name = "datasources.other.password", value = "")
-@Property(name = "datasources.other.url", value = "jdbc:h2:mem:otherDB")
 @Property(name = 'jpa.other.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class MultipleDataSourceSpec extends Specification {
 

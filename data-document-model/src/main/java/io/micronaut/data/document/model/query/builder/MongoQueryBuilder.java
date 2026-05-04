@@ -43,6 +43,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -1517,6 +1518,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Override
         public void visit(CastExpression<?> castExpression) {
             throw new UnsupportedOperationException("CAST is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            throw new UnsupportedOperationException("Current temporal expression is not supported by Micronaut Data MongoDB.");
         }
 
         @Override
