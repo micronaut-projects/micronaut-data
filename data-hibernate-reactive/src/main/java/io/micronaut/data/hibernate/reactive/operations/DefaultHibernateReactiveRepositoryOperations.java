@@ -24,6 +24,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
 import io.micronaut.data.model.Limit;
@@ -329,7 +330,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         Objects.requireNonNull(invocationContext, "Invocation context cannot be null");
         Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
-        return helper.executeUpdate(query);
+        return helper.executeUpdate(query).map(rowsUpdated -> {
+            if (storedQuery.isOptimisticLock() && rowsUpdated == 0) {
+                throw new OptimisticLockException("Execute update returned unexpected row count. Expected: at least 1 got: " + rowsUpdated);
+            }
+            return rowsUpdated;
+        });
     }
 
     @Override

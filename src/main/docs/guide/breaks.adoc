@@ -14,6 +14,7 @@ This applies to the synchronous, asynchronous, reactive, Reactor, RxJava, and Ko
 
 To temporarily restore the Micronaut Data 4 behavior for repository `save` and `saveAll` methods, set `micronaut.data.save-as-insert` to `true`.
 When enabled, `save` and `saveAll` always issue insert operations and fail if the entity already exists.
+The Hibernate JPA `jpa.default.properties.persistOrMergeOnSave` setting no longer controls repository `save` methods.
 
 [configuration]
 ----

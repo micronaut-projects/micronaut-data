@@ -54,7 +54,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 //@Property(name = "jpa.default.properties.hibernate.show_sql", value = "true")
 @Property(name = "jpa.default.properties.uniqueResultOnFindOne", value = "true")
-@Property(name = "jpa.default.properties.persistOrMergeOnSave", value = "true")
 @H2DBProperties
 @MicronautTest(transactional = false)
 public class EntityTests {

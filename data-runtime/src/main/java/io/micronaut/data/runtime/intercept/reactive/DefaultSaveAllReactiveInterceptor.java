@@ -16,10 +16,11 @@
 package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
-import org.jspecify.annotations.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.NonNull;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -45,7 +46,7 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        List<Object> entities = toList(iterable);
+        List<Object> entities = CollectionUtils.iterableToList(iterable);
         return saveAll(context, entities);
     }
 
@@ -53,19 +54,28 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
         if (isSaveAsInsert()) {
             return reactiveOperations.persistAll(getInsertBatchOperation(context, entities));
         }
-        return Flux.fromIterable(entities)
-            .concatMap(entity -> persistOrUpdateReactive(context, entity));
+        List<Publisher<Object>> publishers = new ArrayList<>();
+        List<Object> insertRun = new ArrayList<>();
+        for (Object entity : entities) {
+            if (isEntityUpdateCandidate(context, entity)) {
+                addInsertRun(context, publishers, insertRun);
+                publishers.add(Flux.from(persistOrUpdateReactive(context, entity)));
+            } else {
+                insertRun.add(entity);
+            }
+        }
+        addInsertRun(context, publishers, insertRun);
+        return Flux.concat(publishers);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<Object> toList(Iterable<Object> iterable) {
-        if (iterable instanceof List<?> list) {
-            return (List<Object>) list;
+    private void addInsertRun(MethodInvocationContext<Object, Object> context,
+                              List<Publisher<Object>> publishers,
+                              List<Object> insertRun) {
+        if (insertRun.isEmpty()) {
+            return;
         }
-        List<Object> list = new ArrayList<>();
-        for (Object entity : iterable) {
-            list.add(entity);
-        }
-        return list;
+        List<Object> batch = new ArrayList<>(insertRun);
+        publishers.add(reactiveOperations.persistAll(getInsertBatchOperation(context, batch)));
+        insertRun.clear();
     }
 }

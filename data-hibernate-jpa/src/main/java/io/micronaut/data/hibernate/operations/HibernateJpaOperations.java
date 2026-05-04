@@ -670,8 +670,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
         int updated = query.executeUpdate();
-        if (storedQuery.isOptimisticLock() && updated != 1) {
-            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: " + updated);
+        if (storedQuery.isOptimisticLock() && updated == 0) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: at least 1 got: " + updated);
         }
         return updated;
     }

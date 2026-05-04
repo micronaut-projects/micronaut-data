@@ -378,6 +378,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         for (SourcePersistentProperty identity : identities) {
             ParameterElement identityParameter = findParameterForProperty(parameters, identity);
             if (identityParameter == null) {
+                // The update alternative can only be built when every identity property is supplied.
                 return Map.of();
             }
             identityParameters.put(identity, identityParameter);

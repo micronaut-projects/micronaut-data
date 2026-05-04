@@ -132,7 +132,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         ArgumentUtils.requireNonNull("operations", operations);
         this.conversionService = operations.getConversionService();
         this.operations = operations;
-        this.saveAsInsert = operations.getApplicationContext().getEnvironment()
+        var applicationContext = operations.getApplicationContext();
+        this.saveAsInsert = applicationContext != null && applicationContext.getEnvironment()
             .getProperty(DataConfiguration.SAVE_AS_INSERT_PROPERTY, Boolean.class)
             .orElse(false);
         this.storedQueryResolver = operations instanceof StoredQueryResolver sQueryResolver ? sQueryResolver : new DefaultStoredQueryResolver() {
