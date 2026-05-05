@@ -30,6 +30,7 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
@@ -55,7 +56,9 @@ final class SyncCosmosRepositoryOperations implements
 
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
     @Nullable
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    @Nullable
+    private ExecutorService localExecutorService;
     @Nullable
     private ExecutorAsyncOperations asyncOperations;
 
@@ -81,7 +84,7 @@ final class SyncCosmosRepositoryOperations implements
                 if (executorAsyncOperations == null) {
                     executorAsyncOperations = new ExecutorAsyncOperations(
                         this,
-                        executorService != null ? executorService : newLocalThreadPool()
+                        getExecutorService()
                     );
                     this.asyncOperations = executorAsyncOperations;
                 }
@@ -98,8 +101,20 @@ final class SyncCosmosRepositoryOperations implements
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+        localExecutorService = Executors.newCachedThreadPool();
+        return localExecutorService;
+    }
+
+    @NonNull
+    private ExecutorService getExecutorService() {
+        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (localExecutorService != null) {
+            localExecutorService.shutdown();
+        }
     }
 
     @Override

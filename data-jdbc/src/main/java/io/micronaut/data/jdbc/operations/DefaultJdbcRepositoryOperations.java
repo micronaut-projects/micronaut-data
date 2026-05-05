@@ -159,7 +159,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private ExecutorAsyncOperations asyncOperations;
     @Nullable
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    @Nullable
+    private ExecutorService localExecutorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     @Nullable
@@ -254,8 +256,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+        localExecutorService = Executors.newCachedThreadPool();
+        return localExecutorService;
+    }
+
+    @NonNull
+    private ExecutorService getExecutorService() {
+        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
     @Override
@@ -338,7 +345,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (asyncOperations == null) {
                     asyncOperations = new ExecutorAsyncOperations(
                         this,
-                        executorService != null ? executorService : newLocalThreadPool()
+                        getExecutorService()
                     );
                     this.asyncOperations = asyncOperations;
                 }
@@ -899,8 +906,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     @PreDestroy
     public void close() {
-        if (executorService != null) {
-            executorService.shutdown();
+        if (localExecutorService != null) {
+            localExecutorService.shutdown();
         }
     }
 

@@ -82,6 +82,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperation
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -126,7 +127,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     @Nullable
     private ExecutorAsyncOperations asyncOperations;
     @Nullable
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    @Nullable
+    private ExecutorService localExecutorService;
 
     /**
      * Default constructor.
@@ -1087,7 +1090,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 if (asyncOperations == null) {
                     asyncOperations = new ExecutorAsyncOperations(
                             this,
-                            executorService != null ? executorService : newLocalThreadPool()
+                            getExecutorService()
                     );
                     this.asyncOperations = asyncOperations;
                 }
@@ -1098,8 +1101,20 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+        localExecutorService = Executors.newCachedThreadPool();
+        return localExecutorService;
+    }
+
+    @NonNull
+    private ExecutorService getExecutorService() {
+        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (localExecutorService != null) {
+            localExecutorService.shutdown();
+        }
     }
 
     @NonNull

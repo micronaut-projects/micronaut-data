@@ -34,6 +34,7 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -62,7 +63,8 @@ final class MongoReactiveFactory {
             AsyncCapableRepository,
             HintsCapableRepository,
             MethodContextAwareStoredQueryDecorator,
-            PreparedQueryDecorator {
+            PreparedQueryDecorator,
+            AutoCloseable {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
         @Nullable
@@ -111,6 +113,14 @@ final class MongoReactiveFactory {
                 }
             }
             return Objects.requireNonNull(asyncOperations);
+        }
+
+        @PreDestroy
+        @Override
+        public void close() {
+            if (executorService != null) {
+                executorService.shutdown();
+            }
         }
 
         @Override

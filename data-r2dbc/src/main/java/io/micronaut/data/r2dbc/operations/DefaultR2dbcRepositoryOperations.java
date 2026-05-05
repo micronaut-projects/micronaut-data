@@ -114,6 +114,7 @@ import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
 import org.reactivestreams.Publisher;
@@ -160,7 +161,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final ConnectionFactory connectionFactory;
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
     @Nullable
-    private ExecutorService ioExecutorService;
+    private final ExecutorService ioExecutorService;
+    @Nullable
+    private ExecutorService localExecutorService;
     @Nullable
     private AsyncRepositoryOperations asyncRepositoryOperations;
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
@@ -371,12 +374,30 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public AsyncRepositoryOperations async() {
         if (asyncRepositoryOperations == null) {
-            if (ioExecutorService == null) {
-                ioExecutorService = Executors.newCachedThreadPool();
-            }
-            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(reactiveOperations, ioExecutorService);
+            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(
+                reactiveOperations,
+                getExecutorService()
+            );
         }
         return Objects.requireNonNull(asyncRepositoryOperations);
+    }
+
+    @NonNull
+    private ExecutorService newLocalThreadPool() {
+        localExecutorService = Executors.newCachedThreadPool();
+        return localExecutorService;
+    }
+
+    @NonNull
+    private ExecutorService getExecutorService() {
+        return ioExecutorService != null ? ioExecutorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (localExecutorService != null) {
+            localExecutorService.shutdown();
+        }
     }
 
     @NonNull

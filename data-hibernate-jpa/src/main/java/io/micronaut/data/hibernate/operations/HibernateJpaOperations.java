@@ -64,6 +64,7 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperationsSupportingCriteria;
 import io.micronaut.transaction.TransactionOperations;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -120,7 +121,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     private ExecutorAsyncOperations asyncOperations;
     @Nullable
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    @Nullable
+    private ExecutorService localExecutorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
@@ -716,8 +719,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+        localExecutorService = Executors.newCachedThreadPool();
+        return localExecutorService;
+    }
+
+    @NonNull
+    private ExecutorService getExecutorService() {
+        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
     @NonNull
@@ -731,7 +739,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                     executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
                         this,
                         this,
-                        executorService != null ? executorService : newLocalThreadPool()
+                        getExecutorService()
                     );
                     this.asyncOperations = executorAsyncOperations;
                 }
@@ -747,6 +755,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), asDataConversionService);
         }
         return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), null);
+    }
+
+    @PreDestroy
+    public void close() {
+        if (localExecutorService != null) {
+            localExecutorService.shutdown();
+        }
     }
 
     @NonNull
