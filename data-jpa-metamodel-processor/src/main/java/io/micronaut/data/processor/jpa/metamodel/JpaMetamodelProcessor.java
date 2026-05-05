@@ -24,11 +24,25 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.processing.ProcessingException;
-import io.micronaut.sourcegen.model.*;
+import io.micronaut.sourcegen.model.AnnotationDef;
+import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.FieldDef;
+import io.micronaut.sourcegen.model.TypeDef;
 import org.jspecify.annotations.NonNull;
 
 import javax.lang.model.element.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 
 /**
  * Jpa Static Metamodel processor.

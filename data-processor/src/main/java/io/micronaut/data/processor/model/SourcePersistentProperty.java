@@ -24,7 +24,11 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.ast.*;
+import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.EnumConstantElement;
+import io.micronaut.inject.ast.EnumElement;
+import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.ast.TypedElement;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
