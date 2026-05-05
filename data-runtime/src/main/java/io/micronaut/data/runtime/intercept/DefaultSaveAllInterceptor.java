@@ -69,61 +69,52 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
             return CollectionUtils.iterableToList(operations.persistAll(getInsertBatchOperation(context, entities)));
         }
         List<Object> results = new ArrayList<>(entities);
-        List<Object> insertRun = new ArrayList<>();
-        List<Integer> insertIndexes = new ArrayList<>();
-        List<Object> updateRun = new ArrayList<>();
-        List<Integer> updateIndexes = new ArrayList<>();
+        List<Object> batch = new ArrayList<>();
+        List<Integer> indexes = new ArrayList<>();
+        SaveOperation currentOperation = null;
         for (int i = 0; i < entities.size(); i++) {
             Object entity = entities.get(i);
-            if (isEntityUpdateCandidate(context, entity)) {
-                persistInsertRun(context, insertRun, insertIndexes, results);
-                updateRun.add(entity);
-                updateIndexes.add(i);
-            } else {
-                updateRun(context, updateRun, updateIndexes, results);
-                insertRun.add(entity);
-                insertIndexes.add(i);
+            SaveOperation entityOperation = getSaveOperation(context, entity);
+            if (currentOperation != null && currentOperation != entityOperation) {
+                executeBatch(context, currentOperation, batch, indexes, results);
             }
+            currentOperation = entityOperation;
+            batch.add(entity);
+            indexes.add(i);
         }
-        persistInsertRun(context, insertRun, insertIndexes, results);
-        updateRun(context, updateRun, updateIndexes, results);
+        executeBatch(context, currentOperation, batch, indexes, results);
         return results;
     }
 
-    private void persistInsertRun(MethodInvocationContext<T, R> context,
-                                  List<Object> insertRun,
-                                  List<Integer> insertIndexes,
-                                  List<Object> results) {
-        if (insertRun.isEmpty()) {
-            return;
-        }
-        Iterable<Object> persisted = operations.persistAll(getInsertBatchOperation(context, insertRun));
-        Iterator<Object> persistedIterator = persisted.iterator();
-        for (int i = 0; i < insertIndexes.size(); i++) {
-            Object entity = persistedIterator.hasNext() ? persistedIterator.next() : insertRun.get(i);
-            results.set(insertIndexes.get(i), entity);
-        }
-        insertRun.clear();
-        insertIndexes.clear();
+    private SaveOperation getSaveOperation(MethodInvocationContext<T, R> context, Object entity) {
+        return isEntityUpdateCandidate(context, entity) ? SaveOperation.UPDATE : SaveOperation.INSERT;
     }
 
-    private void updateRun(MethodInvocationContext<T, R> context,
-                           List<Object> updateRun,
-                           List<Integer> updateIndexes,
-                           List<Object> results) {
-        if (updateRun.isEmpty()) {
+    private void executeBatch(MethodInvocationContext<T, R> context,
+                              @Nullable SaveOperation operation,
+                              List<Object> batch,
+                              List<Integer> indexes,
+                              List<Object> results) {
+        if (operation == null || batch.isEmpty()) {
             return;
         }
-        List<Object> batch = new ArrayList<>(updateRun);
-        List<Integer> indexes = new ArrayList<>(updateIndexes);
-        updateRun.clear();
-        updateIndexes.clear();
-        Iterable<Object> updated = operations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), batch));
-        Iterator<Object> updatedIterator = updated.iterator();
-        for (int i = 0; i < indexes.size(); i++) {
-            Object entity = updatedIterator.hasNext() ? updatedIterator.next() : batch.get(i);
-            results.set(indexes.get(i), entity);
+        List<Object> currentBatch = new ArrayList<>(batch);
+        List<Integer> currentIndexes = new ArrayList<>(indexes);
+        batch.clear();
+        indexes.clear();
+        Iterable<Object> saved = operation == SaveOperation.INSERT
+            ? operations.persistAll(getInsertBatchOperation(context, currentBatch))
+            : operations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        Iterator<Object> savedIterator = saved.iterator();
+        for (int i = 0; i < currentIndexes.size(); i++) {
+            Object entity = savedIterator.hasNext() ? savedIterator.next() : currentBatch.get(i);
+            results.set(currentIndexes.get(i), entity);
         }
+    }
+
+    private enum SaveOperation {
+        INSERT,
+        UPDATE
     }
 
 }

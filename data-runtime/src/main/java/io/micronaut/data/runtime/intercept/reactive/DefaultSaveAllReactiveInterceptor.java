@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -55,41 +56,41 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
             return reactiveOperations.persistAll(getInsertBatchOperation(context, entities));
         }
         List<Publisher<Object>> publishers = new ArrayList<>();
-        List<Object> insertRun = new ArrayList<>();
-        List<Object> updateRun = new ArrayList<>();
+        List<Object> batch = new ArrayList<>();
+        SaveOperation currentOperation = null;
         for (Object entity : entities) {
-            if (isEntityUpdateCandidate(context, entity)) {
-                addInsertRun(context, publishers, insertRun);
-                updateRun.add(entity);
-            } else {
-                addUpdateRun(context, publishers, updateRun);
-                insertRun.add(entity);
+            SaveOperation entityOperation = getSaveOperation(context, entity);
+            if (currentOperation != null && currentOperation != entityOperation) {
+                addBatch(context, publishers, currentOperation, batch);
             }
+            currentOperation = entityOperation;
+            batch.add(entity);
         }
-        addInsertRun(context, publishers, insertRun);
-        addUpdateRun(context, publishers, updateRun);
+        addBatch(context, publishers, currentOperation, batch);
         return Flux.concat(publishers);
     }
 
-    private void addInsertRun(MethodInvocationContext<Object, Object> context,
-                              List<Publisher<Object>> publishers,
-                              List<Object> insertRun) {
-        if (insertRun.isEmpty()) {
-            return;
-        }
-        List<Object> batch = new ArrayList<>(insertRun);
-        publishers.add(reactiveOperations.persistAll(getInsertBatchOperation(context, batch)));
-        insertRun.clear();
+    private SaveOperation getSaveOperation(MethodInvocationContext<Object, Object> context, Object entity) {
+        return isEntityUpdateCandidate(context, entity) ? SaveOperation.UPDATE : SaveOperation.INSERT;
     }
 
-    private void addUpdateRun(MethodInvocationContext<Object, Object> context,
-                              List<Publisher<Object>> publishers,
-                              List<Object> updateRun) {
-        if (updateRun.isEmpty()) {
+    private void addBatch(MethodInvocationContext<Object, Object> context,
+                          List<Publisher<Object>> publishers,
+                          @Nullable SaveOperation operation,
+                          List<Object> batch) {
+        if (operation == null || batch.isEmpty()) {
             return;
         }
-        List<Object> batch = new ArrayList<>(updateRun);
-        publishers.add(reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), batch)));
-        updateRun.clear();
+        List<Object> currentBatch = new ArrayList<>(batch);
+        Publisher<Object> publisher = operation == SaveOperation.INSERT
+            ? reactiveOperations.persistAll(getInsertBatchOperation(context, currentBatch))
+            : reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        publishers.add(publisher);
+        batch.clear();
+    }
+
+    private enum SaveOperation {
+        INSERT,
+        UPDATE
     }
 }

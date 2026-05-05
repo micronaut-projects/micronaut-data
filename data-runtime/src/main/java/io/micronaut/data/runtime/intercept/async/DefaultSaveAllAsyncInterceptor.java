@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -58,71 +59,58 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompl
                 .thenApply(CollectionUtils::iterableToList);
         }
         List<Object> results = new ArrayList<>(entities);
-        List<Object> insertRun = new ArrayList<>();
-        List<Integer> insertIndexes = new ArrayList<>();
-        List<Object> updateRun = new ArrayList<>();
-        List<Integer> updateIndexes = new ArrayList<>();
+        List<Object> batch = new ArrayList<>();
+        List<Integer> indexes = new ArrayList<>();
         CompletionStage<List<Object>> stage = CompletableFuture.completedFuture(results);
+        SaveOperation currentOperation = null;
         for (int i = 0; i < entities.size(); i++) {
             Object entity = entities.get(i);
-            if (isEntityUpdateCandidate(context, entity)) {
-                stage = persistInsertRun(context, insertRun, insertIndexes, results, stage);
-                updateRun.add(entity);
-                updateIndexes.add(i);
-            } else {
-                stage = updateRun(context, updateRun, updateIndexes, results, stage);
-                insertRun.add(entity);
-                insertIndexes.add(i);
+            SaveOperation entityOperation = getSaveOperation(context, entity);
+            if (currentOperation != null && currentOperation != entityOperation) {
+                stage = executeBatch(context, currentOperation, batch, indexes, results, stage);
             }
+            currentOperation = entityOperation;
+            batch.add(entity);
+            indexes.add(i);
         }
-        stage = persistInsertRun(context, insertRun, insertIndexes, results, stage);
-        return updateRun(context, updateRun, updateIndexes, results, stage);
+        return executeBatch(context, currentOperation, batch, indexes, results, stage);
     }
 
-    private CompletionStage<List<Object>> persistInsertRun(MethodInvocationContext<Object, CompletionStage<Object>> context,
-                                                           List<Object> insertRun,
-                                                           List<Integer> insertIndexes,
-                                                           List<Object> results,
-                                                           CompletionStage<List<Object>> stage) {
-        if (insertRun.isEmpty()) {
-            return stage;
-        }
-        List<Object> batch = new ArrayList<>(insertRun);
-        List<Integer> indexes = new ArrayList<>(insertIndexes);
-        insertRun.clear();
-        insertIndexes.clear();
-        return stage.thenCompose(ignore -> asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, batch))
-            .thenApply(persisted -> {
-                Iterator<Object> persistedIterator = persisted.iterator();
-                for (int i = 0; i < indexes.size(); i++) {
-                    Object entity = persistedIterator.hasNext() ? persistedIterator.next() : batch.get(i);
-                    results.set(indexes.get(i), entity);
-                }
-                return results;
-            }));
+    private SaveOperation getSaveOperation(MethodInvocationContext<Object, CompletionStage<Object>> context, Object entity) {
+        return isEntityUpdateCandidate(context, entity) ? SaveOperation.UPDATE : SaveOperation.INSERT;
     }
 
-    private CompletionStage<List<Object>> updateRun(MethodInvocationContext<Object, CompletionStage<Object>> context,
-                                                    List<Object> updateRun,
-                                                    List<Integer> updateIndexes,
-                                                    List<Object> results,
-                                                    CompletionStage<List<Object>> stage) {
-        if (updateRun.isEmpty()) {
+    private CompletionStage<List<Object>> executeBatch(MethodInvocationContext<Object, CompletionStage<Object>> context,
+                                                       @Nullable SaveOperation operation,
+                                                       List<Object> batch,
+                                                       List<Integer> indexes,
+                                                       List<Object> results,
+                                                       CompletionStage<List<Object>> stage) {
+        if (operation == null || batch.isEmpty()) {
             return stage;
         }
-        List<Object> batch = new ArrayList<>(updateRun);
-        List<Integer> indexes = new ArrayList<>(updateIndexes);
-        updateRun.clear();
-        updateIndexes.clear();
-        return stage.thenCompose(ignore -> asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), batch))
-            .thenApply(updated -> {
-                Iterator<Object> updatedIterator = updated.iterator();
-                for (int i = 0; i < indexes.size(); i++) {
-                    Object entity = updatedIterator.hasNext() ? updatedIterator.next() : batch.get(i);
-                    results.set(indexes.get(i), entity);
+        List<Object> currentBatch = new ArrayList<>(batch);
+        List<Integer> currentIndexes = new ArrayList<>(indexes);
+        batch.clear();
+        indexes.clear();
+        return stage.thenCompose(ignore -> {
+            CompletionStage<Iterable<Object>> saved = operation == SaveOperation.INSERT
+                ? asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, currentBatch))
+                : asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+            return saved.thenApply(batchResults -> {
+                Iterator<Object> savedIterator = batchResults.iterator();
+                for (int i = 0; i < currentIndexes.size(); i++) {
+                    Object entity = savedIterator.hasNext() ? savedIterator.next() : currentBatch.get(i);
+                    results.set(currentIndexes.get(i), entity);
                 }
                 return results;
-            }));
+            });
+        });
+    }
+
+    private enum SaveOperation {
+        INSERT,
+        UPDATE
     }
 
 }
