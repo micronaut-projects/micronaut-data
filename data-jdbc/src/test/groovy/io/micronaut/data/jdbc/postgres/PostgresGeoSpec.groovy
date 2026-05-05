@@ -69,7 +69,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeographyEntityJson savedEntity = getGeographyEntityJsonRepository().save(entity)
+        GeographyEntityJson savedEntity = getGeographyEntityJsonRepository().insert(entity)
 
         then:
         savedEntity.id > 0
@@ -143,7 +143,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().save(entity)
+        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().insert(entity)
 
         then:
         savedEntity.id > 0

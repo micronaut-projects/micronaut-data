@@ -108,7 +108,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
@@ -118,7 +118,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
             def found = userWithWhereRepository.findById(e.id)
         then:
             !found.isPresent()
@@ -379,7 +379,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -388,14 +388,14 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -857,10 +857,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test order by embedded field"() {
         when:
-            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def e1 = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
             def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
             u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
-            def e2 = userWithWhereRepository.save(u2)
+            def e2 = userWithWhereRepository.insert(u2)
             def found1 = userWithWhereRepository.findById(e1.id)
             def found2 = userWithWhereRepository.findById(e2.id)
         then:

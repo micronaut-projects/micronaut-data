@@ -141,8 +141,8 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
 
     void 'embedded with generated values are saved'() {
         given:
-        relationshipStatusRepository.save(new RelationshipStatus(id: 1, name: 'Active'))
-        relationshipStatusRepository.save(new RelationshipStatus(id: 2, name: 'InActive'))
+        relationshipStatusRepository.insert(new RelationshipStatus(id: 1, name: 'Active'))
+        relationshipStatusRepository.insert(new RelationshipStatus(id: 2, name: 'InActive'))
         when:
         var status = relationshipStatusRepository.findById(1L).orElse(null)
         then:

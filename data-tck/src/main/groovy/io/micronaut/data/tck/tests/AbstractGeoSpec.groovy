@@ -46,7 +46,7 @@ abstract class AbstractGeoSpec extends Specification {
         school.setLocation(location1)
 
         when:
-        School savedSchool = getSchoolRepository().save(school)
+        School savedSchool = getSchoolRepository().insert(school)
 
         then:
         savedSchool.id > 0
@@ -92,7 +92,7 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().save(entity)
+        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().insert(entity)
 
         then:
         savedEntity.id > 0
@@ -150,7 +150,7 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(8))
 
         when:
-        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().save(entity)
+        GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().insert(entity)
 
         then:
         savedEntity.id > 0
@@ -202,7 +202,7 @@ abstract class AbstractGeoSpec extends Specification {
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeometryEntityWkt savedEntity = getGeometryEntityWktRepository().save(entity)
+        GeometryEntityWkt savedEntity = getGeometryEntityWktRepository().insert(entity)
 
         then:
         savedEntity.id > 0

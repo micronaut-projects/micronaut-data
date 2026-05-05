@@ -52,7 +52,7 @@ class OracleXEJSONSpec extends AbstractJSONSpec implements OracleTestPropertyPro
         jsonData.name = "Custom Name"
         jsonData.createdDate = LocalDateTime.now()
         jsonData.duration = Duration.ofHours(12)
-        jsonDataRepository.save(jsonData)
+        jsonDataRepository.insert(jsonData)
         def optJsonData = jsonDataRepository.getJsonDataById(100L)
         then:
         optJsonData.present
@@ -78,7 +78,7 @@ class OracleXEJSONSpec extends AbstractJSONSpec implements OracleTestPropertyPro
         jsonEntity.jsonDefault = sampleData
         jsonEntity.jsonBlob = sampleData
         jsonEntity.jsonString = sampleData
-        jsonEntityRepository.save(jsonEntity)
+        jsonEntityRepository.insert(jsonEntity)
         when:"Load entity from JSON BLOB field"
         def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
         then:"Entity is retrieved and properly deserialized"
