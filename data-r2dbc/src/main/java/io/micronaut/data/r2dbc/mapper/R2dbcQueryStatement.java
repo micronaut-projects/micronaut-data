@@ -98,6 +98,9 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
                 case STRING_ARRAY:
                     statement.bindNull(index, String[].class);
                 break;
+                case UUID_ARRAY:
+                    statement.bindNull(index, UUID[].class);
+                break;
                 case INTEGER_ARRAY:
                     statement.bindNull(index, Integer[].class);
                 break;
