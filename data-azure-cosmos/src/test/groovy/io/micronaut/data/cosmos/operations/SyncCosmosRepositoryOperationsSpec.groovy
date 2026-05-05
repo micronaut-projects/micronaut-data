@@ -43,23 +43,14 @@ class SyncCosmosRepositoryOperationsSpec extends Specification {
             SyncCosmosRepositoryOperations operations = newOperations(null)
 
         when:
-            operations.async()
-            ExecutorService localExecutorService = localExecutorService(operations)
+            ExecutorService localExecutorService = operations.async().executor as ExecutorService
             operations.close()
 
         then:
             localExecutorService.isShutdown()
     }
 
-    private static SyncCosmosRepositoryOperations newOperations(ExecutorService executorService) {
-        def constructor = SyncCosmosRepositoryOperations.getDeclaredConstructor(DefaultReactiveCosmosRepositoryOperations, ExecutorService)
-        constructor.accessible = true
-        return constructor.newInstance(null, executorService) as SyncCosmosRepositoryOperations
-    }
-
-    private static ExecutorService localExecutorService(SyncCosmosRepositoryOperations operations) {
-        def field = SyncCosmosRepositoryOperations.getDeclaredField("localExecutorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
+    private SyncCosmosRepositoryOperations newOperations(ExecutorService executorService) {
+        return new SyncCosmosRepositoryOperations(null, executorService)
     }
 }

@@ -51,8 +51,7 @@ class DefaultMongoRepositoryOperationsSpec extends Specification {
             DefaultMongoRepositoryOperations operations = newOperations(null)
 
         when:
-            operations.async()
-            ExecutorService localExecutorService = localExecutorService(operations)
+            ExecutorService localExecutorService = operations.async().executor as ExecutorService
             operations.close()
 
         then:
@@ -80,11 +79,5 @@ class DefaultMongoRepositoryOperationsSpec extends Specification {
         RuntimeEntityRegistry runtimeEntityRegistry = Mock()
         runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
         return runtimeEntityRegistry
-    }
-
-    private static ExecutorService localExecutorService(DefaultMongoRepositoryOperations operations) {
-        def field = DefaultMongoRepositoryOperations.getDeclaredField("localExecutorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
     }
 }

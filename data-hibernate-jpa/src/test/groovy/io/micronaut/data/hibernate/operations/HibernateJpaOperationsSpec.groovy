@@ -50,8 +50,7 @@ class HibernateJpaOperationsSpec extends Specification {
             HibernateJpaOperations operations = newOperations(null)
 
         when:
-            operations.async()
-            ExecutorService localExecutorService = localExecutorService(operations)
+            ExecutorService localExecutorService = operations.async().executor as ExecutorService
             operations.close()
 
         then:
@@ -70,11 +69,5 @@ class HibernateJpaOperationsSpec extends Specification {
                 Mock(RuntimeEntityRegistry),
                 Mock(DataConversionService)
         )
-    }
-
-    private static ExecutorService localExecutorService(HibernateJpaOperations operations) {
-        def field = HibernateJpaOperations.getDeclaredField("localExecutorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
     }
 }

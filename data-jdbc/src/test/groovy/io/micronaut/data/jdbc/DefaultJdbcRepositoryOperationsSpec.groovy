@@ -64,8 +64,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             DefaultJdbcRepositoryOperations operations = newOperations(null)
 
         when:
-            operations.async()
-            ExecutorService localExecutorService = localExecutorService(operations)
+            ExecutorService localExecutorService = operations.async().executor as ExecutorService
             operations.close()
 
         then:
@@ -99,11 +98,5 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
         runtimeEntityRegistry.getApplicationContext() >> context
         return runtimeEntityRegistry
-    }
-
-    private static ExecutorService localExecutorService(DefaultJdbcRepositoryOperations operations) {
-        def field = DefaultJdbcRepositoryOperations.getDeclaredField("localExecutorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
     }
 }

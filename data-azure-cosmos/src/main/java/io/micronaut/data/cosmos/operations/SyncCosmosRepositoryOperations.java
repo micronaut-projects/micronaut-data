@@ -18,6 +18,7 @@ package io.micronaut.data.cosmos.operations;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Internal;
+import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
@@ -68,8 +69,9 @@ final class SyncCosmosRepositoryOperations implements
      * @param reactiveCosmosRepositoryOperations    The reactive cosmos repository operations
      * @param executorService                       The executor service
      */
-    private SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
-                                           @Named("io") @Nullable ExecutorService executorService) {
+    @Inject
+    SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
+                                   @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
         this.executorService = executorService;
     }

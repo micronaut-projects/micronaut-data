@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc
+package io.micronaut.data.r2dbc.operations
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration
-import io.micronaut.data.r2dbc.operations.DefaultR2dbcRepositoryOperations
-import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
@@ -65,8 +63,7 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
             DefaultR2dbcRepositoryOperations operations = newOperations(null)
 
         when:
-            operations.async()
-            ExecutorService localExecutorService = localExecutorService(operations)
+            ExecutorService localExecutorService = operations.async().executor as ExecutorService
             operations.close()
 
         then:
@@ -101,11 +98,5 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
         runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
         runtimeEntityRegistry.getApplicationContext() >> context
         return runtimeEntityRegistry
-    }
-
-    private static ExecutorService localExecutorService(DefaultR2dbcRepositoryOperations operations) {
-        def field = DefaultR2dbcRepositoryOperations.getDeclaredField("localExecutorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
     }
 }
