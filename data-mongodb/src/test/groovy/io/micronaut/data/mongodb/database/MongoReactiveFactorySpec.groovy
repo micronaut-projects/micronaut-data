@@ -18,8 +18,6 @@ package io.micronaut.data.mongodb.database
 import io.micronaut.data.operations.async.AsyncCapableRepository
 import spock.lang.Specification
 
-import java.util.concurrent.ExecutorService
-
 class MongoReactiveFactorySpec extends Specification {
 
     void "close shuts down local executor service"() {
@@ -27,17 +25,10 @@ class MongoReactiveFactorySpec extends Specification {
             def operations = new MongoReactiveFactory().syncOperations(null)
 
         when:
-            ((AsyncCapableRepository) operations).async()
-            ExecutorService executorService = executorService(operations)
+            def executorService = ((AsyncCapableRepository) operations).async().executor
             ((AutoCloseable) operations).close()
 
         then:
             executorService.isShutdown()
-    }
-
-    private static ExecutorService executorService(Object operations) {
-        def field = operations.getClass().getDeclaredField("executorService")
-        field.accessible = true
-        return (ExecutorService) field.get(operations)
     }
 }
