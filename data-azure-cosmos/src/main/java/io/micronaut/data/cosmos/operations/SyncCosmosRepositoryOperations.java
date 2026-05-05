@@ -59,9 +59,9 @@ final class SyncCosmosRepositoryOperations implements
     @Nullable
     private final ExecutorService executorService;
     @Nullable
-    private ExecutorService localExecutorService;
+    private volatile ExecutorService localExecutorService;
     @Nullable
-    private ExecutorAsyncOperations asyncOperations;
+    private volatile ExecutorAsyncOperations asyncOperations;
 
     /**
      * Default constructor.
@@ -114,6 +114,7 @@ final class SyncCosmosRepositoryOperations implements
 
     @PreDestroy
     public void close() {
+        ExecutorService localExecutorService = this.localExecutorService;
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

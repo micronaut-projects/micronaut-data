@@ -119,11 +119,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
     @Nullable
-    private ExecutorAsyncOperations asyncOperations;
+    private volatile ExecutorAsyncOperations asyncOperations;
     @Nullable
     private final ExecutorService executorService;
     @Nullable
-    private ExecutorService localExecutorService;
+    private volatile ExecutorService localExecutorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
@@ -759,6 +759,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @PreDestroy
     public void close() {
+        ExecutorService localExecutorService = this.localExecutorService;
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

@@ -125,11 +125,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
     @Nullable
-    private ExecutorAsyncOperations asyncOperations;
+    private volatile ExecutorAsyncOperations asyncOperations;
     @Nullable
     private final ExecutorService executorService;
     @Nullable
-    private ExecutorService localExecutorService;
+    private volatile ExecutorService localExecutorService;
 
     /**
      * Default constructor.
@@ -1112,6 +1112,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
     @PreDestroy
     public void close() {
+        ExecutorService localExecutorService = this.localExecutorService;
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

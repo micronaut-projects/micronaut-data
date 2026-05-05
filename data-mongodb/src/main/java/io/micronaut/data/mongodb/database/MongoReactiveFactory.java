@@ -68,9 +68,9 @@ final class MongoReactiveFactory {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
         @Nullable
-        private ExecutorService executorService;
+        private volatile ExecutorService executorService;
         @Nullable
-        private ExecutorAsyncOperations asyncOperations;
+        private volatile ExecutorAsyncOperations asyncOperations;
 
         private MongoReactiveBlockingRepositoryOperations(DefaultReactiveMongoRepositoryOperations reactiveOperations) {
             this.reactiveOperations = reactiveOperations;
@@ -118,6 +118,7 @@ final class MongoReactiveFactory {
         @PreDestroy
         @Override
         public void close() {
+            ExecutorService executorService = this.executorService;
             if (executorService != null) {
                 executorService.shutdown();
             }

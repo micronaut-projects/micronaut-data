@@ -163,7 +163,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Nullable
     private final ExecutorService ioExecutorService;
     @Nullable
-    private ExecutorService localExecutorService;
+    private volatile ExecutorService localExecutorService;
     @Nullable
     private volatile AsyncRepositoryOperations asyncRepositoryOperations;
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
@@ -402,6 +402,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @PreDestroy
     public void close() {
+        ExecutorService localExecutorService = this.localExecutorService;
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

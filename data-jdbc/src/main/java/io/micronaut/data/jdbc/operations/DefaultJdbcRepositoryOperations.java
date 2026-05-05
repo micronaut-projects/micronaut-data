@@ -157,11 +157,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     @Nullable
-    private ExecutorAsyncOperations asyncOperations;
+    private volatile ExecutorAsyncOperations asyncOperations;
     @Nullable
     private final ExecutorService executorService;
     @Nullable
-    private ExecutorService localExecutorService;
+    private volatile ExecutorService localExecutorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     @Nullable
@@ -906,6 +906,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     @PreDestroy
     public void close() {
+        ExecutorService localExecutorService = this.localExecutorService;
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }
