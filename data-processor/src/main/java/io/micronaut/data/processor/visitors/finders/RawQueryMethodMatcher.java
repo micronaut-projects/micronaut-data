@@ -192,11 +192,16 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
-        } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
+        } else if (INSERT_PATTERN.matcher(query).find()) {
             if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
+        } else if (REPLACE_INTO_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
+                return DataMethod.OperationType.UPDATE_RETURNING;
+            }
+            return DataMethod.OperationType.UPDATE;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
             if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;

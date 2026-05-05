@@ -2475,7 +2475,7 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
-    void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
+    void "test raw REPLACE INTO is treated as UPDATE (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -2493,7 +2493,7 @@ interface Repo extends GenericRepository<Book, Long> {
         def method = repository.getRequiredMethod("replaceCustom", Long, String, int)
 
         expect:
-        getOperationType(method) == DataMethod.OperationType.INSERT
+        getOperationType(method) == DataMethod.OperationType.UPDATE
         method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
         getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
     }

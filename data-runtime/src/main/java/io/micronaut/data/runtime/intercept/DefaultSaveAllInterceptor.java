@@ -71,17 +71,22 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         List<Object> results = new ArrayList<>(entities);
         List<Object> insertRun = new ArrayList<>();
         List<Integer> insertIndexes = new ArrayList<>();
+        List<Object> updateRun = new ArrayList<>();
+        List<Integer> updateIndexes = new ArrayList<>();
         for (int i = 0; i < entities.size(); i++) {
             Object entity = entities.get(i);
             if (isEntityUpdateCandidate(context, entity)) {
                 persistInsertRun(context, insertRun, insertIndexes, results);
-                results.set(i, persistOrUpdate(context, entity));
+                updateRun.add(entity);
+                updateIndexes.add(i);
             } else {
+                updateRun(context, updateRun, updateIndexes, results);
                 insertRun.add(entity);
                 insertIndexes.add(i);
             }
         }
         persistInsertRun(context, insertRun, insertIndexes, results);
+        updateRun(context, updateRun, updateIndexes, results);
         return results;
     }
 
@@ -100,6 +105,25 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         }
         insertRun.clear();
         insertIndexes.clear();
+    }
+
+    private void updateRun(MethodInvocationContext<T, R> context,
+                           List<Object> updateRun,
+                           List<Integer> updateIndexes,
+                           List<Object> results) {
+        if (updateRun.isEmpty()) {
+            return;
+        }
+        List<Object> batch = new ArrayList<>(updateRun);
+        List<Integer> indexes = new ArrayList<>(updateIndexes);
+        updateRun.clear();
+        updateIndexes.clear();
+        Iterable<Object> updated = operations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), batch));
+        Iterator<Object> updatedIterator = updated.iterator();
+        for (int i = 0; i < indexes.size(); i++) {
+            Object entity = updatedIterator.hasNext() ? updatedIterator.next() : batch.get(i);
+            results.set(indexes.get(i), entity);
+        }
     }
 
 }

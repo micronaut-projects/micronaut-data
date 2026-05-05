@@ -56,15 +56,18 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
         }
         List<Publisher<Object>> publishers = new ArrayList<>();
         List<Object> insertRun = new ArrayList<>();
+        List<Object> updateRun = new ArrayList<>();
         for (Object entity : entities) {
             if (isEntityUpdateCandidate(context, entity)) {
                 addInsertRun(context, publishers, insertRun);
-                publishers.add(Flux.from(persistOrUpdateReactive(context, entity)));
+                updateRun.add(entity);
             } else {
+                addUpdateRun(context, publishers, updateRun);
                 insertRun.add(entity);
             }
         }
         addInsertRun(context, publishers, insertRun);
+        addUpdateRun(context, publishers, updateRun);
         return Flux.concat(publishers);
     }
 
@@ -77,5 +80,16 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
         List<Object> batch = new ArrayList<>(insertRun);
         publishers.add(reactiveOperations.persistAll(getInsertBatchOperation(context, batch)));
         insertRun.clear();
+    }
+
+    private void addUpdateRun(MethodInvocationContext<Object, Object> context,
+                              List<Publisher<Object>> publishers,
+                              List<Object> updateRun) {
+        if (updateRun.isEmpty()) {
+            return;
+        }
+        List<Object> batch = new ArrayList<>(updateRun);
+        publishers.add(reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), batch)));
+        updateRun.clear();
     }
 }

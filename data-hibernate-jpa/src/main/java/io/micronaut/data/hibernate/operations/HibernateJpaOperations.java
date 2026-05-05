@@ -32,7 +32,6 @@ import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
-import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
@@ -669,11 +668,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         Objects.requireNonNull(invocationContext, "Invocation context is required!");
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
         bindParameters(query, storedQuery, invocationContext, entity);
-        int updated = query.executeUpdate();
-        if (storedQuery.isOptimisticLock() && updated == 0) {
-            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: at least 1 got: " + updated);
-        }
-        return updated;
+        return query.executeUpdate();
     }
 
     @NonNull

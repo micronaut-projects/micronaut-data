@@ -35,7 +35,6 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.EmptyResultException;
-import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -108,9 +107,6 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
-    private static final String JAKARTA_OPTIMISTIC_LOCK_EXCEPTION = "jakarta.persistence.OptimisticLockException";
-    private static final String HIBERNATE_INSTANTIATION_EXCEPTION = "org.hibernate.InstantiationException";
-
     protected final ConversionService conversionService;
     protected final RepositoryOperations operations;
     protected final PreparedQueryResolver preparedQueryResolver;
@@ -662,8 +658,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Persists a new entity, or updates an entity that already has an identity.
-     * If an update does not affect a row, this falls back to insert so save works
-     * for assigned identities that are not stored yet.
      *
      * @param context The method invocation context
      * @param entity  The entity
@@ -677,19 +671,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (!isEntityUpdateCandidate(context, entity)) {
             return operations.persist(getInsertOperation(context, entity));
         }
-        try {
-            return operations.update(getUpdateOperation(context, entity));
-        } catch (RuntimeException e) {
-            if (!canFallbackToInsert(e)) {
-                throw e;
-            }
-            try {
-                return operations.persist(getInsertOperation(context, entity));
-            } catch (RuntimeException insertFailure) {
-                e.addSuppressed(insertFailure);
-                throw e;
-            }
-        }
+        return operations.update(getUpdateOperation(context, entity));
     }
 
     protected final Throwable unwrapCompletionException(Throwable throwable) {
@@ -698,41 +680,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             cause = cause.getCause();
         }
         return cause;
-    }
-
-    protected final boolean isOptimisticLockException(Throwable throwable) {
-        Throwable cause = unwrapCompletionException(throwable);
-        while (cause != null) {
-            if (cause instanceof OptimisticLockException || hasClassName(cause, JAKARTA_OPTIMISTIC_LOCK_EXCEPTION)) {
-                return true;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
-    protected final boolean canFallbackToInsert(Throwable throwable) {
-        Throwable cause = unwrapCompletionException(throwable);
-        while (cause != null) {
-            if (cause instanceof OptimisticLockException
-                || hasClassName(cause, JAKARTA_OPTIMISTIC_LOCK_EXCEPTION)
-                || hasClassName(cause, HIBERNATE_INSTANTIATION_EXCEPTION)) {
-                return true;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
-    private boolean hasClassName(Throwable throwable, String className) {
-        Class<?> type = throwable.getClass();
-        while (type != null) {
-            if (type.getName().equals(className)) {
-                return true;
-            }
-            type = type.getSuperclass();
-        }
-        return false;
     }
 
     protected final RuntimeException propagate(Throwable throwable) {

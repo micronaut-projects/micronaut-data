@@ -74,17 +74,6 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
         if (!isEntityUpdateCandidate(context, entity)) {
             return reactiveOperations.persist(getInsertOperation(context, entity));
         }
-        return Flux.from(reactiveOperations.update(getUpdateOperation(context, entity)))
-            .onErrorResume(throwable -> {
-                Throwable updateFailure = unwrapCompletionException(throwable);
-                if (!canFallbackToInsert(updateFailure)) {
-                    return Flux.error(updateFailure);
-                }
-                return Flux.from(reactiveOperations.persist(getInsertOperation(context, entity)))
-                    .onErrorMap(insertFailure -> {
-                        updateFailure.addSuppressed(unwrapCompletionException(insertFailure));
-                        return updateFailure;
-                    });
-            });
+        return reactiveOperations.update(getUpdateOperation(context, entity));
     }
 }
