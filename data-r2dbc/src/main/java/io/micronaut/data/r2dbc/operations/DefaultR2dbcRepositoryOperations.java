@@ -165,7 +165,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Nullable
     private ExecutorService localExecutorService;
     @Nullable
-    private AsyncRepositoryOperations asyncRepositoryOperations;
+    private volatile AsyncRepositoryOperations asyncRepositoryOperations;
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
@@ -373,13 +373,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public AsyncRepositoryOperations async() {
-        if (asyncRepositoryOperations == null) {
-            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(
-                reactiveOperations,
-                getExecutorService()
-            );
+        AsyncRepositoryOperations ops = asyncRepositoryOperations;
+        if (ops == null) {
+            synchronized (this) {
+                ops = asyncRepositoryOperations;
+                if (ops == null) {
+                    ops = new ReactorToAsyncOperationsAdaptor(
+                        reactiveOperations,
+                        getExecutorService()
+                    );
+                    asyncRepositoryOperations = ops;
+                }
+            }
         }
-        return Objects.requireNonNull(asyncRepositoryOperations);
+        return ops;
     }
 
     @NonNull
