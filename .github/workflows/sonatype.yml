@@ -3,15 +3,29 @@
 # https://github.com/micronaut-projects/micronaut-project-template/tree/master/.github/workflows
 #
 # and edit them there. Note that it will be sync'ed to all the Micronaut repos
-name: Sonatype Vuln Scan
+name: Vulnerability Audit
 on:
   pull_request:
     branches:
       - '[0-9]+.[0-9]+.x'
     paths:
+      - '**/*.gradle'
+      - '**/*.gradle.kts'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - 'settings.gradle.kts'
       - 'gradle/libs.versions.toml'
+      - 'gradle/wrapper/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - '**/gradle.lockfile'
+      - '**/versions.lock'
+      - 'osv-scanner.toml'
+      - '.github/workflows/sonatype.yml'
+      - '.github/workflows/release.yml'
+      - '.github/scripts/vulnerability-audit.sh'
 jobs:
-  build:
+  audit:
     if: github.repository != 'micronaut-projects/micronaut-project-template'
     runs-on: ubuntu-latest
     strategy:
@@ -19,7 +33,6 @@ jobs:
         java: ['25']
     env:
       TESTCONTAINERS_RYUK_DISABLED: true
-      OSS_INDEX_PASSWORD_AVAILABLE: ${{ secrets.OSS_INDEX_PASSWORD != '' }}
     steps:
        # https://github.com/actions/virtual-environments/issues/709
       - name: Remove system JDKs
@@ -56,19 +69,16 @@ jobs:
         run: |
           [ -f ./setup.sh ] && ./setup.sh || [ ! -f ./setup.sh ]
 
-      - name: "🚔 Sonatype Scan"
-        if: env.OSS_INDEX_PASSWORD_AVAILABLE == 'true' && matrix.java == '25'
-        id: sonatypescan
+      - name: "🚔 Vulnerability Audit"
+        if: matrix.java == '25'
         env:
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
           GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
-          OSS_INDEX_USERNAME: ${{ secrets.OSS_INDEX_USERNAME }}
-          OSS_INDEX_PASSWORD: ${{ secrets.OSS_INDEX_PASSWORD }}
         run: |
-          ./gradlew ossIndexAudit --no-parallel --info
+          .github/scripts/vulnerability-audit.sh
 
       - name: "❓ Optional cleanup step"
         run: |
