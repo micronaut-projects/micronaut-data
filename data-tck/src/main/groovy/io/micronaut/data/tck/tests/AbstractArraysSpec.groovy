@@ -38,6 +38,12 @@ abstract class AbstractArraysSpec extends Specification {
 
     def "should insert and update an entity with arrays"() {
         given:
+            def uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001")
+            def uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002")
+            def uuid3 = UUID.fromString("00000000-0000-0000-0000-000000000003")
+            def uuid4 = UUID.fromString("00000000-0000-0000-0000-000000000004")
+            def uuid5 = UUID.fromString("00000000-0000-0000-0000-000000000005")
+            def uuid6 = UUID.fromString("00000000-0000-0000-0000-000000000006")
             ArraysEntity entity = new ArraysEntity()
             entity.stringArray = ["XYZ", "123", "ABC"]
             entity.stringArrayCollection = ["XYZ", "123", "ABC"]
@@ -62,6 +68,8 @@ abstract class AbstractArraysSpec extends Specification {
             entity.booleanArray = [true, false, true, false]
             entity.booleanPrimitiveArray = [true, false, true, false]
             entity.booleanArrayCollection = [true, false, true, false]
+            entity.uuidArray = [uuid1, uuid2, uuid3] as UUID[]
+            entity.uuidArrayCollection = [uuid1, uuid2, uuid3]
         when:
             arraysEntityRepository.save(entity)
             ArraysEntity entityStored = arraysEntityRepository.findById(entity.someId).get()
@@ -95,6 +103,8 @@ abstract class AbstractArraysSpec extends Specification {
             dto.booleanArray == [true, false, true, false] as Boolean[]
             dto.booleanPrimitiveArray == [true, false, true, false] as boolean[]
             dto.booleanArrayCollection == [true, false, true, false]
+            dto.uuidArray == [uuid1, uuid2, uuid3] as UUID[]
+            dto.uuidArrayCollection == [uuid1, uuid2, uuid3]
         when:
             entity.stringArray = ["ABC", "123", "XYZ"]
             entity.stringArrayCollection = ["ABC", "123", "XYZ"]
@@ -119,6 +129,8 @@ abstract class AbstractArraysSpec extends Specification {
             entity.booleanArray = [false, false, true, true]
             entity.booleanPrimitiveArray = [false, true, true, false]
             entity.booleanArrayCollection = [false, false, true, false]
+            entity.uuidArray = [uuid6, uuid5, uuid4] as UUID[]
+            entity.uuidArrayCollection = [uuid6, uuid5, uuid4]
             arraysEntityRepository.update(entity)
             entityStored = arraysEntityRepository.findById(entity.someId).get()
         then:

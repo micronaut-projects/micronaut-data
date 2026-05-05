@@ -220,6 +220,9 @@ public interface QueryStatement<PS, IDX> {
                                 case CHARACTER_ARRAY:
                                     value = convertRequired(value, String[].class);
                                     break;
+                                case UUID_ARRAY:
+                                    value = convertRequired(value, UUID[].class);
+                                    break;
                                 default:
                                     // no-op
                             }

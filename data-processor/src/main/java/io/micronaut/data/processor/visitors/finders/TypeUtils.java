@@ -588,6 +588,9 @@ public class TypeUtils {
                 if (type.isAssignable(String.class)) {
                     return DataType.STRING_ARRAY;
                 }
+                if (type.isAssignable(UUID.class)) {
+                    return DataType.UUID_ARRAY;
+                }
                 if (type.isAssignable(Short.class)) {
                     return DataType.SHORT_ARRAY;
                 }
