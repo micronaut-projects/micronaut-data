@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
@@ -66,6 +67,14 @@ class PostgresArraysSpec extends AbstractArraysSpec implements PostgresTestPrope
         cleanup:
             repo.deleteAll()
     }
+
+    def "custom query binds null UUID array as postgres array parameter"() {
+        given:
+            def repo = context.getBean(R2dbcUuidArrayItemRepository)
+
+        expect:
+            repo.countByIds(null as UUID[]) == 0
+    }
 }
 
 @MappedEntity("r2dbc_uuid_array_item")
@@ -91,4 +100,10 @@ interface R2dbcUuidArrayItemRepository extends CrudRepository<R2dbcUuidArrayItem
         ON CONFLICT (id) DO NOTHING
     """)
     void batchInsertByIds(@TypeDef(type = DataType.UUID_ARRAY) List<UUID> ids)
+
+    @Query("""
+        SELECT count(*) FROM r2dbc_uuid_array_item
+        WHERE id = ANY(cast(:ids AS uuid[]))
+    """)
+    long countByIds(@Nullable @TypeDef(type = DataType.UUID_ARRAY) UUID[] ids)
 }
