@@ -61,12 +61,12 @@ public final class ExecutorServiceResolver implements AutoCloseable {
      */
     private ExecutorService getOrCreateLocalThreadPool() {
         synchronized (localExecutorServiceLock) {
-            ExecutorService localExecutorService = this.localExecutorService;
-            if (localExecutorService == null) {
-                localExecutorService = Executors.newCachedThreadPool();
-                this.localExecutorService = localExecutorService;
+            ExecutorService executorService = this.localExecutorService;
+            if (executorService == null) {
+                executorService = Executors.newCachedThreadPool();
+                this.localExecutorService = executorService;
             }
-            return localExecutorService;
+            return executorService;
         }
     }
 
