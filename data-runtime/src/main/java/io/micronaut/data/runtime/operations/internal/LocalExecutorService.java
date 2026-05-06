@@ -21,7 +21,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Resolves an injected executor service or lazily creates a local executor service.
@@ -33,7 +32,9 @@ public final class LocalExecutorService implements AutoCloseable {
 
     @Nullable
     private final ExecutorService executorService;
-    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
+    private final Object localExecutorServiceLock = new Object();
+    @Nullable
+    private ExecutorService localExecutorService;
 
     /**
      * @param executorService The configured executor service
@@ -47,21 +48,34 @@ public final class LocalExecutorService implements AutoCloseable {
      */
     @NonNull
     public ExecutorService get() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+        if (executorService != null) {
+            return executorService;
+        }
+        return getOrCreateLocalThreadPool();
     }
 
-    private ExecutorService newLocalThreadPool() {
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        localExecutorService.set(executorService);
-        return executorService;
+    /**
+     * Creates the local executor service if this instance does not already have one.
+     *
+     * @return The local executor service owned by this instance
+     */
+    private ExecutorService getOrCreateLocalThreadPool() {
+        synchronized (localExecutorServiceLock) {
+            ExecutorService localExecutorService = this.localExecutorService;
+            if (localExecutorService == null) {
+                localExecutorService = Executors.newCachedThreadPool();
+                this.localExecutorService = localExecutorService;
+            }
+            return localExecutorService;
+        }
     }
 
     @Override
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        if (localExecutorService != null) {
-            localExecutorService.shutdown();
+        synchronized (localExecutorServiceLock) {
+            if (localExecutorService != null) {
+                localExecutorService.shutdown();
+            }
         }
     }
 }
