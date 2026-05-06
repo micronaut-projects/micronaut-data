@@ -37,7 +37,7 @@ import io.micronaut.serde.reference.SerializationReference;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 
@@ -86,8 +86,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     }
 
     @Override
-    @Nullable
-    public <B, P> SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
+    public <B, P> SerializationReference<@NonNull B, @NonNull P> resolveReference(SerializationReference<B, P> reference) {
         return parent.resolveReference(reference);
     }
 
@@ -102,8 +101,8 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                             && type.isAnnotationPresent(GeneratedValue.class);
                     if (isGeneratedObjectIdAsString) {
                         Serializer<? super ObjectId> objectIdSerializer = findSerializer(OBJECT_ID);
-                        return (encoder, encoderContext2, stringType, value) -> {
-                            String stringId = (String) value;
+                        return (encoder, encoderContext2, stringType, val) -> {
+                            String stringId = (String) val;
                             objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
                         };
                     }
