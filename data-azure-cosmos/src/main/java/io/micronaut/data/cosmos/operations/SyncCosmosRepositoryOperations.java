@@ -38,6 +38,7 @@ import jakarta.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The sync Azure Cosmos DB operations implementation.
@@ -58,10 +59,8 @@ final class SyncCosmosRepositoryOperations implements
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
     @Nullable
     private final ExecutorService executorService;
-    @Nullable
-    private volatile ExecutorService localExecutorService;
-    @Nullable
-    private volatile ExecutorAsyncOperations asyncOperations;
+    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
+    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
 
     /**
      * Default constructor.
@@ -79,16 +78,16 @@ final class SyncCosmosRepositoryOperations implements
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
+        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations.get();
         if (executorAsyncOperations == null) {
             synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations;
+                executorAsyncOperations = this.asyncOperations.get();
                 if (executorAsyncOperations == null) {
                     executorAsyncOperations = new ExecutorAsyncOperations(
                         this,
                         getExecutorService()
                     );
-                    this.asyncOperations = executorAsyncOperations;
+                    this.asyncOperations.set(executorAsyncOperations);
                 }
             }
         }
@@ -103,18 +102,20 @@ final class SyncCosmosRepositoryOperations implements
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        localExecutorService = Executors.newCachedThreadPool();
-        return localExecutorService;
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        localExecutorService.set(executorService);
+        return executorService;
     }
 
     @NonNull
     private ExecutorService getExecutorService() {
+        ExecutorService localExecutorService = this.localExecutorService.get();
         return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService;
+        ExecutorService localExecutorService = this.localExecutorService.get();
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

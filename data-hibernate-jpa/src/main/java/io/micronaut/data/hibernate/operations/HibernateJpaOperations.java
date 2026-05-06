@@ -96,6 +96,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -118,12 +119,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
-    @Nullable
-    private volatile ExecutorAsyncOperations asyncOperations;
+    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
     @Nullable
     private final ExecutorService executorService;
-    @Nullable
-    private volatile ExecutorService localExecutorService;
+    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
@@ -719,29 +718,31 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        localExecutorService = Executors.newCachedThreadPool();
-        return localExecutorService;
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        localExecutorService.set(executorService);
+        return executorService;
     }
 
     @NonNull
     private ExecutorService getExecutorService() {
+        ExecutorService localExecutorService = this.localExecutorService.get();
         return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
+        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations.get();
         if (executorAsyncOperations == null) {
             synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations;
+                executorAsyncOperations = this.asyncOperations.get();
                 if (executorAsyncOperations == null) {
                     executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
                         this,
                         this,
                         getExecutorService()
                     );
-                    this.asyncOperations = executorAsyncOperations;
+                    this.asyncOperations.set(executorAsyncOperations);
                 }
             }
         }
@@ -759,7 +760,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService;
+        ExecutorService localExecutorService = this.localExecutorService.get();
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

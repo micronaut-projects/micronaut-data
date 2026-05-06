@@ -130,6 +130,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -156,12 +157,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
-    @Nullable
-    private volatile ExecutorAsyncOperations asyncOperations;
+    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
     @Nullable
     private final ExecutorService executorService;
-    @Nullable
-    private volatile ExecutorService localExecutorService;
+    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     @Nullable
@@ -256,12 +255,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        localExecutorService = Executors.newCachedThreadPool();
-        return localExecutorService;
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        localExecutorService.set(executorService);
+        return executorService;
     }
 
     @NonNull
     private ExecutorService getExecutorService() {
+        ExecutorService localExecutorService = this.localExecutorService.get();
         return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
@@ -338,16 +339,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
+        ExecutorAsyncOperations asyncOperations = this.asyncOperations.get();
         if (asyncOperations == null) {
             synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
+                asyncOperations = this.asyncOperations.get();
                 if (asyncOperations == null) {
                     asyncOperations = new ExecutorAsyncOperations(
                         this,
                         getExecutorService()
                     );
-                    this.asyncOperations = asyncOperations;
+                    this.asyncOperations.set(asyncOperations);
                 }
             }
         }
@@ -906,7 +907,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService;
+        ExecutorService localExecutorService = this.localExecutorService.get();
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }

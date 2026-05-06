@@ -36,12 +36,12 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * MongoDB reactive beans factory.
@@ -67,10 +67,8 @@ final class MongoReactiveFactory {
             AutoCloseable {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
-        @Nullable
-        private volatile ExecutorService executorService;
-        @Nullable
-        private volatile ExecutorAsyncOperations asyncOperations;
+        private final AtomicReference<ExecutorService> executorService = new AtomicReference<>();
+        private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
 
         private MongoReactiveBlockingRepositoryOperations(DefaultReactiveMongoRepositoryOperations reactiveOperations) {
             this.reactiveOperations = reactiveOperations;
@@ -99,16 +97,18 @@ final class MongoReactiveFactory {
         @NonNull
         @Override
         public ExecutorAsyncOperations async() {
-            ExecutorAsyncOperations asyncOperations = this.asyncOperations;
+            ExecutorAsyncOperations asyncOperations = this.asyncOperations.get();
             if (asyncOperations == null) {
                 synchronized (this) { // double check
-                    asyncOperations = this.asyncOperations;
+                    asyncOperations = this.asyncOperations.get();
                     if (asyncOperations == null) {
+                        ExecutorService executorService = this.executorService.get();
                         if (executorService == null) {
                             executorService = Executors.newCachedThreadPool();
+                            this.executorService.set(executorService);
                         }
                         asyncOperations = new ExecutorAsyncOperations(this, executorService);
-                        this.asyncOperations = asyncOperations;
+                        this.asyncOperations.set(asyncOperations);
                     }
                 }
             }
@@ -118,7 +118,7 @@ final class MongoReactiveFactory {
         @PreDestroy
         @Override
         public void close() {
-            ExecutorService executorService = this.executorService;
+            ExecutorService executorService = this.executorService.get();
             if (executorService != null) {
                 executorService.shutdown();
             }

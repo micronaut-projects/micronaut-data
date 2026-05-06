@@ -139,6 +139,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -162,10 +163,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
     @Nullable
     private final ExecutorService ioExecutorService;
-    @Nullable
-    private volatile ExecutorService localExecutorService;
-    @Nullable
-    private volatile AsyncRepositoryOperations asyncRepositoryOperations;
+    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
+    private final AtomicReference<AsyncRepositoryOperations> asyncRepositoryOperations = new AtomicReference<>();
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
@@ -373,16 +372,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public AsyncRepositoryOperations async() {
-        AsyncRepositoryOperations ops = asyncRepositoryOperations;
+        AsyncRepositoryOperations ops = asyncRepositoryOperations.get();
         if (ops == null) {
             synchronized (this) {
-                ops = asyncRepositoryOperations;
+                ops = asyncRepositoryOperations.get();
                 if (ops == null) {
                     ops = new ReactorToAsyncOperationsAdaptor(
                         reactiveOperations,
                         getExecutorService()
                     );
-                    asyncRepositoryOperations = ops;
+                    asyncRepositoryOperations.set(ops);
                 }
             }
         }
@@ -391,18 +390,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
-        localExecutorService = Executors.newCachedThreadPool();
-        return localExecutorService;
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        localExecutorService.set(executorService);
+        return executorService;
     }
 
     @NonNull
     private ExecutorService getExecutorService() {
+        ExecutorService localExecutorService = this.localExecutorService.get();
         return ioExecutorService != null ? ioExecutorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
     }
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService;
+        ExecutorService localExecutorService = this.localExecutorService.get();
         if (localExecutorService != null) {
             localExecutorService.shutdown();
         }
