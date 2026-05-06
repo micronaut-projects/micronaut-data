@@ -32,16 +32,14 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * MongoDB reactive beans factory.
@@ -67,8 +65,8 @@ final class MongoReactiveFactory {
             AutoCloseable {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
-        private final AtomicReference<ExecutorService> executorService = new AtomicReference<>();
-        private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
+        private final LocalExecutorService executorService = new LocalExecutorService(null);
+        private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
         private MongoReactiveBlockingRepositoryOperations(DefaultReactiveMongoRepositoryOperations reactiveOperations) {
             this.reactiveOperations = reactiveOperations;
@@ -97,31 +95,13 @@ final class MongoReactiveFactory {
         @NonNull
         @Override
         public ExecutorAsyncOperations async() {
-            ExecutorAsyncOperations asyncOperations = this.asyncOperations.get();
-            if (asyncOperations == null) {
-                synchronized (this) { // double check
-                    asyncOperations = this.asyncOperations.get();
-                    if (asyncOperations == null) {
-                        ExecutorService executorService = this.executorService.get();
-                        if (executorService == null) {
-                            executorService = Executors.newCachedThreadPool();
-                            this.executorService.set(executorService);
-                        }
-                        asyncOperations = new ExecutorAsyncOperations(this, executorService);
-                        this.asyncOperations.set(asyncOperations);
-                    }
-                }
-            }
-            return Objects.requireNonNull(asyncOperations);
+            return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorService.get()));
         }
 
         @PreDestroy
         @Override
         public void close() {
-            ExecutorService executorService = this.executorService.get();
-            if (executorService != null) {
-                executorService.shutdown();
-            }
+            executorService.close();
         }
 
         @Override

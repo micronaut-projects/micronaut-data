@@ -79,7 +79,9 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
+import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PreDestroy;
@@ -98,9 +100,7 @@ import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -125,10 +125,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final MongoClient mongoClient;
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
-    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
-    @Nullable
-    private final ExecutorService executorService;
-    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final LocalExecutorService executorService;
 
     /**
      * Default constructor.
@@ -158,7 +156,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
         this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
-        this.executorService = executorService;
+        this.executorService = new LocalExecutorService(executorService);
     }
 
     @Override
@@ -1082,41 +1080,15 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations.get();
-        if (asyncOperations == null) {
-            synchronized (this) { // double check
-                asyncOperations = this.asyncOperations.get();
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
-                            this,
-                            getExecutorService()
-                    );
-                    this.asyncOperations.set(asyncOperations);
-                }
-            }
-        }
-        return asyncOperations;
-    }
-
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        localExecutorService.set(executorService);
-        return executorService;
-    }
-
-    @NonNull
-    private ExecutorService getExecutorService() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+                this,
+                executorService.get()
+        ));
     }
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        if (localExecutorService != null) {
-            localExecutorService.shutdown();
-        }
+        executorService.close();
     }
 
     @NonNull

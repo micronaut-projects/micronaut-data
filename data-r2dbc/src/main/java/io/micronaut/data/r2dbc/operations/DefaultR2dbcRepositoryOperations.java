@@ -91,8 +91,10 @@ import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
+import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
@@ -137,9 +139,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -161,10 +161,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
-    @Nullable
-    private final ExecutorService ioExecutorService;
-    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
-    private final AtomicReference<AsyncRepositoryOperations> asyncRepositoryOperations = new AtomicReference<>();
+    private final LocalExecutorService executorService;
+    private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncRepositoryOperations = new SynchronizedLazyValue<>();
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
@@ -227,7 +225,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             jsonMapper,
             sqlJsonColumnMapperProvider);
         this.connectionFactory = connectionFactory;
-        this.ioExecutorService = executorService;
+        this.executorService = new LocalExecutorService(executorService);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.configuration = configuration;
@@ -372,41 +370,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public AsyncRepositoryOperations async() {
-        AsyncRepositoryOperations ops = asyncRepositoryOperations.get();
-        if (ops == null) {
-            synchronized (this) {
-                ops = asyncRepositoryOperations.get();
-                if (ops == null) {
-                    ops = new ReactorToAsyncOperationsAdaptor(
-                        reactiveOperations,
-                        getExecutorService()
-                    );
-                    asyncRepositoryOperations.set(ops);
-                }
-            }
-        }
-        return ops;
-    }
-
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        localExecutorService.set(executorService);
-        return executorService;
-    }
-
-    @NonNull
-    private ExecutorService getExecutorService() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        return ioExecutorService != null ? ioExecutorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
+        return asyncRepositoryOperations.get(() -> new ReactorToAsyncOperationsAdaptor(
+            reactiveOperations,
+            executorService.get()
+        ));
     }
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        if (localExecutorService != null) {
-            localExecutorService.shutdown();
-        }
+        executorService.close();
     }
 
     @NonNull

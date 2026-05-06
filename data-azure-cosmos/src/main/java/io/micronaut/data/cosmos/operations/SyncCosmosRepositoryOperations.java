@@ -29,16 +29,15 @@ import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The sync Azure Cosmos DB operations implementation.
@@ -57,10 +56,8 @@ final class SyncCosmosRepositoryOperations implements
     PreparedQueryDecorator {
 
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
-    @Nullable
-    private final ExecutorService executorService;
-    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
-    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
+    private final LocalExecutorService executorService;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     /**
      * Default constructor.
@@ -72,26 +69,16 @@ final class SyncCosmosRepositoryOperations implements
     SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
                                    @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
-        this.executorService = executorService;
+        this.executorService = new LocalExecutorService(executorService);
     }
 
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations.get();
-        if (executorAsyncOperations == null) {
-            synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations.get();
-                if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperations(
-                        this,
-                        getExecutorService()
-                    );
-                    this.asyncOperations.set(executorAsyncOperations);
-                }
-            }
-        }
-        return Objects.requireNonNull(executorAsyncOperations);
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+            this,
+            executorService.get()
+        ));
     }
 
     @NonNull
@@ -100,25 +87,9 @@ final class SyncCosmosRepositoryOperations implements
         return reactiveCosmosRepositoryOperations;
     }
 
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        localExecutorService.set(executorService);
-        return executorService;
-    }
-
-    @NonNull
-    private ExecutorService getExecutorService() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
-    }
-
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        if (localExecutorService != null) {
-            localExecutorService.shutdown();
-        }
+        executorService.close();
     }
 
     @Override

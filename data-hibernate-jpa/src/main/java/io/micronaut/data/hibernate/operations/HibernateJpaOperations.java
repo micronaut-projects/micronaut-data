@@ -63,6 +63,8 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperationsSupportingCriteria;
+import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
@@ -95,8 +97,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -119,10 +119,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
-    private final AtomicReference<ExecutorAsyncOperations> asyncOperations = new AtomicReference<>();
-    @Nullable
-    private final ExecutorService executorService;
-    private final AtomicReference<ExecutorService> localExecutorService = new AtomicReference<>();
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final LocalExecutorService executorService;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
@@ -150,7 +148,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.sessionFactory = sessionFactory;
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
-        this.executorService = executorService;
+        this.executorService = new LocalExecutorService(executorService);
 
         ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
         this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
@@ -717,36 +715,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @NonNull
-    private ExecutorService newLocalThreadPool() {
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        localExecutorService.set(executorService);
-        return executorService;
-    }
-
-    @NonNull
-    private ExecutorService getExecutorService() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        return executorService != null ? executorService : localExecutorService != null ? localExecutorService : newLocalThreadPool();
-    }
-
-    @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations.get();
-        if (executorAsyncOperations == null) {
-            synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations.get();
-                if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
-                        this,
-                        this,
-                        getExecutorService()
-                    );
-                    this.asyncOperations.set(executorAsyncOperations);
-                }
-            }
-        }
-        return Objects.requireNonNull(executorAsyncOperations);
+        return asyncOperations.get(() -> new ExecutorAsyncOperationsSupportingCriteria(
+            this,
+            this,
+            executorService.get()
+        ));
     }
 
     @NonNull
@@ -760,10 +735,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @PreDestroy
     public void close() {
-        ExecutorService localExecutorService = this.localExecutorService.get();
-        if (localExecutorService != null) {
-            localExecutorService.shutdown();
-        }
+        executorService.close();
     }
 
     @NonNull
