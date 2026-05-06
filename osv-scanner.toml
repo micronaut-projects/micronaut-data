@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "GHSA-frpp-8pwq-hjrx"
+reason = "No Hibernate Reactive 2.4.x version patched for org.hibernate.reactive:hibernate-reactive-core:2.4.17.Final."
