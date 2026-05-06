@@ -91,7 +91,7 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
-import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -158,7 +158,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
-    private final LocalExecutorService executorService;
+    private final ExecutorServiceResolver executorServiceResolver;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     @Nullable
@@ -227,7 +227,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
         this.transactionOperations = transactionOperations;
-        this.executorService = new LocalExecutorService(executorService);
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
@@ -326,7 +326,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public ExecutorAsyncOperations async() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(
             this,
-            executorService.get()
+            executorServiceResolver.get()
         ));
     }
 
@@ -882,7 +882,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     @PreDestroy
     public void close() {
-        executorService.close();
+        executorServiceResolver.close();
     }
 
     private void applySchema(Connection connection) {

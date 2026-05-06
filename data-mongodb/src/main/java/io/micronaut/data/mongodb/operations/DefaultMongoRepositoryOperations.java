@@ -79,7 +79,7 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
-import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -126,7 +126,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
-    private final LocalExecutorService executorService;
+    private final ExecutorServiceResolver executorServiceResolver;
 
     /**
      * Default constructor.
@@ -156,7 +156,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
         this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
-        this.executorService = new LocalExecutorService(executorService);
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @Override
@@ -1082,13 +1082,13 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     public ExecutorAsyncOperations async() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(
                 this,
-                executorService.get()
+                executorServiceResolver.get()
         ));
     }
 
     @PreDestroy
     public void close() {
-        executorService.close();
+        executorServiceResolver.close();
     }
 
     @NonNull

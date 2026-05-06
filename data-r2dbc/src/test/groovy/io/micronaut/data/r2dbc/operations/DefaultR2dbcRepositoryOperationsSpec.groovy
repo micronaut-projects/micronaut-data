@@ -63,11 +63,11 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
             DefaultR2dbcRepositoryOperations operations = newOperations(null)
 
         when:
-            ExecutorService localExecutorService = operations.async().executor as ExecutorService
+            ExecutorService fallbackExecutor = operations.async().executor as ExecutorService
             operations.close()
 
         then:
-            localExecutorService.isShutdown()
+            fallbackExecutor.isShutdown()
     }
 
     private DefaultR2dbcRepositoryOperations newOperations(ExecutorService executorService) {

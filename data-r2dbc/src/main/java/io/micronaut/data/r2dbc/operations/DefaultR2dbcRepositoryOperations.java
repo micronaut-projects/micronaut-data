@@ -91,7 +91,7 @@ import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
-import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
@@ -161,7 +161,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
-    private final LocalExecutorService executorService;
+    private final ExecutorServiceResolver executorServiceResolver;
     private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncRepositoryOperations = new SynchronizedLazyValue<>();
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
@@ -225,7 +225,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             jsonMapper,
             sqlJsonColumnMapperProvider);
         this.connectionFactory = connectionFactory;
-        this.executorService = new LocalExecutorService(executorService);
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.configuration = configuration;
@@ -372,13 +372,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     public AsyncRepositoryOperations async() {
         return asyncRepositoryOperations.get(() -> new ReactorToAsyncOperationsAdaptor(
             reactiveOperations,
-            executorService.get()
+            executorServiceResolver.get()
         ));
     }
 
     @PreDestroy
     public void close() {
-        executorService.close();
+        executorServiceResolver.close();
     }
 
     @NonNull

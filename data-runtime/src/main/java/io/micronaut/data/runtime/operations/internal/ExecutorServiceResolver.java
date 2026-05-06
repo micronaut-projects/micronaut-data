@@ -28,10 +28,10 @@ import java.util.concurrent.Executors;
  * @since 5.0
  */
 @Internal
-public final class LocalExecutorService implements AutoCloseable {
+public final class ExecutorServiceResolver implements AutoCloseable {
 
     @Nullable
-    private final ExecutorService executorService;
+    private final ExecutorService configuredExecutorService;
     private final Object localExecutorServiceLock = new Object();
     @Nullable
     private ExecutorService localExecutorService;
@@ -39,8 +39,8 @@ public final class LocalExecutorService implements AutoCloseable {
     /**
      * @param executorService The configured executor service
      */
-    public LocalExecutorService(@Nullable ExecutorService executorService) {
-        this.executorService = executorService;
+    public ExecutorServiceResolver(@Nullable ExecutorService executorService) {
+        this.configuredExecutorService = executorService;
     }
 
     /**
@@ -48,8 +48,8 @@ public final class LocalExecutorService implements AutoCloseable {
      */
     @NonNull
     public ExecutorService get() {
-        if (executorService != null) {
-            return executorService;
+        if (configuredExecutorService != null) {
+            return configuredExecutorService;
         }
         return getOrCreateLocalThreadPool();
     }

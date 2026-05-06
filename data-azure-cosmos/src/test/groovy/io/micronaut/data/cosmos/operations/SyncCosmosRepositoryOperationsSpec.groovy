@@ -44,11 +44,11 @@ class SyncCosmosRepositoryOperationsSpec extends Specification {
             SyncCosmosRepositoryOperations operations = newOperations(null)
 
         when:
-            ExecutorService localExecutorService = operations.async().executor as ExecutorService
+            ExecutorService fallbackExecutor = operations.async().executor as ExecutorService
             operations.close()
 
         then:
-            localExecutorService.isShutdown()
+            fallbackExecutor.isShutdown()
     }
 
     private SyncCosmosRepositoryOperations newOperations(ExecutorService executorService) {

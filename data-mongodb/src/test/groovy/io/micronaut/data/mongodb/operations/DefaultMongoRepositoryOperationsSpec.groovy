@@ -51,11 +51,11 @@ class DefaultMongoRepositoryOperationsSpec extends Specification {
             DefaultMongoRepositoryOperations operations = newOperations(null)
 
         when:
-            ExecutorService localExecutorService = operations.async().executor as ExecutorService
+            ExecutorService fallbackExecutor = operations.async().executor as ExecutorService
             operations.close()
 
         then:
-            localExecutorService.isShutdown()
+            fallbackExecutor.isShutdown()
     }
 
     private DefaultMongoRepositoryOperations newOperations(ExecutorService executorService) {

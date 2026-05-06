@@ -23,11 +23,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-class LocalExecutorServiceSpec extends Specification {
+class ExecutorServiceResolverSpec extends Specification {
 
     void "concurrent get creates one local executor service"() {
         given:
-            LocalExecutorService localExecutorService = new LocalExecutorService(null)
+            ExecutorServiceResolver resolver = new ExecutorServiceResolver(null)
             CountDownLatch ready = new CountDownLatch(8)
             CountDownLatch start = new CountDownLatch(1)
             ExecutorService callers = Executors.newFixedThreadPool(8)
@@ -37,13 +37,13 @@ class LocalExecutorServiceSpec extends Specification {
                 callers.submit({
                     ready.countDown()
                     start.await()
-                    localExecutorService.get()
+                    resolver.get()
                 })
             }
             assert ready.await(5, TimeUnit.SECONDS)
             start.countDown()
             List<ExecutorService> executorServices = futures.collect { it.get(5, TimeUnit.SECONDS) }
-            localExecutorService.close()
+            resolver.close()
 
         then:
             executorServices.toSet().size() == 1

@@ -29,7 +29,7 @@ import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
-import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -56,7 +56,7 @@ final class SyncCosmosRepositoryOperations implements
     PreparedQueryDecorator {
 
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
-    private final LocalExecutorService executorService;
+    private final ExecutorServiceResolver executorServiceResolver;
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     /**
@@ -69,7 +69,7 @@ final class SyncCosmosRepositoryOperations implements
     SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
                                    @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
-        this.executorService = new LocalExecutorService(executorService);
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @NonNull
@@ -77,7 +77,7 @@ final class SyncCosmosRepositoryOperations implements
     public ExecutorAsyncOperations async() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(
             this,
-            executorService.get()
+            executorServiceResolver.get()
         ));
     }
 
@@ -89,7 +89,7 @@ final class SyncCosmosRepositoryOperations implements
 
     @PreDestroy
     public void close() {
-        executorService.close();
+        executorServiceResolver.close();
     }
 
     @Override

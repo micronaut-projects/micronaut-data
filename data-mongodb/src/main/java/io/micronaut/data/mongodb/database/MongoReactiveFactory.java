@@ -32,7 +32,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
-import io.micronaut.data.runtime.operations.internal.LocalExecutorService;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
@@ -65,7 +65,7 @@ final class MongoReactiveFactory {
             AutoCloseable {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
-        private final LocalExecutorService executorService = new LocalExecutorService(null);
+        private final ExecutorServiceResolver executorServiceResolver = new ExecutorServiceResolver(null);
         private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
         private MongoReactiveBlockingRepositoryOperations(DefaultReactiveMongoRepositoryOperations reactiveOperations) {
@@ -95,13 +95,13 @@ final class MongoReactiveFactory {
         @NonNull
         @Override
         public ExecutorAsyncOperations async() {
-            return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorService.get()));
+            return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorServiceResolver.get()));
         }
 
         @PreDestroy
         @Override
         public void close() {
-            executorService.close();
+            executorServiceResolver.close();
         }
 
         @Override
