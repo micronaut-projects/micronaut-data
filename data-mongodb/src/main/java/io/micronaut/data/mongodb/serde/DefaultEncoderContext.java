@@ -55,8 +55,7 @@ class DefaultEncoderContext extends AbstractPropertyReferenceManager implements 
     }
 
     @Override
-    @Nullable
-    public <B, P> SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
+    public <B, P> @Nullable SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
         final Object value = reference.getReference();
         if (refs != null) {
             final PropertyReference<?, ?> managedReference = refs.peekFirst();

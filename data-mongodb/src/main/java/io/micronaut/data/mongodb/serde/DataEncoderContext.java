@@ -86,8 +86,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     }
 
     @Override
-    @Nullable
-    public <B, P> SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
+    public <B, P> @Nullable SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
         return parent.resolveReference(reference);
     }
 
