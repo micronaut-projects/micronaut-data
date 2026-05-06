@@ -120,6 +120,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final boolean saveAsInsert;
 
     /**
+     * The operation selected for a save invocation.
+     */
+    protected enum SaveOperation {
+        INSERT,
+        UPDATE
+    }
+
+    /**
      * Default constructor.
      *
      * @param operations The operations
@@ -623,6 +631,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         return saveAsInsert;
     }
 
+    /**
+     * Resolve whether save should insert or update the entity.
+     *
+     * @param context The method invocation context
+     * @param entity  The entity instance
+     * @return The selected save operation
+     */
+    protected final SaveOperation resolveSaveOperation(MethodInvocationContext<?, ?> context, Object entity) {
+        if (!isEntityUpdateCandidate(context, entity)) {
+            return SaveOperation.INSERT;
+        }
+        return SaveOperation.UPDATE;
+    }
+
     private boolean hasEntityId(RuntimePersistentEntity<Object> persistentEntity, Object entity) {
         if (persistentEntity.hasIdentity()) {
             RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
@@ -668,10 +690,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (isSaveAsInsert()) {
             return operations.persist(getInsertOperation(context, entity));
         }
-        if (!isEntityUpdateCandidate(context, entity)) {
-            return operations.persist(getInsertOperation(context, entity));
-        }
-        return operations.update(getUpdateOperation(context, entity));
+        return switch (resolveSaveOperation(context, entity)) {
+            case INSERT -> operations.persist(getInsertOperation(context, entity));
+            case UPDATE -> operations.update(getUpdateOperation(context, entity));
+        };
     }
 
     protected final Throwable unwrapCompletionException(Throwable throwable) {
@@ -962,7 +984,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param context The context
      */
-    protected final void validateNullArguments(MethodInvocationContext<T, R> context) {
+    protected final void validateNullArguments(MethodInvocationContext<?, ?> context) {
         Object[] parameterValues = context.getParameterValues();
         for (int i = 0; i < parameterValues.length; i++) {
             Object o = parameterValues[i];

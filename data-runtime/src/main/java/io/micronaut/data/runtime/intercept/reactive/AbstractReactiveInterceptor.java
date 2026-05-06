@@ -71,9 +71,9 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
         if (isSaveAsInsert()) {
             return reactiveOperations.persist(getInsertOperation(context, entity));
         }
-        if (!isEntityUpdateCandidate(context, entity)) {
-            return reactiveOperations.persist(getInsertOperation(context, entity));
-        }
-        return reactiveOperations.update(getUpdateOperation(context, entity));
+        return switch (resolveSaveOperation(context, entity)) {
+            case INSERT -> reactiveOperations.persist(getInsertOperation(context, entity));
+            case UPDATE -> reactiveOperations.update(getUpdateOperation(context, entity));
+        };
     }
 }

@@ -126,7 +126,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
 
     void "test many to one with entity having only id field"() {
         when:"Many to one entity is null"
-        def ent = myEntityRepository.save(new MyEntity(-1, null))
+        def ent = myEntityRepository.insert(new MyEntity(-1, null))
         then:"Entity id is generated"
         ent.lid != -1
         when:"Find entity by id"
@@ -141,9 +141,9 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         noExceptionThrown()
         when:"Many to one entity is not null"
         def myOther = new MyOther("foo")
-        myOtherRepository.save(myOther)
+        myOtherRepository.insert(myOther)
         def newMyEntity = new MyEntity(-1, myOther)
-        myEntityRepository.save(newMyEntity)
+        myEntityRepository.insert(newMyEntity)
         optFound = myEntityRepository.findById(newMyEntity.lid)
         then:"Many to one entity is loaded and not null"
         optFound.present

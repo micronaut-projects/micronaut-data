@@ -53,8 +53,8 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this.preparedQuery = preparedQuery;
-        this.invocationContext = ((DefaultPreparedQuery) preparedQuery).getContext();
-        this.storedQuery = unwrap(((DefaultPreparedQuery<E, R>) preparedQuery).getStoredQueryDelegate());
+        this.invocationContext = unwrapPreparedQuery(preparedQuery).getContext();
+        this.storedQuery = unwrap(preparedQuery);
     }
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
@@ -70,10 +70,20 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         if (storedQuery instanceof BindableParametersStoredQuery<X, Y> bindableParametersStoredQuery) {
             return bindableParametersStoredQuery;
         }
-        if (storedQuery instanceof DelegateStoredQuery) {
-            return unwrap(storedQuery);
+        if (storedQuery instanceof DelegateStoredQuery delegateStoredQuery) {
+            return unwrap(delegateStoredQuery.getStoredQueryDelegate());
         }
         throw new DataAccessException("Cannot unwrap BindableParametersStoredQuery");
+    }
+
+    private static DefaultPreparedQuery<?, ?> unwrapPreparedQuery(PreparedQuery<?, ?> preparedQuery) {
+        if (preparedQuery instanceof DefaultPreparedQuery<?, ?> defaultPreparedQuery) {
+            return defaultPreparedQuery;
+        }
+        if (preparedQuery instanceof DelegatePreparedQuery<?, ?> delegatePreparedQuery) {
+            return unwrapPreparedQuery(delegatePreparedQuery.getPreparedQueryDelegate());
+        }
+        throw new DataAccessException("Cannot unwrap DefaultPreparedQuery");
     }
 
     @Override

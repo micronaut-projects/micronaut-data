@@ -25,13 +25,13 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
         def c1 = new Course(id: UUID.randomUUID(), name: 'Math')
         def c2 = new Course(id: UUID.randomUUID(), name: 'Physics')
         // Pre-persist children with assigned IDs; cascade should only write join rows
-        courseRepository.save(c1).block()
-        courseRepository.save(c2).block()
+        courseRepository.insert(c1).block()
+        courseRepository.insert(c2).block()
         s.addCourse(c1)
         s.addCourse(c2)
 
         when:
-        studentRepository.save(s).block()
+        studentRepository.insert(s).block()
         def s2 = studentRepository.findById(s.id).block()
 
         then:
@@ -41,7 +41,7 @@ class H2ManyToManyAssignedIdSpec extends Specification implements H2TestProperty
         when:
         def s3 = new Student(id: UUID.randomUUID(), name: 'John')
         s3.addCourse(c1)
-        studentRepository.save(s3).block()
+        studentRepository.insert(s3).block()
         def found = studentRepository.findById(s3.id).block()
 
         then:

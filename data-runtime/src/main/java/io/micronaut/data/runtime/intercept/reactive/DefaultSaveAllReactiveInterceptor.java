@@ -55,23 +55,21 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
         if (isSaveAsInsert()) {
             return reactiveOperations.persistAll(getInsertBatchOperation(context, entities));
         }
-        List<Publisher<Object>> publishers = new ArrayList<>();
-        List<Object> batch = new ArrayList<>();
-        SaveOperation currentOperation = null;
-        for (Object entity : entities) {
-            SaveOperation entityOperation = getSaveOperation(context, entity);
-            if (currentOperation != null && currentOperation != entityOperation) {
-                addBatch(context, publishers, currentOperation, batch);
+        return Flux.defer(() -> {
+            List<Publisher<Object>> publishers = new ArrayList<>();
+            List<Object> batch = new ArrayList<>();
+            SaveOperation currentOperation = null;
+            for (Object entity : entities) {
+                SaveOperation entityOperation = resolveSaveOperation(context, entity);
+                if (currentOperation != null && currentOperation != entityOperation) {
+                    addBatch(context, publishers, currentOperation, batch);
+                }
+                currentOperation = entityOperation;
+                batch.add(entity);
             }
-            currentOperation = entityOperation;
-            batch.add(entity);
-        }
-        addBatch(context, publishers, currentOperation, batch);
-        return Flux.concat(publishers);
-    }
-
-    private SaveOperation getSaveOperation(MethodInvocationContext<Object, Object> context, Object entity) {
-        return isEntityUpdateCandidate(context, entity) ? SaveOperation.UPDATE : SaveOperation.INSERT;
+            addBatch(context, publishers, currentOperation, batch);
+            return Flux.concat(publishers);
+        });
     }
 
     private void addBatch(MethodInvocationContext<Object, Object> context,
@@ -87,10 +85,5 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
             : reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
         publishers.add(publisher);
         batch.clear();
-    }
-
-    private enum SaveOperation {
-        INSERT,
-        UPDATE
     }
 }

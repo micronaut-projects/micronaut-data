@@ -87,7 +87,7 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     private SaveOperation getSaveOperation(MethodInvocationContext<T, R> context, Object entity) {
-        return isEntityUpdateCandidate(context, entity) ? SaveOperation.UPDATE : SaveOperation.INSERT;
+        return resolveSaveOperation(context, entity);
     }
 
     private void executeBatch(MethodInvocationContext<T, R> context,
@@ -110,11 +110,6 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
             Object entity = savedIterator.hasNext() ? savedIterator.next() : currentBatch.get(i);
             results.set(currentIndexes.get(i), entity);
         }
-    }
-
-    private enum SaveOperation {
-        INSERT,
-        UPDATE
     }
 
 }

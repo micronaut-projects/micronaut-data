@@ -76,10 +76,10 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
         if (isSaveAsInsert()) {
             return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
         }
-        if (!isEntityUpdateCandidate(context, entity)) {
-            return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
-        }
-        return asyncDatastoreOperations.update(getUpdateOperation(context, entity));
+        return switch (resolveSaveOperation(context, entity)) {
+            case INSERT -> asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+            case UPDATE -> asyncDatastoreOperations.update(getUpdateOperation(context, entity));
+        };
     }
 
     /**

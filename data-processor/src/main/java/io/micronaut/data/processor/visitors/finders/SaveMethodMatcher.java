@@ -178,7 +178,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     .encodeEntityParameters(encodeEntityParameters)
                     .queryResult(
                         queryResult
-                    );
+                );
                 if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                     boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
                     MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
