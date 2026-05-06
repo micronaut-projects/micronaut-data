@@ -41,7 +41,7 @@ class H2Embedded2Spec extends Specification {
 
     def filledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", "2")))
+            var saved = repo.insert(new Foo(0, new Bar("1", "2")))
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", "2")
@@ -49,7 +49,7 @@ class H2Embedded2Spec extends Specification {
 
     void partiallyFilledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", null)))
+            var saved = repo.insert(new Foo(0, new Bar("1", null)))
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", null)

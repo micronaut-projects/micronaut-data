@@ -126,7 +126,7 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
             o.one.em.assoc[1].name == "D"
         when:
             def oem = new OneMainEntityEm(id: new EmId(one: e), name: "Embedded is crazy")
-            oem = oneMainEntityEmRepository.save(oem)
+            oem = oneMainEntityEmRepository.insert(oem)
             oem = oneMainEntityEmRepository.findById(oem.id).get()
         then:
             oem.name == "Embedded is crazy"
