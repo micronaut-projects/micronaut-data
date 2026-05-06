@@ -82,6 +82,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     }
 
     @Override
+    @Nullable
     public <B, P> PropertyReference<@NonNull B, @NonNull P> resolveReference(PropertyReference<B, P> reference) {
         return parent.resolveReference(reference);
     }

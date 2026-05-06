@@ -38,6 +38,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -86,6 +87,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     }
 
     @Override
+    @Nullable
     public <B, P> SerializationReference<@NonNull B, @NonNull P> resolveReference(SerializationReference<B, P> reference) {
         return parent.resolveReference(reference);
     }
