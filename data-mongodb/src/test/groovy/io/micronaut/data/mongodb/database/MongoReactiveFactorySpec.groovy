@@ -15,14 +15,25 @@
  */
 package io.micronaut.data.mongodb.database
 
+import com.mongodb.reactivestreams.client.MongoClient
+import io.micronaut.context.BeanContext
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations
+import io.micronaut.data.model.runtime.AttributeConverterRegistry
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider
+import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider
 import io.micronaut.data.operations.async.AsyncCapableRepository
+import io.micronaut.data.runtime.convert.DataConversionService
+import io.micronaut.data.runtime.date.DateTimeProvider
+import io.micronaut.data.runtime.event.EntityEventRegistry
 import spock.lang.Specification
 
 class MongoReactiveFactorySpec extends Specification {
 
     void "close shuts down local executor service"() {
         given:
-            def operations = new MongoReactiveFactory().syncOperations(null)
+            def operations = new MongoReactiveFactory().syncOperations(newReactiveOperations())
 
         when:
             def executorService = ((AsyncCapableRepository) operations).async().executor
@@ -30,5 +41,39 @@ class MongoReactiveFactorySpec extends Specification {
 
         then:
             executorService.isShutdown()
+    }
+
+    private DefaultReactiveMongoRepositoryOperations newReactiveOperations() {
+        BeanContext beanContext = Mock()
+        beanContext.getBean(MongoDatabaseNameProvider, _) >> Mock(MongoDatabaseNameProvider)
+        def constructor = DefaultReactiveMongoRepositoryOperations.getDeclaredConstructor(
+                String,
+                BeanContext,
+                DateTimeProvider,
+                RuntimeEntityRegistry,
+                DataConversionService,
+                AttributeConverterRegistry,
+                MongoClient,
+                MongoCollectionNameProvider,
+                ReactorConnectionOperations
+        )
+        constructor.accessible = true
+        return constructor.newInstance(
+                "Primary",
+                beanContext,
+                Mock(DateTimeProvider),
+                runtimeEntityRegistry(),
+                Mock(DataConversionService),
+                Mock(AttributeConverterRegistry),
+                Mock(MongoClient),
+                Mock(MongoCollectionNameProvider),
+                Mock(ReactorConnectionOperations)
+        )
+    }
+
+    private RuntimeEntityRegistry runtimeEntityRegistry() {
+        RuntimeEntityRegistry runtimeEntityRegistry = Mock()
+        runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
+        return runtimeEntityRegistry
     }
 }

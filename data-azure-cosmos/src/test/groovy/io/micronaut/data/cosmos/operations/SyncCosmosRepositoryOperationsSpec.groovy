@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.cosmos.operations
 
+import org.objenesis.ObjenesisStd
 import spock.lang.Specification
 
 import java.util.concurrent.ExecutorService
@@ -51,6 +52,10 @@ class SyncCosmosRepositoryOperationsSpec extends Specification {
     }
 
     private SyncCosmosRepositoryOperations newOperations(ExecutorService executorService) {
-        return new SyncCosmosRepositoryOperations(null, executorService)
+        return new SyncCosmosRepositoryOperations(newReactiveOperations(), executorService)
+    }
+
+    private DefaultReactiveCosmosRepositoryOperations newReactiveOperations() {
+        return new ObjenesisStd().newInstance(DefaultReactiveCosmosRepositoryOperations)
     }
 }
