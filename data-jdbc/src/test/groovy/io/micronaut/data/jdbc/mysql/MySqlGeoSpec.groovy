@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.mysql
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -24,6 +25,12 @@ class MySqlGeoSpec extends AbstractGeoSpec implements MySQLTestPropertyProvider 
     @Override
     SchoolRepository getSchoolRepository() {
         return context.getBean(MySqlSchoolRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelRepository getHotelRepository() {
+        return context.getBean(MySqlHotelRepository)
     }
 
     @Override
