@@ -532,7 +532,8 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     void "test find by relation"() {
         given:
-            def repository = buildRepository('test.UserRoleRepository', """
+            def repository = withEmbeddedNamingStrategy("LEGACY") {
+                buildRepository('test.UserRoleRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import org.jspecify.annotations.NonNull;
@@ -550,12 +551,13 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
     Iterable<Role> findRoleByUser(User user);
 }
 """)
+            }
 
             def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
             def query = getQuery(method)
 
         expect:
-            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`role_id`=user_role_id_role_.`id` WHERE (user_role_.`user_id` = ?)'
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == ["id"] as String[]
             getParameterPropertyPaths(method) == ["id.user.id"] as String[]
@@ -2523,5 +2525,55 @@ interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.
         findByIdQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_ WHERE (some_entity_.`some_column` = ? AND some_entity_.`other_entity_id` = ?)'
         saveQuery == 'INSERT INTO `some_table` (`col`,`some_column`,`other_entity_id`) VALUES (?,?,?)'
         findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
+    }
+
+    void "test legacy EmbeddedId naming strategy"() {
+        given:
+        def repository = withEmbeddedNamingStrategy("LEGACY") {
+            buildRepository('test.LegacySomeEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LegacySomeEntityRepository extends GenericRepository<LegacySomeEntity, LegacySomeEntity.PrimaryKey> {
+    Optional<LegacySomeEntity> findById(LegacySomeEntity.PrimaryKey id);
+    LegacySomeEntity saveLegacy(LegacySomeEntity entity);
+    List<LegacySomeEntity> findAll();
+}
+
+@Entity(name = "some_table")
+@Table(name = "some_table")
+record LegacySomeEntity(@EmbeddedId PrimaryKey primaryKey, String col) {
+    @Embeddable
+    record PrimaryKey(
+            int someColumn,
+            @ManyToOne LegacyOtherEntity otherEntity
+    ) {
+    }
+}
+
+@Entity(name = "other_table")
+@Table(name = "other_table")
+record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
+}
+""")
+        }
+
+        def findByIdQuery = getQuery(repository.executableMethods.find { it.methodName == "findById" && it.arguments.length == 1 && it.arguments[0].type.name.contains("PrimaryKey") })
+        def saveQuery = getQuery(repository.executableMethods.find { it.methodName == "saveLegacy" })
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_ WHERE (legacy_some_entity_.`primary_key_some_column` = ? AND legacy_some_entity_.`primary_key_other_entity_id` = ?)'
+        saveQuery == 'INSERT INTO `some_table` (`col`,`primary_key_some_column`,`primary_key_other_entity_id`) VALUES (?,?,?)'
+        findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 }
