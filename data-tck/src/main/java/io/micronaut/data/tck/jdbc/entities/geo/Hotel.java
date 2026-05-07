@@ -1,4 +1,4 @@
-package example;
+package io.micronaut.data.tck.jdbc.entities.geo;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.geo.Point;
 
 @MappedEntity
-public class School {
+public class Hotel {
 
     @Id
     @GeneratedValue
@@ -18,10 +18,10 @@ public class School {
     @Index(columns = "location")
     private Point location;
 
-    public School() {
+    public Hotel() {
     }
 
-    public School(String name, Point location) {
+    public Hotel(String name, Point location) {
         this.name = name;
         this.location = location;
     }
