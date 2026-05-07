@@ -98,7 +98,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentEntity entity = entityResolver.apply(element);
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
-        boolean legacyEmbeddedNaming = isLegacyEmbeddedNaming(context);
+        boolean legacyEmbeddedNaming = isLegacyEmbeddedNaming(element, context);
 
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
@@ -218,7 +218,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
-    private boolean isLegacyEmbeddedNaming(VisitorContext context) {
+    private boolean isLegacyEmbeddedNaming(ClassElement element, VisitorContext context) {
         Optional<String> configuredStrategy = Optional.ofNullable(context.getOptions().get(EMBEDDED_NAMING_STRATEGY))
             .or(() -> Optional.ofNullable(System.getProperty(EMBEDDED_NAMING_STRATEGY)));
         if (configuredStrategy.isEmpty()) {
@@ -231,8 +231,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if ("STANDARD".equalsIgnoreCase(strategy)) {
             return false;
         }
-        context.fail("Invalid value for '" + EMBEDDED_NAMING_STRATEGY + "': " + strategy + ". Supported values are LEGACY and STANDARD.", null);
-        return false;
+        throw new ProcessingException(element, "Invalid value for '" + EMBEDDED_NAMING_STRATEGY + "': " + strategy + ". Supported values are LEGACY and STANDARD.");
     }
 
     /**

@@ -2527,6 +2527,35 @@ interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.
         findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
     }
 
+    void "test invalid embedded naming strategy fails compilation"() {
+        when:
+        withEmbeddedNamingStrategy("INVALID") {
+            buildRepository('test.InvalidEmbeddedNamingRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface InvalidEmbeddedNamingRepository extends GenericRepository<InvalidEmbeddedNamingEntity, Long> {
+    InvalidEmbeddedNamingEntity save(InvalidEmbeddedNamingEntity entity);
+}
+
+@Entity
+class InvalidEmbeddedNamingEntity {
+    @Id
+    Long id;
+}
+""")
+        }
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Invalid value for 'micronaut.data.embedded.naming-strategy': INVALID")
+        ex.message.contains("Supported values are LEGACY and STANDARD")
+    }
+
     void "test legacy EmbeddedId naming strategy"() {
         given:
         def repository = withEmbeddedNamingStrategy("LEGACY") {
