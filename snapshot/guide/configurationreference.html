@@ -12,7 +12,7 @@
     <script src="../js/guide.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <script src="../js/docs.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
 </head>
 <body class="body">
     <div id="main">
@@ -46,7 +46,7 @@
         <div class="docs-content">
             <div class="project">
                 <h1>Configuration Reference</h1>
-                <p><strong>Version:</strong>4.14.5-SNAPSHOT</p>
+                <p><strong>Version:</strong>5.0.0-SNAPSHOT</p>
                 <p></p>
             </div>
 <div class="sect2">
@@ -276,6 +276,15 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fail on multiple results for findOne.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>datasources.*.default-fetch-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the default fetch size for the JDBC driver. The fetch size is a hint to the JDBC driver
+ as to the number of rows that should be fetched from the database when more rows are needed.
+ If set to null, the JDBC driver&#8217;s default fetch size will be used.
+ Used in streaming operations.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
@@ -376,6 +385,15 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r2dbc.datasources.*.schema-generate-names</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The schema names that should be used for generating</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>r2dbc.datasources.*.default-fetch-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.Integer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the default fetch size for the JDBC driver. The fetch size is a hint to the JDBC driver
+ as to the number of rows that should be fetched from the database when more rows are needed.
+ If set to null, the JDBC driver&#8217;s default fetch size will be used.
+ Used in streaming operations.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
