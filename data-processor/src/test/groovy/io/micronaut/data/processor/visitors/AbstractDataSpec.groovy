@@ -32,7 +32,7 @@ import javax.annotation.processing.SupportedAnnotationTypes
 
 abstract class AbstractDataSpec extends AbstractTypeElementSpec {
 
-    static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming-strategy"
+    static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming.strategy"
 
     SourcePersistentEntity buildJpaEntity(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)

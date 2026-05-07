@@ -71,7 +71,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
     private static final String PROPERTY = "property";
-    private static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming-strategy";
+    private static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming.strategy";
     private static final String LEGACY = "LEGACY";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);

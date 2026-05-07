@@ -2552,7 +2552,7 @@ class InvalidEmbeddedNamingEntity {
 
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("Invalid value for 'micronaut.data.embedded.naming-strategy': INVALID")
+        ex.message.contains("Invalid value for 'micronaut.data.embedded.naming.strategy': INVALID")
         ex.message.contains("Supported values are LEGACY and STANDARD")
     }
 
