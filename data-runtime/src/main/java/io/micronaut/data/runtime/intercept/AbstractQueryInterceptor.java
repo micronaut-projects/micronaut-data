@@ -22,8 +22,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
@@ -32,9 +30,12 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.EmptyResultException;
+import io.micronaut.data.exceptions.EntityExistsException;
+import io.micronaut.data.exceptions.ExceptionConverter;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -58,7 +59,6 @@ import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
@@ -77,16 +77,17 @@ import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryResolver;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
@@ -118,12 +119,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private final PagedQueryResolver pagedQueryResolver;
     private final PreparedQueryDecorator preparedQueryDecorator;
     private final boolean saveAsInsert;
+    private final boolean saveAssignedIdFallbackToUpdate;
+    private final EntityIdentityPresenceChecker entityIdentityPresenceChecker = new DefaultEntityIdentityPresenceChecker();
 
     /**
      * The operation selected for a save invocation.
      */
     protected enum SaveOperation {
         INSERT,
+        INSERT_WITH_UPDATE_FALLBACK,
         UPDATE
     }
 
@@ -139,6 +143,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         var applicationContext = operations.getApplicationContext();
         this.saveAsInsert = applicationContext != null && applicationContext.getEnvironment()
             .getProperty(DataConfiguration.SAVE_AS_INSERT_PROPERTY, Boolean.class)
+            .orElse(false);
+        this.saveAssignedIdFallbackToUpdate = applicationContext != null && applicationContext.getEnvironment()
+            .getProperty(DataConfiguration.SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY, Boolean.class)
             .orElse(false);
         this.storedQueryResolver = operations instanceof StoredQueryResolver sQueryResolver ? sQueryResolver : new DefaultStoredQueryResolver() {
             @Override
@@ -603,7 +610,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected final boolean hasEntityId(MethodInvocationContext<?, ?> context, Object entity) {
         Class<Object> rootEntity = getRequiredRootEntity(context);
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
-        return hasEntityId(persistentEntity, entity);
+        return entityIdentityPresenceChecker.hasIdentity(persistentEntity, entity);
     }
 
     /**
@@ -616,12 +623,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected final boolean isEntityUpdateCandidate(MethodInvocationContext<?, ?> context, Object entity) {
         Class<Object> rootEntity = getRequiredRootEntity(context);
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
-        if (!hasEntityId(persistentEntity, entity)) {
+        if (!entityIdentityPresenceChecker.hasIdentity(persistentEntity, entity)) {
             return false;
         }
-        return !persistentEntity.hasVersion()
-            || persistentEntity.getVersion().isGenerated()
-            || persistentEntity.getVersion().getProperty().get(entity) != null;
+        return entityIdentityPresenceChecker.hasGeneratedIdentity(persistentEntity);
     }
 
     /**
@@ -629,6 +634,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected final boolean isSaveAsInsert() {
         return saveAsInsert;
+    }
+
+    /**
+     * @return Whether save should fall back to update when insert detects an existing assigned-ID entity.
+     */
+    protected final boolean isSaveAssignedIdFallbackToUpdate() {
+        return saveAssignedIdFallbackToUpdate;
     }
 
     /**
@@ -640,42 +652,23 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected final SaveOperation resolveSaveOperation(MethodInvocationContext<?, ?> context, Object entity) {
         if (!isEntityUpdateCandidate(context, entity)) {
+            if (isSaveUpdateFallbackCandidate(context, entity)) {
+                return SaveOperation.INSERT_WITH_UPDATE_FALLBACK;
+            }
             return SaveOperation.INSERT;
         }
         return SaveOperation.UPDATE;
     }
 
-    private boolean hasEntityId(RuntimePersistentEntity<Object> persistentEntity, Object entity) {
-        if (persistentEntity.hasIdentity()) {
-            RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
-            return hasAssignedIdentityValue(identity, identity.getProperty().get(entity));
-        }
-        if (persistentEntity.hasCompositeIdentity()) {
-            for (RuntimePersistentProperty<Object> identity : persistentEntity.getCompositeIdentity()) {
-                if (!hasAssignedIdentityValue(identity, identity.getProperty().get(entity))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean hasAssignedIdentityValue(RuntimePersistentProperty<Object> identity, @Nullable Object value) {
-        if (value == null) {
+    private boolean isSaveUpdateFallbackCandidate(MethodInvocationContext<?, ?> context, Object entity) {
+        if (!isSaveAssignedIdFallbackToUpdate()) {
             return false;
         }
-        return !identity.isGenerated() || !(value instanceof Number number) || !isZero(number);
-    }
-
-    private boolean isZero(Number number) {
-        if (number instanceof BigDecimal bigDecimal) {
-            return bigDecimal.signum() == 0;
+        RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(getRequiredRootEntity(context));
+        if (persistentEntity.hasVersion()) {
+            return false;
         }
-        if (number instanceof BigInteger bigInteger) {
-            return bigInteger.signum() == 0;
-        }
-        return number.doubleValue() == 0D;
+        return entityIdentityPresenceChecker.hasNonGeneratedNonNegativeIdentity(persistentEntity, entity);
     }
 
     /**
@@ -692,8 +685,84 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
         return switch (resolveSaveOperation(context, entity)) {
             case INSERT -> operations.persist(getInsertOperation(context, entity));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallback(context, entity);
             case UPDATE -> operations.update(getUpdateOperation(context, entity));
         };
+    }
+
+    /**
+     * Persists the entity and falls back to update when the configured exception conversion identifies
+     * that the insert failed because the entity already exists.
+     *
+     * @param context The method invocation context
+     * @param entity  The entity
+     * @param <E>     The entity type
+     * @return The persisted or updated entity
+     */
+    protected final <E> E persistWithUpdateFallback(MethodInvocationContext<T, ?> context, E entity) {
+        try {
+            return operations.persist(getInsertOperation(context, entity));
+        } catch (RuntimeException e) {
+            if (isEntityExistsException(context, e)) {
+                return operations.update(getUpdateOperation(context, entity));
+            }
+            throw e;
+        }
+    }
+
+    protected final boolean isEntityExistsException(MethodInvocationContext<?, ?> context, RuntimeException exception) {
+        Exception converted = convertException(context, exception);
+        return converted instanceof EntityExistsException
+            || hasExceptionName(converted, "jakarta.data.exceptions.EntityExistsException")
+            || hasExceptionName(converted, "jakarta.persistence.EntityExistsException")
+            || isUniqueConstraintException(converted);
+    }
+
+    private Exception convertException(MethodInvocationContext<?, ?> context, RuntimeException exception) {
+        Class<ExceptionConverter> exceptionConverterClass = context.classValue(ConvertException.class).orElse(null);
+        if (exceptionConverterClass == null) {
+            return exception;
+        }
+        Collection<ExceptionConverter> exceptionConverters = operations.getApplicationContext().getBeansOfType(exceptionConverterClass);
+        Exception converted = exception;
+        for (ExceptionConverter exceptionConverter : exceptionConverters) {
+            try {
+                converted = exceptionConverter.convert(converted);
+            } catch (RuntimeException e) {
+                converted = e;
+            }
+        }
+        return converted;
+    }
+
+    private boolean hasExceptionName(Throwable throwable, String exceptionName) {
+        Throwable cause = throwable;
+        while (cause != null) {
+            if (cause.getClass().getName().equals(exceptionName)) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private boolean isUniqueConstraintException(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase(Locale.ENGLISH);
+                if (normalized.contains("unique index")
+                    || normalized.contains("unique constraint")
+                    || normalized.contains("primary key violation")
+                    || normalized.contains("duplicate key")
+                    || normalized.contains("duplicate entry")) {
+                    return true;
+                }
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
     protected final Throwable unwrapCompletionException(Throwable throwable) {

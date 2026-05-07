@@ -73,7 +73,19 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
         }
         return switch (resolveSaveOperation(context, entity)) {
             case INSERT -> reactiveOperations.persist(getInsertOperation(context, entity));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallbackReactive(context, entity);
             case UPDATE -> reactiveOperations.update(getUpdateOperation(context, entity));
         };
+    }
+
+    protected final <E> Publisher<E> persistWithUpdateFallbackReactive(MethodInvocationContext<T, ?> context, E entity) {
+        return Flux.from(reactiveOperations.persist(getInsertOperation(context, entity)))
+            .onErrorResume(throwable -> {
+                Throwable cause = unwrapCompletionException(throwable);
+                if (cause instanceof RuntimeException runtimeException && isEntityExistsException(context, runtimeException)) {
+                    return Flux.from(reactiveOperations.update(getUpdateOperation(context, entity)));
+                }
+                return Flux.error(cause);
+            });
     }
 }

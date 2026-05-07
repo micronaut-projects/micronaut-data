@@ -80,9 +80,12 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
             return;
         }
         List<Object> currentBatch = new ArrayList<>(batch);
-        Publisher<Object> publisher = operation == SaveOperation.INSERT
-            ? reactiveOperations.persistAll(getInsertBatchOperation(context, currentBatch))
-            : reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        Publisher<Object> publisher = switch (operation) {
+            case INSERT -> reactiveOperations.persistAll(getInsertBatchOperation(context, currentBatch));
+            case INSERT_WITH_UPDATE_FALLBACK -> Flux.fromIterable(currentBatch)
+                .concatMap(entity -> persistWithUpdateFallbackReactive(context, entity));
+            case UPDATE -> reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        };
         publishers.add(publisher);
         batch.clear();
     }

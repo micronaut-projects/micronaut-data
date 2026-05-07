@@ -98,9 +98,11 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompl
                                                List<Object> currentBatch,
                                                List<Integer> currentIndexes,
                                                List<Object> results) {
-        CompletionStage<Iterable<Object>> saved = operation == SaveOperation.INSERT
-            ? asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, currentBatch))
-            : asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        CompletionStage<Iterable<Object>> saved = switch (operation) {
+            case INSERT -> asyncDatastoreOperations.persistAll(getInsertBatchOperation(context, currentBatch));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallback(context, currentBatch);
+            case UPDATE -> asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        };
         return saved.thenAccept(batchResults -> {
             Iterator<Object> savedIterator = batchResults.iterator();
             for (int i = 0; i < currentIndexes.size(); i++) {
@@ -108,6 +110,17 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractCountConvertCompl
                 results.set(currentIndexes.get(i), entity);
             }
         });
+    }
+
+    private CompletionStage<Iterable<Object>> persistWithUpdateFallback(MethodInvocationContext<Object, CompletionStage<Object>> context,
+                                                                        List<Object> batch) {
+        List<Object> saved = new ArrayList<>(batch.size());
+        CompletionStage<Void> stage = CompletableFuture.completedFuture(null);
+        for (Object entity : batch) {
+            stage = stage.thenCompose(ignore -> persistWithUpdateFallbackAsync(context, entity)
+                .thenAccept(saved::add));
+        }
+        return stage.thenApply(ignore -> saved);
     }
 
 }

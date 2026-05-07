@@ -14,6 +14,8 @@ This applies to the synchronous, asynchronous, reactive, Reactor, RxJava, and Ko
 
 To temporarily restore the Micronaut Data 4 behavior for repository `save` and `saveAll` methods, set `micronaut.data.save-as-insert` to `true`.
 When enabled, `save` and `saveAll` always issue insert operations and fail if the entity already exists.
+For entities with assigned identity values, `micronaut.data.save-assigned-id-fallback-to-update` can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.
 The Hibernate JPA `jpa.default.properties.persistOrMergeOnSave` setting no longer controls repository `save` methods.
 
 [configuration]

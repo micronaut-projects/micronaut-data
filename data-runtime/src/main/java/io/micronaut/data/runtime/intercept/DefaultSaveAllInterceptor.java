@@ -102,14 +102,24 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         List<Integer> currentIndexes = new ArrayList<>(indexes);
         batch.clear();
         indexes.clear();
-        Iterable<Object> saved = operation == SaveOperation.INSERT
-            ? operations.persistAll(getInsertBatchOperation(context, currentBatch))
-            : operations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        Iterable<Object> saved = switch (operation) {
+            case INSERT -> operations.persistAll(getInsertBatchOperation(context, currentBatch));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallback(context, currentBatch);
+            case UPDATE -> operations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        };
         Iterator<Object> savedIterator = saved.iterator();
         for (int i = 0; i < currentIndexes.size(); i++) {
             Object entity = savedIterator.hasNext() ? savedIterator.next() : currentBatch.get(i);
             results.set(currentIndexes.get(i), entity);
         }
+    }
+
+    private List<Object> persistWithUpdateFallback(MethodInvocationContext<T, R> context, List<Object> batch) {
+        List<Object> saved = new ArrayList<>(batch.size());
+        for (Object entity : batch) {
+            saved.add(persistWithUpdateFallback(context, entity));
+        }
+        return saved;
     }
 
 }
