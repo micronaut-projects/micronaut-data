@@ -24,6 +24,7 @@ on:
       - '.github/workflows/sonatype.yml'
       - '.github/workflows/release.yml'
       - '.github/scripts/vulnerability-audit.sh'
+      - '.github/scripts/vulnerability-audit-filter.py'
 jobs:
   audit:
     if: github.repository != 'micronaut-projects/micronaut-project-template'
