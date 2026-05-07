@@ -101,7 +101,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
     }
 
     private boolean isOperationType(AnnotationValue<?> dataMethodQuery, OperationType operationType) {
-        return dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethodQuery.OperationType.class)
+        return dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
             .map(op -> op.name().equals(operationType.name()))
             .orElse(false);
     }

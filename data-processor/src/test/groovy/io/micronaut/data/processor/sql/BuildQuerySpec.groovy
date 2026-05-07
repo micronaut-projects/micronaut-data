@@ -2498,6 +2498,29 @@ interface Repo extends GenericRepository<Book, Long> {
         getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
     }
 
+    void "test raw INSERT with explicit parameters is treated as UPDATE operation"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("INSERT INTO book (title, total_pages) VALUES (:title, :totalPages)")
+    int insertCustom(String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("insertCustom", String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(method) == 'INSERT INTO book (title, total_pages) VALUES (?, ?)'
+    }
+
     void "test EmbeddedId naming strategy"() {
         given:
         def repository = buildRepository('test.SomeEntityRepository', """

@@ -131,6 +131,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                         FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.returnType();
                         interceptorType = e.interceptor();
+                        operationType = DataMethod.OperationType.UPDATE;
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {

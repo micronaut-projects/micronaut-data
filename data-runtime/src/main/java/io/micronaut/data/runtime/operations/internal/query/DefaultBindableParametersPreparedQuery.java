@@ -51,10 +51,12 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     protected final MethodInvocationContext<?, ?> invocationContext;
     protected final BindableParametersStoredQuery<E, R> storedQuery;
 
+    @SuppressWarnings("unchecked")
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this.preparedQuery = preparedQuery;
-        this.invocationContext = unwrapPreparedQuery(preparedQuery).getContext();
-        this.storedQuery = unwrap(preparedQuery);
+        DefaultPreparedQuery<E, R> defaultPreparedQuery = (DefaultPreparedQuery<E, R>) unwrapPreparedQuery(preparedQuery);
+        this.invocationContext = defaultPreparedQuery.getContext();
+        this.storedQuery = unwrap(defaultPreparedQuery.getStoredQueryDelegate());
     }
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
