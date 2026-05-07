@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.exceptions.DataAccessException
 import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Id
@@ -29,6 +30,8 @@ import jakarta.persistence.Entity
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.sql.DataSource
+
 import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
 @MicronautTest
@@ -39,24 +42,45 @@ class H2Embedded2Spec extends Specification {
     @Shared
     FooRepo repo
 
+    @Inject
+    @Shared
+    BazRepo bazRepo
+
     def filledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", "2")))
-            var found = repo.findById(saved.id).get()
+        var saved = repo.save(new Foo(0, new Bar("1", "2")))
+        var found = repo.findById(saved.id).get()
         then:
-            found.bar == new Bar("1", "2")
+        found.bar == new Bar("1", "2")
     }
 
     void partiallyFilledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", null)))
-            var found = repo.findById(saved.id).get()
+        var saved = repo.save(new Foo(0, new Bar("1", null)))
+        var found = repo.findById(saved.id).get()
         then:
-            found.bar == new Bar("1", null)
+        found.bar == new Bar("1", null)
     }
 
-}
+    void nullEmbeddedFieldProducesErrorMessageWithDottedPath() {
+        when: "the entity is loaded"
+        bazRepo.save(new BazEntity(1, new BazFields("2024-01-01", null)))
+        bazRepo.findById(1)
 
+        then: "exception message contains the full dotted path to the null field"
+        def ex = thrown(DataAccessException)
+        ex.message.contains("bazFields.createdBy")
+    }
+
+    void allNullEmbeddedColumnsThrowsForNonNullableEmbeddedProperty() {
+        when: "the entity is loaded"
+        bazRepo.save(new BazEntity(999, new BazFields(null, null)))
+        bazRepo.findById(999)
+
+        then: "materialization fails because the embedded property is not nullable"
+        thrown(DataAccessException)
+    }
+}
 @JdbcRepository(dialect = H2)
 interface FooRepo extends CrudRepository<Foo, Integer> {
 }
@@ -93,5 +117,42 @@ class Foo {
     Foo(int id, @Nullable Bar bar) {
         this.id = id
         this.bar = bar
+    }
+}
+
+@JdbcRepository(dialect = H2)
+interface BazRepo extends CrudRepository<BazEntity, Integer> {
+}
+
+@EqualsAndHashCode
+@Embeddable
+@Introspected
+class BazFields {
+
+    @Nullable
+    String createdOn
+    @Nullable
+    String createdBy
+
+    BazFields(String createdOn, String createdBy) {
+        this.createdOn = createdOn
+        this.createdBy = createdBy
+    }
+}
+
+@EqualsAndHashCode
+@Entity
+@Introspected
+class BazEntity {
+
+    @Id
+    int id
+
+    @Embedded
+    BazFields bazFields
+
+    BazEntity(int id, BazFields bazFields) {
+        this.id = id
+        this.bazFields = bazFields
     }
 }
