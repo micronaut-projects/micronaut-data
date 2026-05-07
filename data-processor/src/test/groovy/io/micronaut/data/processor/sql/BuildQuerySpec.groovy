@@ -534,21 +534,109 @@ interface MealRepository extends CrudRepository<Meal, Long> {
         given:
             def repository = withEmbeddedNamingStrategy("LEGACY") {
                 buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import org.jspecify.annotations.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.jdbc.entities.Role;
-import io.micronaut.data.tck.jdbc.entities.User;
-import io.micronaut.data.tck.jdbc.entities.UserRole;
-import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
+}
+
+@Entity
+@Table(name = "user_role_composite")
+class UserRole {
+    @EmbeddedId
+    private UserRoleId id;
+
+    public UserRoleId getId() {
+        return id;
+    }
+
+    public void setId(UserRoleId id) {
+        this.id = id;
+    }
+}
+
+@Embeddable
+class UserRoleId {
+    @ManyToOne
+    private User user;
+    @ManyToOne
+    private Role role;
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+}
+
+@Entity
+@Table(name = "user_composite")
+class User {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Entity
+@Table(name = "role_composite")
+class Role {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }
 """)
             }

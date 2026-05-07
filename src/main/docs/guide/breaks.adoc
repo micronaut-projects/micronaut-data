@@ -91,7 +91,7 @@ private ProjectId projectId;
 
 which will generate column names to be backward compatible.
 
-Alternatively, projects can opt into the previous embedded naming behavior at compilation time by setting the annotation processor option `micronaut.data.embedded.naming.strategy=LEGACY`. The default value is `STANDARD`.
+Alternatively, projects can opt into the previous embedded naming behavior at compilation time by setting the annotation processor option `micronaut.data.embedded.naming.strategy=LEGACY`. The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.embedded.naming.strategy=LEGACY`. If both are present, the annotation processor option takes precedence. The default value is `STANDARD`.
 
 For Gradle Java projects:
 

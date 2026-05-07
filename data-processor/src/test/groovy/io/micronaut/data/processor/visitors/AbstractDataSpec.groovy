@@ -34,6 +34,8 @@ abstract class AbstractDataSpec extends AbstractTypeElementSpec {
 
     static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming.strategy"
 
+    private static final Object EMBEDDED_NAMING_STRATEGY_LOCK = new Object()
+
     SourcePersistentEntity buildJpaEntity(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)
         ClassElement classElement = buildClassElement("""
@@ -94,15 +96,17 @@ $source
     }
 
     protected <T> T withEmbeddedNamingStrategy(String strategy, Closure<T> closure) {
-        def previous = System.getProperty(EMBEDDED_NAMING_STRATEGY)
-        System.setProperty(EMBEDDED_NAMING_STRATEGY, strategy)
-        try {
-            return closure.call()
-        } finally {
-            if (previous == null) {
-                System.clearProperty(EMBEDDED_NAMING_STRATEGY)
-            } else {
-                System.setProperty(EMBEDDED_NAMING_STRATEGY, previous)
+        synchronized (EMBEDDED_NAMING_STRATEGY_LOCK) {
+            def previous = System.getProperty(EMBEDDED_NAMING_STRATEGY)
+            System.setProperty(EMBEDDED_NAMING_STRATEGY, strategy)
+            try {
+                return closure.call()
+            } finally {
+                if (previous == null) {
+                    System.clearProperty(EMBEDDED_NAMING_STRATEGY)
+                } else {
+                    System.setProperty(EMBEDDED_NAMING_STRATEGY, previous)
+                }
             }
         }
     }
