@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.model.geo.Polygon;
+import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.geo.HotelJson;
 
@@ -25,5 +26,5 @@ public interface HotelJsonRepository extends CrudRepository<HotelJson, Long> {
 
     List<HotelJson> findByLocationGeoWithin(Polygon city);
 
-    List<HotelJson> findByLocationGeoIntersects(Polygon city);
+    List<HotelJson> findByLocationGeoIntersects(LineString busRoute);
 }
