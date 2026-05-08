@@ -2,6 +2,8 @@ package io.micronaut.data.jdbc.h2.many2one
 
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.Slice
+import io.micronaut.data.model.Sort
 import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.sql.JoinColumn
@@ -40,6 +42,12 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
 
     @Shared
     MyOtherRepository myOtherRepository = applicationContext.getBean(MyOtherRepository)
+
+    @Shared
+    CarRepository carRepository = applicationContext.getBean(CarRepository)
+
+    @Shared
+    CarManufacturerRepository carManufacturerRepository = applicationContext.getBean(CarManufacturerRepository)
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -149,6 +157,41 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         optFound.present
         optFound.get().other
         optFound.get().other.lid == myOther.lid
+    }
+
+    void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
+        given:
+        carRepository.deleteAll()
+        carManufacturerRepository.deleteAll()
+
+        def alpha = carManufacturerRepository.save(new CarManufacturer(name: "Alpha"))
+        def beta = carManufacturerRepository.save(new CarManufacturer(name: "Beta"))
+        def delta = carManufacturerRepository.save(new CarManufacturer(name: "Delta"))
+        def gamma = carManufacturerRepository.save(new CarManufacturer(name: "Gamma"))
+        carRepository.save(new Car(licensePlate: "CCC", manufacturer: alpha))
+        carRepository.save(new Car(licensePlate: "BBB", manufacturer: beta))
+        carRepository.save(new Car(licensePlate: "AAA", manufacturer: delta))
+        carRepository.save(new Car(licensePlate: "DDD", manufacturer: gamma))
+
+        when:
+        def pageable = Pageable.from(1, 2, Sort.of(Sort.Order.asc("manufacturer.name")))
+        Page<Car> page = carRepository.findAll(pageable)
+
+        then:
+        page.content*.licensePlate == ["AAA", "DDD"]
+        page.content*.manufacturer*.name == ["Delta", "Gamma"]
+        page.totalSize == 4
+
+        when:
+        Slice<Car> slice = carRepository.getAll(pageable)
+
+        then:
+        slice.content*.licensePlate == ["AAA", "DDD"]
+        slice.content*.manufacturer*.name == ["Delta", "Gamma"]
+
+        cleanup:
+        carRepository.deleteAll()
+        carManufacturerRepository.deleteAll()
     }
 
 }
@@ -357,4 +400,39 @@ interface MyEntityRepository extends CrudRepository<MyEntity, Long> {
 }
 @JdbcRepository(dialect = H2)
 interface MyOtherRepository extends CrudRepository<MyOther, String> {
+}
+
+@JdbcRepository(dialect = H2)
+interface CarRepository extends CrudRepository<Car, Long> {
+
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<Car> findAll(Pageable pageable)
+
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Slice<Car> getAll(Pageable pageable)
+}
+
+@JdbcRepository(dialect = H2)
+interface CarManufacturerRepository extends CrudRepository<CarManufacturer, Long> {
+}
+
+@MappedEntity("the_car")
+class Car {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String licensePlate
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    CarManufacturer manufacturer
+}
+
+@MappedEntity("the_car_manufacturer")
+class CarManufacturer {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
 }
