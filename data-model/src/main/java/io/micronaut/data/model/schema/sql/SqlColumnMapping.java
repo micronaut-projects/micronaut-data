@@ -344,6 +344,7 @@ public final class SqlColumnMapping {
             // TODO: Array types are not supported for all dialects so might throw an error?
             // Think only H2 and Postgres support these type defs
             case STRING_ARRAY, CHARACTER_ARRAY -> "VARCHAR(255) ARRAY";
+            case UUID_ARRAY -> "UUID ARRAY";
             case SHORT_ARRAY -> {
                 if (dialect == Dialect.POSTGRES) {
                     yield "SMALLINT ARRAY";

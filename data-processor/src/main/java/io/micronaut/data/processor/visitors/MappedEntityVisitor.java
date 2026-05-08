@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -70,6 +71,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
     private static final String PROPERTY = "property";
+    private static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming.strategy";
+    private static final String LEGACY = "LEGACY";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
@@ -95,6 +98,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentEntity entity = entityResolver.apply(element);
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
+        boolean legacyEmbeddedNaming = isLegacyEmbeddedNaming(element, context);
 
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
@@ -107,22 +111,22 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         for (PersistentProperty property : properties) {
-            computeMappingDefaults(property, dataTypes, dataConverters, context);
+            computeMappingDefaults(property, dataTypes, dataConverters, context, legacyEmbeddedNaming);
         }
         if (entity.hasIdentity()) {
             SourcePersistentProperty identity = entity.getIdentity();
-            computeMappingDefaults(identity, dataTypes, dataConverters, context);
+            computeMappingDefaults(identity, dataTypes, dataConverters, context, legacyEmbeddedNaming);
             if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
                 handleJsonViewIdentity(identity);
             }
         }
         if (entity.hasCompositeIdentity()) {
             for (SourcePersistentProperty compositeIdentity : entity.getCompositeIdentity()) {
-                computeMappingDefaults(compositeIdentity, dataTypes, dataConverters, context);
+                computeMappingDefaults(compositeIdentity, dataTypes, dataConverters, context, legacyEmbeddedNaming);
             }
         }
         if (entity.hasVersion()) {
-            computeMappingDefaults(entity.getVersion(), dataTypes, dataConverters, context);
+            computeMappingDefaults(entity.getVersion(), dataTypes, dataConverters, context, legacyEmbeddedNaming);
         }
 
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
@@ -134,7 +138,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             PersistentProperty property,
             Map<String, DataType> dataTypes,
             Map<String, String> dataConverters,
-            VisitorContext context) {
+            VisitorContext context,
+            boolean legacyEmbeddedNaming) {
 
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
@@ -195,6 +200,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                     throw new ProcessingException(propertyElement, "Relation " + kind + " doesn't support 'mappedBy'.");
                 }
             }
+            if (legacyEmbeddedNaming && kind == Relation.Kind.EMBEDDED) {
+                propertyElement.annotate(EmbeddedNaming.class, builder -> builder.value(EmbeddedNaming.Strategy.LEGACY));
+            }
         }
 
         if (dataType != DataType.OBJECT) {
@@ -208,6 +216,22 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (isRelation) {
             useJoinColumnNameIfSet(annotationMetadata, propertyElement);
         }
+    }
+
+    private boolean isLegacyEmbeddedNaming(ClassElement element, VisitorContext context) {
+        Optional<String> configuredStrategy = Optional.ofNullable(context.getOptions().get(EMBEDDED_NAMING_STRATEGY))
+            .or(() -> Optional.ofNullable(System.getProperty(EMBEDDED_NAMING_STRATEGY)));
+        if (configuredStrategy.isEmpty()) {
+            return false;
+        }
+        String strategy = configuredStrategy.get();
+        if (LEGACY.equalsIgnoreCase(strategy)) {
+            return true;
+        }
+        if ("STANDARD".equalsIgnoreCase(strategy)) {
+            return false;
+        }
+        throw new ProcessingException(element, "Invalid value for '" + EMBEDDED_NAMING_STRATEGY + "': " + strategy + ". Supported values are LEGACY and STANDARD.");
     }
 
     /**
