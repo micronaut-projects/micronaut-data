@@ -17,11 +17,11 @@ package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.jdbc.entities.geo.Hotel;
+import io.micronaut.data.tck.jdbc.entities.geo.HotelJson;
 
 import java.util.List;
 
-public interface HotelRepository extends CrudRepository<Hotel, Long> {
+public interface HotelJsonRepository extends CrudRepository<HotelJson, Long> {
 
-    List<Hotel> findByLocationGeoWithin(Polygon city);
+    List<HotelJson> findByLocationGeoWithin(Polygon city);
 }

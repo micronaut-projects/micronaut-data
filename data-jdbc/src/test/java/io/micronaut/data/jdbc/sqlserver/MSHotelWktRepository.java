@@ -2,8 +2,8 @@ package io.micronaut.data.jdbc.sqlserver;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.HotelRepository;
+import io.micronaut.data.tck.repositories.HotelWktRepository;
 
 @JdbcRepository(dialect = Dialect.SQL_SERVER)
-public interface MSHotelRepository extends HotelRepository {
+public interface MSHotelWktRepository extends HotelWktRepository {
 }

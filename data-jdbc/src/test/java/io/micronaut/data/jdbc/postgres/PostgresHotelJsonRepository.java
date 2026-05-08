@@ -2,8 +2,8 @@ package io.micronaut.data.jdbc.postgres;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.HotelRepository;
+import io.micronaut.data.tck.repositories.HotelJsonRepository;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresHotelRepository extends HotelRepository {
+public interface PostgresHotelJsonRepository extends HotelJsonRepository {
 }

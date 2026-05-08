@@ -2384,20 +2384,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             switch (getDialect()) {
                 case ORACLE -> {
                     query.append("SDO_INSIDE(");
-                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(rightExpression, leftExpression);
                     query.append(") = 'TRUE'");
                 }
                 case POSTGRES, H2, MYSQL -> {
                     query.append("ST_Within(");
-                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(rightExpression, leftExpression);
                     query.append(CLOSE_BRACKET);
                 }
                 case SQL_SERVER -> {
-                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    appendExpression(leftExpression);
                     query.append(".STWithin(");
                     appendExpression(rightExpression, leftExpression);
                     query.append(") = 1");

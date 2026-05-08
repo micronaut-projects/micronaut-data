@@ -3,7 +3,8 @@ package io.micronaut.data.jdbc.postgres
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
-import io.micronaut.data.tck.repositories.HotelRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -41,8 +42,14 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
 
     @Memoized
     @Override
-    HotelRepository getHotelRepository() {
-        return context.getBean(PostgresHotelRepository)
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(PostgresHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(PostgresHotelWktRepository)
     }
 
     @Override

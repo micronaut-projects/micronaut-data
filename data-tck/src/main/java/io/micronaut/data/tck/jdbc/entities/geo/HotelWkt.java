@@ -19,10 +19,13 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.model.geo.Point;
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 
 @MappedEntity
-public class Hotel {
+public class HotelWkt {
 
     @Id
     @GeneratedValue
@@ -30,13 +33,15 @@ public class Hotel {
 
     private String name;
 
+    @Srid(4326)
     @Index(columns = "location")
+    @MappedProperty(converter = GeometryWktConverter.class)
     private Point location;
 
-    public Hotel() {
+    public HotelWkt() {
     }
 
-    public Hotel(String name, Point location) {
+    public HotelWkt(String name, Point location) {
         this.name = name;
         this.location = location;
     }

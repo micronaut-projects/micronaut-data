@@ -11,12 +11,14 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
-import io.micronaut.data.tck.jdbc.entities.geo.Hotel
+import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
+import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
-import io.micronaut.data.tck.repositories.HotelRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -33,7 +35,9 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract SchoolRepository getSchoolRepository()
 
-    abstract HotelRepository getHotelRepository()
+    abstract HotelJsonRepository getHotelJsonRepository()
+
+    abstract HotelWktRepository getHotelWktRepository()
 
     @AutoCleanup
     @Shared
@@ -268,11 +272,13 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test find by location geo within"() {
+    void "test find by location geo within when json used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
         given:
-        Hotel inside1 = new Hotel("Grand Plaza Hotel", new Point(10.0, 10.0))
-        Hotel inside2 = new Hotel("Sunset Resort", new Point(12.0, 12.0))
-        Hotel outside = new Hotel("Mountain View Hotel", new Point(30.0, 30.0))
+        HotelJson inside1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson inside2 = new HotelJson("Sunset Resort", new Point(12.0, 12.0))
+        HotelJson outside = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
 
         Polygon city = new Polygon([
                 new LineString([
@@ -285,10 +291,39 @@ abstract class AbstractGeoSpec extends Specification {
         ])
 
         when:
-        hotelRepository.saveAll(List.of(inside1, inside2, outside))
-        List<Hotel> result = hotelRepository.findByLocationGeoWithin(city)
+        getHotelJsonRepository().saveAll(List.of(inside1, inside2, outside))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoWithin(city)
         List<String> names = result.stream()
-                .map(Hotel::getName)
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test find by location geo within when wkt used"() {
+        given:
+        HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt inside2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
+        HotelWkt outside = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Polygon city = new Polygon([
+                new LineString([
+                        new Point(9.0, 9.0),
+                        new Point(9.0, 15.0),
+                        new Point(15.0, 15.0),
+                        new Point(15.0, 9.0),
+                        new Point(9.0, 9.0)
+                ])
+        ])
+
+        when:
+        getHotelWktRepository().saveAll(List.of(inside1, inside2, outside))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoWithin(city)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
                 .toList()
 
         then:

@@ -2,8 +2,8 @@ package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.HotelRepository;
+import io.micronaut.data.tck.repositories.HotelJsonRepository;
 
 @JdbcRepository(dialect = Dialect.H2)
-public interface H2HotelRepository extends HotelRepository {
+public interface H2HotelJsonRepository extends HotelJsonRepository {
 }

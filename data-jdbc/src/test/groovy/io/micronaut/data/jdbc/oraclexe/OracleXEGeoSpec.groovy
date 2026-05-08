@@ -8,7 +8,8 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
-import io.micronaut.data.tck.repositories.HotelRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -34,8 +35,14 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
 
     @Memoized
     @Override
-    HotelRepository getHotelRepository() {
-        return context.getBean(OracleXEHotelRepository)
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(OracleXEHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(OracleXEHotelWktRepository)
     }
 
     @Override
