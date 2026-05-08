@@ -948,4 +948,21 @@ public final class Restrictions {
             return "GeoWithin";
         }
     }
+
+    /**
+     * Geo intersects restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoIntersects<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoIntersects() {
+            super(PersistentEntityCriteriaBuilder::geoIntersects);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoIntersects";
+        }
+    }
 }

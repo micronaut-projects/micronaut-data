@@ -526,7 +526,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             // Avoid an error when type information is missing.
             return true;
         }
-        if ("GeoWithin".equals(restrictionName)
+        if (("GeoWithin".equals(restrictionName) || "GeoIntersects".equals(restrictionName))
             && genericType.isAssignable("io.micronaut.data.model.geo.Geometry")
             && property.getType().isAssignable("io.micronaut.data.model.geo.Geometry")) {
             return true;

@@ -272,7 +272,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test find by location geo within when json used"() {
+    void "test findByLocationGeoWithin when json conversion is used"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -303,7 +303,38 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test find by location geo within when wkt used"() {
+    void "test findByLocationGeoIntersects when json conversion used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson inside = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson boundary = new HotelJson("Sunset Resort", new Point(9.0, 12.0))
+        HotelJson outside = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Polygon city = new Polygon([
+                new LineString([
+                        new Point(9.0, 9.0),
+                        new Point(9.0, 15.0),
+                        new Point(15.0, 15.0),
+                        new Point(15.0, 9.0),
+                        new Point(9.0, 9.0)
+                ])
+        ])
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(inside, boundary, outside))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoIntersects(city)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoWithin when wkt conversion used"() {
         given:
         HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelWkt inside2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
@@ -322,6 +353,35 @@ abstract class AbstractGeoSpec extends Specification {
         when:
         getHotelWktRepository().saveAll(List.of(inside1, inside2, outside))
         List<HotelWkt> result = getHotelWktRepository().findByLocationGeoWithin(city)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoIntersects when wkt conversion used"() {
+        given:
+        HotelWkt inside = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt boundary = new HotelWkt("Sunset Resort", new Point(9.0, 12.0))
+        HotelWkt outside = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Polygon city = new Polygon([
+                new LineString([
+                        new Point(9.0, 9.0),
+                        new Point(9.0, 15.0),
+                        new Point(15.0, 15.0),
+                        new Point(15.0, 9.0),
+                        new Point(9.0, 9.0)
+                ])
+        ])
+
+        when:
+        getHotelWktRepository().saveAll(List.of(inside, boundary, outside))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoIntersects(city)
         List<String> names = result.stream()
                 .map(HotelWkt::getName)
                 .toList()

@@ -2407,6 +2407,33 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_ANYINTERACT(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 'TRUE'");
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Intersects(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STIntersects(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoIntersects is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftExpression, expression, ignoreCase, "'%'", "?");
         }

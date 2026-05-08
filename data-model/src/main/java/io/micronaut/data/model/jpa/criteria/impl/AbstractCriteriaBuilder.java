@@ -1470,6 +1470,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public Predicate geoIntersects(Expression<?> x, Expression<?> y) {
+        return predicate(x, y, PredicateBinaryOp.GEO_INTERSECTS);
+    }
+
+    @Override
     public Predicate arrayContains(Expression<?> x, Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.ARRAY_CONTAINS);
     }

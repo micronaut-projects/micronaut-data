@@ -228,6 +228,16 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate geoWithin(Expression<?> x, Expression<?> y);
 
     /**
+     * Checks if geospatial expression x intersects geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.1.0
+     */
+    Predicate geoIntersects(Expression<?> x, Expression<?> y);
+
+    /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.
      *
      * @param x The expression (property)

@@ -24,4 +24,6 @@ import java.util.List;
 public interface HotelJsonRepository extends CrudRepository<HotelJson, Long> {
 
     List<HotelJson> findByLocationGeoWithin(Polygon city);
+
+    List<HotelJson> findByLocationGeoIntersects(Polygon city);
 }
