@@ -2442,25 +2442,33 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(COMMA);
                     appendExpression(geometryExpression, leftExpression);
                     query.append(COMMA);
-                    query.append("'distance=");
-                    appendExpression(distanceExpression, leftExpression);
-                    query.append("') = 'TRUE'");
+                    query.append("'distance=' || ");
+                    appendExpression(distanceExpression);
+                    query.append(") = 'TRUE'");
                 }
-                case POSTGRES, H2, MYSQL -> {
+                case POSTGRES, H2 -> {
                     query.append("ST_DWithin(");
                     appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(geometryExpression, leftExpression);
                     query.append(COMMA);
-                    appendExpression(distanceExpression, leftExpression);
+                    appendExpression(distanceExpression);
                     query.append(CLOSE_BRACKET);
+                }
+                case MYSQL -> {
+                    query.append("ST_Distance(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression);
                 }
                 case SQL_SERVER -> {
                     appendExpression(leftExpression);
                     query.append(".STDistance(");
                     appendExpression(geometryExpression, leftExpression);
                     query.append(") <= ");
-                    appendExpression(distanceExpression, leftExpression);
+                    appendExpression(distanceExpression);
                 }
                 default -> throw new UnsupportedOperationException("GeoNear is not supported by dialect: " + getDialect());
             }
