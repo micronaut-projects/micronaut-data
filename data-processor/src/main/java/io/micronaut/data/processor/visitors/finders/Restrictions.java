@@ -931,4 +931,21 @@ public final class Restrictions {
             return "CollectionContains";
         }
     }
+
+    /**
+     * Geo within restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoWithin<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoWithin() {
+            super(PersistentEntityCriteriaBuilder::geoWithin);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoWithin";
+        }
+    }
 }

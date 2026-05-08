@@ -2380,6 +2380,33 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_INSIDE(");
+                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 'TRUE'");
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Within(");
+                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    CriteriaUtils.requireIExpression(leftExpression).visitExpression(this);
+                    query.append(".STWithin(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoWithin is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftExpression, expression, ignoreCase, "'%'", "?");
         }
@@ -2663,6 +2690,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String writeTransformer = getDataTransformerWriteValue(qpp.tableAlias, entityPropertyPath.getProperty()).orElse(null);
                 if (writeTransformer != null) {
                     appendTransformed(query, writeTransformer, pushParameter);
+                } else if (AbstractSqlLikeQueryBuilder.this instanceof SqlQueryBuilder sqlQueryBuilder
+                    && sqlQueryBuilder.isJsonOrWktGeometry(entityPropertyPath.getProperty())) {
+                    sqlQueryBuilder.appendUpdateSetParameter(query, qpp.tableAlias, entityPropertyPath.getProperty(), pushParameter);
                 } else {
                     pushParameter.run();
                 }

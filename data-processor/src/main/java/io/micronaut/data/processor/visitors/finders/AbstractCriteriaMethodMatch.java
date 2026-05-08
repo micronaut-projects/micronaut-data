@@ -509,7 +509,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
             if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
                 PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
-                if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+                if (!isValidType(restrictionName, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
                     throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
                 }
@@ -521,9 +521,14 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return params;
     }
 
-    private boolean isValidType(ClassElement genericType, SourcePersistentProperty property) {
+    private boolean isValidType(String restrictionName, ClassElement genericType, SourcePersistentProperty property) {
         if (TypeUtils.isObjectClass(genericType)) {
             // Avoid an error when type information is missing.
+            return true;
+        }
+        if ("GeoWithin".equals(restrictionName)
+            && genericType.isAssignable("io.micronaut.data.model.geo.Geometry")
+            && property.getType().isAssignable("io.micronaut.data.model.geo.Geometry")) {
             return true;
         }
         PersistentEntity owner = property.getOwner();

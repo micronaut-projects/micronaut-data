@@ -218,6 +218,16 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate regex(Expression<String> x, Expression<String> pattern);
 
     /**
+     * Checks if geospatial expression x is within geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.0.0
+     */
+    Predicate geoWithin(Expression<?> x, Expression<?> y);
+
+    /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.
      *
      * @param x The expression (property)

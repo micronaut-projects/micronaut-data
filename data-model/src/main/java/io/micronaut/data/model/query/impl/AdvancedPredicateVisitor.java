@@ -91,6 +91,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
             case STARTS_WITH -> visitStartsWith(leftExpression, rightExpression, false);
             case STARTS_WITH_IGNORE_CASE -> visitStartsWith(leftExpression, rightExpression, true);
             case REGEX -> visitRegexp(leftExpression, rightExpression);
+            case GEO_WITHIN -> visitGeoWithin(leftExpression, rightExpression);
             case ARRAY_CONTAINS -> visitArrayContains(leftExpression, rightExpression);
             case CONTAINS -> visitContains(leftExpression, rightExpression, false);
             case CONTAINS_IGNORE_CASE -> visitContains(leftExpression, rightExpression, true);
@@ -106,6 +107,10 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     default void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("Regexp is not supported by this implementation.");
+    }
+
+    default void visitGeoWithin(Expression<?> leftExpression, Expression<?> expression) {
+        throw new UnsupportedOperationException("GeoWithin is not supported by this implementation.");
     }
 
     default void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
