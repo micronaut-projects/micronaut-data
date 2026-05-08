@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.model.geo.Point;
 
 @MappedEntity
@@ -30,6 +31,7 @@ public class HotelJson {
 
     private String name;
 
+    @Srid(3857)
     @Index(columns = "location")
     private Point location;
 

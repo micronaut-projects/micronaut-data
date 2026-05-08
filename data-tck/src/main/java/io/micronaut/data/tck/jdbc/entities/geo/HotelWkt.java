@@ -33,7 +33,7 @@ public class HotelWkt {
 
     private String name;
 
-    @Srid(4326)
+    @Srid(3857)
     @Index(columns = "location")
     @MappedProperty(converter = GeometryWktConverter.class)
     private Point location;
