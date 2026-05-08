@@ -238,6 +238,17 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate geoIntersects(Expression<?> x, Expression<?> y);
 
     /**
+     * Checks if geospatial expression x is within the given distance from geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @param distance The distance
+     * @return a new predicate
+     * @since 5.1.0
+     */
+    Predicate geoNear(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
+
+    /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.
      *
      * @param x The expression (property)

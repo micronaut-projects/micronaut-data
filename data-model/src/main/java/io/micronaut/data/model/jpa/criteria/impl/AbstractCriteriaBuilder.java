@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
@@ -1472,6 +1473,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     public Predicate geoIntersects(Expression<?> x, Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.GEO_INTERSECTS);
+    }
+
+    @Override
+    public Predicate geoNear(Expression<?> x, Expression<?> y, Expression<? extends Number> distance) {
+        return new GeoNearPredicate(x, y, distance);
     }
 
     @Override

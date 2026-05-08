@@ -337,6 +337,29 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
+    void "test findByLocationGeoNear when json conversion used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
+        HotelJson farAway = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Point center = new Point(10.0, 10.0)
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(nearby1, nearby2, farAway))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoNear(center, 3d)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
     void "test findByLocationGeoWithin when wkt conversion used"() {
         given:
         HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
@@ -380,6 +403,27 @@ abstract class AbstractGeoSpec extends Specification {
         when:
         getHotelWktRepository().saveAll(List.of(onRoute1, onRoute2, outside))
         List<HotelWkt> result = getHotelWktRepository().findByLocationGeoIntersects(busRoute)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoNear when wkt conversion used"() {
+        given:
+        HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
+        HotelWkt farAway = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Point center = new Point(10.0, 10.0)
+
+        when:
+        getHotelWktRepository().saveAll(List.of(nearby1, nearby2, farAway))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoNear(center, 3d)
         List<String> names = result.stream()
                 .map(HotelWkt::getName)
                 .toList()

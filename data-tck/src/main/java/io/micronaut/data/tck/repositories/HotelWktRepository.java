@@ -17,6 +17,7 @@ package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.data.model.geo.LineString;
+import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt;
 
@@ -27,4 +28,6 @@ public interface HotelWktRepository extends CrudRepository<HotelWkt, Long> {
     List<HotelWkt> findByLocationGeoWithin(Polygon city);
 
     List<HotelWkt> findByLocationGeoIntersects(LineString busRoute);
+
+    List<HotelWkt> findByLocationGeoNear(Point center, double distance);
 }

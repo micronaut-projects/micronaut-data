@@ -2434,6 +2434,39 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitGeoNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_WITHIN_DISTANCE(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    query.append("'distance=");
+                    appendExpression(distanceExpression, leftExpression);
+                    query.append("') = 'TRUE'");
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_DWithin(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    appendExpression(distanceExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STDistance(");
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression, leftExpression);
+                }
+                default -> throw new UnsupportedOperationException("GeoNear is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftExpression, expression, ignoreCase, "'%'", "?");
         }

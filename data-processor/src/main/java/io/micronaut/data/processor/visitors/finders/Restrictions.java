@@ -902,6 +902,38 @@ public final class Restrictions {
 
     }
 
+    private interface ThreeExpressionOp<T> {
+
+        Predicate apply(PersistentEntityCriteriaBuilder cb,
+                        Expression<T> expression,
+                        Expression<T> parameter,
+                        Expression<? extends Number> numberParameter);
+
+    }
+
+    private abstract static class DoublePropertyExpressionRestriction<T> implements PropertyRestriction<T> {
+
+        private final ThreeExpressionOp<T> func;
+
+        private DoublePropertyExpressionRestriction(ThreeExpressionOp<T> func) {
+            this.func = func;
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<T> expression,
+                              List<ParameterExpression<T>> parameters) {
+            return func.apply(cb, expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
+        }
+    }
+
     /**
      * Array contains restriction.
      *
@@ -963,6 +995,23 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "GeoIntersects";
+        }
+    }
+
+    /**
+     * Geo near restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoNear<T> extends DoublePropertyExpressionRestriction<T> {
+
+        public PropertyGeoNear() {
+            super(PersistentEntityCriteriaBuilder::geoNear);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoNear";
         }
     }
 }

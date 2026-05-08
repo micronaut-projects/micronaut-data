@@ -21,6 +21,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
@@ -63,6 +64,11 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     @Override
     default void visit(BetweenPredicate betweenPredicate) {
         visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), false);
+    }
+
+    @Override
+    default void visit(GeoNearPredicate geoNearPredicate) {
+        visitGeoNear(geoNearPredicate.getValue(), geoNearPredicate.getGeometry(), geoNearPredicate.getDistance());
     }
 
     @Override
@@ -116,6 +122,10 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     default void visitGeoIntersects(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("GeoIntersects is not supported by this implementation.");
+    }
+
+    default void visitGeoNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+        throw new UnsupportedOperationException("GeoNear is not supported by this implementation.");
     }
 
     default void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
