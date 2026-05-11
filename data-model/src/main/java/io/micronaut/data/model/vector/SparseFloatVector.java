@@ -18,7 +18,7 @@ package io.micronaut.data.model.vector;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.SparseFloatVectorAttributeConverter;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -31,7 +31,7 @@ import java.util.Objects;
  * @param values Non-zero values aligned with {@code indices}.
  * @since 4.13
  */
-@TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class)
+@TypeDef(type = DataType.OBJECT, converter = SparseFloatVectorAttributeConverter.class)
 public record SparseFloatVector(int length, int[] indices, float[] values) implements SparseVector {
 
     /**

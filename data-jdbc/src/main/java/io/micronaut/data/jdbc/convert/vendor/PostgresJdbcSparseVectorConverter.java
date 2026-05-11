@@ -25,7 +25,9 @@ import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+import org.postgresql.util.PGobject;
 
+import java.sql.SQLException;
 import java.util.Set;
 
 /**
@@ -38,20 +40,51 @@ import java.util.Set;
 @Internal
 @Singleton
 @Requires(classes = PGsparsevec.class)
-final class PostgresJdbcSparseVectorConverter extends AbstractJdbcVectorConverter<PGsparsevec> {
+final class PostgresJdbcSparseVectorConverter extends AbstractJdbcVectorConverter<PGobject> {
 
     PostgresJdbcSparseVectorConverter(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public Class<PGsparsevec> getPersistedType() {
-        return PGsparsevec.class;
+    public Class<PGobject> getPersistedType() {
+        return PGobject.class;
+    }
+
+    @Override
+    public PGobject convert(Vector vector) {
+        if (supportedVectorTypes().stream().anyMatch(x -> x.isAssignableFrom(vector.getClass()))) {
+            return new PGsparsevec(vector.toFloatArray());
+        }
+        throw new IllegalArgumentException(databaseType() + " does not support " + vector.getClass().getName());
     }
 
     @Override
     public Set<Class<? extends Vector>> supportedVectorTypes() {
         return Set.of(SparseFloatVector.class, Vector.class, FloatVector.class);
+    }
+
+    @Override
+    public Vector convert(PGobject object, Class<Vector> targetType) {
+        float[] values = toArray(object);
+        if (SparseFloatVector.class.isAssignableFrom(targetType)) {
+            return SparseFloatVector.fromDense(values);
+        }
+        if (FloatVector.class.isAssignableFrom(targetType) || Vector.class.equals(targetType)) {
+            return Vector.of(values);
+        }
+        throw new IllegalArgumentException(databaseType() + " does not support " + targetType.getName());
+    }
+
+    private static float[] toArray(PGobject object) {
+        if (object instanceof PGsparsevec sparsevec) {
+            return sparsevec.toArray();
+        }
+        try {
+            return new PGsparsevec(object.getValue()).toArray();
+        } catch (SQLException e) {
+            throw new IllegalArgumentException("Cannot parse PostgreSQL sparse vector value", e);
+        }
     }
 
     @Override

@@ -47,4 +47,18 @@ class MySqlTypeConvertersFactorySpec extends Specification {
         ex.message.contains("MYSQL does not support")
 
     }
+
+    def "Vector binary conversion rejects payloads with trailing bytes"() {
+        given:
+        def f = new MySqlTypeConvertersFactory()
+        byte[] malformed = [0, 0, 0, 0, 1] as byte[]
+
+        when:
+        f.binaryToVector().convert(malformed, Vector, null)
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message.contains("Invalid MySQL VECTOR binary length 5")
+        ex.message.contains("multiple of 4")
+    }
 }

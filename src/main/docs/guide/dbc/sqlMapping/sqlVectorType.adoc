@@ -1,18 +1,18 @@
-This section explains how to map and use vector embeddings with Micronaut Data.
+This section explains how to map vector embeddings with Micronaut Data JDBC and R2DBC.
 
-Micronaut Data ships lightweight value types under `io.micronaut.data.model.vector`:
+Micronaut Data provides vector value types in `io.micronaut.data.model.vector`:
 
-- `FloatVector` — float[]-backed (good size/speed balance; recommended default)
-- `DoubleVector` — double[]-backed (best precision; bigger payloads)
-- `ByteVector` — byte[]-backed (smallest size; lossy/narrowed)
+- `FloatVector`: `float[]` backed values.
+- `DoubleVector`: `double[]` backed values.
+- `ByteVector`: `byte[]` backed values.
 
-For sparse payloads, Micronaut Data now also provides:
+Sparse vectors are represented by:
 
-- `SparseFloatVector` — `length + indices + float[] values`
-- `SparseDoubleVector` — `length + indices + double[] values`
-- `SparseByteVector` — `length + indices + byte[] values`
+- `SparseFloatVector`: `length`, `indices`, and `float[] values`.
+- `SparseDoubleVector`: `length`, `indices`, and `double[] values`.
+- `SparseByteVector`: `length`, `indices`, and `byte[] values`.
 
-For cross-dialect sparse usage, prefer `SparseFloatVector` as the default choice.
+For portable sparse mappings, prefer `SparseFloatVector`.
 
 You can also use the sealed interface `Vector` if you need a type-agnostic parameter. For derived vector search methods, Micronaut Data also accepts concrete subtypes (`FloatVector`, `DoubleVector`, `ByteVector`) as parameters.
 When you use `Vector`, Micronaut Data selects the configured dialect-specific vector binding and conversion path for the active driver.
@@ -23,23 +23,25 @@ All vectors expose dense/sparse conversion helpers through the `Vector` API (`to
 
 === Binding policy (recommended path)
 
-Use Micronaut vector types (`Vector` / concrete vector subtypes / sparse vector subtypes) as the only application-level input/output model for vector columns and vector query parameters.
+Use Micronaut vector types (`Vector`, concrete vector subtypes, or sparse vector subtypes) as the application-level input/output model for vector columns and vector query parameters.
 
-Micronaut Data intentionally does not rely on String vector literals as a primary path for vector operations. In particular:
+Micronaut Data does not rely on string vector literals as the primary path for vector operations:
 
-- Oracle R2DBC binds vectors using Oracle native typed VECTOR values (not sparse-text literals)
-- JDBC vector binding is driven by Micronaut vector types across supported dialects
-- If your code currently passes raw primitive arrays or String literals for vector queries, migrate to `Vector`/`SparseVector` values
+- Oracle R2DBC binds vectors using Oracle native typed `VECTOR` values.
+- JDBC vector binding is driven by Micronaut vector types across supported dialects.
+- If your code passes raw primitive arrays or string literals for vector queries, migrate to `Vector` or `SparseVector` values.
 
 === Example entity
 
 snippet::example.DocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
 
-To create a vector index, annotate the vector property with @VectorIndex (params: name optional, vectorIndexType IVF|HNSW, distanceType, accuracy).
+To create a vector index, annotate the vector property with `@VectorIndex`.
+
 Dialect notes:
-- PostgreSQL (pgvector): Creates ivfflat/hnsw; operator class is derived from distance (e.g. COSINE -> vector_cosine_ops, DOT -> vector_ip_ops, L1/L2 -> vector_l1_ops/vector_l2_ops).
-  For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse opclasses (`sparsevec_*_ops`) and requires `HNSW`.
-- Oracle: Creates CREATE VECTOR INDEX with ORGANIZATION NEIGHBOR PARTITIONS (IVF) or GRAPH (HNSW), uses DISTANCE and target ACCURACY.
+
+- PostgreSQL (pgvector): creates `ivfflat` or `hnsw` indexes. The operator class is derived from distance (`COSINE` -> `vector_cosine_ops`, `DOT` -> `vector_ip_ops`, `L1`/`L2` -> `vector_l1_ops`/`vector_l2_ops`).
+  For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse operator classes (`sparsevec_*_ops`) and requires `HNSW`.
+- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `GRAPH` (`HNSW`), plus distance and target accuracy settings.
 
 === Repository usage
 
@@ -68,7 +70,7 @@ If no scoring function is provided, Micronaut Data uses dialect defaults for SQL
 - MySQL: `L2_EUCLIDEAN`
 
 If no dialect default is available, Micronaut Data uses identity conversion.
-`L1_MANHATTAN` currently uses explicit identity normalization.
+`L1_MANHATTAN` uses identity normalization.
 
 For `SearchResults<T>` return types, Micronaut Data always returns raw `Score` and additionally populates `SearchResult.similarity()` when scoring function context is available.
 If no rows match, Micronaut Data returns an empty `SearchResults` (not `null`).
@@ -145,7 +147,7 @@ snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector
 
 === DDL generation and dimensions
 
-Micronaut Data honors vector dimension from `@VectorStorage(length = N)` and, when absent, from `@jakarta.persistence.Column(length = N)`:
+Micronaut Data determines vector dimensions from `@VectorStorage(length = N)`, or from `@jakarta.persistence.Column(length = N)` when `@VectorStorage` does not define a length:
 
 - PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set
 - Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
@@ -158,7 +160,7 @@ The Oracle `<TYPE>` is inferred from the vector subtype:
 
 For sparse columns declared as generic `Vector` (`@VectorStorage(shape = VectorShape.SPARSE)`), Oracle defaults to `FLOAT32`.
 
-If the dialect does not support vectors, Micronaut Data falls back to `VARCHAR(255)` for vector column definitions and logs a warning.
+If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for vector column definitions and logs a warning.
 
 
 === PostgreSQL (pgvector)

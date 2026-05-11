@@ -54,9 +54,7 @@ final class MySqlTypeConvertersFactory {
 
     @Prototype
     DataTypeConverter<FloatVector, byte[]> floatVectorToBinary() {
-        return (vector, targetType, context) -> {
-            return Optional.of(encodeFloatArray(vector.toFloatArray()));
-        };
+        return (vector, targetType, context) -> Optional.of(encodeFloatArray(vector.toFloatArray()));
     }
 
     @Prototype
@@ -78,6 +76,10 @@ final class MySqlTypeConvertersFactory {
     }
 
     private static float[] decodeFloatArray(byte[] bytes) {
+        if (bytes.length % Float.BYTES != 0) {
+            throw new IllegalArgumentException("Invalid MySQL VECTOR binary length " + bytes.length
+                + ": expected a multiple of " + Float.BYTES);
+        }
         int floatCount = bytes.length / Float.BYTES;
         float[] floats = new float[floatCount];
         ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);

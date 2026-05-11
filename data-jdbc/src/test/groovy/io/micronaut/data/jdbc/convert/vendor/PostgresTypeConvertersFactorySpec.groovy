@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.convert.vendor
 
 import com.pgvector.PGsparsevec
 import com.pgvector.PGvector
+import io.micronaut.core.convert.ConversionService
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.vector.Vector
@@ -90,5 +91,20 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         asFloat.toFloatArray().toList() == [1f, 0f, 2f, 0f]
         asVector.toFloatArray().toList() == [1f, 0f, 2f, 0f]
         asSparse.toFloatArray().toList() == [1f, 0f, 2f, 0f]
+    }
+
+    def "JDBC sparse vector converter reads driver PGobject sparsevec values"() {
+        given:
+        def converter = new PostgresJdbcSparseVectorConverter(ConversionService.SHARED)
+        def pg = new PGobject(type: 'sparsevec', value: '{1:1.5,4:-2}/5')
+
+        when:
+        def sparse = (SparseFloatVector) converter.convert(pg, SparseFloatVector)
+
+        then:
+        converter.persistedType == PGobject
+        sparse.indices().toList() == [0, 3]
+        sparse.values().toList() == [1.5f, -2f]
+        sparse.toFloatArray().toList() == [1.5f, 0f, 0f, -2f, 0f]
     }
 }

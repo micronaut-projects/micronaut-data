@@ -88,7 +88,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
             case INTEGER -> Types.INTEGER;
             case TIMESTAMP -> Types.TIMESTAMP;
             case TIME -> Types.TIME;
-            case OBJECT -> dialect == Dialect.ORACLE ? Types.NULL : Types.OTHER;
+            case OBJECT -> Types.OTHER;
             case CHARACTER -> Types.CHAR;
             case DOUBLE -> Types.DOUBLE;
             case BYTE_ARRAY -> Types.BINARY;
