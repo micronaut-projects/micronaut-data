@@ -63,7 +63,10 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperationsSupportingCriteria;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.transaction.TransactionOperations;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -94,7 +97,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -117,10 +119,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
-    @Nullable
-    private ExecutorAsyncOperations asyncOperations;
-    @Nullable
-    private ExecutorService executorService;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final ExecutorServiceResolver executorServiceResolver;
     private final boolean uniqueResultOnFindOne;
     private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
@@ -148,7 +148,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         this.sessionFactory = sessionFactory;
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
-        this.executorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
 
         ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
         this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
@@ -715,29 +715,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @NonNull
-    private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
-    }
-
-    @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
-        if (executorAsyncOperations == null) {
-            synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations;
-                if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
-                        this,
-                        this,
-                        executorService != null ? executorService : newLocalThreadPool()
-                    );
-                    this.asyncOperations = executorAsyncOperations;
-                }
-            }
-        }
-        return Objects.requireNonNull(executorAsyncOperations);
+        return asyncOperations.get(() -> new ExecutorAsyncOperationsSupportingCriteria(
+            this,
+            this,
+            executorServiceResolver.get()
+        ));
     }
 
     @NonNull
@@ -747,6 +731,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), asDataConversionService);
         }
         return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), null);
+    }
+
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @NonNull
