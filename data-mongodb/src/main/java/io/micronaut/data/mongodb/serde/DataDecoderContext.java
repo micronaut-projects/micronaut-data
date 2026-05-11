@@ -39,7 +39,6 @@ import io.micronaut.serde.reference.PropertyReference;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.BsonValueCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.jspecify.annotations.NonNull;
@@ -177,7 +176,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     @Nullable
     private String decodeGeneratedStringId(Decoder decoder, Deserializer.DecoderContext decoderContext) throws IOException {
         if (decoder instanceof BsonReaderDecoder) {
-            CodecBsonDecoder<BsonValue> codecBsonDecoder = new CodecBsonDecoder<>(new BsonValueCodec(codecRegistry));
+            CodecBsonDecoder<BsonValue> codecBsonDecoder = new CodecBsonDecoder<>(codecRegistry.get(BsonValue.class));
             BsonValue value = codecBsonDecoder.deserialize(decoder, decoderContext, BSON_VALUE);
             if (value == null || value.isNull()) {
                 return null;

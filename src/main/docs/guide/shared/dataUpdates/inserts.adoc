@@ -35,10 +35,11 @@ The built-in CRUD repository variants include insert methods with their native r
 
 Custom insert methods must accept a single argument that is the entity and start with `persist`, `insert`, or `store`, or be annotated with ann:data.annotation.Insert[].
 To persist multiple entities the method needs to accept `java.lang.Iterable` of the entity.
-Methods that start with `save` perform a conditional save: an entity without an assigned identity value is inserted, and an entity with an assigned identity value is updated.
+Methods that start with `save` perform a conditional save: an entity without an identity value is inserted, and an entity with a generated or always auto-populated identity value already present is updated.
+Entities with non-generated assigned identities are inserted by default.
 
 To temporarily restore the Micronaut Data 4 behavior where repository `save` and `saveAll` always issue insert operations, set `micronaut.data.save-as-insert` to `true`.
-For entities with assigned identity values, `micronaut.data.save-assigned-id-fallback-to-update` can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+For entities with non-generated assigned identity values, `micronaut.data.save-assigned-id-fallback-to-update` can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
 This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.
 
 Alternatively you can also define a method that features parameter names that match the properties of the entity name:

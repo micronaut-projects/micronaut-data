@@ -34,11 +34,11 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state.
      * <p>
-     * If the entity has no assigned identity, an insert is performed. If the entity has an assigned identity,
-     * an update is attempted.
+     * If the entity has no identity value, an insert is performed. If the entity has a generated or always
+     * auto-populated identity value already present, an update is attempted. Entities with non-generated assigned
+     * identities are inserted by default.
      * To require a specific operation, use {@link #insert(Object)} or {@link #update(Object)}.
-     * The {@code micronaut.data.save-as-insert} configuration property can be enabled to make this method
-     * always issue an insert for compatibility with Micronaut Data 4.
+     * This is the default repository save behavior and can be overridden by Micronaut Data configuration.
      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
@@ -61,9 +61,8 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
      * <p>
-     * Each entity is inserted or updated independently using the same identity-based rules as {@link #save(Object)}.
-     * The {@code micronaut.data.save-as-insert} configuration property can be enabled to make this method
-     * always issue inserts for compatibility with Micronaut Data 4.
+     * Each entity is saved independently using the same rules as {@link #save(Object)}.
+     * This is the default repository save behavior and can be overridden by Micronaut Data configuration.
      *
      * @param entities The entities to save. Must not be {@literal null}.
      * @param <S> The generic type

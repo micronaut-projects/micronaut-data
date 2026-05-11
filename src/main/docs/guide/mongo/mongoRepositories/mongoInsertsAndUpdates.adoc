@@ -2,9 +2,10 @@ Unlike JPA/Hibernate, Micronaut Data MongoDB is stateless and has no notion of a
 
 Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.
 
-When saving an entity with a method like `save(MyEntity)`, Micronaut Data decides between insert and update from the entity identity value.
-An entity without an assigned identity value is inserted.
-An entity with an assigned identity value is updated.
+When saving an entity with a method like `save(MyEntity)`, Micronaut Data performs a conditional save.
+An entity without an identity value is inserted.
+An entity with a generated or always auto-populated identity value already present is updated.
+Entities with non-generated assigned identities are inserted by default.
 
 If you need to require an insert, use `insert(MyEntity)`, `insertAll(Iterable<MyEntity>)`, or define an insert method.
 If you need to require an update, use `update(MyEntity)` or define an appropriate `update` method to update only the data you want to update, for example:
