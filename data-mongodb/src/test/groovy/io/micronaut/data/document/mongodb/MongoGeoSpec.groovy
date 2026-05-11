@@ -94,65 +94,65 @@ class MongoGeoSpec extends Specification {
 
     void "test geo within query parsing"() {
         given:
-        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
-        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
-        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity museumIslandCafe = new GeoEntity(point: new Point(new Position(13.4035d, 52.5194d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
 
-        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, museumIslandCafe, airportHotel])
 
-        Polygon area = new Polygon([
-                new Position(9d, 9d),
-                new Position(9d, 15d),
-                new Position(15d, 15d),
-                new Position(15d, 9d),
-                new Position(9d, 9d)
+        Polygon mitteDistrict = new Polygon([
+                new Position(13.4010d, 52.5180d),
+                new Position(13.4010d, 52.5215d),
+                new Position(13.4065d, 52.5215d),
+                new Position(13.4065d, 52.5180d),
+                new Position(13.4010d, 52.5180d)
         ])
 
         when:
-        def within = mongoGeoEntityRepository.findByPointGeoWithin(area)
+        def within = mongoGeoEntityRepository.findByPointGeoWithin(mitteDistrict)
 
         then:
-        within*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
+        within*.id as Set == [alexanderplatzCafe.id, museumIslandCafe.id] as Set
     }
 
     void "test geo intersects query parsing"() {
         given:
-        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
-        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
-        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity museumIslandCafe = new GeoEntity(point: new Point(new Position(13.4035d, 52.5194d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
 
-        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, museumIslandCafe, airportHotel])
 
-        Polygon area = new Polygon([
-                new Position(9d, 9d),
-                new Position(9d, 15d),
-                new Position(15d, 15d),
-                new Position(15d, 9d),
-                new Position(9d, 9d)
+        Polygon cityCenterServiceZone = new Polygon([
+                new Position(13.4010d, 52.5180d),
+                new Position(13.4010d, 52.5215d),
+                new Position(13.4065d, 52.5215d),
+                new Position(13.4065d, 52.5180d),
+                new Position(13.4010d, 52.5180d)
         ])
 
         when:
-        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(area)
+        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(cityCenterServiceZone)
 
         then:
-        intersects*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
+        intersects*.id as Set == [alexanderplatzCafe.id, museumIslandCafe.id] as Set
     }
 
     void "test geo near query parsing"() {
         given:
-        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
-        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(10.00001d, 10.00001d)))
-        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity nearbyBakery = new GeoEntity(point: new Point(new Position(13.4053d, 52.5202d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
 
-        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, nearbyBakery, airportHotel])
 
-        Point center = new Point(new Position(10d, 10d))
+        Point alexanderplatz = new Point(new Position(13.4050d, 52.5200d))
 
         when:
-        def near = mongoGeoEntityRepository.findByPointGeoNear(center, 5d)
+        def near = mongoGeoEntityRepository.findByPointGeoNear(alexanderplatz, 50d)
 
         then:
-        near*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
+        near*.id as Set == [alexanderplatzCafe.id, nearbyBakery.id] as Set
     }
 
     Position createPosition(double x) {
