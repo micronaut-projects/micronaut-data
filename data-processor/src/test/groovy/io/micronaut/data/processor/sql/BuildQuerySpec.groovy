@@ -123,6 +123,66 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             getResultDataType(method) == DataType.ENTITY
     }
 
+    @Unroll
+    void "test #dialect vector search score projection has a single alias"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchByEmbeddingNear(Vector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+
+        then:
+            query.contains(' AS mn_score FROM ')
+            query.count(' AS mn_score') == 1
+            !query.contains(' AS mn_score AS mn_score')
+
+        where:
+            dialect << ["POSTGRES", "ORACLE", "MYSQL"]
+    }
+
     void "test POSTGRES custom query - expression"() {
         given:
             def repository = buildRepository('test.MyInterface2', """

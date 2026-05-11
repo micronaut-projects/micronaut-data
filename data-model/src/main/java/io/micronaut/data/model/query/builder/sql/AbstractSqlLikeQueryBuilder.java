@@ -3306,9 +3306,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private void appendFunction(String functionName, List<Expression<?>> expressions) {
             if (SCORE_FUNCTION.equals(functionName) && expressions.size() == 2) {
                 appendVectorScore(expressions.get(0), expressions.get(1));
-                if (columnAlias != null) {
-                    query.append(AS_CLAUSE).append(columnAlias);
-                }
                 return;
             }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
