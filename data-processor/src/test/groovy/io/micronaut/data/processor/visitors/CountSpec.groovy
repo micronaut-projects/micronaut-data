@@ -31,7 +31,7 @@ class CountSpec extends AbstractDataSpec {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.model.entities.*;
 import java.util.concurrent.*;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import java.util.*;

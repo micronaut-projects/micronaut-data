@@ -131,6 +131,7 @@ final class CosmosSerde {
      * @param <R> the type to be returned
      * @return the deserialized object of T type
      */
+    @Nullable
     public  <E, R> R deserialize(RuntimePersistentEntity<E> persistentEntity, com.fasterxml.jackson.databind.node.ObjectNode objectNode, Argument<R> type) {
         RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
         if (identity != null && !identity.getName().equals(Constants.INTERNAL_ID)) {
@@ -158,6 +159,7 @@ final class CosmosSerde {
      * @param <T> the type to be returned
      * @return the deserialized object of T type
      */
+    @Nullable
     public  <T> T deserialize(com.fasterxml.jackson.databind.node.ObjectNode objectNode, Argument<T> type) {
         try {
             Deserializer.DecoderContext decoderContext = serdeRegistry.newDecoderContext(null);

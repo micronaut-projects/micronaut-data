@@ -23,7 +23,11 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Models compilation time configuration for the repository. Typically used as a meta-annotation.

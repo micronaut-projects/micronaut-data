@@ -31,26 +31,30 @@ import java.util.Objects;
  * @param columns The column names in the index
  * @param sqlIndexDefinitionProvider Optional vendor-specific index DDL provider
  * @param vectorIndexMetadata Vector index metadata, if any
+ * @param spatial Whether the index is spatial
  */
 @Internal
 public record SqlIndexMapping(String name,
                               boolean unique,
                               String[] columns,
                               @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
-                              @Nullable VectorIndexMetadata vectorIndexMetadata) {
+                              @Nullable VectorIndexMetadata vectorIndexMetadata,
+                              boolean spatial) {
 
-    /**
-     * Backwards-compatible constructor (non-vector index).
-     */
     public SqlIndexMapping(String name, boolean unique, String[] columns) {
-        this(name, unique, columns, null, null);
+        this(name, unique, columns, null, null, false);
     }
 
-    /**
-     * Constructor that supports SqlIndexDefinitionProvider (non-vector index).
-     */
+    public SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial) {
+        this(name, unique, columns, null, null, spatial);
+    }
+
     public SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
-        this(name, unique, columns, sqlIndexDefinitionProvider, null);
+        this(name, unique, columns, sqlIndexDefinitionProvider, null, false);
+    }
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider, VectorIndexMetadata vectorIndexMetadata) {
+        this(name, unique, columns, sqlIndexDefinitionProvider, vectorIndexMetadata, false);
     }
 
     @Override
@@ -63,6 +67,7 @@ public record SqlIndexMapping(String name,
         }
         SqlIndexMapping that = (SqlIndexMapping) object;
         return unique == that.unique &&
+               spatial == that.spatial &&
                Objects.equals(name, that.name) &&
                Objects.equals(sqlIndexDefinitionProvider, that.sqlIndexDefinitionProvider) &&
                Objects.equals(vectorIndexMetadata, that.vectorIndexMetadata) &&
@@ -71,7 +76,7 @@ public record SqlIndexMapping(String name,
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata);
+        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial);
         result = 31 * result + Arrays.hashCode(columns);
         return result;
     }
@@ -82,6 +87,7 @@ public record SqlIndexMapping(String name,
             "name='" + name + '\'' +
             ", unique=" + unique +
             ", columns=" + Arrays.toString(columns) +
+            ", spatial=" + spatial +
             '}';
     }
 }

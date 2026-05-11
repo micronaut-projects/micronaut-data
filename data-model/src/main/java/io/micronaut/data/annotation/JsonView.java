@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
  * {@code
  * @JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
  * public class ContactView {
- *     &#64;Id
- *     &#64;GeneratedValue(GeneratedValue.Type.IDENTITY)
+ *     {@literal @Id}
+ *     {@literal @GeneratedValue(GeneratedValue.Type.IDENTITY)}
  *     private Long id;
  *     private String name;
  *     private int age;

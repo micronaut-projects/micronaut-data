@@ -28,9 +28,12 @@ import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -206,6 +209,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
+    public void visit(IParameterExpression<?> parameterExpression) {
+        // Parameters do not introduce join paths.
+    }
+
+    @Override
     public void visit(IdExpression<?, ?> idExpression) {
     }
 
@@ -223,6 +231,16 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         functionExpression.getExpressions().forEach(this::visitExpression);
+    }
+
+    @Override
+    public void visit(CastExpression<?> castExpression) {
+        visitExpression(castExpression.getExpression());
+    }
+
+    @Override
+    public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+        // Current temporal expressions do not introduce join paths.
     }
 
     @Override

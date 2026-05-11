@@ -30,12 +30,13 @@ dependencies {
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
     testImplementation mnR2dbc.r2dbc.pool
-    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation(mnRxjava3.micronaut.rxjava3)
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor mnValidation.micronaut.validation.processor
     testAnnotationProcessor projects.micronautDataProcessor
 
+    testImplementation mnTest.micronaut.test.junit5
     testImplementation mn.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
@@ -91,6 +92,7 @@ dependencies {
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
+    testRuntimeOnly libs.h2gis
 }
 
 micronaut {

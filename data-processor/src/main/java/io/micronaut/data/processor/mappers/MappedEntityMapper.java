@@ -18,7 +18,13 @@ package io.micronaut.data.processor.mappers;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.inject.annotation.TypedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 

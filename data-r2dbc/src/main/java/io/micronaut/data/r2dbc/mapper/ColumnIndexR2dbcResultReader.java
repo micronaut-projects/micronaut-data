@@ -15,23 +15,13 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 /**
  * Implementation of {@link ResultReader} for R2DBC.
@@ -39,8 +29,7 @@ import java.util.Date;
  * @author graemerocher
  * @since 1.0.0
  */
-public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
-    private final ConversionService conversionService;
+public class ColumnIndexR2dbcResultReader extends ColumnIndexReadableResultReader<Row> {
 
     /**
      * Constructs a new instance.
@@ -49,167 +38,7 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
      * @since 3.1
      */
     public ColumnIndexR2dbcResultReader(@Nullable DataConversionService conversionService) {
-        // Backwards compatibility should be removed in the next version
-        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
-    }
-
-    @Override
-    public ConversionService getConversionService() {
-        return conversionService;
-    }
-
-    @Nullable
-    @Override
-    public Object readDynamic(@NonNull Row resultSet, @NonNull Integer index, @NonNull DataType dataType) {
-        return switch (dataType) {
-            case UUID -> readUUID(resultSet, index);
-            case STRING, JSON -> readString(resultSet, index);
-            case LONG -> readConvertible(resultSet, index, Long.class);
-            case INTEGER ->
-                // https://github.com/mirromutth/r2dbc-mysql/issues/177
-                    readConvertible(resultSet, index, Integer.class);
-            case BOOLEAN -> resultSet.get(index, Boolean.class);
-            case BYTE -> resultSet.get(index, Byte.class);
-            case TIME -> readTime(resultSet, index);
-            case TIMESTAMP -> readConvertible(resultSet, index, Timestamp.class);
-            case DATE -> resultSet.get(index, Date.class);
-            case CHARACTER -> resultSet.get(index, Character.class);
-            case FLOAT -> resultSet.get(index, Float.class);
-            case SHORT -> resultSet.get(index, Short.class);
-            case DOUBLE -> resultSet.get(index, Double.class);
-            case BYTE_ARRAY -> readBytes(resultSet, index);
-            case BIGDECIMAL -> resultSet.get(index, BigDecimal.class);
-            default -> getRequiredValue(resultSet, index, Object.class);
-        };
-    }
-
-    private Object readConvertible(Row resultSet, int index, Class<?> clazz) {
-        Object value = resultSet.get(index);
-        if (value == null || clazz.isInstance(value)) {
-            return value;
-        }
-        return convertRequired(value, clazz);
-    }
-
-    @Override
-    public long readLong(Row resultSet, Integer name) {
-        Long l = resultSet.get(name, Long.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public char readChar(Row resultSet, Integer name) {
-        Character character = resultSet.get(name, Character.class);
-        if (character != null) {
-            return character;
-        }
-        return 0;
-    }
-
-    @Override
-    @Nullable
-    public Date readDate(Row resultSet, Integer name) {
-        final LocalDate localDate = resultSet.get(name, LocalDate.class);
-        if (localDate != null) {
-            return java.sql.Date.valueOf(localDate);
-        }
-        return null;
-    }
-
-    @Override
-    @Nullable
-    public Date readTimestamp(Row resultSet, Integer index) {
-        final LocalDateTime localDateTime = resultSet.get(index, LocalDateTime.class);
-        if (localDateTime != null) {
-            return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public String readString(Row resultSet, Integer name) {
-        return resultSet.get(name, String.class);
-    }
-
-    @Override
-    public int readInt(Row resultSet, Integer name) {
-        Integer l = resultSet.get(name, Integer.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public boolean readBoolean(Row resultSet, Integer name) {
-        Boolean l = resultSet.get(name, Boolean.class);
-        if (l != null) {
-            return l;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public float readFloat(Row resultSet, Integer name) {
-        Float l = resultSet.get(name, Float.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public byte readByte(Row resultSet, Integer name) {
-        Byte l = resultSet.get(name, Byte.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public short readShort(Row resultSet, Integer name) {
-        Short l = resultSet.get(name, Short.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public double readDouble(Row resultSet, Integer name) {
-        Double l = resultSet.get(name, Double.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Nullable
-    @Override
-    public BigDecimal readBigDecimal(Row resultSet, Integer name) {
-        return resultSet.get(name, BigDecimal.class);
-    }
-
-    @Override
-    public byte @Nullable [] readBytes(Row resultSet, Integer name) {
-        try {
-            return resultSet.get(name, byte[].class);
-        } catch (Exception e) {
-            // Ignore and fallback to generic handling (Oracle, H2, etc.)
-        }
-        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
+        super(conversionService);
     }
 
     @Nullable
@@ -227,24 +56,14 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             if (type.isInstance(raw)) {
                 return type.cast(raw);
             }
-            return conversionService.convert(raw, type).orElse(null);
+            return getConversionService().convert(raw, type).orElse(null);
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
-                return conversionService.convert(resultSet.get(name), type).orElse(null);
+                return getConversionService().convert(resultSet.get(name), type).orElse(null);
             } catch (Exception exception) {
-                throw exceptionForColumn(name, e);
+                throw new DataAccessException("Error reading object for index [" + name + "] from result set: " + e.getMessage(), e);
             }
         }
-    }
-
-    @Override
-    public boolean next(Row resultSet) {
-        // not used
-        return false;
-    }
-
-    private DataAccessException exceptionForColumn(Integer name, Exception e) {
-        return new DataAccessException("Error reading object for index [" + name + "] from result set: " + e.getMessage(), e);
     }
 }

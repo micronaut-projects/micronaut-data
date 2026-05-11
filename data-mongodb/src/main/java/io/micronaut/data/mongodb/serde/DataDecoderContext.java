@@ -41,6 +41,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -72,7 +73,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
      */
     DataDecoderContext(MongoDataConfiguration mongoDataConfiguration,
                        AttributeConverterRegistry attributeConverterRegistry,
-                       Deserializer.DecoderContext parent,
+                        Deserializer.DecoderContext parent,
                        CodecRegistry codecRegistry) {
         this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
@@ -81,7 +82,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     }
 
     @Override
-    public <B, P> PropertyReference<B, P> resolveReference(PropertyReference<B, P> reference) {
+    @Nullable
+    public <B, P> PropertyReference<@NonNull B, @NonNull P> resolveReference(PropertyReference<B, P> reference) {
         return parent.resolveReference(reference);
     }
 

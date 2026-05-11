@@ -20,7 +20,7 @@ dependencies {
     implementation mnSql.jakarta.persistence.api
 
 	compileOnly(libs.managed.javax.persistence.api)
-    compileOnly libs.kotlin.coroutines.reactor
+    compileOnly(mn.kotlinx.coroutines.reactor)
     compileOnly mnMultitenancy.micronaut.multitenancy
 
 	testAnnotationProcessor mn.micronaut.inject.java

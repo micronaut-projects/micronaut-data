@@ -34,7 +34,7 @@ public final class FunctionExpression<E> extends AbstractExpression<E> {
     private final String name;
     private final List<Expression<?>> expressions;
 
-    public FunctionExpression(String name, List<Expression<?>> expressions,  Class<E> expressionType) {
+    public FunctionExpression(String name, List<Expression<?>> expressions, Class<E> expressionType) {
         super(new ClassExpressionType<>(expressionType));
         this.name = name;
         this.expressions = expressions;

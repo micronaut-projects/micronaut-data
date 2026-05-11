@@ -441,7 +441,7 @@ public class EntityTests {
                 characters.withIdEqualOrAbove(68L, Limit.of(5)));
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.KEY_VALUE)) {
-                return; // Key-Value databases are not capable of >= in JDQL
+                return; // Key-Value databases are not capable of >= in Jakarta Query
             } else {
                 throw x;
             }
@@ -1471,7 +1471,7 @@ public class EntityTests {
             two = numbers.two().orElseThrow();
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.KEY_VALUE)) {
-                return; // Key-Value databases are not capable of JDQL TRUE/FALSE
+                return; // Key-Value databases are not capable of Jakarta Query TRUE/FALSE
             } else {
                 throw x;
             }
@@ -1489,8 +1489,8 @@ public class EntityTests {
             assertEquals(24, characters.twentyFour());
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.KEY_VALUE)) {
-                // Key-Value databases are not capable of <= in JDQL.
-                // Key-Value databases might not be capable of JDQL AND.
+                // Key-Value databases are not capable of <= in Jakarta Query.
+                // Key-Value databases might not be capable of Jakarta Query AND.
                 return;
             } else {
                 throw x;
@@ -1509,8 +1509,8 @@ public class EntityTests {
                     .collect(Collectors.toList()));
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.COLUMN)) {
-                // Key-Value databases might not be capable of JDQL AND.
-                // Column and Key-Value databases might not be capable of JDQL IN
+                // Key-Value databases might not be capable of Jakarta Query AND.
+                // Column and Key-Value databases might not be capable of Jakarta Query IN
                 // when used with entity attributes other than the Id.
                 return;
             } else {
@@ -1526,8 +1526,8 @@ public class EntityTests {
             page1 = numbers.oddsFrom21To(40L, PageRequest.ofSize(5));
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.KEY_VALUE)) {
-                // Key-Value databases are not capable of JDQL BETWEEN
-                // Key-Value databases are not capable of JDQL TRUE/FALSE
+                // Key-Value databases are not capable of Jakarta Query BETWEEN
+                // Key-Value databases are not capable of Jakarta Query TRUE/FALSE
                 return;
             } else {
                 throw x;
@@ -1917,9 +1917,9 @@ public class EntityTests {
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.DOCUMENT)) {
                 // Document, Column, and Key-Value databases might not be capable of parentheses.
-                // Column and Key-Value databases might not be capable of JDQL OR.
-                // Key-Value databases might not be capable of < in JDQL.
-                // Key-Value databases might not be capable of JDQL AND.
+                // Column and Key-Value databases might not be capable of Jakarta Query OR.
+                // Key-Value databases might not be capable of < in Jakarta Query.
+                // Key-Value databases might not be capable of Jakarta Query AND.
                 return;
             } else {
                 throw x;

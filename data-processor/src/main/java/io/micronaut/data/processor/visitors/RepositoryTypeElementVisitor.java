@@ -63,6 +63,8 @@ import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -687,6 +689,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (queryResult != null) {
             if (parameterBinding.stream().anyMatch(QueryParameterBinding::isExpandable)) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY, queryResult.getQueryParts().toArray(new String[0]));
+            }
+            // OUT parameter bindings (e.g. Oracle RETURNING ... INTO ...)
+            List<QueryOutParameterBinding> outBindings = queryResult.getOutParameterBindings();
+            if (CollectionUtils.isNotEmpty(outBindings)) {
+                List<AnnotationValue<?>> outAnnotations = new ArrayList<>(outBindings.size());
+                for (QueryOutParameterBinding b : outBindings) {
+                    AnnotationValueBuilder<?> outBuilder = AnnotationValue.builder(DataMethodQueryOutParameter.class);
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
+                    outAnnotations.add(outBuilder.build());
+                }
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new AnnotationValue[0]));
             }
 
             int max = queryResult.getMax();

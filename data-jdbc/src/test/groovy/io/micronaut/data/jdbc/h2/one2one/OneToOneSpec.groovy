@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.h2.one2one
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
@@ -23,8 +22,7 @@ import java.sql.Connection
 import java.time.LocalDateTime
 
 @MicronautTest
-@H2DBProperties
-@Property(name = "datasources.default.schema-generate", value = "NONE")
+@H2DBProperties(schemaGenerate = "NONE")
 class OneToOneSpec extends Specification {
 
     @Shared

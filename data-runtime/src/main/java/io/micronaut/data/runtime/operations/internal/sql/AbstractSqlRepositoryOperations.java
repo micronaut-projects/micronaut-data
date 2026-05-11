@@ -23,6 +23,8 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
@@ -855,41 +857,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
-            List<AnnotationValue<Projection>> projections = preparedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
-            RuntimePersistentEntity<R> dtoPersistentEntity;
-            if (projections != null && !projections.isEmpty()) {
-                if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
-                    throw new IllegalStateException("Number of projections does not match persistent entity properties");
-                }
-                Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
-                Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
-                List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
-                for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
-                    RuntimePersistentProperty<R> dtoProp = dtoIter.next();
-                    String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
-                    RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
-                    if (propertyByName == null) {
-                        throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
-                    }
-                    BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
-                    MutableAnnotationMetadata annotationMetadata = new  MutableAnnotationMetadata();
-                    annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
-                    properties.add(new BeanPropertyWithAnnotationMetadata<>(
-                        dtoProp.getName(),
-                        dtoProp.getProperty(),
-                        new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
-                    ));
-                }
-                dtoPersistentEntity = new RuntimePersistentEntity<>(
-                    resultPersistentEntity.getIntrospection(),
-                    properties
-                );
-            } else {
-                dtoPersistentEntity = new RuntimePersistentEntity<>(
-                    resultPersistentEntity.getIntrospection(),
-                    getDtoProperties(resultPersistentEntity, persistentEntity)
-                );
-            }
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
+                preparedQuery.getAnnotationMetadata(),
+                persistentEntity,
+                resultPersistentEntity
+            );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
                 columnNameResultSetReader,
@@ -1001,8 +973,75 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
     }
 
-    private <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
-                                                                  RuntimePersistentEntity<E> persistentEntity) {
+    protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                                                                 RuntimePersistentEntity<E> persistentEntity,
+                                                                                 RuntimePersistentEntity<R> resultPersistentEntity) {
+        List<AnnotationValue<Projection>> projections = annotationMetadata.getAnnotationValuesByType(Projection.class);
+        if (projections != null && !projections.isEmpty()) {
+            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
+                throw new IllegalStateException("Number of projections does not match persistent entity properties");
+            }
+            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
+            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
+            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
+            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
+                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
+                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
+                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
+                if (propertyByName == null) {
+                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
+                }
+                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
+                MutableAnnotationMetadata mutableAnnotationMetadata = new MutableAnnotationMetadata();
+                mutableAnnotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                properties.add(new BeanPropertyWithAnnotationMetadata<>(
+                    dtoProp.getName(),
+                    dtoProp.getProperty(),
+                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata)
+                ));
+            }
+            return new RuntimePersistentEntity<>(
+                resultPersistentEntity.getIntrospection(),
+                properties
+            );
+        }
+        return new RuntimePersistentEntity<>(
+            resultPersistentEntity.getIntrospection(),
+            getDtoProperties(resultPersistentEntity, persistentEntity)
+        );
+    }
+
+    protected final <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
+        if (storedQuery.isDtoProjection()) {
+            return true;
+        }
+        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+            return false;
+        }
+        Class<R> resultType = storedQuery.getResultType();
+        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
+            return false;
+        }
+        if (resultType.equals(String.class)
+            || Number.class.isAssignableFrom(resultType)
+            || CharSequence.class.isAssignableFrom(resultType)
+            || java.util.Date.class.isAssignableFrom(resultType)
+            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
+            || resultType.equals(Boolean.class)
+            || resultType.equals(Character.class)
+            || resultType.equals(Object.class)) {
+            return false;
+        }
+        try {
+            BeanIntrospection.getIntrospection(resultType);
+            return true;
+        } catch (IntrospectionException e) {
+            return false;
+        }
+    }
+
+    protected final <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                          RuntimePersistentEntity<E> persistentEntity) {
         return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
             if (p.hasAnnotation(MappedProperty.class)) {
                 return p;

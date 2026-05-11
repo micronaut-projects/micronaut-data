@@ -1,7 +1,6 @@
 micronaut:
   application:
     name: example
-  propagation: thread_local
 
 r2dbc:
   datasources:

@@ -532,16 +532,18 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     void "test find by relation"() {
         given:
-            def repository = buildRepository('test.UserRoleRepository', """
+            def repository = withEmbeddedNamingStrategy("LEGACY") {
+                buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import org.jspecify.annotations.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.jdbc.entities.Role;
-import io.micronaut.data.tck.jdbc.entities.User;
-import io.micronaut.data.tck.jdbc.entities.UserRole;
-import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
@@ -549,13 +551,101 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
 }
+
+@Entity
+@Table(name = "user_role_composite")
+class UserRole {
+    @EmbeddedId
+    private UserRoleId id;
+
+    public UserRoleId getId() {
+        return id;
+    }
+
+    public void setId(UserRoleId id) {
+        this.id = id;
+    }
+}
+
+@Embeddable
+class UserRoleId {
+    @ManyToOne
+    private User user;
+    @ManyToOne
+    private Role role;
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+}
+
+@Entity
+@Table(name = "user_composite")
+class User {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Entity
+@Table(name = "role_composite")
+class Role {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
 """)
+            }
 
             def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
             def query = getQuery(method)
 
         expect:
-            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`role_id`=user_role_id_role_.`id` WHERE (user_role_.`user_id` = ?)'
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == ["id"] as String[]
             getParameterPropertyPaths(method) == ["id.user.id"] as String[]
@@ -2451,6 +2541,29 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
+    void "test oracle raw query ignores lowercase returning in string literal"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT 'user returning later' AS msg FROM dual")
+    String message();
+}
+""")
+        def method = repository.getRequiredMethod("message")
+
+        expect:
+        getRawQuery(method) == "SELECT 'user returning later' AS msg FROM dual"
+        method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
     void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """
@@ -2500,5 +2613,84 @@ interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.
         findByIdQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_ WHERE (some_entity_.`some_column` = ? AND some_entity_.`other_entity_id` = ?)'
         saveQuery == 'INSERT INTO `some_table` (`col`,`some_column`,`other_entity_id`) VALUES (?,?,?)'
         findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
+    }
+
+    void "test invalid embedded naming strategy fails compilation"() {
+        when:
+        withEmbeddedNamingStrategy("INVALID") {
+            buildRepository('test.InvalidEmbeddedNamingRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface InvalidEmbeddedNamingRepository extends GenericRepository<InvalidEmbeddedNamingEntity, Long> {
+    InvalidEmbeddedNamingEntity save(InvalidEmbeddedNamingEntity entity);
+}
+
+@Entity
+class InvalidEmbeddedNamingEntity {
+    @Id
+    Long id;
+}
+""")
+        }
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Invalid value for 'micronaut.data.embedded.naming.strategy': INVALID")
+        ex.message.contains("Supported values are LEGACY and STANDARD")
+    }
+
+    void "test legacy EmbeddedId naming strategy"() {
+        given:
+        def repository = withEmbeddedNamingStrategy("LEGACY") {
+            buildRepository('test.LegacySomeEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LegacySomeEntityRepository extends GenericRepository<LegacySomeEntity, LegacySomeEntity.PrimaryKey> {
+    Optional<LegacySomeEntity> findById(LegacySomeEntity.PrimaryKey id);
+    LegacySomeEntity saveLegacy(LegacySomeEntity entity);
+    List<LegacySomeEntity> findAll();
+}
+
+@Entity(name = "some_table")
+@Table(name = "some_table")
+record LegacySomeEntity(@EmbeddedId PrimaryKey primaryKey, String col) {
+    @Embeddable
+    record PrimaryKey(
+            int someColumn,
+            @ManyToOne LegacyOtherEntity otherEntity
+    ) {
+    }
+}
+
+@Entity(name = "other_table")
+@Table(name = "other_table")
+record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
+}
+""")
+        }
+
+        def findByIdQuery = getQuery(repository.executableMethods.find { it.methodName == "findById" && it.arguments.length == 1 && it.arguments[0].type.name.contains("PrimaryKey") })
+        def saveQuery = getQuery(repository.executableMethods.find { it.methodName == "saveLegacy" })
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_ WHERE (legacy_some_entity_.`primary_key_some_column` = ? AND legacy_some_entity_.`primary_key_other_entity_id` = ?)'
+        saveQuery == 'INSERT INTO `some_table` (`col`,`primary_key_some_column`,`primary_key_other_entity_id`) VALUES (?,?,?)'
+        findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 }

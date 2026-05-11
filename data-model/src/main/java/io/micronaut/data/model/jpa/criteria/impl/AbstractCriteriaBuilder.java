@@ -17,10 +17,10 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NextMajorVersion;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
@@ -56,6 +56,7 @@ import jakarta.persistence.criteria.SetJoin;
 import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.criteria.TemporalField;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -65,12 +66,14 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoolExpression;
@@ -84,6 +87,18 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoo
  */
 @Internal
 public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteriaBuilder {
+
+    private final Supplier<OffsetDateTime> localDateTimeSupplier;
+
+    protected AbstractCriteriaBuilder() {
+        this(() -> {
+            throw new IllegalStateException("Local date/time expressions require a DateTimeProvider.");
+        });
+    }
+
+    protected AbstractCriteriaBuilder(Supplier<OffsetDateTime> localDateTimeSupplier) {
+        this.localDateTimeSupplier = Objects.requireNonNull(localDateTimeSupplier);
+    }
 
     @NonNull
     private Predicate predicate(Expression<?> x, Expression<?> y, PredicateBinaryOp op) {
@@ -1153,34 +1168,19 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     public Expression<Date> currentDate() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.DATE, Date.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     public Expression<Timestamp> currentTimestamp() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.TIMESTAMP, Timestamp.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     public Expression<Time> currentTime() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.TIME, Time.class);
     }
 
     @Override
@@ -1340,17 +1340,17 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public Expression<LocalDate> localDate() {
-        throw notSupportedOperation();
+        return parameter(LocalDate.class, null, (Supplier<LocalDate>) () -> localDateTimeSupplier.get().toLocalDate());
     }
 
     @Override
     public Expression<LocalDateTime> localDateTime() {
-        throw notSupportedOperation();
+        return parameter(LocalDateTime.class, null, (Supplier<LocalDateTime>) () -> localDateTimeSupplier.get().toLocalDateTime());
     }
 
     @Override
     public Expression<LocalTime> localTime() {
-        throw notSupportedOperation();
+        return parameter(LocalTime.class, null, (Supplier<LocalTime>) () -> localDateTimeSupplier.get().toLocalTime());
     }
 
     @Override

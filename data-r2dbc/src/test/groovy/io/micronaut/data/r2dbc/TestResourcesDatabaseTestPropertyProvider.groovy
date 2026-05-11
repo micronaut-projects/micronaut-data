@@ -58,8 +58,8 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         def dbType = dbType()
         def options = [
                 (prefix + '.db-type')         : dbType,
-                (prefix + '.schema-generate') : schemaGenerate(),
-                (prefix + '.dialect')         : dialect,
+                (prefix + '.schema-generate') : schemaGenerate().name(),
+                (prefix + '.dialect')         : dialect.name(),
                 (prefix + '.packages')        : packages(),
                 (prefix + '.connectTimeout')  : Duration.ofMinutes(1).toString(),
                 (prefix + '.statementTimeout'): Duration.ofMinutes(1).toString(),

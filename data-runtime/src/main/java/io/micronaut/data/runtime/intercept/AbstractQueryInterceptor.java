@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
@@ -61,6 +62,8 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.runtime.query.DefaultPagedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
 import io.micronaut.data.runtime.query.DefaultStoredQueryResolver;
@@ -152,6 +155,45 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             }
         };
         this.pagedQueryResolver = operations instanceof PagedQueryResolver resolver ? resolver : new DefaultPagedQueryResolver();
+    }
+
+    /**
+     * Finds the requested repository operations from the root operations or one of its async/reactive variants.
+     *
+     * @param operationsType The operations type
+     * @param <O> The operations type
+     * @return The operations, if available
+     * @since 5.0.0
+     */
+    @Internal
+    @Nullable
+    protected final <O> O findRepositoryOperations(@NonNull Class<O> operationsType) {
+        ArgumentUtils.requireNonNull("operationsType", operationsType);
+        O repositoryOperations = asRepositoryOperations(operationsType, operations);
+        if (repositoryOperations != null) {
+            return repositoryOperations;
+        }
+        if (operations instanceof AsyncCapableRepository asyncCapableRepository) {
+            repositoryOperations = asRepositoryOperations(operationsType, asyncCapableRepository.async());
+            if (repositoryOperations != null) {
+                return repositoryOperations;
+            }
+        }
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            repositoryOperations = asRepositoryOperations(operationsType, reactiveCapableRepository.reactive());
+            if (repositoryOperations != null) {
+                return repositoryOperations;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static <O> O asRepositoryOperations(Class<O> operationsType, Object repositoryOperations) {
+        if (operationsType.isInstance(repositoryOperations)) {
+            return operationsType.cast(repositoryOperations);
+        }
+        return null;
     }
 
     /**

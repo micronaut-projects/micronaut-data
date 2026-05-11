@@ -17,6 +17,7 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -42,6 +43,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -1511,6 +1513,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            throw new UnsupportedOperationException("CAST is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            throw new UnsupportedOperationException("Current temporal expression is not supported by Micronaut Data MongoDB.");
         }
 
         @Override
