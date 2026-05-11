@@ -17,15 +17,21 @@ package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.BsonReaderDecoder;
 import io.micronaut.serde.bson.BsonWriterEncoder;
+import io.micronaut.serde.config.annotation.SerdeConfig;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -33,6 +39,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Persistent entity implementation of {@link Codec}.
@@ -53,6 +61,7 @@ class MappedCodec<T> implements Codec<T> {
     protected final CodecRegistry codecRegistry;
     private final Deserializer.DecoderContext decoderContext;
     private final Serializer.EncoderContext encoderContext;
+    private final List<String> nullableManyAssociationProperties;
 
     /**
      * Default constructor.
@@ -73,6 +82,7 @@ class MappedCodec<T> implements Codec<T> {
         this.codecRegistry = codecRegistry;
         this.decoderContext = dataSerdeRegistry.newDecoderContext(type, codecRegistry);
         this.encoderContext = dataSerdeRegistry.newEncoderContext(type, codecRegistry);
+        this.nullableManyAssociationProperties = findNullableManyAssociationProperties(persistentEntity);
         try {
             this.serializer = dataSerdeRegistry.findSerializer(argument).createSpecific(encoderContext, argument);
             this.deserializer = dataSerdeRegistry.findDeserializer(argument).createSpecific(decoderContext, argument);
@@ -94,7 +104,14 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
-            serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
+            if (nullableManyAssociationProperties.isEmpty()) {
+                serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
+            } else {
+                BsonDocument document = new BsonDocument();
+                serializer.serialize(new BsonWriterEncoder(new BsonDocumentWriter(document), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
+                removeNullManyAssociations(document);
+                new BsonDocumentCodec(codecRegistry).encode(writer, document, encoderContext);
+            }
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
         }
@@ -103,5 +120,28 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public Class<T> getEncoderClass() {
         return type;
+    }
+
+    private static List<String> findNullableManyAssociationProperties(RuntimePersistentEntity<?> persistentEntity) {
+        List<String> propertyNames = new ArrayList<>(2);
+        for (Association association : persistentEntity.getAssociations()) {
+            Relation.Kind kind = association.getKind();
+            if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
+                propertyNames.add(
+                    association.getAnnotationMetadata()
+                        .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+                        .orElseGet(association::getName)
+                );
+            }
+        }
+        return List.copyOf(propertyNames);
+    }
+
+    private void removeNullManyAssociations(BsonDocument document) {
+        for (String propertyName : nullableManyAssociationProperties) {
+            if (document.containsKey(propertyName) && document.get(propertyName).isNull()) {
+                document.remove(propertyName);
+            }
+        }
     }
 }

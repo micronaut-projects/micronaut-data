@@ -15,17 +15,21 @@
  */
 package io.micronaut.data.document.serde.defaults;
 
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.document.serde.CustomConverterDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.util.CustomizableDeserializer;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * Default deserializer for custom converters.
@@ -53,12 +57,26 @@ final class DefaultCustomConverterDeserializer implements CustomConverterDeseria
         Argument<Object> convertedType = Argument.of(converterPersistedType);
         AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
         Deserializer<?> deserializer = decoderContext.findDeserializer(convertedType);
-        return (decoder, decoderContext1, type1) -> {
-            if (decoder.decodeNull()) {
-                return null;
+        return new Deserializer<>() {
+            @Override
+            public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                Object deserialized = deserializer.deserialize(decoder, decoderContext, convertedType);
+                Object converted = converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
+                if (converted == null) {
+                    throw new SerdeException("Custom converter returned null for non-null deserialization of " + type.getName());
+                }
+                return converted;
             }
-            Object deserialized = deserializer.deserialize(decoder, decoderContext1, convertedType);
-            return converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
+
+            @Override
+            @Nullable
+            public Object deserializeNullable(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                if (decoder.decodeNull()) {
+                    return null;
+                }
+                Object deserialized = deserializer.deserializeNullable(decoder, decoderContext, convertedType);
+                return converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
+            }
         };
     }
 

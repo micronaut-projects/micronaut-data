@@ -97,8 +97,17 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Deserializer<?> relationDeser = findDeserializer(type);
                     return new Deserializer<>() {
                         @Override
-                        @Nullable
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                            Object deserialized = deserializeNullable(decoder, decoderContext, type);
+                            if (deserialized == null) {
+                                throw nullDeserializationException(type);
+                            }
+                            return deserialized;
+                        }
+
+                        @Override
+                        @Nullable
+                        public Object deserializeNullable(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
                                 return null;
                             }
@@ -126,9 +135,19 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     if (type.getType().isAssignableFrom(String.class) && type.isAnnotationPresent(GeneratedValue.class)) {
                         Deserializer<? extends ObjectId> deserializer = findDeserializer(OBJECT_ID);
-                        return (decoder, decoderContext2, objectIdType) -> {
-                            ObjectId objectId = deserializer.deserialize(decoder, decoderContext2, OBJECT_ID);
-                            return objectId == null ? null : objectId.toHexString();
+                        return new Deserializer<>() {
+                            @Override
+                            public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                                ObjectId objectId = deserializer.deserialize(decoder, decoderContext, OBJECT_ID);
+                                return objectId.toHexString();
+                            }
+
+                            @Override
+                            @Nullable
+                            public Object deserializeNullable(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                                ObjectId objectId = deserializer.deserializeNullable(decoder, decoderContext, OBJECT_ID);
+                                return objectId == null ? null : objectId.toHexString();
+                            }
                         };
                     }
                     Deserializer<? extends Object> deserializer = findDeserializer(type);
@@ -156,12 +175,22 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Deserializer<?> deserializer = findDeserializer(convertedType);
                     return new Deserializer<>() {
                         @Override
-                        @Nullable
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                            Object deserialized = deserializer.deserialize(decoder, decoderContext, convertedType);
+                            Object converted = converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
+                            if (converted == null) {
+                                throw new SerdeException("Custom converter returned null for non-null deserialization of " + type.getName());
+                            }
+                            return converted;
+                        }
+
+                        @Override
+                        @Nullable
+                        public Object deserializeNullable(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
                                 return null;
                             }
-                            Object deserialized = deserializer.deserialize(decoder, decoderContext, convertedType);
+                            Object deserialized = deserializer.deserializeNullable(decoder, decoderContext, convertedType);
                             return converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
                         }
                     };
@@ -215,6 +244,10 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     @Override
     public boolean hasView(Class<?>... views) {
         return this.mongoDataConfiguration.isIgnoreJsonViews() || parent.hasView(views);
+    }
+
+    private static SerdeException nullDeserializationException(Argument<?> type) {
+        return new SerdeException("Deserializer returned null for non-null deserialization of " + type.getName());
     }
 
 }
