@@ -14,7 +14,7 @@ public interface MongoGeoEntityRepository extends CrudRepository<GeoEntity, Stri
 
     List<GeoEntity> findByPointGeoWithin(Polygon area);
 
-    List<GeoEntity> findByPointGeoIntersects(LineString path);
+    List<GeoEntity> findByPointGeoIntersects(Polygon area);
 
     List<GeoEntity> findByPointGeoNear(Point center, double distance);
 }

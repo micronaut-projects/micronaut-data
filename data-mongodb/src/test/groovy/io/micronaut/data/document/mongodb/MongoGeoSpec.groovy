@@ -123,13 +123,16 @@ class MongoGeoSpec extends Specification {
 
         mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
 
-        LineString path = new LineString([
-            new Position(9d, 9d),
-            new Position(15d, 15d)
+        Polygon area = new Polygon([
+                new Position(9d, 9d),
+                new Position(9d, 15d),
+                new Position(15d, 15d),
+                new Position(15d, 9d),
+                new Position(9d, 9d)
         ])
 
         when:
-        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(path)
+        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(area)
 
         then:
         intersects*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
@@ -138,7 +141,7 @@ class MongoGeoSpec extends Specification {
     void "test geo near query parsing"() {
         given:
         GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
-        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
+        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(10.00001d, 10.00001d)))
         GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
 
         mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
@@ -146,7 +149,7 @@ class MongoGeoSpec extends Specification {
         Point center = new Point(new Position(10d, 10d))
 
         when:
-        def near = mongoGeoEntityRepository.findByPointGeoNear(center, 3d)
+        def near = mongoGeoEntityRepository.findByPointGeoNear(center, 5d)
 
         then:
         near*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
