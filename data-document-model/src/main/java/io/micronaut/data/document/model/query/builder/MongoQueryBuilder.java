@@ -53,6 +53,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
@@ -1298,6 +1299,42 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of("$all", criteriaValue));
+        }
+
+        @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoWithin", Map.of(
+                    "$geometry", valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoIntersects", Map.of(
+                    "$geometry", valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visit(GeoNearPredicate geoNearPredicate) {
+            visitGeoNear(geoNearPredicate.getValue(), geoNearPredicate.getGeometry(), geoNearPredicate.getDistance());
+        }
+
+        @Override
+        public void visitGeoNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$near", Map.of(
+                    "$geometry", valueRepresentation(queryState, propertyPath, geometryExpression),
+                    "$maxDistance", valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression)
+                )
+            ));
         }
 
         @Override

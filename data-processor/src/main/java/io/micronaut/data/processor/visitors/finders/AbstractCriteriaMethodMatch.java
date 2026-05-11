@@ -532,8 +532,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         }
         if (("GeoWithin".equals(restrictionName) || "GeoIntersects".equals(restrictionName)
             || ("GeoNear".equals(restrictionName) && parameterIndex == 0))
-            && genericType.isAssignable("io.micronaut.data.model.geo.Geometry")
-            && property.getType().isAssignable("io.micronaut.data.model.geo.Geometry")) {
+            && isGeometryType(genericType)
+            && isGeometryType(property.getType())) {
             return true;
         }
         if ("GeoNear".equals(restrictionName) && parameterIndex == 1 && TypeUtils.isNumber(genericType)) {
@@ -554,6 +554,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return true;
         }
         return genericType.isAssignable(Iterable.class);
+    }
+
+    private boolean isGeometryType(ClassElement type) {
+        return type.isAssignable("io.micronaut.data.model.geo.Geometry")
+            || type.isAssignable("com.mongodb.client.model.geojson.Geometry");
     }
 
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
