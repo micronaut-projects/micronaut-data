@@ -79,9 +79,12 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -97,7 +100,6 @@ import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -123,10 +125,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final MongoClient mongoClient;
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
-    @Nullable
-    private ExecutorAsyncOperations asyncOperations;
-    @Nullable
-    private ExecutorService executorService;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final ExecutorServiceResolver executorServiceResolver;
 
     /**
      * Default constructor.
@@ -156,7 +156,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
         this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
-        this.executorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @Override
@@ -1080,26 +1080,15 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-        if (asyncOperations == null) {
-            synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
-                            this,
-                            executorService != null ? executorService : newLocalThreadPool()
-                    );
-                    this.asyncOperations = asyncOperations;
-                }
-            }
-        }
-        return asyncOperations;
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+                this,
+                executorServiceResolver.get()
+        ));
     }
 
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @NonNull

@@ -44,7 +44,7 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
         def prefix = 'datasources.' + dataSourceName
         return [
                 (prefix + '.url')            : "jdbc:h2:mem:${dataSourceName};${H2_URL_PROPERTIES}",
-                (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.schema-generate'): schemaGenerate().name(),
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',
