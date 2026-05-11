@@ -48,8 +48,8 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         def prefix = 'datasources.' + dataSourceName
         return [
                 (prefix + '.db-type')                        : dbType(),
-                (prefix + '.schema-generate')                : schemaGenerate(),
-                (prefix + '.dialect')                        : dialect(),
+                (prefix + '.schema-generate')                : schemaGenerate().name(),
+                (prefix + '.dialect')                        : dialect().name(),
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.enabled')                        : dataSourceEnabled(dataSourceName),
                 "test-resources.containers.postgres.image-name": "postgis/postgis",

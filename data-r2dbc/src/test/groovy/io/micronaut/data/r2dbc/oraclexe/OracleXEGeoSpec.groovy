@@ -43,8 +43,8 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
         def prefix = 'r2dbc.datasources.' + dataSourceName
         return [
                 (prefix + '.db-type')                        : dbType(),
-                (prefix + '.schema-generate')                : schemaGenerate(),
-                (prefix + '.dialect')                        : dialect(),
+                (prefix + '.schema-generate')                : schemaGenerate().name(),
+                (prefix + '.dialect')                        : dialect().name(),
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.connectTimeout')                 : Duration.ofMinutes(1).toString(),
                 (prefix + '.statementTimeout')               : Duration.ofMinutes(1).toString(),
