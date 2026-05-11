@@ -139,7 +139,8 @@ final class OracleReturningSupport {
                 query.getJoinPaths(),
                 jsonMapper != null ? () -> jsonMapper : null,
                 (loadedEntity, entity) -> (R) postLoadCallback.apply(loadedEntity, entity, query.getAnnotationMetadata()),
-                conversionService
+                conversionService,
+                null
             );
         }
         if (dtoEntityResolver.isDtoProjection(query)) {
@@ -159,7 +160,8 @@ final class OracleReturningSupport {
                 query.getJoinPaths(),
                 null,
                 null,
-                conversionService
+                conversionService,
+                null
             );
         }
         return new SqlTypeMapper<>() {

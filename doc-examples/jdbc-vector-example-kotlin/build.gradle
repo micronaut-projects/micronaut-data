@@ -27,11 +27,10 @@ dependencies {
     implementation projects.micronautDataJdbc
     implementation(mnSql.jakarta.persistence.api)
     implementation mn.micronaut.http.client
-    implementation mnRxjava2.micronaut.rxjava2
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation mnSerde.micronaut.serde.support
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

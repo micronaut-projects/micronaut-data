@@ -49,12 +49,8 @@ public record SqlIndexMapping(String name,
         this(name, unique, columns, null, null, spatial);
     }
 
-    public SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
+    public SqlIndexMapping(String name, boolean unique, String[] columns, @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
         this(name, unique, columns, sqlIndexDefinitionProvider, null, false);
-    }
-
-    public SqlIndexMapping(String name, boolean unique, String[] columns, SqlIndexDefinitionProvider sqlIndexDefinitionProvider, VectorIndexMetadata vectorIndexMetadata) {
-        this(name, unique, columns, sqlIndexDefinitionProvider, vectorIndexMetadata, false);
     }
 
     @Override

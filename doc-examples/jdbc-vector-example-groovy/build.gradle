@@ -25,7 +25,6 @@ dependencies {
     implementation projects.micronautDataJdbc
     implementation(mnSql.jakarta.persistence.api)
     implementation mn.micronaut.http.client
-    implementation mnRxjava2.micronaut.rxjava2
     implementation mnValidation.micronaut.validation
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat

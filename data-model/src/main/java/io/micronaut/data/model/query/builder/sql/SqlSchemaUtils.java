@@ -597,7 +597,7 @@ public final class SqlSchemaUtils {
                         }
                     }
                 }
-                indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta));
+                indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta, false));
             }
         }
 

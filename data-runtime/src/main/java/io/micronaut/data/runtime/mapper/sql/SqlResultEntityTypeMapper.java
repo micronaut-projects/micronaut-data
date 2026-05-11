@@ -139,7 +139,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService, DatabaseConversionContextFactory conversionContextFactory) {
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService,
+            @Nullable DatabaseConversionContextFactory conversionContextFactory) {
         this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, conversionContextFactory);
     }
 

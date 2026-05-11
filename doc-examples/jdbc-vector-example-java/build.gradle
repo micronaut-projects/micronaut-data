@@ -23,7 +23,6 @@ dependencies {
     annotationProcessor projects.micronautDataProcessor
     annotationProcessor mnValidation.micronaut.validation
     implementation projects.micronautDataJdbc
-    implementation mnRxjava2.micronaut.rxjava2
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
     implementation(mnSql.jakarta.persistence.api)
