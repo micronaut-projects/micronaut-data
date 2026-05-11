@@ -1,9 +1,12 @@
 package io.micronaut.data.document.mongodb
 
+import com.mongodb.client.MongoClient
+import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.geojson.LineString
 import com.mongodb.client.model.geojson.MultiLineString
 import com.mongodb.client.model.geojson.MultiPoint
 import com.mongodb.client.model.geojson.Point
+import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
 import io.micronaut.data.document.mongodb.entities.GeoEntity
 import io.micronaut.data.document.mongodb.repositories.MongoGeoEntityRepository
@@ -18,6 +21,16 @@ class MongoGeoSpec extends Specification {
     @Inject
     @Shared
     MongoGeoEntityRepository mongoGeoEntityRepository
+
+    @Inject
+    @Shared
+    MongoClient mongoClient
+
+    def setupSpec() {
+        mongoClient.getDatabase("test")
+            .getCollection("geo_entity")
+            .createIndex(Indexes.geo2dsphere("point"))
+    }
 
     def cleanup() {
         mongoGeoEntityRepository.deleteAll()
@@ -77,6 +90,66 @@ class MongoGeoSpec extends Specification {
             assertLineString(it.getLineString(), 2)
             assert it.getMultiLineString() == null
         }
+    }
+
+    void "test geo within query parsing"() {
+        given:
+        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
+        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
+        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+
+        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+
+        Polygon area = new Polygon([
+                new Position(9d, 9d),
+                new Position(9d, 15d),
+                new Position(15d, 15d),
+                new Position(15d, 9d),
+                new Position(9d, 9d)
+        ])
+
+        when:
+        def within = mongoGeoEntityRepository.findByPointGeoWithin(area)
+
+        then:
+        within*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
+    }
+
+    void "test geo intersects query parsing"() {
+        given:
+        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
+        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
+        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+
+        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+
+        LineString path = new LineString([
+            new Position(9d, 9d),
+            new Position(15d, 15d)
+        ])
+
+        when:
+        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(path)
+
+        then:
+        intersects*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
+    }
+
+    void "test geo near query parsing"() {
+        given:
+        GeoEntity onDiagonal1 = new GeoEntity(point: new Point(new Position(10d, 10d)))
+        GeoEntity onDiagonal2 = new GeoEntity(point: new Point(new Position(12d, 12d)))
+        GeoEntity outside = new GeoEntity(point: new Point(new Position(30d, 30d)))
+
+        mongoGeoEntityRepository.saveAll([onDiagonal1, onDiagonal2, outside])
+
+        Point center = new Point(new Position(10d, 10d))
+
+        when:
+        def near = mongoGeoEntityRepository.findByPointGeoNear(center, 3d)
+
+        then:
+        near*.id as Set == [onDiagonal1.id, onDiagonal2.id] as Set
     }
 
     Position createPosition(double x) {
