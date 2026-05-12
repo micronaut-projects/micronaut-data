@@ -22,7 +22,7 @@ import jakarta.persistence.criteria.Expression;
 /**
  * The geo near predicate implementation.
  *
- * @since 5.1.0
+ * @since 5.0
  */
 @Internal
 public final class GeoNearPredicate extends AbstractPredicate {

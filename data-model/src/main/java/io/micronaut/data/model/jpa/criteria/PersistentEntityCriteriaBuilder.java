@@ -53,7 +53,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return The insert criteria
      * @since 5.0
      */
-    
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity);
 
     /**
@@ -64,7 +63,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param ignoreCase If ignore case should be used
      * @return ascending ordering corresponding to the expression
      */
-    
     Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
@@ -223,7 +221,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param x The geospatial expression
      * @param y The geospatial expression
      * @return a new predicate
-     * @since 5.0.0
+     * @since 5.0
      */
     Predicate geoWithin(Expression<?> x, Expression<?> y);
 
@@ -233,7 +231,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param x The geospatial expression
      * @param y The geospatial expression
      * @return a new predicate
-     * @since 5.1.0
+     * @since 5.0
      */
     Predicate geoIntersects(Expression<?> x, Expression<?> y);
 
@@ -244,7 +242,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param y The geospatial expression
      * @param distance The distance
      * @return a new predicate
-     * @since 5.1.0
+     * @since 5.0
      */
     Predicate geoNear(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
 
