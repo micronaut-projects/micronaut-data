@@ -808,6 +808,81 @@ void "test annotation metadata"() {
 <h2 id="_5_0">5.0</h2>
 <div class="sectionbody">
 <div class="sect2">
+<h3 id="_repository_save_methods_now_perform_save_or_update">Repository save methods now perform save-or-update</h3>
+<div class="paragraph">
+<p>Micronaut Data repository <code>save</code> and <code>saveAll</code> methods now perform a conditional save operation instead of always requiring an insert query.
+For entities without an identity value, Micronaut Data performs an insert.
+For entities with a generated or always auto-populated identity value already present, Micronaut Data attempts an update.
+Entities with non-generated assigned identities are inserted by default.</p>
+</div>
+<div class="paragraph">
+<p>Code that relied on <code>save</code> or <code>saveAll</code> to always issue an insert should use the explicit <code>insert</code> and <code>insertAll</code> methods now available on the built-in CRUD repository interfaces.
+Custom repository methods can also require insert behavior by starting with <code>insert</code>, <code>persist</code>, or <code>store</code>, or by using <a href="../api/io/micronaut/data/annotation/Insert.html">@Insert</a>.
+This applies to the synchronous, asynchronous, reactive, Reactor, RxJava, and Kotlin coroutine CRUD repository variants.</p>
+</div>
+<div class="paragraph">
+<p>To temporarily restore the Micronaut Data 4 behavior for repository <code>save</code> and <code>saveAll</code> methods, set <code>micronaut.data.save-as-insert</code> to <code>true</code>.
+When enabled, <code>save</code> and <code>saveAll</code> always issue insert operations and fail if the entity already exists.
+For entities with non-generated assigned identity values, <code>micronaut.data.save-assigned-id-fallback-to-update</code> can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.
+The Hibernate JPA <code>jpa.default.properties.persistOrMergeOnSave</code> setting no longer controls repository <code>save</code> methods.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.save-as-insert=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    save-as-insert: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
+  [micronaut.data]
+    save-as-insert=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    saveAsInsert = true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      save-as-insert = true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "save-as-insert": true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_mapping_between_java_time_types_and_oracle_database_interval_types">Mapping between Java time types and Oracle database INTERVAL types</h3>
 <div class="paragraph">
 <p>The following Java time types are now mapped to INTERVAL database types instead of string database types when using Oracle database:</p>
@@ -1515,6 +1590,19 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>The built-in CRUD repository interfaces provide three distinct write operations:
+<code>save</code> / <code>saveAll</code> perform a conditional save, inserting entities without an identity value and updating entities with a generated or always auto-populated identity value already present.
+Entities with non-generated assigned identities are inserted by default.
+<code>insert</code> / <code>insertAll</code> require an insert operation.
+<code>update</code> / <code>updateAll</code> require an update operation.</p>
+</div>
+<div class="paragraph">
+<p>To temporarily restore the Micronaut Data 4 behavior where <code>save</code> and <code>saveAll</code> always issue insert operations, set <code>micronaut.data.save-as-insert</code> to <code>true</code>.
+For new code, prefer <code>insert</code> and <code>insertAll</code> when an insert is required.
+For entities with non-generated assigned identity values, <code>micronaut.data.save-assigned-id-fallback-to-update</code> can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.</p>
+</div>
 <div class="paragraph">
 <p>Note that in addition to interfaces you can also define repositories as abstract classes:</p>
 </div>
@@ -3184,26 +3272,64 @@ total == 2</code></pre>
 
 
 <div class="paragraph">
-<p>To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> interface does:</p>
+<p>To explicitly insert data, use <code>insert</code> and <code>insertAll</code> from the built-in CRUD repository interfaces or define a repository method that requires an insert operation.
+Unlike <code>save</code> and <code>saveAll</code>, explicit insert methods always issue an insert and may fail if the entity already exists.</p>
 </div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
-Book save(Book entity);</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun save(entity: Book): Book</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">Book save(Book entity)</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book insert(Book entity);
+List&lt;Book&gt; insertAll(Iterable&lt;Book&gt; entities);</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The method must accept a single argument that is the entity and start with either <code>save</code>, <code>persist</code>, <code>insert</code> or <code>store</code>, to persist multiple entities the method needs to accept <code>java.lag.Iterable</code> of the entity.</p>
+<p>The built-in CRUD repository variants include insert methods with their native return types:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Repository</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Insert methods</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>S insert(S entity)</code>, <code>List&lt;S&gt; insertAll(Iterable&lt;S&gt; entities)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/async/AsyncCrudRepository.html">AsyncCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CompletableFuture&lt;S&gt; insert(S entity)</code>, <code>CompletableFuture&lt;? extends Iterable&lt;S&gt;&gt; insertAll(Iterable&lt;S&gt; entities)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Publisher&lt;S&gt; insert(S entity)</code>, <code>Publisher&lt;S&gt; insertAll(Iterable&lt;S&gt; entities)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Mono&lt;S&gt; insert(S entity)</code>, <code>Flux&lt;S&gt; insertAll(Iterable&lt;S&gt; entities)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Single&lt;S&gt; insert(S entity)</code>, <code>Flowable&lt;S&gt; insertAll(Iterable&lt;S&gt; entities)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/kotlin/CoroutineCrudRepository.html">CoroutineCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>suspend fun &lt;S : E&gt; insert(entity: S): S</code>, <code>fun &lt;S : E&gt; insertAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt;</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Custom insert methods must accept a single argument that is the entity and start with <code>persist</code>, <code>insert</code>, or <code>store</code>, or be annotated with <a href="../api/io/micronaut/data/annotation/Insert.html">@Insert</a>.
+To persist multiple entities the method needs to accept <code>java.lang.Iterable</code> of the entity.
+Methods that start with <code>save</code> perform a conditional save: an entity without an identity value is inserted, and an entity with a generated or always auto-populated identity value already present is updated.
+Entities with non-generated assigned identities are inserted by default.</p>
+</div>
+<div class="paragraph">
+<p>To temporarily restore the Micronaut Data 4 behavior where repository <code>save</code> and <code>saveAll</code> always issue insert operations, set <code>micronaut.data.save-as-insert</code> to <code>true</code>.
+For entities with non-generated assigned identity values, <code>micronaut.data.save-assigned-id-fallback-to-update</code> can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.</p>
 </div>
 <div class="paragraph">
 <p>Alternatively you can also define a method that features parameter names that match the properties of the entity name:</p>
@@ -3290,7 +3416,7 @@ It is not possible to use the entity as the return type in partial updates becau
 
 
 <div class="paragraph">
-<p>To update an entity you can once again pass the entity to the <code>update</code> method:</p>
+<p>To require an update of an existing entity, pass the entity to the <code>update</code> method:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -3309,7 +3435,9 @@ Book update(Book newBook);</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>However, generally it is more efficient to use batch updates to only update the properties that have actually changed.</p>
+<p>Use <code>save</code> when you want Micronaut Data to decide between insert and update based on the entity identity value.
+Use <code>update</code> when the entity must already exist.
+However, generally it is more efficient to use batch updates to only update the properties that have actually changed.</p>
 </div>
 <div class="paragraph">
 <p>There are a couple of ways to achieve batch updates. One way is to define a method that features an argument annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a>, starts with the stem <code>update</code>:</p>
@@ -9244,7 +9372,7 @@ bookRepository.save(book)</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Unlike the JPA implementation there is no dirty checking so <code>save</code> always performs a SQL <code>INSERT</code>. For batch updates use an <code>update</code> method (see following section).
+Unlike the JPA implementation there is no dirty checking. <code>save</code> inserts entities without an identity value and updates entities with a generated or always auto-populated identity value already present. Entities with non-generated assigned identities are inserted by default. Use <code>insert</code> to require an insert, and use an <code>update</code> method for explicit or partial updates.
 </td>
 </tr>
 </table>
@@ -11148,10 +11276,14 @@ abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, 
 <p>Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.</p>
 </div>
 <div class="paragraph">
-<p>By default, when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
+<p>When saving an entity with a method like <code>save(MyEntity)</code>, Micronaut Data JDBC / R2DBC performs a conditional save.
+An entity without an identity value is inserted.
+An entity with a generated or always auto-populated identity value already present is updated.
+Entities with non-generated assigned identities are inserted by default.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
+<p>If you need to require an insert, use <code>insert(MyEntity)</code>, <code>insertAll(Iterable&lt;MyEntity&gt;)</code>, or define an insert method.
+If you need to require an update, use <code>update(MyEntity)</code> or define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -11175,7 +11307,7 @@ void update(@Id Long id, String title);</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>By being explicit in defining the method as an update method Micronaut Data knows to execute an <code>UPDATE</code>.</p>
+<p>By being explicit in defining the method as an insert or update method, Micronaut Data knows which SQL operation to execute.</p>
 </div>
 
 <h2 id="optimisticLocking"><a class="anchor" href="#optimisticLocking"></a>6.3.2 Optimistic locking</h2>
@@ -14446,7 +14578,7 @@ public class Book {
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Book(@field:Id
                 @GeneratedValue
-                var id: ObjectId,
+                var id: ObjectId?,
                 var title: String,
                 var pages: Int = 0)</code></pre>
 </div>
@@ -14583,8 +14715,8 @@ bookRepository.save(book);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">var book = Book(ObjectId(),"The Stand", 1000)
-bookRepository.save(book)</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">var book = Book(null, "The Stand", 1000)
+book = bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -14651,7 +14783,7 @@ void update(@Id ObjectId id, String title);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(book.id, "Changed")</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(id, "Changed")</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -14856,10 +14988,14 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 <p>Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.</p>
 </div>
 <div class="paragraph">
-<p>By default, when saving an entity with a method like <code>save(MyEntity)</code> an insert is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
+<p>When saving an entity with a method like <code>save(MyEntity)</code>, Micronaut Data performs a conditional save.
+An entity without an identity value is inserted.
+An entity with a generated or always auto-populated identity value already present is updated.
+Entities with non-generated assigned identities are inserted by default.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
+<p>If you need to require an insert, use <code>insert(MyEntity)</code>, <code>insertAll(Iterable&lt;MyEntity&gt;)</code>, or define an insert method.
+If you need to require an update, use <code>update(MyEntity)</code> or define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">

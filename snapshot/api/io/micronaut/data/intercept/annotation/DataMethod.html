@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#META_MEMBER_EXPANDABLE_QUERY" tabindex="0">META_MEMBER_EXPANDABLE_QUERY</a></li>
 <li><a href="#META_MEMBER_EXPANDABLE_COUNT_QUERY" tabindex="0">META_MEMBER_EXPANDABLE_COUNT_QUERY</a></li>
 <li><a href="#META_MEMBER_COUNT_QUERY" tabindex="0">META_MEMBER_COUNT_QUERY</a></li>
+<li><a href="#META_MEMBER_QUERIES" tabindex="0">META_MEMBER_QUERIES</a></li>
 <li><a href="#META_MEMBER_RESULT_TYPE" tabindex="0">META_MEMBER_RESULT_TYPE</a></li>
 <li><a href="#META_MEMBER_RESULT_DATA_TYPE" tabindex="0">META_MEMBER_RESULT_DATA_TYPE</a></li>
 <li><a href="#META_MEMBER_ROOT_ENTITY" tabindex="0">META_MEMBER_ROOT_ENTITY</a></li>
@@ -101,6 +102,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#pageSize()" tabindex="0">pageSize</a></li>
 <li><a href="#pageIndex()" tabindex="0">pageIndex</a></li>
 <li><a href="#parameters()" tabindex="0">parameters</a></li>
+<li><a href="#queries()" tabindex="0">queries</a></li>
 <li><a href="#procedure()" tabindex="0">procedure</a></li>
 </ol>
 </li>
@@ -268,38 +270,43 @@ loadScripts(document, 'script');</script>
 <div class="block">The member that holds the is procedure value.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#META_MEMBER_QUERY_BUILDER" class="member-name-link">META_MEMBER_QUERY_BUILDER</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#META_MEMBER_QUERIES" class="member-name-link">META_MEMBER_QUERIES</a></code></div>
 <div class="col-last odd-row-color">
+<div class="block">The member that holds alternative query definitions.</div>
+</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#META_MEMBER_QUERY_BUILDER" class="member-name-link">META_MEMBER_QUERY_BUILDER</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The query builder to use.</div>
 </div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#META_MEMBER_RAW_COUNT_QUERY" class="member-name-link">META_MEMBER_RAW_COUNT_QUERY</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Whether the user is a raw user specified query.</div>
-</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#META_MEMBER_RAW_QUERY" class="member-name-link">META_MEMBER_RAW_QUERY</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#META_MEMBER_RAW_COUNT_QUERY" class="member-name-link">META_MEMBER_RAW_COUNT_QUERY</a></code></div>
 <div class="col-last odd-row-color">
 <div class="block">Whether the user is a raw user specified query.</div>
 </div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#META_MEMBER_RESULT_DATA_TYPE" class="member-name-link">META_MEMBER_RESULT_DATA_TYPE</a></code></div>
+<div class="col-second even-row-color"><code><a href="#META_MEMBER_RAW_QUERY" class="member-name-link">META_MEMBER_RAW_QUERY</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">The member name that holds the result type.</div>
+<div class="block">Whether the user is a raw user specified query.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#META_MEMBER_RESULT_TYPE" class="member-name-link">META_MEMBER_RESULT_TYPE</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#META_MEMBER_RESULT_DATA_TYPE" class="member-name-link">META_MEMBER_RESULT_DATA_TYPE</a></code></div>
 <div class="col-last odd-row-color">
 <div class="block">The member name that holds the result type.</div>
 </div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#META_MEMBER_ROOT_ENTITY" class="member-name-link">META_MEMBER_ROOT_ENTITY</a></code></div>
+<div class="col-second even-row-color"><code><a href="#META_MEMBER_RESULT_TYPE" class="member-name-link">META_MEMBER_RESULT_TYPE</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">The member name that holds the result type.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#META_MEMBER_ROOT_ENTITY" class="member-name-link">META_MEMBER_ROOT_ENTITY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The member name that holds the root entity type.</div>
 </div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#NAME" class="member-name-link">NAME</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#NAME" class="member-name-link">NAME</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The annotation name.</div>
 </div>
 </div>
@@ -377,17 +384,20 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color"><code>boolean</code></div>
 <div class="col-second odd-row-color"><code><a href="#procedure()" class="member-name-link">procedure</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
-<div class="col-second even-row-color"><code><a href="#resultDataType()" class="member-name-link">resultDataType</a></code></div>
+<div class="col-first even-row-color"><code><a href="DataMethodQuery.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQuery</a>[]</code></div>
+<div class="col-second even-row-color"><code><a href="#queries()" class="member-name-link">queries</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#resultType()" class="member-name-link">resultType</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code><a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#resultDataType()" class="member-name-link">resultDataType</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#resultType()" class="member-name-link">resultType</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The computed result type.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#rootEntity()" class="member-name-link">rootEntity</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#rootEntity()" class="member-name-link">rootEntity</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The root entity this method applies to.</div>
 </div>
 </div>
@@ -473,6 +483,23 @@ loadScripts(document, 'script');</script>
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../constant-values.html#io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_COUNT_QUERY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="META_MEMBER_QUERIES">
+<h3>META_MEMBER_QUERIES</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">META_MEMBER_QUERIES</span></div>
+<div class="block">The member that holds alternative query definitions.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_QUERIES">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -1085,6 +1112,22 @@ query parameters. The <code>Property.name()</code> is used to define the query p
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The query parameters</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd><code>{}</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="queries()">
+<h3>queries</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="DataMethodQuery.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQuery</a>[]</span>&nbsp;<span class="element-name">queries</span></div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Alternative query definitions for this method.</dd>
 </dl>
 <dl class="notes">
 <dt>Default:</dt>

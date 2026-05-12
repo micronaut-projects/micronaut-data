@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#resolveQuery(io.micronaut.aop.MethodInvocationContext)" tabindex="0">resolveQuery(MethodInvocationContext)</a></li>
+<li><a href="#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)" tabindex="0">resolveQuery(MethodInvocationContext, StoredQuery.OperationType)</a></li>
 <li><a href="#resolveCountQuery(io.micronaut.aop.MethodInvocationContext)" tabindex="0">resolveCountQuery(MethodInvocationContext)</a></li>
 <li><a href="#createStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String,java.lang.String%5B%5D,java.util.List,boolean,boolean)" tabindex="0">createStoredQuery(ExecutableMethod, StoredQuery.OperationType, String, AnnotationMetadata, Class, String, String, String[], List, boolean, boolean)</a></li>
 <li><a href="#createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String%5B%5D,java.util.List)" tabindex="0">createCountStoredQuery(ExecutableMethod, StoredQuery.OperationType, String, AnnotationMetadata, Class, String, String[], List)</a></li>
@@ -166,6 +167,12 @@ implements <a href="StoredQueryResolver.html" title="interface in io.micronaut.d
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Stored query resolved from the method context.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">resolveQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Stored query resolved from the method context for the requested operation type.</div>
+</div>
 </div>
 </div>
 </div>
@@ -214,6 +221,29 @@ implements <a href="StoredQueryResolver.html" title="interface in io.micronaut.d
 <dd><span id="resolveQuery(io.micronaut.aop.MethodInvocationContext)-type-param-R"><code>R</code> - The result type</span></dd>
 <dt>Parameters:</dt>
 <dd><code>context</code> - The method context</dd>
+<dt>Returns:</dt>
+<dd>The prepared query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)">
+<h3>resolveQuery</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</span>&nbsp;<span class="element-name">resolveQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="StoredQueryResolver.html#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)">StoredQueryResolver</a></code></span></div>
+<div class="block">Stored query resolved from the method context for the requested operation type.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="StoredQueryResolver.html#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)">resolveQuery</a></code>&nbsp;in interface&nbsp;<code><a href="StoredQueryResolver.html" title="interface in io.micronaut.data.runtime.query">StoredQueryResolver</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><span id="resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)-type-param-E"><code>E</code> - The entity type</span></dd>
+<dd><span id="resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery.OperationType)-type-param-R"><code>R</code> - The result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method context</dd>
+<dd><code>operationType</code> - The operation type</dd>
 <dt>Returns:</dt>
 <dd>The prepared query</dd>
 </dl>

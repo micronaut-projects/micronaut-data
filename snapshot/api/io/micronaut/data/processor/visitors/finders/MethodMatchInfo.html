@@ -54,6 +54,7 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#nested-class-summary" tabindex="0">Nested Class Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -74,6 +75,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#dto(boolean)" tabindex="0">dto(boolean)</a></li>
 <li><a href="#queryResult(io.micronaut.data.model.query.builder.QueryResult)" tabindex="0">queryResult(QueryResult)</a></li>
 <li><a href="#countQueryResult(io.micronaut.data.model.query.builder.QueryResult)" tabindex="0">countQueryResult(QueryResult)</a></li>
+<li><a href="#addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult)" tabindex="0">addQueryResult(DataMethod.OperationType, TypedElement, QueryResult)</a></li>
+<li><a href="#addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult,boolean)" tabindex="0">addQueryResult(DataMethod.OperationType, TypedElement, QueryResult, boolean)</a></li>
 <li><a href="#isRawQuery(boolean)" tabindex="0">isRawQuery(boolean)</a></li>
 <li><a href="#encodeEntityParameters(boolean)" tabindex="0">encodeEntityParameters(boolean)</a></li>
 <li><a href="#optimisticLock(boolean)" tabindex="0">optimisticLock(boolean)</a></li>
@@ -82,6 +85,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getCountQueryResult()" tabindex="0">getCountQueryResult()</a></li>
 <li><a href="#isRawQuery()" tabindex="0">isRawQuery()</a></li>
 <li><a href="#isEncodeEntityParameters()" tabindex="0">isEncodeEntityParameters()</a></li>
+<li><a href="#getAdditionalQueries()" tabindex="0">getAdditionalQueries()</a></li>
 </ol>
 </li>
 </ol>
@@ -112,6 +116,21 @@ which is readable at runtime.</div>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="MethodMatchInfo.QueryDefinition.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.QueryDefinition</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -147,6 +166,17 @@ which is readable at runtime.</div>
 <div class="block">Adds a parameter role.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">addQueryResult</a><wbr>(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult,boolean)" class="member-name-link">addQueryResult</a><wbr>(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
+ boolean&nbsp;optimisticLock)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#countQueryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">countQueryResult</a><wbr>(@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;countQueryResult)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
@@ -155,59 +185,62 @@ which is readable at runtime.</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#encodeEntityParameters(boolean)" class="member-name-link">encodeEntityParameters</a><wbr>(boolean&nbsp;encodeEntityParameters)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCountQueryResult()" class="member-name-link">getCountQueryResult</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="MethodMatchInfo.QueryDefinition.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.QueryDefinition</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAdditionalQueries()" class="member-name-link">getAdditionalQueries</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInterceptor()" class="member-name-link">getInterceptor</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCountQueryResult()" class="member-name-link">getCountQueryResult</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInterceptor()" class="member-name-link">getInterceptor</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;io.micronaut.inject.ast.ParameterElement, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterRoles()" class="member-name-link">getParameterRoles</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;io.micronaut.inject.ast.ParameterElement, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getParameterRoles()" class="member-name-link">getParameterRoles</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.TypedElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.TypedElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The computed result type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRuntimeInterceptor()" class="member-name-link">getRuntimeInterceptor</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRuntimeInterceptor()" class="member-name-link">getRuntimeInterceptor</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The runtime interceptor that will handle the method.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDto()" class="member-name-link">isDto</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDto()" class="member-name-link">isDto</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is the query result a DTO query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEncodeEntityParameters()" class="member-name-link">isEncodeEntityParameters</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptimisticLock()" class="member-name-link">isOptimisticLock</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEncodeEntityParameters()" class="member-name-link">isEncodeEntityParameters</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptimisticLock()" class="member-name-link">isOptimisticLock</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets optimistic lock value.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery(boolean)" class="member-name-link">isRawQuery</a><wbr>(boolean&nbsp;isRawQuery)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#optimisticLock(boolean)" class="member-name-link">optimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery(boolean)" class="member-name-link">isRawQuery</a><wbr>(boolean&nbsp;isRawQuery)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#queryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">queryResult</a><wbr>(@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#optimisticLock(boolean)" class="member-name-link">optimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setOptimisticLock(boolean)" class="member-name-link">setOptimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#queryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">queryResult</a><wbr>(@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setOptimisticLock(boolean)" class="member-name-link">setOptimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets optimistic lock value.</div>
 </div>
 </div>
@@ -388,6 +421,27 @@ somehow in the query.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult)">
+<h3>addQueryResult</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">addQueryResult</span><wbr><span class="parameters">(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="addQueryResult(io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.inject.ast.TypedElement,io.micronaut.data.model.query.builder.QueryResult,boolean)">
+<h3>addQueryResult</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">addQueryResult</span><wbr><span class="parameters">(<a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ @Nullable io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+ <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult,
+ boolean&nbsp;optimisticLock)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="isRawQuery(boolean)">
 <h3>isRawQuery</h3>
 <div class="horizontal-scroll">
@@ -448,6 +502,14 @@ somehow in the query.</div>
 <h3>isEncodeEntityParameters</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEncodeEntityParameters</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getAdditionalQueries()">
+<h3>getAdditionalQueries</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodMatchInfo.QueryDefinition.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.QueryDefinition</a>&gt;</span>&nbsp;<span class="element-name">getAdditionalQueries</span>()</div>
 </div>
 </section>
 </li>

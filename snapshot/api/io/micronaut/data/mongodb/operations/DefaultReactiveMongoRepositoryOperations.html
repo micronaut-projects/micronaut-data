@@ -94,6 +94,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#withClientSession(java.util.function.Function)" tabindex="0">withClientSession(Function)</a></li>
 <li><a href="#withClientSessionMany(java.util.function.Function)" tabindex="0">withClientSessionMany(Function)</a></li>
 <li><a href="#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">getReplaceOptions(AnnotationMetadata)</a></li>
+<li><a href="#checkSaveMatchedCount(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.runtime.RuntimePersistentEntity,int,long)" tabindex="0">checkSaveMatchedCount(AnnotationMetadata, RuntimePersistentEntity, int, long)</a></li>
+<li><a href="#getModifiedOrUpsertedCount(com.mongodb.client.result.UpdateResult)" tabindex="0">getModifiedOrUpsertedCount(UpdateResult)</a></li>
+<li><a href="#getModifiedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)" tabindex="0">getModifiedOrUpsertedCount(BulkWriteResult)</a></li>
+<li><a href="#getMatchedOrUpsertedCount(com.mongodb.client.result.UpdateResult)" tabindex="0">getMatchedOrUpsertedCount(UpdateResult)</a></li>
+<li><a href="#getMatchedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)" tabindex="0">getMatchedOrUpsertedCount(BulkWriteResult)</a></li>
 <li><a href="#getInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">getInsertOneOptions(AnnotationMetadata)</a></li>
 <li><a href="#getInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">getInsertManyOptions(AnnotationMetadata)</a></li>
 <li><a href="#getDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">getDeleteOptions(AnnotationMetadata)</a></li>
@@ -202,210 +207,228 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;@Nullable R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertResult(io.micronaut.data.model.runtime.PreparedQuery,org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" class="member-name-link">convertResult</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#checkSaveMatchedCount(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.runtime.RuntimePersistentEntity,int,long)" class="member-name-link">checkSaveMatchedCount</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
+ int&nbsp;expected,
+ long&nbsp;matched)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;@Nullable R</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertResult(io.micronaut.data.model.runtime.PreparedQuery,org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" class="member-name-link">convertResult</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
  org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  org.bson.BsonDocument&nbsp;result,
  boolean&nbsp;isDtoProjection)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertUsingIntrospected(io.micronaut.data.model.runtime.PreparedQuery,org.bson.BsonDocument,java.lang.Class)" class="member-name-link">convertUsingIntrospected</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertUsingIntrospected(io.micronaut.data.model.runtime.PreparedQuery,org.bson.BsonDocument,java.lang.Class)" class="member-name-link">convertUsingIntrospected</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
  org.bson.BsonDocument&nbsp;result,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Attempts to convert a BSON document into an instance of the specified result type using introspection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#count(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">count</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#count(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">count</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Counts all results for the given query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;org.bson.conversions.Bson</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createFilterIdAndVersion(io.micronaut.data.model.runtime.RuntimePersistentEntity,T,org.bson.codecs.configuration.CodecRegistry)" class="member-name-link">createFilterIdAndVersion</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;org.bson.conversions.Bson</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createFilterIdAndVersion(io.micronaut.data.model.runtime.RuntimePersistentEntity,T,org.bson.codecs.configuration.CodecRegistry)" class="member-name-link">createFilterIdAndVersion</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  T&nbsp;entity,
  org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate stored query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate prepared query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#delete(io.micronaut.data.model.runtime.DeleteOperation)" class="member-name-link">delete</a><wbr>(<a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#delete(io.micronaut.data.model.runtime.DeleteOperation)" class="member-name-link">delete</a><wbr>(<a href="../../model/runtime/DeleteOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Deletes the entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll</a><wbr>(<a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll</a><wbr>(<a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Deletes all the entities of the given type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">execute</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">execute</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Executes the given query with parameter values returning a result.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">executeDelete</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeDelete(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">executeDelete</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Executes a batch delete for the given query and parameter values.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">executeUpdate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#executeUpdate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">executeUpdate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Executes an update for the given query and parameter values.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exists(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">exists</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exists(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">exists</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check with a record exists for the given query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findAll(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findAll</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Finds all results for the given query.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findAll(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findAll</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findAll(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findAll</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;query)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Finds all results for the given query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOne</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findAll(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findAll</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Finds all results for the given query.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOne</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by Query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by ID.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOptional</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T,<wbr>R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOptional</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by Query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(java.lang.Class,java.lang.Object)" class="member-name-link">findOptional</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(java.lang.Class,java.lang.Object)" class="member-name-link">findOptional</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by ID.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findPage(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findPage</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;pagedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;<a href="../../model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;R&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findPage(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findPage</a><wbr>(<a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;R&gt;&nbsp;pagedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find a page for the given entity and pageable.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.bson.codecs.configuration.CodecRegistry</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCodecRegistry(com.mongodb.reactivestreams.client.MongoDatabase)" class="member-name-link">getCodecRegistry</a><wbr>(com.mongodb.reactivestreams.client.MongoDatabase&nbsp;mongoDatabase)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected com.mongodb.reactivestreams.client.MongoDatabase</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)" class="member-name-link">getDatabase</a><wbr>(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.bson.codecs.configuration.CodecRegistry</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCodecRegistry(com.mongodb.reactivestreams.client.MongoDatabase)" class="member-name-link">getCodecRegistry</a><wbr>(com.mongodb.reactivestreams.client.MongoDatabase&nbsp;mongoDatabase)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected com.mongodb.reactivestreams.client.MongoDatabase</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)" class="member-name-link">getDatabase</a><wbr>(<a href="../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repository)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.DeleteOptions</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getDeleteOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.InsertManyOptions</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getInsertManyOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.DeleteOptions</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getDeleteOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.InsertOneOptions</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getInsertOneOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.InsertManyOptions</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertManyOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getInsertManyOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>R&gt;&nbsp;<a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMongoPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getMongoPreparedQuery</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.InsertOneOptions</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getInsertOneOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMongoStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getMongoStoredQuery</a><wbr>(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMatchedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)" class="member-name-link">getMatchedOrUpsertedCount</a><wbr>(com.mongodb.bulk.BulkWriteResult&nbsp;bulkWriteResult)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.ReplaceOptions</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final long</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMatchedOrUpsertedCount(com.mongodb.client.result.UpdateResult)" class="member-name-link">getMatchedOrUpsertedCount</a><wbr>(com.mongodb.client.result.UpdateResult&nbsp;updateResult)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logAggregate(io.micronaut.data.mongodb.operations.MongoAggregation)" class="member-name-link">logAggregate</a><wbr>(<a href="MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;aggregation)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getModifiedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)" class="member-name-link">getModifiedOrUpsertedCount</a><wbr>(com.mongodb.bulk.BulkWriteResult&nbsp;bulkWriteResult)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final long</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getModifiedOrUpsertedCount(com.mongodb.client.result.UpdateResult)" class="member-name-link">getModifiedOrUpsertedCount</a><wbr>(com.mongodb.client.result.UpdateResult&nbsp;updateResult)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>R&gt;&nbsp;<a href="MongoPreparedQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoPreparedQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMongoPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getMongoPreparedQuery</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data.mongodb.operations">MongoStoredQuery</a><wbr>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMongoStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getMongoStoredQuery</a><wbr>(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.ReplaceOptions</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logFind(io.micronaut.data.mongodb.operations.MongoFind)" class="member-name-link">logFind</a><wbr>(<a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a>&nbsp;find)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logAggregate(io.micronaut.data.mongodb.operations.MongoAggregation)" class="member-name-link">logAggregate</a><wbr>(<a href="MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;aggregation)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(<a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logFind(io.micronaut.data.mongodb.operations.MongoFind)" class="member-name-link">logFind</a><wbr>(<a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a>&nbsp;find)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(<a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist the entity returning a possibly new entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(<a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(<a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist all the given entities.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;values,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationship.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;veto)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationships in batch.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  T&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist one entity during cascade.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(io.micronaut.data.model.runtime.UpdateOperation)" class="member-name-link">update</a><wbr>(<a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(io.micronaut.data.model.runtime.UpdateOperation)" class="member-name-link">update</a><wbr>(<a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Updates the entity returning a possibly new entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll</a><wbr>(<a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll</a><wbr>(<a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Updates the entities for the given operation.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">updateOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">updateOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  T&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Update one entity during cascade.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
 </div>
 </div>
@@ -1067,6 +1090,49 @@ return the number of objects updated, then do so.</div>
 <h3>getReplaceOptions</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">com.mongodb.client.model.ReplaceOptions</span>&nbsp;<span class="element-name">getReplaceOptions</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="checkSaveMatchedCount(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.runtime.RuntimePersistentEntity,int,long)">
+<h3>checkSaveMatchedCount</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">checkSaveMatchedCount</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
+ int&nbsp;expected,
+ long&nbsp;matched)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getModifiedOrUpsertedCount(com.mongodb.client.result.UpdateResult)">
+<h3>getModifiedOrUpsertedCount</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">getModifiedOrUpsertedCount</span><wbr><span class="parameters">(com.mongodb.client.result.UpdateResult&nbsp;updateResult)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getModifiedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)">
+<h3>getModifiedOrUpsertedCount</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getModifiedOrUpsertedCount</span><wbr><span class="parameters">(com.mongodb.bulk.BulkWriteResult&nbsp;bulkWriteResult)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getMatchedOrUpsertedCount(com.mongodb.client.result.UpdateResult)">
+<h3>getMatchedOrUpsertedCount</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">getMatchedOrUpsertedCount</span><wbr><span class="parameters">(com.mongodb.client.result.UpdateResult&nbsp;updateResult)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getMatchedOrUpsertedCount(com.mongodb.bulk.BulkWriteResult)">
+<h3>getMatchedOrUpsertedCount</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getMatchedOrUpsertedCount</span><wbr><span class="parameters">(com.mongodb.bulk.BulkWriteResult&nbsp;bulkWriteResult)</span></div>
 </div>
 </section>
 </li>

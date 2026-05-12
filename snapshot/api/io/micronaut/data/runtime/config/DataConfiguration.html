@@ -58,9 +58,23 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#SAVE_AS_INSERT_PROPERTY" tabindex="0">SAVE_AS_INSERT_PROPERTY</a></li>
+<li><a href="#SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY" tabindex="0">SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">DataConfiguration()</a></li>
+</ol>
+</li>
+<li><a href="#method-detail" tabindex="0">Method Details</a>
+<ol class="toc-list">
+<li><a href="#isSaveAsInsert()" tabindex="0">isSaveAsInsert()</a></li>
+<li><a href="#isSaveAssignedIdFallbackToUpdate()" tabindex="0">isSaveAssignedIdFallbackToUpdate()</a></li>
+<li><a href="#setSaveAsInsert(boolean)" tabindex="0">setSaveAsInsert(boolean)</a></li>
+<li><a href="#setSaveAssignedIdFallbackToUpdate(boolean)" tabindex="0">setSaveAssignedIdFallbackToUpdate(boolean)</a></li>
 </ol>
 </li>
 </ol>
@@ -116,6 +130,23 @@ implements <a href="DataSettings.html" title="interface in io.micronaut.data.run
 <li>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#SAVE_AS_INSERT_PROPERTY" class="member-name-link">SAVE_AS_INSERT_PROPERTY</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The configuration property that makes repository save methods use insert operations only.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY" class="member-name-link">SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">The configuration property that makes repository save methods fall back to update when insert detects
+that an entity with an assigned identity already exists.</div>
+</div>
+</div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.runtime.config.DataSettings">Fields inherited from interface&nbsp;<a href="DataSettings.html#field-summary" title="interface in io.micronaut.data.runtime.config">DataSettings</a></h3>
 <code><a href="DataSettings.html#PREFIX">PREFIX</a>, <a href="DataSettings.html#QUERY_LOG">QUERY_LOG</a></code></div>
@@ -138,6 +169,33 @@ implements <a href="DataSettings.html" title="interface in io.micronaut.data.run
 <li>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
+<div id="method-summary-table">
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSaveAsInsert()" class="member-name-link">isSaveAsInsert</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSaveAssignedIdFallbackToUpdate()" class="member-name-link">isSaveAssignedIdFallbackToUpdate</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSaveAsInsert(boolean)" class="member-name-link">setSaveAsInsert</a><wbr>(boolean&nbsp;saveAsInsert)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets whether repository save methods should always use insert operations.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSaveAssignedIdFallbackToUpdate(boolean)" class="member-name-link">setSaveAssignedIdFallbackToUpdate</a><wbr>(boolean&nbsp;saveAssignedIdFallbackToUpdate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets whether repository save methods should fall back to update when an insert detects that an entity
+with a non-generated identity already exists.</div>
+</div>
+</div>
+</div>
+</div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -147,6 +205,49 @@ implements <a href="DataSettings.html" title="interface in io.micronaut.data.run
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="SAVE_AS_INSERT_PROPERTY">
+<h3>SAVE_AS_INSERT_PROPERTY</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SAVE_AS_INSERT_PROPERTY</span></div>
+<div class="block">The configuration property that makes repository save methods use insert operations only.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#io.micronaut.data.runtime.config.DataConfiguration.SAVE_AS_INSERT_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY">
+<h3>SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY</span></div>
+<div class="block">The configuration property that makes repository save methods fall back to update when insert detects
+that an entity with an assigned identity already exists.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#io.micronaut.data.runtime.config.DataConfiguration.SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -157,6 +258,67 @@ implements <a href="DataSettings.html" title="interface in io.micronaut.data.run
 <h3>DataConfiguration</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DataConfiguration</span>()</div>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<!-- ============ METHOD DETAIL ========== -->
+<li>
+<section class="method-details" id="method-detail">
+<h2>Method Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="isSaveAsInsert()">
+<h3>isSaveAsInsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSaveAsInsert</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether repository save methods should always use insert operations.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isSaveAssignedIdFallbackToUpdate()">
+<h3>isSaveAssignedIdFallbackToUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSaveAssignedIdFallbackToUpdate</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether repository save methods should fall back to update for entities with assigned identities.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setSaveAsInsert(boolean)">
+<h3>setSaveAsInsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setSaveAsInsert</span><wbr><span class="parameters">(boolean&nbsp;saveAsInsert)</span></div>
+<div class="block">Sets whether repository save methods should always use insert operations.
+This restores the Micronaut Data 4 behavior where <code>save</code> and <code>saveAll</code>
+always inserted entities instead of selecting insert or update based on identity state.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>saveAsInsert</code> - Whether repository save methods should always use insert operations</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setSaveAssignedIdFallbackToUpdate(boolean)">
+<h3>setSaveAssignedIdFallbackToUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setSaveAssignedIdFallbackToUpdate</span><wbr><span class="parameters">(boolean&nbsp;saveAssignedIdFallbackToUpdate)</span></div>
+<div class="block">Sets whether repository save methods should fall back to update when an insert detects that an entity
+with a non-generated identity already exists.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>saveAssignedIdFallbackToUpdate</code> - Whether repository save methods should fall back to update</dd>
+</dl>
 </div>
 </section>
 </li>

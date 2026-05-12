@@ -57,6 +57,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#insert(S)" tabindex="0">insert(S)</a></li>
 <li><a href="#existsByAuthor(io.micronaut.coherence.data.model.Author)" tabindex="0">existsByAuthor(Author)</a></li>
 <li><a href="#findByAuthor(io.micronaut.coherence.data.model.Author)" tabindex="0">findByAuthor(Author)</a></li>
 <li><a href="#findByPagesGreaterThanEquals(int)" tabindex="0">findByPagesGreaterThanEquals(int)</a></li>
@@ -83,7 +84,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#update(com.tangosol.util.UUID,int)" tabindex="0">update(UUID, int)</a></li>
 <li><a href="#updateByTitleStartingWith(java.lang.String,int)" tabindex="0">updateByTitleStartingWith(String, int)</a></li>
 <li><a href="#deleteByTitleStartingWith(java.lang.String)" tabindex="0">deleteByTitleStartingWith(String)</a></li>
-<li><a href="#saveBooks(java.util.Collection)" tabindex="0">saveBooks(Collection)</a></li>
+<li><a href="#insertBooks(java.util.Collection)" tabindex="0">insertBooks(Collection)</a></li>
 </ol>
 </li>
 </ol>
@@ -192,23 +193,28 @@ extends <a href="../../../data/repository/async/AsyncCrudRepository.html" title=
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findSumPagesByAuthor(io.micronaut.coherence.data.model.Author)" class="member-name-link">findSumPagesByAuthor</a><wbr>(<a href="../model/Author.html" title="class in io.micronaut.coherence.data.model">Author</a>&nbsp;author)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveBooks(java.util.Collection)" class="member-name-link">saveBooks</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&nbsp;books)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;S&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#insert(S)" class="member-name-link">insert</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">This method issues an explicit insert for the given entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#insertBooks(java.util.Collection)" class="member-name-link">insertBooks</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&nbsp;books)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#update(com.tangosol.util.UUID,int)" class="member-name-link">update</a><wbr>(com.tangosol.util.UUID&nbsp;id,
+ int&nbsp;pages)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#update(com.tangosol.util.UUID,int)" class="member-name-link">update</a><wbr>(com.tangosol.util.UUID&nbsp;id,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateByTitleStartingWith(java.lang.String,int)" class="member-name-link">updateByTitleStartingWith</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;title,
  int&nbsp;pages)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateByTitleStartingWith(java.lang.String,int)" class="member-name-link">updateByTitleStartingWith</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;title,
- int&nbsp;pages)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.repository.async.AsyncCrudRepository">Methods inherited from interface&nbsp;<a href="../../../data/repository/async/AsyncCrudRepository.html#method-summary" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a></h3>
-<code><a href="../../../data/repository/async/AsyncCrudRepository.html#count()" title="count()">count</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#delete(E)" title="delete(Book)">delete</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteAll()" title="deleteAll()">deleteAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteAll(java.lang.Iterable)" title="deleteAll(Iterable)">deleteAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteById(ID)" title="deleteById(UUID)">deleteById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#existsById(ID)" title="existsById(UUID)">existsById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#findAll()" title="findAll()">findAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#findById(ID)" title="findById(UUID)">findById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#save(S)" title="save(S)">save</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#saveAll(java.lang.Iterable)" title="saveAll(Iterable)">saveAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#update(S)" title="update(S)">update</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#updateAll(java.lang.Iterable)" title="updateAll(Iterable)">updateAll</a></code></div>
+<code><a href="../../../data/repository/async/AsyncCrudRepository.html#count()" title="count()">count</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#delete(E)" title="delete(Book)">delete</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteAll()" title="deleteAll()">deleteAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteAll(java.lang.Iterable)" title="deleteAll(Iterable)">deleteAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#deleteById(ID)" title="deleteById(UUID)">deleteById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#existsById(ID)" title="existsById(UUID)">existsById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#findAll()" title="findAll()">findAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#findById(ID)" title="findById(UUID)">findById</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#insertAll(java.lang.Iterable)" title="insertAll(Iterable)">insertAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#save(S)" title="save(S)">save</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#saveAll(java.lang.Iterable)" title="saveAll(Iterable)">saveAll</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#update(S)" title="update(S)">update</a>, <a href="../../../data/repository/async/AsyncCrudRepository.html#updateAll(java.lang.Iterable)" title="updateAll(Iterable)">updateAll</a></code></div>
 </section>
 </li>
 </ul>
@@ -220,6 +226,28 @@ extends <a href="../../../data/repository/async/AsyncCrudRepository.html" title=
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="insert(S)">
+<h3 id="insert(io.micronaut.coherence.data.model.Book)">insert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;S&gt;</span>&nbsp;<span class="element-name">insert</span><wbr><span class="parameters">(S&nbsp;entity)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../data/repository/async/AsyncCrudRepository.html#insert(S)">AsyncCrudRepository</a></code></span></div>
+<div class="block">This method issues an explicit insert for the given entity. The method differs from <a href="../../../data/repository/async/AsyncCrudRepository.html#save(S)"><code>AsyncCrudRepository.save(Object)</code></a>
+in that an insert will be generated regardless of the entity identity state. If the entity already exists
+then an exception may be thrown.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../data/repository/async/AsyncCrudRepository.html#insert(S)">insert</a></code>&nbsp;in interface&nbsp;<code><a href="../../../data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>, com.tangosol.util.UUID&gt;</code></dd>
+<dt>Type Parameters:</dt>
+<dd><span id="insert(S)-type-param-S"><code>S</code> - The generic type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity to insert. Must not be null.</dd>
+<dt>Returns:</dt>
+<dd>The inserted entity will never be null.</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="existsByAuthor(io.micronaut.coherence.data.model.Author)">
 <h3>existsByAuthor</h3>
@@ -433,10 +461,10 @@ extends <a href="../../../data/repository/async/AsyncCrudRepository.html" title=
 </section>
 </li>
 <li>
-<section class="detail" id="saveBooks(java.util.Collection)">
-<h3>saveBooks</h3>
+<section class="detail" id="insertBooks(java.util.Collection)">
+<h3>insertBooks</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&gt;</span>&nbsp;<span class="element-name">saveBooks</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&nbsp;books)</span></div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&gt;</span>&nbsp;<span class="element-name">insertBooks</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../model/Book.html" title="class in io.micronaut.coherence.data.model">Book</a>&gt;&nbsp;books)</span></div>
 </div>
 </section>
 </li>

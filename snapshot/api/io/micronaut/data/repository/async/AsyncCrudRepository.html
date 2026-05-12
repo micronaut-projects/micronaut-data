@@ -58,8 +58,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#save(S)" tabindex="0">save(S)</a></li>
+<li><a href="#insert(S)" tabindex="0">insert(S)</a></li>
 <li><a href="#update(S)" tabindex="0">update(S)</a></li>
 <li><a href="#updateAll(java.lang.Iterable)" tabindex="0">updateAll(Iterable)</a></li>
+<li><a href="#insertAll(java.lang.Iterable)" tabindex="0">insertAll(Iterable)</a></li>
 <li><a href="#saveAll(java.lang.Iterable)" tabindex="0">saveAll(Iterable)</a></li>
 <li><a href="#findById(ID)" tabindex="0">findById(ID)</a></li>
 <li><a href="#existsById(ID)" tabindex="0">existsById(ID)</a></li>
@@ -159,6 +161,16 @@ extends <a href="../GenericRepository.html" title="interface in io.micronaut.dat
 <div class="block">Retrieves an entity by its id.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;S&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#insert(S)" class="member-name-link">insert</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">This method issues an explicit insert for the given entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#insertAll(java.lang.Iterable)" class="member-name-link">insertAll</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">This method issues an explicit insert for the given entities.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;<br><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;S&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#save(S)" class="member-name-link">save</a><wbr>(S&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
@@ -197,7 +209,13 @@ extends <a href="../GenericRepository.html" title="interface in io.micronaut.dat
 <h3 id="save(java.lang.Object)">save</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;S&gt;</span>&nbsp;<span class="element-name">save</span><wbr><span class="parameters">(S&nbsp;entity)</span></div>
-<div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
+<div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.
+<p>
+If the entity has no identity value, an insert is performed. If the entity has a generated or always
+auto-populated identity value already present, an update is attempted. Entities with non-generated assigned
+identities are inserted by default.
+To require a specific operation, use <a href="#insert(S)"><code>insert(Object)</code></a> or <a href="#update(S)"><code>update(Object)</code></a>.
+This is the default repository save behavior and can be overridden by Micronaut Data configuration.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><span id="save(S)-type-param-S"><code>S</code> - The generic type</span></dd>
@@ -210,11 +228,34 @@ extends <a href="../GenericRepository.html" title="interface in io.micronaut.dat
 </section>
 </li>
 <li>
+<section class="detail" id="insert(S)">
+<h3 id="insert(java.lang.Object)">insert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;S&gt;</span>&nbsp;<span class="element-name">insert</span><wbr><span class="parameters">(S&nbsp;entity)</span></div>
+<div class="block">This method issues an explicit insert for the given entity. The method differs from <a href="#save(S)"><code>save(Object)</code></a>
+in that an insert will be generated regardless of the entity identity state. If the entity already exists
+then an exception may be thrown.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="insert(S)-type-param-S"><code>S</code> - The generic type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity to insert. Must not be null.</dd>
+<dt>Returns:</dt>
+<dd>The inserted entity will never be null.</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="update(S)">
 <h3 id="update(java.lang.Object)">update</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;S&gt;</span>&nbsp;<span class="element-name">update</span><wbr><span class="parameters">(S&nbsp;entity)</span></div>
-<div class="block">This method issues an explicit update for the given entity. The method differs from <a href="#save(S)"><code>save(Object)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
+<div class="block">This method issues an explicit update for the given entity. The method differs from <a href="#save(S)"><code>save(Object)</code></a>
+in that an update will be generated regardless of the entity identity state. If the entity has no assigned ID
+then an exception will be thrown.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><span id="update(S)-type-param-S"><code>S</code> - The generic type</span></dd>
@@ -232,7 +273,9 @@ extends <a href="../GenericRepository.html" title="interface in io.micronaut.dat
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>
 <span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
-<div class="block">This method issues an explicit update for the given entities. The method differs from <a href="#saveAll(java.lang.Iterable)"><code>saveAll(Iterable)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
+<div class="block">This method issues an explicit update for the given entities. The method differs from <a href="#saveAll(java.lang.Iterable)"><code>saveAll(Iterable)</code></a>
+in that an update will be generated for every entity regardless of identity state. If an entity has no assigned ID
+then an exception will be thrown.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><span id="updateAll(java.lang.Iterable)-type-param-S"><code>S</code> - The generic type</span></dd>
@@ -245,12 +288,37 @@ extends <a href="../GenericRepository.html" title="interface in io.micronaut.dat
 </section>
 </li>
 <li>
+<section class="detail" id="insertAll(java.lang.Iterable)">
+<h3>insertAll</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>
+<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&gt;</span>&nbsp;<span class="element-name">insertAll</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
+<div class="block">This method issues an explicit insert for the given entities. The method differs from <a href="#saveAll(java.lang.Iterable)"><code>saveAll(Iterable)</code></a>
+in that an insert will be generated for every entity regardless of identity state. If an entity already exists
+then an exception may be thrown.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="insertAll(java.lang.Iterable)-type-param-S"><code>S</code> - The generic type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>entities</code> - The entities to insert. Must not be null.</dd>
+<dt>Returns:</dt>
+<dd>The inserted entities will never be null.</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="saveAll(java.lang.Iterable)">
 <h3>saveAll</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="type-parameters">&lt;S extends <a href="#type-param-E" title="type parameter in AsyncCrudRepository">E</a>&gt;</span>
 <span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&gt;</span>&nbsp;<span class="element-name">saveAll</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</span></div>
-<div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
+<div class="block">Saves all given entities, possibly returning new instances representing the saved state.
+<p>
+Each entity is saved independently using the same rules as <a href="#save(S)"><code>save(Object)</code></a>.
+This is the default repository save behavior and can be overridden by Micronaut Data configuration.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><span id="saveAll(java.lang.Iterable)-type-param-S"><code>S</code> - The generic type</span></dd>

@@ -57,8 +57,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#save(io.micronaut.data.tck.jdbc.entities.UserRole)" tabindex="0">save(UserRole)</a></li>
-<li><a href="#save(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)" tabindex="0">save(User, Role)</a></li>
+<li><a href="#insert(io.micronaut.data.tck.jdbc.entities.UserRole)" tabindex="0">insert(UserRole)</a></li>
+<li><a href="#insert(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)" tabindex="0">insert(User, Role)</a></li>
 <li><a href="#deleteById(io.micronaut.data.tck.jdbc.entities.UserRoleId)" tabindex="0">deleteById(UserRoleId)</a></li>
 <li><a href="#delete(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)" tabindex="0">delete(User, Role)</a></li>
 <li><a href="#count()" tabindex="0">count()</a></li>
@@ -118,10 +118,10 @@ extends <a href="../../repository/GenericRepository.html" title="interface in io
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findRoleByUser(io.micronaut.data.tck.jdbc.entities.User)" class="member-name-link">findRoleByUser</a><wbr>(<a href="../jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#save(io.micronaut.data.tck.jdbc.entities.UserRole)" class="member-name-link">save</a><wbr>(@Valid @NotNull @NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a>&nbsp;entity)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#insert(io.micronaut.data.tck.jdbc.entities.UserRole)" class="member-name-link">insert</a><wbr>(@Valid @NotNull @NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#save(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)" class="member-name-link">save</a><wbr>(<a href="../jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#insert(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)" class="member-name-link">insert</a><wbr>(<a href="../jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user,
  <a href="../jdbc/entities/Role.html" title="class in io.micronaut.data.tck.jdbc.entities">Role</a>&nbsp;role)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 </div>
@@ -139,19 +139,19 @@ extends <a href="../../repository/GenericRepository.html" title="interface in io
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="save(io.micronaut.data.tck.jdbc.entities.UserRole)">
-<h3>save</h3>
+<section class="detail" id="insert(io.micronaut.data.tck.jdbc.entities.UserRole)">
+<h3>insert</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">@NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></span>&nbsp;<span class="element-name">save</span><wbr><span class="parameters">(@Valid @NotNull
+<div class="member-signature"><span class="return-type">@NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></span>&nbsp;<span class="element-name">insert</span><wbr><span class="parameters">(@Valid @NotNull
  @Valid @NotNull @NonNull <a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a>&nbsp;entity)</span></div>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="save(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)">
-<h3>save</h3>
+<section class="detail" id="insert(io.micronaut.data.tck.jdbc.entities.User,io.micronaut.data.tck.jdbc.entities.Role)">
+<h3>insert</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></span>&nbsp;<span class="element-name">save</span><wbr><span class="parameters">(<a href="../jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="../jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></span>&nbsp;<span class="element-name">insert</span><wbr><span class="parameters">(<a href="../jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user,
  <a href="../jdbc/entities/Role.html" title="class in io.micronaut.data.tck.jdbc.entities">Role</a>&nbsp;role)</span></div>
 </div>
 </section>

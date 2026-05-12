@@ -402,9 +402,45 @@
 </div>
 <div class="sect2">
 <h3 id="_micronaut_data_runtime_config_properties">Micronaut Data Runtime Config Properties</h3>
+<a id="io.micronaut.data.runtime.config.DataConfiguration" href="#io.micronaut.data.runtime.config.DataConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.html">DataConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.save-as-insert</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether repository save methods should always use insert operations.
+ This restores the Micronaut Data 4 behavior where {@code save} and {@code saveAll}
+ always inserted entities instead of selecting insert or update based on identity state.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.save-assigned-id-fallback-to-update</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether repository save methods should fall back to update when an insert detects that an entity
+ with a non-generated identity already exists.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration" href="#io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
+<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -431,7 +467,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.runtime.config.DataConfiguration$PageableConfiguration" href="#io.micronaut.data.runtime.config.DataConfiguration$PageableConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">DataConfiguration$PageableConfiguration</a></caption>
+<caption class="title">Table 10. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">DataConfiguration$PageableConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">

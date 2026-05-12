@@ -60,14 +60,18 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getDefaultInterceptors(io.micronaut.inject.visitor.VisitorContext)" tabindex="0">getDefaultInterceptors(VisitorContext)</a></li>
 <li><a href="#resolveInterceptorTypeByOperationType(boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.data.processor.visitors.MethodMatchContext)" tabindex="0">resolveInterceptorTypeByOperationType(boolean, boolean, DataMethod.OperationType, MethodMatchContext)</a></li>
+<li><a href="#resolveSaveInterceptorType(boolean,boolean,io.micronaut.data.processor.visitors.MethodMatchContext)" tabindex="0">resolveSaveInterceptorType(boolean, boolean, MethodMatchContext)</a></li>
 <li><a href="#pickSaveOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickSaveOneInterceptor(MethodMatchContext, ClassElement)</a></li>
+<li><a href="#pickInsertOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickInsertOneInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickUpdateAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickUpdateAllEntitiesInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickProcedureInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickProcedureInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickDeleteInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickDeleteInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickDeleteAllInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickDeleteAllInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickDeleteAllReturningInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickDeleteAllReturningInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickSaveEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickSaveEntityInterceptor(MethodMatchContext, ClassElement)</a></li>
+<li><a href="#pickInsertEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickInsertEntityInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickSaveAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickSaveAllEntitiesInterceptor(MethodMatchContext, ClassElement)</a></li>
+<li><a href="#pickInsertAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickInsertAllEntitiesInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickUpdateInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickUpdateInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#pickUpdateEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">pickUpdateEntityInterceptor(MethodMatchContext, ClassElement)</a></li>
 <li><a href="#resolveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" tabindex="0">resolveFindInterceptor(MethodMatchContext, ClassElement)</a></li>
@@ -248,49 +252,66 @@ loadScripts(document, 'script');</script>
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickProcedureInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickProcedureInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickInsertAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickInsertAllEntitiesInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveAllEntitiesInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickInsertEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickInsertEntityInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveEntityInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickInsertOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickInsertOneInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveOneInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickProcedureInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickProcedureInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSpecInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSpecInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveAllEntitiesInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateAllEntitiesInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveEntityInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateAllSpecInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateAllSpecInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSaveOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSaveOneInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateEntityInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickSpecInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickSpecInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateAllEntitiesInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateAllSpecInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateAllSpecInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveInterceptorTypeByOperationType(boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">resolveInterceptorTypeByOperationType</a><wbr>(boolean&nbsp;hasEntityParameter,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateEntityInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#pickUpdateInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickUpdateInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveFindInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">resolveFindInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveInterceptorTypeByOperationType(boolean,boolean,io.micronaut.data.intercept.annotation.DataMethod.OperationType,io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">resolveInterceptorTypeByOperationType</a><wbr>(boolean&nbsp;hasEntityParameter,
  boolean&nbsp;hasMultipleEntityParameter,
  <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#resolveSaveInterceptorType(boolean,boolean,io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">resolveSaveInterceptorType</a><wbr>(boolean&nbsp;hasEntityParameter,
+ boolean&nbsp;hasMultipleEntityParameter,
  <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
@@ -335,10 +356,29 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="resolveSaveInterceptorType(boolean,boolean,io.micronaut.data.processor.visitors.MethodMatchContext)">
+<h3>resolveSaveInterceptorType</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">resolveSaveInterceptorType</span><wbr><span class="parameters">(boolean&nbsp;hasEntityParameter,
+ boolean&nbsp;hasMultipleEntityParameter,
+ <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="pickSaveOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
 <h3>pickSaveOneInterceptor</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">pickSaveOneInterceptor</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="pickInsertOneInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
+<h3>pickInsertOneInterceptor</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">pickInsertOneInterceptor</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
 </div>
 </section>
@@ -398,10 +438,28 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="pickInsertEntityInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
+<h3>pickInsertEntityInterceptor</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">pickInsertEntityInterceptor</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="pickSaveAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
 <h3>pickSaveAllEntitiesInterceptor</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">pickSaveAllEntitiesInterceptor</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="pickInsertAllEntitiesInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)">
+<h3>pickInsertAllEntitiesInterceptor</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></span>&nbsp;<span class="element-name">pickInsertAllEntitiesInterceptor</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
 </div>
 </section>

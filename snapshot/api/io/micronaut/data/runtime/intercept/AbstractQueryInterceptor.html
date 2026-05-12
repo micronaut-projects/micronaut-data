@@ -54,6 +54,7 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#nested-class-summary" tabindex="0">Nested Class Summary</a></li>
 <li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
@@ -93,6 +94,16 @@ loadScripts(document, 'script');</script>
 <li><a href="#getPageableInRole(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getPageableInRole(MethodInvocationContext)</a></li>
 <li><a href="#getOffset(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getOffset(MethodInvocationContext)</a></li>
 <li><a href="#getLimit(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getLimit(MethodInvocationContext)</a></li>
+<li><a href="#hasEntityId(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" tabindex="0">hasEntityId(MethodInvocationContext, Object)</a></li>
+<li><a href="#isEntityUpdateCandidate(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" tabindex="0">isEntityUpdateCandidate(MethodInvocationContext, Object)</a></li>
+<li><a href="#isSaveAsInsert()" tabindex="0">isSaveAsInsert()</a></li>
+<li><a href="#isSaveAssignedIdFallbackToUpdate()" tabindex="0">isSaveAssignedIdFallbackToUpdate()</a></li>
+<li><a href="#resolveSaveOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" tabindex="0">resolveSaveOperation(MethodInvocationContext, Object)</a></li>
+<li><a href="#persistOrUpdate(io.micronaut.aop.MethodInvocationContext,E)" tabindex="0">persistOrUpdate(MethodInvocationContext, E)</a></li>
+<li><a href="#persistWithUpdateFallback(io.micronaut.aop.MethodInvocationContext,E)" tabindex="0">persistWithUpdateFallback(MethodInvocationContext, E)</a></li>
+<li><a href="#isEntityExistsException(io.micronaut.aop.MethodInvocationContext,java.lang.RuntimeException)" tabindex="0">isEntityExistsException(MethodInvocationContext, RuntimeException)</a></li>
+<li><a href="#unwrapCompletionException(java.lang.Throwable)" tabindex="0">unwrapCompletionException(Throwable)</a></li>
+<li><a href="#propagate(java.lang.Throwable)" tabindex="0">propagate(Throwable)</a></li>
 <li><a href="#getRequiredEntity(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getRequiredEntity(MethodInvocationContext)</a></li>
 <li><a href="#instantiateEntity(java.lang.Class,java.util.Map)" tabindex="0">instantiateEntity(Class, Map)</a></li>
 <li><a href="#getPagedQuery(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getPagedQuery(MethodInvocationContext)</a></li>
@@ -136,7 +147,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
-<dd><code><a href="async/AbstractAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">AbstractAsyncInterceptor</a>, <a href="reactive/AbstractReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">AbstractReactiveInterceptor</a>, <a href="criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a>, <a href="DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a>, <a href="DefaultCountInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultCountInterceptor</a>, <a href="DefaultDeleteAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllInterceptor</a>, <a href="DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a>, <a href="DefaultDeleteOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteOneInterceptor</a>, <a href="async/DefaultDeleteReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultDeleteReturningManyAsyncInterceptor</a>, <a href="DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a>, <a href="DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a>, <a href="DefaultExistsByInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultExistsByInterceptor</a>, <a href="DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a>, <a href="DefaultFindByIdInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindByIdInterceptor</a>, <a href="DefaultFindOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOneInterceptor</a>, <a href="DefaultFindOptionalInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOptionalInterceptor</a>, <a href="DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a>, <a href="DefaultFindStreamInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindStreamInterceptor</a>, <a href="async/DefaultInsertReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultInsertReturningManyAsyncInterceptor</a>, <a href="DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a>, <a href="DefaultInsertReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningOneInterceptor</a>, <a href="async/DefaultProcedureReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultProcedureReturningManyAsyncInterceptor</a>, <a href="DefaultProcedureReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningManyInterceptor</a>, <a href="DefaultProcedureReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningOneInterceptor</a>, <a href="DefaultSaveAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveAllInterceptor</a>, <a href="DefaultSaveEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveEntityInterceptor</a>, <a href="DefaultSaveOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveOneInterceptor</a>, <a href="DefaultUpdateAllEntitiesInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateAllEntitiesInterceptor</a>, <a href="DefaultUpdateEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateEntityInterceptor</a>, <a href="DefaultUpdateInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateInterceptor</a>, <a href="async/DefaultUpdateReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultUpdateReturningManyAsyncInterceptor</a>, <a href="DefaultUpdateReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningManyInterceptor</a>, <a href="DefaultUpdateReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningOneInterceptor</a>, <a href="../../jpa/repository/intercept/DetachInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">DetachInterceptor</a>, <a href="../../jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a>, <a href="../../jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a>, <a href="../../jpa/repository/intercept/MergeInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">MergeInterceptor</a>, <a href="../../jpa/repository/intercept/PersistInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">PersistInterceptor</a>, <a href="../../jpa/repository/intercept/RefreshInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RefreshInterceptor</a>, <a href="../../jpa/repository/intercept/RemoveInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RemoveInterceptor</a></code></dd>
+<dd><code><a href="async/AbstractAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">AbstractAsyncInterceptor</a>, <a href="reactive/AbstractReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">AbstractReactiveInterceptor</a>, <a href="criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a>, <a href="DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a>, <a href="DefaultCountInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultCountInterceptor</a>, <a href="DefaultDeleteAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllInterceptor</a>, <a href="DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a>, <a href="DefaultDeleteOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteOneInterceptor</a>, <a href="async/DefaultDeleteReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultDeleteReturningManyAsyncInterceptor</a>, <a href="DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a>, <a href="DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a>, <a href="DefaultExistsByInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultExistsByInterceptor</a>, <a href="DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a>, <a href="DefaultFindByIdInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindByIdInterceptor</a>, <a href="DefaultFindOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOneInterceptor</a>, <a href="DefaultFindOptionalInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOptionalInterceptor</a>, <a href="DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a>, <a href="DefaultFindStreamInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindStreamInterceptor</a>, <a href="DefaultInsertAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertAllInterceptor</a>, <a href="DefaultInsertEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertEntityInterceptor</a>, <a href="DefaultInsertOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertOneInterceptor</a>, <a href="async/DefaultInsertReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultInsertReturningManyAsyncInterceptor</a>, <a href="DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a>, <a href="DefaultInsertReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningOneInterceptor</a>, <a href="async/DefaultProcedureReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultProcedureReturningManyAsyncInterceptor</a>, <a href="DefaultProcedureReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningManyInterceptor</a>, <a href="DefaultProcedureReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningOneInterceptor</a>, <a href="DefaultSaveAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveAllInterceptor</a>, <a href="DefaultSaveEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveEntityInterceptor</a>, <a href="DefaultSaveOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveOneInterceptor</a>, <a href="DefaultUpdateAllEntitiesInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateAllEntitiesInterceptor</a>, <a href="DefaultUpdateEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateEntityInterceptor</a>, <a href="DefaultUpdateInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateInterceptor</a>, <a href="async/DefaultUpdateReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultUpdateReturningManyAsyncInterceptor</a>, <a href="DefaultUpdateReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningManyInterceptor</a>, <a href="DefaultUpdateReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningOneInterceptor</a>, <a href="../../jpa/repository/intercept/DetachInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">DetachInterceptor</a>, <a href="../../jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a>, <a href="../../jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a>, <a href="../../jpa/repository/intercept/MergeInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">MergeInterceptor</a>, <a href="../../jpa/repository/intercept/PersistInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">PersistInterceptor</a>, <a href="../../jpa/repository/intercept/RefreshInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RefreshInterceptor</a>, <a href="../../jpa/repository/intercept/RemoveInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RemoveInterceptor</a></code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
@@ -154,6 +165,23 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected static enum&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="AbstractQueryInterceptor.SaveOperation.html" class="type-name-link" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The operation selected for a save invocation.</div>
+</div>
+</div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field-summary">
@@ -403,38 +431,85 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the batch operation for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasEntityId(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" class="member-name-link">hasEntityId</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the entity has a non-null identity value.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(io.micronaut.aop.MethodInvocationContext,java.lang.String,java.lang.Class)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check the return role from the method context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;parameterValues)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Instantiate the given entity for the given parameter values.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNumber(java.lang.Class)" class="member-name-link">isNumber</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEntityExistsException(io.micronaut.aop.MethodInvocationContext,java.lang.RuntimeException)" class="member-name-link">isEntityExistsException</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a>&nbsp;exception)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEntityUpdateCandidate(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" class="member-name-link">isEntityUpdateCandidate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the entity should be updated instead of inserted.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNumber(java.lang.Class)" class="member-name-link">isNumber</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is the type a number.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareCountQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareCountQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSaveAsInsert()" class="member-name-link">isSaveAsInsert</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSaveAssignedIdFallbackToUpdate()" class="member-name-link">isSaveAssignedIdFallbackToUpdate</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;E</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOrUpdate(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">persistOrUpdate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Persists a new entity, or updates an entity that already has an identity.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;E</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistWithUpdateFallback(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">persistWithUpdateFallback</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Persists the entity and falls back to update when the configured exception conversion identifies
+that the insert failed because the entity already exists.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareCountQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareCountQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  @NonNull io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Prepares a query for the given context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr>RT&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepares a query for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a><wbr>&lt;?,<wbr>RT&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Prepares a query for the given context.</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#propagate(java.lang.Throwable)" class="member-name-link">propagate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="AbstractQueryInterceptor.SaveOperation.html" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveSaveOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)" class="member-name-link">resolveSaveOperation</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolve whether save should insert or update the entity.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#unwrapCompletionException(java.lang.Throwable)" class="member-name-link">unwrapCompletionException</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateNullArguments(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">validateNullArguments</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateNullArguments(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">validateNullArguments</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Validates null arguments ensuring no argument is null unless declared so.</div>
 </div>
@@ -899,6 +974,145 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 </section>
 </li>
 <li>
+<section class="detail" id="hasEntityId(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">
+<h3>hasEntityId</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasEntityId</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</span></div>
+<div class="block">Whether the entity has a non-null identity value.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method invocation context</dd>
+<dd><code>entity</code> - The entity instance</dd>
+<dt>Returns:</dt>
+<dd>True if the entity has an ID value</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isEntityUpdateCandidate(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">
+<h3>isEntityUpdateCandidate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEntityUpdateCandidate</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</span></div>
+<div class="block">Whether the entity should be updated instead of inserted.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method invocation context</dd>
+<dd><code>entity</code> - The entity instance</dd>
+<dt>Returns:</dt>
+<dd>True if the entity has enough state to use the update query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isSaveAsInsert()">
+<h3>isSaveAsInsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSaveAsInsert</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether save methods should always perform insert operations.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isSaveAssignedIdFallbackToUpdate()">
+<h3>isSaveAssignedIdFallbackToUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSaveAssignedIdFallbackToUpdate</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether save should fall back to update when insert detects an existing assigned-ID entity.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resolveSaveOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">
+<h3>resolveSaveOperation</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="AbstractQueryInterceptor.SaveOperation.html" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></span>&nbsp;<span class="element-name">resolveSaveOperation</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;entity)</span></div>
+<div class="block">Resolve whether save should insert or update the entity.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method invocation context</dd>
+<dd><code>entity</code> - The entity instance</dd>
+<dt>Returns:</dt>
+<dd>The selected save operation</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="persistOrUpdate(io.micronaut.aop.MethodInvocationContext,E)">
+<h3 id="persistOrUpdate(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">persistOrUpdate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">E</span>&nbsp;<span class="element-name">persistOrUpdate</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</span></div>
+<div class="block">Persists a new entity, or updates an entity that already has an identity.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="persistOrUpdate(io.micronaut.aop.MethodInvocationContext,E)-type-param-E"><code>E</code> - The entity type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method invocation context</dd>
+<dd><code>entity</code> - The entity</dd>
+<dt>Returns:</dt>
+<dd>The persisted or updated entity</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="persistWithUpdateFallback(io.micronaut.aop.MethodInvocationContext,E)">
+<h3 id="persistWithUpdateFallback(io.micronaut.aop.MethodInvocationContext,java.lang.Object)">persistWithUpdateFallback</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>&nbsp;<span class="return-type">E</span>&nbsp;<span class="element-name">persistWithUpdateFallback</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr>?&gt;&nbsp;context,
+ E&nbsp;entity)</span></div>
+<div class="block">Persists the entity and falls back to update when the configured exception conversion identifies
+that the insert failed because the entity already exists.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="persistWithUpdateFallback(io.micronaut.aop.MethodInvocationContext,E)-type-param-E"><code>E</code> - The entity type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>context</code> - The method invocation context</dd>
+<dd><code>entity</code> - The entity</dd>
+<dt>Returns:</dt>
+<dd>The persisted or updated entity</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isEntityExistsException(io.micronaut.aop.MethodInvocationContext,java.lang.RuntimeException)">
+<h3>isEntityExistsException</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEntityExistsException</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a>&nbsp;exception)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="unwrapCompletionException(java.lang.Throwable)">
+<h3>unwrapCompletionException</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a></span>&nbsp;<span class="element-name">unwrapCompletionException</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="propagate(java.lang.Throwable)">
+<h3>propagate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a></span>&nbsp;<span class="element-name">propagate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="getRequiredEntity(io.micronaut.aop.MethodInvocationContext)">
 <h3>getRequiredEntity</h3>
 <div class="horizontal-scroll">
@@ -1204,7 +1418,7 @@ implements <a href="../../intercept/DataInterceptor.html" title="interface in io
 <section class="detail" id="validateNullArguments(io.micronaut.aop.MethodInvocationContext)">
 <h3>validateNullArguments</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateNullArguments</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="#type-param-T" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="#type-param-R" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateNullArguments</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</span></div>
 <div class="block">Validates null arguments ensuring no argument is null unless declared so.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

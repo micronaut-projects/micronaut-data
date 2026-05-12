@@ -97,7 +97,8 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="caption"><span>Classes</span></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
+<div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
@@ -105,80 +106,96 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Abstract interceptor that executes a <a href="../../annotation/Query.html" title="annotation interface in io.micronaut.data.annotation"><code>Query</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DataInterceptorResolver.html" title="class in io.micronaut.data.runtime.intercept">DataInterceptorResolver</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="AbstractQueryInterceptor.SaveOperation.html" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="block">The operation selected for a save invocation.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DataInterceptorResolver.html" title="class in io.micronaut.data.runtime.intercept">DataInterceptorResolver</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The data interceptor resolver.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DataIntroductionAdvice.html" title="class in io.micronaut.data.runtime.intercept">DataIntroductionAdvice</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DataIntroductionAdvice.html" title="class in io.micronaut.data.runtime.intercept">DataIntroductionAdvice</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The root Data introduction advice, which simply delegates to an appropriate interceptor
 declared in the <a href="../../intercept/package-summary.html"><code>io.micronaut.data.intercept</code></a> package.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">An abstract base implementation of query interceptor for page interceptors
 implementing <a href="../../intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindPageInterceptor</code></a> or
 <a href="../../intercept/FindCursoredPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindCursoredPageInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultCountInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultCountInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultCountInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultCountInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept"><code>CountInterceptor</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultDeleteAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllInterceptor</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Default implementation of <a href="../../intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteAllInterceptor</code></a>.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a>&lt;E,<wbr>R&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultDeleteAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllInterceptor</a>&lt;T&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteAllInterceptor</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultDeleteOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteOneInterceptor</a>&lt;T&gt;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a>&lt;E,<wbr>R&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Default implementation of <a href="../../intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteAllInterceptor</code></a>.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultDeleteOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteOneInterceptor</a>&lt;T&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The default implementation of <a href="../../intercept/DeleteOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteOneInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/DeleteReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteReturningManyInterceptor</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/DeleteReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteReturningOneInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultExistsByInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultExistsByInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultExistsByInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultExistsByInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The default implementation of <a href="../../intercept/ExistsByInterceptor.html" title="interface in io.micronaut.data.intercept"><code>ExistsByInterceptor</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The default implementation of <a href="../../intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindAllInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindByIdInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindByIdInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindByIdInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindByIdInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation that handles lookup by ID.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindCursoredPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindCursoredPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindCursoredPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindCursoredPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/FindCursoredPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindCursoredPageInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOneInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOneInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of the <a href="../../intercept/FindOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindOneInterceptor</code></a> interface.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindOptionalInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOptionalInterceptor</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindOptionalInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindOptionalInterceptor</a>&lt;T&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/FindOptionalInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindOptionalInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindPageInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindPageInterceptor</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/FindSliceInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindSliceInterceptor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultFindStreamInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindStreamInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultFindStreamInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindStreamInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/FindStreamInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindStreamInterceptor</code></a>.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultInsertAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertAllInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Default implementation of <a href="../../intercept/InsertAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>InsertAllInterceptor</code></a>.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultInsertEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertEntityInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Default implementation of <a href="../../intercept/InsertEntityInterceptor.html" title="interface in io.micronaut.data.intercept"><code>InsertEntityInterceptor</code></a>.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultInsertOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertOneInterceptor</a>&lt;T&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Default implementation of <a href="../../intercept/InsertOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>InsertOneInterceptor</code></a>.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a>&lt;T,<wbr>R&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
@@ -227,6 +244,7 @@ implementing <a href="../../intercept/FindPageInterceptor.html" title="interface
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="DefaultUpdateReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningOneInterceptor</a>&lt;T,<wbr>R&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Default implementation of <a href="../../intercept/UpdateReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>UpdateReturningOneInterceptor</code></a>.</div>
+</div>
 </div>
 </div>
 </div>
