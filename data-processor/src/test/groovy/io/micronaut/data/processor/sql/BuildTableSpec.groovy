@@ -596,6 +596,132 @@ class Course {
         e.message == 'Cannot resolve default join table columns for entity [test.Course] that has no declared ID'
     }
 
+    void "test create ManyToMany table fails when owner has composite id"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinTable;
+import jakarta.persistence.IdClass;
+import java.io.Serializable;
+import java.util.List;
+
+@MappedEntity
+@IdClass(StudentId.class)
+class Student {
+    @Id
+    private Long id1;
+    @Id
+    private Long id2;
+    private String name;
+    @JoinTable
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    private List<Course> courses;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+}
+
+@Introspected
+class StudentId implements Serializable {
+    private Long id1;
+    private Long id2;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+}
+
+@MappedEntity
+class Course {
+    @Id
+    private Long id;
+    private String name;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+''')
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(MappingException)
+        e.message == 'Cannot resolve default join table columns for entity [test.Student] that has a composite identity (single ID required)'
+    }
+
+    void "test create ManyToMany table fails when associated entity has composite id"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinTable;
+import jakarta.persistence.IdClass;
+import java.io.Serializable;
+import java.util.List;
+
+@MappedEntity
+class Student {
+    @Id
+    private Long id;
+    private String name;
+    @JoinTable
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    private List<Course> courses;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+}
+
+@MappedEntity
+@IdClass(CourseId.class)
+class Course {
+    @Id
+    private Long id1;
+    @Id
+    private Long id2;
+    private String name;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@Introspected
+class CourseId implements Serializable {
+    private Long id1;
+    private Long id2;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+}
+''')
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(MappingException)
+        e.message == 'Cannot resolve default join table columns for entity [test.Course] that has a composite identity (single ID required)'
+    }
+
     @Unroll
     void "test build create table for Duration and Period types for dialect #dialect"() {
         given:

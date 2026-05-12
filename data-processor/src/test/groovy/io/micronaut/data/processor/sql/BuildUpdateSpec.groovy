@@ -326,6 +326,28 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
     }
 
+    void "test update by ID with composite id fails with clear message"() {
+        when:
+        buildRepository('test.EntityWithIdClassRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.EntityIdClass;
+import io.micronaut.data.tck.entities.EntityWithIdClass;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface EntityWithIdClassRepository extends GenericRepository<EntityWithIdClass, EntityIdClass> {
+
+    void updateName(@Id Long id, String name);
+}
+""")
+
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot update by ID for entity [io.micronaut.data.tck.entities.EntityWithIdClass] that has a composite identity (single ID required)')
+    }
+
     void "test error message for update method with invalid return type"() {
         when:
         buildRepository('test.PersonRepository', """
