@@ -300,10 +300,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
                             throw new IllegalStateException("Expected association as a mapped path: " + mappedBy);
                         }
 
-                        boolean currentLookHasIdentity = currentLookup.persistentEntity.hasIdentity();
+                        boolean currentLookupHasIdentity = currentLookup.persistentEntity.hasIdentity();
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        if (currentLookHasIdentity) {
+                        if (currentLookupHasIdentity) {
                             PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
                                 localMatchFields.add(asPath(associations, p));
                             });
@@ -312,7 +312,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                         var mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
                         mappedAssociations.add(associationProperty);
 
-                        if (currentLookHasIdentity) {
+                        if (currentLookupHasIdentity) {
                             PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
                                 String fieldPath = asPath(associations, p);
                                 foreignMatchFields.add(fieldPath);
