@@ -31,16 +31,16 @@ class JpaEmbeddedIdSpec extends Specification implements PostgresHibernateReacti
     void "test CRUD"() {
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test")).block()
+        repository.insert(new Shipment(id, "test")).block()
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2")).block()
+        repository.insert(new Shipment(id2, "test2")).block()
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3")).block()
+        repository.insert(new Shipment(id3, "test3")).block()
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4")).block()
+        repository.insert(new Shipment(id4, "test4")).block()
 
         def entity = repository.findById(id).block()
 

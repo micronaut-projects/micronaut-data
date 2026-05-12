@@ -27,6 +27,7 @@ import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -70,6 +71,40 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
             }
         }
         return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
+    }
+
+    protected final <E> CompletionStage<E> persistOrUpdateAsync(MethodInvocationContext<T, ?> context, E entity) {
+        if (isSaveAsInsert()) {
+            return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+        }
+        return switch (resolveSaveOperation(context, entity)) {
+            case INSERT -> asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallbackAsync(context, entity);
+            case UPDATE -> asyncDatastoreOperations.update(getUpdateOperation(context, entity));
+        };
+    }
+
+    protected final <E> CompletionStage<E> persistWithUpdateFallbackAsync(MethodInvocationContext<T, ?> context, E entity) {
+        CompletableFuture<E> result = new CompletableFuture<>();
+        asyncDatastoreOperations.persist(getInsertOperation(context, entity)).whenComplete((value, throwable) -> {
+            if (throwable == null) {
+                result.complete(value);
+                return;
+            }
+            Throwable cause = unwrapCompletionException(throwable);
+            if (cause instanceof RuntimeException runtimeException && isEntityExistsException(context, runtimeException)) {
+                asyncDatastoreOperations.update(getUpdateOperation(context, entity)).whenComplete((updated, updateThrowable) -> {
+                    if (updateThrowable == null) {
+                        result.complete(updated);
+                    } else {
+                        result.completeExceptionally(updateThrowable);
+                    }
+                });
+            } else {
+                result.completeExceptionally(cause);
+            }
+        });
+        return result;
     }
 
     /**

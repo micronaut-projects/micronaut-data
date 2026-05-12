@@ -31,7 +31,7 @@ class ScalarProjectionSpec extends Specification {
     ChildrenRepository childrenRepository
 
     void setupSpec() {
-        childrenRepository.saveAll([
+        childrenRepository.insertAll([
                 new Children(new ChildrenId(1, 1)),
                 new Children(new ChildrenId(1, 2)),
                 new Children(new ChildrenId(1, 3)),

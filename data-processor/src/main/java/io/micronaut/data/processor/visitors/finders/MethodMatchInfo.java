@@ -22,8 +22,10 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,6 +50,7 @@ public final class MethodMatchInfo {
     private QueryResult queryResult;
     @Nullable
     private QueryResult countQueryResult;
+    private final List<QueryDefinition> additionalQueries = new ArrayList<>(2);
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
 
@@ -148,6 +151,20 @@ public final class MethodMatchInfo {
         return this;
     }
 
+    public MethodMatchInfo addQueryResult(DataMethod.OperationType operationType,
+                                          @Nullable TypedElement resultType,
+                                          QueryResult queryResult) {
+        return addQueryResult(operationType, resultType, queryResult, false);
+    }
+
+    public MethodMatchInfo addQueryResult(DataMethod.OperationType operationType,
+                                          @Nullable TypedElement resultType,
+                                          QueryResult queryResult,
+                                          boolean optimisticLock) {
+        additionalQueries.add(new QueryDefinition(operationType, resultType, queryResult, optimisticLock));
+        return this;
+    }
+
     public MethodMatchInfo isRawQuery(boolean isRawQuery) {
         this.isRawQuery = isRawQuery;
         return this;
@@ -183,6 +200,16 @@ public final class MethodMatchInfo {
 
     public boolean isEncodeEntityParameters() {
         return encodeEntityParameters;
+    }
+
+    public List<QueryDefinition> getAdditionalQueries() {
+        return Collections.unmodifiableList(additionalQueries);
+    }
+
+    public record QueryDefinition(DataMethod.OperationType operationType,
+                                  @Nullable TypedElement resultType,
+                                  QueryResult queryResult,
+                                  boolean optimisticLock) {
     }
 
 }

@@ -80,7 +80,7 @@ class PersistEventEvictionsTest extends AbstractDataTest {
      */
     private void runPersistEventTestEviction(CrudRepository<Book, UUID> repository) {
         Assertions.assertFalse(repository.existsById(IT.getUuid()));
-        Book result = repository.save(IT);
+        Book result = repository.insert(IT);
         Assertions.assertEquals(IT, result);
         Assertions.assertFalse(repository.existsById(IT.getUuid()));
         Assertions.assertTrue(eventRecorder.getRecordedEvents().contains(
@@ -95,7 +95,7 @@ class PersistEventEvictionsTest extends AbstractDataTest {
     private void runPersistEventTestEviction(AsyncCrudRepository<Book, UUID> repository) {
         repository.existsById(IT.getUuid())
                 .thenAccept(Assertions::assertFalse)
-                .thenCompose(unused -> repository.save(IT))
+                .thenCompose(unused -> repository.insert(IT))
                 .thenAccept(book1 -> Assertions.assertEquals(IT, book1))
                 .thenCompose(unused -> repository.existsById(IT.getUuid()))
                 .thenAccept(Assertions::assertFalse)

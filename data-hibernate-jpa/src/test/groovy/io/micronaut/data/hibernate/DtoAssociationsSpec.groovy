@@ -28,11 +28,11 @@ class DtoAssociationsSpec extends Specification {
     UserRepository userRepository
 
     def setupSpec() {
-        def group1 = groupRepository.save(new Group(id: 1, name: "Group 1"))
-        def group2 = groupRepository.save(new Group(id: 2, name: "Group 2"))
+        def group1 = groupRepository.insert(new Group(id: 1, name: "Group 1"))
+        def group2 = groupRepository.insert(new Group(id: 2, name: "Group 2"))
 
-        userRepository.save(new User(id: 1, username: "john", something: "blabla", groups: [group1, group2]))
-        userRepository.save(new User(id: 2, username: "jane", something: "blabla"))
+        userRepository.insert(new User(id: 1, username: "john", something: "blabla", groups: [group1, group2]))
+        userRepository.insert(new User(id: 2, username: "jane", something: "blabla"))
     }
 
     def "basic dtos"() {
@@ -67,7 +67,7 @@ interface UserRepository extends GenericRepository<User, Long> {
     @Join(value = "groups", type = Join.Type.LEFT)
     List<SomeDtoWithGroup> findAll();
 
-    void save(User user);
+    void insert(User user);
 
     List<SomeDto> list();
 }

@@ -44,6 +44,21 @@ public interface StoredQueryResolver {
     <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context);
 
     /**
+     * Stored query resolved from the method context for the requested operation type.
+     *
+     * @param context       The method context
+     * @param operationType The operation type
+     * @param <E>           The entity type
+     * @param <R>           The result type
+     * @return The prepared query
+     * @since 5.0.0
+     */
+    default <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
+                                                  StoredQuery.OperationType operationType) {
+        return resolveQuery(context);
+    }
+
+    /**
      * Stored count query resolved from the method context.
      *
      * @param context     The method context

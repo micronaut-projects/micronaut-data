@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.intercept.SaveEntityInterceptor
+import io.micronaut.data.intercept.InsertEntityInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
@@ -508,7 +508,7 @@ interface MyInterface extends GenericRepository<Book, UUID> {
             getRawQuery(saveCustom) == 'INSERT INTO Book(title, totalPages) VALUES (?, ?)'
             getDataTypes(saveCustom) == [DataType.STRING, DataType.INTEGER]
             getParameterPropertyPaths(saveCustom) == ["title", "totalPages"] as String[]
-            getDataInterceptor(saveCustom) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getDataInterceptor(saveCustom) == "io.micronaut.data.intercept.InsertEntityInterceptor"
     }
 
     void "test custom insert save all - JPA"() {
@@ -532,7 +532,7 @@ interface PersonRepository extends GenericRepository<Person, Long> {
             getQuery(saveReturningMethod) == 'INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)'
             getDataResultType(saveReturningMethod) == "int"
             getParameterPropertyPaths(saveReturningMethod) == ["name", "age"] as String[]
-            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveAllInterceptor"
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.InsertAllInterceptor"
             getResultDataType(saveReturningMethod) == DataType.INTEGER
             getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
     }
@@ -558,7 +558,7 @@ interface PersonRepository extends GenericRepository<Person, Long> {
             getQuery(saveReturningMethod) == 'INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)'
             getDataResultType(saveReturningMethod) == "int"
             getParameterPropertyPaths(saveReturningMethod) == ["name", "age"] as String[]
-            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.InsertEntityInterceptor"
             getResultDataType(saveReturningMethod) == DataType.INTEGER
             getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
     }
@@ -613,7 +613,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
 
         expect:
         insertQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE) "
-        method.classValue(DataMethod, "interceptor").get() == SaveEntityInterceptor
+        method.classValue(DataMethod, "interceptor").get() == InsertEntityInterceptor
     }
 
     void "ORACLE test build save returning"() {

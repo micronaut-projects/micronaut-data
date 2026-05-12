@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
@@ -2624,7 +2625,7 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
-    void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
+    void "test raw REPLACE INTO is treated as UPDATE (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -2643,7 +2644,31 @@ interface Repo extends GenericRepository<Book, Long> {
 
         expect:
         getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
         getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
+    }
+
+    void "test raw INSERT with explicit parameters is treated as UPDATE operation"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("INSERT INTO book (title, total_pages) VALUES (:title, :totalPages)")
+    int insertCustom(String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("insertCustom", String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(method) == 'INSERT INTO book (title, total_pages) VALUES (?, ?)'
     }
 
     void "test EmbeddedId naming strategy"() {

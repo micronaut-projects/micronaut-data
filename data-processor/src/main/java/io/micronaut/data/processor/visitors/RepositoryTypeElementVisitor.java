@@ -627,7 +627,38 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 queryResult,
                 methodInfo.getResultType(),
                 parameterBinding,
-                methodInfo.isEncodeEntityParameters());
+                methodInfo.isEncodeEntityParameters(),
+                methodInfo.isOptimisticLock());
+
+            List<AnnotationValue<Annotation>> additionalQueryAnnotations = new ArrayList<>(methodInfo.getAdditionalQueries().size());
+            for (MethodMatchInfo.QueryDefinition queryDefinition : methodInfo.getAdditionalQueries()) {
+                QueryResult additionalQueryResult = queryDefinition.queryResult();
+                List<QueryParameterBinding> additionalParameterBinding = additionalQueryResult.getParameterBindings();
+                bindAdditionalParameters(methodMatchContext, additionalParameterBinding, additionalQueryResult.getAdditionalRequiredParameters());
+
+                AnnotationValueBuilder<Annotation> builder = AnnotationValue.builder(DataMethodQuery.class.getName());
+                String query = additionalQueryResult.getQuery();
+                if (methodInfo.isRawQuery()) {
+                    query = addRawQueryParameterPlaceholders(queryEncoder, query, additionalQueryResult.getQueryParts());
+                }
+                builder.member(AnnotationMetadata.VALUE_MEMBER, query);
+                builder.member(DataMethodQuery.META_MEMBER_NATIVE, method.booleanValue(Query.class,
+                    DataMethodQuery.META_MEMBER_NATIVE).orElse(false));
+
+                addQueryDefinition(methodMatchContext,
+                    builder,
+                    queryDefinition.operationType(),
+                    additionalQueryResult,
+                    queryDefinition.resultType(),
+                    additionalParameterBinding,
+                    methodInfo.isEncodeEntityParameters(),
+                    queryDefinition.optimisticLock());
+
+                additionalQueryAnnotations.add(builder.build());
+            }
+            if (!additionalQueryAnnotations.isEmpty()) {
+                annotationBuilder.member(DataMethod.META_MEMBER_QUERIES, additionalQueryAnnotations.toArray(AnnotationValue[]::new));
+            }
 
             QueryResult countQuery = methodInfo.getCountQueryResult();
             if (countQuery != null) {
@@ -651,7 +682,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     countQuery,
                     methodMatchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(),
                     countParametersBindings,
-                    methodInfo.isEncodeEntityParameters());
+                    methodInfo.isEncodeEntityParameters(),
+                    false);
 
                 annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, builder.build());
             }
@@ -666,13 +698,17 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     @Nullable
                                     TypedElement resultType,
                                     List<QueryParameterBinding> parameterBinding,
-                                    boolean encodeEntityParameters) {
+                                    boolean encodeEntityParameters,
+                                    boolean optimisticLock) {
 
         if (methodMatchContext.getMethodElement().hasAnnotation(Procedure.class)) {
             annotationBuilder.member(DataMethodQuery.META_MEMBER_PROCEDURE, true);
         }
 
         annotationBuilder.member(DataMethodQuery.META_MEMBER_OPERATION_TYPE, operationType);
+        if (optimisticLock) {
+            annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIMISTIC_LOCK, true);
+        }
 
         if (resultType != null) {
             String stringType = resultType.getName();

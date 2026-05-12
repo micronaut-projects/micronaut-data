@@ -121,14 +121,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     ClassElement resultType = entry.returnType();
                     ClassElement interceptorType = entry.interceptor();
 
-                    if (interceptorType.getSimpleName().startsWith("SaveOne")) {
+                    if (entityParameter == null
+                        && entitiesParameter == null
+                        && operationType == DataMethod.OperationType.INSERT
+                        && (interceptorType.getSimpleName().startsWith("SaveOne") || interceptorType.getSimpleName().startsWith("InsertOne"))) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
-                        operationType = DataMethod.OperationType.UPDATE;
                         FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.returnType();
                         interceptorType = e.interceptor();
+                        operationType = DataMethod.OperationType.UPDATE;
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {
@@ -190,11 +193,16 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
-        } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
+        } else if (INSERT_PATTERN.matcher(query).find()) {
             if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
+        } else if (REPLACE_INTO_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
+                return DataMethod.OperationType.UPDATE_RETURNING;
+            }
+            return DataMethod.OperationType.UPDATE;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
             if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;

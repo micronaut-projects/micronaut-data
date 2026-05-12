@@ -26,7 +26,7 @@ class LoadSpec extends Specification {
     def setupSpec() {
         Children existing = new Children(existingId)
         existing.setName("Mitch")
-        childrenRepository.save(existing)
+        childrenRepository.insert(existing)
     }
 
     def "can retrieve uninitialized proxy from repository for existing entity"() {
