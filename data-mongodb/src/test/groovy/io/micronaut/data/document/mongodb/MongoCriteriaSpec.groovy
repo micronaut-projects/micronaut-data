@@ -39,6 +39,7 @@ import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -51,6 +52,9 @@ class MongoCriteriaSpec extends Specification {
     PersistentEntityCriteriaDelete criteriaDelete
 
     PersistentEntityCriteriaUpdate criteriaUpdate
+
+    @Shared
+    Map<Class, RuntimePersistentEntity> entities = [:]
 
     void setup() {
         criteriaBuilder = new RuntimeCriteriaBuilder()
@@ -467,12 +471,17 @@ class MongoCriteriaSpec extends Specification {
     }
 
     private RuntimePersistentEntity getRuntimePersistentEntity(Class type) {
-        return new RuntimePersistentEntity(type) {
-            @Override
-            protected RuntimePersistentEntity getEntity(Class t) {
-                return getRuntimePersistentEntity(t)
+        RuntimePersistentEntity entity = entities.get(type)
+        if (entity == null) {
+            entity = new RuntimePersistentEntity(type) {
+                @Override
+                protected RuntimePersistentEntity getEntity(Class t) {
+                    return getRuntimePersistentEntity(t)
+                }
             }
+            entities.put(type, entity)
         }
+        return entity
     }
 
     private static String getQuery(PersistentEntityCriteriaDelete<Object> query) {

@@ -977,6 +977,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return value;
     }
 
+    private static String identityIssueDescription(PersistentEntity entity) {
+        return entity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID";
+    }
+
     /**
      * Used to cache queries for entities.
      */
@@ -1006,11 +1010,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         public int hashCode() {
             return Objects.hash(repositoryType, entityType);
         }
-    }
-
-
-    private static String identityIssueDescription(PersistentEntity entity) {
-        return entity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID";
     }
 
     /**

@@ -614,8 +614,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             return persistentEntityRoot.id();
         } else {
             PersistentEntity persistentEntity = getPersistentEntity(root);
+            String entityName = persistentEntity.getName();
+            if (persistentEntity.hasCompositeIdentity()) {
+                throw new IllegalStateException("Composite identity is present for entity [" + entityName + "]; no singular identity expression can be resolved");
+            }
             if (!persistentEntity.hasIdentity()) {
-                throw new IllegalStateException("No identity is present");
+                throw new IllegalStateException("No declared identity is present for entity [" + entityName + "]");
             }
             return root.get(persistentEntity.getIdentity().getName());
         }
