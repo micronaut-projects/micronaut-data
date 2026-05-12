@@ -26,7 +26,7 @@ class H2AssignedUuidCascadePersistSpec extends Specification implements H2TestPr
         }
 
         when:
-        tenantRepository.save(t).block()
+        tenantRepository.insert(t).block()
 
         then:
         tenantRepository.findById(tenantId).block() != null

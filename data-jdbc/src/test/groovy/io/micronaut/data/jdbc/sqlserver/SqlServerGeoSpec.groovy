@@ -57,7 +57,7 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().save(entity)
+        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().insert(entity)
 
         then:
         savedEntity.id > 0

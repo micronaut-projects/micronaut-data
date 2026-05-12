@@ -43,6 +43,8 @@ interface MyInterface extends AsyncCrudRepository<Person, Long> {
 
         expect:
         repository != null
+        repository.getRequiredMethod("insert", Person).synthesize(DataMethod).interceptor() == InsertEntityAsyncInterceptor
+        repository.getRequiredMethod("insertAll", Iterable).synthesize(DataMethod).interceptor() == InsertAllAsyncInterceptor
     }
 
     @Unroll
@@ -151,6 +153,12 @@ class FullNameDto {
         "save"             | "CompletionStage<Person>"            | "String name, String publicId" | SaveOneAsyncInterceptor    | Person.name        | false
         "save"             | "CompletionStage<Integer>"           | "String name, String publicId" | SaveOneAsyncInterceptor    | Integer.name       | false
         "save"             | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | Person.name        | false
+        "insert"           | "CompletionStage<Integer>"           | "Person person"                | InsertEntityAsyncInterceptor | Integer.name     | false
+        "insert"           | "CompletionStage<Person>"            | "Person person"                | InsertEntityAsyncInterceptor | Person.name      | false
+        "insert"           | "CompletionStage<Person>"            | "String name, String publicId" | InsertOneAsyncInterceptor  | Person.name        | false
+        "insert"           | "CompletionStage<Integer>"           | "String name, String publicId" | InsertOneAsyncInterceptor  | Integer.name       | false
+        "insert"           | "CompletionStage<List<Person>>"      | "List<Person> entities"        | InsertAllAsyncInterceptor  | Person.name        | false
+        "insertAll"        | "CompletionStage<List<Person>>"      | "List<Person> entities"        | InsertAllAsyncInterceptor  | Person.name        | false
         "updateByName"     | "CompletionStage<Long>"              | "String name, int age"         | UpdateAsyncInterceptor     | Long.name          | false
         "update"           | "CompletionStage<Void>"              | "@Id Long id, int age"         | UpdateAsyncInterceptor     | Void.name          | false
         "updateAll"        | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false

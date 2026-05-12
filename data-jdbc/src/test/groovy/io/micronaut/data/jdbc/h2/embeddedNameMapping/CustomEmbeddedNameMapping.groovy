@@ -40,7 +40,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
                             detailsIncluded: new EmbeddedAuthorDetails(numberAge: 33)
                     )
             )
-            myBookRepository.save(book)
+            myBookRepository.insert(book)
             book = myBookRepository.findById("1").get()
 
         then:
@@ -154,5 +154,4 @@ class EmbeddedAuthor {
 class EmbeddedAuthorDetails {
     int numberAge
 }
-
 

@@ -49,9 +49,9 @@ class Tests {
     @org.junit.jupiter.api.Test
     void test() {
         CarManufacturer1 manufacturerOneToOne = new CarManufacturer1(1L, "Tesla ONE_TO_ONE");
-        manufacturer1Repository.save(manufacturerOneToOne);
+        manufacturer1Repository.insert(manufacturerOneToOne);
         CarManufacturer2 manufacturerManyToOne = new CarManufacturer2(2L, "Tesla MANY_TO_ONE");
-        manufacturer2Repository.save(manufacturerManyToOne);
+        manufacturer2Repository.insert(manufacturerManyToOne);
 
         Car car1 = new Car(
             1L,
@@ -61,7 +61,7 @@ class Tests {
             null,
             null
         );
-        carRepository.save(car1);
+        carRepository.insert(car1);
 
         Car car2 = new Car(
             2L,
@@ -71,7 +71,7 @@ class Tests {
             null,
             null
         );
-        carRepository.save(car2);
+        carRepository.insert(car2);
 
         Car car3 = new Car(
             3L,
@@ -81,12 +81,12 @@ class Tests {
             null,
             null
         );
-        carRepository.save(car3);
+        carRepository.insert(car3);
 
         CarManufacturer3 manufacturersOneToMany1 = new CarManufacturer3(3L, "Tesla ONE_TO_MANY 1", car3);
         CarManufacturer3 manufacturersOneToMany2 = new CarManufacturer3(4L, "Tesla ONE_TO_MANY 1", car3);
-        manufacturer3Repository.save(manufacturersOneToMany1);
-        manufacturer3Repository.save(manufacturersOneToMany2);
+        manufacturer3Repository.insert(manufacturersOneToMany1);
+        manufacturer3Repository.insert(manufacturersOneToMany2);
 
         Car car4 = new Car(
             4L,
@@ -96,12 +96,12 @@ class Tests {
             null,
             null
         );
-        carRepository.save(car4);
+        carRepository.insert(car4);
 
         CarManufacturer4 manufacturersManyToMany1 = new CarManufacturer4(5L, "Tesla MANY_TO_MANY 1", Collections.singletonList(car4));
         CarManufacturer4 manufacturersManyToMany2 = new CarManufacturer4(6L, "Tesla MANY_TO_MANY 2", Collections.singletonList(car4));
-        manufacturer4Repository.save(manufacturersManyToMany1);
-        manufacturer4Repository.save(manufacturersManyToMany2);
+        manufacturer4Repository.insert(manufacturersManyToMany1);
+        manufacturer4Repository.insert(manufacturersManyToMany2);
 
         Car manufacturerOneToOneCar = httpClient.toBlocking().retrieve(HttpRequest.GET("/cars/manufacturerOneToOne"), Argument.of(Car.class));
 

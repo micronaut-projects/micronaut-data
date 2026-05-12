@@ -798,7 +798,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     return Mono.from(collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata))).map(updateResult -> {
                         d.rowsUpdated = updateResult.getModifiedCount();
                         if (persistentEntity.hasVersion()) {
-                            checkOptimisticLocking(1, (int) d.rowsUpdated);
+                            checkOptimisticLocking(1, getModifiedOrUpsertedCount(updateResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, getMatchedOrUpsertedCount(updateResult));
                         }
                         return d;
                     });
@@ -846,7 +848,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     return Mono.from(collection.bulkWrite(ctx.clientSession, replaces)).map(bulkWriteResult -> {
                         if (persistentEntity.hasVersion()) {
-                            checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
+                            checkOptimisticLocking(replaces.size(), getModifiedOrUpsertedCount(bulkWriteResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                         }
                         return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
@@ -876,7 +880,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     Mono<Long> modifiedCount = Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates)).map(result -> {
                         if (storedQuery.isOptimisticLock()) {
-                            checkOptimisticLocking(updates.size(), result.getModifiedCount());
+                            checkOptimisticLocking(updates.size(), getModifiedOrUpsertedCount(result));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), getMatchedOrUpsertedCount(result));
                         }
                         return (long) result.getModifiedCount();
                     });

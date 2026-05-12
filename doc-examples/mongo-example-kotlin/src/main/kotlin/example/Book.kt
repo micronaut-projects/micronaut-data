@@ -10,7 +10,7 @@ import org.bson.types.ObjectId
 @MappedEntity
 data class Book(@field:Id
                 @GeneratedValue
-                var id: ObjectId,
+                var id: ObjectId?,
                 var title: String,
                 var pages: Int = 0)
 // end::book[]

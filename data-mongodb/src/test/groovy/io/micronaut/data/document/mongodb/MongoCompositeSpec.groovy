@@ -91,9 +91,9 @@ class MongoCompositeSpec extends Specification implements MongoTestPropertyProvi
             settlement.enabled = true
 
         when:
-            settlementTypeRepository.save(type)
-            zoneRepository.save(zone)
-            settlementRepository.save(settlement)
+            settlementTypeRepository.insert(type)
+            zoneRepository.insert(zone)
+            settlementRepository.insert(settlement)
             settlement = settlementRepository.findById(settlement.getId()).get()
 
         then:
@@ -135,7 +135,7 @@ class MongoCompositeSpec extends Specification implements MongoTestPropertyProvi
         when:
             settlement.id.county.countyName = "Czech Republic"
             settlement.id.county.enabled = true
-            countryRepository.save(settlement.id.county)
+            countryRepository.insert(settlement.id.county)
             settlement = settlementRepository.queryById(settlement.getId()).get()
 
         then:
