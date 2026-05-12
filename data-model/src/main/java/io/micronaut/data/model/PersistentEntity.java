@@ -335,6 +335,8 @@ public interface PersistentEntity extends PersistentElement {
                         } else {
                             return Optional.empty();
                         }
+                    } else {
+                        return Optional.empty();
                     }
                 }
                 if (prop instanceof Association association) {
