@@ -262,7 +262,7 @@ abstract class AbstractCascadeOperations {
      * Build a veto predicate for batch persist of many children.
      * For join-table associations, veto any child with a non-null id (existing). For direct FKs, veto when id present and generated.
      */
-    protected static Predicate<Object> batchPersistVeto(RuntimePersistentEntity<Object> childPersistentEntity,
+    protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
                                                         @Nullable RuntimeAssociation<Object> association,
                                                         java.util.Set<Object> alreadyPersisted) {
         RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
