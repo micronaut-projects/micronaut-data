@@ -45,7 +45,7 @@ class MongoRuntimeSpec extends Specification implements MongoTestPropertyProvide
             )
 
         when:
-            contentRepository.save(testContent)
+            contentRepository.insert(testContent)
             def loadedTestContent = contentRepository.findById('test').orElse(null)
         then:
             loadedTestContent

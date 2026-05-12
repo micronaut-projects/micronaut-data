@@ -133,6 +133,10 @@ public enum DataType {
      */
     STRING_ARRAY(true, String[].class),
     /**
+     * A UUID array.
+     */
+    UUID_ARRAY(true, java.util.UUID[].class),
+    /**
      * A short array.
      */
     SHORT_ARRAY(true, short[].class, Short[].class),

@@ -19,7 +19,8 @@ class H2DBPropertiesTestPropertyProviderFactory implements TestPropertyProviderF
                 'datasources.default.driverClassName': h2DbProperties.driverClassName(),
                 'datasources.default.url'            : h2DbProperties.url(),
                 'datasources.default.username'       : h2DbProperties.username(),
-                'datasources.default.password'       : h2DbProperties.password()
+                'datasources.default.password'       : h2DbProperties.password(),
+                'micronaut.data.save-assigned-id-fallback-to-update': 'true'
         ] as Map<String, String>
     }
 }

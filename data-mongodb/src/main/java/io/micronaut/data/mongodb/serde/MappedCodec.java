@@ -30,6 +30,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -81,6 +82,7 @@ class MappedCodec<T> implements Codec<T> {
     }
 
     @Override
+    @Nullable
     public T decode(BsonReader reader, DecoderContext decoderContext) {
         try {
             return deserializer.deserialize(new BsonReaderDecoder(reader, LimitingStream.DEFAULT_LIMITS), this.decoderContext, argument);

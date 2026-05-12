@@ -25,6 +25,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Limit;
@@ -130,6 +131,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
+                persistentProperty = findPersistentProperty(binding, persistentEntity);
             } else if (binding.isAutoPopulated()) {
                 PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
                 persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
@@ -305,6 +307,27 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             throw new IllegalStateException("Cannot find property: " + String.join(".", propertyPath));
         }
         return pp;
+    }
+
+    @Nullable
+    private RuntimePersistentProperty<Object> findPersistentProperty(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<E> persistentEntity) {
+        String[] propertyPath = queryParameterBinding.getPropertyPath();
+        if (propertyPath == null) {
+            return null;
+        }
+        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+        if (pp == null) {
+            return null;
+        }
+        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) pp.getProperty();
+        DataType bindingDataType = queryParameterBinding.getDataType();
+        if (bindingDataType == DataType.OBJECT || bindingDataType == property.getDataType()) {
+            return property;
+        }
+        if (!(property instanceof Association)) {
+            return property;
+        }
+        return null;
     }
 
     private String invocationIsRequiredMessage() {

@@ -22,6 +22,8 @@ jobs:
       - name: Build Matrix
         uses: micronaut-projects/github-actions/graalvm/build-matrix@300bf6db7c062dcba77c90bb90e475df31b2acab # master
         id: build-matrix
+        with:
+          java-version: '25'
   build:
     needs: build_matrix
     if: github.repository != 'micronaut-projects/micronaut-project-template'
@@ -55,6 +57,7 @@ jobs:
           java: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           nativeTestTask: ${{ matrix.native_test_task }}
+          gradle-java: '25'
       - name: Build Steps
         uses: micronaut-projects/github-actions/graalvm/build@300bf6db7c062dcba77c90bb90e475df31b2acab # master
         id: build

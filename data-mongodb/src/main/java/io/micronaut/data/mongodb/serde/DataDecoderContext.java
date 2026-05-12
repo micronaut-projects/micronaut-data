@@ -37,10 +37,11 @@ import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.ObjectId;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -55,7 +56,7 @@ import java.util.Collection;
 @Internal
 final class DataDecoderContext implements Deserializer.DecoderContext {
 
-    private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
+    private static final Argument<BsonValue> BSON_VALUE = Argument.of(BsonValue.class);
 
     private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
@@ -81,7 +82,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     }
 
     @Override
-    public <B, P> PropertyReference<B, P> resolveReference(PropertyReference<B, P> reference) {
+    @Nullable
+    public <B, P> PropertyReference<@NonNull B, @NonNull P> resolveReference(PropertyReference<B, P> reference) {
         return parent.resolveReference(reference);
     }
 
@@ -123,11 +125,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 @Override
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     if (type.getType().isAssignableFrom(String.class) && type.isAnnotationPresent(GeneratedValue.class)) {
-                        Deserializer<? extends ObjectId> deserializer = findDeserializer(OBJECT_ID);
-                        return (decoder, decoderContext2, objectIdType) -> {
-                            ObjectId objectId = deserializer.deserialize(decoder, decoderContext2, OBJECT_ID);
-                            return objectId == null ? null : objectId.toHexString();
-                        };
+                        return (decoder, decoderContext2, objectIdType) -> decodeGeneratedStringId(decoder, decoderContext2);
                     }
                     Deserializer<? extends Object> deserializer = findDeserializer(type);
                     return (Deserializer<Object>) deserializer.createSpecific(decoderContext, type);
@@ -173,6 +171,23 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             return (D) customConverterDeserializer;
         }
         return parent.findCustomDeserializer(deserializerClass);
+    }
+
+    @Nullable
+    private String decodeGeneratedStringId(Decoder decoder, Deserializer.DecoderContext decoderContext) throws IOException {
+        if (decoder instanceof BsonReaderDecoder) {
+            CodecBsonDecoder<BsonValue> codecBsonDecoder = new CodecBsonDecoder<>(codecRegistry.get(BsonValue.class));
+            BsonValue value = codecBsonDecoder.deserialize(decoder, decoderContext, BSON_VALUE);
+            if (value == null || value.isNull()) {
+                return null;
+            }
+            return switch (value.getBsonType()) {
+                case OBJECT_ID -> value.asObjectId().getValue().toHexString();
+                case STRING -> value.asString().getValue();
+                default -> throw new SerdeException("Cannot decode BSON " + value.getBsonType() + " value as generated String id");
+            };
+        }
+        return decoder.decodeStringNullable();
     }
 
     @Override

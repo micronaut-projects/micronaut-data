@@ -91,8 +91,10 @@ import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
@@ -114,6 +116,7 @@ import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
 import org.reactivestreams.Publisher;
@@ -136,7 +139,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -159,10 +161,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
-    @Nullable
-    private ExecutorService ioExecutorService;
-    @Nullable
-    private AsyncRepositoryOperations asyncRepositoryOperations;
+    private final ExecutorServiceResolver executorServiceResolver;
+    private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncRepositoryOperations = new SynchronizedLazyValue<>();
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
@@ -225,7 +225,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             jsonMapper,
             sqlJsonColumnMapperProvider);
         this.connectionFactory = connectionFactory;
-        this.ioExecutorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.configuration = configuration;
@@ -370,13 +370,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public AsyncRepositoryOperations async() {
-        if (asyncRepositoryOperations == null) {
-            if (ioExecutorService == null) {
-                ioExecutorService = Executors.newCachedThreadPool();
-            }
-            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(reactiveOperations, ioExecutorService);
-        }
-        return Objects.requireNonNull(asyncRepositoryOperations);
+        return asyncRepositoryOperations.get(() -> new ReactorToAsyncOperationsAdaptor(
+            reactiveOperations,
+            executorServiceResolver.get()
+        ));
+    }
+
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @NonNull

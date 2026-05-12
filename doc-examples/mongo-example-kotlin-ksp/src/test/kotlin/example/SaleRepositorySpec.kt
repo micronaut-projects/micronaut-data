@@ -2,7 +2,6 @@ package example
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -24,10 +23,9 @@ class SaleRepositorySpec : AbstractMongoSpec() {
     @Test
     fun testReadWriteCustomType() {
         val apple = manufacturerRepository.save("Apple")
-        val macBook = Product(ObjectId(),"MacBook", apple)
-        productRepository.save(macBook)
+        val macBook = productRepository.save(Product("MacBook", apple))
 
-        var sale = saleRepository.save(Sale(ObjectId(), macBook, Quantity(1)))
+        var sale = saleRepository.save(Sale(null, macBook, Quantity(1)))
 
         assertNotNull(
                 sale.id

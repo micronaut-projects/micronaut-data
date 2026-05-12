@@ -9,7 +9,6 @@ import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
-import io.micronaut.data.jdbc.h2.jakarta_data.simple.Address
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
 import jakarta.inject.Inject
@@ -44,13 +43,13 @@ class AutoPopulateSkipIfPresentSpec extends Specification implements H2TestPrope
     void 'preset id is not overwritten and id initialized'() {
         when:"Save entity with auto populate value set"
         def preset = UUID.randomUUID()
-        def c = new Customer(id: preset, name: "name1", age: 40, address: Address.of("st1","NY","100"), version: null)
+        def c = new Customer(id: preset, name: "name1", age: 40, address: new AutoPopulateAddress(street: "st1", city: "NY", zip: "100"), version: null)
         def saved = customerRepository.save(c)
         then:"The value is not overwritten"
         saved.id == preset
         saved.version != null
         when:"Save entity with auto populate value not set"
-        c = new Customer(id: null, name: "name2", age: 30, address: Address.of("st2","NJ","100"), version: null)
+        c = new Customer(id: null, name: "name2", age: 30, address: new AutoPopulateAddress(street: "st2", city: "NJ", zip: "100"), version: null)
         saved = customerRepository.save(c)
         then:"The value is generated in the auto populate listener"
         saved.id != null
@@ -122,9 +121,16 @@ class Customer {
 
     Integer age
 
-    @Relation(EMBEDDED) Address address
+    @Relation(EMBEDDED) AutoPopulateAddress address
 
     @Version Long version
+}
+
+@Embeddable
+class AutoPopulateAddress {
+    String street
+    String city
+    String zip
 }
 
 @JdbcRepository(dialect = Dialect.H2)

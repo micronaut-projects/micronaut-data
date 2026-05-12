@@ -119,13 +119,15 @@ We have a [template repo](https://github.com/micronaut-projects/micronaut-projec
 source of truth for certain files. It is used as a template to create new repos, and changes to certain files in the
 template repo will get propagated automatically. The files propagated are:
 
-* Workflow files (`.github/workflows/*`). They are copied using rsync"
+* Workflow files (`.github/workflows/*`). They are copied using rsync:
   * `central-sync.yml`.
-  * `dependency-update.yml`.
-  * `graalvm.yml`.
+  * `graalvm-dev.yml`.
+  * `graalvm-latest.yml`.
   * `gradle.yml`.
+  * `publish-snapshot.yml`.
   * `release.yml`.
-  * `release-notes.yml`.
+  * `sonatype.yml`.
+
 * Renovate configuration (`.github/renovate.json`).
 * Gradle wrapper.
 * `.gitignore`.
@@ -167,6 +169,9 @@ publish is not a new patch version, but a new minor or major, update the release
 If you are publishing a milestone or release candidate, check the pre-release checkbox.
 
 Note that the release tags must be preceded with `v`, e.g.: `v1.2.3`.
+
+The release workflow runs a vulnerability audit before publishing. Vulnerability findings are advisory for milestone and
+release-candidate tags such as `v1.2.3-M1` and `v1.2.3-RC1`, but they remain blocking for GA releases.
 
 Once you publish the GitHub release, the
 [Release GitHub Action workflow](https://github.com/micronaut-projects/micronaut-project-template/blob/master/.github/workflows/release.yml)
