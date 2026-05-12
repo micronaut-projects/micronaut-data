@@ -341,7 +341,7 @@ abstract class AbstractGeoSpec extends Specification {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
-        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
         HotelJson farAway = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
 
@@ -415,7 +415,7 @@ abstract class AbstractGeoSpec extends Specification {
 
     void "test findByLocationGeoNear when wkt conversion used"() {
         given:
-        HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
         HotelWkt farAway = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
 
