@@ -190,7 +190,8 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
             if (idParameter != null) {
                 if (!rootEntity.hasIdentity()) {
-                    throw new MatchFailedException("Cannot update by ID for entity that has no ID");
+                    throw new MatchFailedException("Cannot update by ID for entity [" + rootEntity.getName() + "] that "
+                        + (rootEntity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
                 }
                 notConsumedParameters.remove(idParameter);
                 predicate = cb.equal(root.id(), scb.parameter(idParameter, new PersistentPropertyPath(rootEntity.getIdentity())));

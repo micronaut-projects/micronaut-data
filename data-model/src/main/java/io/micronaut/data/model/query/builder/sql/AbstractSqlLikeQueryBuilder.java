@@ -1220,8 +1220,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         PersistentPropertyPath path;
-        if (By.ID.equals(propertyName) && entity.hasIdentity()) {
-            path = new PersistentPropertyPath(entity.getIdentity());
+        if (By.ID.equals(propertyName)) {
+            if (entity.hasIdentity()) {
+                path = new PersistentPropertyPath(entity.getIdentity());
+            } else if (entity.hasCompositeIdentity()) {
+                throw new IllegalArgumentException("Cannot sort by ID on entity [" + entity.getName() + "] that has a composite identity");
+            } else {
+                throw new IllegalArgumentException("Cannot sort by ID on entity [" + entity.getName() + "] that has no declared ID");
+            }
         } else {
             path = entity.getPropertyPath(propertyName);
         }

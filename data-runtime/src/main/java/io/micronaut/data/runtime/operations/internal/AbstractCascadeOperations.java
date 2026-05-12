@@ -336,7 +336,8 @@ abstract class AbstractCascadeOperations {
     }
 
     private static IllegalStateException noDeclaredIdForJoinTable(RuntimePersistentEntity<Object> persistentEntity) {
-        return new IllegalStateException("Cannot cascade join table association for entity [" + persistentEntity.getName() + "] that has no declared ID");
+        return new IllegalStateException("Cannot cascade join table association for entity [" + persistentEntity.getName() + "] that "
+            + (persistentEntity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
     }
 
     /**

@@ -164,7 +164,7 @@ final class SqlQueryBuilderUtils {
         }
         if (!entity.hasIdentity()) {
             throw new MappingException("Cannot resolve default join table columns for entity [" + entity.getName()
-                + "] that has no declared ID");
+                + "] that " + (entity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
         }
         List<String> columns = new ArrayList<>();
         PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)

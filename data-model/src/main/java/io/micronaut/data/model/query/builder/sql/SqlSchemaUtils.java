@@ -203,7 +203,7 @@ public final class SqlSchemaUtils {
                                                        List<PersistentPropertyPath> joinProperties) {
         if (!entity.hasIdentity()) {
             throw new MappingException("Cannot create join table [" + joinTableName + "] for entity [" + entity.getName()
-                + "] that has no declared ID");
+                + "] that " + (entity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
         }
         PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
             -> joinProperties.add(PersistentPropertyPath.of(associations, property, "")));

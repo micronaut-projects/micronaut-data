@@ -417,10 +417,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
         String sqlInsert = resolveEnvPlaceholderValues(resolveAssociationInsert(repositoryType, persistentEntity, association));
         if (!persistentEntity.hasIdentity()) {
-            throw new DataAccessException("Cannot insert association for entity [" + persistentEntity.getName() + "] that has no declared ID");
+            throw new DataAccessException("Cannot insert association for entity [" + persistentEntity.getName() + "] that "
+                + identityIssueDescription(persistentEntity));
         }
         if (!association.getAssociatedEntity().hasIdentity()) {
-            throw new DataAccessException("Cannot insert association for associated entity [" + association.getAssociatedEntity().getName() + "] that has no declared ID");
+            throw new DataAccessException("Cannot insert association for associated entity [" + association.getAssociatedEntity().getName() + "] that "
+                + identityIssueDescription(association.getAssociatedEntity()));
         }
         final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
@@ -1006,6 +1008,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
     }
 
+
+    private static String identityIssueDescription(PersistentEntity entity) {
+        return entity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID";
+    }
 
     /**
      * Functional interface used to supply a statement.

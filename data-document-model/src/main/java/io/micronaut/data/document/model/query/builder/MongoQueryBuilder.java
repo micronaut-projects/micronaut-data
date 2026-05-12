@@ -255,7 +255,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
                         throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                     }
                     if (!associationOwner.hasIdentity()) {
-                        throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
+                        throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that "
+                            + (associationOwner.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
                     }
                     Association owningAssociation = inverseSide.orElse(association);
                     boolean isAssociationOwner = association.getInverseSide().isEmpty();
@@ -302,7 +303,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                         if (!currentLookup.persistentEntity.hasIdentity()) {
                             throw new MappingException("Cannot join on entity [" + currentLookup.persistentEntity.getName()
-                                + "] that has no declared ID");
+                                + "] that " + (currentLookup.persistentEntity.hasCompositeIdentity() ? "has a composite identity (single ID required)" : "has no declared ID"));
                         }
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
