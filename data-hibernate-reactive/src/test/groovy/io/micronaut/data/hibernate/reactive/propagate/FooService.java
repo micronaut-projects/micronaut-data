@@ -17,7 +17,7 @@ public class FooService {
     RequestContext requestContext;
 
     Mono<Foo> create() {
-        return repository.save(new Foo(requestContext.getId(), "DEFAULT_NAME"))
+        return repository.insert(new Foo(requestContext.getId(), "DEFAULT_NAME"))
             .flatMap(entity -> Mono.deferContextual(contextView -> {
                 ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     entity.setName(requestContext.getName());
@@ -31,7 +31,7 @@ public class FooService {
     Mono<Foo> createTransactional() {
         return Mono.deferContextual(contextView -> {
             return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
-                return repository.save(
+                return repository.insert(
                     new Foo(requestContext.getId(), requestContext.getName())
                 );
             });

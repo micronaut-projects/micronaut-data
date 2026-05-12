@@ -89,8 +89,8 @@ public final class MongoUtils {
             } else {
                 BeanProperty<T, Object> property = identity.getProperty();
                 Class<?> type = property.getType();
-                if (type == String.class && idValue != null) {
-                    return new BsonObjectId(new ObjectId(idValue.toString()));
+                if (type == String.class && identity.isGenerated() && idValue != null) {
+                    return generatedStringIdValue(idValue.toString());
                 }
                 return toBsonValue(idValue, codecRegistry);
             }
@@ -179,6 +179,13 @@ public final class MongoUtils {
         codec.encode(writer, value, EncoderContext.builder().build());
         writer.writeEndDocument();
         return holder.get("value", BsonNull.VALUE);
+    }
+
+    static BsonValue generatedStringIdValue(String idValue) {
+        if (ObjectId.isValid(idValue)) {
+            return new BsonObjectId(new ObjectId(idValue));
+        }
+        return new BsonString(idValue);
     }
 
     static BsonValue toBsonValue(ConversionService conversionService, BsonType bsonType, Object value) {

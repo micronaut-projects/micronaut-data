@@ -17,9 +17,33 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.reactive.*
+import io.micronaut.data.model.entities.Person
 import spock.lang.Unroll
 
 class ReactiveSpec extends AbstractDataSpec {
+
+    @Unroll
+    void "test #repoType exposes explicit insert methods"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.reactive.*;
+
+@Repository
+interface MyInterface extends $repoType<Person, Long> {
+}
+"""
+        )
+
+        expect:
+        repository.getRequiredMethod("insert", Person).synthesize(DataMethod).interceptor() == InsertEntityReactiveInterceptor
+        repository.getRequiredMethod("insertAll", Iterable).synthesize(DataMethod).interceptor() == InsertAllReactiveInterceptor
+
+        where:
+        repoType << ["ReactiveStreamsCrudRepository", "ReactorCrudRepository", "RxJavaCrudRepository"]
+    }
 
     @Unroll
     void "test reactive method #method"() {
@@ -75,6 +99,14 @@ $returnType $method($arguments);
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
         "saveReturningAll" | "Flowable<Person>"   | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "insert"       | "Completable"           | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Long>"          | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Person>"        | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Mono<Person>"          | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Person>"        | "String name, String publicId" | InsertOneReactiveInterceptor
+        "insert"       | "Flowable<Person>"      | "List<Person> entities"        | InsertAllReactiveInterceptor
+        "insertAll"    | "Flowable<Person>"      | "List<Person> entities"        | InsertAllReactiveInterceptor
+        "insertAll"    | "Flux<Person>"          | "List<Person> entities"        | InsertAllReactiveInterceptor
         "deleteReturning"  | "Single<Person>"     | "Person person"                | DeleteReturningOneReactiveInterceptor
         "deleteReturning"  | "Flowable<Person>"   | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor
         "deleteReturning"  | "Flux<Person>"       | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor

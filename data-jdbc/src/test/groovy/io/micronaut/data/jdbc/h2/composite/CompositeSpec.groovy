@@ -89,7 +89,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlementTypeRepository.save(type)
             zoneRepository.save(zone)
-            settlementRepository.save(settlement)
+            settlementRepository.insert(settlement)
             settlement = settlementRepository.findById(settlement.getId()).get()
 
         then:
@@ -130,7 +130,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlement.id.county.countyName = "Czech Republic"
             settlement.id.county.enabled = true
-            countryRepository.save(settlement.id.county)
+            countryRepository.insert(settlement.id.county)
             settlement = settlementRepository.queryById(settlement.getId()).get()
 
         then:
@@ -265,7 +265,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlementTypeRepository.save(type)
             zoneRepository.save(zone)
-            settlementRepository.save(settlement)
+            settlementRepository.insert(settlement)
             settlement = settlementRepository.findById(settlement.getId()).get()
 
         then:
@@ -306,7 +306,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlement.id.county.countyName = "Czech Republic"
             settlement.id.county.enabled = true
-            countryRepository.save(settlement.id.county)
+            countryRepository.insert(settlement.id.county)
             settlement = settlementRepository.findOne(new CriteriaQueryBuilder<Settlement>() {
             @Override
             CriteriaQuery<Settlement> build(CriteriaBuilder criteriaBuilder) {

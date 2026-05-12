@@ -922,7 +922,7 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     void "test DTO retrieval"() {
         when:
         def customer = new Customer("1", "first", "last", List.of())
-        def saved = customerRepository.save(customer)
+        def saved = customerRepository.insert(customer)
         def loaded = customerRepository.findById(saved.id)
         then:
         loaded.present
