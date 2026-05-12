@@ -113,15 +113,21 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         Predicate predicate;
         if (entityParameter != null) {
             final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
+            SourcePersistentProperty identity = rootEntity.hasIdentity() ? rootEntity.getIdentity() : null;
             if (rootEntity.hasVersion()) {
+                if (identity == null) {
+                    throw new MatchFailedException("Cannot delete by entity with optimistic locking for entity [" + rootEntity.getName()
+                        + "] that has no single declared ID");
+                }
                 predicate = cb.and(
-                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(identity))),
                     cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
                 );
             } else {
                 boolean generateInIdList = getEntitiesParameter() != null
                     && !rootEntity.hasCompositeIdentity()
-                    && !rootEntity.getIdentity().isEmbedded();
+                    && identity != null
+                    && !identity.isEmbedded();
                 if (generateInIdList) {
                     predicate = root.id().in(cb.entityPropertyParameter(entityParameter, null));
                 } else {

@@ -195,6 +195,57 @@ interface BookRepository extends GenericRepository<Book, Long> {
         e.message.contains('Cannot delete entities of type: author')
     }
 
+    void "test delete versioned entity with composite id fails with clear message"() {
+        when:
+        buildRepository('test.VersionedCompositeRepository', """
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.IdClass;
+import java.io.Serializable;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface VersionedCompositeRepository extends GenericRepository<VersionedComposite, VersionedCompositeId> {
+    void delete(VersionedComposite entity);
+}
+
+@MappedEntity
+@IdClass(VersionedCompositeId.class)
+class VersionedComposite {
+    @Id
+    private Long id1;
+    @Id
+    private Long id2;
+    @Version
+    private Long version;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+}
+
+@Introspected
+class VersionedCompositeId implements Serializable {
+    private Long id1;
+    private Long id2;
+    public Long getId1() { return id1; }
+    public void setId1(Long id1) { this.id1 = id1; }
+    public Long getId2() { return id2; }
+    public void setId2(Long id2) { this.id2 = id2; }
+}
+""")
+
+        then:
+        def e = thrown(Exception)
+        e.message.contains('Cannot delete by entity with optimistic locking for entity [test.VersionedComposite] that has no single declared ID')
+    }
+
     void "test build delete with embedded id"() {
         given:
         def repository = buildRepository('test.CustomerRepository', """
