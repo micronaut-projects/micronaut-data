@@ -109,7 +109,7 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
                 Mock(R2dbcSchemaHandler),
                 new DataR2dbcConfiguration("default", connectionFactory, Mock(Provider)),
                 null,
-                new SqlJsonColumnMapperProvider<Row>(null, [], []),
+                context.getBean(SqlJsonColumnMapperProvider) as SqlJsonColumnMapperProvider<Row>,
                 [],
                 [],
                 Mock(R2dbcReactorTransactionOperations),
