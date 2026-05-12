@@ -16,9 +16,18 @@
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.SparseByteVector;
+import io.micronaut.data.model.vector.SparseDoubleVector;
+import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.runtime.convert.DataTypeConverter;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Shared helpers for Oracle VECTOR converters.
@@ -96,6 +105,127 @@ public abstract class AbstractOracleTypeConvertersFactory {
             case FLOAT64 -> Vector.of(adapter.toDoubleArray());
             case BINARY, INT8 -> Vector.of(adapter.toByteArray());
         };
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to neutral {@link Vector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, Vector> oracleVectorToVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) -> Optional.of(toVector(adapterFactory.apply(oracleVector)));
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link DoubleVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, DoubleVector> oracleVectorToDoubleVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToDoubleArray(adapterFactory.apply(oracleVector)).map(a -> (DoubleVector) Vector.of(a));
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link FloatVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, FloatVector> oracleVectorToFloatVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToFloatArray(adapterFactory.apply(oracleVector)).map(a -> (FloatVector) Vector.of(a));
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link ByteVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, ByteVector> oracleVectorToByteVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToByteArray(adapterFactory.apply(oracleVector)).map(a -> (ByteVector) Vector.of(a));
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link SparseDoubleVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, SparseDoubleVector> oracleVectorToSparseDoubleVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToDoubleArray(adapterFactory.apply(oracleVector)).map(SparseDoubleVector::fromDense);
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link SparseFloatVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, SparseFloatVector> oracleVectorToSparseFloatVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToFloatArray(adapterFactory.apply(oracleVector)).map(SparseFloatVector::fromDense);
+    }
+
+    /**
+     * Creates a converter from Oracle VECTOR to {@link SparseByteVector}.
+     *
+     * @param adapterFactory adapter factory
+     * @param <T> Oracle VECTOR type
+     * @return converter
+     */
+    protected static <T> DataTypeConverter<T, SparseByteVector> oracleVectorToSparseByteVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) ->
+            vectorToByteArray(adapterFactory.apply(oracleVector)).map(SparseByteVector::fromDense);
+    }
+
+    /**
+     * Converts a Micronaut vector to the driver-native Oracle VECTOR representation.
+     *
+     * @param vector Micronaut vector
+     * @param factory native vector factory
+     * @param <T> Oracle VECTOR type
+     * @return native vector
+     */
+    protected static <T> Optional<T> vectorToOracleVector(Vector vector, OracleVectorFactory<T> factory) {
+        try {
+            if (vector instanceof FloatVector floatVector) {
+                return Optional.of(factory.ofFloat32Values(floatVector.toFloatArray()));
+            }
+            if (vector instanceof ByteVector byteVector) {
+                return Optional.of(factory.ofInt8Values(byteVector.toByteArray()));
+            }
+            if (vector instanceof SparseFloatVector(int length, int[] indices, float[] values)) {
+                return Optional.of(factory.ofSparseFloat32Values(length, indices, values));
+            }
+            if (vector instanceof SparseByteVector(int length, int[] indices, byte[] values)) {
+                return Optional.of(factory.ofSparseInt8Values(length, indices, values));
+            }
+            if (vector instanceof SparseDoubleVector(int length, int[] indices, double[] values)) {
+                return Optional.of(factory.ofSparseFloat64Values(length, indices, values));
+            }
+            return Optional.of(factory.ofFloat64Values(vector.toDoubleArray()));
+        } catch (Exception e) {
+            throw new DataAccessException("Cannot convert Vector to oracle.sql.VECTOR", e);
+        }
     }
 
     // ----------------------
@@ -221,5 +351,135 @@ public abstract class AbstractOracleTypeConvertersFactory {
          * @return vector payload as byte array
          */
         byte[] toByteArray();
+    }
+
+    /**
+     * Factory API for creating driver-native Oracle VECTOR values.
+     *
+     * @param <T> Oracle VECTOR type
+     */
+    public static final class OracleVectorFactory<T> {
+        private final OracleArrayFactory<float[], T> float32Factory;
+        private final OracleArrayFactory<double[], T> float64Factory;
+        private final OracleArrayFactory<byte[], T> int8Factory;
+        private final OracleSparseArrayFactory<float[], T> sparseFloat32Factory;
+        private final OracleSparseArrayFactory<byte[], T> sparseInt8Factory;
+        private final OracleSparseArrayFactory<double[], T> sparseFloat64Factory;
+
+        /**
+         * @param float32Factory dense float factory
+         * @param float64Factory dense double factory
+         * @param int8Factory dense byte factory
+         * @param sparseFloat32Factory sparse float factory
+         * @param sparseInt8Factory sparse byte factory
+         * @param sparseFloat64Factory sparse double factory
+         */
+        public OracleVectorFactory(OracleArrayFactory<float[], T> float32Factory,
+                                   OracleArrayFactory<double[], T> float64Factory,
+                                   OracleArrayFactory<byte[], T> int8Factory,
+                                   OracleSparseArrayFactory<float[], T> sparseFloat32Factory,
+                                   OracleSparseArrayFactory<byte[], T> sparseInt8Factory,
+                                   OracleSparseArrayFactory<double[], T> sparseFloat64Factory) {
+            this.float32Factory = float32Factory;
+            this.float64Factory = float64Factory;
+            this.int8Factory = int8Factory;
+            this.sparseFloat32Factory = sparseFloat32Factory;
+            this.sparseInt8Factory = sparseInt8Factory;
+            this.sparseFloat64Factory = sparseFloat64Factory;
+        }
+
+        /**
+         * @param values dense float values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofFloat32Values(float[] values) throws Exception {
+            return float32Factory.create(values);
+        }
+
+        /**
+         * @param values dense double values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofFloat64Values(double[] values) throws Exception {
+            return float64Factory.create(values);
+        }
+
+        /**
+         * @param values dense byte values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofInt8Values(byte[] values) throws Exception {
+            return int8Factory.create(values);
+        }
+
+        /**
+         * @param length dense vector length
+         * @param indices sparse indices
+         * @param values sparse float values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofSparseFloat32Values(int length, int[] indices, float[] values) throws Exception {
+            return sparseFloat32Factory.create(length, indices, values);
+        }
+
+        /**
+         * @param length dense vector length
+         * @param indices sparse indices
+         * @param values sparse byte values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofSparseInt8Values(int length, int[] indices, byte[] values) throws Exception {
+            return sparseInt8Factory.create(length, indices, values);
+        }
+
+        /**
+         * @param length dense vector length
+         * @param indices sparse indices
+         * @param values sparse double values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofSparseFloat64Values(int length, int[] indices, double[] values) throws Exception {
+            return sparseFloat64Factory.create(length, indices, values);
+        }
+    }
+
+    /**
+     * Creates native vectors from array values.
+     *
+     * @param <A> array type
+     * @param <T> Oracle VECTOR type
+     */
+    @FunctionalInterface
+    public interface OracleArrayFactory<A, T> {
+        /**
+         * @param values values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T create(A values) throws Exception;
+    }
+
+    /**
+     * Creates sparse native vectors from array values.
+     *
+     * @param <A> array type
+     * @param <T> Oracle VECTOR type
+     */
+    @FunctionalInterface
+    public interface OracleSparseArrayFactory<A, T> {
+        /**
+         * @param length dense vector length
+         * @param indices sparse indices
+         * @param values sparse values
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T create(int length, int[] indices, A values) throws Exception;
     }
 }

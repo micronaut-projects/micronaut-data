@@ -24,22 +24,16 @@ import java.util.Objects;
  * Default immutable {@link SearchResults} implementation.
  *
  * @param <T> entity type
+ * @param results matched results
  */
 @Experimental
-final class DefaultSearchResults<T> implements SearchResults<T> {
-
-    private final List<SearchResult<T>> results;
+record DefaultSearchResults<T>(List<SearchResult<T>> results) implements SearchResults<T> {
 
     /**
      * @param results matched results
      */
     DefaultSearchResults(List<SearchResult<T>> results) {
         this.results = List.copyOf(Objects.requireNonNull(results, "results must not be null"));
-    }
-
-    @Override
-    public List<SearchResult<T>> results() {
-        return results;
     }
 
     @Override

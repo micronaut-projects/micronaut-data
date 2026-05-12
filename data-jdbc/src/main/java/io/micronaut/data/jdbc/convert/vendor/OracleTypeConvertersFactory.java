@@ -19,15 +19,15 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.SparseByteVector;
 import io.micronaut.data.model.vector.SparseDoubleVector;
 import io.micronaut.data.model.vector.SparseFloatVector;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
 import oracle.sql.DATE;
@@ -54,6 +54,15 @@ import java.util.Optional;
 @Requires(classes = DATE.class)
 @Internal
 final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFactory {
+
+    private static final OracleVectorFactory<VECTOR> ORACLE_VECTOR_FACTORY = new OracleVectorFactory<>(
+        VECTOR::ofFloat32Values,
+        VECTOR::ofFloat64Values,
+        VECTOR::ofInt8Values,
+        (length, indices, values) -> VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(length, indices, values)),
+        (length, indices, values) -> VECTOR.ofInt8Values(VECTOR.SparseByteArray.of(length, indices, values)),
+        (length, indices, values) -> VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.of(length, indices, values))
+    );
 
     @Prototype
     DataTypeConverter<DATE, Timestamp> fromOracleDateToTimestamp() {
@@ -105,10 +114,7 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
 
     @Prototype
     DataTypeConverter<VECTOR, Vector> fromOracleVectorToVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return Optional.of(toVector(adapter));
-        };
+        return oracleVectorToVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
@@ -123,98 +129,43 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
 
     @Prototype
     DataTypeConverter<Vector, VECTOR> fromVectorToOracleVector() {
-        return (vector, targetType, context) -> {
-            try {
-                if (vector instanceof FloatVector floatVector) {
-                    return Optional.of(VECTOR.ofFloat32Values(floatVector.toFloatArray()));
-                }
-                if (vector instanceof ByteVector byteVector) {
-                    return Optional.of(VECTOR.ofInt8Values(byteVector.toByteArray()));
-                }
-                if (vector instanceof SparseFloatVector(
-                    int length2, int[] indices2, float[] values2
-                )) {
-                    return Optional.of(VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(
-                        length2,
-                        indices2,
-                        values2
-                    )));
-                }
-                if (vector instanceof SparseByteVector(int length1, int[] indices1, byte[] values1)) {
-                    return Optional.of(VECTOR.ofInt8Values(VECTOR.SparseByteArray.of(
-                        length1,
-                        indices1,
-                        values1
-                    )));
-                }
-                if (vector instanceof SparseDoubleVector(
-                    int length, int[] indices, double[] values
-                )) {
-                    return Optional.of(VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.of(
-                        length,
-                        indices,
-                        values
-                    )));
-                }
-                return Optional.of(VECTOR.ofFloat64Values(vector.toDoubleArray()));
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot convert Vector to oracle.sql.VECTOR: " + vector, e);
-            }
-        };
+        return (vector, targetType, context) -> vectorToOracleVector(vector, ORACLE_VECTOR_FACTORY);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, DoubleVector> fromOracleVectorToDoubleVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToDoubleArray(adapter).map(a -> (DoubleVector) Vector.of(a));
-        };
+        return oracleVectorToDoubleVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, FloatVector> fromOracleVectorToFloatVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToFloatArray(adapter).map(a -> (FloatVector) Vector.of(a));
-        };
+        return oracleVectorToFloatVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, ByteVector> fromOracleVectorToByteVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToByteArray(adapter).map(a -> (ByteVector) Vector.of(a));
-        };
+        return oracleVectorToByteVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, SparseDoubleVector> fromOracleVectorToSparseDoubleVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToDoubleArray(adapter).map(SparseDoubleVector::fromDense);
-        };
+        return oracleVectorToSparseDoubleVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, SparseFloatVector> fromOracleVectorToSparseFloatVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToFloatArray(adapter).map(SparseFloatVector::fromDense);
-        };
+        return oracleVectorToSparseFloatVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     @Prototype
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, SparseByteVector> fromOracleVectorToSparseByteVector() {
-        return (oracleVector, targetType, context) -> {
-            OracleVectorAdapter adapter = new OracleVectorAdapterImpl(oracleVector);
-            return vectorToByteArray(adapter).map(SparseByteVector::fromDense);
-        };
+        return oracleVectorToSparseByteVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     // Adapter over oracle.sql.VECTOR to reuse shared helpers from AbstractOracleTypeConvertersFactory
