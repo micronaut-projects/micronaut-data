@@ -415,7 +415,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return The operation
      */
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        String sqlInsert = resolveEnvPlaceholderValues(resolveAssociationInsert(repositoryType, persistentEntity, association));
         if (!persistentEntity.hasIdentity()) {
             throw new DataAccessException("Cannot insert association for entity [" + persistentEntity.getName() + "] that "
                 + identityIssueDescription(persistentEntity));
@@ -424,6 +423,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             throw new DataAccessException("Cannot insert association for associated entity [" + association.getAssociatedEntity().getName() + "] that "
                 + identityIssueDescription(association.getAssociatedEntity()));
         }
+        String sqlInsert = resolveEnvPlaceholderValues(resolveAssociationInsert(repositoryType, persistentEntity, association));
         final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
         for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).toList()) {
