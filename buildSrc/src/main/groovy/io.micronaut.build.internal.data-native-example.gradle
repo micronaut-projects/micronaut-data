@@ -97,10 +97,6 @@ graalvmNative {
                     logger.quiet("Enabling strict image heap!")
                     buildArgs.add("--strict-image-heap")
                 }
-                if (System.getenv("GRAALVM_HOME")?.contains("25")) {
-                    logger.quiet("Enabling SharedArenaSupport for GraalVM 25")
-                    buildArgs.add("-H:+SharedArenaSupport")
-                }
             }
             buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger,org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter," +
                     "ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger,ch.qos.logback.classic.LoggerContext,ch.qos.logback.classic.PatternLayout,ch.qos.logback.classic.spi,ch.qos.logback.classic.encoder," +
