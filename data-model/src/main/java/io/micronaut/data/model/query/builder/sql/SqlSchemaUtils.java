@@ -153,14 +153,8 @@ public final class SqlSchemaUtils {
                     isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
                     !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                if (entity.hasIdentity()) {
-                    PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations1, property3)
-                        -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
-                }
-                if (associatedEntity.hasIdentity()) {
-                    PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
-                        -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                }
+                addJoinTableIdentityProperties(entity, joinTableName, leftProperties);
+                addJoinTableIdentityProperties(associatedEntity, joinTableName, rightProperties);
                 List<SqlColumnMapping> joinColumns = new ArrayList<>();
                 addJoinTableColumns(entity, namingStrategy, leftProperties, leftJoinTableColumns, joinColumns, dialect);
                 addJoinTableColumns(entity, namingStrategy, rightProperties, rightJoinTableColumns, joinColumns, dialect);
@@ -202,6 +196,17 @@ public final class SqlSchemaUtils {
             indexes, auxiliaryStatements);
         tables.add(table);
         return tables;
+    }
+
+    private static void addJoinTableIdentityProperties(PersistentEntity entity,
+                                                       String joinTableName,
+                                                       List<PersistentPropertyPath> joinProperties) {
+        if (!entity.hasIdentity()) {
+            throw new MappingException("Cannot create join table [" + joinTableName + "] for entity [" + entity.getName()
+                + "] that has no declared ID");
+        }
+        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
+            -> joinProperties.add(PersistentPropertyPath.of(associations, property, "")));
     }
 
     /**

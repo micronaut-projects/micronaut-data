@@ -17,16 +17,21 @@ package io.micronaut.data.document.mongodb
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import org.jspecify.annotations.NonNull
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
 import io.micronaut.data.document.mongodb.entities.Test
 import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaDelete
@@ -228,6 +233,21 @@ class MongoCriteriaSpec extends Specification {
 
         expect:
             predicateQuery == '''[{$count:'result'}]'''
+    }
+
+    void "test mappedBy join from entity without id fails fast"() {
+        given:
+            PersistentEntityCriteriaQuery query = criteriaBuilder.createQuery()
+            PersistentEntityRoot entityRoot = query.from(getRuntimePersistentEntity(NoIdMongoOwner))
+            def children = entityRoot.join("children")
+            query.where(criteriaBuilder.equal(children.get("id"), criteriaBuilder.parameter(String)))
+
+        when:
+            getQuery(query)
+
+        then:
+            def e = thrown(MappingException)
+            e.message == 'Cannot join on entity [io.micronaut.data.document.mongodb.NoIdMongoOwner] that has no declared ID'
     }
 
     @Unroll
@@ -446,6 +466,15 @@ class MongoCriteriaSpec extends Specification {
         return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
+    private RuntimePersistentEntity getRuntimePersistentEntity(Class type) {
+        return new RuntimePersistentEntity(type) {
+            @Override
+            protected RuntimePersistentEntity getEntity(Class t) {
+                return getRuntimePersistentEntity(t)
+            }
+        }
+    }
+
     private static String getQuery(PersistentEntityCriteriaDelete<Object> query) {
         return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
@@ -473,4 +502,19 @@ class MongoCriteriaSpec extends Specification {
         Predicate toPredicate(@NonNull Root<T> root, @NonNull CriteriaUpdate<?> query, @NonNull CriteriaBuilder criteriaBuilder);
     }
 
+}
+
+@MappedEntity("no_id_mongo_owner")
+class NoIdMongoOwner {
+    String name
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "owner")
+    Set<NoIdMongoChild> children
+}
+
+@MappedEntity("no_id_mongo_child")
+class NoIdMongoChild {
+    @Id
+    String id
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    NoIdMongoOwner owner
 }

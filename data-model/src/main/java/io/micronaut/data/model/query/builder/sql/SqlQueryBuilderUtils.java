@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
@@ -161,11 +162,13 @@ final class SqlQueryBuilderUtils {
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
-        List<String> columns = new ArrayList<>();
-        if (entity.hasIdentity()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
-                -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
+        if (!entity.hasIdentity()) {
+            throw new MappingException("Cannot resolve default join table columns for entity [" + entity.getName()
+                + "] that has no declared ID");
         }
+        List<String> columns = new ArrayList<>();
+        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
+            -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
         return columns;
     }
 

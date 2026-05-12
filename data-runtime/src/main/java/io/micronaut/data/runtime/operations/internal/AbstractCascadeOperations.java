@@ -30,8 +30,8 @@ import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -252,7 +252,7 @@ abstract class AbstractCascadeOperations {
      * Common decision if a child should be persisted on PERSIST cascade for single association.
      */
     protected static boolean shouldPersistChildOnPersist(RuntimePersistentEntity<Object> childPersistentEntity, Object child) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+        RuntimePersistentProperty<Object> identity = getIdentityIfDeclared(childPersistentEntity);
         boolean hasId = identity != null && identity.getProperty().get(child) != null;
         boolean generatedId = identity != null && identity.isGenerated();
         return (!hasId || identity instanceof Association || !generatedId);
@@ -265,10 +265,10 @@ abstract class AbstractCascadeOperations {
     protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
                                                         @Nullable RuntimeAssociation<Object> association,
                                                         java.util.Set<Object> alreadyPersisted) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+        RuntimePersistentProperty<Object> identity = getIdentityIfDeclared(childPersistentEntity);
         if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
             if (identity == null) {
-                throw new IllegalStateException("Cannot cascade join table association for entity [" + childPersistentEntity.getName() + "] that has no declared ID");
+                throw noDeclaredIdForJoinTable(childPersistentEntity);
             }
             return val -> alreadyPersisted.contains(val) || identity.getProperty().get(val) != null;
         }
@@ -289,7 +289,7 @@ abstract class AbstractCascadeOperations {
      */
     protected static List<Object> uniqueByIdForJoin(RuntimePersistentEntity<Object> childPersistentEntity,
                                                      Iterable<Object>... sources) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        RuntimePersistentProperty<Object> identity = requireIdentityForJoinTable(childPersistentEntity);
         Map<Object, Object> byId = new LinkedHashMap<>();
         for (Iterable<Object> src : sources) {
             if (src == null) {
@@ -310,7 +310,7 @@ abstract class AbstractCascadeOperations {
      */
     protected static Iterable<Object> deduplicateSourceForJoinBatch(RuntimePersistentEntity<Object> childPersistentEntity,
                                                                     Iterable<Object> source) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        RuntimePersistentProperty<Object> identity = requireIdentityForJoinTable(childPersistentEntity);
         Map<Object, Object> map = new LinkedHashMap<>();
         for (Object c : source) {
             Object idVal = identity.getProperty().get(c);
@@ -321,6 +321,22 @@ abstract class AbstractCascadeOperations {
             }
         }
         return map.values();
+    }
+
+    @Nullable
+    protected static RuntimePersistentProperty<Object> getIdentityIfDeclared(RuntimePersistentEntity<Object> persistentEntity) {
+        return persistentEntity.hasIdentity() ? persistentEntity.getIdentity() : null;
+    }
+
+    protected static RuntimePersistentProperty<Object> requireIdentityForJoinTable(RuntimePersistentEntity<Object> persistentEntity) {
+        if (!persistentEntity.hasIdentity()) {
+            throw noDeclaredIdForJoinTable(persistentEntity);
+        }
+        return persistentEntity.getIdentity();
+    }
+
+    private static IllegalStateException noDeclaredIdForJoinTable(RuntimePersistentEntity<Object> persistentEntity) {
+        return new IllegalStateException("Cannot cascade join table association for entity [" + persistentEntity.getName() + "] that has no declared ID");
     }
 
     /**

@@ -90,7 +90,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
 
                 monoEntity = monoEntity.flatMap(e -> {
 
-                RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+                RuntimePersistentProperty<Object> identity = getIdentityIfDeclared(childPersistentEntity);
                 boolean hasId = identity != null && identity.getProperty().get(child) != null;
                 Mono<T> thisEntity;
                 Mono<Object> childMono;
@@ -144,13 +144,14 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Cascading many UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                         }
+                        RuntimePersistentProperty<Object> identity = getIdentityIfDeclared(childPersistentEntity);
                         Flux<Object> childrenFlux = Flux.empty();
                         for (Object child : cascadeManyOp.children) {
                             if (ctx.persisted.contains(child)) {
                                 continue;
                             }
                             Mono<Object> modifiedEntity;
-                            if (childPersistentEntity.getIdentity().getProperty().get(child) == null) {
+                            if (identity == null || identity.getProperty().get(child) == null) {
                                 modifiedEntity = helper.persistOne(ctx, child, childPersistentEntity);
                             } else {
                                 modifiedEntity = helper.updateOne(ctx, child, childPersistentEntity);
@@ -185,9 +186,10 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                                 LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                             }
 
+                            RuntimePersistentProperty<Object> identity = getIdentityIfDeclared(childPersistentEntity);
                             Flux<Object> childrenFlux = Flux.empty();
                             for (Object child : cascadeManyOp.children) {
-                                if (ctx.persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
+                                if (ctx.persisted.contains(child) || (identity != null && identity.getProperty().get(child) != null)) {
                                     childrenFlux = childrenFlux.concatWith(Mono.just(child));
                                     continue;
                                 }

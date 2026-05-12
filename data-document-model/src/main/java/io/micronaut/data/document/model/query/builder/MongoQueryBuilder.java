@@ -300,24 +300,23 @@ public final class MongoQueryBuilder implements QueryBuilder {
                             throw new IllegalStateException("Expected association as a mapped path: " + mappedBy);
                         }
 
-                        boolean currentLookupHasIdentity = currentLookup.persistentEntity.hasIdentity();
+                        if (!currentLookup.persistentEntity.hasIdentity()) {
+                            throw new MappingException("Cannot join on entity [" + currentLookup.persistentEntity.getName()
+                                + "] that has no declared ID");
+                        }
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        if (currentLookupHasIdentity) {
-                            PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
-                                localMatchFields.add(asPath(associations, p));
-                            });
-                        }
+                        PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                            localMatchFields.add(asPath(associations, p));
+                        });
 
                         var mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
                         mappedAssociations.add(associationProperty);
 
-                        if (currentLookupHasIdentity) {
-                            PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
-                                String fieldPath = asPath(associations, p);
-                                foreignMatchFields.add(fieldPath);
-                            });
-                        }
+                        PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                            String fieldPath = asPath(associations, p);
+                            foreignMatchFields.add(fieldPath);
+                        });
 
                         pipeline.add(lookup(
                             joinedCollectionName,

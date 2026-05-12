@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
@@ -511,6 +512,88 @@ class Teacher {
         sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
         sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
         sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+    }
+
+    void "test create ManyToMany table fails when owner has no id"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinTable;
+import java.util.List;
+
+@MappedEntity
+class Student {
+    private String name;
+    @JoinTable
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    private List<Course> courses;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+}
+
+@MappedEntity
+class Course {
+    @Id
+    private Long id;
+    private String name;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+''')
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(MappingException)
+        e.message == 'Cannot resolve default join table columns for entity [test.Student] that has no declared ID'
+    }
+
+    void "test create ManyToMany table fails when associated entity has no id"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinTable;
+import java.util.List;
+
+@MappedEntity
+class Student {
+    @Id
+    private Long id;
+    private String name;
+    @JoinTable
+    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    private List<Course> courses;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+}
+
+@MappedEntity
+class Course {
+    private String name;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+''')
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(MappingException)
+        e.message == 'Cannot resolve default join table columns for entity [test.Course] that has no declared ID'
     }
 
     @Unroll
