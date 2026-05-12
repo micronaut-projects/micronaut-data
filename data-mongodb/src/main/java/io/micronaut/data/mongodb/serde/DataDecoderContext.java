@@ -180,10 +180,9 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
-                            Object deserialized = deserializer.deserialize(decoder, decoderContext, convertedType);
-                            Object converted = converter.convertToEntityValue(deserialized, ConversionContext.of(convertedType));
+                            Object converted = deserializeNullable(decoder, decoderContext, type);
                             if (converted == null) {
-                                throw new SerdeException("Custom converter returned null for non-null deserialization of " + type.getName());
+                                throw nullDeserializationException(type);
                             }
                             return converted;
                         }

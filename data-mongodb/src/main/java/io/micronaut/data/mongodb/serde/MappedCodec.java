@@ -61,7 +61,7 @@ class MappedCodec<T> implements Codec<T> {
     protected final CodecRegistry codecRegistry;
     private final Deserializer.DecoderContext decoderContext;
     private final Serializer.EncoderContext encoderContext;
-    private final List<String> nullableManyAssociationProperties;
+    private final List<String> manyAssociationProperties;
 
     /**
      * Default constructor.
@@ -82,7 +82,7 @@ class MappedCodec<T> implements Codec<T> {
         this.codecRegistry = codecRegistry;
         this.decoderContext = dataSerdeRegistry.newDecoderContext(type, codecRegistry);
         this.encoderContext = dataSerdeRegistry.newEncoderContext(type, codecRegistry);
-        this.nullableManyAssociationProperties = findNullableManyAssociationProperties(persistentEntity);
+        this.manyAssociationProperties = findManyAssociationProperties(persistentEntity);
         try {
             this.serializer = dataSerdeRegistry.findSerializer(argument).createSpecific(encoderContext, argument);
             this.deserializer = dataSerdeRegistry.findDeserializer(argument).createSpecific(decoderContext, argument);
@@ -104,7 +104,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
-            if (nullableManyAssociationProperties.isEmpty()) {
+            if (manyAssociationProperties.isEmpty()) {
                 serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
             } else {
                 BsonDocument document = new BsonDocument();
@@ -122,7 +122,7 @@ class MappedCodec<T> implements Codec<T> {
         return type;
     }
 
-    private static List<String> findNullableManyAssociationProperties(RuntimePersistentEntity<?> persistentEntity) {
+    private static List<String> findManyAssociationProperties(RuntimePersistentEntity<?> persistentEntity) {
         List<String> propertyNames = new ArrayList<>(2);
         for (Association association : persistentEntity.getAssociations()) {
             Relation.Kind kind = association.getKind();
@@ -138,7 +138,7 @@ class MappedCodec<T> implements Codec<T> {
     }
 
     private void removeNullManyAssociations(BsonDocument document) {
-        for (String propertyName : nullableManyAssociationProperties) {
+        for (String propertyName : manyAssociationProperties) {
             if (document.containsKey(propertyName) && document.get(propertyName).isNull()) {
                 document.remove(propertyName);
             }
