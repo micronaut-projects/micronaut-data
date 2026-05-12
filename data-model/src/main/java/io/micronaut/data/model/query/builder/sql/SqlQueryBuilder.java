@@ -683,7 +683,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private boolean hasEmbeddedId(PersistentEntity entity) {
-        return entity.getIdentity().getAnnotationMetadata().hasAnnotation(EmbeddedId.class);
+        return entity.hasIdentity() && entity.getIdentity().getAnnotationMetadata().hasAnnotation(EmbeddedId.class);
     }
 
     private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {

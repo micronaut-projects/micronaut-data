@@ -613,7 +613,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
             return persistentEntityRoot.id();
         } else {
-            return root.get(getPersistentEntity(root).getIdentity().getName());
+            PersistentEntity persistentEntity = getPersistentEntity(root);
+            if (!persistentEntity.hasIdentity()) {
+                throw new IllegalStateException("No identity is present");
+            }
+            return root.get(persistentEntity.getIdentity().getName());
         }
     }
 

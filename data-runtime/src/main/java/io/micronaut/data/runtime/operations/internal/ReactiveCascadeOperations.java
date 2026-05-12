@@ -90,8 +90,8 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
 
                 monoEntity = monoEntity.flatMap(e -> {
 
-                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                boolean hasId = identity.getProperty().get(child) != null;
+                RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+                boolean hasId = identity != null && identity.getProperty().get(child) != null;
                 Mono<T> thisEntity;
                 Mono<Object> childMono;
                 if ((cascadeType == Relation.Cascade.PERSIST) && shouldPersistChildOnPersist(childPersistentEntity, child)) {
@@ -104,7 +104,8 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                 } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading one UPDATE for '{}' ({}) association: '{}'", persistentEntity.getName(),
-                                persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
+                            persistentEntity.hasIdentity() ? persistentEntity.getIdentity().getProperty().get(entity) : null,
+                            cascadeOp.ctx.associations);
                     }
                     Mono<Object> updated = helper.updateOne(ctx, child, childPersistentEntity).cache();
                     thisEntity = updated.map(updatedEntity -> afterCascadedOne(e, cascadeOp.ctx.associations, child, updatedEntity));

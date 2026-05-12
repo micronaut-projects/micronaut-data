@@ -1220,7 +1220,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         PersistentPropertyPath path;
-        if (By.ID.equals(propertyName)) {
+        if (By.ID.equals(propertyName) && entity.hasIdentity()) {
             path = new PersistentPropertyPath(entity.getIdentity());
         } else {
             path = entity.getPropertyPath(propertyName);
@@ -1476,9 +1476,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             query.append('"').append(persistedName).append('"');
                     } else {
                         String path = propertyPath.getPath();
-                        String identityPrefix = queryState.entity.getIdentity().getName() + ".";
-                        if (path.startsWith(identityPrefix)) {
-                            path = "\"_id\"." + path.substring(identityPrefix.length());
+                        if (queryState.entity.hasIdentity()) {
+                            String identityPrefix = queryState.entity.getIdentity().getName() + ".";
+                            if (path.startsWith(identityPrefix)) {
+                                path = "\"_id\"." + path.substring(identityPrefix.length());
+                            }
                         }
                         query.append(path);
                     }

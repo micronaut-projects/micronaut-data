@@ -145,7 +145,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                         .filter(p -> !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
                         .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
 
-                if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
+                if (rootEntity.hasIdentity() && ((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
                     // Workaround for only ID entities
                     query.set(rootEntity.getIdentity().getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(rootEntity.getIdentity())));
                 }

@@ -137,6 +137,9 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 @Override
                 public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
                     RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) type.getType());
+                    if (!entity.hasIdentity()) {
+                        throw new SerdeException("Cannot serialize relation for entity [" + entity.getName() + "] that has no declared ID");
+                    }
                     BeanProperty<Object, Object> property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
                     Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);

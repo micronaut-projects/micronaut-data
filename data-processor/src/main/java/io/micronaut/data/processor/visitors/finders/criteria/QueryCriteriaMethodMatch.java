@@ -131,6 +131,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             // MySQL doesn't support subquery with limits
             && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
             && !persistentEntity.hasCompositeIdentity()
+            && persistentEntity.hasIdentity()
             && !(persistentEntity.getIdentity() instanceof Embedded);
     }
 

@@ -153,10 +153,14 @@ public final class SqlSchemaUtils {
                     isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
                     !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations1, property3)
-                    -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
-                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
-                    -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
+                if (entity.hasIdentity()) {
+                    PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations1, property3)
+                        -> leftProperties.add(PersistentPropertyPath.of(associations1, property3, "")));
+                }
+                if (associatedEntity.hasIdentity()) {
+                    PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
+                        -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
+                }
                 List<SqlColumnMapping> joinColumns = new ArrayList<>();
                 addJoinTableColumns(entity, namingStrategy, leftProperties, leftJoinTableColumns, joinColumns, dialect);
                 addJoinTableColumns(entity, namingStrategy, rightProperties, rightJoinTableColumns, joinColumns, dialect);

@@ -252,9 +252,9 @@ abstract class AbstractCascadeOperations {
      * Common decision if a child should be persisted on PERSIST cascade for single association.
      */
     protected static boolean shouldPersistChildOnPersist(RuntimePersistentEntity<Object> childPersistentEntity, Object child) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-        boolean hasId = identity.getProperty().get(child) != null;
-        boolean generatedId = identity.isGenerated();
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+        boolean hasId = identity != null && identity.getProperty().get(child) != null;
+        boolean generatedId = identity != null && identity.isGenerated();
         return (!hasId || identity instanceof Association || !generatedId);
     }
 
@@ -265,13 +265,19 @@ abstract class AbstractCascadeOperations {
     protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
                                                         @Nullable RuntimeAssociation<Object> association,
                                                         java.util.Set<Object> alreadyPersisted) {
-        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+        RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
         if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+            if (identity == null) {
+                throw new IllegalStateException("Cannot cascade join table association for entity [" + childPersistentEntity.getName() + "] that has no declared ID");
+            }
             return val -> alreadyPersisted.contains(val) || identity.getProperty().get(val) != null;
         }
         return val -> {
             if (alreadyPersisted.contains(val)) {
                 return true;
+            }
+            if (identity == null) {
+                return false;
             }
             Object idVal = identity.getProperty().get(val);
             return idVal != null && identity.isGenerated() && !(identity instanceof Association);

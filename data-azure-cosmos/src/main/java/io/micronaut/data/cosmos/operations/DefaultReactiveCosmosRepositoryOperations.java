@@ -722,8 +722,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param <T> the entity type
      */
     private <T> void generateId(RuntimePersistentEntity<T> persistentEntity, T entity) {
-        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-        if (identity.getProperty().get(entity) == null) {
+        RuntimePersistentProperty<T> identity = persistentEntity.hasIdentity() ? persistentEntity.getIdentity() : null;
+        if (identity != null && identity.getProperty().get(entity) == null) {
             if (identity.getDataType().equals(DataType.STRING)) {
                 identity.getProperty().convertAndSet(entity, UUID.randomUUID().toString());
             }

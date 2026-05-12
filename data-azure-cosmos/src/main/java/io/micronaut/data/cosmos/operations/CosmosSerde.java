@@ -133,7 +133,7 @@ final class CosmosSerde {
      */
     @Nullable
     public  <E, R> R deserialize(RuntimePersistentEntity<E> persistentEntity, com.fasterxml.jackson.databind.node.ObjectNode objectNode, Argument<R> type) {
-        RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
+        RuntimePersistentProperty<?> identity = persistentEntity.hasIdentity() ? persistentEntity.getIdentity() : null;
         if (identity != null && !identity.getName().equals(Constants.INTERNAL_ID)) {
             // Remove the internal id field if there is no such field in the entity
             objectNode.remove(Constants.INTERNAL_ID);

@@ -162,8 +162,10 @@ final class SqlQueryBuilderUtils {
             return joinColumns;
         }
         List<String> columns = new ArrayList<>();
-        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
-            -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
+        if (entity.hasIdentity()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), entity.getIdentity(), (associations, property)
+                -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
+        }
         return columns;
     }
 

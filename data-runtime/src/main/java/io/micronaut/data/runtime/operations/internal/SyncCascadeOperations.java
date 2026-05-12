@@ -83,8 +83,8 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 if (ctx.persisted.contains(child)) {
                     continue;
                 }
-                RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                boolean hasId = identity.getProperty().get(child) != null;
+                RuntimePersistentProperty<Object> identity = childPersistentEntity.hasIdentity() ? childPersistentEntity.getIdentity() : null;
+                boolean hasId = identity != null && identity.getProperty().get(child) != null;
                 if ((cascadeType == Relation.Cascade.PERSIST) && shouldPersistChildOnPersist(childPersistentEntity, child)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
@@ -95,7 +95,8 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 } else if (hasId && (cascadeType == Relation.Cascade.UPDATE)) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Cascading MERGE for '{}' ({}) association: '{}'", persistentEntity.getName(),
-                            persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
+                            persistentEntity.hasIdentity() ? persistentEntity.getIdentity().getProperty().get(entity) : null,
+                            cascadeOp.ctx.associations);
                     }
                     Object updated = helper.updateOne(ctx, child, childPersistentEntity);
                     entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, updated);

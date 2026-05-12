@@ -761,9 +761,11 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     return Mono.from(collection.insertOne(ctx.clientSession, d.entity, getInsertOneOptions(ctx.annotationMetadata))).map(insertOneResult -> {
                         BsonValue insertedId = insertOneResult.getInsertedId();
-                        BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
-                        if (property.get(d.entity) == null) {
-                            d.entity = updateEntityId(property, d.entity, insertedId);
+                        if (persistentEntity.hasIdentity()) {
+                            BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
+                            if (property.get(d.entity) == null) {
+                                d.entity = updateEntityId(property, d.entity, insertedId);
+                            }
                         }
                         return d;
                     });

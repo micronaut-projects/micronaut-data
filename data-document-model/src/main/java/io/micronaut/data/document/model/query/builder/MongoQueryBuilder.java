@@ -300,19 +300,24 @@ public final class MongoQueryBuilder implements QueryBuilder {
                             throw new IllegalStateException("Expected association as a mapped path: " + mappedBy);
                         }
 
+                        boolean currentLookHasIdentity = currentLookup.persistentEntity.hasIdentity();
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
-                            localMatchFields.add(asPath(associations, p));
-                        });
+                        if (currentLookHasIdentity) {
+                            PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                                localMatchFields.add(asPath(associations, p));
+                            });
+                        }
 
                         var mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
                         mappedAssociations.add(associationProperty);
 
-                        PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
-                            String fieldPath = asPath(associations, p);
-                            foreignMatchFields.add(fieldPath);
-                        });
+                        if (currentLookHasIdentity) {
+                            PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                                String fieldPath = asPath(associations, p);
+                                foreignMatchFields.add(fieldPath);
+                            });
+                        }
 
                         pipeline.add(lookup(
                             joinedCollectionName,
@@ -363,7 +368,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return joinColumns;
         }
         var fields = new ArrayList<String>();
-        PersistentEntityUtils.traversePersistentProperties(entity.getIdentity(), (associations, property) -> fields.add(asPath(associations, property)));
+        if (entity.hasIdentity()) {
+            PersistentEntityUtils.traversePersistentProperties(entity.getIdentity(), (associations, property) -> fields.add(asPath(associations, property)));
+        }
         return fields;
     }
 

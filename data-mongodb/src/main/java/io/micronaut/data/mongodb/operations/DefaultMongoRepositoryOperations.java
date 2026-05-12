@@ -851,9 +851,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 InsertOneResult insertOneResult = collection.insertOne(ctx.clientSession, entity, getInsertOneOptions(ctx.annotationMetadata));
                 BsonValue insertedId = insertOneResult.getInsertedId();
-                BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
-                if (property.get(entity) == null) {
-                    entity = updateEntityId(property, entity, insertedId);
+                if (persistentEntity.hasIdentity()) {
+                    BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
+                    if (property.get(entity) == null) {
+                        entity = updateEntityId(property, entity, insertedId);
+                    }
                 }
             }
         };

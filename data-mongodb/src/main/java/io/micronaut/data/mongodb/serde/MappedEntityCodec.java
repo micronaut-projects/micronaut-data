@@ -54,6 +54,9 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
                       Class<T> type,
                       CodecRegistry codecRegistry) {
         super(dataSerdeRegistry, persistentEntity, type, codecRegistry);
+        if (!persistentEntity.hasIdentity()) {
+            throw new IllegalStateException("Cannot create a collectible codec for entity [" + persistentEntity.getName() + "] that has no declared ID");
+        }
         RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
         identityProperty = identity.getProperty();
         isGeneratedId = identity.isAnnotationPresent(GeneratedValue.class);
