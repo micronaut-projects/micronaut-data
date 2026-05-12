@@ -30,6 +30,25 @@ snippet::example.GeometryEntityWkt[project="doc-examples/jdbc-geospatial", sourc
 NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
 and native spatial column definitions when the dialect supports them.
 
+=== Query predicates
+
+Micronaut Data also translates repository finder methods and criteria predicates for geospatial comparisons into
+dialect-specific SQL.
+
+For example, the following repository method fragments are supported for SQL dialects with geospatial support:
+
+* `findByLocationGeoWithin(geometry)`
+* `findByLocationGeoIntersects(geometry)`
+* `findByLocationGeoNear(geometry, distance)`
+
+The same operations are available through the criteria API with `geoWithin`, `geoIntersects`, and `geoNear` predicates.
+
+Micronaut Data applies the same GeoJSON or WKT conversion rules described above to the predicate arguments, and each
+database section below documents the exact spatial functions emitted for that dialect.
+
+`GeoNear` expects the second argument to be a numeric distance value. Micronaut Data passes that value through as a bind
+parameter and uses the most appropriate distance predicate available for the active dialect.
+
 === Database vendor details
 
 Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
@@ -59,6 +78,8 @@ WARNING: Oracle `SDO_UTIL.FROM_GEOJSON` currently does not accept `NULL`. The bu
 Until the bug fix gets released, you can use GeoJSON conversion only for geospatial columns that are required.
 Otherwise you can use WKT conversion.
 
+===== Schema generation
+
 The Oracle database requires rows in `USER_SDO_GEOM_METADATA` for spatial columns that are indexed. Micronaut Data generates
 those metadata statements automatically if you use Micronaut Data's internal schema-generation tooling, which is intended
 for tests rather than production schema management. In that case, the generated metadata depends on the SRID.
@@ -81,6 +102,27 @@ are annotated with `@Index`:
 ----
 CREATE INDEX "IDX_GEOMETRY_ENTITY_JSON_LOCATION" ON "GEOMETRY_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX
 ----
+
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following Oracle spatial functions:
+
+[cols="1,4"]
+|===
+| Predicate | Oracle spatial function
+
+| `GeoWithin`
+| `SDO_INSIDE(column, convertedValue) = 'TRUE'`
+
+| `GeoIntersects`
+| `SDO_ANYINTERACT(column, convertedValue) = 'TRUE'`
+
+| `GeoNear`
+| `SDO_WITHIN_DISTANCE(column, convertedValue, 'distance=distanceValue') = 'TRUE'`
+|===
+
+`convertedValue` is the Oracle spatial conversion call such as `SDO_UTIL.FROM_GEOJSON(?, NULL, srid)` or
+`SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)`.
 
 ==== PostgreSQL
 
@@ -116,6 +158,8 @@ For `GEOGRAPHY` data type Micronaut Data still uses the same `ST_GeomFromGeoJSON
 and `ST_AsText` functions, but casts through `::geography` on writes and `::geometry` on reads because
 the PostGIS JSON and text conversion functions operate on geometry values.
 
+===== Schema generation
+
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
 
@@ -123,6 +167,27 @@ annotated with `@Index`:
 ----
 CREATE INDEX "idx_geography_entity_json_location" ON "geography_entity_json" USING GIST ("location");
 ----
+
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following PostgreSQL / PostGIS spatial functions:
+
+[cols="1,3"]
+|===
+| Predicate | PostgreSQL / PostGIS spatial function
+
+| `GeoWithin`
+| `ST_Within(column, convertedValue)`
+
+| `GeoIntersects`
+| `ST_Intersects(column, convertedValue)`
+
+| `GeoNear`
+| `ST_DWithin(column, convertedValue, distanceValue)`
+|===
+
+`convertedValue` is the PostGIS conversion call such as `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)` or
+`ST_GeomFromText(?, srid)`.
 
 ==== MySQL
 
@@ -144,6 +209,8 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
+===== Schema generation
+
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
 
@@ -151,6 +218,27 @@ annotated with `@Index`:
 ----
 CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
+
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following MySQL spatial functions:
+
+[cols="1,3"]
+|===
+| Predicate | MySQL spatial function
+
+| `GeoWithin`
+| `ST_Within(column, convertedValue)`
+
+| `GeoIntersects`
+| `ST_Intersects(column, convertedValue)`
+
+| `GeoNear`
+| `ST_Distance(column, convertedValue) <= distanceValue`
+|===
+
+`convertedValue` is the MySQL spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
+`ST_GeomFromText(?, srid)`.
 
 ==== MariaDB
 
@@ -176,6 +264,27 @@ follow the same MySQL-style `GEOMETRY` storage model, `ST_AsGeoJSON` and `ST_AsT
 If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
 spatial-function behavior.
 
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following MariaDB spatial functions:
+
+[cols="1,3"]
+|===
+| Predicate | MariaDB spatial function
+
+| `GeoWithin`
+| `ST_Within(column, convertedValue)`
+
+| `GeoIntersects`
+| `ST_Intersects(column, convertedValue)`
+
+| `GeoNear`
+| `ST_Distance(column, convertedValue) <= distanceValue`
+|===
+
+`convertedValue` is the MariaDB spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
+`ST_GeomFromText(?, srid)`.
+
 ==== H2
 
 H2 geospatial support requires the H2GIS extension because the spatial types, functions, and indexes used by Micronaut
@@ -199,6 +308,8 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
+===== Schema generation
+
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
 
@@ -206,6 +317,27 @@ annotated with `@Index`:
 ----
 CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
+
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following H2 / H2GIS spatial functions:
+
+[cols="1,3"]
+|===
+| Predicate | H2 / H2GIS spatial function
+
+| `GeoWithin`
+| `ST_Within(column, convertedValue)`
+
+| `GeoIntersects`
+| `ST_Intersects(column, convertedValue)`
+
+| `GeoNear`
+| `ST_DWithin(column, convertedValue, distanceValue)`
+|===
+
+`convertedValue` is the H2GIS conversion call such as `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)` or
+`ST_GeomFromText(?, srid)`.
 
 ==== SQL Server
 
@@ -245,3 +377,24 @@ USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 
 ----
 
 That clause is generated for `geometry` SQL Server mappings and is not used for the `geography` mapping.
+
+===== Query predicates
+
+Micronaut Data translates geospatial repository methods and criteria predicates to the following SQL Server spatial functions:
+
+[cols="1,3"]
+|===
+| Predicate | SQL Server spatial function
+
+| `GeoWithin`
+| `column.STWithin(convertedValue) = 1`
+
+| `GeoIntersects`
+| `column.STIntersects(convertedValue) = 1`
+
+| `GeoNear`
+| `column.STDistance(convertedValue) <= distanceValue`
+|===
+
+`convertedValue` is the SQL Server spatial conversion call such as `geometry::STGeomFromText(?, srid)` or
+`geography::STGeomFromText(?, srid)`.
