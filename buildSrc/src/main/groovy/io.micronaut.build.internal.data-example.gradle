@@ -25,6 +25,7 @@ tasks.register("testExamples") {
 dependencies {
     micronautBoms(
             platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnMongo.micronaut.mongo.bom),
             platform(mnTest.micronaut.test.bom)
     )
     testRuntimeOnly mnSerde.micronaut.serde.jackson
