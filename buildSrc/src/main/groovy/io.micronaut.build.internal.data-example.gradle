@@ -18,6 +18,12 @@ tasks.withType(Javadoc).configureEach {
     options.addBooleanOption('quiet', true)
 }
 
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
+}
+
 tasks.register("testExamples") {
     dependsOn "test"
 }
