@@ -83,7 +83,7 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
     }
 
     @Override
-    public <R> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
+    public <R extends @Nullable Object> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
         return transactionOperations.execute(definition, status -> callback.call(new SessionTransactionStatus(status, definition, this)));
     }
 
@@ -218,4 +218,3 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         }
     }
 }
-

@@ -16,7 +16,6 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -113,7 +112,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     @Override
     @NonNull
-    public @NotNull C getConnection() {
+    public C getConnection() {
         return connectionStatus.getConnection();
     }
 
