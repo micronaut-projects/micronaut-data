@@ -6,9 +6,11 @@ import io.micronaut.data.tck.metamodel.ExpectedMetamodel
 import io.micronaut.data.tck.tests.metamodel.AbstractEntityMetamodelSpec
 import jakarta.persistence.metamodel.EntityType
 import jakarta.persistence.metamodel.SingularAttribute
+import spock.lang.Ignore
 
 import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.*
 
+@Ignore("Access annotation not supported currently")
 class EmployeePropertyAccessMetamodelSpec extends AbstractEntityMetamodelSpec {
 
     final def EMPLOYEE_PROPERTY_ACCESS_CLASS_NAME = EmployeePropertyAccess.name

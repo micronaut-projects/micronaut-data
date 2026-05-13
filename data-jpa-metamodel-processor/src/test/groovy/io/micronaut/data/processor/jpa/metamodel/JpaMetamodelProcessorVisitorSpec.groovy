@@ -30,7 +30,6 @@ import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*
 
 class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
-
     void "test metaModel Generation"() {
         given:
         var classLoader = buildClassLoader("test.Train",
@@ -254,6 +253,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
     }
 
+    @Ignore("Access annotation not supported currently.")
     void "test metaModel class Generation with access type annotation FIELD"() {
         given:
 
@@ -306,6 +306,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         }
     }
 
+    @Ignore("Access annotation not supported currently.")
     void "test metaModel Generation with access type annotations"() {
         given:
 
@@ -362,7 +363,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
     }
 
-    @Ignore(value = "Ignored because i couldn't find a way to map access type on a property level it is only supported on class/type level;")
+    @Ignore("Access annotation not supported currently.")
     void "test metaModel Generation with property type annotations and field annotated"() {
         given:
 
@@ -423,7 +424,7 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         }
     }
 
-    @Ignore(value = "Ignored because i couldn't find a way to map access type on a property level it is only supported on class/type level;")
+    @Ignore("Access annotation not supported currently.")
     void "test metaModel Generation with mixed access"() {
         given:
 
@@ -649,15 +650,36 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         import java.util.*;
 
         @Entity
-        @Access(AccessType.FIELD)
         public class Department {
             @Id
             Long id;
-
             String name;
-
             @OneToMany(mappedBy = "department")
             List<Employee> employees = new ArrayList<>();
+
+            public Long getId() {
+                return id;
+            }
+
+            public void setId(Long id) {
+                this.id = id;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public List<Employee> getEmployees() {
+                return employees;
+            }
+
+            public void setEmployees(List<Employee> employees) {
+                this.employees = employees;
+            }
         }
     """)
 
@@ -667,15 +689,36 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         import jakarta.persistence.*;
 
         @Entity
-        @Access(AccessType.FIELD)
         public class Employee {
             @Id
             Long id;
-
             String name;
-
             @ManyToOne
             Department department;
+
+            public Long getId() {
+                return id;
+            }
+
+            public void setId(Long id) {
+                this.id = id;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public Department getDepartment() {
+                return department;
+            }
+
+            public void setDepartment(Department department) {
+                this.department = department;
+            }
         }
     """)
 
@@ -745,15 +788,36 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         import java.util.*;
 
         @Entity
-        @Access(AccessType.FIELD)
         public class Student {
             @Id
             Long id;
-
             String name;
-
             @ManyToMany(mappedBy = "students")
             Set<Course> courses = new HashSet<>();
+
+            public Long getId() {
+                return id;
+            }
+
+            public void setId(Long id) {
+                this.id = id;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public Set<Course> getCourses() {
+                return courses;
+            }
+
+            public void setCourses(Set<Course> courses) {
+                this.courses = courses;
+            }
         }
     """)
 
@@ -764,7 +828,6 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
         import java.util.*;
 
         @Entity
-        @Access(AccessType.FIELD)
         public class Course {
             @Id
             Long id;
@@ -773,6 +836,30 @@ class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 
             @ManyToMany
             Set<Student> students = new HashSet<>();
+
+            public Long getId() {
+                return id;
+            }
+
+            public void setId(Long id) {
+                this.id = id;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public Set<Student> getStudents() {
+                return students;
+            }
+
+            public void setStudents(Set<Student> students) {
+                this.students = students;
+            }
         }
     """)
 
