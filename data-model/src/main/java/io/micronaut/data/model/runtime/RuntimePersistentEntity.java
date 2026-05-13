@@ -443,13 +443,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         return this.hasAutoPopulatedProperties;
     }
 
-    @Override
-    public boolean isInner() {
-        // It seems that there is no way currently to see if the entity
-        // is an inner class or not through introspections
-        return false;
-    }
-
     private boolean hasDirectAutoPopulated() {
         return Arrays.stream(allPersistentProperties)
             .filter(Objects::nonNull)

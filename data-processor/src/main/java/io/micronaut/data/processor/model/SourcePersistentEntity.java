@@ -301,11 +301,6 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     }
 
     @Override
-    public boolean isInner() {
-        return classElement.isInner();
-    }
-
-    @Override
     public String toString() {
         return getName();
     }

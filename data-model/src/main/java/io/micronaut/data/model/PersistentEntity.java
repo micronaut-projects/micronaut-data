@@ -237,13 +237,6 @@ public interface PersistentEntity extends PersistentElement {
     @Nullable PersistentEntity getParentEntity();
 
     /**
-     * Is this type an inner class.
-     *
-     * @return True if it is an inner class
-     */
-    boolean isInner();
-
-    /**
      * Computes a dot separated property path for the given camel case path.
      * @param camelCasePath The camel case path
      * @return The dot separated version or null if it cannot be computed
