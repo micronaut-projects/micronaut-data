@@ -864,12 +864,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (CollectionUtils.isEmpty(indexes)) {
             return;
         }
+        List<String> indexNames = new ArrayList<>(indexes.size());
         for (SqlIndexMapping indexMapping : indexes) {
-            addToCollectionIfNotContains(createStatements, createIndexStatement(table, indexMapping, escapedTableName, escape));
+            String indexName = createIndexName(table, indexMapping, escape);
+            if (indexNames.contains(indexName)) {
+                continue;
+            }
+            indexNames.add(indexName);
+            addToCollectionIfNotContains(createStatements, createIndexStatement(table, indexMapping, indexName, escapedTableName, escape));
         }
     }
 
-    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+    private String createIndexName(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, boolean escape) {
         // Create index name without escaped table name and then escape if needed
         String columnNames = String.join(", ", indexMapping.columns());
         String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
@@ -878,6 +884,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (escape) {
             indexName = quote(indexName);
         }
+        return indexName;
+    }
+
+    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String indexName, String escapedTableName, boolean escape) {
+        String columnNames = String.join(", ", indexMapping.columns());
         SqlIndexDefinitionProvider sqlIndexDefinitionProvider = indexMapping.sqlIndexDefinitionProvider();
         if (sqlIndexDefinitionProvider != null) {
             return sqlIndexDefinitionProvider.getIndexDefinition(

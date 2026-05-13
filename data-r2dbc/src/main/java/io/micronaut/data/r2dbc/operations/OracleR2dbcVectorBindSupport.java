@@ -54,6 +54,9 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
 
     @Override
     public @Nullable Parameter toTypedVectorParameter(@Nullable Object value, @Nullable String query) {
+        if (value instanceof CharSequence) {
+            throw new IllegalArgumentException("String VECTOR literals are not supported. Use io.micronaut.data.model.vector.Vector instead.");
+        }
         if (!(value instanceof Vector vector)) {
             return null;
         }

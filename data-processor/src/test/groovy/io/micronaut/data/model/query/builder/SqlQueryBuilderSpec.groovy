@@ -660,6 +660,7 @@ interface MyRepository {
         statements[5] == 'CREATE INDEX `idx_vehicle_second_plate_number` ON `vehicle` (`second_plate_number`);'
         statements[6] == 'CREATE INDEX `idx_vehicle_second_status` ON `vehicle` (`second_status`);'
         statements[7] == 'CREATE INDEX `idx_vehicle_second_jurisdiction_region_code` ON `vehicle` (`second_jurisdiction_region_code`);'
+        statements.toSet().size() == statements.size()
     }
 
     void "test build create index from table annotation"() {
