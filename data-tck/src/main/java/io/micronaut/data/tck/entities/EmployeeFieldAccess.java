@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 
 @Access(AccessType.FIELD)
 @Entity
+@SuppressWarnings("checkstyle:DesignForExtension")
 public class EmployeeFieldAccess {
 
     @Id
@@ -50,32 +51,26 @@ public class EmployeeFieldAccess {
         this.salary = salary;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(Long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public double getSalary() {
         return salary;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setSalary(double salary) {
         this.salary = salary;
     }

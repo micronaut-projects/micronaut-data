@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+@SuppressWarnings("checkstyle:DesignForExtension")
 public class Client {
 
     @Id
@@ -94,122 +95,98 @@ public class Client {
     @Transient
     private String nonPersistent;
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(Long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public long getVersion() {
         return version;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setVersion(long version) {
         this.version = version;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Tier getTier() {
         return tier;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setTier(Tier tier) {
         this.tier = tier;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Address getBillingAddress() {
         return billingAddress;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setBillingAddress(Address billingAddress) {
         this.billingAddress = billingAddress;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Collection<ClientCategory> getCategoriesCollection() {
         return categoriesCollection;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setCategoriesCollection(Collection<ClientCategory> categoriesCollection) {
         this.categoriesCollection = categoriesCollection;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public List<ClientCategory> getCategoriesList() {
         return categoriesList;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setCategoriesList(List<ClientCategory> categoriesList) {
         this.categoriesList = categoriesList;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Set<ClientCategory> getCategoriesSet() {
         return categoriesSet;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setCategoriesSet(Set<ClientCategory> categoriesSet) {
         this.categoriesSet = categoriesSet;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public ClientCategory getMainCategory() {
         return mainCategory;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setMainCategory(ClientCategory mainCategory) {
         this.mainCategory = mainCategory;
     }
 //
-//    @SuppressWarnings("checkstyle:DesignForExtension")
 //    public Map<String, String> getProperties() {
 //        return properties;
 //    }
 //
-//    @SuppressWarnings("checkstyle:DesignForExtension")
 //    public void setProperties(Map<String, String> properties) {
 //        this.properties = properties;
 //    }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getNonPersistent() {
         return nonPersistent;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setNonPersistent(String nonPersistent) {
         this.nonPersistent = nonPersistent;
     }
@@ -231,22 +208,18 @@ public class Client {
         public Address() {
         }
 
-        @SuppressWarnings("checkstyle:DesignForExtension")
         public String getStreet() {
             return street;
         }
 
-        @SuppressWarnings("checkstyle:DesignForExtension")
         public void setStreet(String street) {
             this.street = street;
         }
 
-        @SuppressWarnings("checkstyle:DesignForExtension")
         public String getCity() {
             return city;
         }
 
-        @SuppressWarnings("checkstyle:DesignForExtension")
         public void setCity(String city) {
             this.city = city;
         }

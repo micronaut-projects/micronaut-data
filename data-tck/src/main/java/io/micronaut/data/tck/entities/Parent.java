@@ -19,6 +19,7 @@ package io.micronaut.data.tck.entities;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 
+@SuppressWarnings("checkstyle:DesignForExtension")
 @MappedSuperclass
 public class Parent {
     @Id
@@ -33,22 +34,18 @@ public class Parent {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
         return this.id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(Long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getName() {
         return this.name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }

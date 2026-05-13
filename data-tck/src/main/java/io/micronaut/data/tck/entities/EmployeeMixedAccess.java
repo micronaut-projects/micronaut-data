@@ -25,6 +25,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
+@SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
 public class EmployeeMixedAccess {
     private Long id;
     private String name;
@@ -42,36 +43,30 @@ public class EmployeeMixedAccess {
     public EmployeeMixedAccess() {
     }
 
-    @SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(Long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "name")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "salary")
     public double getSalary() {
         return salary;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setSalary(double salary) {
         this.salary = salary;
     }

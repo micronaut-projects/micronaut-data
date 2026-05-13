@@ -24,6 +24,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
+@SuppressWarnings("checkstyle:DesignForExtension")
 public class EmbeddedOwner {
 
     @Id
@@ -35,32 +36,26 @@ public class EmbeddedOwner {
     @Embedded
     private EmbeddableClass embedded;
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(Long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getOwnerName() {
         return ownerName;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public EmbeddableClass getEmbedded() {
         return embedded;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setEmbedded(EmbeddableClass embedded) {
         this.embedded = embedded;
     }

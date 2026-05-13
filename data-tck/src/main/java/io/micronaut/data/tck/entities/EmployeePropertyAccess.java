@@ -24,6 +24,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+@SuppressWarnings("checkstyle:DesignForExtension")
 @Access(AccessType.PROPERTY)
 @Entity
 public class EmployeePropertyAccess {
@@ -41,7 +42,6 @@ public class EmployeePropertyAccess {
     public EmployeePropertyAccess() {
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long getId() {
@@ -52,18 +52,15 @@ public class EmployeePropertyAccess {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "name")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "salary")
     public double getSalary() {
         return salary;

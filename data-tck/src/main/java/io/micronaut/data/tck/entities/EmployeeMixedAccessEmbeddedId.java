@@ -24,6 +24,7 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 
 @Entity
+@SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
 public class EmployeeMixedAccessEmbeddedId {
     private EmployeeId id;
     private String name;
@@ -32,35 +33,29 @@ public class EmployeeMixedAccessEmbeddedId {
     @Access(AccessType.FIELD)
     private String fieldAnnotated;
 
-    @SuppressWarnings({"checkstyle:DesignForExtension", "checkstyle:EmptyLineSeparator"})
     @EmbeddedId
     public EmployeeId getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(EmployeeId id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "name")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     @Column(name = "salary")
     public double getSalary() {
         return salary;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setSalary(double salary) {
         this.salary = salary;
     }

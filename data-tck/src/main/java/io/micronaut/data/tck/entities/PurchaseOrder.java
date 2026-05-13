@@ -20,6 +20,7 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 
+@SuppressWarnings("checkstyle:DesignForExtension")
 @Entity
 public class PurchaseOrder {
 
@@ -31,32 +32,26 @@ public class PurchaseOrder {
     @Embedded
     private EmbeddableClass details;
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public OrderPk getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(OrderPk id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getDescription() {
         return description;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setDescription(String description) {
         this.description = description;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public EmbeddableClass getDetails() {
         return details;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setDetails(EmbeddableClass details) {
         this.details = details;
     }

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@SuppressWarnings("checkstyle:DesignForExtension")
 public class ClientCategory {
 
     @Id
@@ -49,42 +50,34 @@ public class ClientCategory {
         this.bytes = bytes;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public long getId() {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setId(long id) {
         this.id = id;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public String getName() {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setName(String name) {
         this.name = name;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public List<Book> getBooks() {
         return books;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setBooks(List<Book> books) {
         this.books = books;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public byte[] getBytes() {
         return bytes;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setBytes(byte[] bytes) {
         this.bytes = bytes;
     }

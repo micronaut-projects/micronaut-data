@@ -18,7 +18,7 @@ package io.micronaut.data.tck.entities;
 
 import jakarta.persistence.Entity;
 
-@SuppressWarnings("checkstyle:FinalClass")
+@SuppressWarnings({"checkstyle:FinalClass", "checkstyle:DesignForExtension"})
 @Entity
 public class Child extends Parent {
     Long age;
@@ -31,12 +31,10 @@ public class Child extends Parent {
         this.age = age;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public Long getAge() {
         return this.age;
     }
 
-    @SuppressWarnings("checkstyle:DesignForExtension")
     public void setAge(Long age) {
         this.age = age;
     }
