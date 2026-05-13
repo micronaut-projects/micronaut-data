@@ -118,11 +118,7 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
      */
     @Override
     public float[] toFloatArray() {
-        float[] dense = new float[length];
-        for (int i = 0; i < indices.length; i++) {
-            dense[indices[i]] = values[i];
-        }
-        return dense;
+        return VectorArrays.sparseToFloatArray(length, indices, i -> values[i]);
     }
 
     /**
@@ -130,11 +126,7 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
      */
     @Override
     public double[] toDoubleArray() {
-        double[] dense = new double[length];
-        for (int i = 0; i < indices.length; i++) {
-            dense[indices[i]] = values[i];
-        }
-        return dense;
+        return VectorArrays.sparseToDoubleArray(length, indices, i -> values[i]);
     }
 
     /**
@@ -142,11 +134,7 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
      */
     @Override
     public byte[] toByteArray() {
-        byte[] dense = new byte[length];
-        for (int i = 0; i < indices.length; i++) {
-            dense[indices[i]] = values[i];
-        }
-        return dense;
+        return VectorArrays.sparseToByteArray(length, indices, i -> values[i]);
     }
 
     /**
@@ -160,17 +148,12 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
 
     @Override
     public String toString() {
-        return "SparseByteVector[length=" + length
-            + ", indices=" + Arrays.toString(indices)
-            + ", values=" + Arrays.toString(values) + ']';
+        return VectorArrays.sparseToString("SparseByteVector", length, indices, values);
     }
 
     @Override
     public int hashCode() {
-        int result = Integer.hashCode(length);
-        result = 31 * result + Arrays.hashCode(indices);
-        result = 31 * result + Arrays.hashCode(values);
-        return result;
+        return VectorArrays.sparseHashCode(length, indices, values);
     }
 
     @Override

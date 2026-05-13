@@ -26,6 +26,26 @@ class SparseVectorSpec extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    void "sparse vector validates shape variants"() {
+        when:
+        new SparseFloatVector(-1, [] as int[], [] as float[])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new SparseByteVector(3, [0, 2] as int[], [1] as byte[])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new SparseDoubleVector(2, [2] as int[], [1d] as double[])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     void "sparse byte vector converts to dense byte array"() {
         given:
         def sparse = new SparseByteVector(5, [0, 4] as int[], [1, 9] as byte[])
@@ -106,7 +126,12 @@ class SparseVectorSpec extends Specification {
         new SparseByteVector(3, [1] as int[], [7] as byte[]) == new SparseByteVector(3, [1] as int[], [7] as byte[])
         new SparseByteVector(3, [1] as int[], [7] as byte[]).hashCode() == new SparseByteVector(3, [1] as int[], [7] as byte[]).hashCode()
         new SparseFloatVector(3, [1] as int[], [7f] as float[]) == new SparseFloatVector(3, [1] as int[], [7f] as float[])
+        new SparseFloatVector(3, [1] as int[], [7f] as float[]).hashCode() == new SparseFloatVector(3, [1] as int[], [7f] as float[]).hashCode()
         new SparseDoubleVector(3, [1] as int[], [7d] as double[]) == new SparseDoubleVector(3, [1] as int[], [7d] as double[])
+        new SparseDoubleVector(3, [1] as int[], [7d] as double[]).hashCode() == new SparseDoubleVector(3, [1] as int[], [7d] as double[]).hashCode()
+        new SparseByteVector(3, [1] as int[], [7] as byte[]) != new SparseByteVector(3, [2] as int[], [7] as byte[])
+        new SparseFloatVector(3, [1] as int[], [7f] as float[]) != new SparseFloatVector(4, [1] as int[], [7f] as float[])
+        new SparseDoubleVector(3, [1] as int[], [7d] as double[]) != new SparseDoubleVector(3, [1] as int[], [8d] as double[])
     }
 
     void "sparse vector constructors reject null arrays"() {

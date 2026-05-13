@@ -57,11 +57,7 @@ public record ByteVector(byte[] data) implements Vector {
      */
     @Override
     public float[] toFloatArray() {
-        float[] out = new float[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = data[i];
-        }
-        return out;
+        return VectorArrays.toFloatArray(data.length, i -> data[i]);
     }
 
     /**
@@ -69,11 +65,7 @@ public record ByteVector(byte[] data) implements Vector {
      */
     @Override
     public double[] toDoubleArray() {
-        double[] out = new double[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = data[i];
-        }
-        return out;
+        return VectorArrays.toDoubleArray(data.length, i -> data[i]);
     }
 
     /**

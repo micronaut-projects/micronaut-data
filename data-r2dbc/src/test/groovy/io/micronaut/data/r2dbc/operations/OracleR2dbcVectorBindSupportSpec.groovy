@@ -26,6 +26,11 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
         parameter.value.class.name == 'oracle.sql.VECTOR'
     }
 
+    def "returns null for null vector binding value"() {
+        expect:
+        bindSupport.toTypedVectorParameter(null, null) == null
+    }
+
     def "creates typed Oracle VECTOR parameter for sparse INT8 value"() {
         given:
         def sparse = new SparseByteVector(5, [1, 3] as int[], [10, 20] as byte[])
@@ -44,7 +49,9 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
     def "creates typed Oracle VECTOR parameter for sparse FLOAT32 value"() {
         given:
         def sparse = new SparseFloatVector(3, [0, 2] as int[], [1.5f, 2.5f] as float[])
-        conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(3, [0, 2] as int[], [1.5f, 2.5f] as float[])))
+        conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat32Values(
+            VECTOR.SparseFloatArray.of(3, [0, 2] as int[], [1.5f, 2.5f] as float[])
+        ))
 
         when:
         def parameter = bindSupport.toTypedVectorParameter(sparse, null)
@@ -60,7 +67,9 @@ class OracleR2dbcVectorBindSupportSpec extends Specification {
         given:
         def query = 'select VECTOR_DISTANCE(TO_VECTOR(col, 3, float32, sparse), TO_VECTOR(?,3,FLOAT32,SPARSE), cosine) from dual'
         def sparse = new SparseFloatVector(3, [0, 2] as int[], [1.5f, 2.5f] as float[])
-        conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(3, [0, 2] as int[], [1.5f, 2.5f] as float[])))
+        conversionService.convert(_ as Vector, VECTOR) >> Optional.of(VECTOR.ofFloat32Values(
+            VECTOR.SparseFloatArray.of(3, [0, 2] as int[], [1.5f, 2.5f] as float[])
+        ))
 
         when:
         def parameter = bindSupport.toTypedVectorParameter(sparse, query)

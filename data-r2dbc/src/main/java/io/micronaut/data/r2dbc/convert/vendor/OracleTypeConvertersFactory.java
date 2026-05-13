@@ -33,6 +33,8 @@ import oracle.jdbc.OracleType;
 import oracle.sql.VECTOR;
 
 import java.sql.SQLException;
+import java.util.function.IntConsumer;
+import java.util.function.IntToDoubleFunction;
 
 /**
  * Oracle VECTOR converters.
@@ -130,13 +132,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
             try {
                 if (v.isSparse()) {
                     VECTOR.SparseFloatArray sparse = v.toSparseFloatArray();
-                    float[] dense = new float[sparse.length()];
-                    int[] indices = sparse.indices();
                     float[] values = sparse.values();
-                    for (int i = 0; i < indices.length; i++) {
-                        dense[indices[i]] = values[i];
-                    }
-                    return dense;
+                    return toDenseFloatArray(sparse.length(), sparse.indices(), i -> values[i]);
                 }
                 return v.toFloatArray();
             } catch (SQLException e) {
@@ -149,13 +146,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
             try {
                 if (v.isSparse()) {
                     VECTOR.SparseDoubleArray sparse = v.toSparseDoubleArray();
-                    double[] dense = new double[sparse.length()];
-                    int[] indices = sparse.indices();
                     double[] values = sparse.values();
-                    for (int i = 0; i < indices.length; i++) {
-                        dense[indices[i]] = values[i];
-                    }
-                    return dense;
+                    return toDenseDoubleArray(sparse.length(), sparse.indices(), i -> values[i]);
                 }
                 return v.toDoubleArray();
             } catch (SQLException e) {
@@ -176,17 +168,36 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
                         return dense;
                     }
                     VECTOR.SparseByteArray sparse = v.toSparseByteArray();
-                    byte[] dense = new byte[sparse.length()];
-                    int[] indices = sparse.indices();
                     byte[] values = sparse.values();
-                    for (int i = 0; i < indices.length; i++) {
-                        dense[indices[i]] = values[i];
-                    }
-                    return dense;
+                    return toDenseByteArray(sparse.length(), sparse.indices(), i -> values[i]);
                 }
                 return v.toByteArray();
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract vector from: " + v);
+            }
+        }
+
+        private static float[] toDenseFloatArray(int length, int[] indices, IntToDoubleFunction valueAt) {
+            float[] dense = new float[length];
+            fillSparse(indices, sourceIndex -> dense[indices[sourceIndex]] = (float) valueAt.applyAsDouble(sourceIndex));
+            return dense;
+        }
+
+        private static double[] toDenseDoubleArray(int length, int[] indices, IntToDoubleFunction valueAt) {
+            double[] dense = new double[length];
+            fillSparse(indices, sourceIndex -> dense[indices[sourceIndex]] = valueAt.applyAsDouble(sourceIndex));
+            return dense;
+        }
+
+        private static byte[] toDenseByteArray(int length, int[] indices, IntToDoubleFunction valueAt) {
+            byte[] dense = new byte[length];
+            fillSparse(indices, sourceIndex -> dense[indices[sourceIndex]] = (byte) valueAt.applyAsDouble(sourceIndex));
+            return dense;
+        }
+
+        private static void fillSparse(int[] indices, IntConsumer fillValue) {
+            for (int i = 0; i < indices.length; i++) {
+                fillValue.accept(i);
             }
         }
     }

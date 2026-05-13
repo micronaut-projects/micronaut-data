@@ -25,6 +25,19 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         faCodec.getVector() as List == [1f, 2.6f]
     }
 
+    def "sparse float arrays are rejected for Postgres R2DBC codec binding"() {
+        given:
+        def f = new PostgresTypeConvertersFactory()
+        def sparse = [1f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f] as float[]
+
+        when:
+        f.fromFloatArrayToPgObject().convert(sparse, io.r2dbc.postgresql.codec.Vector, null)
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message.contains('Sparse vectors are not supported')
+    }
+
     def "codec Vector is converted back to FloatVector and Vector"() {
         given:
         def f = new PostgresTypeConvertersFactory()

@@ -57,11 +57,7 @@ public record DoubleVector(double[] data) implements Vector {
      */
     @Override
     public float[] toFloatArray() {
-        float[] out = new float[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = (float) data[i];
-        }
-        return out;
+        return VectorArrays.toFloatArray(data.length, i -> data[i]);
     }
 
     /**
@@ -77,11 +73,7 @@ public record DoubleVector(double[] data) implements Vector {
      */
     @Override
     public byte[] toByteArray() {
-        byte[] out = new byte[data.length];
-        for (int i = 0; i < data.length; i++) {
-            out[i] = (byte) data[i];
-        }
-        return out;
+        return VectorArrays.toByteArray(data.length, i -> data[i]);
     }
 
     @Override
