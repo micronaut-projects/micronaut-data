@@ -32,6 +32,7 @@ import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JA
 import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_EMBEDDABLE_TYPE
 import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_LIST_ATTRIBUTE
 import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_SET_ATTRIBUTE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_MAPPED_SUPER_CLASS_TYPE
 
 class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 

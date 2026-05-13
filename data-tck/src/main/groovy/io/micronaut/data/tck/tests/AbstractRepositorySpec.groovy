@@ -55,6 +55,7 @@ import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.PersonDto2
+import io.micronaut.data.tck.entities.Person_
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.IntervalEntity
@@ -64,6 +65,7 @@ import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.repositories.CarRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
@@ -2751,7 +2753,7 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test criteria select with Metamodel"() {
         when:
         personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
-        def person = personRepository.findOne(SpecificationsWithMetamodel.personWithOnlyNameAndAgeByName("Denis")).get()
+        def person = personRepository.findOne(PersonRepository.SpecificationsWithMetamodel.personWithOnlyNameAndAgeByName("Denis")).get()
         then:
         person.id == null
         person.income == null
@@ -2927,18 +2929,18 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
-        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(WithMetamodel.titleEquals(book.title)).get()
-        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(WithMetamodel.titleContains(book.title)).orElse(null)
-        def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(WithMetamodel.titleEquals("non_existing_book_" + System.currentTimeMillis()))
-        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(WithMetamodel.titleEquals(book.title)).get(0)
-        def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
-        def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
-        def bookLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(WithMetamodel.hasChapter("Ch1"))
-        def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(WithMetamodel.hasChapter("Ch32"))
+        def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(BookSpecifications.WithMetamodel.titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(BookSpecifications.WithMetamodel.titleContains(book.title)).orElse(null)
+        def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(BookSpecifications.WithMetamodel.titleEquals("non_existing_book_" + System.currentTimeMillis()))
+        def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(BookSpecifications.WithMetamodel.titleEquals(book.title)).get(0)
+        def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(BookSpecifications.WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingFindAllWithCriteriaApiAndJoins = bookRepository.findAll(BookSpecifications.WithMetamodel.titleEqualsWithJoin(book.title)).get(0)
+        def bookLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(BookSpecifications.WithMetamodel.hasChapter("Ch1"))
+        def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(BookSpecifications.WithMetamodel.hasChapter("Ch32"))
         def booksLoadedByChapterTitleQuery = bookRepository.findAllByChaptersTitle("Ch1")
         def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
-        def booksLoadedByTitleAndTotalPagesUsingSimpleCriteria = bookRepository.findAll(WithMetamodel.titleAndTotalPagesEquals("1984", 360))
-        def booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate = bookRepository.findAll(WithMetamodel.titleAndTotalPagesEqualsUsingConjunction("1984", 360))
+        def booksLoadedByTitleAndTotalPagesUsingSimpleCriteria = bookRepository.findAll(BookSpecifications.WithMetamodel.titleAndTotalPagesEquals("1984", 360))
+        def booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate = bookRepository.findAll(BookSpecifications.WithMetamodel.titleAndTotalPagesEqualsUsingConjunction("1984", 360))
 
         then:
         bookLoadedUsingFindAllByGenre.genre.genreName != null
