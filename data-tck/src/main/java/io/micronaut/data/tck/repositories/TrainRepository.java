@@ -19,14 +19,33 @@ import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
-import io.micronaut.data.tck.entities.*;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainCZ;
+import io.micronaut.data.tck.entities.TrainCZProjection;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import io.micronaut.data.tck.entities.TrainNameModelDto;
+import io.micronaut.data.tck.entities.Train_;
 import jakarta.data.Order;
 import jakarta.data.Sort;
-import jakarta.data.constraint.*;
+import jakarta.data.constraint.AtLeast;
+import jakarta.data.constraint.AtMost;
+import jakarta.data.constraint.EqualTo;
+import jakarta.data.constraint.GreaterThan;
+import jakarta.data.constraint.In;
+import jakarta.data.constraint.LessThan;
+import jakarta.data.constraint.Like;
+import jakarta.data.constraint.NotEqualTo;
+import jakarta.data.constraint.NotIn;
+import jakarta.data.constraint.NotLike;
 import jakarta.data.page.CursoredPage;
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
-import jakarta.data.repository.*;
+import jakarta.data.repository.CrudRepository;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.Is;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
 import jakarta.data.restrict.Restriction;
 
 import java.time.Instant;
@@ -34,6 +53,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+
 
 public interface TrainRepository extends CrudRepository<Train, Long>, JpaSpecificationExecutor<Train> {
 

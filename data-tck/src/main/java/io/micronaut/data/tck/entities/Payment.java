@@ -1,6 +1,15 @@
 package io.micronaut.data.tck.entities;
 
-import jakarta.persistence.*;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 
 @Entity
 @Access(AccessType.FIELD)

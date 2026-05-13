@@ -9,7 +9,7 @@ import io.micronaut.data.tck.tests.metamodel.AbstractEntityMetamodelSpec
 import jakarta.persistence.metamodel.EntityType
 import jakarta.persistence.metamodel.SingularAttribute
 
-import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.*
+import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute
 
 class PurchaseOrderMetamodelSpec extends AbstractEntityMetamodelSpec {
 

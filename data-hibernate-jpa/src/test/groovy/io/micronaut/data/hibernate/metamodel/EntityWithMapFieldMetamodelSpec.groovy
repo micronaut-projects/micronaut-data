@@ -10,7 +10,7 @@ import jakarta.persistence.metamodel.MapAttribute
 import jakarta.persistence.metamodel.SetAttribute
 import jakarta.persistence.metamodel.SingularAttribute
 
-import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.*
+import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute;
 
 class EntityWithMapFieldMetamodelSpec extends AbstractEntityMetamodelSpec {
 

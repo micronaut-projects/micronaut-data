@@ -1,8 +1,30 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.*
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.entities.Authentication
+import io.micronaut.data.tck.entities.Client
+import io.micronaut.data.tck.entities.ClientCategory
+import io.micronaut.data.tck.entities.Device
+import io.micronaut.data.tck.entities.User
+import io.micronaut.data.tck.repositories.AuthenticationRepository
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BasicTypesRepository
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.ChapterRepository
+import io.micronaut.data.tck.repositories.ChildRepository
+import io.micronaut.data.tck.repositories.ClientCategoryRepository
+import io.micronaut.data.tck.repositories.ClientRepository
+import io.micronaut.data.tck.repositories.DeviceRepository
+import io.micronaut.data.tck.repositories.EmbeddedOwnerRepository
+import io.micronaut.data.tck.repositories.EmployeeFieldAccessRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessEmbeddedIdRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessRepository
+import io.micronaut.data.tck.repositories.EmployeePropertyAccessRepository
+import io.micronaut.data.tck.repositories.GenreRepository
+import io.micronaut.data.tck.repositories.PageRepository
+import io.micronaut.data.tck.repositories.PublisherRepository
+import io.micronaut.data.tck.repositories.PurchaseOrderRepository
+import io.micronaut.data.tck.repositories.TrainRepository
 import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
 
 class JdbcRepositorySpec extends AbstractMetamodelSpec implements H2TestPropertyProvider {

@@ -1,8 +1,21 @@
 package io.micronaut.data.hibernate.entities;
 
-import jakarta.persistence.*;
 
-import java.util.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.OrderColumn;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 public class EntityWithMapField {

@@ -3,8 +3,46 @@ package io.micronaut.data.tck.tests.metamodel
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.tck.entities.*
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Book_
+import io.micronaut.data.tck.entities.Chapter
+import io.micronaut.data.tck.entities.Child
+import io.micronaut.data.tck.entities.Child_
+import io.micronaut.data.tck.entities.Client
+import io.micronaut.data.tck.entities.EmbeddableClass
+import io.micronaut.data.tck.entities.EmbeddedOwner
+import io.micronaut.data.tck.entities.EmployeeFieldAccess
+import io.micronaut.data.tck.entities.EmployeeId
+import io.micronaut.data.tck.entities.EmployeeMixedAccess
+import io.micronaut.data.tck.entities.EmployeeMixedAccessEmbeddedId
+import io.micronaut.data.tck.entities.EmployeePropertyAccess
+import io.micronaut.data.tck.entities.Genre
+import io.micronaut.data.tck.entities.OrderPk
+import io.micronaut.data.tck.entities.Page
+import io.micronaut.data.tck.entities.Publisher
+import io.micronaut.data.tck.entities.PurchaseOrder
+import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.entities.Train
+import io.micronaut.data.tck.entities.TrainSpecs
+import io.micronaut.data.tck.entities.Train_
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BasicTypesRepository
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.ChapterRepository
+import io.micronaut.data.tck.repositories.ChildRepository
+import io.micronaut.data.tck.repositories.ClientCategoryRepository
+import io.micronaut.data.tck.repositories.ClientRepository
+import io.micronaut.data.tck.repositories.EmbeddedOwnerRepository
+import io.micronaut.data.tck.repositories.EmployeeFieldAccessRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessEmbeddedIdRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessRepository
+import io.micronaut.data.tck.repositories.EmployeePropertyAccessRepository
+import io.micronaut.data.tck.repositories.GenreRepository
+import io.micronaut.data.tck.repositories.PageRepository
+import io.micronaut.data.tck.repositories.PublisherRepository
+import io.micronaut.data.tck.repositories.PurchaseOrderRepository
+import io.micronaut.data.tck.repositories.TrainRepository
 import spock.lang.AutoCleanup
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -16,7 +54,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-import static io.micronaut.data.tck.repositories.ChildRepository.Specification.*
+import static io.micronaut.data.tck.repositories.ChildRepository.Specification.nameEquals
+import static io.micronaut.data.tck.repositories.ChildRepository.Specification.ageGreaterThan
+import static io.micronaut.data.tck.repositories.ChildRepository.Specification.idEquals
 
 abstract class AbstractMetamodelSpec extends Specification {
 

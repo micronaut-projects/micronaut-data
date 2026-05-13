@@ -8,7 +8,7 @@ import jakarta.persistence.metamodel.EntityType
 import jakarta.persistence.metamodel.SingularAttribute
 import spock.lang.Ignore
 
-import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.*
+import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute
 
 @Ignore("Access annotation not supported currently")
 class EmployeePropertyAccessMetamodelSpec extends AbstractEntityMetamodelSpec {

@@ -10,7 +10,7 @@ import jakarta.persistence.metamodel.SingularAttribute
 
 import java.time.Instant
 
-import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.*
+import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute
 import static io.micronaut.metamodel.AuditedMetamodelSpec.AUDITED_CLASS_NAME
 
 class PaymentMetamodelSpec extends AbstractEntityMetamodelSpec {

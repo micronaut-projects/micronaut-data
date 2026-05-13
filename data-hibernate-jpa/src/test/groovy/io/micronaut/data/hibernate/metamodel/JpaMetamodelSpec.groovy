@@ -1,13 +1,43 @@
 package io.micronaut.data.hibernate.metamodel
 
 import groovy.transform.Memoized
-import io.micronaut.data.hibernate.*
+import io.micronaut.data.hibernate.HibernateTrainRepository
+import io.micronaut.data.hibernate.JpaBasicTypesRepository
+import io.micronaut.data.hibernate.JpaChapterRepository
+import io.micronaut.data.hibernate.JpaChildRepository
+import io.micronaut.data.hibernate.JpaClientCategoryRepository
+import io.micronaut.data.hibernate.JpaClientRepository
+import io.micronaut.data.hibernate.JpaEmbeddedOwnerRepository
+import io.micronaut.data.hibernate.JpaEmployeeFieldAccessRepository
+import io.micronaut.data.hibernate.JpaEmployeeMixedAccessEmbeddedIdRepository
+import io.micronaut.data.hibernate.JpaEmployeeMixedAccessRepository
+import io.micronaut.data.hibernate.JpaEmployeePropertyAccessRepository
+import io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository
+import io.micronaut.data.hibernate.JpaGenreRepository
+import io.micronaut.data.hibernate.JpaPageRepository
+import io.micronaut.data.hibernate.JpaPublisherRepository
+import io.micronaut.data.hibernate.JpaPurchaseOrderRepository
 import io.micronaut.data.hibernate.entities.EntityWithMapField
 import io.micronaut.data.tck.entities.Client
 import io.micronaut.data.tck.entities.ClientCategory
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BasicTypesRepository
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.ChapterRepository
+import io.micronaut.data.tck.repositories.ChildRepository
+import io.micronaut.data.tck.repositories.ClientCategoryRepository
+import io.micronaut.data.tck.repositories.ClientRepository
+import io.micronaut.data.tck.repositories.EmbeddedOwnerRepository
+import io.micronaut.data.tck.repositories.EmployeeFieldAccessRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessEmbeddedIdRepository
+import io.micronaut.data.tck.repositories.EmployeeMixedAccessRepository
+import io.micronaut.data.tck.repositories.EmployeePropertyAccessRepository
+import io.micronaut.data.tck.repositories.GenreRepository
+import io.micronaut.data.tck.repositories.PageRepository
+import io.micronaut.data.tck.repositories.PublisherRepository
+import io.micronaut.data.tck.repositories.PurchaseOrderRepository
+import io.micronaut.data.tck.repositories.TrainRepository
 import io.micronaut.data.tck.tests.metamodel.AbstractMetamodelSpec
-import spock.lang.Ignore
 
 import static io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository.Specification.hasTagInList
 import static io.micronaut.data.hibernate.JpaEntityWithMapFieldRepository.Specification.hasTagInSet

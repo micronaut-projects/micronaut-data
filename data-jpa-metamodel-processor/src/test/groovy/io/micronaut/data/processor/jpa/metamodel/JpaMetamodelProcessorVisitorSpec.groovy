@@ -26,7 +26,12 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_SINGULAR_ATTRIBUTE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_ENTITY_TYPE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_MAP_ATTRIBUTE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_EMBEDDABLE_TYPE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_LIST_ATTRIBUTE
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_METAMODEL_SET_ATTRIBUTE
 
 class JpaMetamodelProcessorVisitorSpec extends AbstractTypeElementSpec {
 

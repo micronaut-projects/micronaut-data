@@ -8,7 +8,12 @@ import jakarta.persistence.metamodel.EntityType
 import jakarta.persistence.metamodel.SingularAttribute
 
 import java.nio.charset.Charset
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 
 import static io.micronaut.data.tck.metamodel.ExpectedMetamodel.Attribute
 

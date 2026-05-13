@@ -16,7 +16,12 @@
 
 package io.micronaut.data.tck.entities;
 
-import jakarta.persistence.*;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
 public class EmployeeMixedAccessEmbeddedId {

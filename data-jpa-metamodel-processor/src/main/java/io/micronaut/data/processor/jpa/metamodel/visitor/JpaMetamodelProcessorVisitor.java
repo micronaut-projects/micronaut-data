@@ -36,7 +36,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.*;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_ENTITY;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JAKARTA_STATIC_METAMODEL;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.JPA_METAMODEL_ENABLED_FLAG;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.SUPPORTED_ANNOTATIONS;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.createJpaMetaModelClassDefBuilder;
+import static io.micronaut.data.processor.jpa.metamodel.JpaMetamodelProcessor.supportedClass;
 
 /**
  * Jpa static meta model annotation processor visitor.
