@@ -199,6 +199,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
+     * @return the database conversion context factory used by SQL result mappers
+     */
+    protected final DatabaseConversionContextFactory getConversionContextFactory() {
+        return conversionContextFactory;
+    }
+
+    /**
      * @return The result reader that will check for the column existence and return null for {@link ResultReader#readDynamic(Object, Object, DataType)}
      */
     protected ResultReader<RS, String> createColumnNameResultSetReaderWithColumnExistenceAware() {

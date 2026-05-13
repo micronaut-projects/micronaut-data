@@ -42,6 +42,15 @@ public record ByteVector(byte[] data) implements Vector {
      */
     public ByteVector {
         Objects.requireNonNull(data, "ByteVector data must not be null");
+        data = Arrays.copyOf(data, data.length);
+    }
+
+    /**
+     * @return a copy of the vector values
+     */
+    @Override
+    public byte[] data() {
+        return Arrays.copyOf(data, data.length);
     }
 
     /**

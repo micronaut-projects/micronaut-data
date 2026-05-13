@@ -639,7 +639,6 @@ final class DataConversionServiceFactory {
 
         // LocalDate
         conversionService.addConverter(LocalDate.class, java.sql.Date.class, java.sql.Date::valueOf);
-        conversionService.addConverter(LocalDate.class, Date.class, localDate -> Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
         // LocalTime
         conversionService.addConverter(LocalTime.class, Timestamp.class, localTime -> Timestamp.valueOf(localTime.atDate(LocalDate.now())));

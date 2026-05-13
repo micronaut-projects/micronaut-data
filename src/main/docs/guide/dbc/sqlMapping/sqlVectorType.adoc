@@ -170,9 +170,9 @@ If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
 - PostgreSQL JDBC supports dense and sparse conversion paths.
-- Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses only the dense pgvector codec API.
+- Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.
 
-NOTE: PostgreSQL vector support is backed by the pgvector Java library. Include it at runtime so Postgres driver types are available. In Micronaut Data, dense `vector` support applies to JDBC and R2DBC; `PGsparsevec` sparse mapping is currently JDBC-only.
+NOTE: PostgreSQL JDBC vector support is backed by the pgvector Java library. Include it at runtime when using JDBC pgvector driver-native types. R2DBC dense `vector` support uses the PostgreSQL R2DBC driver codec; `PGsparsevec` sparse mapping is currently JDBC-only.
 
 dependency:com.pgvector:pgvector[scope="runtimeOnly"]
 

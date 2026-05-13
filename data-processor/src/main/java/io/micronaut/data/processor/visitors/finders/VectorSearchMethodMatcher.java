@@ -38,10 +38,16 @@ public final class VectorSearchMethodMatcher extends AbstractMethodMatcher {
     public VectorSearchMethodMatcher() {
         super(MethodNameParser.builder()
             .match(QueryMatchId.PREFIX, "search")
+            .tryMatchPrefixedNumber(QueryMatchId.LIMIT, TOP_OR_FIRST)
             .tryMatchLastOccurrencePrefixed(QueryMatchId.ORDER, "Order property not specified!", ORDER_VARIATIONS)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .takeRest(QueryMatchId.PROJECTION)
             .build());
+    }
+
+    @Override
+    public int getOrder() {
+        return MethodMatcher.DEFAULT_POSITION - 100;
     }
 
     @Override

@@ -434,7 +434,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             return DefaultJdbcRepositoryOperations.this.isDtoProjection(query);
                         }
                     },
-                    this::triggerOracleReturningPostLoad
+                    this::triggerOracleReturningPostLoad,
+                    getConversionContextFactory()
                 ).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
@@ -1362,7 +1363,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         outCtx,
                         columnIndexCallableResultReader,
                         jsonMapper,
-                        jdbcDataConversionService()
+                        jdbcDataConversionService(),
+                        getConversionContextFactory()
                     );
                     entity = (T) mapper.readEntity(cs);
 

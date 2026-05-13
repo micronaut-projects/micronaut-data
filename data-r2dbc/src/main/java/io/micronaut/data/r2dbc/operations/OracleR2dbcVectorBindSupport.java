@@ -54,18 +54,12 @@ final class OracleR2dbcVectorBindSupport implements VectorBindSupport {
 
     @Override
     public @Nullable Parameter toTypedVectorParameter(@Nullable Object value, @Nullable String query) {
-        if (value == null) {
+        if (!(value instanceof Vector vector)) {
             return null;
         }
-        if (value instanceof CharSequence) {
-            throw new IllegalArgumentException("String VECTOR literals are not supported for Oracle binding");
-        }
-        if (value instanceof Vector vector) {
-            VECTOR oracleVector = conversionService.convert(vector, VECTOR.class)
-                .orElseThrow(() -> new IllegalArgumentException("Cannot convert " + vector.getClass().getName() + " to oracle.sql.VECTOR"));
-            return Parameters.in(ORACLE_VECTOR_TYPE, oracleVector);
-        }
-        return null;
+        VECTOR oracleVector = conversionService.convert(vector, VECTOR.class)
+            .orElseThrow(() -> new IllegalArgumentException("Cannot convert " + vector.getClass().getName() + " to oracle.sql.VECTOR"));
+        return Parameters.in(ORACLE_VECTOR_TYPE, oracleVector);
     }
 
 }

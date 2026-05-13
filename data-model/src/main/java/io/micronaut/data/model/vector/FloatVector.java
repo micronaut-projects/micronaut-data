@@ -42,6 +42,15 @@ public record FloatVector(float[] data) implements Vector {
      */
     public FloatVector {
         Objects.requireNonNull(data, "FloatVector data must not be null");
+        data = Arrays.copyOf(data, data.length);
+    }
+
+    /**
+     * @return a copy of the vector values
+     */
+    @Override
+    public float[] data() {
+        return Arrays.copyOf(data, data.length);
     }
 
     /**

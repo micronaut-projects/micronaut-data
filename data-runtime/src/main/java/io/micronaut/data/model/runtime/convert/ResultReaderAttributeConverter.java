@@ -29,7 +29,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
  * {@link #convertToEntityValue(Object, ConversionContext)}.</p>
  *
  * <p>The {@link ConversionContext} may carry additional metadata and, when it is an instance of
- * {@link DatabaseTypeConversionContext}, it exposes the SQL dialect
+ * {@link DatabaseTypeConversionContext}, it exposes the database type
  * associated with the current operation.</p>
  *
  * <p>Implementations adapt between the entity-facing type {@code X} and the persisted driver type {@code Y}.</p>

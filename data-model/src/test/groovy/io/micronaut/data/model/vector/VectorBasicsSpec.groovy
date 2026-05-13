@@ -63,6 +63,32 @@ class VectorBasicsSpec extends Specification {
         vb.toByteArray().toList() == [1 as byte, 2 as byte]
     }
 
+    void "record component data accessor returns a defensive copy"() {
+        when:
+        def doubleVector = Vector.of([1d, 2d] as double[]) as DoubleVector
+        def doubleData = doubleVector.data()
+        doubleData[0] = 99d
+
+        then:
+        doubleVector.toDoubleArray().toList() == [1d, 2d]
+
+        when:
+        def floatVector = Vector.of([1f, 2f] as float[]) as FloatVector
+        def floatData = floatVector.data()
+        floatData[0] = 99f
+
+        then:
+        floatVector.toFloatArray().toList() == [1f, 2f]
+
+        when:
+        def byteVector = Vector.of([1 as byte, 2 as byte] as byte[]) as ByteVector
+        def byteData = byteVector.data()
+        byteData[0] = 99 as byte
+
+        then:
+        byteVector.toByteArray().toList() == [1 as byte, 2 as byte]
+    }
+
     void "toXxxArray returns a fresh copy each call"() {
         given:
         def v = Vector.of([1d, 2d, 3d] as double[])

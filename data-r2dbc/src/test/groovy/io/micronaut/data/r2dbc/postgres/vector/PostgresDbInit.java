@@ -41,8 +41,6 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
                 // Ensure pgvector extension and demo table for vector tests
                 try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
                     st.execute();
-                } catch (SQLException e) {
-                    // Ignore if not available or already exists
                 }
                 last = null;
                 break;

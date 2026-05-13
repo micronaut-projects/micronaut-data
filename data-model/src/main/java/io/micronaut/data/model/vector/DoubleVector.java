@@ -42,6 +42,15 @@ public record DoubleVector(double[] data) implements Vector {
      */
     public DoubleVector {
         Objects.requireNonNull(data, "DoubleVector data must not be null");
+        data = Arrays.copyOf(data, data.length);
+    }
+
+    /**
+     * @return a copy of the vector values
+     */
+    @Override
+    public double[] data() {
+        return Arrays.copyOf(data, data.length);
     }
 
     /**

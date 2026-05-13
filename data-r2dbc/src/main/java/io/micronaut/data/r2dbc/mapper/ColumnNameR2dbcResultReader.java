@@ -295,60 +295,40 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     @Nullable
     private static <T> T getTypedValue(Row resultSet, String name, Class<T> type) {
         IllegalArgumentException lowerCaseFailure = null;
-        T value;
         try {
-            value = resultSet.get(name, type);
+            return resultSet.get(name, type);
         } catch (IllegalArgumentException e) {
             lowerCaseFailure = e;
-            value = null;
-        }
-        if (value != null) {
-            return value;
         }
         String upperName = name.toUpperCase(Locale.ROOT);
         if (upperName.equals(name)) {
-            if (lowerCaseFailure != null) {
-                throw lowerCaseFailure;
-            }
-            return null;
+            throw lowerCaseFailure;
         }
         try {
             return resultSet.get(upperName, type);
         } catch (IllegalArgumentException e) {
-            if (lowerCaseFailure != null) {
-                throw lowerCaseFailure;
-            }
-            return null;
+            e.addSuppressed(lowerCaseFailure);
+            throw e;
         }
     }
 
     @Nullable
     private static Object getRawValue(Row resultSet, String name) {
         IllegalArgumentException lowerCaseFailure = null;
-        Object value;
         try {
-            value = resultSet.get(name);
+            return resultSet.get(name);
         } catch (IllegalArgumentException e) {
             lowerCaseFailure = e;
-            value = null;
-        }
-        if (value != null) {
-            return value;
         }
         String upperName = name.toUpperCase(Locale.ROOT);
         if (upperName.equals(name)) {
-            if (lowerCaseFailure != null) {
-                throw lowerCaseFailure;
-            }
-            return null;
+            throw lowerCaseFailure;
         }
         try {
             return resultSet.get(upperName);
         } catch (IllegalArgumentException e) {
-            if (lowerCaseFailure != null) {
-                throw lowerCaseFailure;
-            }
-            return null;
+            e.addSuppressed(lowerCaseFailure);
+            throw e;
         }
     }
 
