@@ -131,7 +131,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;R</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R extends @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;<br>R</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" class="member-name-link">execute</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="../TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="#type-param-T" title="type parameter in SynchronousTransactionOperationsFromReactiveTransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -247,7 +247,7 @@ managed by this <a href="../TransactionOperations.html" title="interface in io.m
 <section class="detail" id="execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">
 <h3>execute</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;R extends @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">execute</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="../TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="#type-param-T" title="type parameter in SynchronousTransactionOperationsFromReactiveTransactionOperations">T</a>,<wbr>R&gt;&nbsp;callback)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">TransactionOperations</a></code></span></div>
 <div class="block">Execute a transaction within the context of the function.</div>
