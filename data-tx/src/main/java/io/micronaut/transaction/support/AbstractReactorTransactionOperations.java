@@ -18,6 +18,7 @@ package io.micronaut.transaction.support;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
@@ -89,11 +90,13 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     }
 
     @Override
+    @Nullable
     public final ReactiveTransactionStatus<C> getTransactionStatus(ContextView contextView) {
         return findTransactionStatus(contextView).orElse(null);
     }
 
     @Override
+    @Nullable
     public final TransactionDefinition getTransactionDefinition(ContextView contextView) {
         ReactiveTransactionStatus<C> status = getTransactionStatus(contextView);
         return status == null ? null : status.getTransactionDefinition();
@@ -107,7 +110,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
-            ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
+            @Nullable ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
             return withTransactionFlux(transactionStatus, definition, handler);
         });
     }
@@ -121,7 +124,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
      * @param <T>               The transaction type
      * @return The published result
      */
-    protected <T> Flux<T> withTransactionFlux(ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
+    protected <T> Flux<T> withTransactionFlux(@Nullable ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
         TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
         if (transactionStatus != null) {
             if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
