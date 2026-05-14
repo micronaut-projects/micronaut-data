@@ -887,6 +887,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return indexName;
     }
 
+    @SuppressWarnings("java:S3776")
     private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String indexName, String escapedTableName, boolean escape) {
         String columnNames = String.join(", ", indexMapping.columns());
         SqlIndexDefinitionProvider sqlIndexDefinitionProvider = indexMapping.sqlIndexDefinitionProvider();
