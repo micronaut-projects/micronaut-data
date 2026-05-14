@@ -107,6 +107,10 @@ class MappedCodec<T> implements Codec<T> {
             if (manyAssociationProperties.isEmpty()) {
                 serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
             } else {
+                // To-many relations are represented by join collections, so the relation serializer writes them
+                // as null in the owning document. Do not persist those explicit nulls: serde's strict null
+                // contract rejects null BSON values for non-null collection constructor arguments, while an
+                // absent field lets immutable entities use their default relation value.
                 BsonDocument document = new BsonDocument();
                 serializer.serialize(new BsonWriterEncoder(new BsonDocumentWriter(document), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
                 removeNullManyAssociations(document);
