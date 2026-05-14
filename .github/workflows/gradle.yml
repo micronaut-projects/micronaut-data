@@ -14,76 +14,12 @@ on:
       - master
       - '[0-9]+.[0-9]+.x'
 jobs:
-  doc_examples_matrix:
+  build:
     if: github.repository != 'micronaut-projects/micronaut-project-template'
     runs-on: ubuntu-latest
-    outputs:
-      groups: ${{ steps.collect.outputs.groups }}
-    steps:
-      - name: "📥 Checkout repository"
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1
-        with:
-          distribution: 'graalvm'
-          java-version: '25'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "🔧 Setup Gradle"
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: "📦 Collect doc-example modules"
-        id: collect
-        run: |
-          MODULES=$(./gradlew -q projects | grep "Project ':micronaut-doc-examples:" | sed -E "s/.*Project '([^']+)'.*/\1/")
-          export MODULES
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import os
-          mods = [line.strip() for line in os.environ.get("MODULES", "").splitlines() if line.strip()]
-          buckets = {
-              "vector": [],
-              "jdbc": [],
-              "r2dbc": [],
-              "hibernate": [],
-              "mongo": [],
-              "other": [],
-          }
-
-          for m in mods:
-              name = m.split(":")[-1]
-              if "vector" in name:
-                  buckets["vector"].append(m)
-              elif "jdbc" in name:
-                  buckets["jdbc"].append(m)
-              elif "r2dbc" in name:
-                  buckets["r2dbc"].append(m)
-              elif "hibernate" in name:
-                  buckets["hibernate"].append(m)
-              elif "mongo" in name:
-                  buckets["mongo"].append(m)
-              else:
-                  buckets["other"].append(m)
-
-          groups = []
-          for bucket_name, bucket_mods in buckets.items():
-              if not bucket_mods:
-                  continue
-              groups.append({
-                  "name": bucket_name,
-                  "tasks": " ".join(f"{mod}:check" for mod in bucket_mods)
-              })
-
-          print("groups=" + json.dumps(groups))
-          PY
-
-  build_core:
-    if: github.repository != 'micronaut-projects/micronaut-project-template'
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
+    strategy:
+      matrix:
+        java: ['25']
     env:
       TESTCONTAINERS_RYUK_DISABLED: true
       SONAR_TOKEN_AVAILABLE: ${{ secrets.SONAR_TOKEN != '' }}
@@ -96,8 +32,6 @@ jobs:
           export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
       - name: "🗑 Free disk space"
         run: |
-         sudo rm -rf /usr/share/dotnet
-         sudo rm -rf /usr/local/lib/android
          sudo rm -rf "/usr/local/share/boost"
          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
          sudo rm -rf "/opt/ghc"
@@ -115,7 +49,7 @@ jobs:
         uses: graalvm/setup-graalvm@bef4b0e916c7dd079bf60fb95d49139f67e32c5f # v1
         with:
           distribution: 'graalvm'
-          java-version: '25'
+          java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "🔧 Setup Gradle"
@@ -134,140 +68,35 @@ jobs:
           GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
         run: |
-          DOC_EXCLUDES=$(./gradlew -q projects | grep "Project ':micronaut-doc-examples:" | sed -E "s/.*Project '([^']+)'.*/-x \1:test -x \1:check/" | tr '\n' ' ')
-          ./gradlew check jacocoReport --no-daemon $DOC_EXCLUDES
+          ./gradlew check jacocoReport --no-daemon --continue
 
       - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN_AVAILABLE == 'true'
+        if: env.SONAR_TOKEN_AVAILABLE == 'true' && matrix.java == '25'
         env:
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./gradlew classes testClasses sonar --no-parallel --no-daemon
+          ./gradlew sonar --no-parallel --continue
 
       - name: "📊 Publish Test Report"
         if: always()
         uses: mikepenz/action-junit-report@bccf2e31636835cf0874589931c4116687171386 # v6
         with:
-          check_name: Java CI / Test Report (25 / core)
+          check_name: Java CI / Test Report (${{ matrix.java }})
           report_paths: '**/build/test-results/test/TEST-*.xml'
           check_retries: 'true'
 
       - name: "📜 Upload binary compatibility check results"
-        if: always()
+        if: matrix.java == '25'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: binary-compatibility-reports
           path: "**/build/reports/binary-compatibility-*.html"
 
-      - name: "❓ Optional cleanup step"
-        run: |
-          [ -f ./cleanup.sh ] && ./cleanup.sh || [ ! -f ./cleanup.sh ]
-
-  build_doc_examples:
-    if: github.repository != 'micronaut-projects/micronaut-project-template'
-    needs: doc_examples_matrix
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        group: ${{ fromJson(needs.doc_examples_matrix.outputs.groups) }}
-    env:
-      DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-      DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-      DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-      GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
-      GH_USERNAME: ${{ secrets.GH_USERNAME }}
-      TESTCONTAINERS_RYUK_DISABLED: true
-      PREDICTIVE_TEST_SELECTION: "${{ github.event_name == 'pull_request' && 'true' || 'false' }}"
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OSS_INDEX_USERNAME: ${{ secrets.OSS_INDEX_USERNAME }}
-      OSS_INDEX_PASSWORD: ${{ secrets.OSS_INDEX_PASSWORD }}
-    steps:
-       # https://github.com/actions/virtual-environments/issues/709
-      - name: Remove system JDKs
-        run: |
-          sudo rm -rf /usr/lib/jvm/*
-          unset JAVA_HOME
-          export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
-      - name: "🗑 Free disk space"
-        run: |
-         sudo rm -rf /usr/share/dotnet
-         sudo rm -rf /usr/local/lib/android
-         sudo rm -rf "/usr/local/share/boost"
-         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-         sudo rm -rf "/opt/ghc"
-         sudo rm -rf "/usr/share/dotnet"
-         sudo rm -rf "/usr/local/lib/android"
-         sudo apt-get clean
-         df -h
-
-      - name: "📥 Checkout repository"
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1
-        with:
-          distribution: 'graalvm'
-          java-version: '25'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "🔧 Setup Gradle"
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: "❓ Optional setup step"
-        run: |
-          [ -f ./setup.sh ] && ./setup.sh || [ ! -f ./setup.sh ]
-
-      - name: "🛠 Build doc-example module"
-        run: |
-          ./gradlew --no-daemon ${{ matrix.group.tasks }}
-
-      - name: "📊 Publish Test Report"
-        if: always()
-        uses: mikepenz/action-junit-report@v6
-        with:
-          check_name: Java CI / Test Report (25 / doc-${{ matrix.group.name }})
-          report_paths: '**/build/test-results/test/TEST-*.xml'
-          check_retries: 'true'
-
-      - name: "❓ Optional cleanup step"
-        run: |
-          [ -f ./cleanup.sh ] && ./cleanup.sh || [ ! -f ./cleanup.sh ]
-
-  publish:
-    if: github.repository != 'micronaut-projects/micronaut-project-template' && github.event_name == 'push'
-    needs: [build_core, build_doc_examples]
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
-      GH_USERNAME: ${{ secrets.GH_USERNAME }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: "📥 Checkout repository"
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1
-        with:
-          distribution: 'graalvm'
-          java-version: '25'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "🔧 Setup Gradle"
-        uses: gradle/actions/setup-gradle@v5
-
       - name: "📦 Publish to Sonatype Snapshots"
+        if: success() && github.event_name == 'push' && matrix.java == '25'
         env:
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -285,9 +114,14 @@ jobs:
           if_false: ${{ github.repository }}
 
       - name: "📑 Publish to Github Pages"
+        if: success() && github.event_name == 'push' && matrix.java == '25'
         uses: micronaut-projects/github-pages-deploy-action@76d63aafbab7108d74e83be4e5b3b0501382e829 # master
         env:
           TARGET_REPOSITORY: ${{ steps.docs_target.outputs.value }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           BRANCH: gh-pages
           FOLDER: build/docs
+
+      - name: "❓ Optional cleanup step"
+        run: |
+          [ -f ./cleanup.sh ] && ./cleanup.sh || [ ! -f ./cleanup.sh ]
