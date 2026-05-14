@@ -862,8 +862,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (optSqlColumnMapping.isPresent()) {
                     String definition = optSqlColumnMapping.get().getDefinition();
                     if (definition != null && definition.toLowerCase().contains("geometry")) {
-                        // should be used with srid = 3857 which is default value when geometry type is used
-                        indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
+                        Integer srid = indexMapping.srid();
+                        if (Objects.equals(SqlSchemaUtils.SRID_WGS_84, srid) || Objects.equals(SqlSchemaUtils.SRID_ETRS_89, srid)) {
+                            indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90))");
+                        } else if (Objects.equals(SqlSchemaUtils.SRID_WEB_MERCATOR, srid)) {
+                            indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
+                        }
                     }
                 }
             }

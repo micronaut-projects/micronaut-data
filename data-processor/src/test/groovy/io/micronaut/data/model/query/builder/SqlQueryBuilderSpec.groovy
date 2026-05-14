@@ -18,12 +18,15 @@ package io.micronaut.data.model.query.builder
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.GeogEntityJson
 import io.micronaut.data.model.entities.GeogEntityWkt
+import io.micronaut.data.model.entities.GeomEntityCompositeIndex
 import io.micronaut.data.model.entities.GeomEntityJson
+import io.micronaut.data.model.entities.GeomEntityWGS84
 import io.micronaut.data.model.entities.GeomEntityWkt
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
@@ -824,7 +827,7 @@ interface MyRepository {
         Dialect.SQL_SERVER | [
                 'CREATE TABLE [geom_entity_json] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOMETRY NOT NULL,[multi_point] GEOMETRY NOT NULL,[line_string] GEOMETRY NOT NULL,[multi_line_string] GEOMETRY);',
                 'CREATE SPATIAL INDEX [idx_geom_entity_json_location] ON [geom_entity_json] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));',
-                'CREATE SPATIAL INDEX [idx_geom_entity_json_multi_point] ON [geom_entity_json] ([multi_point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
+                'CREATE SPATIAL INDEX [idx_geom_entity_json_multi_point] ON [geom_entity_json] ([multi_point]);'
         ]
     }
 
@@ -899,7 +902,27 @@ interface MyRepository {
         Dialect.MYSQL      | 'CREATE TABLE `school` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));'               | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
         Dialect.POSTGRES   | 'CREATE TABLE "school" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL,"point" GEOMETRY NOT NULL,"description" VARCHAR(255));' | 'CREATE INDEX "idx_school_point" ON "school" USING GIST ("point");'
         Dialect.H2         | 'CREATE TABLE `school` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`point` GEOMETRY NOT NULL,`description` VARCHAR(255));' | 'CREATE SPATIAL INDEX `idx_school_point` ON `school` (`point`);'
-        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOMETRY NOT NULL,[description] VARCHAR(255));'       | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892));'
+        Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOMETRY NOT NULL,[description] VARCHAR(255));'       | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
+    }
+
+    void "test build create index for SQL Server geometry column 4326 srid"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityWGS84))
+
+        then:
+        statements[0] == 'CREATE TABLE [geom_entity_wgs84] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOMETRY NOT NULL);'
+        statements[1] == 'CREATE SPATIAL INDEX [idx_geom_entity_wgs84_location] ON [geom_entity_wgs84] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90));'
+    }
+
+    void "test build create table rejects composite index containing geometry column"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+        encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityCompositeIndex))
+
+        then:
+        def e = thrown(MappingException)
+        e.message == 'A geospatial column cannot be included in a composite index. Index columns: [point, name_col]'
     }
 
     void "test build composite id query"() {
