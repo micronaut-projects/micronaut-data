@@ -15,10 +15,10 @@
  */
 package io.micronaut.data.model.vector;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.vector.SparseByteVectorAttributeConverter;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -29,8 +29,9 @@ import java.util.Objects;
  * @param length The dense vector length.
  * @param indices Sorted non-zero positions.
  * @param values Non-zero values aligned with {@code indices}.
- * @since 4.13
+ * @since 5.0.0
  */
+@SuppressWarnings("ArrayRecordComponent")
 @TypeDef(type = DataType.OBJECT, converter = SparseByteVectorAttributeConverter.class)
 public record SparseByteVector(int length, int[] indices, byte[] values) implements SparseVector {
 
@@ -97,9 +98,6 @@ public record SparseByteVector(int length, int[] indices, byte[] values) impleme
         return Arrays.copyOf(indices, indices.length);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public byte[] values() {
         return Arrays.copyOf(values, values.length);

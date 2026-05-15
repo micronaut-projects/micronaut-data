@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
@@ -35,6 +33,8 @@ import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.Column;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unified attribute converter for Vector that supports multiple SQL dialects.

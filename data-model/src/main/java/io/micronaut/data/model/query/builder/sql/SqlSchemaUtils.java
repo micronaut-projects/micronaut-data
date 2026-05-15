@@ -597,6 +597,9 @@ public final class SqlSchemaUtils {
                         }
                     }
                 }
+                if (provider == null) {
+                    throw new MappingException("Vector indexes are not supported for dialect " + dialect + " on property: " + prop.getName());
+                }
                 indexMappings.add(new SqlIndexMapping(name, false, new String[]{columnName}, provider, meta, false));
             }
         }

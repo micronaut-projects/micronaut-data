@@ -184,6 +184,196 @@ interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
             dialect << ["POSTGRES", "ORACLE", "MYSQL"]
     }
 
+    @Unroll
+    void "test #dialect vector top search orders by vector score"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+
+        then:
+            query.contains(' ORDER BY ')
+            query.indexOf(' ORDER BY ') > query.indexOf(' WHERE ')
+            query.indexOf(' ORDER BY ') < query.indexOf(limitToken)
+            query.contains(scoreToken)
+
+        where:
+            dialect    | limitToken       | scoreToken
+            "POSTGRES" | " LIMIT 2"       | " <=> "
+            "ORACLE"   | "FETCH NEXT 2"   | "VECTOR_DISTANCE("
+            "MYSQL"    | " LIMIT 2"       | "DISTANCE("
+    }
+
+    void "test vector search score projection uses vector parameter for matching predicate"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector referenceEmbedding;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getReferenceEmbedding() {
+        return referenceEmbedding;
+    }
+
+    public void setReferenceEmbedding(FloatVector referenceEmbedding) {
+        this.referenceEmbedding = referenceEmbedding;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchTop2ByReferenceEmbeddingAndEmbeddingNear(Vector reference, Vector query, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            def method = repository.getRequiredMethod(
+                    "searchTop2ByReferenceEmbeddingAndEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            )
+
+        then:
+            getQuery(method).contains(' AS mn_score FROM ')
+            getParameterBindingIndexes(method).first() == "1"
+            getParameterBindingIndexes(method).last() == "1"
+    }
+
+    void "test vector search score projection ignores role parameters when resolving vector predicate"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchByEmbeddingNear(Sort sort, Vector query, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            def method = repository.getRequiredMethod(
+                    "searchByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.Sort"),
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            )
+
+        then:
+            getQuery(method).contains(' AS mn_score FROM ')
+            getParameterBindingIndexes(method).first() == "1"
+            getParameterBindingIndexes(method)[1] == "1"
+    }
+
     void "test POSTGRES custom query - expression"() {
         given:
             def repository = buildRepository('test.MyInterface2', """

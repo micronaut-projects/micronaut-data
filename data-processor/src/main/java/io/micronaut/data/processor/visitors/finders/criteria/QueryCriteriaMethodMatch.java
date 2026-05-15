@@ -55,6 +55,7 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.MethodResult;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
+import io.micronaut.data.processor.visitors.finders.Restrictions;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -75,8 +76,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -87,6 +90,8 @@ import java.util.stream.Collectors;
  */
 @Experimental
 public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
+
+    private static final Pattern LOGICAL_OPERATOR_PATTERN = Pattern.compile("And|Or");
 
     /**
      * Default constructor.
@@ -152,6 +157,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyDistinct(query);
         applyProjection(matchContext, cb, root, query);
         applyPredicate(matchContext, cb, root, query);
+        applyVectorScoreOrderIfNeeded(matchContext, cb, root, query);
         applyOrder(cb, root, query);
         applyOrderByAnnotation(cb, root, query, matchContext.getMethodElement());
         applyForUpdate(query);
@@ -479,13 +485,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (predicateMatches.isEmpty()) {
             throw new MatchFailedException("SearchResults query must include a Near, Within, or Between predicate");
         }
-        String vectorPropertyName = resolveVectorPropertyName(predicateMatches);
-        if (vectorPropertyName == null) {
+        VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
+        if (vectorPredicate == null) {
             throw new MatchFailedException("Unable to resolve vector property for SearchResults query");
         }
 
         Root<?> root = query.getRoots().iterator().next();
-        ParameterElement vectorElement = resolveSearchResultsVectorParameter(matchContext);
+        ParameterElement vectorElement = resolveVectorPredicateParameter(matchContext, vectorPredicate);
+        String vectorPropertyName = vectorPredicate.propertyName();
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty((PersistentEntityRoot<Object>) root, vectorPropertyName);
         if (vectorPropertyExpression == null) {
             throw new MatchFailedException("Unable to resolve vector property path for SearchResults query: " + vectorPropertyName);
@@ -499,28 +506,81 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         query.multiselect(root, scoreExpr.alias("mn_score"));
     }
 
-    private ParameterElement resolveSearchResultsVectorParameter(MethodMatchContext matchContext) {
-        return Arrays.stream(matchContext.getParameters())
-            .filter(p -> p.getType().isAssignable(Vector.class))
-            .findFirst()
-            .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "SearchResults return type requires a Vector parameter"));
+    private void applyVectorScoreOrderIfNeeded(MethodMatchContext matchContext,
+                                               PersistentEntityCriteriaBuilder cb,
+                                               PersistentEntityRoot<Object> root,
+                                               PersistentEntityCriteriaQuery<?> query) {
+        if (matchContext.hasParameterInRole(TypeRole.SORT) || matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
+            return;
+        }
+        List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
+        if (predicateMatches.isEmpty()) {
+            return;
+        }
+        VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
+        if (vectorPredicate == null) {
+            return;
+        }
+        String vectorPropertyName = vectorPredicate.propertyName();
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty(root, vectorPropertyName);
+        if (vectorPropertyExpression == null || !vectorPropertyExpression.getProperty().isAssignable(Vector.class)) {
+            return;
+        }
+        ParameterElement vectorElement = resolveVectorPredicateParameter(matchContext, vectorPredicate);
+        io.micronaut.data.model.PersistentPropertyPath propertyPath = io.micronaut.data.model.PersistentPropertyPath.of(
+            vectorPropertyExpression.getAssociations(),
+            vectorPropertyExpression.getProperty()
+        );
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
+        ParameterExpression<Vector> vectorParameter = scb.parameter(vectorElement, propertyPath);
+        Expression<Double> scoreExpr = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
+        query.orderBy(cb.asc(scoreExpr));
     }
 
-    private @Nullable String resolveVectorPropertyName(List<MethodNameParser.Match> predicateMatches) {
+    private ParameterElement resolveVectorPredicateParameter(MethodMatchContext matchContext, VectorPredicate vectorPredicate) {
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        int parameterIndex = vectorPredicate.parameterIndex();
+        if (parameterIndex >= parameters.size()) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Vector search predicate requires a Vector parameter");
+        }
+        ParameterElement parameter = parameters.get(parameterIndex);
+        if (!parameter.getType().isAssignable(Vector.class)) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Vector search predicate requires a Vector parameter");
+        }
+        return parameter;
+    }
+
+    @SuppressWarnings("StringSplitter")
+    private @Nullable VectorPredicate resolveVectorPredicate(List<MethodNameParser.Match> predicateMatches) {
         String predicate = predicateMatches.getFirst().part();
-        String[] parts = predicate.split("And|Or");
-        for (String part : parts) {
+        int parameterIndex = 0;
+        for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
             if (part.endsWith("Near")) {
-                return NameUtils.decapitalize(part.substring(0, part.length() - 4));
+                return new VectorPredicate(NameUtils.decapitalize(part.substring(0, part.length() - 4)), parameterIndex);
             }
             if (part.endsWith("Within")) {
-                return NameUtils.decapitalize(part.substring(0, part.length() - 6));
+                return new VectorPredicate(NameUtils.decapitalize(part.substring(0, part.length() - 6)), parameterIndex);
             }
             if (part.endsWith("Between")) {
-                return NameUtils.decapitalize(part.substring(0, part.length() - 7));
+                return new VectorPredicate(NameUtils.decapitalize(part.substring(0, part.length() - 7)), parameterIndex);
             }
+            parameterIndex += requiredParameters(part);
         }
         return null;
+    }
+
+    private int requiredParameters(String predicatePart) {
+        Map.Entry<String, Restrictions.PropertyRestriction> bestMatch = null;
+        for (Map.Entry<String, Restrictions.PropertyRestriction> entry : Restrictions.PROPERTY_RESTRICTIONS_MAP.entrySet()) {
+            if (predicatePart.endsWith(entry.getKey())
+                && (bestMatch == null || entry.getKey().length() > bestMatch.getKey().length())) {
+                bestMatch = entry;
+            }
+        }
+        return bestMatch == null ? 1 : bestMatch.getValue().getRequiredParameters();
+    }
+
+    private record VectorPredicate(String propertyName, int parameterIndex) {
     }
 
     private void applyDtoProjectionIfNeeded(MethodMatchContext matchContext,
@@ -561,6 +621,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return countQuery.build(annotationMetadata, matchContext.getQueryBuilder());
     }
 
+    @SuppressWarnings("StringSplitter")
     private void applyOrderBy(String orderBy,
                               PersistentEntityRoot<?> root,
                               PersistentEntityQuery<?> query,

@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
 import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -15,7 +16,7 @@ import jakarta.persistence.Column
 import spock.lang.Specification
 
 /**
- * Spock spec verifying MySQL HeatWave DDL for @VectorIndex.
+ * Spock spec verifying MySQL vector index DDL handling for @VectorIndex.
  */
 class MysqlVectorIndexDdlSpec extends Specification {
 
@@ -32,22 +33,22 @@ class MysqlVectorIndexDdlSpec extends Specification {
         Vector embedding
     }
 
-    def "generates MySQL vector index on embedding"() {
+    def "fails clearly for unsupported MySQL vector index on embedding"() {
         given:
         def builder = new SqlQueryBuilder(Dialect.MYSQL)
         def entity = new RuntimePersistentEntity<>(DocumentEmbeddingTestEntity.class)
+        ApplicationContext ctx = ApplicationContext.run()
 
         when:
-        ApplicationContext ctx = ApplicationContext.run()
         List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
         providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
-        String[] statements = builder.buildCreateTableStatements(entity, providers)
-        ctx.close()
+        builder.buildCreateTableStatements(entity, providers)
 
         then:
-        statements.any { s ->
-            s.contains("CREATE INDEX") &&
-            s.toLowerCase().contains("embedding")
-        }
+        def e = thrown(MappingException)
+        e.message.contains("Vector indexes are not supported for dialect MYSQL")
+
+        cleanup:
+        ctx?.close()
     }
 }

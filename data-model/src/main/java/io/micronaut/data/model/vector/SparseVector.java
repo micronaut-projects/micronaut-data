@@ -18,7 +18,7 @@ package io.micronaut.data.model.vector;
 /**
  * Common contract for sparse vector representations.
  *
- * @since 4.13
+ * @since 5.0.0
  */
 public sealed interface SparseVector extends Vector permits SparseDoubleVector, SparseFloatVector, SparseByteVector {
 
