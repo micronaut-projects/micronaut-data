@@ -77,36 +77,48 @@ jobs:
             local out="build/ci-diagnostics/${ts}"
             mkdir -p "$out"
 
+            run_probe() {
+              local file="$1"
+              shift
+              timeout --kill-after=5s 20s "$@" > "$file" 2>&1 || {
+                echo "probe failed or timed out: $*" >> "$file"
+              }
+            }
+
             echo "::group::CI diagnostics ${ts}"
             date -u '+%Y-%m-%dT%H:%M:%SZ' > "$out/date.txt"
-            ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid > "$out/ps.txt" || true
-            df -h > "$out/df.txt" || true
-            free -m > "$out/free.txt" || true
-            docker system df -v > "$out/docker-system-df.txt" || true
-            docker images --digests > "$out/docker-images.txt" || true
-            docker ps -a > "$out/docker-ps.txt" || true
-            docker stats --no-stream --all > "$out/docker-stats.txt" || true
-            docker inspect $(docker ps -aq) > "$out/docker-inspect.json" 2>&1 || true
+            run_probe "$out/ps.txt" ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid
+            run_probe "$out/df.txt" df -h
+            run_probe "$out/free.txt" free -m
+            run_probe "$out/docker-system-df.txt" docker system df -v
+            run_probe "$out/docker-images.txt" docker images --digests
+            run_probe "$out/docker-ps.txt" docker ps -a
+            run_probe "$out/docker-stats.txt" docker stats --no-stream --all
+            container_ids="$(timeout --kill-after=5s 10s docker ps -aq 2>/dev/null || true)"
+            if [ -n "${container_ids:-}" ]; then
+              timeout --kill-after=5s 20s docker inspect $container_ids > "$out/docker-inspect.json" 2>&1 || echo "docker inspect failed or timed out" >> "$out/docker-inspect.json"
+            fi
             while read -r container_id; do
-              docker logs --tail 300 "$container_id" > "$out/docker-${container_id}.log" 2>&1 || true
-            done < <(docker ps -aq)
+              [ -n "${container_id:-}" ] || continue
+              timeout --kill-after=5s 10s docker logs --tail 300 "$container_id" > "$out/docker-${container_id}.log" 2>&1 || echo "docker logs failed or timed out" >> "$out/docker-${container_id}.log"
+            done <<< "${container_ids:-}"
             find . -path '*/build/test-results/test/TEST-*.xml' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -200 > "$out/recent-test-results.txt" || true
             find . -path '*/build/reports/tests/test/index.html' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -50 > "$out/test-report-indexes.txt" || true
 
             if command -v jcmd >/dev/null 2>&1; then
-              jcmd -l > "$out/jcmd-l.txt" || true
+              run_probe "$out/jcmd-l.txt" jcmd -l
               while read -r pid main rest; do
                 [ -n "${pid:-}" ] || continue
-                jcmd "$pid" Thread.print -l > "$out/thread-${pid}.txt" 2>&1 || true
-                jcmd "$pid" VM.command_line > "$out/command-${pid}.txt" 2>&1 || true
-                jcmd "$pid" GC.heap_info > "$out/heap-${pid}.txt" 2>&1 || true
+                timeout --kill-after=5s 10s jcmd "$pid" Thread.print -l > "$out/thread-${pid}.txt" 2>&1 || echo "thread dump failed or timed out" >> "$out/thread-${pid}.txt"
+                timeout --kill-after=5s 10s jcmd "$pid" VM.command_line > "$out/command-${pid}.txt" 2>&1 || echo "command line dump failed or timed out" >> "$out/command-${pid}.txt"
+                timeout --kill-after=5s 10s jcmd "$pid" GC.heap_info > "$out/heap-${pid}.txt" 2>&1 || echo "heap dump failed or timed out" >> "$out/heap-${pid}.txt"
               done < "$out/jcmd-l.txt"
             fi
             {
               echo "diagnostics captured in ${out}"
               echo "disk: $(df -h / | awk 'NR == 2 {print $3 \" used, \" $4 \" free, \" $5 \" full\"}')"
               echo "memory: $(free -m | awk '/Mem:/ {print $3 \" MiB used, \" $7 \" MiB available\"}')"
-              echo "docker containers: $(docker ps -aq | wc -l | tr -d ' ')"
+              echo "docker containers: $(printf '%s\n' "${container_ids:-}" | sed '/^$/d' | wc -l | tr -d ' ')"
               echo "jvms: $([ -f "$out/jcmd-l.txt" ] && wc -l < "$out/jcmd-l.txt" | tr -d ' ' || echo 0)"
               if [ -f build/ci-diagnostics/gradle-output.log ]; then
                 echo "gradle log bytes: $(wc -c < build/ci-diagnostics/gradle-output.log)"
@@ -144,7 +156,10 @@ jobs:
           set -e
 
           kill "$diagnostics_pid" 2>/dev/null || true
-          wait "$diagnostics_pid" 2>/dev/null || true
+          for _ in 1 2 3 4 5 6 7 8 9 10; do
+            kill -0 "$diagnostics_pid" 2>/dev/null || break
+            sleep 1
+          done
 
           dump_diagnostics
           exit "$gradle_exit"
