@@ -53,7 +53,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = TestContextSupport.runWithRetry(properties)
 
     abstract PersonReactiveRepository getPersonRepository()
     abstract StudentReactiveRepository getStudentRepository()

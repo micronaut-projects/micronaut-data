@@ -31,7 +31,7 @@ import java.sql.Connection
 abstract class AbstractEventsSpec extends Specification {
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = TestContextSupport.runWithRetry(properties)
 
     @Shared DomainEvents entityUnderTest
 

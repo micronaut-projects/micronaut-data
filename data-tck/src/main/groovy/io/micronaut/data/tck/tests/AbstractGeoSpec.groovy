@@ -33,7 +33,7 @@ abstract class AbstractGeoSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = TestContextSupport.runWithRetry(properties)
 
     void "test creating, reading and updating when json conversion used on embedded geometry type"() {
         assumeTrue(supportsGeometryJsonConversion())

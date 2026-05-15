@@ -37,7 +37,7 @@ abstract class AbstractJSONSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
+    ApplicationContext applicationContext = TestContextSupport.runWithRetry(getProperties())
 
     abstract SaleRepository getSaleRepository();
     abstract SaleItemRepository getSaleItemRepository();

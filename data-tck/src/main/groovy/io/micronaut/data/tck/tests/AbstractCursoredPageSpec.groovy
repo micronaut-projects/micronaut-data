@@ -34,7 +34,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = TestContextSupport.runWithRetry(properties)
 
     abstract PersonRepository getPersonRepository()
 

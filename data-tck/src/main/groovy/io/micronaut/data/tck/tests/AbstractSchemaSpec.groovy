@@ -14,11 +14,11 @@ abstract class AbstractSchemaSpec extends Specification {
         given:
         def props = properties
         props["datasources.default.packages"] = "io.micronaut.data.tck.entities.schema"
-        def initialContext = ApplicationContext.run(props)
+        def initialContext = TestContextSupport.runWithRetry(props)
         when:
         def schemaValidateProperties = props
         schemaValidateProperties["datasources.default.schema-generate"] =  "validate"
-        def validationContext = ApplicationContext.run(schemaValidateProperties)
+        def validationContext = TestContextSupport.runWithRetry(schemaValidateProperties)
         then:
         noExceptionThrown()
         cleanup:

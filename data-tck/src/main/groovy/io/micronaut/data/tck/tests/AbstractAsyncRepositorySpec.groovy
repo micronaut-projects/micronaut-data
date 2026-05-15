@@ -47,7 +47,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = TestContextSupport.runWithRetry(properties)
 
     abstract PersonAsyncRepository getPersonRepository()
 

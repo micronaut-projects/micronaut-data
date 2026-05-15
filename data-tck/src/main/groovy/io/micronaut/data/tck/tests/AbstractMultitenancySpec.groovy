@@ -37,7 +37,6 @@ import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
 import jakarta.transaction.Transactional
-import java.net.ConnectException
 
 abstract class AbstractMultitenancySpec extends Specification {
 
@@ -165,30 +164,7 @@ abstract class AbstractMultitenancySpec extends Specification {
     protected abstract long getSchemaBooksCount(BeanContext beanContext, String schemaName);
 
     private static EmbeddedServer startEmbeddedServer(Map<String, Object> properties) {
-        Throwable lastFailure = null
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return ApplicationContext.run(EmbeddedServer, properties, Environment.TEST)
-            } catch (Throwable e) {
-                lastFailure = e
-                if (!causedByConnectionRefused(e) || attempt == 3) {
-                    throw e
-                }
-                Thread.sleep(1000L * attempt)
-            }
-        }
-        throw lastFailure
-    }
-
-    private static boolean causedByConnectionRefused(Throwable e) {
-        Throwable current = e
-        while (current != null) {
-            if (current instanceof ConnectException) {
-                return true
-            }
-            current = current.cause
-        }
-        return false
+        return TestContextSupport.runWithRetry(EmbeddedServer, properties, Environment.TEST)
     }
 
 }
