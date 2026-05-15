@@ -70,6 +70,21 @@ jobs:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
         run: |
           mkdir -p build/ci-diagnostics
+          cat > build/ci-diagnostics/test-events.init.gradle <<'EOF'
+          allprojects {
+            tasks.withType(Test).configureEach { testTask ->
+              def eventsFile = rootProject.layout.buildDirectory.file("ci-diagnostics/test-events.log").get().asFile
+              beforeTest { descriptor ->
+                eventsFile.parentFile.mkdirs()
+                eventsFile << "${new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")} START ${testTask.path} ${descriptor.className} :: ${descriptor.name}\n"
+              }
+              afterTest { descriptor, result ->
+                eventsFile.parentFile.mkdirs()
+                eventsFile << "${new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")} END ${testTask.path} ${result.resultType} ${descriptor.className} :: ${descriptor.name}\n"
+              }
+            }
+          }
+          EOF
 
           dump_diagnostics() {
             local ts
@@ -125,6 +140,10 @@ jobs:
                 echo "recent gradle progress:"
                 grep -E '(^> Task| PASSED| FAILED|BUILD |FAILURE:|Exception|OutOfMemory|No space|Connection refused)' build/ci-diagnostics/gradle-output.log | tail -12 || true
               fi
+              if [ -f build/ci-diagnostics/test-events.log ]; then
+                echo "recent test events:"
+                tail -12 build/ci-diagnostics/test-events.log || true
+              fi
               echo "recent test result XML:"
               tail -10 "$out/recent-test-results.txt" || true
             }
@@ -132,7 +151,7 @@ jobs:
           }
 
           (
-            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache > build/ci-diagnostics/gradle-output.log 2>&1
+            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache --init-script build/ci-diagnostics/test-events.init.gradle > build/ci-diagnostics/gradle-output.log 2>&1
             gradle_exit=$?
             echo "$gradle_exit" > build/ci-diagnostics/gradle-exit-code.txt
             exit "$gradle_exit"
