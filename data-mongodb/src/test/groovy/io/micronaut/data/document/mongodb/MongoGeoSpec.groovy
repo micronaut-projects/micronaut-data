@@ -138,7 +138,7 @@ class MongoGeoSpec extends Specification {
         intersects*.id as Set == [alexanderplatzCafe.id, museumIslandCafe.id] as Set
     }
 
-    void "test geo near query parsing"() {
+    void "test near query parsing"() {
         given:
         GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
         GeoEntity nearbyBakery = new GeoEntity(point: new Point(new Position(13.4053d, 52.5202d)))
@@ -149,7 +149,7 @@ class MongoGeoSpec extends Specification {
         Point alexanderplatz = new Point(new Position(13.4050d, 52.5200d))
 
         when:
-        def near = mongoGeoEntityRepository.findByPointGeoNear(alexanderplatz, 50d)
+        def near = mongoGeoEntityRepository.findByPointNear(alexanderplatz, 50d)
 
         then:
         near*.id as Set == [alexanderplatzCafe.id, nearbyBakery.id] as Set

@@ -17,9 +17,6 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -43,6 +40,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
@@ -53,9 +51,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -71,6 +69,8 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -1322,12 +1322,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public void visit(GeoNearPredicate geoNearPredicate) {
-            visitGeoNear(geoNearPredicate.getValue(), geoNearPredicate.getGeometry(), geoNearPredicate.getDistance());
+        public void visit(NearPredicate nearPredicate) {
+            visitNear(nearPredicate.getValue(), nearPredicate.getGeometry(), nearPredicate.getDistance());
         }
 
         @Override
-        public void visitGeoNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of(
                 "$near", Map.of(

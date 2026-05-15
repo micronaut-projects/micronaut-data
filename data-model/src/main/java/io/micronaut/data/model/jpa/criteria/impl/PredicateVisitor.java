@@ -19,8 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -79,11 +79,11 @@ public interface PredicateVisitor {
     void visit(BetweenPredicate betweenPredicate);
 
     /**
-     * Visit {@link GeoNearPredicate}.
+     * Visit {@link NearPredicate}.
      *
-     * @param geoNearPredicate The geo near predicate
+     * @param nearPredicate The near predicate
      */
-    void visit(GeoNearPredicate geoNearPredicate);
+    void visit(NearPredicate nearPredicate);
 
     /**
      * Visit {@link BinaryPredicate}.

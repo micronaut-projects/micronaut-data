@@ -20,20 +20,20 @@ import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 
 /**
- * The geo near predicate implementation.
+ * The near predicate implementation.
  *
  * @since 5.0
  */
 @Internal
-public final class GeoNearPredicate extends AbstractPredicate {
+public final class NearPredicate extends AbstractPredicate {
 
     private final Expression<?> value;
     private final Expression<?> geometry;
     private final Expression<? extends Number> distance;
 
-    public GeoNearPredicate(Expression<?> value,
-                            Expression<?> geometry,
-                            Expression<? extends Number> distance) {
+    public NearPredicate(Expression<?> value,
+                         Expression<?> geometry,
+                         Expression<? extends Number> distance) {
         this.value = value;
         this.geometry = geometry;
         this.distance = distance;

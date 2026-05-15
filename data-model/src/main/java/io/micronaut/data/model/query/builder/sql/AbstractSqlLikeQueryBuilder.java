@@ -2434,7 +2434,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public void visitGeoNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
             switch (getDialect()) {
                 case ORACLE -> {
                     query.append("SDO_WITHIN_DISTANCE(");
@@ -2470,7 +2470,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(") <= ");
                     appendExpression(distanceExpression);
                 }
-                default -> throw new UnsupportedOperationException("GeoNear is not supported by dialect: " + getDialect());
+                default -> throw new UnsupportedOperationException("Near is not supported by dialect: " + getDialect());
             }
         }
 

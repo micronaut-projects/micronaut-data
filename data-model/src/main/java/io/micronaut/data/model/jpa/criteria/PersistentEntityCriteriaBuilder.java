@@ -244,7 +244,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return a new predicate
      * @since 5.0
      */
-    Predicate geoNear(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
+    Predicate near(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
 
     /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.

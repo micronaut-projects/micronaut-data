@@ -29,5 +29,5 @@ public interface HotelWktRepository extends CrudRepository<HotelWkt, Long> {
 
     List<HotelWkt> findByLocationGeoIntersects(LineString busRoute);
 
-    List<HotelWkt> findByLocationGeoNear(Point center, double distance);
+    List<HotelWkt> findByLocationNear(Point center, double distance);
 }

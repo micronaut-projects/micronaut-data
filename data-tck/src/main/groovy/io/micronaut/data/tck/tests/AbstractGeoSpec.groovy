@@ -337,7 +337,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoNear when json conversion used"() {
+    void "test findByLocationNear when json conversion used"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -349,7 +349,7 @@ abstract class AbstractGeoSpec extends Specification {
 
         when:
         getHotelJsonRepository().saveAll(List.of(nearby1, nearby2, farAway))
-        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoNear(center, 3d)
+        List<HotelJson> result = getHotelJsonRepository().findByLocationNear(center, 3d)
         List<String> names = result.stream()
                 .map(HotelJson::getName)
                 .toList()
@@ -413,7 +413,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoNear when wkt conversion used"() {
+    void "test findByLocationNear when wkt conversion used"() {
         given:
         HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
@@ -423,7 +423,7 @@ abstract class AbstractGeoSpec extends Specification {
 
         when:
         getHotelWktRepository().saveAll(List.of(nearby1, nearby2, farAway))
-        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoNear(center, 3d)
+        List<HotelWkt> result = getHotelWktRepository().findByLocationNear(center, 3d)
         List<String> names = result.stream()
                 .map(HotelWkt::getName)
                 .toList()

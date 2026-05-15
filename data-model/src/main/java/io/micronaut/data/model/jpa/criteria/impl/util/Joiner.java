@@ -43,9 +43,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.GeoNearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
@@ -276,10 +276,10 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
-    public void visit(GeoNearPredicate geoNearPredicate) {
-        visitPredicateExpression(geoNearPredicate.getValue());
-        visitPredicateExpression(geoNearPredicate.getGeometry());
-        visitPredicateExpression(geoNearPredicate.getDistance());
+    public void visit(NearPredicate nearPredicate) {
+        visitPredicateExpression(nearPredicate.getValue());
+        visitPredicateExpression(nearPredicate.getGeometry());
+        visitPredicateExpression(nearPredicate.getDistance());
     }
 
     @Override

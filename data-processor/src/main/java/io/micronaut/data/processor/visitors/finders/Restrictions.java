@@ -967,11 +967,11 @@ public final class Restrictions {
     }
 
     /**
-     * Geo near restriction.
+     * Near restriction.
      *
      * @param <T> The property type
      */
-    public static class PropertyGeoNear<T> implements PropertyRestriction<T> {
+    public static class PropertyNear<T> implements PropertyRestriction<T> {
 
         @Override
         public int getRequiredParameters() {
@@ -984,12 +984,12 @@ public final class Restrictions {
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
                               List<ParameterExpression<T>> parameters) {
-            return cb.geoNear(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
+            return cb.near(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
         }
 
         @Override
         public String getName() {
-            return "GeoNear";
+            return "Near";
         }
     }
 }

@@ -39,14 +39,14 @@ For example, the following repository method fragments are supported for SQL dia
 
 * `findByLocationGeoWithin(geometry)`
 * `findByLocationGeoIntersects(geometry)`
-* `findByLocationGeoNear(geometry, distance)`
+* `findByLocationNear(geometry, distance)`
 
-The same operations are available through the criteria API with `geoWithin`, `geoIntersects`, and `geoNear` predicates.
+The same operations are available through the criteria API with `geoWithin`, `geoIntersects`, and `near` predicates.
 
 Micronaut Data applies the same GeoJSON or WKT conversion rules described above to the predicate arguments, and each
 database section below documents the exact spatial functions emitted for that dialect.
 
-`GeoNear` expects the second argument to be a numeric distance value. Micronaut Data passes that value through as a bind
+`Near` expects the second argument to be a numeric distance value. Micronaut Data passes that value through as a bind
 parameter and uses the most appropriate distance predicate available for the active dialect.
 
 === Database vendor details
@@ -117,7 +117,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `SDO_ANYINTERACT(column, convertedValue) = 'TRUE'`
 
-| `GeoNear`
+| `Near`
 | `SDO_WITHIN_DISTANCE(column, convertedValue, 'distance=distanceValue') = 'TRUE'`
 |===
 
@@ -182,7 +182,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `GeoNear`
+| `Near`
 | `ST_DWithin(column, convertedValue, distanceValue)`
 |===
 
@@ -233,7 +233,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `GeoNear`
+| `Near`
 | `ST_Distance(column, convertedValue) <= distanceValue`
 |===
 
@@ -278,7 +278,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `GeoNear`
+| `Near`
 | `ST_Distance(column, convertedValue) <= distanceValue`
 |===
 
@@ -332,7 +332,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `GeoNear`
+| `Near`
 | `ST_DWithin(column, convertedValue, distanceValue)`
 |===
 
@@ -392,7 +392,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `column.STIntersects(convertedValue) = 1`
 
-| `GeoNear`
+| `Near`
 | `column.STDistance(convertedValue) <= distanceValue`
 |===
 

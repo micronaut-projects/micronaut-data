@@ -29,5 +29,5 @@ public interface HotelJsonRepository extends CrudRepository<HotelJson, Long> {
 
     List<HotelJson> findByLocationGeoIntersects(LineString busRoute);
 
-    List<HotelJson> findByLocationGeoNear(Point center, double distance);
+    List<HotelJson> findByLocationNear(Point center, double distance);
 }

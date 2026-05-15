@@ -513,7 +513,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
                     throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
                 }
-                if ("GeoNear".equals(restrictionName) && i == 1) {
+                if ("Near".equals(restrictionName) && i == 1) {
                     params.add(scb.parameter(parameter, null));
                 } else {
                     params.add(scb.parameter(parameter, propertyPath));
@@ -531,12 +531,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return true;
         }
         if (("GeoWithin".equals(restrictionName) || "GeoIntersects".equals(restrictionName)
-            || ("GeoNear".equals(restrictionName) && parameterIndex == 0))
+            || ("Near".equals(restrictionName) && parameterIndex == 0))
             && isGeometryType(genericType)
             && isGeometryType(property.getType())) {
             return true;
         }
-        if ("GeoNear".equals(restrictionName) && parameterIndex == 1 && TypeUtils.isNumber(genericType)) {
+        if ("Near".equals(restrictionName) && parameterIndex == 1 && TypeUtils.isNumber(genericType)) {
             return true;
         }
         PersistentEntity owner = property.getOwner();

@@ -619,11 +619,11 @@ interface MyRepository {
     }
 
     @Unroll
-    void "test encode #dialect geoNear predicate for #entityClass.simpleName"() {
+    void "test encode #dialect near predicate for #entityClass.simpleName"() {
         given:
         def query = builder.createQuery(entityClass)
         def root = query.from(entityClass)
-        query.where(builder.geoNear(root.get('point'), builder.parameter(Object), builder.parameter(Double)))
+        query.where(builder.near(root.get('point'), builder.parameter(Object), builder.parameter(Double)))
 
         expect:
         query.build(new SqlQueryBuilder(dialect)).query == expectedQuery
