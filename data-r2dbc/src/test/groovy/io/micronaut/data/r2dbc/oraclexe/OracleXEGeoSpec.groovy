@@ -12,6 +12,7 @@ import io.micronaut.data.tck.repositories.HotelJsonRepository
 import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
+import io.micronaut.test.support.TestPropertyProviderFactory
 
 import java.time.Duration
 
@@ -50,6 +51,16 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
+    }
+
+    @Override
+    Map<String, String> getProperties() {
+        def props = getDataSourceProperties("oraclegeospatial")
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    props.putAll(it.get().create(props, this.class).get())
+                }
+        return props
     }
 
     @Override
