@@ -68,7 +68,66 @@ jobs:
           GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
         run: |
-          ./gradlew check jacocoReport --no-daemon --continue
+          mkdir -p build/ci-diagnostics
+
+          dump_diagnostics() {
+            local ts
+            ts="$(date -u +%Y%m%dT%H%M%SZ)"
+            local out="build/ci-diagnostics/${ts}"
+            mkdir -p "$out"
+
+            echo "::group::CI diagnostics ${ts}"
+            date -u '+%Y-%m-%dT%H:%M:%SZ' | tee "$out/date.txt"
+            ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid | tee "$out/ps.txt" || true
+            df -h | tee "$out/df.txt" || true
+            free -m | tee "$out/free.txt" || true
+            docker ps -a | tee "$out/docker-ps.txt" || true
+
+            if command -v jcmd >/dev/null 2>&1; then
+              jcmd -l | tee "$out/jcmd-l.txt" || true
+              while read -r pid main rest; do
+                case "$main $rest" in
+                  *Gradle*|*Test*|*JUnit*|*Spock*|*micronaut*|*testresources*)
+                    echo "Dumping JVM ${pid}: ${main} ${rest}"
+                    jcmd "$pid" Thread.print -l > "$out/thread-${pid}.txt" 2>&1 || true
+                    jcmd "$pid" VM.command_line > "$out/command-${pid}.txt" 2>&1 || true
+                    ;;
+                esac
+              done < "$out/jcmd-l.txt"
+            fi
+            echo "::endgroup::"
+          }
+
+          ./gradlew check jacocoReport --no-daemon --continue &
+          gradle_pid=$!
+
+          (
+            while kill -0 "$gradle_pid" 2>/dev/null; do
+              sleep 120
+              kill -0 "$gradle_pid" 2>/dev/null || break
+              dump_diagnostics
+            done
+          ) &
+          diagnostics_pid=$!
+
+          set +e
+          wait "$gradle_pid"
+          gradle_exit=$?
+          set -e
+
+          kill "$diagnostics_pid" 2>/dev/null || true
+          wait "$diagnostics_pid" 2>/dev/null || true
+
+          dump_diagnostics
+          exit "$gradle_exit"
+
+      - name: "🧵 Upload CI diagnostics"
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ci-diagnostics-${{ matrix.java }}
+          path: build/ci-diagnostics
+          if-no-files-found: ignore
 
       - name: "🔎 Run static analysis"
         if: env.SONAR_TOKEN_AVAILABLE == 'true' && matrix.java == '25'
