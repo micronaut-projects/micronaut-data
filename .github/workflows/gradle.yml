@@ -82,6 +82,8 @@ jobs:
             ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid | tee "$out/ps.txt" || true
             df -h | tee "$out/df.txt" || true
             free -m | tee "$out/free.txt" || true
+            docker system df -v | tee "$out/docker-system-df.txt" || true
+            docker images --digests | tee "$out/docker-images.txt" || true
             docker ps -a | tee "$out/docker-ps.txt" || true
             docker stats --no-stream --all | tee "$out/docker-stats.txt" || true
             docker inspect $(docker ps -aq) > "$out/docker-inspect.json" 2>&1 || true
@@ -106,7 +108,7 @@ jobs:
 
           (
             set -o pipefail
-            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue 2>&1 | tee build/ci-diagnostics/gradle-output.log
+            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache 2>&1 | tee build/ci-diagnostics/gradle-output.log
             gradle_exit=${PIPESTATUS[0]}
             echo "$gradle_exit" > build/ci-diagnostics/gradle-exit-code.txt
             exit "$gradle_exit"
