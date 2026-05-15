@@ -50,7 +50,9 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterExpressions
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterRoles
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterTableAliases
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
@@ -1764,7 +1766,7 @@ interface EntityWithIdClassRepository extends GenericRepository<Book, Long> {
 """)
             def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_ WHERE (book_.id IN (SELECT book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_ WHERE (book_book_.id IN (SELECT book_book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_book_ JOIN book_book_book_.author book_book_book_author_))))'
+            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_ WHERE (book_.id IN (SELECT book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_ JOIN book_book_.author book_book_author_ WHERE (book_book_.id IN (SELECT book_book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_book_ JOIN book_book_book_.author book_book_book_author_))))'
             getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(book_)) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
     }
 
@@ -2390,8 +2392,95 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id` WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getQueryParts(findAll) == [
+                """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id` WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))""",
+                "))",
+                ""
+            ] as String[]
             getParameterRoles(findAll) == ["pageableRequired", "sort"]
+            getParameterTableAliases(findAll) == ["book_book_", "book_"]
+    }
+
+    void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
+        given:
+        def repository = buildRepository('test.CarRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface CarRepository extends CrudRepository<Car, Long> {
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<Car> findAll(Pageable pageable);
+
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Slice<Car> getAll(Pageable pageable);
+}
+
+@MappedEntity("the_car")
+class Car {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String licensePlate;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private CarManufacturer manufacturer;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getLicensePlate() { return licensePlate; }
+    public void setLicensePlate(String licensePlate) { this.licensePlate = licensePlate; }
+    public CarManufacturer getManufacturer() { return manufacturer; }
+    public void setManufacturer(CarManufacturer manufacturer) { this.manufacturer = manufacturer; }
+}
+
+@MappedEntity("the_car_manufacturer")
+class CarManufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+        """)
+        def findAll = repository.getRequiredMethod("findAll", Pageable)
+        def getAll = repository.getRequiredMethod("getAll", Pageable)
+        def expectedQuery = """SELECT car_.`id`,car_.`license_plate`,car_.`manufacturer_id`,car_manufacturer_.`name` AS manufacturer_name FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id` WHERE (car_.`id` IN (SELECT car_car_.`id` FROM `the_car` car_car_ LEFT JOIN `the_car_manufacturer` car_car_manufacturer_ ON car_car_.`manufacturer_id`=car_car_manufacturer_.`id` WHERE (car_car_.`id` IN (SELECT car_car_car_.`id` FROM `the_car` car_car_car_ LEFT JOIN `the_car_manufacturer` car_car_car_manufacturer_ ON car_car_car_.`manufacturer_id`=car_car_car_manufacturer_.`id`))"""
+        def expectedQueryParts = [
+            expectedQuery,
+            "))",
+            ""
+        ] as String[]
+
+        expect:
+        getQuery(findAll) == expectedQuery
+        getQueryParts(findAll) == expectedQueryParts
+        getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(car_.`id`)) FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id`'
+        getParameterRoles(findAll) == ["pageableRequired", "sort"]
+        getParameterTableAliases(findAll) == ["car_car_", "car_"]
+
+        getQuery(getAll) == expectedQuery
+        getQueryParts(getAll) == expectedQueryParts
+        getParameterRoles(getAll) == ["pageableRequired", "sort"]
+        getParameterTableAliases(getAll) == ["car_car_", "car_"]
     }
 
     void "test repository with reused embedded entity"() {

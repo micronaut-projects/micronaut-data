@@ -27,7 +27,10 @@ import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
@@ -207,6 +210,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         applyDistinct(mainQuery);
 
+        applyPaginationJoinSpecs(paginationRoot, joinSpecs);
         applyJoinSpecs(filteredRoot, joinSpecs);
         applyJoinSpecs(mainRoot, joinSpecs);
 
@@ -215,6 +219,31 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         mainEntityQuery.getParametersInRole().put(pageableParameterIndex, TypeRole.SORT);
 
         return mainQuery;
+    }
+
+    private void applyPaginationJoinSpecs(PersistentEntityRoot<Object> root, List<AnnotationValue<Join>> joinSpecs) {
+        for (AnnotationValue<Join> joinSpec : joinSpecs) {
+            String path = joinSpec.stringValue().orElse(null);
+            if (path != null && isToOneJoinPath(root.getPersistentEntity(), path)) {
+                applyJoinSpecs(root, List.of(joinSpec));
+            }
+        }
+    }
+
+    private boolean isToOneJoinPath(PersistentEntity persistentEntity, String path) {
+        PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+        if (propertyPath == null || !(propertyPath.getProperty() instanceof Association association)) {
+            return false;
+        }
+        if (association.isForeignKey()) {
+            return false;
+        }
+        for (Association associationPath : propertyPath.getAssociations()) {
+            if (associationPath.isForeignKey()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

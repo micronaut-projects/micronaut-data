@@ -461,6 +461,18 @@ interface MyRepository {
         Person | 'desc'    | ["name", "someId"] | 'person_.name DESC,person_.some_id DESC'
     }
 
+    void "test encode order by with joined property uses provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Book)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, "book_book_")
+
+        then:
+        query == ' ORDER BY book_book_author_.name ASC'
+    }
+
     void "test encode insert statement"() {
         given:
         def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder())

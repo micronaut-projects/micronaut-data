@@ -375,6 +375,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias
      */
     public String getAliasName(JoinPath joinPath) {
+        return getAliasName(joinPath, null);
+    }
+
+    /**
+     * Get the alias name.
+     *
+     * @param joinPath   The join path
+     * @param tableAlias The root table alias to prefix nested joins with
+     * @return The alias
+     */
+    protected String getAliasName(JoinPath joinPath, @Nullable String tableAlias) {
         return joinPath.getAlias().orElseGet(() -> {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
 
@@ -383,8 +394,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return joinPathAlias;
             }
 
-            PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-            String ownerAlias = getAliasName(owner);
+            String ownerAlias;
+            if (tableAlias == null) {
+                PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
+                ownerAlias = getAliasName(owner);
+            } else {
+                ownerAlias = tableAlias;
+            }
             if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
                 return ownerAlias + joinPathAlias.substring(1);
             } else {
@@ -1245,7 +1261,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             for (Association association : associations) {
                 joiner.add(association.getName());
             }
-            String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
+            String joinAlias = getAliasName(
+                new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null),
+                tableAlias
+            );
             if (!computePropertyPaths()) {
                 if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
                     // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
