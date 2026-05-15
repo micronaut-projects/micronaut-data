@@ -122,7 +122,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
     private final ExecutorServiceResolver executorServiceResolver;
     private final boolean uniqueResultOnFindOne;
-    private final boolean persistOrMergeOnSave;
     private final Integer defaultFetchSize;
 
     /**
@@ -152,7 +151,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
         ConvertibleValuesMap<Object> convertibleValuesMap = new ConvertibleValuesMap<>(jpaConfiguration.getProperties());
         this.uniqueResultOnFindOne = convertibleValuesMap.get("uniqueResultOnFindOne", boolean.class, false);
-        this.persistOrMergeOnSave = convertibleValuesMap.get("persistOrMergeOnSave", boolean.class, false);
         this.defaultFetchSize = convertibleValuesMap.get("defaultFetchSize", Integer.class)
             .orElse(convertibleValuesMap.get("default-fetch-size", Integer.class, 0));
     }
@@ -271,7 +269,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
-        return executeRead(session -> session.byId(type).load(id));
+        return executeReadNullable(session -> session.byId(type).load(id));
     }
 
     @NonNull
@@ -286,6 +284,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void persist(@NonNull T entity) {
         executeWrite(session -> {
             session.persist(entity);
@@ -294,6 +293,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void refresh(@NonNull T entity) {
         executeWrite(session -> {
             session.refresh(entity);
@@ -302,6 +302,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void remove(@NonNull T entity) {
         executeWrite(session -> {
             session.remove(entity);
@@ -310,6 +311,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void detach(@NonNull T entity) {
         executeWrite(session -> {
             session.detach(entity);
@@ -320,7 +322,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return executeRead(session -> {
+        return executeReadNullable(session -> {
             if (uniqueResultOnFindOne) {
                 UniqueResultCollector<R> collector = new UniqueResultCollector<>();
                 collectFindOne(session, preparedQuery, collector);
@@ -452,16 +454,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 return executeUpdate(operation, session, storedQuery);
             }
             T entity = operation.getEntity();
-            if (persistOrMergeOnSave) {
-                RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                    session.persist(entity);
-                } else {
-                    entity = session.merge(entity);
-                }
-            } else {
-                session.persist(entity);
-            }
+            session.persist(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
@@ -476,7 +469,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 return executeUpdate(operation, session, storedQuery);
             }
             T entity = operation.getEntity();
-            entity = session.merge(entity);
+            if (!session.contains(entity)) {
+                entity = session.merge(entity);
+            }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
@@ -500,8 +495,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             }
             List<T> results = new ArrayList<>();
             for (T entity : operation) {
-                T merge = session.merge(entity);
-                results.add(merge);
+                if (session.contains(entity)) {
+                    results.add(entity);
+                } else {
+                    results.add(session.merge(entity));
+                }
             }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return results;
@@ -528,19 +526,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             if (storedQuery != null) {
                 return executeUpdate(operation, session, storedQuery);
             }
-            if (persistOrMergeOnSave) {
-                RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-                for (T entity : operation) {
-                    if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getProperty().get(entity) == null) {
-                        session.persist(entity);
-                    } else {
-                        session.merge(entity);
-                    }
-                }
-            } else {
-                for (T entity : operation) {
-                    session.persist(entity);
-                }
+            for (T entity : operation) {
+                session.persist(entity);
             }
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return operation;
@@ -706,10 +693,17 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         });
     }
 
+    @SuppressWarnings("NullAway")
     private <R> R executeRead(Function<Session, R> callback) {
         return transactionOperations.executeRead(status -> callback.apply(status.getConnection()));
     }
 
+    @Nullable
+    private <R> R executeReadNullable(Function<Session, R> callback) {
+        return transactionOperations.executeRead(status -> callback.apply(status.getConnection()));
+    }
+
+    @SuppressWarnings("NullAway")
     private <R> R executeWrite(Function<Session, R> callback) {
         return transactionOperations.executeWrite(status -> callback.apply(status.getConnection()));
     }
@@ -751,6 +745,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public void flush() {
         executeWrite(session -> {
                 session.flush();
@@ -778,8 +773,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @Nullable
     public <R> R findOne(CriteriaQuery<R> query) {
-        return executeRead(session -> session.createQuery(query).uniqueResult());
+        return executeReadNullable(session -> session.createQuery(query).uniqueResult());
     }
 
     @Override

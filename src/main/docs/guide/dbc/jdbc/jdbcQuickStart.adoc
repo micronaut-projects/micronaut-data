@@ -102,7 +102,7 @@ To save an instance use the `save` method of the `CrudRepository` interface:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="save", indent="0"]
 
-NOTE: Unlike the JPA implementation there is no dirty checking so `save` always performs a SQL `INSERT`. For batch updates use an `update` method (see following section).
+NOTE: Unlike the JPA implementation there is no dirty checking. `save` inserts entities without an identity value and updates entities with a generated or always auto-populated identity value already present. Entities with non-generated assigned identities are inserted by default. Use `insert` to require an insert, and use an `update` method for explicit or partial updates.
 
 === Retrieving an Instance (Read)
 

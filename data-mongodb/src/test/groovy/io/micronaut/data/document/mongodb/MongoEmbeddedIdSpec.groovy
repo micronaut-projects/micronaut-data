@@ -50,7 +50,7 @@ class MongoEmbeddedIdSpec extends Specification implements MongoTestPropertyProv
         when:
         ItemGroup itemGroup = new ItemGroup(1L)
         itemGroup.setSecondId(2L)
-        groupRepository.save(itemGroup)
+        groupRepository.insert(itemGroup)
         ItemGroup entity = groupRepository.findById(1L).get()
 
         then:
@@ -60,16 +60,16 @@ class MongoEmbeddedIdSpec extends Specification implements MongoTestPropertyProv
     void "test CRUD"() {
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         def entity = repository.findById(id).orElse(null)
 

@@ -890,8 +890,8 @@ abstract class AbstractRepositorySpec extends Specification {
         io.micronaut.data.tck.jdbc.entities.User user1 = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("user1@email.com"))
         io.micronaut.data.tck.jdbc.entities.Role role1 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("manager"))
         io.micronaut.data.tck.jdbc.entities.Role role2 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("developer"))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
         def userRoleCount = userRoleRepository.count()
         def userRoleDistinctCount = userRoleRepository.countDistinct()
 
@@ -2121,7 +2121,7 @@ abstract class AbstractRepositorySpec extends Specification {
         Role role = roleRepository.save(new Role("ROLE_USER"))
 
         when:
-        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
+        UserRole userRole = userRoleRepository.insert(adminUser, adminRole)
 
         then:
         userRoleRepository.count() == 1
@@ -2129,8 +2129,8 @@ abstract class AbstractRepositorySpec extends Specification {
         userRole.role.id == adminRole.id
 
         when:
-        userRoleRepository.save(adminUser, role)
-        userRoleRepository.save(user, role)
+        userRoleRepository.insert(adminUser, role)
+        userRoleRepository.insert(user, role)
 
         then:
         userRoleRepository.count() == 3
@@ -3262,7 +3262,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -3271,14 +3271,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -3326,7 +3326,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClass2Repository.save(e)
+        entityWithIdClass2Repository.insert(e)
         e = entityWithIdClass2Repository.findById(k).get()
 
         then:
@@ -3335,14 +3335,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name() == "Xyz"
 
         when:
-        entityWithIdClass2Repository.save(f)
+        entityWithIdClass2Repository.insert(f)
         List<EntityWithIdClass2> ef = entityWithIdClass2Repository.findById2(e.id2())
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClass2Repository.save(g)
+        entityWithIdClass2Repository.insert(g)
         List<EntityWithIdClass2> eg = entityWithIdClass2Repository.findById1(e.id1())
 
         then:
@@ -3670,7 +3670,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "test query specification with uppercase/lowercase column names"() {
         given:
-        exampleEntityRepository.save(new ExampleEntity(1, "foo", "bar"))
+        exampleEntityRepository.insert(new ExampleEntity(1, "foo", "bar"))
         when:
         QuerySpecification<ExampleEntity> qs = (root, query, criteriaBuilder) -> {
             query.multiselect(

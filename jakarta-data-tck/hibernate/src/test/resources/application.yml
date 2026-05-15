@@ -13,7 +13,6 @@ jpa:
   default:
     properties:
       uniqueResultOnFindOne: true
-      persistOrMergeOnSave: true
       hibernate:
         show_sql: true
         hbm2ddl:

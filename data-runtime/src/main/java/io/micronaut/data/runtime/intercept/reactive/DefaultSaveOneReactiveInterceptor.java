@@ -48,7 +48,7 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractCountOrEntityPubl
 
         return Mono.fromCallable(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);
-            return getInsertOperation(context, o);
-        }).flatMapMany(reactiveOperations::persist);
+            return o;
+        }).flatMapMany(o -> persistOrUpdateReactive(context, o));
     }
 }

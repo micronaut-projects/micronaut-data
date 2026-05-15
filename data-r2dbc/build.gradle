@@ -35,6 +35,7 @@ dependencies {
     testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mnTest.micronaut.test.junit5
+    testImplementation libs.managed.jakarta.data.api
     testImplementation mn.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
