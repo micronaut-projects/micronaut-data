@@ -37,6 +37,7 @@ import io.micronaut.test.support.TestPropertyProviderFactory
 import spock.lang.Specification
 
 import jakarta.transaction.Transactional
+import java.net.ConnectException
 
 abstract class AbstractMultitenancySpec extends Specification {
 
@@ -63,13 +64,13 @@ abstract class AbstractMultitenancySpec extends Specification {
             return
         }
         setup:
-            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + getDataSourceProperties('default') + [
+            EmbeddedServer embeddedServer = startEmbeddedServer(commonProperties + getDataSourceProperties('default') + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'SCHEMA',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
                     (sourcePrefix() + '.default.schema-generate-names[0]')    : 'foo',
                     (sourcePrefix() + '.default.schema-generate-names[1]')    : 'bar'
-            ], Environment.TEST)
+            ])
             def context = embeddedServer.applicationContext
             FooBookClient fooBookClient = context.getBean(FooBookClient)
             BarBookClient barBookClient = context.getBean(BarBookClient)
@@ -118,11 +119,11 @@ abstract class AbstractMultitenancySpec extends Specification {
     def "test datasource multitenancy"() {
         setup:
             Map<String, String> dataSourceProperties = getDataSourceProperties('foo') + getDataSourceProperties('bar')
-            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + dataSourceProperties + [
+            EmbeddedServer embeddedServer = startEmbeddedServer(commonProperties + dataSourceProperties + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'DATASOURCE',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true'
-            ], Environment.TEST)
+            ])
             def context = embeddedServer.applicationContext
             FooBookClient fooBookClient = context.getBean(FooBookClient)
             BarBookClient barBookClient = context.getBean(BarBookClient)
@@ -162,6 +163,33 @@ abstract class AbstractMultitenancySpec extends Specification {
     protected abstract long getDataSourceBooksCount(BeanContext beanContext, String ds);
 
     protected abstract long getSchemaBooksCount(BeanContext beanContext, String schemaName);
+
+    private static EmbeddedServer startEmbeddedServer(Map<String, Object> properties) {
+        Throwable lastFailure = null
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                return ApplicationContext.run(EmbeddedServer, properties, Environment.TEST)
+            } catch (Throwable e) {
+                lastFailure = e
+                if (!causedByConnectionRefused(e) || attempt == 3) {
+                    throw e
+                }
+                Thread.sleep(1000L * attempt)
+            }
+        }
+        throw lastFailure
+    }
+
+    private static boolean causedByConnectionRefused(Throwable e) {
+        Throwable current = e
+        while (current != null) {
+            if (current instanceof ConnectException) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
 
 }
 
