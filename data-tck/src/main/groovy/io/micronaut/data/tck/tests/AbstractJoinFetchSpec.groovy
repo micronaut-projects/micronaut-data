@@ -12,7 +12,7 @@ abstract class AbstractJoinFetchSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = TestContextSupport.runWithRetry(properties)
+    ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
     boolean leftJoinSupported = true

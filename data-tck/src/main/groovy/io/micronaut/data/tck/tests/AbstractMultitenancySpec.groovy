@@ -63,13 +63,13 @@ abstract class AbstractMultitenancySpec extends Specification {
             return
         }
         setup:
-            EmbeddedServer embeddedServer = startEmbeddedServer(commonProperties + getDataSourceProperties('default') + [
+            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + getDataSourceProperties('default') + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'SCHEMA',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
                     (sourcePrefix() + '.default.schema-generate-names[0]')    : 'foo',
                     (sourcePrefix() + '.default.schema-generate-names[1]')    : 'bar'
-            ])
+            ], Environment.TEST)
             def context = embeddedServer.applicationContext
             FooBookClient fooBookClient = context.getBean(FooBookClient)
             BarBookClient barBookClient = context.getBean(BarBookClient)
@@ -118,11 +118,11 @@ abstract class AbstractMultitenancySpec extends Specification {
     def "test datasource multitenancy"() {
         setup:
             Map<String, String> dataSourceProperties = getDataSourceProperties('foo') + getDataSourceProperties('bar')
-            EmbeddedServer embeddedServer = startEmbeddedServer(commonProperties + dataSourceProperties + [
+            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + dataSourceProperties + [
                     'spec.name'                                               : 'multitenancy',
                     'micronaut.data.multi-tenancy.mode'                       : 'DATASOURCE',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true'
-            ])
+            ], Environment.TEST)
             def context = embeddedServer.applicationContext
             FooBookClient fooBookClient = context.getBean(FooBookClient)
             BarBookClient barBookClient = context.getBean(BarBookClient)
@@ -162,10 +162,6 @@ abstract class AbstractMultitenancySpec extends Specification {
     protected abstract long getDataSourceBooksCount(BeanContext beanContext, String ds);
 
     protected abstract long getSchemaBooksCount(BeanContext beanContext, String schemaName);
-
-    private static EmbeddedServer startEmbeddedServer(Map<String, Object> properties) {
-        return TestContextSupport.runWithRetry(EmbeddedServer, properties, Environment.TEST)
-    }
 
 }
 

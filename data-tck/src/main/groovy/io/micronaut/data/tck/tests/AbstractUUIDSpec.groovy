@@ -26,7 +26,7 @@ abstract class AbstractUUIDSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext applicationContext = TestContextSupport.runWithRetry(properties)
+    ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     abstract UuidRepository getUuidRepository()
 

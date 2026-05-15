@@ -137,7 +137,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = TestContextSupport.runWithRetry(properties)
+    ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
     Optional<SynchronousTransactionManager<Connection>> transactionManager = context.findBean(SynchronousTransactionManager)

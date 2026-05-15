@@ -30,7 +30,7 @@ abstract class AbstractArraysSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = TestContextSupport.runWithRetry(properties)
+    ApplicationContext context = ApplicationContext.run(properties)
 
     ApplicationContext getApplicationContext() {
         return context
