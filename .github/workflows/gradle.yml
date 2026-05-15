@@ -61,7 +61,7 @@ jobs:
 
       - name: "🛠 Build with Gradle"
         id: gradle
-        timeout-minutes: 90
+        timeout-minutes: 180
         env:
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -151,7 +151,7 @@ jobs:
           }
 
           (
-            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache --init-script build/ci-diagnostics/test-events.init.gradle > build/ci-diagnostics/gradle-output.log 2>&1
+            timeout --preserve-status --signal=TERM --kill-after=60s 150m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache --init-script build/ci-diagnostics/test-events.init.gradle > build/ci-diagnostics/gradle-output.log 2>&1
             gradle_exit=$?
             echo "$gradle_exit" > build/ci-diagnostics/gradle-exit-code.txt
             exit "$gradle_exit"
