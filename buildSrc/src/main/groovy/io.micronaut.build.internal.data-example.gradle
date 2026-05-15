@@ -18,6 +18,14 @@ tasks.withType(Javadoc).configureEach {
     options.addBooleanOption('quiet', true)
 }
 
+tasks.withType(Test).configureEach {
+    if (providers.environmentVariable("GITHUB_ACTIONS").map { it.toBoolean() }.getOrElse(false)) {
+        plugins.withId("io.micronaut.test-resources") {
+            finalizedBy("stopTestResourcesService")
+        }
+    }
+}
+
 tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
         setProperty("useClassDataSharing", false)

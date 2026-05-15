@@ -70,6 +70,14 @@ tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach 
     }
 }
 
+tasks.withType(Test).configureEach {
+    if (providers.environmentVariable("GITHUB_ACTIONS").map { it.toBoolean() }.getOrElse(false)) {
+        plugins.withId("io.micronaut.test-resources") {
+            finalizedBy("stopTestResourcesService")
+        }
+    }
+}
+
 dependencies {
     micronautBoms(
             platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
