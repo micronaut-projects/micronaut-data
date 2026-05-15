@@ -78,38 +78,50 @@ jobs:
             mkdir -p "$out"
 
             echo "::group::CI diagnostics ${ts}"
-            date -u '+%Y-%m-%dT%H:%M:%SZ' | tee "$out/date.txt"
-            ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid | tee "$out/ps.txt" || true
-            df -h | tee "$out/df.txt" || true
-            free -m | tee "$out/free.txt" || true
-            docker system df -v | tee "$out/docker-system-df.txt" || true
-            docker images --digests | tee "$out/docker-images.txt" || true
-            docker ps -a | tee "$out/docker-ps.txt" || true
-            docker stats --no-stream --all | tee "$out/docker-stats.txt" || true
+            date -u '+%Y-%m-%dT%H:%M:%SZ' > "$out/date.txt"
+            ps -eo pid,ppid,stat,etime,pcpu,pmem,args --sort=pid > "$out/ps.txt" || true
+            df -h > "$out/df.txt" || true
+            free -m > "$out/free.txt" || true
+            docker system df -v > "$out/docker-system-df.txt" || true
+            docker images --digests > "$out/docker-images.txt" || true
+            docker ps -a > "$out/docker-ps.txt" || true
+            docker stats --no-stream --all > "$out/docker-stats.txt" || true
             docker inspect $(docker ps -aq) > "$out/docker-inspect.json" 2>&1 || true
             while read -r container_id; do
               docker logs --tail 300 "$container_id" > "$out/docker-${container_id}.log" 2>&1 || true
             done < <(docker ps -aq)
-            find . -path '*/build/test-results/test/TEST-*.xml' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -200 | tee "$out/recent-test-results.txt" || true
-            find . -path '*/build/reports/tests/test/index.html' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -50 | tee "$out/test-report-indexes.txt" || true
+            find . -path '*/build/test-results/test/TEST-*.xml' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -200 > "$out/recent-test-results.txt" || true
+            find . -path '*/build/reports/tests/test/index.html' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -50 > "$out/test-report-indexes.txt" || true
 
             if command -v jcmd >/dev/null 2>&1; then
-              jcmd -l | tee "$out/jcmd-l.txt" || true
+              jcmd -l > "$out/jcmd-l.txt" || true
               while read -r pid main rest; do
                 [ -n "${pid:-}" ] || continue
-                echo "Dumping JVM ${pid}: ${main} ${rest}"
                 jcmd "$pid" Thread.print -l > "$out/thread-${pid}.txt" 2>&1 || true
                 jcmd "$pid" VM.command_line > "$out/command-${pid}.txt" 2>&1 || true
                 jcmd "$pid" GC.heap_info > "$out/heap-${pid}.txt" 2>&1 || true
               done < "$out/jcmd-l.txt"
             fi
+            {
+              echo "diagnostics captured in ${out}"
+              echo "disk: $(df -h / | awk 'NR == 2 {print $3 \" used, \" $4 \" free, \" $5 \" full\"}')"
+              echo "memory: $(free -m | awk '/Mem:/ {print $3 \" MiB used, \" $7 \" MiB available\"}')"
+              echo "docker containers: $(docker ps -aq | wc -l | tr -d ' ')"
+              echo "jvms: $([ -f "$out/jcmd-l.txt" ] && wc -l < "$out/jcmd-l.txt" | tr -d ' ' || echo 0)"
+              if [ -f build/ci-diagnostics/gradle-output.log ]; then
+                echo "gradle log bytes: $(wc -c < build/ci-diagnostics/gradle-output.log)"
+                echo "recent gradle progress:"
+                grep -E '(^> Task| PASSED| FAILED|BUILD |FAILURE:|Exception|OutOfMemory|No space|Connection refused)' build/ci-diagnostics/gradle-output.log | tail -12 || true
+              fi
+              echo "recent test result XML:"
+              tail -10 "$out/recent-test-results.txt" || true
+            }
             echo "::endgroup::"
           }
 
           (
-            set -o pipefail
-            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache 2>&1 | tee build/ci-diagnostics/gradle-output.log
-            gradle_exit=${PIPESTATUS[0]}
+            timeout --preserve-status --signal=TERM --kill-after=60s 75m ./gradlew check jacocoReport --no-daemon --continue --rerun-tasks --no-build-cache > build/ci-diagnostics/gradle-output.log 2>&1
+            gradle_exit=$?
             echo "$gradle_exit" > build/ci-diagnostics/gradle-exit-code.txt
             exit "$gradle_exit"
           ) &
