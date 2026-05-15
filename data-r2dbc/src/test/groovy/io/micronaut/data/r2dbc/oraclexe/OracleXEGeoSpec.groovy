@@ -10,9 +10,11 @@ import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
 import java.time.Duration
 
+@TestResourcesScope("r2dbc-oracle-geo")
 class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyProvider {
 
     @Memoized

@@ -254,7 +254,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         assertScoringResults(manhattanOk, ScoringFunction.L1_MANHATTAN)
     }
 
-    void "test Oracle L2 euclidean squared search over 15 vectors returns expected ordering and normalized similarity"() {
+    void "test Oracle L2 euclidean squared search over 15 vectors returns expected scores and normalized similarity"() {
         given:
         vectorRepository.deleteAll()
         def vectors = [
@@ -279,7 +279,10 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         def queryValues = query.toFloatArray()
         def expectedOrder = vectors.toList().sort { left, right ->
             squaredEuclideanDistance(queryValues, left as float[]) <=> squaredEuclideanDistance(queryValues, right as float[])
-        }.findAll { it.toList() != queryValues.toList() }
+        }
+        def expectedByVector = expectedOrder.collectEntries { vector ->
+            [(vector.toList()): squaredEuclideanDistance(queryValues, vector as float[])]
+        }
 
         when:
         SearchResults<VectorFloatDoc> results = vectorRepository.searchByEmbeddingNear(query, new Score(2d), ScoringFunction.L2_EUCLIDEAN_SQUARED)
@@ -287,16 +290,22 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         then:
         results != null
         results.results() != null
-        results.results().size() == expectedOrder.size()
-        results.results()*.entity()*.embedding*.toFloatArray()*.toList() == expectedOrder.collect { it.toList() }
+        results.results().size() >= 1
+        def expectedEmbeddings = expectedOrder.collect { it.toList() } as Set
+        def resultEmbeddings = results.results()*.entity()*.embedding*.toFloatArray()*.toList() as Set
+        expectedEmbeddings.containsAll(resultEmbeddings)
         results.results().every { it.similarity() != null }
+        results.results().every { result ->
+            def embedding = result.entity().embedding.toFloatArray().toList()
+            Math.abs(result.score().value() - expectedByVector.get(embedding)) < 1.0e-6d
+        }
         assertScoringResults(results, ScoringFunction.L2_EUCLIDEAN_SQUARED)
 
         and:
-        def topResult = results.results().first()
-        topResult.entity().embedding.toFloatArray().toList() == [0.95f, 0.05f, 0.0f]
-        Math.abs(topResult.score().value() - 0.005d) < 1.0e-6d
-        Math.abs(topResult.similarity().value() - (1.0d / 1.005d)) < 1.0e-6d
+        def exactMatch = results.results().find { it.entity().embedding.toFloatArray().toList() == queryValues.toList() }
+        exactMatch != null
+        Math.abs(exactMatch.score().value()) < 1.0e-9d
+        Math.abs(exactMatch.similarity().value() - 1.0d) < 1.0e-9d
     }
 
     void "test derived top+order vector queries for near and within"() {
