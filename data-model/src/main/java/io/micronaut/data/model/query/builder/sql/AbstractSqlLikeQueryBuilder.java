@@ -364,8 +364,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias name
      */
     protected String getAliasName(PersistentEntity entity) {
-        return entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
-            .orElseGet(() -> getTableName(entity) + "_");
+        return normalizeAlias(entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
+            .orElseGet(() -> getTableName(entity) + "_"));
     }
 
     /**
@@ -402,11 +402,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 ownerAlias = tableAlias;
             }
             if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
-                return ownerAlias + joinPathAlias.substring(1);
+                return normalizeAlias(ownerAlias + joinPathAlias.substring(1));
             } else {
-                return ownerAlias + joinPathAlias;
+                return normalizeAlias(ownerAlias + joinPathAlias);
             }
         });
+    }
+
+    /**
+     * Normalize a generated alias for dialect-specific identifier requirements.
+     *
+     * @param alias The generated alias
+     * @return The normalized alias
+     */
+    protected String normalizeAlias(String alias) {
+        return alias;
     }
 
     /**
@@ -1694,7 +1704,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             this.baseQueryDefinition = query;
             this.entity = query.persistentEntity();
             this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
-            this.rootAlias = useAlias || tableAliasPrefix != null ? (tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder.this.getAliasName(entity) : null;
+            this.rootAlias = useAlias || tableAliasPrefix != null
+                ? normalizeAlias((tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder.this.getAliasName(entity))
+                : null;
         }
 
         public QueryState(BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
@@ -1853,9 +1865,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
                 }
                 if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
-                    return ownerAlias + joinPathAlias.substring(1);
+                    return normalizeAlias(ownerAlias + joinPathAlias.substring(1));
                 } else {
-                    return ownerAlias + joinPathAlias;
+                    return normalizeAlias(ownerAlias + joinPathAlias);
                 }
             });
         }

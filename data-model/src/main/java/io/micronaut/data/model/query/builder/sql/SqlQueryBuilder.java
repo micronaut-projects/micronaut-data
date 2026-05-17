@@ -118,6 +118,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
+    private static final int MAX_POSTGRES_IDENTIFIER_LENGTH = 63;
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
@@ -201,6 +202,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     protected boolean shouldEscape(PersistentEntity entity) {
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
         return Objects.requireNonNullElseGet(shouldEscapeDialect, () -> super.shouldEscape(entity));
+    }
+
+    @Override
+    protected String normalizeAlias(String alias) {
+        if (dialect == Dialect.POSTGRES && alias.length() > MAX_POSTGRES_IDENTIFIER_LENGTH) {
+            String hash = String.format(Locale.ROOT, "%08x", alias.hashCode());
+            boolean trailingUnderscore = alias.endsWith("_");
+            int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
+            int prefixLength = MAX_POSTGRES_IDENTIFIER_LENGTH - reserved;
+            String normalized = alias.substring(0, prefixLength) + "_" + hash;
+            return trailingUnderscore ? normalized + "_" : normalized;
+        }
+        return alias;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {

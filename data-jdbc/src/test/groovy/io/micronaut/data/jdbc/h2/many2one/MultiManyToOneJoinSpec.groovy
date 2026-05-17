@@ -49,6 +49,12 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Shared
     CarManufacturerRepository carManufacturerRepository = applicationContext.getBean(CarManufacturerRepository)
 
+    @Shared
+    FleetRepository fleetRepository = applicationContext.getBean(FleetRepository)
+
+    @Shared
+    FleetManufacturerRepository fleetManufacturerRepository = applicationContext.getBean(FleetManufacturerRepository)
+
     void 'test many-to-one hierarchy'() {
         given:
             RefA refA = new RefA(refB: new RefB(refC: new RefC(name: "TestXyz")))
@@ -192,6 +198,53 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         cleanup:
         carRepository.deleteAll()
         carManufacturerRepository.deleteAll()
+    }
+
+    void "test issue 3851 nested to-one join through one-to-many with pageable sorting and pagination"() {
+        given:
+        fleetRepository.deleteAll()
+        fleetManufacturerRepository.deleteAll()
+
+        def alpha = fleetManufacturerRepository.save(new FleetManufacturer(name: "Alpha"))
+        def beta = fleetManufacturerRepository.save(new FleetManufacturer(name: "Beta"))
+        def gamma = fleetManufacturerRepository.save(new FleetManufacturer(name: "Gamma"))
+        def delta = fleetManufacturerRepository.save(new FleetManufacturer(name: "Delta"))
+        def epsilon = fleetManufacturerRepository.save(new FleetManufacturer(name: "Epsilon"))
+        fleetRepository.save(new Fleet(name: "Fleet-A", vehicles: [
+            new Vehicle(registrationCode: "A-1", manufacturer: alpha),
+            new Vehicle(registrationCode: "A-2", manufacturer: beta)
+        ]))
+        fleetRepository.save(new Fleet(name: "Fleet-B", vehicles: [
+            new Vehicle(registrationCode: "B-1", manufacturer: gamma)
+        ]))
+        fleetRepository.save(new Fleet(name: "Fleet-C", vehicles: [
+            new Vehicle(registrationCode: "C-1", manufacturer: delta)
+        ]))
+        fleetRepository.save(new Fleet(name: "Fleet-D", vehicles: [
+            new Vehicle(registrationCode: "D-1", manufacturer: epsilon)
+        ]))
+
+        when:
+        def pageable = Pageable.from(1, 2, Sort.of(Sort.Order.asc("name")))
+        Page<Fleet> page = fleetRepository.findAll(pageable)
+
+        then:
+        page.content*.name == ["Fleet-C", "Fleet-D"]
+        page.content[0].vehicles*.manufacturer*.name.flatten() == ["Delta"]
+        page.content[1].vehicles*.manufacturer*.name.flatten() == ["Epsilon"]
+        page.totalSize == 4
+
+        when:
+        Slice<Fleet> slice = fleetRepository.getAll(pageable)
+
+        then:
+        slice.content*.name == ["Fleet-C", "Fleet-D"]
+        slice.content[0].vehicles*.manufacturer*.name.flatten() == ["Delta"]
+        slice.content[1].vehicles*.manufacturer*.name.flatten() == ["Epsilon"]
+
+        cleanup:
+        fleetRepository.deleteAll()
+        fleetManufacturerRepository.deleteAll()
     }
 
 }
@@ -430,6 +483,56 @@ class Car {
 
 @MappedEntity("the_car_manufacturer")
 class CarManufacturer {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+}
+
+@JdbcRepository(dialect = H2)
+interface FleetRepository extends CrudRepository<Fleet, Long> {
+
+    @Join(value = "vehicles.manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<Fleet> findAll(Pageable pageable)
+
+    @Join(value = "vehicles.manufacturer", type = Join.Type.LEFT_FETCH)
+    Slice<Fleet> getAll(Pageable pageable)
+}
+
+@JdbcRepository(dialect = H2)
+interface FleetManufacturerRepository extends CrudRepository<FleetManufacturer, Long> {
+}
+
+@MappedEntity("fleet_record")
+class Fleet {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "fleet", cascade = Relation.Cascade.ALL)
+    List<Vehicle> vehicles = []
+}
+
+@MappedEntity("fleet_vehicle")
+class Vehicle {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String registrationCode
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    Fleet fleet
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    FleetManufacturer manufacturer
+}
+
+@MappedEntity("fleet_manufacturer")
+class FleetManufacturer {
     @Id
     @GeneratedValue
     Long id

@@ -2483,6 +2483,120 @@ class CarManufacturer {
         getParameterTableAliases(getAll) == ["car_car_", "car_"]
     }
 
+    void "test issue 3851 pageable join criteria rejects non association join path"() {
+        when:
+        buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Join("title")
+    Page<Book> findByTitle(String title, Pageable pageable);
+}
+
+        """)
+
+        then:
+        Throwable ex = thrown()
+        ex.message.contains('Invalid join spec [title]. Property is not an association!')
+    }
+
+    void "test issue 3851 pageable join criteria supports nested to-one join path through foreign key association"() {
+        given:
+        def repository = buildRepository('test.FleetRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface FleetRepository extends GenericRepository<Fleet, Long> {
+    @Join(value = "vehicles.manufacturer", type = Join.Type.FETCH)
+    Page<Fleet> findByVehiclesManufacturerName(String name, Pageable pageable);
+}
+
+@MappedEntity("fleet")
+class Fleet {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "fleet")
+    private List<Vehicle> vehicles = List.of();
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public List<Vehicle> getVehicles() { return vehicles; }
+    public void setVehicles(List<Vehicle> vehicles) { this.vehicles = vehicles; }
+}
+
+@MappedEntity("vehicle")
+class Vehicle {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String registrationCode;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Fleet fleet;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Manufacturer manufacturer;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getRegistrationCode() { return registrationCode; }
+    public void setRegistrationCode(String registrationCode) { this.registrationCode = registrationCode; }
+    public Fleet getFleet() { return fleet; }
+    public void setFleet(Fleet fleet) { this.fleet = fleet; }
+    public Manufacturer getManufacturer() { return manufacturer; }
+    public void setManufacturer(Manufacturer manufacturer) { this.manufacturer = manufacturer; }
+}
+
+@MappedEntity("manufacturer")
+class Manufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+        """)
+
+        def method = repository.getRequiredMethod("findByVehiclesManufacturerName", String, Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+
+        expect:
+        query.contains('INNER JOIN `vehicle` fleet_vehicles_ ON fleet_.`id`=fleet_vehicles_.`fleet_id`')
+        query.contains('INNER JOIN `manufacturer` fleet_vehicles_manufacturer_ ON fleet_vehicles_.`manufacturer_id`=fleet_vehicles_manufacturer_.`id`')
+        query.contains('fleet_vehicles_manufacturer_.`name` = ?')
+        countQuery == 'SELECT COUNT(DISTINCT(fleet_.`id`)) FROM `fleet` fleet_ INNER JOIN `vehicle` fleet_vehicles_ ON fleet_.`id`=fleet_vehicles_.`fleet_id` INNER JOIN `manufacturer` fleet_vehicles_manufacturer_ ON fleet_vehicles_.`manufacturer_id`=fleet_vehicles_manufacturer_.`id` WHERE (fleet_vehicles_manufacturer_.`name` = ?)'
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "fleet_fleet_", "fleet_"]
+    }
+
     void "test repository with reused embedded entity"() {
         when:
         buildRepository('test.TestRepository', """
