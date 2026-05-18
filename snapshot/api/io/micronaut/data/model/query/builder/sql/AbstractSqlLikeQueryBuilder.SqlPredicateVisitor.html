@@ -78,6 +78,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#visitLessThanOrEquals(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">visitLessThanOrEquals(Expression, Expression)</a></li>
 <li><a href="#visitStartsWith(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" tabindex="0">visitStartsWith(Expression, Expression, boolean)</a></li>
 <li><a href="#visitContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" tabindex="0">visitContains(Expression, Expression, boolean)</a></li>
+<li><a href="#visitGeoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">visitGeoWithin(Expression, Expression)</a></li>
+<li><a href="#visitGeoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">visitGeoIntersects(Expression, Expression)</a></li>
+<li><a href="#visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">visitNear(Expression, Expression, Expression)</a></li>
 <li><a href="#visitEndsWith(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" tabindex="0">visitEndsWith(Expression, Expression, boolean)</a></li>
 <li><a href="#visitIdEquals(jakarta.persistence.criteria.Expression)" tabindex="0">visitIdEquals(Expression)</a></li>
 <li><a href="#visitIsFalse(jakarta.persistence.criteria.Expression)" tabindex="0">visitIsFalse(Expression)</a></li>
@@ -204,6 +207,14 @@ implements <a href="../../impl/AdvancedPredicateVisitor.html" title="interface i
  boolean&nbsp;ignoreCase)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitGeoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitGeoIntersects</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitGeoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitGeoWithin</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitGreaterThan(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitGreaterThan</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -252,15 +263,20 @@ implements <a href="../../impl/AdvancedPredicateVisitor.html" title="interface i
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitNotEquals(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" class="member-name-link">visitNotEquals</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
- jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression,
- boolean&nbsp;ignoreCase)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitNear</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometryExpression,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distanceExpression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitStartsWith(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" class="member-name-link">visitStartsWith</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitNotEquals(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" class="member-name-link">visitNotEquals</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression,
  boolean&nbsp;ignoreCase)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitStartsWith(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)" class="member-name-link">visitStartsWith</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression,
+ boolean&nbsp;ignoreCase)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -272,7 +288,7 @@ implements <a href="../../impl/AdvancedPredicateVisitor.html" title="interface i
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.query.impl.AdvancedPredicateVisitor">Methods inherited from interface&nbsp;<a href="../../impl/AdvancedPredicateVisitor.html#method-summary" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a></h3>
-<code><a href="../../impl/AdvancedPredicateVisitor.html#appendPredicate(io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="appendPredicate(PredicateBinaryOp, Expression, Expression)">appendPredicate</a>, <a href="../../impl/AdvancedPredicateVisitor.html#getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)" title="getRequiredProperty(PersistentPropertyPath)">getRequiredProperty</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate)" title="visit(BetweenPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate)" title="visit(BinaryPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate)" title="visit(InPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate)" title="visit(UnaryPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visitArrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="visitArrayContains(Expression, Expression)">visitArrayContains</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visitRegexp(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="visitRegexp(Expression, Expression)">visitRegexp</a></code></div>
+<code><a href="../../impl/AdvancedPredicateVisitor.html#appendPredicate(io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="appendPredicate(PredicateBinaryOp, Expression, Expression)">appendPredicate</a>, <a href="../../impl/AdvancedPredicateVisitor.html#getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)" title="getRequiredProperty(PersistentPropertyPath)">getRequiredProperty</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate)" title="visit(BetweenPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate)" title="visit(BinaryPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate)" title="visit(InPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate)" title="visit(NearPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate)" title="visit(UnaryPredicate)">visit</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visitArrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="visitArrayContains(Expression, Expression)">visitArrayContains</a>, <a href="../../impl/AdvancedPredicateVisitor.html#visitRegexp(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" title="visitRegexp(Expression, Expression)">visitRegexp</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor">Methods inherited from interface&nbsp;<a href="../../../jpa/criteria/impl/ExpressionVisitor.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></h3>
 <code><a href="../../../jpa/criteria/impl/ExpressionVisitor.html#visit(jakarta.persistence.criteria.Predicate)" title="visit(Predicate)">visit</a></code></div>
@@ -488,6 +504,46 @@ implements <a href="../../impl/AdvancedPredicateVisitor.html" title="interface i
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../../impl/AdvancedPredicateVisitor.html#visitContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,boolean)">visitContains</a></code>&nbsp;in interface&nbsp;<code><a href="../../impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a>&lt;<a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="visitGeoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>visitGeoWithin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitGeoWithin</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../impl/AdvancedPredicateVisitor.html#visitGeoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">visitGeoWithin</a></code>&nbsp;in interface&nbsp;<code><a href="../../impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a>&lt;<a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="visitGeoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>visitGeoIntersects</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitGeoIntersects</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;rightExpression)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../impl/AdvancedPredicateVisitor.html#visitGeoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">visitGeoIntersects</a></code>&nbsp;in interface&nbsp;<code><a href="../../impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a>&lt;<a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>visitNear</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitNear</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;leftExpression,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometryExpression,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distanceExpression)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../impl/AdvancedPredicateVisitor.html#visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">visitNear</a></code>&nbsp;in interface&nbsp;<code><a href="../../impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a>&lt;<a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&gt;</code></dd>
 </dl>
 </div>
 </section>

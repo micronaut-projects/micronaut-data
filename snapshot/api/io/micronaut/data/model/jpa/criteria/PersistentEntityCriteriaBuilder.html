@@ -82,6 +82,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">startsWithStringIgnoreCase(Expression, Expression)</a></li>
 <li><a href="#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">endingWithStringIgnoreCase(Expression, Expression)</a></li>
 <li><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">regex(Expression, Expression)</a></li>
+<li><a href="#geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">geoWithin(Expression, Expression)</a></li>
+<li><a href="#geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">geoIntersects(Expression, Expression)</a></li>
+<li><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">near(Expression, Expression, Expression)</a></li>
 <li><a href="#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">arrayContains(Expression, Expression)</a></li>
 </ol>
 </li>
@@ -208,6 +211,18 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <div class="block">Checks if the expression x equals a string y ignoring case.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">geoIntersects</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Checks if geospatial expression x intersects geospatial expression y.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">geoWithin</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Checks if geospatial expression x is within geospatial expression y.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">ilike</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
@@ -230,45 +245,52 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <div class="block">Checks if the expression is not empty.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">notEqualStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">near</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distance)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Checks if geospatial expression x is within the given distance from geospatial expression y.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">notEqualStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression x not equals the expression y ignoring case.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">notEqualStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">notEqualStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression x not equals a string y ignoring case.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#or(java.lang.Iterable)" class="member-name-link">or</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#or(java.lang.Iterable)" class="member-name-link">or</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;jakarta.persistence.criteria.Predicate&gt;&nbsp;restrictions)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">OR restriction predicate.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a predicate for testing whether the expression satisfies the given pattern.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Order</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" class="member-name-link">sort</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Order</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" class="member-name-link">sort</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
  boolean&nbsp;ascending,
  boolean&nbsp;ignoreCase)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create an ordering.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Checks if the expression x starts with the expression y.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Checks if the expression x starts with the expression y.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression x starts with the expression y ignoring case.</div>
 </div>
 </div>
@@ -663,6 +685,65 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <dd><code>pattern</code> - string expression</dd>
 <dt>Returns:</dt>
 <dd>like predicate</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoWithin(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>geoWithin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoWithin</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</span></div>
+<div class="block">Checks if geospatial expression x is within geospatial expression y.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>x</code> - The geospatial expression</dd>
+<dd><code>y</code> - The geospatial expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="geoIntersects(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>geoIntersects</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">geoIntersects</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</span></div>
+<div class="block">Checks if geospatial expression x intersects geospatial expression y.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>x</code> - The geospatial expression</dd>
+<dd><code>y</code> - The geospatial expression</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="near(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>near</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">near</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distance)</span></div>
+<div class="block">Checks if geospatial expression x is within the given distance from geospatial expression y.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>x</code> - The geospatial expression</dd>
+<dd><code>y</code> - The geospatial expression</dd>
+<dd><code>distance</code> - The distance</dd>
+<dt>Returns:</dt>
+<dd>a new predicate</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </div>
 </section>

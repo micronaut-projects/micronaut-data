@@ -12713,6 +12713,40 @@ and native spatial column definitions when the dialect supports them.
 </div>
 </div>
 <div class="sect2">
+<h3 id="_query_predicates">Query predicates</h3>
+<div class="paragraph">
+<p>Micronaut Data also translates repository finder methods and criteria predicates for geospatial comparisons into
+dialect-specific SQL.</p>
+</div>
+<div class="paragraph">
+<p>For example, the following repository method fragments are supported for SQL dialects with geospatial support:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>findByLocationGeoWithin(geometry)</code></p>
+</li>
+<li>
+<p><code>findByLocationGeoIntersects(geometry)</code></p>
+</li>
+<li>
+<p><code>findByLocationNear(geometry, distance)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The same operations are available through the criteria API with <code>geoWithin</code>, <code>geoIntersects</code>, and <code>near</code> predicates.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data applies the same GeoJSON or WKT conversion rules described above to the predicate arguments, and each
+database section below documents the exact spatial functions emitted for that dialect.</p>
+</div>
+<div class="paragraph">
+<p><code>Near</code> expects the second argument to be a numeric distance value. Micronaut Data passes that value through as a bind
+parameter and uses the most appropriate distance predicate available for the active dialect.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_database_vendor_details">Database vendor details</h3>
 <div class="paragraph">
 <p>Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
@@ -12770,6 +12804,8 @@ Otherwise you can use WKT conversion.
 </tr>
 </table>
 </div>
+<div class="sect4">
+<h5 id="_schema_generation">Schema generation</h5>
 <div class="paragraph">
 <p>The Oracle database requires rows in <code>USER_SDO_GEOM_METADATA</code> for spatial columns that are indexed. Micronaut Data generates
 those metadata statements automatically if you use Micronaut Data&#8217;s internal schema-generation tooling, which is intended
@@ -12804,6 +12840,43 @@ are annotated with <code>@Index</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX "IDX_GEOMETRY_ENTITY_JSON_LOCATION" ON "GEOMETRY_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_query_predicates_2">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following Oracle spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">Oracle spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_INSIDE(column, convertedValue) = 'TRUE'</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_ANYINTERACT(column, convertedValue) = 'TRUE'</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SDO_WITHIN_DISTANCE(column, convertedValue, 'distance=distanceValue') = 'TRUE'</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the Oracle spatial conversion call such as <code>SDO_UTIL.FROM_GEOJSON(?, NULL, srid)</code> or
+<code>SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)</code>.</p>
 </div>
 </div>
 </div>
@@ -12890,6 +12963,8 @@ public class GeographyEntityWkt {
 and <code>ST_AsText</code> functions, but casts through <code>::geography</code> on writes and <code>::geometry</code> on reads because
 the PostGIS JSON and text conversion functions operate on geometry values.</p>
 </div>
+<div class="sect4">
+<h5 id="_schema_generation_2">Schema generation</h5>
 <div class="paragraph">
 <p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with <code>@Index</code>:</p>
@@ -12897,6 +12972,43 @@ annotated with <code>@Index</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE INDEX "idx_geography_entity_json_location" ON "geography_entity_json" USING GIST ("location");</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_query_predicates_3">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following PostgreSQL / PostGIS spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">PostgreSQL / PostGIS spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Within(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DWithin(column, convertedValue, distanceValue)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the PostGIS conversion call such as <code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code> or
+<code>ST_GeomFromText(?, srid)</code>.</p>
 </div>
 </div>
 </div>
@@ -12938,6 +13050,8 @@ annotated with <code>@Index</code>:</p>
 </tr>
 </tbody>
 </table>
+<div class="sect4">
+<h5 id="_schema_generation_3">Schema generation</h5>
 <div class="paragraph">
 <p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with <code>@Index</code>:</p>
@@ -12945,6 +13059,43 @@ annotated with <code>@Index</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_query_predicates_4">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following MySQL spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">MySQL spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Within(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the MySQL spatial conversion call such as <code>ST_GeomFromGeoJSON(?, 1, srid)</code> or
+<code>ST_GeomFromText(?, srid)</code>.</p>
 </div>
 </div>
 </div>
@@ -12989,6 +13140,42 @@ follow the same MySQL-style <code>GEOMETRY</code> storage model, <code>ST_AsGeoJ
 <p>If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
 spatial-function behavior.</p>
 </div>
+<div class="sect4">
+<h5 id="_query_predicates_5">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following MariaDB spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">MariaDB spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Within(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the MariaDB spatial conversion call such as <code>ST_GeomFromGeoJSON(?, 1, srid)</code> or
+<code>ST_GeomFromText(?, srid)</code>.</p>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_h2">H2</h4>
@@ -13032,6 +13219,8 @@ Data come from H2GIS.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect4">
+<h5 id="_schema_generation_4">Schema generation</h5>
 <div class="paragraph">
 <p>If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with <code>@Index</code>:</p>
@@ -13039,6 +13228,43 @@ annotated with <code>@Index</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_query_predicates_6">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following H2 / H2GIS spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">H2 / H2GIS spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Within(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DWithin(column, convertedValue, distanceValue)</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the H2GIS conversion call such as <code>ST_SetSRID(ST_GeomFromGeoJSON(?), srid)</code> or
+<code>ST_GeomFromText(?, srid)</code>.</p>
 </div>
 </div>
 </div>
@@ -13122,6 +13348,42 @@ USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 
 </div>
 <div class="paragraph">
 <p>That clause is generated for <code>geometry</code> SQL Server mappings and is not used for the <code>geography</code> mapping.</p>
+</div>
+<div class="sect4">
+<h5 id="_query_predicates_7">Query predicates</h5>
+<div class="paragraph">
+<p>Micronaut Data translates geospatial repository methods and criteria predicates to the following SQL Server spatial functions:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">SQL Server spatial function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>column.STWithin(convertedValue) = 1</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>column.STIntersects(convertedValue) = 1</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>column.STDistance(convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>convertedValue</code> is the SQL Server spatial conversion call such as <code>geometry::STGeomFromText(?, srid)</code> or
+<code>geography::STGeomFromText(?, srid)</code>.</p>
+</div>
 </div>
 </div>
 </div>
@@ -14970,6 +15232,57 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 </div>
 <div class="paragraph">
 <p>Micronaut Data MongoDB supports array or list containment check for single or multiple values using <code>ArrayContains</code> or <code>CollectionContains</code> criteria.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data MongoDB also supports geospatial repository finder methods and criteria predicates for MongoDB GeoJSON values.
+MongoDB repositories should use the MongoDB Java driver&#8217;s geospatial types from <code>com.mongodb.client.model.geojson</code>, for example
+<code>Point</code>, <code>LineString</code>, and <code>Polygon</code>.
+The following repository method fragments are supported:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>findByPointGeoWithin(geometry)</code></p>
+</li>
+<li>
+<p><code>findByPointGeoIntersects(geometry)</code></p>
+</li>
+<li>
+<p><code>findByPointNear(geometry, distance)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Micronaut Data translates these operations to MongoDB&#8217;s geospatial query operators:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Predicate</th>
+<th class="tableblock halign-left valign-top">MongoDB query operator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoWithin</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>$geoWithin</code> with <code>$geometry</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GeoIntersects</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>$geoIntersects</code> with <code>$geometry</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>$near</code> with <code>$geometry</code> and <code>$maxDistance</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>Near</code> expects the second argument to be a numeric distance value and writes it to MongoDB as <code>$maxDistance</code>.</p>
 </div>
 
 <h2 id="mongoInsertsAndUpdates"><a class="anchor" href="#mongoInsertsAndUpdates"></a>7.2.1 Accessing data</h2>

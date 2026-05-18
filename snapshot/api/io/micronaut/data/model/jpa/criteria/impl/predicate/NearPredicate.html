@@ -59,15 +59,14 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">NearPredicate(Expression, Expression, Expression, Expression)</a></li>
+<li><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" tabindex="0">NearPredicate(Expression, Expression, Expression)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#getExpression()" tabindex="0">getExpression()</a></li>
+<li><a href="#getValue()" tabindex="0">getValue()</a></li>
 <li><a href="#getGeometry()" tabindex="0">getGeometry()</a></li>
-<li><a href="#getMinDistance()" tabindex="0">getMinDistance()</a></li>
-<li><a href="#getMaxDistance()" tabindex="0">getMaxDistance()</a></li>
+<li><a href="#getDistance()" tabindex="0">getDistance()</a></li>
 <li><a href="#visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)" tabindex="0">visitPredicate(PredicateVisitor)</a></li>
 </ol>
 </li>
@@ -78,7 +77,7 @@ loadScripts(document, 'script');</script>
 <div class="header">
 <h1 title="Class NearPredicate" class="title">Class NearPredicate</h1>
 </div>
-<div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
+<div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance"><a href="AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPredicate</a>
 <div class="inheritance">io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate</div>
 </div>
@@ -86,17 +85,17 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="../../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, <a href="../../IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a>, <a href="../../ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.criteria.Predicate, jakarta.persistence.criteria.Selection&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.TupleElement&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></dd>
+<dd><code><a href="../../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, <a href="../../IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a>, <a href="../../ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.criteria.Predicate, jakarta.persistence.criteria.Selection&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;, jakarta.persistence.TupleElement&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">NearPredicate</span>
 <span class="extends-implements">extends <a href="AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></span></div>
-<div class="block">MongoDB geospatial predicate for <code>$near</code> queries.</div>
+<div class="block">The near predicate implementation.</div>
 <dl class="notes">
 <dt>Since:</dt>
-<dd>5.0.0</dd>
+<dd>5.0</dd>
 </dl>
 </div>
 </section>
@@ -119,10 +118,9 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">NearPredicate</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">NearPredicate</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;value,
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
- @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
- @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</code></div>
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distance)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -138,21 +136,18 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getExpression()" class="member-name-link">getExpression</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDistance()" class="member-name-link">getDistance</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getGeometry()" class="member-name-link">getGeometry</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable jakarta.persistence.criteria.Expression<wbr>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMaxDistance()" class="member-name-link">getMaxDistance</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getValue()" class="member-name-link">getValue</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable jakarta.persistence.criteria.Expression<wbr>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMinDistance()" class="member-name-link">getMinDistance</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)" class="member-name-link">visitPredicate</a><wbr>(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)" class="member-name-link">visitPredicate</a><wbr>(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit predicate.</div>
 </div>
 </div>
@@ -162,8 +157,8 @@ loadScripts(document, 'script');</script>
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPredicate">Methods inherited from class&nbsp;<a href="AbstractPredicate.html#method-summary" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></h3>
 <code><a href="AbstractPredicate.html#getExpressions()" title="getExpressions()">getExpressions</a>, <a href="AbstractPredicate.html#getJavaType()" title="getJavaType()">getJavaType</a>, <a href="AbstractPredicate.html#getOperator()" title="getOperator()">getOperator</a>, <a href="AbstractPredicate.html#isNegated()" title="isNegated()">isNegated</a>, <a href="AbstractPredicate.html#not()" title="not()">not</a>, <a href="AbstractPredicate.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)" title="visitExpression(ExpressionVisitor)">visitExpression</a></code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
-<code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
+<h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
+<code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IExpression">Methods inherited from interface&nbsp;<a href="../../IExpression.html#method-summary" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></h3>
 <code><a href="../../IExpression.html#as(java.lang.Class)" title="as(Class)">as</a>, <a href="../../IExpression.html#cast(java.lang.Class)" title="cast(Class)">cast</a>, <a href="../../IExpression.html#equalTo(jakarta.persistence.criteria.Expression)" title="equalTo(Expression)">equalTo</a>, <a href="../../IExpression.html#equalTo(java.lang.Object)" title="equalTo(Object)">equalTo</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression...)" title="in(Expression...)">in</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression)" title="in(Expression)">in</a>, <a href="../../IExpression.html#in(java.lang.Object...)" title="in(Object...)">in</a>, <a href="../../IExpression.html#in(java.util.Collection)" title="in(Collection)">in</a>, <a href="../../IExpression.html#isNotNull()" title="isNotNull()">isNotNull</a>, <a href="../../IExpression.html#isNull()" title="isNull()">isNull</a>, <a href="../../IExpression.html#notEqualTo(jakarta.persistence.criteria.Expression)" title="notEqualTo(Expression)">notEqualTo</a>, <a href="../../IExpression.html#notEqualTo(java.lang.Object)" title="notEqualTo(Object)">notEqualTo</a>, <a href="../../IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)" title="visitSelection(SelectionVisitor)">visitSelection</a></code></div>
@@ -185,13 +180,12 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<section class="detail" id="&lt;init&gt;(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
 <h3>NearPredicate</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">NearPredicate</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">NearPredicate</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;value,
  jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;geometry,
- @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;minDistance,
- @Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;maxDistance)</span></div>
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;distance)</span></div>
 </div>
 </section>
 </li>
@@ -204,14 +198,10 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="getExpression()">
-<h3>getExpression</h3>
+<section class="detail" id="getValue()">
+<h3>getValue</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;?&gt;</span>&nbsp;<span class="element-name">getExpression</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The geospatial property expression.</dd>
-</dl>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;?&gt;</span>&nbsp;<span class="element-name">getValue</span>()</div>
 </div>
 </section>
 </li>
@@ -220,34 +210,14 @@ loadScripts(document, 'script');</script>
 <h3>getGeometry</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;?&gt;</span>&nbsp;<span class="element-name">getGeometry</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The geometry expression.</dd>
-</dl>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="getMinDistance()">
-<h3>getMinDistance</h3>
+<section class="detail" id="getDistance()">
+<h3>getDistance</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">getMinDistance</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The optional minimum distance expression.</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getMaxDistance()">
-<h3>getMaxDistance</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">getMaxDistance</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The optional maximum distance expression.</dd>
-</dl>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">getDistance</span>()</div>
 </div>
 </section>
 </li>
