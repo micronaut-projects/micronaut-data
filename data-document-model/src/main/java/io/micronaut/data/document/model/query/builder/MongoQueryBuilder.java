@@ -118,6 +118,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String NEGATE = "$mn_negate"; // -vale
     public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
+    private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
@@ -1306,7 +1307,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of(
                 "$geoWithin", Map.of(
-                    "$geometry", valueRepresentation(queryState, propertyPath, expression)
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
                 )
             ));
         }
@@ -1316,7 +1317,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of(
                 "$geoIntersects", Map.of(
-                    "$geometry", valueRepresentation(queryState, propertyPath, expression)
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
                 )
             ));
         }
@@ -1331,7 +1332,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of(
                 "$near", Map.of(
-                    "$geometry", valueRepresentation(queryState, propertyPath, geometryExpression),
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, geometryExpression),
                     "$maxDistance", valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression)
                 )
             ));

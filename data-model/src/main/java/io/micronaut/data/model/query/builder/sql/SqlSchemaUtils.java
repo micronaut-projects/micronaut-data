@@ -474,33 +474,8 @@ public final class SqlSchemaUtils {
         Stream.of(indexes)
             .flatMap(Optional::stream)
             .flatMap(Collection::stream)
-            .forEach(index -> {
-                String name = index.stringValue("name").orElse("");
-                boolean unique = index.booleanValue("unique").orElse(false);
-                String[] declaredColumns = index.stringValues("columns");
-                boolean spatial = false;
-                Integer spatialSrid = null;
-                String[] mappedColumns = new String[declaredColumns.length];
-                for (int i = 0; i < declaredColumns.length; i++) {
-                    String declaredColumn = declaredColumns[i];
-                    PersistentProperty persistentProperty = propertyMap.get(declaredColumn);
-                    if (persistentProperty == null) {
-                        throw new MappingException("Persistent property not found for column: " + declaredColumn);
-                    }
-                    if (persistentProperty.isAssignable(Geometry.class)) {
-                        OptionalInt optSrid = persistentProperty.getAnnotationMetadata().intValue(Srid.class);
-                        if (optSrid.isPresent()) {
-                            spatialSrid = optSrid.getAsInt();
-                        }
-                        spatial = true;
-                    }
-                    mappedColumns[i] = namingStrategy.mappedName(associations, persistentProperty);
-                }
-                if (spatial && mappedColumns.length > 1) {
-                    throw new MappingException("A geospatial column cannot be included in a composite index. Index columns: " + Arrays.toString(mappedColumns));
-                }
-                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns, spatial, spatialSrid));
-            });
+            .map(index -> toSqlIndexMapping(index, propertyMap, namingStrategy, associations))
+            .forEach(indexMappings::add);
 
         for (PersistentProperty property : entity.getPersistentProperties()) {
             if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
@@ -510,6 +485,37 @@ public final class SqlSchemaUtils {
                 addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings);
             }
         }
+    }
+
+    private static SqlIndexMapping toSqlIndexMapping(AnnotationValue<Index> index,
+                                                     Map<String, PersistentProperty> propertyMap,
+                                                     NamingStrategy namingStrategy,
+                                                     List<Association> associations) {
+        String name = index.stringValue("name").orElse("");
+        boolean unique = index.booleanValue("unique").orElse(false);
+        String[] declaredColumns = index.stringValues("columns");
+        boolean spatial = false;
+        Integer spatialSrid = null;
+        String[] mappedColumns = new String[declaredColumns.length];
+        for (int i = 0; i < declaredColumns.length; i++) {
+            String declaredColumn = declaredColumns[i];
+            PersistentProperty persistentProperty = propertyMap.get(declaredColumn);
+            if (persistentProperty == null) {
+                throw new MappingException("Persistent property not found for column: " + declaredColumn);
+            }
+            if (persistentProperty.isAssignable(Geometry.class)) {
+                OptionalInt optSrid = persistentProperty.getAnnotationMetadata().intValue(Srid.class);
+                if (optSrid.isPresent()) {
+                    spatialSrid = optSrid.getAsInt();
+                }
+                spatial = true;
+            }
+            mappedColumns[i] = namingStrategy.mappedName(associations, persistentProperty);
+        }
+        if (spatial && mappedColumns.length > 1) {
+            throw new MappingException("A geospatial column cannot be included in a composite index. Index columns: " + Arrays.toString(mappedColumns));
+        }
+        return new SqlIndexMapping(name, unique, mappedColumns, spatial, spatialSrid);
     }
 
     private static List<SqlColumnMapping> getPrimaryKeyColumns(List<PersistentProperty> identities, NamingStrategy namingStrategy, Dialect dialect) {
