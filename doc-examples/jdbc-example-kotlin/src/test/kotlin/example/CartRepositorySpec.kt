@@ -19,7 +19,7 @@ class CartRepositorySpec(private val cartRepository: CartRepository?) {
         assertEquals(2, cart.items.size)
         assertNotNull(cart.items[0].id)
         assertNotNull(cart.items[1].id)
-        cart = cartRepository.findById(cart.id!!).orElse(null)
+        cart = cartRepository.findById(cart.id!!)!!
         assertNotNull(cart)
         assertNotNull(cart.id)
         assertNotNull(cart.items)

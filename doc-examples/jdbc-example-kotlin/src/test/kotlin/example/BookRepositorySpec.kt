@@ -12,7 +12,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.*
 
 @MicronautTest
 class BookRepositorySpec {
@@ -68,7 +67,7 @@ class BookRepositorySpec {
 
         // Read: Read a book from the database
         // tag::read[]
-        book = bookRepository.findById(id).orElse(null)
+        book = bookRepository.findById(id)!!
         // end::read[]
         assertNotNull(book)
         assertEquals("The Stand", book.title)
@@ -81,7 +80,7 @@ class BookRepositorySpec {
         // tag::update[]
         bookRepository.update(book.id, "Changed")
         // end::update[]
-        book = bookRepository.findById(id).orElse(null)
+        book = bookRepository.findById(id)!!
         assertEquals("Changed", book.title)
 
         // Delete: Delete the book
@@ -92,18 +91,38 @@ class BookRepositorySpec {
     }
 
     @Test
+    fun testInsertMethods() {
+        val inserted = bookRepository.insert(Book(0, "The Long Walk", 384))
+        assertNotNull(inserted.id)
+        assertEquals("The Long Walk", inserted.title)
+
+        val insertedMany = bookRepository.insertAll(
+            listOf(
+                Book(0, "It", 1138),
+                Book(0, "Misery", 320)
+            )
+        ).toList()
+
+        assertEquals(2, insertedMany.size)
+        assertTrue(insertedMany.all { it.id > 0 })
+        assertEquals(3, bookRepository.count())
+    }
+
+    @Test
     fun testPageable() {
         // tag::saveall[]
-        bookRepository.saveAll(Arrays.asList(
-                Book(0,"The Stand", 1000),
-                Book(0,"The Shining", 600),
-                Book(0,"The Power of the Dog", 500),
-                Book(0,"The Border", 700),
-                Book(0,"Along Came a Spider", 300),
-                Book(0,"Pet Cemetery", 400),
-                Book(0,"A Game of Thrones", 900),
-                Book(0,"A Clash of Kings", 1100)
-        ))
+        bookRepository.saveAll(
+            listOf(
+                Book(0, "The Stand", 1000),
+                Book(0, "The Shining", 600),
+                Book(0, "The Power of the Dog", 500),
+                Book(0, "The Border", 700),
+                Book(0, "Along Came a Spider", 300),
+                Book(0, "Pet Cemetery", 400),
+                Book(0, "A Game of Thrones", 900),
+                Book(0, "A Clash of Kings", 1100)
+            )
+        )
         // end::saveall[]
 
         // tag::pageable[]
@@ -230,12 +249,12 @@ class BookRepositorySpec {
 
     @Test
     fun testOneToManyCustomQuery() {
-        val savedBook = bookRepository.save(Book(0, "Dummy Book", 20, setOf(Review("Anonymous", "Lorem Ipsum"),
+        bookRepository.save(Book(0, "Dummy Book", 20, setOf(Review("Anonymous", "Lorem Ipsum"),
             Review("Member", "Interesting"))))
 
         val books = bookRepository.searchBooksByTitle("Dummy Book")
-        assertEquals(1, books.size);
-        val book = books.get(0)
+        assertEquals(1, books.size)
+        val book = books[0]
         assertEquals("Dummy Book", book.title)
         assertEquals(2, book.reviews.size)
     }
