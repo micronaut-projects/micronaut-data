@@ -26,7 +26,7 @@ import io.micronaut.data.model.Sort
  * @param <E> The entity type
  * @param <ID> The ID type
  * @author Denis Stepanov
- * @since 4.13
+ * @since 5.0
  */
 @Blocking
 interface KotlinPageableCrudRepository<E, ID> : KotlinCrudRepository<E, ID> {
