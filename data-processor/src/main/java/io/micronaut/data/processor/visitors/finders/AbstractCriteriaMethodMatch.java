@@ -502,27 +502,39 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 throw new MatchFailedException("Insufficient arguments to method criteria: " + restrictionName);
             }
             ParameterElement parameter = parameters.next();
-            ClassElement genericType = parameter.getGenericType();
-            if (TypeUtils.isContainerType(genericType)) {
-                genericType = genericType.getFirstTypeArgument().orElse(genericType);
-            }
-
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
-                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
-                if (!isValidType(restrictionName, i, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
-                    SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
-                    throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
-                }
-                if ("Near".equals(restrictionName) && i == 1) {
-                    params.add(scb.parameter(parameter, null));
-                } else {
-                    params.add(scb.parameter(parameter, propertyPath));
-                }
-            } else {
-                params.add(scb.parameter(parameter, null));
-            }
+            params.add(provideParam(parameter, scb, restrictionName, i, expression));
         }
         return params;
+    }
+
+    private <T> ParameterExpression<T> provideParam(ParameterElement parameter,
+                                                    SourcePersistentEntityCriteriaBuilder scb,
+                                                    String restrictionName,
+                                                    int parameterIndex,
+                                                    @Nullable
+                                                    Expression<?> expression) {
+        ClassElement genericType = parameter.getGenericType();
+        if (TypeUtils.isContainerType(genericType)) {
+            genericType = genericType.getFirstTypeArgument().orElse(genericType);
+        }
+
+        if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
+            PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
+            if (!isValidType(restrictionName, parameterIndex, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+                SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
+                throw new IllegalArgumentException(
+                    "Parameter [" + genericType.getType().getName() + " " + parameter.getName() +
+                        "] is not compatible with property [" + property.getType().getName() + " " +
+                        property.getName() + "] of entity: " + property.getOwner().getName());
+            }
+            if ("Near".equals(restrictionName) && parameterIndex == 1) {
+                return scb.parameter(parameter, null);
+            } else {
+                return scb.parameter(parameter, propertyPath);
+            }
+        } else {
+            return scb.parameter(parameter, null);
+        }
     }
 
     private boolean isValidType(String restrictionName, int parameterIndex, ClassElement genericType, SourcePersistentProperty property) {

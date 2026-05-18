@@ -164,6 +164,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
+    private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
@@ -2387,7 +2388,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(rightExpression, leftExpression);
-                    query.append(") = 'TRUE'");
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
                 case POSTGRES, H2, MYSQL -> {
                     query.append("ST_Within(");
@@ -2414,7 +2415,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(rightExpression, leftExpression);
-                    query.append(") = 'TRUE'");
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
                 case POSTGRES, H2, MYSQL -> {
                     query.append("ST_Intersects(");
@@ -2444,7 +2445,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(COMMA);
                     query.append("'distance=' || ");
                     appendExpression(distanceExpression);
-                    query.append(") = 'TRUE'");
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
                 case POSTGRES, H2 -> {
                     query.append("ST_DWithin(");

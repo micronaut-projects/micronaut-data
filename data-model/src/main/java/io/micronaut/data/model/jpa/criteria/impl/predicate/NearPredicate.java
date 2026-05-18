@@ -25,6 +25,7 @@ import jakarta.persistence.criteria.Expression;
  * @since 5.0
  */
 @Internal
+@SuppressWarnings("java:S1452")
 public final class NearPredicate extends AbstractPredicate {
 
     private final Expression<?> value;
