@@ -27,7 +27,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.schema.sql.*;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
 import org.jspecify.annotations.Nullable;
@@ -549,7 +548,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 sb.append(alias)
                     .append(DOT)
                     .append(column.getPersistedName())
-                    .append(SPACE)
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
@@ -790,8 +788,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
-            } else if (tableColumn.getDbType() == SqlDbType.JSON_OBJECT) {
-                column += " JSON(OBJECT)";
             } else {
                 column += " " + tableColumn.getSqlType(dialect);
                 if (tableColumn.isRequired()) {

@@ -403,6 +403,8 @@ public final class SqlColumnMapping {
                     } else {
                         yield "BLOB";
                     }
+                } else if (dbType == SqlDbType.JSON_OBJECT) {
+                    yield getJsonObjectSqlType(dialect);
                 } else {
                     throw new MappingException("Unable to create table column for property [" + name + "] with unknown data type: " + dataType);
                 }
@@ -432,6 +434,13 @@ public final class SqlColumnMapping {
             }
             default -> "JSON";
         };
+    }
+
+    private String getJsonObjectSqlType(Dialect dialect) {
+        if (dialect == Dialect.ORACLE) {
+            return "JSON(OBJECT)";
+        }
+        return getJsonSqlType(dialect);
     }
 
     private static String floatType(Integer precision) {

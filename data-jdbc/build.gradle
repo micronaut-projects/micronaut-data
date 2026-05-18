@@ -18,8 +18,6 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
-    implementation mn.jackson.annotations
-
     compileOnly(mnRxjava3.micronaut.rxjava3)
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
@@ -38,6 +36,7 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
     testImplementation mn.micronaut.http.client
+    testImplementation mn.jackson.annotations
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)

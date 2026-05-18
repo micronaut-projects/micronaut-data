@@ -534,7 +534,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity personViewEntity = getRuntimePersistentEntity(PersonView)
         String[] sql = builder.buildCreateTableStatements(personViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW person_view AS SELECT JSON {'_id': p.id, 'firstname': p.firstname, 'lastname': p.lastname, p.extras  AS  FLEX COLUMN } FROM TBL_PERSON p WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW person_view AS SELECT JSON {'_id': p.id, 'firstname': p.firstname, 'lastname': p.lastname, p.extras AS FLEX COLUMN} FROM TBL_PERSON p WITH UPDATE INSERT DELETE "
     }
 
     def "test_insert_flex_column"() {
