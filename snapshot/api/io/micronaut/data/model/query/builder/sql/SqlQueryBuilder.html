@@ -78,12 +78,16 @@ loadScripts(document, 'script');</script>
 <li><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" tabindex="0">shouldEscape(PersistentEntity)</a></li>
 <li><a href="#asLiteral(java.lang.Object)" tabindex="0">asLiteral(Object)</a></li>
 <li><a href="#buildBatchCreateTableStatement(io.micronaut.data.model.PersistentEntity...)" tabindex="0">buildBatchCreateTableStatement(PersistentEntity...)</a></li>
+<li><a href="#buildBatchCreateTableStatement(java.util.List,io.micronaut.data.model.PersistentEntity...)" tabindex="0">buildBatchCreateTableStatement(List, PersistentEntity...)</a></li>
 <li><a href="#buildBatchDropTableStatement(io.micronaut.data.model.PersistentEntity...)" tabindex="0">buildBatchDropTableStatement(PersistentEntity...)</a></li>
 <li><a href="#buildDropTableStatements(io.micronaut.data.model.PersistentEntity)" tabindex="0">buildDropTableStatements(PersistentEntity)</a></li>
 <li><a href="#buildJoinTableInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Association)" tabindex="0">buildJoinTableInsert(PersistentEntity, Association)</a></li>
 <li><a href="#isForeignKeyWithJoinTable(io.micronaut.data.model.Association)" tabindex="0">isForeignKeyWithJoinTable(Association)</a></li>
 <li><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)" tabindex="0">buildCreateTableStatements(PersistentEntity)</a></li>
-<li><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D)" tabindex="0">buildCreateTableStatements(PersistentEntity[])</a></li>
+<li><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity,java.util.List)" tabindex="0">buildCreateTableStatements(PersistentEntity, List)</a></li>
+<li><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity...)" tabindex="0">buildCreateTableStatements(PersistentEntity...)</a></li>
+<li><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">buildCreateTableStatements(PersistentEntity[], Dialect)</a></li>
+<li><a href="#buildCreateTableStatements(java.util.List,io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">buildCreateTableStatements(List, PersistentEntity[], Dialect)</a></li>
 <li><a href="#getTableAsKeyword()" tabindex="0">getTableAsKeyword()</a></li>
 <li><a href="#createSelectionVisitor(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryState,boolean)" tabindex="0">createSelectionVisitor(AnnotationMetadata, AbstractSqlLikeQueryBuilder.QueryState, boolean)</a></li>
 <li><a href="#createReturningSelectionVisitor(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryState,boolean)" tabindex="0">createReturningSelectionVisitor(AnnotationMetadata, AbstractSqlLikeQueryBuilder.QueryState, boolean)</a></li>
@@ -259,20 +263,41 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <div class="block">Builds a batch create tables statement.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildBatchDropTableStatement(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildBatchDropTableStatement</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildBatchCreateTableStatement(java.util.List,io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildBatchCreateTableStatement</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;columnDefinitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Builds a batch create tables statement.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildBatchDropTableStatement(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildBatchDropTableStatement</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds a batch drop tables statement.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Builds the creation table statement.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Builds a set of <code>CREATE TABLE</code> statements for the given entity.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds the creation table statement for collection of entities.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity,java.util.List)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Builds a set of <code>CREATE TABLE</code> statements for the given entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(java.util.List,io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDropTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildDropTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -574,6 +599,24 @@ SQL migration tool such as Flyway or Liquibase is recommended.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="buildBatchCreateTableStatement(java.util.List,io.micronaut.data.model.PersistentEntity...)">
+<h3>buildBatchCreateTableStatement</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">buildBatchCreateTableStatement</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;columnDefinitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</span></div>
+<div class="block">Builds a batch create tables statement. Designed for testing and not production usage. For production a
+SQL migration tool such as Flyway or Liquibase is recommended.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>columnDefinitionProviders</code> - the list of SqlColumnDefinitionProvider</dd>
+<dd><code>entities</code> - the entities</dd>
+<dt>Returns:</dt>
+<dd>The table</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="buildBatchDropTableStatement(io.micronaut.data.model.PersistentEntity...)">
 <h3>buildBatchDropTableStatement</h3>
 <div class="horizontal-scroll">
@@ -642,22 +685,46 @@ SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <h3>buildCreateTableStatements</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
-<div class="block">Builds the creation table statement. Designed for testing and not production usage. For production a
-SQL migration tool such as Flyway or Liquibase is recommended.</div>
+<div class="block">Builds a set of <code>CREATE TABLE</code> statements for the given entity.
+<p>
+This method is <code>public</code> and the class is non-final; therefore it can be overridden.
+If you override it, ensure you preserve the following behavior expected by callers:
+<ul>
+    <li>Return a non-null <code>String[]</code> containing SQL statements in execution order.</li>
+    <li>Respect the current <a href="#getDialect()"><code>getDialect()</code></a> and escaping rules (see <a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)"><code>shouldEscape(PersistentEntity)</code></a>).</li>
+    <li>Keep special handling for <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entities (Oracle-only) consistent with the base implementation.</li>
+</ul></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>entity</code> - The entity</dd>
 <dt>Returns:</dt>
-<dd>The tables for the give entity</dd>
+<dd>The <code>CREATE TABLE</code> statements</dd>
 </dl>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="buildCreateTableStatements(io.micronaut.data.model.PersistentEntity[])">
+<section class="detail" id="buildCreateTableStatements(io.micronaut.data.model.PersistentEntity,java.util.List)">
 <h3>buildCreateTableStatements</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders)</span></div>
+<div class="block">Builds a set of <code>CREATE TABLE</code> statements for the given entity.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity</dd>
+<dd><code>definitionProviders</code> - The definition providers</dd>
+<dt>Returns:</dt>
+<dd>The <code>CREATE TABLE</code> statements</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildCreateTableStatements(io.micronaut.data.model.PersistentEntity...)">
+<h3>buildCreateTableStatements</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</span></div>
 <div class="block">Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
 SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <dl class="notes">
@@ -666,6 +733,25 @@ SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <dt>Returns:</dt>
 <dd>The tables for the given entities</dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildCreateTableStatements(io.micronaut.data.model.PersistentEntity[],io.micronaut.data.model.query.builder.sql.Dialect)">
+<h3>buildCreateTableStatements</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildCreateTableStatements(java.util.List,io.micronaut.data.model.PersistentEntity[],io.micronaut.data.model.query.builder.sql.Dialect)">
+<h3>buildCreateTableStatements</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
 </div>
 </section>
 </li>

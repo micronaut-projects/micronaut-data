@@ -70,6 +70,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getParameterInRole(java.lang.String,io.micronaut.core.type.Argument,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" tabindex="0">getParameterInRole(String, Argument, MethodInvocationContext, ConversionService)</a></li>
 <li><a href="#getParametersInRole(java.lang.String,java.lang.Class,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" tabindex="0">getParametersInRole(String, Class, MethodInvocationContext, ConversionService)</a></li>
 <li><a href="#getParametersInRole(java.lang.String,io.micronaut.core.type.Argument,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" tabindex="0">getParametersInRole(String, Argument, MethodInvocationContext, ConversionService)</a></li>
+<li><a href="#getParametersOfType(io.micronaut.core.type.Argument,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" tabindex="0">getParametersOfType(Argument, MethodInvocationContext, ConversionService)</a></li>
 <li><a href="#getConversionService()" tabindex="0">getConversionService()</a></li>
 <li><a href="#getContext()" tabindex="0">getContext()</a></li>
 <li><a href="#getRootEntity()" tabindex="0">getRootEntity()</a></li>
@@ -243,49 +244,54 @@ implements <a href="DelegateStoredQuery.html" title="interface in io.micronaut.d
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return the values of the given parameter if the given role.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuery()" class="member-name-link">getQuery</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getParametersOfType(io.micronaut.core.type.Argument,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" class="member-name-link">getParametersOfType</a><wbr>(@NonNull io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type,
+ @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;methodContext,
+ @NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuery()" class="member-name-link">getQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The query to execute.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryHints()" class="member-name-link">getQueryHints</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryHints()" class="member-name-link">getQueryHints</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The parameter binding.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryLimit()" class="member-name-link">getQueryLimit</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRepositoryType()" class="member-name-link">getRepositoryType</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryLimit()" class="member-name-link">getQueryLimit</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;<a href="#type-param-E" title="type parameter in DefaultPreparedQuery">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRepositoryType()" class="member-name-link">getRepositoryType</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a><wbr>&lt;<a href="#type-param-E" title="type parameter in DefaultPreparedQuery">E</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The root entity type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a><wbr>&lt;<a href="#type-param-E" title="type parameter in DefaultPreparedQuery">E</a>,<wbr><a href="#type-param-RT" title="type parameter in DefaultPreparedQuery">RT</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getStoredQueryDelegate()" class="member-name-link">getStoredQueryDelegate</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(java.lang.String,java.lang.Class,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a><wbr>&lt;<a href="#type-param-E" title="type parameter in DefaultPreparedQuery">E</a>,<wbr><a href="#type-param-RT" title="type parameter in DefaultPreparedQuery">RT</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getStoredQueryDelegate()" class="member-name-link">getStoredQueryDelegate</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasReturnTypeInRole(java.lang.String,java.lang.Class,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)" class="member-name-link">hasReturnTypeInRole</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;role,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type,
  @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;methodContext,
  @NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Check the return role from the method context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDtoProjection()" class="member-name-link">isDtoProjection</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDtoProjection()" class="member-name-link">isDtoProjection</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets an indicator telling whether underlying query is raw query.</div>
 </div>
 </div>
@@ -460,6 +466,16 @@ implements <a href="DelegateStoredQuery.html" title="interface in io.micronaut.d
 <dt>Returns:</dt>
 <dd>The list of types</dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getParametersOfType(io.micronaut.core.type.Argument,io.micronaut.aop.MethodInvocationContext,io.micronaut.core.convert.ConversionService)">
+<h3>getParametersOfType</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getParametersOfType</span><wbr><span class="parameters">(@NonNull io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type,
+ @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;methodContext,
+ @NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</span></div>
 </div>
 </section>
 </li>

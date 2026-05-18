@@ -73,6 +73,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(PersistentEntity, Dialect)</a></li>
+<li><a href="#getSqlTableMappings(java.util.List,io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(List, PersistentEntity, Dialect)</a></li>
 </ol>
 </li>
 </ol>
@@ -159,6 +160,13 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">getSqlTableMappings</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Returns SQL table mappings for an entity using no external definition providers.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlTableMappings(java.util.List,io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">getSqlTableMappings</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity.</div>
 </div>
 </div>
@@ -352,16 +360,40 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</span>&nbsp;<span class="element-name">getSqlTableMappings</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+<div class="block">Returns SQL table mappings for an entity using no external definition providers.
+
+<p>This convenience overload is intended for callers that don't need custom
+column/index DDL provider extensions.</p></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity</dd>
+<dd><code>dialect</code> - The SQL dialect used to render vendor-specific definitions</dd>
+<dt>Returns:</dt>
+<dd>The SQL table definitions for the given entity</dd>
+<dt>Since:</dt>
+<dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getSqlTableMappings(java.util.List,io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)">
+<h3>getSqlTableMappings</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</span>&nbsp;<span class="element-name">getSqlTableMappings</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
+ <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity. It will contain main entity table
 and potentially joined tables.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
+<dd><code>definitionProviders</code> - the list of DefinitionProvider (column/index DDL providers)</dd>
 <dd><code>entity</code> - The entity</dd>
-<dd><code>dialect</code> - The dialect</dd>
+<dd><code>dialect</code> - The SQL dialect used to render vendor-specific definitions.</dd>
 <dt>Returns:</dt>
 <dd>The SQL table definitions for the given entity</dd>
 <dt>Since:</dt>
-<dd>4.13.0</dd>
+<dd>5.0.0</dd>
 </dl>
 </div>
 </section>

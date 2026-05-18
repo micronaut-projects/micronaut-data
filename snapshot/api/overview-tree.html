@@ -127,8 +127,12 @@ loadScripts(document, 'script');</script>
 <li><a href="io/micronaut/data/model/query/impl/package-tree.html">io.micronaut.data.model.query.impl</a>, </li>
 <li><a href="io/micronaut/data/model/runtime/package-tree.html">io.micronaut.data.model.runtime</a>, </li>
 <li><a href="io/micronaut/data/model/runtime/convert/package-tree.html">io.micronaut.data.model.runtime.convert</a>, </li>
+<li><a href="io/micronaut/data/model/runtime/convert/vector/package-tree.html">io.micronaut.data.model.runtime.convert.vector</a>, </li>
+<li><a href="io/micronaut/data/model/runtime/convert/vector/impl/package-tree.html">io.micronaut.data.model.runtime.convert.vector.impl</a>, </li>
 <li><a href="io/micronaut/data/model/schema/sql/package-tree.html">io.micronaut.data.model.schema.sql</a>, </li>
 <li><a href="io/micronaut/data/model/schema/sql/metadata/package-tree.html">io.micronaut.data.model.schema.sql.metadata</a>, </li>
+<li><a href="io/micronaut/data/model/vector/package-tree.html">io.micronaut.data.model.vector</a>, </li>
+<li><a href="io/micronaut/data/model/vector/search/package-tree.html">io.micronaut.data.model.vector.search</a>, </li>
 <li><a href="io/micronaut/data/mongodb/advice/package-tree.html">io.micronaut.data.mongodb.advice</a>, </li>
 <li><a href="io/micronaut/data/mongodb/annotation/package-tree.html">io.micronaut.data.mongodb.annotation</a>, </li>
 <li><a href="io/micronaut/data/mongodb/conf/package-tree.html">io.micronaut.data.mongodb.conf</a>, </li>
@@ -251,7 +255,11 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.hibernate.connection.<a href="io/micronaut/data/hibernate/connection/HibernateConnectionOperations.html" class="type-name-link" title="class in io.micronaut.data.hibernate.connection">HibernateConnectionOperations</a></li>
 </ul>
 </li>
-<li class="circle">io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" class="type-name-link" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a> (implements io.micronaut.core.convert.ConversionContext)</li>
+<li class="circle">io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" class="type-name-link" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a> (implements io.micronaut.core.convert.ConversionContext)
+<ul>
+<li class="circle">io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.ArgumentJdbcCC.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.ArgumentJdbcCC</a> (implements io.micronaut.core.convert.ArgumentConversionContext&lt;T&gt;)</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a> (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>)
 <ul>
 <li class="circle">io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/MethodMatchSourcePersistentEntityCriteriaBuilderImpl.html" class="type-name-link" title="class in io.micronaut.data.processor.model.criteria.impl">MethodMatchSourcePersistentEntityCriteriaBuilderImpl</a> (implements io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>)</li>
@@ -309,6 +317,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">FindMethodMatcher</a></li>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a></li>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/UpdateMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">UpdateMethodMatcher</a></li>
+<li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/VectorSearchMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">VectorSearchMethodMatcher</a></li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.mongodb.init.<a href="io/micronaut/data/mongodb/init/AbstractMongoCollectionsCreator.html" class="type-name-link" title="class in io.micronaut.data.mongodb.init">AbstractMongoCollectionsCreator</a>&lt;Dtbs&gt;
@@ -317,6 +326,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.mongodb.init.<a href="io/micronaut/data/mongodb/init/MongoReactiveCollectionsCreator.html" class="type-name-link" title="class in io.micronaut.data.mongodb.init">MongoReactiveCollectionsCreator</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" class="type-name-link" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html" class="type-name-link" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorFactory</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a> (implements io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a>)</li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" class="type-name-link" title="class in io.micronaut.data.model">AbstractPersistentEntity</a> (implements io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>)
 <ul>
@@ -1208,6 +1219,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyStringEqualsIgnoreCase.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyStringEqualsIgnoreCase</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyWithin.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyWithin</a> (implements io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyRestriction.html" title="interface in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyRestriction</a>&lt;T&gt;)</li>
 <li class="circle">io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/Role.html" class="type-name-link" title="class in io.micronaut.data.tck.jdbc.entities">Role</a></li>
 <li class="circle">io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/RowTupleMapper.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.mapper">RowTupleMapper</a> (implements io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;RS,<wbr>R&gt;)</li>
 <li class="circle">org.antlr.v4.runtime.RuleContext (implements org.antlr.v4.runtime.tree.RuleNode)
@@ -1281,6 +1293,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" class="type-name-link" title="class in io.micronaut.data.jdbc.config">SchemaGenerator</a></li>
 <li class="circle">io.micronaut.data.runtime.multitenancy.conf.<a href="io/micronaut/data/runtime/multitenancy/conf/SchemaMultiTenancyEnabledCondition.html" class="type-name-link" title="class in io.micronaut.data.runtime.multitenancy.conf">SchemaMultiTenancyEnabledCondition</a> (implements io.micronaut.context.condition.Condition)</li>
 <li class="circle">io.micronaut.data.tck.jdbc.entities.geo.<a href="io/micronaut/data/tck/jdbc/entities/geo/School.html" class="type-name-link" title="class in io.micronaut.data.tck.jdbc.entities.geo">School</a></li>
+<li class="circle">io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SearchResultsMapper.html" class="type-name-link" title="class in io.micronaut.data.runtime.mapper.sql">SearchResultsMapper</a>&lt;R,<wbr>E&gt;</li>
 <li class="circle">io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Settlement.html" class="type-name-link" title="class in io.micronaut.data.document.tck.entities">Settlement</a></li>
 <li class="circle">io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/SettlementPk.html" class="type-name-link" title="class in io.micronaut.data.document.tck.entities">SettlementPk</a></li>
 <li class="circle">io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/SettlementType.html" class="type-name-link" title="class in io.micronaut.data.document.tck.entities">SettlementType</a></li>
@@ -1295,6 +1308,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ShipmentWithIndexOnClassAndFields.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">ShipmentWithIndexOnClassAndFields</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ShipmentWithIndexOnFields.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">ShipmentWithIndexOnFields</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ShipmentWithIndexOnFieldsCompositeIndexes.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">ShipmentWithIndexOnFieldsCompositeIndexes</a></li>
+<li class="circle">io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SimilarityNormalizer.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">SimilarityNormalizer</a></li>
 <li class="circle">com.example.<a href="com/example/SimpleController.html" class="type-name-link" title="class in com.example">SimpleController</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" class="type-name-link" title="class in io.micronaut.data.model">Sort.Order</a></li>
 <li class="circle">io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" class="type-name-link" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a> (implements io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>, io.micronaut.inject.ast.TypedElement)
@@ -1447,6 +1461,9 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleArrayFactory.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleArrayFactory</a>&lt;A,<wbr>T&gt;</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory</a>&lt;A,<wbr>T&gt;</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorAdapter</a></li>
 <li class="circle">io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.StatementSupplier.html" class="type-name-link" title="interface in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;PS&gt;</li>
 <li class="circle">io.micronaut.core.annotation.AnnotationSource
 <ul>
@@ -1465,8 +1482,12 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.runtime.convert">RuntimePersistentPropertyConversionContext</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseTypeConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">DatabaseTypeConversionContext</a>
+<ul>
 <li class="circle">io.micronaut.data.jdbc.convert.<a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a></li>
 <li class="circle">io.micronaut.data.r2dbc.convert.<a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.r2dbc.convert">R2dbcConversionContext</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PagedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt; (also extends io.micronaut.core.naming.Named)
@@ -1646,7 +1667,18 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.async">AsyncRepositoryOperations</a></li>
 <li class="circle">io.micronaut.transaction.async.<a href="io/micronaut/transaction/async/AsyncTransactionOperations.html" class="type-name-link" title="interface in io.micronaut.transaction.async">AsyncTransactionOperations</a>&lt;C&gt;</li>
-<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;
+<ul>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/ByteVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">ByteVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/DoubleVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">DoubleVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/FloatVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">FloatVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/ResultReaderAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">ResultReaderAttributeConverter</a>&lt;X,<wbr>Y&gt;</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseByteVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseByteVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseDoubleVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseDoubleVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseFloatVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseFloatVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>)</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.runtime.support.convert.<a href="io/micronaut/data/runtime/support/convert/AttributeConverterProvider.html" class="type-name-link" title="interface in io.micronaut.data.runtime.support.convert">AttributeConverterProvider</a></li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AttributeConverterRegistry.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a></li>
 <li class="circle">io.micronaut.core.attr.AttributeHolder
@@ -1949,6 +1981,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;E&gt;</li>
+<li class="circle">io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/DatabaseConversionContextFactory.html" class="type-name-link" title="interface in io.micronaut.data.runtime.convert">DatabaseConversionContextFactory</a></li>
 <li class="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,<wbr>R&gt;
 <ul>
 <li class="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">CountAsyncInterceptor</a>&lt;T&gt;</li>
@@ -2056,6 +2089,22 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" class="type-name-link" title="interface in io.micronaut.data.runtime.config">DataSettings</a></li>
 <li class="circle">io.micronaut.data.runtime.multitenancy.<a href="io/micronaut/data/runtime/multitenancy/DataSourceTenantResolver.html" class="type-name-link" title="interface in io.micronaut.data.runtime.multitenancy">DataSourceTenantResolver</a></li>
 <li class="circle">io.micronaut.data.runtime.date.<a href="io/micronaut/data/runtime/date/DateTimeProvider.html" class="type-name-link" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&lt;T&gt;</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DefinitionProvider.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>
+<ul>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a>
+<ul>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/ByteVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">ByteVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/DoubleVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">DoubleVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/FloatVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">FloatVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseByteVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseByteVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseDoubleVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseDoubleVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/SparseFloatVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">SparseFloatVectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorAttributeConverter</a>&lt;X&gt; (also extends io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a>&lt;X,<wbr>Y&gt;)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlIndexDefinitionProvider.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a></li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.serde.Deserializer&lt;T&gt;
 <ul>
@@ -2396,12 +2445,17 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.runtime.convert">RuntimePersistentPropertyConversionContext</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseTypeConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">DatabaseTypeConversionContext</a>
+<ul>
 <li class="circle">io.micronaut.data.jdbc.convert.<a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a></li>
 <li class="circle">io.micronaut.data.r2dbc.convert.<a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.r2dbc.convert">R2dbcConversionContext</a></li>
 </ul>
 </li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/SearchResults.html" class="type-name-link" title="interface in io.micronaut.data.model.vector.search">SearchResults</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" class="type-name-link" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;
 <ul>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" class="type-name-link" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;
@@ -3087,13 +3141,24 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.runtime.convert">RuntimePersistentPropertyConversionContext</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseTypeConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">DatabaseTypeConversionContext</a>
+<ul>
 <li class="circle">io.micronaut.data.jdbc.convert.<a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a></li>
 <li class="circle">io.micronaut.data.r2dbc.convert.<a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.r2dbc.convert">R2dbcConversionContext</a></li>
 </ul>
 </li>
 </ul>
 </li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/UpdateSpecification.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;T&gt;</li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" class="type-name-link" title="interface in io.micronaut.data.model.vector">Vector</a>
+<ul>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseVector.html" class="type-name-link" title="interface in io.micronaut.data.model.vector">SparseVector</a></li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" class="type-name-link" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></li>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorTypeConverter</a>&lt;T&gt;</li>
 <li class="circle">java.sql.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Wrapper.html" class="type-name-link external-link" title="class or interface in java.sql">Wrapper</a>
 <ul>
 <li class="circle">java.sql.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" class="type-name-link external-link" title="class or interface in java.sql">Connection</a> (also extends java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>)
@@ -3212,6 +3277,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.annotation.repeatable.<a href="io/micronaut/data/annotation/repeatable/TypeDefinitions.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation.repeatable">TypeDefinitions</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/TypeRole.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">TypeRole</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Update.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Update</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorIndex.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">VectorIndex</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorStorage.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">VectorStorage</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Version.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Version</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Where.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Where</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
 <li class="circle">io.micronaut.data.annotation.repeatable.<a href="io/micronaut/data/annotation/repeatable/WhereSpecifications.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation.repeatable">WhereSpecifications</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
@@ -3226,6 +3293,7 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html" class="type-name-link external-link" title="class or interface in java.lang">Enum</a>&lt;E&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;T&gt;, java.lang.constant.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/constant/Constable.html" title="class or interface in java.lang.constant" class="external-link">Constable</a>, java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
 <ul>
+<li class="circle">io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorKind.html" class="type-name-link" title="enum class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorKind</a></li>
 <li class="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.SaveOperation.html" class="type-name-link" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></li>
 <li class="circle">io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryPosition.html" class="type-name-link" title="enum class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryPosition</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/BinaryExpressionType.html" class="type-name-link" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">BinaryExpressionType</a></li>
@@ -3233,6 +3301,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.Capability.html" class="type-name-link" title="enum class in io.micronaut.data.connection">ConnectionCapabilities.Capability</a></li>
 <li class="circle">io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionDefinition.Propagation.html" class="type-name-link" title="enum class in io.micronaut.data.connection">ConnectionDefinition.Propagation</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/CurrentTemporalExpression.Type.html" class="type-name-link" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">CurrentTemporalExpression.Type</a></li>
+<li class="circle">io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseType.html" class="type-name-link" title="enum class in io.micronaut.data.model.runtime.convert">DatabaseType</a></li>
 <li class="circle">io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" class="type-name-link" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></li>
 <li class="circle">io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQuery.OperationType.html" class="type-name-link" title="enum class in io.micronaut.data.intercept.annotation">DataMethodQuery.OperationType</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" class="type-name-link" title="enum class in io.micronaut.data.model">DataType</a></li>
@@ -3261,6 +3330,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Cascade.html" class="type-name-link" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a></li>
 <li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Kind.html" class="type-name-link" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></li>
 <li class="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SchemaGenerate.html" class="type-name-link" title="enum class in io.micronaut.data.runtime.config">SchemaGenerate</a></li>
+<li class="circle">io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/ScoringFunction.html" class="type-name-link" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.Direction.html" class="type-name-link" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a></li>
 <li class="circle">io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" class="type-name-link" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></li>
 <li class="circle">io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.TableType.html" class="type-name-link" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></li>
@@ -3272,6 +3342,9 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" class="type-name-link" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></li>
 <li class="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html" class="type-name-link" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/UnaryExpressionType.html" class="type-name-link" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpressionType</a></li>
+<li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorIndexType.html" class="type-name-link" title="enum class in io.micronaut.data.annotation">VectorIndexType</a></li>
+<li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorIndexType.DistanceType.html" class="type-name-link" title="enum class in io.micronaut.data.annotation">VectorIndexType.DistanceType</a></li>
+<li class="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorShape.html" class="type-name-link" title="enum class in io.micronaut.data.annotation">VectorShape</a></li>
 </ul>
 </li>
 </ul>
@@ -3292,12 +3365,15 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.coherence.data.model.<a href="io/micronaut/coherence/data/model/Author.html" class="type-name-link" title="class in io.micronaut.coherence.data.model">Author</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)</li>
 <li class="circle">io.micronaut.data.tck.entities.embedded.<a href="io/micronaut/data/tck/entities/embedded/BookEntity.html" class="type-name-link" title="class in io.micronaut.data.tck.entities.embedded">BookEntity</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BookWithIdAndTitle.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">BookWithIdAndTitle</a></li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">ByteVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" title="interface in io.micronaut.data.model.vector">Vector</a>)</li>
 <li class="circle">io.micronaut.data.connection.<a href="io/micronaut/data/connection/DefaultConnectionDefinition.html" class="type-name-link" title="class in io.micronaut.data.connection">DefaultConnectionDefinition</a> (implements io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>)</li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/DoubleVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">DoubleVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" title="interface in io.micronaut.data.model.vector">Vector</a>)</li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/EntityWithIdClass2.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">EntityWithIdClass2</a></li>
 <li class="circle">io.micronaut.coherence.data.util.<a href="io/micronaut/coherence/data/util/EventRecord.html" class="type-name-link" title="class in io.micronaut.coherence.data.util">EventRecord</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ExampleEntity.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">ExampleEntity</a></li>
 <li class="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.InterceptorMatch.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></li>
 <li class="circle">io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/FindInterceptorDef.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors">FindInterceptorDef</a></li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/FloatVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">FloatVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" title="interface in io.micronaut.data.model.vector">Vector</a>)</li>
 <li class="circle">io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/GeometryCollection.html" class="type-name-link" title="class in io.micronaut.data.model.geo">GeometryCollection</a> (implements io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/Geometry.html" title="interface in io.micronaut.data.model.geo">Geometry</a>)</li>
 <li class="circle">io.micronaut.data.tck.entities.embedded.<a href="io/micronaut/data/tck/entities/embedded/HouseEntity.html" class="type-name-link" title="class in io.micronaut.data.tck.entities.embedded">HouseEntity</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Limit.DefaultLimit.html" class="type-name-link" title="class in io.micronaut.data.model">Limit.DefaultLimit</a> (implements io.micronaut.data.model.<a href="io/micronaut/data/model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>)</li>
@@ -3316,7 +3392,13 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/Point.html" class="type-name-link" title="class in io.micronaut.data.model.geo">Point</a> (implements io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/Geometry.html" title="interface in io.micronaut.data.model.geo">Geometry</a>)</li>
 <li class="circle">io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/Polygon.html" class="type-name-link" title="class in io.micronaut.data.model.geo">Polygon</a> (implements io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/Geometry.html" title="interface in io.micronaut.data.model.geo">Geometry</a>)</li>
 <li class="circle">io.micronaut.data.tck.entities.embedded.<a href="io/micronaut/data/tck/entities/embedded/ResourceEntity.html" class="type-name-link" title="class in io.micronaut.data.tck.entities.embedded">ResourceEntity</a>&lt;S&gt;</li>
+<li class="circle">io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/Score.html" class="type-name-link" title="class in io.micronaut.data.model.vector.search">Score</a></li>
+<li class="circle">io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/SearchResult.html" class="type-name-link" title="class in io.micronaut.data.model.vector.search">SearchResult</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ShipmentDto.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">ShipmentDto</a></li>
+<li class="circle">io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/Similarity.html" class="type-name-link" title="class in io.micronaut.data.model.vector.search">Similarity</a></li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseByteVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">SparseByteVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseVector.html" title="interface in io.micronaut.data.model.vector">SparseVector</a>)</li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseDoubleVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">SparseDoubleVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseVector.html" title="interface in io.micronaut.data.model.vector">SparseVector</a>)</li>
+<li class="circle">io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseFloatVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">SparseFloatVector</a> (implements io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseVector.html" title="interface in io.micronaut.data.model.vector">SparseVector</a>)</li>
 <li class="circle">io.micronaut.data.model.jd.<a href="io/micronaut/data/model/jd/SpecificationConstraint.html" class="type-name-link" title="class in io.micronaut.data.model.jd">SpecificationConstraint</a></li>
 <li class="circle">io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></li>
 <li class="circle">io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a></li>
@@ -3328,6 +3410,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/TrainNameModelDto.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">TrainNameModelDto</a></li>
 <li class="circle">io.micronaut.data.document.tck.services.<a href="io/micronaut/data/document/tck/services/TxEventsService.NewBookEvent.html" class="type-name-link" title="class in io.micronaut.data.document.tck.services">TxEventsService.NewBookEvent</a></li>
 <li class="circle">io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/TxEventsService.NewBookEvent.html" class="type-name-link" title="class in io.micronaut.data.tck.services">TxEventsService.NewBookEvent</a></li>
+<li class="circle">io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></li>
 </ul>
 </li>
 </ul>

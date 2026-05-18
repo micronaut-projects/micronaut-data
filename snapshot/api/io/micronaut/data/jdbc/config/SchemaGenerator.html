@@ -58,7 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)" tabindex="0">SchemaGenerator(List, JdbcSchemaHandler, List, Environment)</a></li>
+<li><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment,java.util.List)" tabindex="0">SchemaGenerator(List, JdbcSchemaHandler, List, Environment, List)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -96,10 +96,11 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)" class="member-name-link">SchemaGenerator</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment,java.util.List)" class="member-name-link">SchemaGenerator</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
  <a href="../operations/JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a>&gt;&nbsp;sqlTableMappingValidators,
- io.micronaut.context.env.Environment&nbsp;environment)</code></div>
+ io.micronaut.context.env.Environment&nbsp;environment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Constructors a schema generator for the given configurations.</div>
 </div>
@@ -140,13 +141,14 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)">
+<section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment,java.util.List)">
 <h3>SchemaGenerator</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SchemaGenerator</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
  <a href="../operations/JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a>&gt;&nbsp;sqlTableMappingValidators,
- io.micronaut.context.env.Environment&nbsp;environment)</span></div>
+ io.micronaut.context.env.Environment&nbsp;environment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders)</span></div>
 <div class="block">Constructors a schema generator for the given configurations.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -154,6 +156,7 @@ loadScripts(document, 'script');</script>
 <dd><code>schemaHandler</code> - The schema handler</dd>
 <dd><code>sqlTableMappingValidators</code> - The list of <a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation"><code>SqlTableMappingValidator</code></a> instances</dd>
 <dd><code>environment</code> - The environment</dd>
+<dd><code>definitionProviders</code> - Providers of vendor-specific SQL definitions (columns and indexes) used during schema generation</dd>
 </dl>
 </div>
 </section>

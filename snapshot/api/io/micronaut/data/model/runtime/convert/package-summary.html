@@ -77,12 +77,16 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Runtime implementation of the model that uses <code>Introspected</code> bean metadata.</div>
 </div>
+<div class="col-first odd-row-color"><a href="vector/package-summary.html">io.micronaut.data.model.runtime.convert.vector</a></div>
+<div class="col-last odd-row-color">
+<div class="block">Vector conversion contracts.</div>
+</div>
 </div>
 </div>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
@@ -91,13 +95,37 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">The attribute converter is used for converting mapped entity value to the persisted value and back.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="GeometryJsonConverter.html" title="class in io.micronaut.data.model.runtime.convert">GeometryJsonConverter</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="DatabaseType.html" title="enum class in io.micronaut.data.model.runtime.convert">DatabaseType</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="block">Canonical database types supported across SQL and NoSQL stores.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="DatabaseTypeConversionContext.html" title="interface in io.micronaut.data.model.runtime.convert">DatabaseTypeConversionContext</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Database-type-aware <code>ConversionContext</code> used by SQL mappers and converters.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Internal extension interface for SQL schema definition providers.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="GeometryJsonConverter.html" title="class in io.micronaut.data.model.runtime.convert">GeometryJsonConverter</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Converts <a href="../../geo/Geometry.html" title="interface in io.micronaut.data.model.geo"><code>Geometry</code></a> values to and from their GeoJSON string representation.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="GeometryWktConverter.html" title="class in io.micronaut.data.model.runtime.convert">GeometryWktConverter</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="GeometryWktConverter.html" title="class in io.micronaut.data.model.runtime.convert">GeometryWktConverter</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Converts <a href="../../geo/Geometry.html" title="interface in io.micronaut.data.model.geo"><code>Geometry</code></a> values to and from their Well-Known Text (WKT) representation.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ResultReaderAttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">ResultReaderAttributeConverter</a>&lt;X,<wbr>Y&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">ResultReader-aware attribute converter contract for SQL-like stores (JDBC/R2DBC).</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Extension interface to provide vendor-specific SQL column definitions during schema generation.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Extension interface to generate vendor-specific SQL index definitions for schema generation.</div>
 </div>
 </div>
 </div>

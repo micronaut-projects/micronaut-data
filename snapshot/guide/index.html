@@ -259,9 +259,11 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.13</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.14</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>6.5.14</strong><span>SQL Vector Type Mapping</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.15</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.15</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.16</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -10376,6 +10378,48 @@ class AuthorController {
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For Oracle sparse <code>VECTOR(&#8230;&#8203;, SPARSE)</code> usage with R2DBC, include a recent Oracle JDBC driver as well so Oracle sparse VECTOR APIs are available at runtime.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"com.oracle.database.jdbc:ojdbc11")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;com.oracle.database.jdbc&lt;/groupId&gt;
+    &lt;artifactId&gt;ojdbc11&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For PostgreSQL vector support with R2DBC, Micronaut Data uses <code>io.r2dbc.postgresql.codec.Vector</code> from the PostgreSQL R2DBC driver. The pgvector Java library is only required when using JDBC pgvector driver-native types; sparse <code>PGsparsevec</code> mapping is currently JDBC-only.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_sql_logging">SQL Logging</h3>
@@ -13711,7 +13755,830 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.14 Support for Java 16 Records</h2>
+<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>6.5.14 SQL Vector Type Mapping</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/sqlMapping/sqlVectorType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>This section explains how to map vector embeddings with Micronaut Data JDBC and R2DBC.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data provides vector value types in <code>io.micronaut.data.model.vector</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FloatVector</code>: <code>float[]</code> backed values.</p>
+</li>
+<li>
+<p><code>DoubleVector</code>: <code>double[]</code> backed values.</p>
+</li>
+<li>
+<p><code>ByteVector</code>: <code>byte[]</code> backed values.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Sparse vectors are represented by:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>SparseFloatVector</code>: <code>length</code>, <code>indices</code>, and <code>float[] values</code>.</p>
+</li>
+<li>
+<p><code>SparseDoubleVector</code>: <code>length</code>, <code>indices</code>, and <code>double[] values</code>.</p>
+</li>
+<li>
+<p><code>SparseByteVector</code>: <code>length</code>, <code>indices</code>, and <code>byte[] values</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For portable sparse mappings, prefer <code>SparseFloatVector</code>.</p>
+</div>
+<div class="paragraph">
+<p>You can also use the sealed interface <code>Vector</code> if you need a type-agnostic parameter. For derived vector search methods, Micronaut Data also accepts concrete subtypes (<code>FloatVector</code>, <code>DoubleVector</code>, <code>ByteVector</code>) as parameters.
+When you use <code>Vector</code>, Micronaut Data selects the configured dialect-specific vector binding and conversion path for the active driver.</p>
+</div>
+<div class="sect2">
+<h3 id="_conversion_helpers">Conversion helpers</h3>
+<div class="paragraph">
+<p>All vectors expose dense/sparse conversion helpers through the <code>Vector</code> API (<code>toSparseFloatVector()</code>, <code>toSparseDoubleVector()</code>, <code>toSparseByteVector()</code>).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_binding_policy_recommended_path">Binding policy (recommended path)</h3>
+<div class="paragraph">
+<p>Use Micronaut vector types (<code>Vector</code>, concrete vector subtypes, or sparse vector subtypes) as the application-level input/output model for vector columns and vector query parameters.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data does not rely on string vector literals as the primary path for vector operations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Oracle R2DBC binds vectors using Oracle native typed <code>VECTOR</code> values.</p>
+</li>
+<li>
+<p>JDBC vector binding is driven by Micronaut vector types across supported dialects.</p>
+</li>
+<li>
+<p>If your code passes raw primitive arrays or string literals for vector queries, migrate to <code>Vector</code> or <code>SparseVector</code> values.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example_entity">Example entity</h3>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.VectorIndex;
+import io.micronaut.data.annotation.VectorIndexType;
+import io.micronaut.data.model.vector.Vector;
+import jakarta.persistence.Column;
+
+@MappedEntity("document_embedding")
+public record DocumentEmbedding(
+    @Id
+    @GeneratedValue
+    Long id,
+
+    @VectorIndex(
+        vectorIndexType = VectorIndexType.IVF,
+        distanceType = VectorIndexType.DistanceType.COSINE,
+        accuracy = 90
+    )
+    @Column(length = 3)
+    Vector embedding) {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorIndex
+import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.model.vector.Vector
+import jakarta.persistence.Column
+
+@MappedEntity("document_embedding")
+data class DocumentEmbedding(
+    @field:Id
+    @field:GeneratedValue
+    val id: Long? = null,
+
+    @field:Column(length = 3)
+    @field:VectorIndex(
+        vectorIndexType = VectorIndexType.IVF,
+        distanceType = VectorIndexType.DistanceType.COSINE,
+        accuracy = 90
+    )
+    val embedding: Vector
+)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorIndex
+import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.model.vector.Vector
+import jakarta.persistence.Column
+
+@MappedEntity("document_embedding")
+class DocumentEmbedding {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @Column(length = 3)
+    @VectorIndex(
+        vectorIndexType = VectorIndexType.IVF,
+        distanceType = VectorIndexType.DistanceType.COSINE,
+        accuracy = 90
+    )
+    Vector embedding
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create a vector index, annotate the vector property with <code>@VectorIndex</code>.</p>
+</div>
+<div class="paragraph">
+<p>Dialect notes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>PostgreSQL (pgvector): creates <code>ivfflat</code> or <code>hnsw</code> indexes. The operator class is derived from distance (<code>COSINE</code> &#8594; <code>vector_cosine_ops</code>, <code>DOT</code> &#8594; <code>vector_ip_ops</code>, <code>L1</code>/<code>L2</code> &#8594; <code>vector_l1_ops</code>/<code>vector_l2_ops</code>).
+For sparse columns (<code>@VectorStorage(shape = VectorShape.SPARSE)</code>), Micronaut Data emits sparse operator classes (<code>sparsevec_*_ops</code>) and requires <code>HNSW</code>.</p>
+</li>
+<li>
+<p>Oracle: creates <code>CREATE VECTOR INDEX</code> with <code>ORGANIZATION NEIGHBOR PARTITIONS</code> (<code>IVF</code>) or <code>GRAPH</code> (<code>HNSW</code>), plus distance and target accuracy settings.</p>
+</li>
+<li>
+<p>MySQL: <code>@VectorIndex</code> is not supported and schema generation fails fast instead of creating a plain non-vector index.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_repository_usage">Repository usage</h3>
+<div class="paragraph">
+<p>Use vector fields as you would any other property. You can also pass <code>Vector</code> into query parameters when you don’t want to commit to a specific subtype at the call site.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.ScoringFunction;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
+
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    DocumentEmbedding save(Vector embedding);
+
+    List&lt;DocumentEmbedding&gt; findTop2ByEmbeddingNear(Vector vec, Double maxDistance);
+
+    SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
+                                                           Score maxDistance,
+                                                           ScoringFunction function);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    fun save(embedding: Vector): DocumentEmbedding
+
+    fun findTop2ByEmbeddingNear(vec: Vector, maxDistance: Double): List&lt;DocumentEmbedding&gt;
+
+    fun searchByEmbeddingNear(vector: Vector,
+                              maxDistance: Score,
+                              function: ScoringFunction): SearchResults&lt;DocumentEmbedding&gt;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    DocumentEmbedding save(Vector embedding)
+
+    List&lt;DocumentEmbedding&gt; findTop2ByEmbeddingNear(Vector vec, Double maxDistance)
+
+    SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
+                                                           Score maxDistance,
+                                                           ScoringFunction function)
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_score_vs_similarity_normalization">Score vs Similarity (normalization)</h3>
+<div class="paragraph">
+<p><code>Score</code> is the raw database vector score/distance value used by SQL predicates and ordering.</p>
+</div>
+<div class="paragraph">
+<p><code>Similarity</code> can be normalized to/from raw score values by Micronaut Data for supported scoring functions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>COSINE</code></p>
+</li>
+<li>
+<p><code>L2_EUCLIDEAN</code></p>
+</li>
+<li>
+<p><code>L2_EUCLIDEAN_SQUARED</code></p>
+</li>
+<li>
+<p><code>DOT</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When a repository method includes both <code>Similarity</code> arguments and an explicit <code>ScoringFunction</code> parameter,
+Micronaut Data converts <code>Similarity</code> values to raw SQL score values before binding.</p>
+</div>
+<div class="paragraph">
+<p>If no scoring function is provided, Micronaut Data uses dialect defaults for SQL vector search:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>PostgreSQL: <code>COSINE</code></p>
+</li>
+<li>
+<p>Oracle: <code>COSINE</code></p>
+</li>
+<li>
+<p>MySQL: <code>L2_EUCLIDEAN</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If no dialect default is available, Micronaut Data uses identity conversion.
+<code>L1_MANHATTAN</code> uses identity normalization.</p>
+</div>
+<div class="paragraph">
+<p>For <code>SearchResults&lt;T&gt;</code> return types, Micronaut Data always returns raw <code>Score</code> and additionally populates <code>SearchResult.similarity()</code> when scoring function context is available.
+If no rows match, Micronaut Data returns an empty <code>SearchResults</code> (not <code>null</code>).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_derived_vector_search_methods">Derived vector search methods</h3>
+<div class="paragraph">
+<p>Micronaut Data supports derived vector finder methods with the <code>searchBy&#8230;&#8203;</code> prefix:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Near(Vector vector, Double maxDistance)</code></p>
+</li>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Near(Vector vector, Score maxDistance)</code></p>
+</li>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Within(Vector vector, Double minDistance, Double maxDistance)</code></p>
+</li>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Within(Vector vector, Similarity minDistance, Similarity maxDistance)</code></p>
+</li>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Between(Vector vector, Double minDistance, Double maxDistance)</code></p>
+</li>
+<li>
+<p><code>searchBy&lt;Embedding&gt;Between(Vector vector, Score minDistance, Score maxDistance)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For these signatures, the vector argument can be either <code>Vector</code> or a concrete vector subtype.</p>
+</div>
+<div class="paragraph">
+<p>For vector properties, <code>Between</code> is treated as vector range semantics (<code>Within</code>).</p>
+</div>
+<div class="paragraph">
+<p>Top/order variants are also supported, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>searchTop2ByEmbeddingNearOrderByIdDesc(&#8230;&#8203;)</code></p>
+</li>
+<li>
+<p><code>searchTop2ByEmbeddingWithinOrderByIdAsc(&#8230;&#8203;)</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scoring_function_selection_in_derived_search">Scoring function selection in derived search</h3>
+<div class="paragraph">
+<p>You can provide an explicit scoring function argument in derived vector methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.ScoringFunction;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
+
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    DocumentEmbedding save(Vector embedding);
+
+    List&lt;DocumentEmbedding&gt; findTop2ByEmbeddingNear(Vector vec, Double maxDistance);
+
+    SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
+                                                           Score maxDistance,
+                                                           ScoringFunction function);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    fun save(embedding: Vector): DocumentEmbedding
+
+    fun findTop2ByEmbeddingNear(vec: Vector, maxDistance: Double): List&lt;DocumentEmbedding&gt;
+
+    fun searchByEmbeddingNear(vector: Vector,
+                              maxDistance: Score,
+                              function: ScoringFunction): SearchResults&lt;DocumentEmbedding&gt;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbedding, Long&gt; {
+
+    // Example showing vector as a parameter
+    DocumentEmbedding save(Vector embedding)
+
+    List&lt;DocumentEmbedding&gt; findTop2ByEmbeddingNear(Vector vec, Double maxDistance)
+
+    SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
+                                                           Score maxDistance,
+                                                           ScoringFunction function)
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Only one <code>ScoringFunction</code> parameter is allowed for vector derived search methods.</p>
+</div>
+<div class="paragraph">
+<p>Current derived-search scoring function support by dialect:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>PostgreSQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code></p>
+</li>
+<li>
+<p>Oracle: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>L2_EUCLIDEAN_SQUARED</code>, <code>DOT</code>, <code>L1_MANHATTAN</code></p>
+</li>
+<li>
+<p>MySQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an <code>IllegalArgumentException</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_oracle_sparse_vector_columns">Oracle sparse vector columns</h3>
+<div class="paragraph">
+<p>For Oracle, declare sparse vector storage with <code>@VectorStorage(shape = VectorShape.SPARSE)</code> on the vector property.
+You can also set dimensions with <code>@VectorStorage(length = N)</code> (equivalent to <code>@Column(length = N)</code> for vectors).</p>
+</div>
+<div class="paragraph">
+<p>When the property type is generic <code>Vector</code> (not <code>FloatVector</code>/<code>DoubleVector</code>/<code>ByteVector</code>) and sparse storage is enabled,
+Micronaut Data defaults Oracle sparse DDL to <code>FLOAT32</code> and coerces sparse values through a float-compatible conversion path.
+This gives a consistent default for sparse <code>Vector</code> usage across Oracle and PostgreSQL JDBC.</p>
+</div>
+<div class="paragraph">
+<p>For sparse vector subtypes, Oracle infers the element type from the Java subtype in the same way as dense vectors:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>SparseDoubleVector</code> &#8594; <code>VECTOR(N, FLOAT64, SPARSE)</code></p>
+</li>
+<li>
+<p><code>SparseFloatVector</code>  &#8594; <code>VECTOR(N, FLOAT32, SPARSE)</code></p>
+</li>
+<li>
+<p><code>SparseByteVector</code>   &#8594; <code>VECTOR(N, INT8, SPARSE)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For sparse columns declared as generic <code>Vector</code>, Oracle defaults to <code>VECTOR(N, FLOAT32, SPARSE)</code>.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.VectorShape;
+import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.vector.Vector;
+
+@MappedEntity("sparse_document_embedding")
+public record SparseDocumentEmbedding(
+    @Id
+    @GeneratedValue
+    Long id,
+
+    @VectorStorage(length = 5, shape = VectorShape.SPARSE)
+    Vector embedding) {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorShape
+import io.micronaut.data.annotation.VectorStorage
+import io.micronaut.data.model.vector.Vector
+
+@MappedEntity("sparse_document_embedding")
+data class SparseDocumentEmbedding(
+    @field:Id
+    @field:GeneratedValue
+    val id: Long? = null,
+
+    @field:VectorStorage(length = 5, shape = VectorShape.SPARSE)
+    val embedding: Vector
+)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorShape
+import io.micronaut.data.annotation.VectorStorage
+import io.micronaut.data.model.vector.Vector
+
+@MappedEntity("sparse_document_embedding")
+class SparseDocumentEmbedding {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @VectorStorage(length = 5, shape = VectorShape.SPARSE)
+    Vector embedding
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This generates Oracle DDL like <code>VECTOR(5, FLOAT32, SPARSE)</code> when the field type is generic <code>Vector</code>.</p>
+</div>
+<div class="paragraph">
+<p>Oracle R2DBC supports sparse derived search/query binding using native typed Oracle VECTOR binding for sparse paths.</p>
+</div>
+<div class="paragraph">
+<p>Sparse storage describes the database representation, while the Java response type is driven by your mapped property / repository method signature:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If your property/return type is <code>Vector</code> or a dense subtype (<code>FloatVector</code>, <code>DoubleVector</code>, <code>ByteVector</code>), sparse database values are materialized to dense arrays.</p>
+</li>
+<li>
+<p>If your property/return type is a sparse subtype (<code>SparseFloatVector</code>, <code>SparseDoubleVector</code>, <code>SparseByteVector</code>), Micronaut Data returns sparse vector objects.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example_usage">Example usage</h3>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">        Vector vec = Vector.of(0.1d, 0.2d, 0.3d);
+        repository.save(vec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">        val vec: Vector = Vector.of(0.1, 0.2, 0.3)
+        repository.save(vec)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">        Vector vec = Vector.of(0.1d, 0.2d, 0.3d)
+        repository.save(vec)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ddl_generation_and_dimensions">DDL generation and dimensions</h3>
+<div class="paragraph">
+<p>Micronaut Data determines vector dimensions from <code>@VectorStorage(length = N)</code>, or from <code>@jakarta.persistence.Column(length = N)</code> when <code>@VectorStorage</code> does not define a length:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>PostgreSQL (pgvector): <code>vector(N)</code> / <code>vector</code> by default, or <code>sparsevec(N)</code> / <code>sparsevec</code> when <code>@VectorStorage(shape = VectorShape.SPARSE)</code> is set</p>
+</li>
+<li>
+<p>Oracle: <code>VECTOR(N, &lt;TYPE&gt;)</code> or <code>VECTOR(*, &lt;TYPE&gt;)</code> when no length is present</p>
+</li>
+<li>
+<p>MySQL HeatWave: <code>VECTOR(N)</code> or <code>VECTOR</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The Oracle <code>&lt;TYPE&gt;</code> is inferred from the vector subtype:
+- <code>DoubleVector</code> &#8594; <code>FLOAT64</code>
+- <code>FloatVector</code>  &#8594; <code>FLOAT32</code>
+- <code>ByteVector</code>   &#8594; <code>INT8</code></p>
+</div>
+<div class="paragraph">
+<p>For sparse columns declared as generic <code>Vector</code> (<code>@VectorStorage(shape = VectorShape.SPARSE)</code>), Oracle defaults to <code>FLOAT32</code>.</p>
+</div>
+<div class="paragraph">
+<p>If the dialect does not support vectors, Micronaut Data emits <code>VARCHAR(255)</code> for vector column definitions and logs a warning.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_postgresql_pgvector">PostgreSQL (pgvector)</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Column type: <code>vector</code> / <code>vector(N)</code> (dense) or <code>sparsevec</code> / <code>sparsevec(N)</code> when <code>@VectorStorage(shape = VectorShape.SPARSE)</code> is used</p>
+</li>
+<li>
+<p>PostgreSQL vector storage is float32-based. Dense mappings use <code>FloatVector</code> semantics, and sparse mappings use <code>SparseFloatVector</code> semantics; generic <code>Vector</code> values are coerced through those float-based paths.</p>
+</li>
+<li>
+<p>Use <code>@VectorStorage(length = N)</code> (or <code>@Column(length = N)</code>) to define the dimension in schema generation</p>
+</li>
+<li>
+<p>Sparse index DDL uses <code>HNSW</code> with <code>sparsevec_*_ops</code> operator classes; sparse + <code>IVF</code> is rejected.</p>
+</li>
+<li>
+<p>PostgreSQL JDBC supports dense and sparse conversion paths.</p>
+</li>
+<li>
+<p>Postgres R2DBC currently supports dense <code>vector</code> only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+PostgreSQL JDBC vector support is backed by the pgvector Java library. Include it at runtime when using JDBC pgvector driver-native types. R2DBC dense <code>vector</code> support uses the PostgreSQL R2DBC driver codec; <code>PGsparsevec</code> sparse mapping is currently JDBC-only.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"com.pgvector:pgvector")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;com.pgvector&lt;/groupId&gt;
+    &lt;artifactId&gt;pgvector&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>DDL example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE document_embedding (
+  id BIGINT PRIMARY KEY,
+  embedding vector(384)
+);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_oracle_vector">Oracle (VECTOR)</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Column type: <code>VECTOR(N, &lt;TYPE&gt;)</code> or <code>VECTOR(*, &lt;TYPE&gt;)</code></p>
+</li>
+<li>
+<p><code>&lt;TYPE&gt;</code> derives from the Java vector subtype:</p>
+</li>
+<li>
+<p><code>DoubleVector</code> &#8594; <code>FLOAT64</code></p>
+</li>
+<li>
+<p><code>FloatVector</code>  &#8594; <code>FLOAT32</code></p>
+</li>
+<li>
+<p><code>ByteVector</code>   &#8594; <code>INT8</code></p>
+</li>
+<li>
+<p>Use <code>@VectorStorage(length = N)</code> (or <code>@Column(length = N)</code>) to set the dimension; when omitted, <code>*</code> is used.</p>
+</li>
+<li>
+<p>JDBC and R2DBC derived <code>SearchResults</code> mappings both return empty <code>SearchResults</code> when no rows match.</p>
+</li>
+<li>
+<p>Oracle JDBC and Oracle R2DBC both support sparse vector columns (<code>VECTOR(&#8230;&#8203;, SPARSE)</code>) for derived search scenarios.</p>
+</li>
+<li>
+<p>Oracle R2DBC sparse and dense query parameters are bound using Oracle native typed VECTOR values.</p>
+</li>
+<li>
+<p>For Oracle R2DBC sparse vectors, include a recent <code>ojdbc11</code> dependency in your application so sparse VECTOR JDBC APIs are available to the Oracle driver stack.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>DDL example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE document_embedding (
+  id NUMBER(19) PRIMARY KEY,
+  embedding VECTOR(384, FLOAT64)
+);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Oracle approximate row-limiting syntax for vector search can use <code>FETCH FIRST APPROX</code> / <code>APPROXIMATE</code> when supported by the database version and query shape:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT *
+FROM document_embedding d
+ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
+FETCH FIRST APPROX 2 ROWS ONLY;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mysql_heatwave_vector">MySQL HeatWave (VECTOR)</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Column type: <code>VECTOR(N)</code> or <code>VECTOR</code></p>
+</li>
+<li>
+<p>Only <code>FloatVector</code> is supported.</p>
+</li>
+<li>
+<p>Works with JDBC only; R2DBC is currently not supported.</p>
+</li>
+<li>
+<p>Use <code>@VectorStorage(length = N)</code> (or <code>@Column(length = N)</code>) to define the dimension</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>DDL example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE document_embedding (
+  id BIGINT PRIMARY KEY,
+  embedding VECTOR(1536)
+);</code></pre>
+</div>
+</div>
+</div>
+
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.15 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -13763,7 +14630,7 @@ record Book(
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.15 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.16 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.0.x/src/main/docs/guide/dbc/kotlinData.adoc"'>

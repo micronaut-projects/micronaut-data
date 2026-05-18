@@ -59,7 +59,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D)" tabindex="0">SqlIndexMapping(String, boolean, String[])</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,boolean)" tabindex="0">SqlIndexMapping(String, boolean, String[], boolean)</a></li>
 <li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,boolean,java.lang.Integer)" tabindex="0">SqlIndexMapping(String, boolean, String[], boolean, Integer)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean)" tabindex="0">SqlIndexMapping(String, boolean, String[], SqlIndexDefinitionProvider, VectorIndexMetadata, boolean)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider)" tabindex="0">SqlIndexMapping(String, boolean, String[], SqlIndexDefinitionProvider)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean,java.lang.Integer)" tabindex="0">SqlIndexMapping(String, boolean, String[], SqlIndexDefinitionProvider, VectorIndexMetadata, boolean, Integer)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -70,6 +74,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#name()" tabindex="0">name()</a></li>
 <li><a href="#unique()" tabindex="0">unique()</a></li>
 <li><a href="#columns()" tabindex="0">columns()</a></li>
+<li><a href="#sqlIndexDefinitionProvider()" tabindex="0">sqlIndexDefinitionProvider()</a></li>
+<li><a href="#vectorIndexMetadata()" tabindex="0">vectorIndexMetadata()</a></li>
 <li><a href="#spatial()" tabindex="0">spatial()</a></li>
 <li><a href="#srid()" tabindex="0">srid()</a></li>
 </ol>
@@ -92,13 +98,15 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-name">name</span></code> - The index name</dd>
 <dd><code><span id="param-unique">unique</span></code> - Whether the index is unique</dd>
 <dd><code><span id="param-columns">columns</span></code> - The column names in the index</dd>
+<dd><code><span id="param-sqlIndexDefinitionProvider">sqlIndexDefinitionProvider</span></code> - Optional vendor-specific index DDL provider</dd>
+<dd><code><span id="param-vectorIndexMetadata">vectorIndexMetadata</span></code> - Vector index metadata, if any</dd>
 <dd><code><span id="param-spatial">spatial</span></code> - Whether the index is spatial</dd>
 <dd><code><span id="param-srid">srid</span></code> - The spatial reference identifier</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlIndexMapping</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, boolean&nbsp;unique, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns, boolean&nbsp;spatial, @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlIndexMapping</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, boolean&nbsp;unique, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns, @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider, @Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a>&nbsp;vectorIndexMetadata, boolean&nbsp;spatial, @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">The SQL table index mapping.</div>
 </div>
@@ -117,9 +125,34 @@ loadScripts(document, 'script');</script>
  boolean&nbsp;unique,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,boolean,java.lang.Integer)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,boolean)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  boolean&nbsp;unique,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ boolean&nbsp;spatial)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,boolean,java.lang.Integer)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ boolean&nbsp;spatial,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider,
+ @Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a>&nbsp;vectorIndexMetadata,
+ boolean&nbsp;spatial)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,java.lang.String%5B%5D,io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean,java.lang.Integer)" class="member-name-link">SqlIndexMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider,
+ @Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a>&nbsp;vectorIndexMetadata,
  boolean&nbsp;spatial,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)</code></div>
 <div class="col-last odd-row-color">
@@ -164,20 +197,30 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-spatial"><code>spatial</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#srid()" class="member-name-link">srid</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sqlIndexDefinitionProvider()" class="member-name-link">sqlIndexDefinitionProvider</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-sqlIndexDefinitionProvider"><code>sqlIndexDefinitionProvider</code></a> record component.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#srid()" class="member-name-link">srid</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-srid"><code>srid</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#unique()" class="member-name-link">unique</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#unique()" class="member-name-link">unique</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-unique"><code>unique</code></a> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#vectorIndexMetadata()" class="member-name-link">vectorIndexMetadata</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-vectorIndexMetadata"><code>vectorIndexMetadata</code></a> record component.</div>
 </div>
 </div>
 </div>
@@ -207,6 +250,17 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,boolean,java.lang.String[],boolean)">
+<h3>SqlIndexMapping</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlIndexMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ boolean&nbsp;spatial)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="&lt;init&gt;(java.lang.String,boolean,java.lang.String[],boolean,java.lang.Integer)">
 <h3>SqlIndexMapping</h3>
 <div class="horizontal-scroll">
@@ -215,12 +269,52 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
  boolean&nbsp;spatial,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,boolean,java.lang.String[],io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean)">
+<h3>SqlIndexMapping</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlIndexMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider,
+ @Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a>&nbsp;vectorIndexMetadata,
+ boolean&nbsp;spatial)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,boolean,java.lang.String[],io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider)">
+<h3>SqlIndexMapping</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlIndexMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,boolean,java.lang.String[],io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider,io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata,boolean,java.lang.Integer)">
+<h3>SqlIndexMapping</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlIndexMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;unique,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;columns,
+ @Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a>&nbsp;sqlIndexDefinitionProvider,
+ @Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a>&nbsp;vectorIndexMetadata,
+ boolean&nbsp;spatial,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;srid)</span></div>
 <div class="block">Creates an instance of a <code>SqlIndexMapping</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>name</code> - the value for the <a href="#param-name"><code>name</code></a> record component</dd>
 <dd><code>unique</code> - the value for the <a href="#param-unique"><code>unique</code></a> record component</dd>
 <dd><code>columns</code> - the value for the <a href="#param-columns"><code>columns</code></a> record component</dd>
+<dd><code>sqlIndexDefinitionProvider</code> - the value for the <a href="#param-sqlIndexDefinitionProvider"><code>sqlIndexDefinitionProvider</code></a> record component</dd>
+<dd><code>vectorIndexMetadata</code> - the value for the <a href="#param-vectorIndexMetadata"><code>vectorIndexMetadata</code></a> record component</dd>
 <dd><code>spatial</code> - the value for the <a href="#param-spatial"><code>spatial</code></a> record component</dd>
 <dd><code>srid</code> - the value for the <a href="#param-srid"><code>srid</code></a> record component</dd>
 </dl>
@@ -317,6 +411,32 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-columns"><code>columns</code></a> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="sqlIndexDefinitionProvider()">
+<h3>sqlIndexDefinitionProvider</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="../../runtime/convert/SqlIndexDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlIndexDefinitionProvider</a></span>&nbsp;<span class="element-name">sqlIndexDefinitionProvider</span>()</div>
+<div class="block">Returns the value of the <a href="#param-sqlIndexDefinitionProvider"><code>sqlIndexDefinitionProvider</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-sqlIndexDefinitionProvider"><code>sqlIndexDefinitionProvider</code></a> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="vectorIndexMetadata()">
+<h3>vectorIndexMetadata</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></span>&nbsp;<span class="element-name">vectorIndexMetadata</span>()</div>
+<div class="block">Returns the value of the <a href="#param-vectorIndexMetadata"><code>vectorIndexMetadata</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-vectorIndexMetadata"><code>vectorIndexMetadata</code></a> record component</dd>
 </dl>
 </div>
 </section>

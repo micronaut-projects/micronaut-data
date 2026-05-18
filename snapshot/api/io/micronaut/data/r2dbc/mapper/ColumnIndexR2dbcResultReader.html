@@ -63,6 +63,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#getRequiredValue(io.r2dbc.spi.Row,java.lang.Integer,java.lang.Class)" tabindex="0">getRequiredValue(Row, Integer, Class)</a></li>
 <li><a href="#getConversionService()" tabindex="0">getConversionService()</a></li>
 <li><a href="#readDynamic(R,java.lang.Integer,io.micronaut.data.model.DataType)" tabindex="0">readDynamic(Row, Integer, DataType)</a></li>
 <li><a href="#readLong(R,java.lang.Integer)" tabindex="0">readLong(Row, Integer)</a></li>
@@ -78,7 +79,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#readDouble(R,java.lang.Integer)" tabindex="0">readDouble(Row, Integer)</a></li>
 <li><a href="#readBigDecimal(R,java.lang.Integer)" tabindex="0">readBigDecimal(Row, Integer)</a></li>
 <li><a href="#readBytes(R,java.lang.Integer)" tabindex="0">readBytes(Row, Integer)</a></li>
-<li><a href="#getRequiredValue(R,java.lang.Integer,java.lang.Class)" tabindex="0">getRequiredValue(Row, Integer, Class)</a></li>
 <li><a href="#next(R)" tabindex="0">next(Row)</a></li>
 </ol>
 </li>
@@ -144,7 +144,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Get conversion service.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(R,java.lang.Integer,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(io.r2dbc.spi.Row,java.lang.Integer,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -283,6 +283,33 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getRequiredValue(io.r2dbc.spi.Row,java.lang.Integer,java.lang.Class)">
+<h3>getRequiredValue</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getRequiredValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span>
+                                 throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">ResultReader</a></code></span></div>
+<div class="block">Get a value from the given result set for the given name and type.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">getRequiredValue</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
+<dt>Type Parameters:</dt>
+<dd><span id="getRequiredValue(RS,IDX,java.lang.Class)-type-param-T"><code>T</code> - The generic type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>name</code> - The name</dd>
+<dd><code>type</code> - The type</dd>
+<dt>Returns:</dt>
+<dd>The value</dd>
+<dt>Throws:</dt>
+<dd><code><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be read</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getConversionService()">
 <h3>getConversionService</h3>
@@ -577,33 +604,6 @@ loadScripts(document, 'script');</script>
 <dd><code>name</code> - The name (such as the column name)</dd>
 <dt>Returns:</dt>
 <dd>The byte[] value</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getRequiredValue(R,java.lang.Integer,java.lang.Class)">
-<h3 id="getRequiredValue(io.r2dbc.spi.Readable,java.lang.Integer,java.lang.Class)">getRequiredValue</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getRequiredValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span>
-                                 throws <span class="exceptions"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">ResultReader</a></code></span></div>
-<div class="block">Get a value from the given result set for the given name and type.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">getRequiredValue</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;R extends io.r2dbc.spi.Readable, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></dd>
-<dt>Type Parameters:</dt>
-<dd><span id="getRequiredValue(RS,IDX,java.lang.Class)-type-param-T"><code>T</code> - The generic type</span></dd>
-<dt>Parameters:</dt>
-<dd><code>resultSet</code> - The result set</dd>
-<dd><code>name</code> - The name</dd>
-<dd><code>type</code> - The type</dd>
-<dt>Returns:</dt>
-<dd>The value</dd>
-<dt>Throws:</dt>
-<dd><code><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be read</dd>
 </dl>
 </div>
 </section>

@@ -70,11 +70,14 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.PreparedQuery)" tabindex="0">DefaultSqlPreparedQuery(PreparedQuery)</a></li>
 <li><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">DefaultSqlPreparedQuery(PreparedQuery, SqlStoredQuery)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)" tabindex="0">DefaultSqlPreparedQuery(PreparedQuery, SqlStoredQuery, VectorScoringSupportResolver)</a></li>
 <li><a href="#%3Cinit%3E(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">DefaultSqlPreparedQuery(SqlStoredQuery)</a></li>
+<li><a href="#%3Cinit%3E(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)" tabindex="0">DefaultSqlPreparedQuery(SqlStoredQuery, VectorScoringSupportResolver)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#getVectorScoringFunction()" tabindex="0">getVectorScoringFunction()</a></li>
 <li><a href="#getPersistentEntity()" tabindex="0">getPersistentEntity()</a></li>
 <li><a href="#getPreparedQueryDelegate()" tabindex="0">getPreparedQueryDelegate()</a></li>
 <li><a href="#isExpandableQuery()" tabindex="0">isExpandableQuery()</a></li>
@@ -189,7 +192,14 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">DefaultSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;preparedQuery,
  <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">DefaultSqlPreparedQuery</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)" class="member-name-link">DefaultSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;preparedQuery,
+ <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery,
+ @Nullable io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver&nbsp;vectorScoringSupportResolver)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">DefaultSqlPreparedQuery</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)" class="member-name-link">DefaultSqlPreparedQuery</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery,
+ @Nullable io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver&nbsp;vectorScoringSupportResolver)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -278,17 +288,20 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../../model/vector/search/ScoringFunction.html" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getVectorScoringFunction()" class="member-name-link">getVectorScoringFunction</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepare(E)" class="member-name-link">prepare</a><wbr>(@Nullable <a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepare(E)" class="member-name-link">prepare</a><wbr>(@Nullable <a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if query need to be modified to expand parameters.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sizeOf(java.lang.Object)" class="member-name-link">sizeOf</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sizeOf(java.lang.Object)" class="member-name-link">sizeOf</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Compute the size of the given object.</div>
 </div>
 </div>
@@ -390,10 +403,29 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 </section>
 </li>
 <li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)">
+<h3>DefaultSqlPreparedQuery</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultSqlPreparedQuery</span><wbr><span class="parameters">(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;preparedQuery,
+ <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery,
+ @Nullable io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver&nbsp;vectorScoringSupportResolver)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)">
 <h3>DefaultSqlPreparedQuery</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultSqlPreparedQuery</span><wbr><span class="parameters">(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver)">
+<h3>DefaultSqlPreparedQuery</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultSqlPreparedQuery</span><wbr><span class="parameters">(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;&nbsp;sqlStoredQuery,
+ @Nullable io.micronaut.data.runtime.operations.internal.sql.VectorScoringSupportResolver&nbsp;vectorScoringSupportResolver)</span></div>
 </div>
 </section>
 </li>
@@ -405,6 +437,18 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getVectorScoringFunction()">
+<h3>getVectorScoringFunction</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="../../../../model/vector/search/ScoringFunction.html" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></span>&nbsp;<span class="element-name">getVectorScoringFunction</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>vector scoring function</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getPersistentEntity()">
 <h3>getPersistentEntity</h3>

@@ -73,8 +73,12 @@ io.micronaut.data.model.query.builder.sql.validation
 io.micronaut.data.model.query.impl
 io.micronaut.data.model.runtime
 io.micronaut.data.model.runtime.convert
+io.micronaut.data.model.runtime.convert.vector
+io.micronaut.data.model.runtime.convert.vector.impl
 io.micronaut.data.model.schema.sql
 io.micronaut.data.model.schema.sql.metadata
+io.micronaut.data.model.vector
+io.micronaut.data.model.vector.search
 io.micronaut.data.mongodb.advice
 io.micronaut.data.mongodb.annotation
 io.micronaut.data.mongodb.conf
