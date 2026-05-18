@@ -91,6 +91,24 @@ class BookRepositorySpec {
     }
 
     @Test
+    fun testInsertMethods() {
+        val inserted = bookRepository.insert(Book(0, "The Long Walk", 384))
+        assertNotNull(inserted.id)
+        assertEquals("The Long Walk", inserted.title)
+
+        val insertedMany = bookRepository.insertAll(
+            listOf(
+                Book(0, "It", 1138),
+                Book(0, "Misery", 320)
+            )
+        ).toList()
+
+        assertEquals(2, insertedMany.size)
+        assertTrue(insertedMany.all { it.id > 0 })
+        assertEquals(3, bookRepository.count())
+    }
+
+    @Test
     fun testPageable() {
         // tag::saveall[]
         bookRepository.saveAll(

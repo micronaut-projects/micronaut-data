@@ -18,6 +18,9 @@ package io.micronaut.data.repository.jpa.kotlin
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -32,7 +35,7 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
  * @author Denis Stepanov
  * @since 5.0
  */
-interface KotlinJpaSpecificationExecutor<T> {
+interface KotlinJpaSpecificationExecutor<T : Any> {
 
     /**
      * Returns a single entity matching the given [QuerySpecification].
@@ -51,6 +54,16 @@ interface KotlinJpaSpecificationExecutor<T> {
     fun findOne(spec: PredicateSpecification<T>?): T?
 
     /**
+     * Returns a single entity using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return optional found result
+     */
+    fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R?
+
+    /**
      * Returns all entities matching the given [QuerySpecification].
      *
      * @param spec The query specification
@@ -65,6 +78,16 @@ interface KotlinJpaSpecificationExecutor<T> {
      * @return found results
      */
     fun findAll(spec: PredicateSpecification<T>?): List<T>
+
+    /**
+     * Returns multiple entities using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return found results
+     */
+    fun <R> findAll(builder: CriteriaQueryBuilder<R>?): List<R>
 
     /**
      * Returns a [Page] of entities matching the given [QuerySpecification].
@@ -119,6 +142,22 @@ interface KotlinJpaSpecificationExecutor<T> {
     fun count(spec: PredicateSpecification<T>?): Long
 
     /**
+     * Returns whether an instance was found for the given [QuerySpecification].
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     */
+    fun exists(spec: QuerySpecification<T>?): Boolean
+
+    /**
+     * Returns whether an instance was found for the given [PredicateSpecification].
+     *
+     * @param spec The query specification
+     * @return the number of instances.
+     */
+    fun exists(spec: PredicateSpecification<T>?): Boolean
+
+    /**
      * Deletes all entities matching the given [DeleteSpecification].
      *
      * @param spec The delete specification
@@ -135,10 +174,26 @@ interface KotlinJpaSpecificationExecutor<T> {
     fun deleteAll(spec: PredicateSpecification<T>?): Long
 
     /**
+     * Delete all entities using build criteria query.
+     *
+     * @param builder The delete criteria query builder
+     * @return the number records updated.
+     */
+    fun deleteAll(builder: CriteriaDeleteBuilder<T>?): Long
+
+    /**
      * Updates all entities matching the given [UpdateSpecification].
      *
      * @param spec The update specification
      * @return the number records updated.
      */
     fun updateAll(spec: UpdateSpecification<T>?): Long
+
+    /**
+     * Updates all entities using build criteria query.
+     *
+     * @param builder The update criteria query builder
+     * @return the number records updated.
+     */
+    fun updateAll(builder: CriteriaUpdateBuilder<T>?): Long
 }

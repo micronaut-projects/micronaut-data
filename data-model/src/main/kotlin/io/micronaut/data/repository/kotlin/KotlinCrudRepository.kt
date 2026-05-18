@@ -28,7 +28,7 @@ import io.micronaut.data.repository.GenericRepository
  * @since 5.0
  */
 @Blocking
-interface KotlinCrudRepository<E, ID> : GenericRepository<E, ID> {
+interface KotlinCrudRepository<E : Any, ID : Any> : GenericRepository<E, ID> {
 
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state. Note that certain implementations may not be able to detect whether a save or update should be performed and may always perform an insert. The [.update] method can be used in this case to explicitly request an update.
@@ -40,6 +40,17 @@ interface KotlinCrudRepository<E, ID> : GenericRepository<E, ID> {
     fun <S : E> save(entity: S): S
 
     /**
+     * This method issues an explicit insert for the given entity. The method differs from [.save] in that an insert
+     * will be generated regardless of the entity identity state. If the entity already exists then an exception may be thrown.
+     *
+     * @param entity The entity to insert. Must not be null.
+     * @return The inserted entity will never be null.
+     * @param <S> The generic type
+     * @since 5.0
+     */
+    fun <S : E> insert(entity: S): S
+
+    /**
      * This method issues an explicit update for the given entity. The method differs from [.save] in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
      * @param entity The entity to save. Must not be null.
@@ -47,6 +58,17 @@ interface KotlinCrudRepository<E, ID> : GenericRepository<E, ID> {
      * @param <S> The generic type
      */
     fun <S : E> update(entity: S): S
+
+    /**
+     * This method issues an explicit insert for the given entities. The method differs from [.saveAll] in that an insert
+     * will be generated for every entity regardless of identity state. If an entity already exists then an exception may be thrown.
+     *
+     * @param entities The entities to insert. Must not be null.
+     * @return The inserted entities will never be null.
+     * @param <S> The generic type
+     * @since 5.0
+     */
+    fun <S : E> insertAll(entities: Iterable<S>): Iterable<S>
 
     /**
      * This method issues an explicit update for the given entities. The method differs from [.saveAll] in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
@@ -64,7 +86,7 @@ interface KotlinCrudRepository<E, ID> : GenericRepository<E, ID> {
      * @param <S> The generic type
      * @return The saved entities objects. will never be null.
      */
-    fun <S : E?> saveAll(entities: Iterable<S>): Iterable<S>
+    fun <S : E> saveAll(entities: Iterable<S>): Iterable<S>
 
     /**
      * Retrieves an entity by its id.

@@ -29,7 +29,7 @@ import io.micronaut.data.model.Sort
  * @since 5.0
  */
 @Blocking
-interface KotlinPageableCrudRepository<E, ID> : KotlinCrudRepository<E, ID> {
+interface KotlinPageableCrudRepository<E : Any, ID : Any> : KotlinCrudRepository<E, ID> {
 
     /**
      * Find all results for the given sort order.
