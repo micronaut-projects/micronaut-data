@@ -19,7 +19,6 @@ import groovy.transform.Memoized
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.repositories.BookReactiveRepository
-import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 
