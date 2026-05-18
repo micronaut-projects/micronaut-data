@@ -16,14 +16,15 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -695,32 +696,6 @@ public final class Restrictions {
     }
 
     /**
-     * Restriction that matches vector score against a threshold.
-     */
-    public static final class PropertyNear implements PropertyRestriction<Object> {
-
-        @Override
-        public String getName() {
-            return "Near";
-        }
-
-        @Override
-        public int getRequiredParameters() {
-            return 2;
-        }
-
-        @Override
-        public Predicate find(PersistentEntityRoot<?> entityRoot,
-                              PersistentEntityCriteriaBuilder cb,
-                              Expression<Object> expression,
-                              List<ParameterExpression<Object>> parameters) {
-            Expression<Double> score = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
-            Expression<Double> threshold = (Expression<Double>) (Expression<?>) parameters.get(1);
-            return cb.lessThanOrEqualTo(score, threshold);
-        }
-    }
-
-    /**
      * Restriction that matches vector score within an inclusive range.
      */
     public static final class PropertyWithin implements PropertyRestriction<Object> {
@@ -983,6 +958,73 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "CollectionContains";
+        }
+    }
+
+    /**
+     * Geo within restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoWithin<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoWithin() {
+            super(PersistentEntityCriteriaBuilder::geoWithin);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoWithin";
+        }
+    }
+
+    /**
+     * Geo intersects restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoIntersects<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoIntersects() {
+            super(PersistentEntityCriteriaBuilder::geoIntersects);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoIntersects";
+        }
+    }
+
+    /**
+     * Near restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyNear<T> implements PropertyRestriction<T> {
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<T> expression,
+                              List<ParameterExpression<T>> parameters) {
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                && propertyPath.getProperty().isAssignable(Vector.class)) {
+                Expression<Double> score = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+                Expression<Double> threshold = (Expression<Double>) (Expression<?>) parameters.get(1);
+                return cb.lessThanOrEqualTo(score, threshold);
+            }
+            return cb.near(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
+        }
+
+        @Override
+        public String getName() {
+            return "Near";
         }
     }
 }

@@ -525,18 +525,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 throw new MatchFailedException("Insufficient arguments to method criteria: " + restrictionName);
             }
             ParameterElement parameter = parameters.next();
-            ClassElement genericType = parameter.getGenericType();
-            if (TypeUtils.isContainerType(genericType)) {
-                genericType = genericType.getFirstTypeArgument().orElse(genericType);
-            }
-
-            PersistentPropertyPath propertyPath = toPersistentPropertyPath(expression);
-            if (propertyPath == null || isNearOrWithinDistanceParameter(restrictionName, i)) {
-                params.add(scb.parameter(parameter, null));
-                continue;
-            }
-            validateParameterCompatibility(genericType, parameter, propertyPath);
-            params.add(scb.parameter(parameter, propertyPath));
+            params.add(provideParam(parameter, scb, restrictionName, i, expression));
         }
         return params;
     }
@@ -552,19 +541,55 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
     }
 
-    private void validateParameterCompatibility(ClassElement genericType,
+    private <T> ParameterExpression<T> provideParam(ParameterElement parameter,
+                                                    SourcePersistentEntityCriteriaBuilder scb,
+                                                    String restrictionName,
+                                                    int parameterIndex,
+                                                    @Nullable
+                                                    Expression<?> expression) {
+        ClassElement genericType = parameter.getGenericType();
+        if (TypeUtils.isContainerType(genericType)) {
+            genericType = genericType.getFirstTypeArgument().orElse(genericType);
+        }
+
+        PersistentPropertyPath propertyPath = toPersistentPropertyPath(expression);
+        if (propertyPath == null) {
+            return scb.parameter(parameter, null);
+        }
+        if (isNearOrWithinDistanceParameter(restrictionName, parameterIndex)) {
+            if (NEAR.equals(restrictionName) && !propertyPath.getProperty().isAssignable(Vector.class)) {
+                validateParameterCompatibility(restrictionName, parameterIndex, genericType, parameter, propertyPath);
+            }
+            return scb.parameter(parameter, null);
+        }
+        validateParameterCompatibility(restrictionName, parameterIndex, genericType, parameter, propertyPath);
+        return scb.parameter(parameter, propertyPath);
+    }
+
+    private void validateParameterCompatibility(String restrictionName,
+                                                int parameterIndex,
+                                                ClassElement genericType,
                                                 ParameterElement parameter,
                                                 PersistentPropertyPath propertyPath) {
-        if (isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+        if (isValidType(restrictionName, parameterIndex, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
             return;
         }
         SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
         throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
     }
 
-    private boolean isValidType(ClassElement genericType, SourcePersistentProperty property) {
+    private boolean isValidType(String restrictionName, int parameterIndex, ClassElement genericType, SourcePersistentProperty property) {
         if (TypeUtils.isObjectClass(genericType)) {
             // Avoid an error when type information is missing.
+            return true;
+        }
+        if (("GeoWithin".equals(restrictionName) || "GeoIntersects".equals(restrictionName)
+            || ("Near".equals(restrictionName) && parameterIndex == 0))
+            && isGeometryType(genericType)
+            && isGeometryType(property.getType())) {
+            return true;
+        }
+        if ("Near".equals(restrictionName) && parameterIndex == 1 && TypeUtils.isNumber(genericType)) {
             return true;
         }
         PersistentEntity owner = property.getOwner();
@@ -582,6 +607,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return true;
         }
         return genericType.isAssignable(Iterable.class);
+    }
+
+    private boolean isGeometryType(ClassElement type) {
+        return type.isAssignable("io.micronaut.data.model.geo.Geometry")
+            || type.isAssignable("com.mongodb.client.model.geojson.Geometry");
     }
 
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {

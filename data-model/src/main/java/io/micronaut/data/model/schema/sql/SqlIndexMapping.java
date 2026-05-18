@@ -32,6 +32,7 @@ import java.util.Objects;
  * @param sqlIndexDefinitionProvider Optional vendor-specific index DDL provider
  * @param vectorIndexMetadata Vector index metadata, if any
  * @param spatial Whether the index is spatial
+ * @param srid The spatial reference identifier
  */
 @Internal
 public record SqlIndexMapping(String name,
@@ -39,18 +40,32 @@ public record SqlIndexMapping(String name,
                               String[] columns,
                               @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
                               @Nullable VectorIndexMetadata vectorIndexMetadata,
-                              boolean spatial) {
+                              boolean spatial,
+                              @Nullable Integer srid) {
 
     public SqlIndexMapping(String name, boolean unique, String[] columns) {
-        this(name, unique, columns, null, null, false);
+        this(name, unique, columns, null, null, false, null);
     }
 
     public SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial) {
-        this(name, unique, columns, null, null, spatial);
+        this(name, unique, columns, null, null, spatial, null);
+    }
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial, @Nullable Integer srid) {
+        this(name, unique, columns, null, null, spatial, srid);
+    }
+
+    public SqlIndexMapping(String name,
+                           boolean unique,
+                           String[] columns,
+                           @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
+                           @Nullable VectorIndexMetadata vectorIndexMetadata,
+                           boolean spatial) {
+        this(name, unique, columns, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial, null);
     }
 
     public SqlIndexMapping(String name, boolean unique, String[] columns, @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
-        this(name, unique, columns, sqlIndexDefinitionProvider, null, false);
+        this(name, unique, columns, sqlIndexDefinitionProvider, null, false, null);
     }
 
     @Override
@@ -67,12 +82,13 @@ public record SqlIndexMapping(String name,
                Objects.equals(name, that.name) &&
                Objects.equals(sqlIndexDefinitionProvider, that.sqlIndexDefinitionProvider) &&
                Objects.equals(vectorIndexMetadata, that.vectorIndexMetadata) &&
+               Objects.equals(srid, that.srid) &&
                Arrays.equals(columns, that.columns);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial);
+        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial, srid);
         result = 31 * result + Arrays.hashCode(columns);
         return result;
     }
@@ -84,6 +100,7 @@ public record SqlIndexMapping(String name,
             ", unique=" + unique +
             ", columns=" + Arrays.toString(columns) +
             ", spatial=" + spatial +
+            ", srid=" + srid +
             '}';
     }
 }

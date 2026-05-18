@@ -3,9 +3,12 @@ package io.micronaut.data.r2dbc.postgres
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
+import io.micronaut.test.support.TestPropertyProviderFactory
 
 import java.time.Duration
 
@@ -42,9 +45,31 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         return context.getBean(PostgresSchoolRepository)
     }
 
+    @Memoized
+    @Override
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(PostgresHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(PostgresHotelWktRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo", "io.micronaut.data.r2dbc.postgres")
+    }
+
+    @Override
+    Map<String, String> getProperties() {
+        def props = getDataSourceProperties("postgresgeospatial")
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    props.putAll(it.get().create(props, this.class).get())
+                }
+        return props
     }
 
     @Override

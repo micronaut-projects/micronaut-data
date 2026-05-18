@@ -11,10 +11,14 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
+import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
+import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -31,9 +35,21 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract SchoolRepository getSchoolRepository()
 
+    abstract HotelJsonRepository getHotelJsonRepository()
+
+    abstract HotelWktRepository getHotelWktRepository()
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
+
+    void cleanup() {
+        getGeometryEntityJsonRepository()?.deleteAll()
+        getGeometryEntityWktRepository()?.deleteAll()
+        getSchoolRepository()?.deleteAll()
+        getHotelJsonRepository()?.deleteAll()
+        getHotelWktRepository()?.deleteAll()
+    }
 
     void "test creating, reading and updating when json conversion used on embedded geometry type"() {
         assumeTrue(supportsGeometryJsonConversion())
@@ -262,6 +278,160 @@ abstract class AbstractGeoSpec extends Specification {
             assertNull(it.getMultiPolygon())
             assertNull(it.getGeometryCollection())
         }
+    }
+
+    void "test findByLocationGeoWithin when json conversion is used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson inside1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson inside2 = new HotelJson("Sunset Resort", new Point(12.0, 12.0))
+        HotelJson outside = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Polygon city = new Polygon([
+                new LineString([
+                        new Point(9.0, 9.0),
+                        new Point(9.0, 15.0),
+                        new Point(15.0, 15.0),
+                        new Point(15.0, 9.0),
+                        new Point(9.0, 9.0)
+                ])
+        ])
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(inside1, inside2, outside))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoWithin(city)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoIntersects when json conversion used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson onRoute1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelJson onRoute2 = new HotelJson("Sunset Resort", new Point(12.0, 12.0))
+        HotelJson outside = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        LineString busRoute = new LineString([
+                new Point(9.0, 9.0),
+                new Point(15.0, 15.0)
+        ])
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(onRoute1, onRoute2, outside))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationGeoIntersects(busRoute)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationNear when json conversion used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(11.0, 11.0))
+        HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
+        HotelJson farAway = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Point center = new Point(10.0, 10.0)
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(nearby1, nearby2, farAway))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationNear(center, 3d)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoWithin when wkt conversion used"() {
+        given:
+        HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt inside2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
+        HotelWkt outside = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Polygon city = new Polygon([
+                new LineString([
+                        new Point(9.0, 9.0),
+                        new Point(9.0, 15.0),
+                        new Point(15.0, 15.0),
+                        new Point(15.0, 9.0),
+                        new Point(9.0, 9.0)
+                ])
+        ])
+
+        when:
+        getHotelWktRepository().saveAll(List.of(inside1, inside2, outside))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoWithin(city)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationGeoIntersects when wkt conversion used"() {
+        given:
+        HotelWkt onRoute1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
+        HotelWkt onRoute2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
+        HotelWkt outside = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        LineString busRoute = new LineString([
+                new Point(9.0, 9.0),
+                new Point(15.0, 15.0)
+        ])
+
+        when:
+        getHotelWktRepository().saveAll(List.of(onRoute1, onRoute2, outside))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationGeoIntersects(busRoute)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationNear when wkt conversion used"() {
+        given:
+        HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(11.0, 11.0))
+        HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
+        HotelWkt farAway = new HotelWkt("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Point center = new Point(10.0, 10.0)
+
+        when:
+        getHotelWktRepository().saveAll(List.of(nearby1, nearby2, farAway))
+        List<HotelWkt> result = getHotelWktRepository().findByLocationNear(center, 3d)
+        List<String> names = result.stream()
+                .map(HotelWkt::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
     }
 
     protected boolean supportsGeometryJsonConversion() {

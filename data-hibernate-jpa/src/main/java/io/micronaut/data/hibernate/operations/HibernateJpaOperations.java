@@ -269,7 +269,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
-        return executeRead(session -> session.byId(type).load(id));
+        return executeReadNullable(session -> session.byId(type).load(id));
     }
 
     @NonNull
@@ -284,6 +284,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void persist(@NonNull T entity) {
         executeWrite(session -> {
             session.persist(entity);
@@ -292,6 +293,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void refresh(@NonNull T entity) {
         executeWrite(session -> {
             session.refresh(entity);
@@ -300,6 +302,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void remove(@NonNull T entity) {
         executeWrite(session -> {
             session.remove(entity);
@@ -308,6 +311,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public <T> void detach(@NonNull T entity) {
         executeWrite(session -> {
             session.detach(entity);
@@ -318,7 +322,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return executeRead(session -> {
+        return executeReadNullable(session -> {
             if (uniqueResultOnFindOne) {
                 UniqueResultCollector<R> collector = new UniqueResultCollector<>();
                 collectFindOne(session, preparedQuery, collector);
@@ -689,10 +693,17 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         });
     }
 
+    @SuppressWarnings("NullAway")
     private <R> R executeRead(Function<Session, R> callback) {
         return transactionOperations.executeRead(status -> callback.apply(status.getConnection()));
     }
 
+    @Nullable
+    private <R> R executeReadNullable(Function<Session, R> callback) {
+        return transactionOperations.executeRead(status -> callback.apply(status.getConnection()));
+    }
+
+    @SuppressWarnings("NullAway")
     private <R> R executeWrite(Function<Session, R> callback) {
         return transactionOperations.executeWrite(status -> callback.apply(status.getConnection()));
     }
@@ -734,6 +745,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public void flush() {
         executeWrite(session -> {
                 session.flush();
@@ -761,8 +773,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    @Nullable
     public <R> R findOne(CriteriaQuery<R> query) {
-        return executeRead(session -> session.createQuery(query).uniqueResult());
+        return executeReadNullable(session -> session.createQuery(query).uniqueResult());
     }
 
     @Override
