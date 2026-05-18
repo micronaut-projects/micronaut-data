@@ -35,26 +35,26 @@ public final class SimilarityNormalizer {
 
     private static final SimilarityNormalizer L2_EUCLIDEAN =
         new SimilarityNormalizer(
-            score -> 1d / (1d + Math.pow(score, 2d)),
-            similarity -> similarity == 0d ? Double.MAX_VALUE : Math.sqrt((1d / similarity) - 1d)
+            scoreValue -> 1d / (1d + Math.pow(scoreValue, 2d)),
+            similarityValue -> similarityValue == 0d ? Double.MAX_VALUE : Math.sqrt((1d / similarityValue) - 1d)
         );
 
     private static final SimilarityNormalizer L2_EUCLIDEAN_SQUARED =
         new SimilarityNormalizer(
-            score -> 1d / (1d + score),
-            similarity -> similarity == 0d ? Double.MAX_VALUE : (1d / similarity) - 1d
+            scoreValue -> 1d / (1d + scoreValue),
+            similarityValue -> similarityValue == 0d ? Double.MAX_VALUE : (1d / similarityValue) - 1d
         );
 
     private static final SimilarityNormalizer COSINE =
         new SimilarityNormalizer(
-            score -> (1d + (1d - score)) / 2d,
-            similarity -> 1d - ((similarity * 2d) - 1d)
+            scoreValue -> (1d + (1d - scoreValue)) / 2d,
+            similarityValue -> 1d - ((similarityValue * 2d) - 1d)
         );
 
     private static final SimilarityNormalizer DOT_PRODUCT =
         new SimilarityNormalizer(
-            score -> (1d - score) / 2d,
-            similarity -> 1d - (similarity * 2d)
+            scoreValue -> (1d - scoreValue) / 2d,
+            similarityValue -> 1d - (similarityValue * 2d)
         );
 
     private static final Map<ScoringFunction, SimilarityNormalizer> NORMALIZERS = new EnumMap<>(ScoringFunction.class);

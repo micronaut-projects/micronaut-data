@@ -160,8 +160,8 @@ public final class SqlSchemaUtils {
 
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
 
-        List<SqlColumnDefinitionProvider> sqlColumnDefinitionProviders = definitionProviders.stream().filter(x -> x instanceof SqlColumnDefinitionProvider).map(x -> (SqlColumnDefinitionProvider) x).toList();
-        List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders = definitionProviders.stream().filter(x -> x instanceof SqlIndexDefinitionProvider).map(x -> (SqlIndexDefinitionProvider) x).toList();
+        List<SqlColumnDefinitionProvider> sqlColumnDefinitionProviders = definitionProviders.stream().filter(SqlColumnDefinitionProvider.class::isInstance).map(x -> (SqlColumnDefinitionProvider) x).toList();
+        List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders = definitionProviders.stream().filter(SqlIndexDefinitionProvider.class::isInstance).map(x -> (SqlIndexDefinitionProvider) x).toList();
 
         NamingStrategy namingStrategy = entity.getNamingStrategy();
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {

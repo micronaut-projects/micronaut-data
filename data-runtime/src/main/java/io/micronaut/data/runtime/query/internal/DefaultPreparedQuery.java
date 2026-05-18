@@ -219,9 +219,9 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     }
 
     @NonNull
-    public static <RT1> List<RT1> getParametersOfType(@NonNull Argument<RT1> type,
-                                                      @NonNull MethodInvocationContext<?, ?> methodContext,
-                                                      @NonNull ConversionService conversionService) {
+    public static <T> List<T> getParametersOfType(@NonNull Argument<T> type,
+                                                  @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                  @NonNull ConversionService conversionService) {
         Argument<?>[] arguments = methodContext.getArguments();
         Object[] values = methodContext.getParameterValues();
         if (arguments.length == 0 || values.length == 0) {
@@ -231,16 +231,16 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
             .mapToObj(i -> {
                 Object value = values[i];
                 if (value == null) {
-                    return Stream.<RT1>empty();
+                    return Stream.<T>empty();
                 }
                 if (type.isInstance(value)) {
                     //noinspection unchecked
-                    return Stream.of((RT1) value);
+                    return Stream.of((T) value);
                 }
                 if (type.getType().isAssignableFrom(arguments[i].getType())) {
                     return conversionService.convert(value, type).stream();
                 }
-                return Stream.<RT1>empty();
+                return Stream.<T>empty();
             })
             .flatMap(s -> s)
             .toList();

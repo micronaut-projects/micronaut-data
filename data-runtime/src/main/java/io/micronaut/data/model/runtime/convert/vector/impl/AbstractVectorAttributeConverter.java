@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Base converter that delegates Vector conversions to a dialect-specific {@link io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter} selected by DatabaseType.
@@ -110,10 +111,10 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
     }
 
     @Override
-    public <RS, IDX> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
-                                              ResultReader<RS, IDX> reader,
-                                              RS resultSet,
-                                              IDX columnName) {
+    public <R, I> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
+                                           ResultReader<R, I> reader,
+                                           R resultSet,
+                                           I columnName) {
         VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), type);
         if (vectorTypeConverter != null) {
             Object value = reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
@@ -157,19 +158,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        VectorTypeConverter<?> fallback = null;
-        for (VectorTypeConverter<?> converter : converters) {
-            if (!supportsVectorType(converter, entityValue.getClass())) {
-                continue;
-            }
-            if (fallback == null) {
-                fallback = converter;
-            }
-            if (converter.isSparseSupported() == sparseValue) {
-                return converter;
-            }
-        }
-        return fallback;
+        return selectConverter(converters, converter -> supportsVectorType(converter, entityValue.getClass()), sparseValue);
     }
 
     private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, Object persistedValue, Class<? extends Vector> targetType) {
@@ -178,22 +167,8 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        VectorTypeConverter<?> fallback = null;
-        for (VectorTypeConverter<?> converter : converters) {
-            if (!converter.getPersistedType().isInstance(persistedValue)) {
-                continue;
-            }
-            if (!supportsVectorType(converter, targetType)) {
-                continue;
-            }
-            if (fallback == null) {
-                fallback = converter;
-            }
-            if (converter.isSparseSupported() == sparseTarget) {
-                return converter;
-            }
-        }
-        return fallback;
+        return selectConverter(converters, converter ->
+            converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
     }
 
     private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, Class<? extends Vector> targetType) {
@@ -202,16 +177,21 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
+        return selectConverter(converters, converter -> supportsVectorType(converter, targetType), sparseTarget);
+    }
+
+    private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
+                                                                    Predicate<VectorTypeConverter<?>> candidate,
+                                                                    boolean sparse) {
         VectorTypeConverter<?> fallback = null;
         for (VectorTypeConverter<?> converter : converters) {
-            if (!supportsVectorType(converter, targetType)) {
-                continue;
-            }
-            if (fallback == null) {
-                fallback = converter;
-            }
-            if (converter.isSparseSupported() == sparseTarget) {
-                return converter;
+            if (candidate.test(converter)) {
+                if (fallback == null) {
+                    fallback = converter;
+                }
+                if (converter.isSparseSupported() == sparse) {
+                    return converter;
+                }
             }
         }
         return fallback;

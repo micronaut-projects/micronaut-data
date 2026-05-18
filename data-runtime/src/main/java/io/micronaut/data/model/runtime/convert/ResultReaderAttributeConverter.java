@@ -50,8 +50,8 @@ public interface ResultReaderAttributeConverter<X, Y> extends AttributeConverter
      *
      * <p>The result set and column identifier types are tied to the reader generics.</p>
      *
-     * @param <RS> The native result set type (e.g. {@code java.sql.ResultSet} or {@code io.r2dbc.spi.Row})
-     * @param <IDX> The column identifier type expected by the reader (e.g. {@code Integer} index or {@code String} name)
+     * @param <R> The native result set type (e.g. {@code java.sql.ResultSet} or {@code io.r2dbc.spi.Row})
+     * @param <I> The column identifier type expected by the reader (e.g. {@code Integer} index or {@code String} name)
      * @param conversionContext the conversion context (may carry dialect and argument metadata)
      * @param reader the converter-aware result reader for the underlying driver
      * @param resultSet the native row/result set object (e.g. {@code java.sql.ResultSet}, R2DBC {@code io.r2dbc.spi.Row}, etc.)
@@ -60,8 +60,8 @@ public interface ResultReaderAttributeConverter<X, Y> extends AttributeConverter
      * @since 5.0.0
      */
     @Nullable
-    <RS, IDX> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
-                                       ResultReader<RS, IDX> reader,
-                                       RS resultSet,
-                                       IDX columnName);
+    <R, I> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
+                                    ResultReader<R, I> reader,
+                                    R resultSet,
+                                    I columnName);
 }

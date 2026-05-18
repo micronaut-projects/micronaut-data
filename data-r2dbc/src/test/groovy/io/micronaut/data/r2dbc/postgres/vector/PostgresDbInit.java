@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 @Context
 @Singleton
@@ -47,7 +48,7 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
             } catch (SQLException e) {
                 last = e;
                 try {
-                    Thread.sleep(1000);
+                    TimeUnit.SECONDS.sleep(1);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(ie);

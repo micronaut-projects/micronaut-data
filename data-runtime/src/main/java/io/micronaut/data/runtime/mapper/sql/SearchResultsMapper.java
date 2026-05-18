@@ -35,15 +35,15 @@ import java.util.List;
  * When a {@link ScoringFunction} is provided, normalized similarity is derived via
  * {@link SimilarityNormalizer}; otherwise similarity is omitted.</p>
  *
- * @param <RS> native row/result-set type
+ * @param <R> native row/result-set type
  * @param <E> mapped entity type
  * @since 5.0.0
  */
 @Internal
-public final class SearchResultsMapper<RS, E> {
+public final class SearchResultsMapper<R, E> {
 
-    private final SqlTypeMapper<RS, E> entityMapper;
-    private final ResultReader<RS, String> resultReader;
+    private final SqlTypeMapper<R, E> entityMapper;
+    private final ResultReader<R, String> resultReader;
     private final String scoreAlias;
     @Nullable
     private final ScoringFunction scoringFunction;
@@ -53,8 +53,8 @@ public final class SearchResultsMapper<RS, E> {
      * @param resultReader Reader used to extract score alias values
      * @param scoreAlias Result column alias containing the score value
      */
-    public SearchResultsMapper(SqlTypeMapper<RS, E> entityMapper,
-                               ResultReader<RS, String> resultReader,
+    public SearchResultsMapper(SqlTypeMapper<R, E> entityMapper,
+                               ResultReader<R, String> resultReader,
                                String scoreAlias) {
         this(entityMapper, resultReader, scoreAlias, null);
     }
@@ -65,8 +65,8 @@ public final class SearchResultsMapper<RS, E> {
      * @param scoreAlias Result column alias containing the score value
      * @param scoringFunction Optional scoring function used to compute normalized similarity
      */
-    public SearchResultsMapper(SqlTypeMapper<RS, E> entityMapper,
-                               ResultReader<RS, String> resultReader,
+    public SearchResultsMapper(SqlTypeMapper<R, E> entityMapper,
+                               ResultReader<R, String> resultReader,
                                String scoreAlias,
                                @Nullable ScoringFunction scoringFunction) {
         this.entityMapper = entityMapper;
@@ -82,7 +82,7 @@ public final class SearchResultsMapper<RS, E> {
      * @param entityType Entity type to map
      * @return Mapped search results
      */
-    public SearchResults<E> mapAll(RS rs, Class<E> entityType) {
+    public SearchResults<E> mapAll(R rs, Class<E> entityType) {
         List<SearchResult<E>> out = new ArrayList<>();
         while (hasNext(rs)) {
             SearchResult<E> searchResult = mapOne(rs, entityType);
@@ -97,7 +97,7 @@ public final class SearchResultsMapper<RS, E> {
      * @param rs Result set/row stream handle
      * @return Whether another row is available
      */
-    public boolean hasNext(RS rs) {
+    public boolean hasNext(R rs) {
         return entityMapper.hasNext(rs);
     }
 
@@ -108,7 +108,7 @@ public final class SearchResultsMapper<RS, E> {
      * @param entityType Entity type to map
      * @return mapped result or {@code null} when entity mapping yields no row data
      */
-    public @Nullable SearchResult<E> mapOne(RS rs, Class<E> entityType) {
+    public @Nullable SearchResult<E> mapOne(R rs, Class<E> entityType) {
         E entity = entityMapper.map(rs, entityType);
         if (entity == null) {
             return null;

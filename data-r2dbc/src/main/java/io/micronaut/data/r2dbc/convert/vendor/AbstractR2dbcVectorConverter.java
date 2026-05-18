@@ -33,7 +33,7 @@ abstract class AbstractR2dbcVectorConverter<T> implements VectorTypeConverter<T>
     /**
      * @param conversionService Conversion service used for vector type adaptation.
      */
-    public AbstractR2dbcVectorConverter(ConversionService conversionService) {
+    protected AbstractR2dbcVectorConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 
