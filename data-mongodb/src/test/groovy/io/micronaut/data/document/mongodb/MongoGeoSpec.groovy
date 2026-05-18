@@ -1,9 +1,12 @@
 package io.micronaut.data.document.mongodb
 
+import com.mongodb.client.MongoClient
+import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.geojson.LineString
 import com.mongodb.client.model.geojson.MultiLineString
 import com.mongodb.client.model.geojson.MultiPoint
 import com.mongodb.client.model.geojson.Point
+import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
 import io.micronaut.data.document.mongodb.entities.GeoEntity
 import io.micronaut.data.document.mongodb.repositories.MongoGeoEntityRepository
@@ -18,6 +21,16 @@ class MongoGeoSpec extends Specification {
     @Inject
     @Shared
     MongoGeoEntityRepository mongoGeoEntityRepository
+
+    @Inject
+    @Shared
+    MongoClient mongoClient
+
+    def setupSpec() {
+        mongoClient.getDatabase("test")
+            .getCollection("geo_entity")
+            .createIndex(Indexes.geo2dsphere("point"))
+    }
 
     def cleanup() {
         mongoGeoEntityRepository.deleteAll()
@@ -77,6 +90,69 @@ class MongoGeoSpec extends Specification {
             assertLineString(it.getLineString(), 2)
             assert it.getMultiLineString() == null
         }
+    }
+
+    void "test geo within query parsing"() {
+        given:
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity museumIslandCafe = new GeoEntity(point: new Point(new Position(13.4035d, 52.5194d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
+
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, museumIslandCafe, airportHotel])
+
+        Polygon mitteDistrict = new Polygon([
+                new Position(13.4010d, 52.5180d),
+                new Position(13.4010d, 52.5215d),
+                new Position(13.4065d, 52.5215d),
+                new Position(13.4065d, 52.5180d),
+                new Position(13.4010d, 52.5180d)
+        ])
+
+        when:
+        def within = mongoGeoEntityRepository.findByPointGeoWithin(mitteDistrict)
+
+        then:
+        within*.id as Set == [alexanderplatzCafe.id, museumIslandCafe.id] as Set
+    }
+
+    void "test geo intersects query parsing"() {
+        given:
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity museumIslandCafe = new GeoEntity(point: new Point(new Position(13.4035d, 52.5194d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
+
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, museumIslandCafe, airportHotel])
+
+        Polygon cityCenterServiceZone = new Polygon([
+                new Position(13.4010d, 52.5180d),
+                new Position(13.4010d, 52.5215d),
+                new Position(13.4065d, 52.5215d),
+                new Position(13.4065d, 52.5180d),
+                new Position(13.4010d, 52.5180d)
+        ])
+
+        when:
+        def intersects = mongoGeoEntityRepository.findByPointGeoIntersects(cityCenterServiceZone)
+
+        then:
+        intersects*.id as Set == [alexanderplatzCafe.id, museumIslandCafe.id] as Set
+    }
+
+    void "test near query parsing"() {
+        given:
+        GeoEntity alexanderplatzCafe = new GeoEntity(point: new Point(new Position(13.4050d, 52.5200d)))
+        GeoEntity nearbyBakery = new GeoEntity(point: new Point(new Position(13.4053d, 52.5202d)))
+        GeoEntity airportHotel = new GeoEntity(point: new Point(new Position(13.5033d, 52.3667d)))
+
+        mongoGeoEntityRepository.saveAll([alexanderplatzCafe, nearbyBakery, airportHotel])
+
+        Point alexanderplatz = new Point(new Position(13.4050d, 52.5200d))
+
+        when:
+        def near = mongoGeoEntityRepository.findByPointNear(alexanderplatz, 50d)
+
+        then:
+        near*.id as Set == [alexanderplatzCafe.id, nearbyBakery.id] as Set
     }
 
     Position createPosition(double x) {

@@ -164,6 +164,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
+    private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
@@ -2380,6 +2381,101 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_INSIDE(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Within(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STWithin(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoWithin is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_ANYINTERACT(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Intersects(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STIntersects(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoIntersects is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_WITHIN_DISTANCE(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    query.append("'distance=' || ");
+                    appendExpression(distanceExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2 -> {
+                    query.append("ST_DWithin(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    appendExpression(distanceExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case MYSQL -> {
+                    query.append("ST_Distance(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STDistance(");
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression);
+                }
+                default -> throw new UnsupportedOperationException("Near is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftExpression, expression, ignoreCase, "'%'", "?");
         }
@@ -2663,6 +2759,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String writeTransformer = getDataTransformerWriteValue(qpp.tableAlias, entityPropertyPath.getProperty()).orElse(null);
                 if (writeTransformer != null) {
                     appendTransformed(query, writeTransformer, pushParameter);
+                } else if (AbstractSqlLikeQueryBuilder.this instanceof SqlQueryBuilder sqlQueryBuilder
+                    && sqlQueryBuilder.isJsonOrWktGeometry(entityPropertyPath.getProperty())) {
+                    sqlQueryBuilder.appendUpdateSetParameter(query, qpp.tableAlias, entityPropertyPath.getProperty(), pushParameter);
                 } else {
                     pushParameter.run();
                 }

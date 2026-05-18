@@ -931,4 +931,65 @@ public final class Restrictions {
             return "CollectionContains";
         }
     }
+
+    /**
+     * Geo within restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoWithin<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoWithin() {
+            super(PersistentEntityCriteriaBuilder::geoWithin);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoWithin";
+        }
+    }
+
+    /**
+     * Geo intersects restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoIntersects<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoIntersects() {
+            super(PersistentEntityCriteriaBuilder::geoIntersects);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoIntersects";
+        }
+    }
+
+    /**
+     * Near restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyNear<T> implements PropertyRestriction<T> {
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<T> expression,
+                              List<ParameterExpression<T>> parameters) {
+            return cb.near(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
+        }
+
+        @Override
+        public String getName() {
+            return "Near";
+        }
+    }
 }

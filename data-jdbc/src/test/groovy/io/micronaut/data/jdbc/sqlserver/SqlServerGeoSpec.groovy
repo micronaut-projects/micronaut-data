@@ -3,6 +3,8 @@ package io.micronaut.data.jdbc.sqlserver
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -26,6 +28,18 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
     @Override
     SchoolRepository getSchoolRepository() {
         return context.getBean(MSSchoolRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(MSHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(MSHotelWktRepository)
     }
 
     @Memoized

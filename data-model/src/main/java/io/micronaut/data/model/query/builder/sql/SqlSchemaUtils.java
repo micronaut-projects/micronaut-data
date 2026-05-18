@@ -61,7 +61,6 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,6 +88,10 @@ public final class SqlSchemaUtils {
     public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
     public static final String NULLABLE_COLUMN = "NULLABLE";
 
+    static final int SRID_WGS_84 = 4326;
+    static final int SRID_ETRS_89 = 4258;
+    static final int SRID_WEB_MERCATOR = 3857;
+
     private static final String ORACLE_GEOM_METADATA_STATEMENT = """
         INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
         VALUES (
@@ -100,9 +103,6 @@ public final class SqlSchemaUtils {
           ),
           %s
         )""";
-    private static final int SRID_WGS_84 = 4326;
-    private static final int SRID_ETRS_89 = 4258;
-    private static final int SRID_WEB_MERCATOR = 3857;
 
     private SqlSchemaUtils() {
     }
@@ -467,11 +467,6 @@ public final class SqlSchemaUtils {
             .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
             .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
 
-        UnaryOperator<String> columnMapper = columnName ->
-            Optional.ofNullable(propertyMap.get(columnName))
-                .map(pp -> namingStrategy.mappedName(associations, pp))
-                .orElseThrow(() -> new MappingException("Persistent property not found for column: " + columnName));
-
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
             .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
@@ -479,18 +474,8 @@ public final class SqlSchemaUtils {
         Stream.of(indexes)
             .flatMap(Optional::stream)
             .flatMap(Collection::stream)
-            .forEach(index -> {
-                String name = index.stringValue("name").orElse("");
-                boolean unique = index.booleanValue("unique").orElse(false);
-                String[] declaredColumns = index.stringValues("columns");
-                String[] mappedColumns = Arrays.stream(declaredColumns)
-                    .map(columnMapper)
-                    .toArray(String[]::new);
-                boolean spatial = Arrays.stream(declaredColumns)
-                    .map(propertyMap::get)
-                    .anyMatch(pp -> pp.isAssignable(Geometry.class));
-                indexMappings.add(new SqlIndexMapping(name, unique, mappedColumns, spatial));
-            });
+            .map(index -> toSqlIndexMapping(index, propertyMap, namingStrategy, associations))
+            .forEach(indexMappings::add);
 
         for (PersistentProperty property : entity.getPersistentProperties()) {
             if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
@@ -500,6 +485,37 @@ public final class SqlSchemaUtils {
                 addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings);
             }
         }
+    }
+
+    private static SqlIndexMapping toSqlIndexMapping(AnnotationValue<Index> index,
+                                                     Map<String, PersistentProperty> propertyMap,
+                                                     NamingStrategy namingStrategy,
+                                                     List<Association> associations) {
+        String name = index.stringValue("name").orElse("");
+        boolean unique = index.booleanValue("unique").orElse(false);
+        String[] declaredColumns = index.stringValues("columns");
+        boolean spatial = false;
+        Integer spatialSrid = null;
+        String[] mappedColumns = new String[declaredColumns.length];
+        for (int i = 0; i < declaredColumns.length; i++) {
+            String declaredColumn = declaredColumns[i];
+            PersistentProperty persistentProperty = propertyMap.get(declaredColumn);
+            if (persistentProperty == null) {
+                throw new MappingException("Persistent property not found for column: " + declaredColumn);
+            }
+            if (persistentProperty.isAssignable(Geometry.class)) {
+                OptionalInt optSrid = persistentProperty.getAnnotationMetadata().intValue(Srid.class);
+                if (optSrid.isPresent()) {
+                    spatialSrid = optSrid.getAsInt();
+                }
+                spatial = true;
+            }
+            mappedColumns[i] = namingStrategy.mappedName(associations, persistentProperty);
+        }
+        if (spatial && mappedColumns.length > 1) {
+            throw new MappingException("A geospatial column cannot be included in a composite index. Index columns: " + Arrays.toString(mappedColumns));
+        }
+        return new SqlIndexMapping(name, unique, mappedColumns, spatial, spatialSrid);
     }
 
     private static List<SqlColumnMapping> getPrimaryKeyColumns(List<PersistentProperty> identities, NamingStrategy namingStrategy, Dialect dialect) {
